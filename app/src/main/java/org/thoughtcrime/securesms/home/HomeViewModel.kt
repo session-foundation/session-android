@@ -304,9 +304,9 @@ class HomeViewModel @Inject constructor(
         configFactory.removeContactOrBlindedContact(address)
     }
 
-    fun leaveGroup(accountId: AccountId) {
+    fun leaveGroup(accountId: AccountId, deleteGroup : Boolean) {
         viewModelScope.launch(Dispatchers.Default) {
-            groupManager.leaveGroup(accountId)
+            groupManager.leaveGroup(accountId, deleteGroup)
         }
     }
 
@@ -433,6 +433,32 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun getLeaveGroupConfirmationDialog(thread: ThreadRecord, isDeleteGroup : Boolean): GroupManagerV2.ConfirmDialogData? {
+        val recipient = thread.recipient
+        if (recipient.address is Address.Group) {
+            val accountId = recipient.address.accountId
+            // Admin will delete the group
+            return if (isDeleteGroup) {
+                groupManager.getDeleteGroupConfirmationDialogData(
+                    accountId,
+                    recipient.displayName()
+                )
+            } else {
+                // more than 1 admin will leave
+                groupManager.getLeaveGroupConfirmationDialogData(
+                    accountId,
+                    recipient.displayName()
+                )
+            }
+        }
+
+        return null
+    }
+
+    fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean{
+        return groupManager.isCurrentUserLastAdmin(groupId)
+    }
+
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
         val userProfileModal: UserProfileModalData? = null,
@@ -489,8 +515,8 @@ class HomeViewModel @Inject constructor(
     companion object {
         private val CONVERSATION_COMPARATOR = compareByDescending<ThreadRecord> { it.recipient.isPinned }
             .thenByDescending { it.recipient.priority }
-            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenByDescending { it.date }
+            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenBy { it.recipient.displayName() }
     }
 }
