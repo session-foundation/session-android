@@ -515,8 +515,8 @@ class HomeViewModel @Inject constructor(
     companion object {
         private val CONVERSATION_COMPARATOR = compareByDescending<ThreadRecord> { it.recipient.isPinned }
             .thenByDescending { it.recipient.priority }
-            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenByDescending { it.date }
+            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenBy { it.recipient.displayName() }
     }
 }
