@@ -278,7 +278,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     SmsDatabase.addProFeatureColumns(db);
     RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
 
-    SnodeDatabase.Companion.createTableAndMigrateData(db);
+    SnodeDatabase.Companion.createTableAndMigrateData(db, true);
   }
 
   @Override
@@ -630,7 +630,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV58) {
-          SnodeDatabase.Companion.createTableAndMigrateData(db);
+          SnodeDatabase.Companion.createTableAndMigrateData(db, true);
       }
 
       db.setTransactionSuccessful();

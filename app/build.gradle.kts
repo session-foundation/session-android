@@ -414,6 +414,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.truth)
     testImplementation(libs.truth)
+    testImplementation(libs.androidx.sqlite.framework)
     androidTestImplementation(libs.truth)
     testRuntimeOnly(libs.mockito.core)
 
@@ -429,7 +430,6 @@ dependencies {
     androidTestUtil(libs.androidx.orchestrator)
 
     testImplementation(libs.robolectric)
-    testImplementation(libs.robolectric.shadows.multidex)
     testImplementation(libs.conscrypt.openjdk.uber)
     testImplementation(libs.turbine)
 

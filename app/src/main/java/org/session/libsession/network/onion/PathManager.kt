@@ -18,6 +18,7 @@ import org.session.libsession.network.model.Path
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePathStorage
+import org.session.libsession.network.snode.SnodePoolStorage
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.Log
@@ -30,6 +31,7 @@ class PathManager @Inject constructor(
     private val scope: CoroutineScope,
     private val directory: SnodeDirectory,
     private val storage: SnodePathStorage,
+    private val snodePoolStorage: SnodePoolStorage,
     private val swarmDirectory: SwarmDirectory,
 ) {
     companion object {
@@ -48,10 +50,6 @@ class PathManager @Inject constructor(
     private val buildMutex = Mutex()
     private val _isBuilding = MutableStateFlow(false)
 
-    // In-memory strike tracking (same lifetime as PathManager)
-    private val pathStrikes: MutableMap<String, Int> = mutableMapOf()
-    private val snodeStrikes: MutableMap<String, Int> = mutableMapOf()
-
     private fun snodeKey(snode: Snode): String =
         snode.publicKeySet?.ed25519Key ?: snode.toString()
 
@@ -59,31 +57,19 @@ class PathManager @Inject constructor(
         path.joinToString(separator = "|") { it.publicKeySet?.ed25519Key ?: it.toString() }
 
     private fun increasePathStrike(path: Path): Int {
-        val key = pathKey(path)
-        val next = (pathStrikes[key] ?: 0) + 1
-        pathStrikes[key] = next
-        return next
+        return requireNotNull(storage.increaseOnionRequestPathStrike(path, 1))
     }
 
     private fun increaseSnodeStrike(snode: Snode): Int {
-        val key = snodeKey(snode)
-        val next = (snodeStrikes[key] ?: 0) + 1
-        snodeStrikes[key] = next
-        return next
-    }
-
-    private fun setSnodeStrikes(snode: Snode, strikes: Int): Int {
-        val key = snodeKey(snode)
-        snodeStrikes[key] = strikes
-        return strikes
+        return requireNotNull(snodePoolStorage.increaseSnodeStrike(snode, 1))
     }
 
     private fun clearPathStrike(path: Path) {
-        pathStrikes.remove(pathKey(path))
+        storage.clearOnionRequestPathStrikes(path)
     }
 
     private fun clearSnodeStrike(snode: Snode) {
-        snodeStrikes.remove(snodeKey(snode))
+        snodePoolStorage.clearSnodeStrike(snode)
     }
 
     // -----------------------------
@@ -179,10 +165,6 @@ class PathManager @Inject constructor(
                 val sanitized = sanitizePaths(allPaths)
                 _paths.value = sanitized
 
-                // Keep strikes only for paths that still exist
-                val alive = sanitized.map(::pathKey).toSet()
-                pathStrikes.keys.retainAll(alive)
-
                 Log.w("Onion Request", "Paths rebuilt successfully. Current path count: ${sanitized.size}")
             } finally {
                 _isBuilding.value = false
@@ -210,7 +192,7 @@ class PathManager @Inject constructor(
             val droppedSnodeKeys = mutableSetOf<String>()
 
             val snodeStrikes = if (forceRemove) {
-                setSnodeStrikes(snode, STRIKE_THRESHOLD)
+                STRIKE_THRESHOLD
             } else {
                 increaseSnodeStrike(snode)
             }

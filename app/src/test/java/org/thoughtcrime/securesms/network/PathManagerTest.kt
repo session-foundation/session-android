@@ -31,6 +31,7 @@ class PathManagerTest {
         private var value: List<Path> = initial
         var lastSet: List<Path>? = null
         var cleared = false
+        val pathStrikes = mutableMapOf<Path, Int>()
 
         override fun getOnionRequestPaths(): List<Path> = value
 
@@ -42,6 +43,19 @@ class PathManagerTest {
         override fun clearOnionRequestPaths() {
             value = emptyList()
             cleared = true
+        }
+
+        override fun increaseOnionRequestPathStrike(
+            path: Path,
+            increment: Int
+        ): Int {
+            val newStrike = (pathStrikes[path] ?: 0) + increment
+            pathStrikes[path] = newStrike
+            return newStrike
+        }
+
+        override fun clearOnionRequestPathStrikes(path: Path) {
+            pathStrikes.remove(path)
         }
     }
 
@@ -60,7 +74,8 @@ class PathManagerTest {
             scope = backgroundScope,
             directory = directory,
             storage = storage,
-            swarmDirectory = swarmDirectory
+            swarmDirectory = swarmDirectory,
+            snodePoolStorage = mock(),
         )
 
         assertThat(pm.paths.value).hasSize(1)
@@ -77,9 +92,8 @@ class PathManagerTest {
 
         val storage = FakePathStorage(listOf(p1, p2))
         val directory = mock<SnodeDirectory>()
-        val swarmDirectory = mock<SwarmDirectory>()
 
-        val pm = PathManager(backgroundScope, directory, storage, swarmDirectory)
+        val pm = PathManager(backgroundScope, directory, storage, mock(), mock())
 
         val chosen = pm.getPath(exclude = b)
         assertThat(chosen).isEqualTo(p2)
@@ -102,7 +116,7 @@ class PathManagerTest {
         }
         val swarmDirectory = mock<SwarmDirectory>()
 
-        val pm = PathManager(backgroundScope, directory, storage, swarmDirectory)
+        val pm = PathManager(backgroundScope, directory, storage, mock(), swarmDirectory)
 
         pm.handleBadSnode(snode = b, publicKey = "pubkey123", forceRemove = true)
         advanceUntilIdle()
@@ -136,7 +150,7 @@ class PathManagerTest {
         }
         val swarmDirectory = mock<SwarmDirectory>()
 
-        val pm = PathManager(backgroundScope, directory, storage, swarmDirectory)
+        val pm = PathManager(backgroundScope, directory, storage, mock(), swarmDirectory)
 
         pm.handleBadSnode(snode = b, publicKey = "pubkey123", forceRemove = true)
         advanceUntilIdle()

@@ -236,10 +236,9 @@ class SnodeDirectory @Inject constructor(
      * Remove a snode from the pool by its ed25519 key.
      */
     fun dropSnodeFromPool(ed25519Key: String) {
-        val current = getSnodePool()
-        val hit = current.firstOrNull { it.publicKeySet?.ed25519Key == ed25519Key } ?: return
-        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): $hit")
-        storage.setSnodePool(current - hit)
+        val removed = storage.removeSnode(ed25519Key)
+        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): ${removed != null}")
+
         // NOTE: do NOT touch lastRefreshElapsedMs here; dropping isn’t a “refresh”.
     }
 
