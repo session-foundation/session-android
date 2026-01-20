@@ -132,16 +132,6 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
             }
         }
 
-        // react to the character limit changes
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel?.inputBarState
-                    ?.map { it.charLimitState }
-                    ?.distinctUntilChanged()
-                    ?.collectLatest(binding.inputBar::setCharLimitState)
-            }
-        }
-
         fragmentPagerAdapter = MediaSendFragmentPagerAdapter(childFragmentManager)
         binding.mediasendPager.setAdapter(fragmentPagerAdapter)
 
