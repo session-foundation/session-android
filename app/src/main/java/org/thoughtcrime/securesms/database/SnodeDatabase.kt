@@ -440,6 +440,10 @@ class SnodeDatabase @Inject constructor(
 
             // Migrate paths
             oldPaths.forEachIndexed { pathIndex, path ->
+                //language=roomsql
+                db.execSQL("INSERT INTO onion_paths (id, created_at_ms) VALUES (?1, ?2)",
+                    arrayOf<Any>(pathIndex, System.currentTimeMillis()))
+
                 path.forEachIndexed { snodeIndex, snode ->
                     //language=roomsql
                     db.execSQL("""
