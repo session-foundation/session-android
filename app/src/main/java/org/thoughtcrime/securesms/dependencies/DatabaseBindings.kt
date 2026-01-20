@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.dependencies
 
+import androidx.sqlite.db.SupportSQLiteOpenHelper
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -12,6 +13,7 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import javax.inject.Singleton
 
@@ -30,4 +32,7 @@ abstract class DatabaseBindings {
 
     @Binds
     abstract fun bindMessageProvider(provider: DatabaseAttachmentProvider): MessageDataProvider
+
+    @Binds
+    abstract fun bindSupportOpenHelper(openHelper: SQLCipherOpenHelper): SupportSQLiteOpenHelper
 }
