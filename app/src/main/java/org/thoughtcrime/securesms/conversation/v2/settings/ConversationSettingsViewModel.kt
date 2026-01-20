@@ -20,6 +20,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -1099,7 +1100,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     onNegative = {
                         // Show confirmation dialog to delete or leave the group
                         // put True here since this option is to "Delete Group"
-                        if (isUserLastAdmin) confirmDeleteGroup()
+                        if (isUserLastAdmin){
+                            // with how we handle dialog dismissal on option click, showing the simpleDialog
+                            // from another simpleDialog without delay will cause it to become null and not display
+                            viewModelScope.launch {
+                                delay(500)
+                                confirmDeleteGroup()
+                            }
+                        }
                     },
                     showXIcon = dialogData.showCloseButton,
                     negativeStyleDanger = isUserLastAdmin // red color on the right
