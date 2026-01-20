@@ -772,17 +772,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         if (recipient.address is Address.Group) {
             confirmAndLeaveGroup(
-                dialogData = if (isAdminDeleteGroup) {
-                    groupManagerV2.getDeleteGroupConfirmationDialogData(
-                        recipient.address.accountId,
-                        recipient.displayName()
-                    )
-                } else {
-                    groupManagerV2.getLeaveGroupConfirmationDialogData(
-                        recipient.address.accountId,
-                        recipient.displayName()
-                    )
-                }
+                dialogData = homeViewModel.getLeaveGroupConfirmationDialog(thread, isAdminDeleteGroup)
             ) {
                 homeViewModel.leaveGroup(recipient.address.accountId, isAdminDeleteGroup)
             }

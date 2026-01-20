@@ -433,19 +433,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getLeaveGroupConfirmationDialog(thread: ThreadRecord): GroupManagerV2.ConfirmDialogData? {
+    fun getLeaveGroupConfirmationDialog(thread: ThreadRecord, isDeleteGroup : Boolean): GroupManagerV2.ConfirmDialogData? {
         val recipient = thread.recipient
         if (recipient.address is Address.Group) {
             val accountId = recipient.address.accountId
-            // 1 admin will delete the group
-            if (isCurrentUserLastAdmin(accountId)) {
-                return groupManager.getDeleteGroupConfirmationDialogData(
+            // Admin will delete the group
+            return if (isDeleteGroup) {
+                groupManager.getDeleteGroupConfirmationDialogData(
                     accountId,
                     recipient.displayName()
                 )
             } else {
                 // more than 1 admin will leave
-                return groupManager.getLeaveGroupConfirmationDialogData(
+                groupManager.getLeaveGroupConfirmationDialogData(
                     accountId,
                     recipient.displayName()
                 )
