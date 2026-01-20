@@ -1231,7 +1231,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
         // if an admin tries to leave while being the only admin in the group
         if (isCurrentUserLastAdmin(groupId)) {
-            message = Phrase.from(application, R.string.groupOnlyAdmin)
+            message = Phrase.from(application, R.string.groupOnlyAdminLeave)
                 .put(GROUP_NAME_KEY, name)
                 .format()
 
