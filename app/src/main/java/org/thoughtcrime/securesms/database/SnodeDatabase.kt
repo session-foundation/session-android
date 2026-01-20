@@ -306,14 +306,6 @@ class SnodeDatabase @Inject constructor(
         """, arrayOf<Any>(snode.publicKeySet!!.ed25519Key))
     }
 
-    override fun getForkInfo(): ForkInfo {
-        TODO("Not yet implemented")
-    }
-
-    override fun setForkInfo(forkInfo: ForkInfo) {
-        TODO("Not yet implemented")
-    }
-
     private fun Path.snodeKeys(): String {
         return joinToString(separator = ",", transform = { it.publicKeySet!!.ed25519Key })
     }
