@@ -10,7 +10,6 @@ import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.ByteArraySlice
-import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
@@ -249,21 +248,10 @@ class SnodeDirectory @Inject constructor(
      * Remove a snode from the pool by its ed25519 key.
      */
     fun dropSnodeFromPool(ed25519Key: String) {
-        val current = getSnodePool()
-        val hit = current.firstOrNull { it.publicKeySet?.ed25519Key == ed25519Key } ?: return
-        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): $hit")
-        storage.setSnodePool(current - hit)
-        // NOTE: do NOT touch lastRefreshElapsedMs here; dropping isn’t a “refresh”.
-    }
+        val removed = storage.removeSnode(ed25519Key)
+        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): ${removed != null}")
 
-    fun updateForkInfo(newForkInfo: ForkInfo) {
-        val current = storage.getForkInfo()
-        if (newForkInfo > current) {
-            Log.d("Loki", "Updating fork info: $current -> $newForkInfo")
-            storage.setForkInfo(newForkInfo)
-        } else if (newForkInfo < current) {
-            Log.w("Loki", "Got stale fork info $newForkInfo (current: $current)")
-        }
+        // NOTE: do NOT touch lastRefreshElapsedMs here; dropping isn’t a “refresh”.
     }
 
     fun getSnodeByKey(ed25519Key: String?): Snode? {
