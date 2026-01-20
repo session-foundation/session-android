@@ -44,7 +44,7 @@ class SwarmApiExecutorImpl @Inject constructor(
         val snode = apiContext.snode ?: run {
             val targetSnode = swarmDirectory.getSingleTargetSnode(dest.publicKeyHex)
             Log.d(TAG, "Selected snode $targetSnode for publicKey=${dest.publicKeyHex}")
-            apiContext.snode = targetSnode
+            ctx.set(SwarmApiContextKey, SwarmApiContext(snode = targetSnode))
             targetSnode
         }
 
@@ -67,10 +67,10 @@ class SwarmApiExecutorImpl @Inject constructor(
                     }
 
                     // drop the cached snode so we pick a new one upon retry
-                    apiContext.snode = null
+                    ctx.remove(SwarmApiContextKey)
 
                     throw ErrorWithFailureDecision(
-                        cause = e,
+                        cause = SwarmApiError.SnodeNotLongerPartOfSwarmError(snode, dest.publicKeyHex),
                         failureDecision = FailureDecision.Retry,
                     )
                 }
@@ -85,7 +85,7 @@ class SwarmApiExecutorImpl @Inject constructor(
     }
 
     private class SwarmApiContext(
-        var snode: Snode? = null
+        val snode: Snode? = null
     )
 
     private object SwarmApiContextKey : ApiExecutorContext.Key<SwarmApiContext>

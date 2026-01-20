@@ -19,6 +19,10 @@ class ApiExecutorContext {
         ensureInitialized()[key] = value
     }
 
+    fun remove(key: Key<*>) {
+        values?.remove(key)
+    }
+
     fun getRaw(key: Key<*>): Any? {
         return values?.get(key)
     }

@@ -9,12 +9,16 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsignal.utilities.Snode
 
 class GetSwarmApi @AssistedInject constructor(
     @Assisted private val pubKey: String,
     private val json: Json,
-) : AbstractSnodeApi<GetSwarmApi.Response>() {
+    snodeClientErrorManager: SnodeClientErrorManager,
+) : AbstractSnodeApi<GetSwarmApi.Response>(
+    snodeClientErrorManager = snodeClientErrorManager,
+) {
     override val methodName: String
         get() = "get_snodes_for_pubkey"
 

@@ -9,6 +9,7 @@ import org.session.libsession.network.SnodeClientFailureKey
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -30,7 +31,7 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
                 SnodeClientFailureContext(
                     targetSnode = snode,
                     swarmPublicKey = snode.publicKeySet?.x25519Key,
-                    previousError = null
+                    previousErrorCode = null
                 )
             }
 
@@ -42,7 +43,19 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
                 ctx = failureContext
             )
 
+            ctx.set(SnodeClientFailureKey, failureContext.copy(previousErrorCode = code))
 
+            if (decision != null) {
+                throw ErrorWithFailureDecision(
+                    cause = RuntimeException("Snode API error: code=$code, body=$body"),
+                    failureDecision = decision,
+                )
+            } else {
+                throw SnodeApiError.UnknownStatusCode(
+                    code = code,
+                    bodyText = (body as? JsonPrimitive)?.content
+                )
+            }
         }
     }
 

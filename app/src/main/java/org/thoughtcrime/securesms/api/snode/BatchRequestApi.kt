@@ -8,12 +8,16 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.snode.model.BatchResponse
 
 class BatchRequestApi @AssistedInject constructor(
     @Assisted val requests: List<SnodeApi<*>>,
     private val json: Json,
-) : AbstractSnodeApi<BatchResponse>() {
+    snodeClientErrorManager: SnodeClientErrorManager,
+) : AbstractSnodeApi<BatchResponse>(
+    snodeClientErrorManager = snodeClientErrorManager,
+) {
 
     override val methodName: String
         get() = "batch"
