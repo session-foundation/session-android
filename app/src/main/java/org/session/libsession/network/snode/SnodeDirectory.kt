@@ -8,7 +8,6 @@ import kotlinx.coroutines.sync.withLock
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
-import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
@@ -240,16 +239,6 @@ class SnodeDirectory @Inject constructor(
         Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): ${removed != null}")
 
         // NOTE: do NOT touch lastRefreshElapsedMs here; dropping isn’t a “refresh”.
-    }
-
-    fun updateForkInfo(newForkInfo: ForkInfo) {
-        val current = storage.getForkInfo()
-        if (newForkInfo > current) {
-            Log.d("Loki", "Updating fork info: $current -> $newForkInfo")
-            storage.setForkInfo(newForkInfo)
-        } else if (newForkInfo < current) {
-            Log.w("Loki", "Got stale fork info $newForkInfo (current: $current)")
-        }
     }
 
     fun getSnodeByKey(ed25519Key: String?): Snode? {

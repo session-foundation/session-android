@@ -2,7 +2,6 @@ package org.session.libsession.network.snode
 
 
 import org.session.libsession.network.model.Path
-import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.Snode
 
 interface SnodePathStorage {
@@ -42,7 +41,4 @@ interface SnodePoolStorage {
      */
     fun increaseSnodeStrike(snode: Snode, increment: Int): Int?
     fun clearSnodeStrike(snode: Snode)
-
-    fun getForkInfo(): ForkInfo
-    fun setForkInfo(forkInfo: ForkInfo)
 }
