@@ -654,9 +654,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 unblockConversation(thread)
             }
         }
+        bottomSheet.onAdminLeaveTapped = {
+            bottomSheet.dismiss()
+            deleteConversation(thread, false)
+        }
         bottomSheet.onDeleteTapped = {
             bottomSheet.dismiss()
-            deleteConversation(thread)
+            deleteConversation(thread, true)
         }
         bottomSheet.onNotificationTapped = {
             bottomSheet.dismiss()
@@ -758,14 +762,29 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    private fun deleteConversation(thread: ThreadRecord) {
+    /**
+     * @param isAdminDeleteGroup will determine if the group will be deleted by admin
+     * false : admin will only leave the group (group has > 1 admin)
+     * true : admin will delete the group (can delete even if > 1 admin)
+     */
+    private fun deleteConversation(thread: ThreadRecord, isAdminDeleteGroup : Boolean) {
         val recipient = thread.recipient
 
         if (recipient.address is Address.Group) {
             confirmAndLeaveGroup(
-                dialogData = homeViewModel.getLeaveGroupConfirmationDialog(thread)
+                dialogData = if (isAdminDeleteGroup) {
+                    groupManagerV2.getDeleteGroupConfirmationDialogData(
+                        recipient.address.accountId,
+                        recipient.displayName()
+                    )
+                } else {
+                    groupManagerV2.getLeaveGroupConfirmationDialogData(
+                        recipient.address.accountId,
+                        recipient.displayName()
+                    )
+                }
             ) {
-                homeViewModel.leaveGroup(recipient.address.accountId)
+                homeViewModel.leaveGroup(recipient.address.accountId, isAdminDeleteGroup)
             }
 
             return

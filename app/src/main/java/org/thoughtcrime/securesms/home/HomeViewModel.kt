@@ -304,9 +304,9 @@ class HomeViewModel @Inject constructor(
         configFactory.removeContactOrBlindedContact(address)
     }
 
-    fun leaveGroup(accountId: AccountId) {
+    fun leaveGroup(accountId: AccountId, deleteGroup : Boolean) {
         viewModelScope.launch(Dispatchers.Default) {
-            groupManager.leaveGroup(accountId, isCurrentUserLastAdmin(accountId))
+            groupManager.leaveGroup(accountId, deleteGroup)
         }
     }
 
