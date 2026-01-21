@@ -3,9 +3,9 @@ package org.thoughtcrime.securesms.api
 import okhttp3.HttpUrl
 import org.session.libsignal.utilities.ByteArraySlice
 
-typealias SessionAPIRequest = ByteArray
+typealias SessionApiRequest = ByteArray
 
-class SessionAPIResponse(
+class SessionApiResponse(
     val code: Int,
     val body: SessionAPIResponseBody,
 )
@@ -20,4 +20,4 @@ sealed interface SessionDestination {
     data class HttpServer(val url: HttpUrl, val x25519PubKeyHex: String) : SessionDestination
 }
 
-typealias SessionAPIExecutor = ApiExecutor<SessionDestination, SessionAPIRequest, SessionAPIResponse>
+typealias SessionApiExecutor = ApiExecutor<SessionDestination, SessionApiRequest, SessionApiResponse>

@@ -10,7 +10,7 @@ import kotlinx.serialization.json.encodeToStream
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import org.thoughtcrime.securesms.api.SessionAPIExecutor
+import org.thoughtcrime.securesms.api.SessionApiExecutor
 import org.thoughtcrime.securesms.api.SessionAPIResponseBody
 import org.thoughtcrime.securesms.api.SessionDestination
 import java.io.ByteArrayOutputStream
@@ -19,7 +19,7 @@ import javax.inject.Inject
 typealias SnodeApiExecutor = ApiExecutor<Snode, SnodeApi<*>, SnodeApiResponse>
 
 class SnodeApiExecutorImpl @Inject constructor(
-    private val executor: SessionAPIExecutor,
+    private val executor: SessionApiExecutor,
     private val json: Json,
 ) : SnodeApiExecutor {
     @OptIn(ExperimentalSerializationApi::class)

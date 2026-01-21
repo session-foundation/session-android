@@ -5,7 +5,6 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.session.libsession.network.onion.OnionTransport
-import org.session.libsession.network.onion.http.HttpOnionTransport
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SnodePoolStorage
 import org.session.libsession.network.snode.SwarmStorage

@@ -30,9 +30,9 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import org.thoughtcrime.securesms.api.SessionAPIExecutor
-import org.thoughtcrime.securesms.api.SessionAPIRequest
-import org.thoughtcrime.securesms.api.SessionAPIResponse
+import org.thoughtcrime.securesms.api.SessionApiExecutor
+import org.thoughtcrime.securesms.api.SessionApiRequest
+import org.thoughtcrime.securesms.api.SessionApiResponse
 import org.thoughtcrime.securesms.api.SessionAPIResponseBody
 import org.thoughtcrime.securesms.api.SessionDestination
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
@@ -57,12 +57,12 @@ class OnionSessionApiExecutor @Inject constructor(
     private val pathManager: PathManager,
     private val json: Json,
     private val networkErrorManager: NetworkErrorManager,
-) : SessionAPIExecutor {
+) : SessionApiExecutor {
     override suspend fun send(
         ctx: ApiExecutorContext,
         dest: SessionDestination,
-        req: SessionAPIRequest
-    ): SessionAPIResponse {
+        req: SessionApiRequest
+    ): SessionApiResponse {
         val path = pathManager.getPath()
         val onionRequestVersion = when (dest) {
             is SessionDestination.Snode -> Version.V3
@@ -316,7 +316,7 @@ class OnionSessionApiExecutor @Inject constructor(
     private suspend fun handleV4Response(
         body: ResponseBody,
         builtOnion: OnionBuilder.BuiltOnion
-    ): SessionAPIResponse {
+    ): SessionApiResponse {
         val bodyBytes = withContext(Dispatchers.IO) {
             body.bytes() // Read all bytes into memory
         }
@@ -346,7 +346,7 @@ class OnionSessionApiExecutor @Inject constructor(
 
         val bodySlice = decrypted.getBody(infoLength, infoEndIndex)
 
-        return SessionAPIResponse(
+        return SessionApiResponse(
             code = info.code,
             body = SessionAPIResponseBody.Bytes(bodySlice)
         )
@@ -367,7 +367,7 @@ class OnionSessionApiExecutor @Inject constructor(
     private suspend fun handleV3Response(
         body: ResponseBody,
         builtOnion: OnionBuilder.BuiltOnion
-    ): SessionAPIResponse {
+    ): SessionApiResponse {
         val ivAndCipherText = Base64.decode(withContext(Dispatchers.IO) {
             body.bytes()
         })
@@ -377,7 +377,7 @@ class OnionSessionApiExecutor @Inject constructor(
                 .inputStream()
                 .use(json::decodeFromStream)
 
-        return SessionAPIResponse(
+        return SessionApiResponse(
             code = response.status,
             body = SessionAPIResponseBody.Text(response.body)
         )

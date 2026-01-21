@@ -30,7 +30,6 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
             val failureContext = ctx.getOrPut(SnodeClientFailureKey) {
                 SnodeClientFailureContext(
                     targetSnode = snode,
-                    swarmPublicKey = snode.publicKeySet?.x25519Key,
                     previousErrorCode = null
                 )
             }

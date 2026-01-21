@@ -30,7 +30,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class APIModuleBinding {
     @Binds
-    abstract fun bindSessionAPIExecutor(executor: OnionSessionApiExecutor): SessionAPIExecutor
+    abstract fun bindSessionAPIExecutor(executor: OnionSessionApiExecutor): SessionApiExecutor
 
     @Binds
     abstract fun bindSwarmApiExecutor(executor: SwarmApiExecutorImpl): SwarmApiExecutor

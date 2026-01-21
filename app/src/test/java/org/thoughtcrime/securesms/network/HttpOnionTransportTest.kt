@@ -8,7 +8,6 @@ import org.mockito.kotlin.mock
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
-import org.session.libsession.network.onion.http.HttpOnionTransport
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Snode
