@@ -30,7 +30,7 @@ class SnodeClientErrorManager @Inject constructor(
                 // we should consider the destination snode faulty. Drop from pool and swarm swarm and retry
                 // handleBadSnode will handle removing the snode from the paths/pool/swarm and clean up the strikes
                 // if needed
-                pathManager.handleBadSnode(snode = ctx.targetSnode, swarmPublicKey = ctx.swarmPublicKey, forceRemove = true)
+                pathManager.handleBadSnode(snode = ctx.targetSnode, forceRemove = true)
                 return FailureDecision.Retry
             } else {
                 // reset the clock
@@ -46,14 +46,14 @@ class SnodeClientErrorManager @Inject constructor(
         // Unparseable data: 502 + "oxend returned unparsable data"
         if (code == 502 && bodyText?.contains("oxend returned unparsable data", ignoreCase = true) == true) {
             // penalise the destination snode and retry
-            pathManager.handleBadSnode(snode = ctx.targetSnode, swarmPublicKey = ctx.swarmPublicKey, forceRemove = true)
+            pathManager.handleBadSnode(snode = ctx.targetSnode, forceRemove = true)
             return FailureDecision.Retry
         }
 
         // Destination snode not ready
         if(code == 503 && bodyText?.contains("Snode not ready", ignoreCase = true) == true){
             // penalise the destination snode and retry
-            pathManager.handleBadSnode(snode = ctx.targetSnode, swarmPublicKey = ctx.swarmPublicKey)
+            pathManager.handleBadSnode(snode = ctx.targetSnode)
             return FailureDecision.Retry
         }
 
@@ -65,6 +65,5 @@ object SnodeClientFailureKey : ApiExecutorContext.Key<SnodeClientFailureContext>
 
 data class SnodeClientFailureContext(
     val targetSnode: Snode,
-    val swarmPublicKey: String? = null,
     val previousErrorCode: Int? = null,
 )

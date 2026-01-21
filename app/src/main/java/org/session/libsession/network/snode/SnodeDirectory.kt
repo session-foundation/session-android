@@ -25,7 +25,7 @@ import kotlin.io.encoding.Base64
 class SnodeDirectory @Inject constructor(
     private val storage: SnodePoolStorage,
     private val prefs: TextSecurePreferences,
-    @ManagerScope private val scope: CoroutineScope,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) : OnAppStartupComponent {
 
     companion object {
@@ -39,6 +39,20 @@ class SnodeDirectory @Inject constructor(
         private const val KEY_X25519 = "pubkey_x25519"
         private const val KEY_ED25519 = "pubkey_ed25519"
         private const val KEY_VERSION = "storage_server_version"
+
+        private val DEV_NET_SEED_NODES = setOf(
+            "http://sesh-net.local:1280"
+        )
+
+        private val TEST_NET_SEED_NODES = setOf(
+            "http://public.loki.foundation:38157"
+        )
+
+        private val MAIN_NET_SEED_NODES = setOf(
+            "https://seed1.getsession.org:$SEED_NODE_PORT",
+            "https://seed2.getsession.org:$SEED_NODE_PORT",
+            "https://seed3.getsession.org:$SEED_NODE_PORT"
+        )
     }
 
     /**
@@ -50,14 +64,10 @@ class SnodeDirectory @Inject constructor(
     // Refresh state (non-blocking trigger + real exclusion inside mutex)
     @Volatile private var snodePoolRefreshing = false
 
-    private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {
-        Environment.DEV_NET -> setOf("http://sesh-net.local:1280")
-        Environment.TEST_NET -> setOf("http://public.loki.foundation:38157")
-        Environment.MAIN_NET -> setOf(
-            "https://seed1.getsession.org:$SEED_NODE_PORT",
-            "https://seed2.getsession.org:$SEED_NODE_PORT",
-            "https://seed3.getsession.org:$SEED_NODE_PORT",
-        )
+    val seedNodePool: Set<String> get() = when (prefs.getEnvironment()) {
+        Environment.DEV_NET -> DEV_NET_SEED_NODES
+        Environment.TEST_NET -> TEST_NET_SEED_NODES
+        Environment.MAIN_NET -> MAIN_NET_SEED_NODES
     }
 
     private val getRandomSnodeParams: Map<String, Any> = buildMap {

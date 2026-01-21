@@ -6,13 +6,24 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.http.HTTP_EXECUTOR_SEMAPHORE_NAME
+import org.thoughtcrime.securesms.api.http.HttpApiExecutor
+import org.thoughtcrime.securesms.api.http.OkHttpApiExecutor
+import org.thoughtcrime.securesms.api.http.createRegularNodeOkHttpClient
+import org.thoughtcrime.securesms.api.http.createSeedSnodeOkHttpClient
 import org.thoughtcrime.securesms.api.onion.OnionSessionApiExecutor
+import org.thoughtcrime.securesms.api.onion.REGULAR_SNODE_HTTP_EXECUTOR_NAME
+import org.thoughtcrime.securesms.api.snode.SnodeApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiBatcher
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutorImpl
+import org.thoughtcrime.securesms.api.snode.SnodeApiResponse
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutorImpl
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -20,9 +31,6 @@ import javax.inject.Singleton
 abstract class APIModuleBinding {
     @Binds
     abstract fun bindSessionAPIExecutor(executor: OnionSessionApiExecutor): SessionAPIExecutor
-
-    @Binds
-    abstract fun bindHttpAPIExecutor(executor: OkHttpApiExecutor): ApiExecutor<okhttp3.HttpUrl, okhttp3.Request, okhttp3.Response>
 
     @Binds
     abstract fun bindSwarmApiExecutor(executor: SwarmApiExecutorImpl): SwarmApiExecutor
@@ -37,7 +45,7 @@ class APIModule{
         executor: SnodeApiExecutorImpl,
         batcher: SnodeApiBatcher,
         @ManagerScope scope: CoroutineScope,
-        errorHandlingRPCExecutorFactory: ErrorHandlingApiExecutor.Factory
+        autoRetryExecutor: AutoRetryApiExecutor.Factory<Snode, SnodeApi<*>, SnodeApiResponse>
     ): SnodeApiExecutor {
         val batchExecutor = BatchApiExecutor(
             realExecutor = executor,
@@ -45,6 +53,39 @@ class APIModule{
             scope = scope,
         )
 
-        return errorHandlingRPCExecutorFactory.create(batchExecutor)
+        return autoRetryExecutor.create(batchExecutor)
+    }
+
+    @Provides
+    @Singleton
+    @Named(HTTP_EXECUTOR_SEMAPHORE_NAME)
+    fun provideHttpExecutorSemaphore(): Semaphore {
+        return Semaphore(20)
+    }
+
+
+    @Provides
+    @Named(REGULAR_SNODE_HTTP_EXECUTOR_NAME)
+    @Singleton
+    fun provideRegularSnodeApiExecutor(
+        @Named(HTTP_EXECUTOR_SEMAPHORE_NAME) semaphore: Semaphore,
+    ): HttpApiExecutor {
+        return OkHttpApiExecutor(
+            client = createRegularNodeOkHttpClient().build(),
+            semaphore = semaphore
+        )
+    }
+
+
+    @Provides
+    @Named(REGULAR_SNODE_HTTP_EXECUTOR_NAME)
+    @Singleton
+    fun provideSeedSnodeApiExecutor(
+        @Named(HTTP_EXECUTOR_SEMAPHORE_NAME) semaphore: Semaphore,
+    ): HttpApiExecutor {
+        return OkHttpApiExecutor(
+            client = createSeedSnodeOkHttpClient().build(),
+            semaphore = semaphore
+        )
     }
 }

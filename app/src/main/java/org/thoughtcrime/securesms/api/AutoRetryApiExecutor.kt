@@ -11,7 +11,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.util.findCause
 
-class ErrorHandlingApiExecutor<Dest, Req, Res> @AssistedInject constructor(
+class AutoRetryApiExecutor<Dest, Req, Res> @AssistedInject constructor(
     @Assisted private val actualExecutor: ApiExecutor<Dest, Req, Res>,
 ) : ApiExecutor<Dest, Req, Res> {
     override suspend fun send(ctx: ApiExecutorContext, dest: Dest, req: Req): Res {
@@ -22,11 +22,9 @@ class ErrorHandlingApiExecutor<Dest, Req, Res> @AssistedInject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
-                val abort = e.findCause<NonRetryableException>() != null ||
-                        e.findCause<ErrorWithFailureDecision>()?.decision is FailureDecision.Fail ||
-                        numRetried == 2
-
-                if (abort) {
+                if (e.findCause<NonRetryableException>() != null ||
+                    e.findCause<ErrorWithFailureDecision>()?.failureDecision == FailureDecision.Fail ||
+                    numRetried == 2) {
                     throw e
                 } else {
                     numRetried += 1
@@ -38,11 +36,11 @@ class ErrorHandlingApiExecutor<Dest, Req, Res> @AssistedInject constructor(
     }
 
     @AssistedFactory
-    interface Factory {
-        fun <Dest, Req, Res> create(actualExecutor: ApiExecutor<Dest, Req, Res>): ErrorHandlingApiExecutor<Dest, Req, Res>
+    interface Factory<Dest, Req, Res> {
+        fun create(actualExecutor: ApiExecutor<Dest, Req, Res>): AutoRetryApiExecutor<Dest, Req, Res>
     }
 
     companion object {
-        private const val TAG = "AutoRetryRPCExecutor"
+        private const val TAG = "AutoRetryApiExecutor"
     }
 }

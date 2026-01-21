@@ -15,7 +15,7 @@ class SnodeApiBatcher @Inject constructor(
         return batchRequestAPIFactory.create(requests.map { it.second })
     }
 
-    override fun deconstructBatchResponse(
+    override suspend fun deconstructBatchResponse(
         dest: Snode,
         requests: List<Pair<ApiExecutorContext, SnodeApi<*>>>,
         response: SnodeApiResponse

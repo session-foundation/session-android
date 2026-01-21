@@ -182,7 +182,7 @@ class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
 
     interface Batcher<Dest, Req, Res> {
         fun constructBatchRequest(requests: List<Pair<ApiExecutorContext, Req>>): Req
-        fun deconstructBatchResponse(dest: Dest, requests: List<Pair<ApiExecutorContext, Req>>, response: Res): List<Res>
+        suspend fun deconstructBatchResponse(dest: Dest, requests: List<Pair<ApiExecutorContext, Req>>, response: Res): List<Res>
     }
 
     companion object {
