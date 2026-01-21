@@ -13,23 +13,37 @@ import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import java.time.Duration
 import java.time.Instant
 
-fun ProDetails.toProStatus(): ProStatus {
+fun ProDetails.toProStatus(nowMs: Long): ProStatus {
     return when (status) {
         ProDetails.DETAILS_STATUS_ACTIVE -> {
             val paymentItem = paymentItems.first()
 
-            if (autoRenewing == true) {
+            val expiryInstant = expiry!!
+            val expiryMs = expiryInstant.toEpochMilli()
+            val graceMs = graceDurationMs ?: 0L
+
+            // beginAutoRenew / renew-due timestamp
+            val renewingAtMs = expiryMs - graceMs
+            val renewingAtInstant = Instant.ofEpochMilli(renewingAtMs)
+
+            val isAutoRenewing = autoRenewing == true
+            val inGracePeriod =
+                isAutoRenewing &&
+                        nowMs >= renewingAtMs &&
+                        nowMs < expiryMs
+
+            if (isAutoRenewing) {
                 ProStatus.Active.AutoRenewing(
-                    renewingAt = expiry!!,
+                    renewingAt = renewingAtInstant,
                     duration = paymentItem.planDuration.toSubscriptionDuration(),
                     providerData = paymentItem.paymentProvider.getMetadata(),
                     quickRefundExpiry = paymentItem.platformExpiry,
                     refundInProgress = refundRequestedAtMs > 0,
-                    inGracePeriod = graceDurationMs != null
+                    inGracePeriod = inGracePeriod
                 )
             } else {
                 ProStatus.Active.Expiring(
-                    renewingAt = expiry!!,
+                    renewingAt = renewingAtInstant, // will equal expiry when graceMs == 0
                     duration = paymentItem.planDuration.toSubscriptionDuration(),
                     providerData = paymentItem.paymentProvider.getMetadata(),
                     quickRefundExpiry = paymentItem.platformExpiry,
