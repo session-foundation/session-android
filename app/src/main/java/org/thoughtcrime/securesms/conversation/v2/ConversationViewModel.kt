@@ -195,8 +195,9 @@ class ConversationViewModel @AssistedInject constructor(
                 )
 
     /**
-     * Current thread ID, or -1 if it doesn't exist yet.
-     *
+     * Current thread ID, or 0 if it doesn't exist yet.
+     * Setting this to 0 for now to avoid seeing messages with -1 threadId
+     * when trying to create a new message request
      */
     @Deprecated("Use threadIdFlow instead")
     val threadId: Long get() = threadIdFlow.value ?: 0L
