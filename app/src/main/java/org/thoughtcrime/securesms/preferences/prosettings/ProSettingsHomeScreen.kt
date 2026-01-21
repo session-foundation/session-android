@@ -836,7 +836,7 @@ fun ProManage(
                     icon = R.drawable.ic_refresh_cw,
                     qaTag = R.string.qa_pro_settings_action_recover_plan,
                     onClick = {
-                        sendCommand(RefeshProDetails)
+                        sendCommand(RecoverAccount)
                     }
                 )
             }

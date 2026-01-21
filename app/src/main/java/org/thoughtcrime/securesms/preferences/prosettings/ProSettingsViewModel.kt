@@ -104,6 +104,8 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val _cancelPlanState: MutableStateFlow<State<CancelPlanState>> = MutableStateFlow(State.Loading)
     val cancelPlanState: StateFlow<State<CancelPlanState>> = _cancelPlanState
 
+    private var recovering: Boolean = false
+
     init {
         // observe subscription status
         viewModelScope.launch {
@@ -200,6 +202,54 @@ class ProSettingsViewModel @AssistedInject constructor(
         // calculate stats for pro users
         if (subType is ProStatus.Active) refreshProStats()
 
+        // we got a new state - if we were recovering, we can mark it as done
+        if(proDataState.refreshState is State.Success && recovering){
+            // we are back with a state after attempting to recover
+            // show a confirmation dialog whose text depends on the current pro status
+            // if we are now pro after recovery:
+            if(proDataState.type is ProStatus.Active){
+                _dialogState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = Phrase.from(context, R.string.proAccessRestored)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .format().toString(),
+                            message = Phrase.from(context, R.string.proAccessRestoredDescription)
+                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format(),
+                            positiveText = context.getString(R.string.okay),
+                            positiveStyleDanger = false,
+                        )
+                    )
+                }
+            } else {
+                _dialogState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = Phrase.from(context, R.string.proAccessNotFound)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            message = Phrase.from(context, R.string.proAccessNotFoundDescription)
+                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format(),
+                            positiveText = context.getString(R.string.helpSupport),
+                            negativeText = context.getString(R.string.close),
+                            positiveStyleDanger = false,
+                            negativeStyleDanger = true,
+                            onPositive = { onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT)) },
+                        )
+                    )
+                }
+            }
+        }
+
+        // clear recovery on non loads
+        if(proDataState.refreshState !is State.Loading){
+            recovering = false
+        }
+
         while (true) {
             val now = clock.currentTime()
 
@@ -262,7 +312,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                 break  // pro not active, no need to refresh any UI
             }
         }
-
     }
 
     fun ensureChoosePlanState(){
@@ -488,7 +537,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            is Commands.RefeshProDetails -> {
+            is Commands.RecoverAccount -> {
+                recovering = true
                 refreshProDetails(true)
             }
 
@@ -936,7 +986,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         data class OnHeaderClicked(val inSheet: Boolean): Commands
         data object OnProStatsClicked: Commands
 
-        data object RefeshProDetails: Commands
+        data object RecoverAccount: Commands
     }
 
     data class ProSettingsState(
