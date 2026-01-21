@@ -159,7 +159,7 @@ class HomeViewModel @Inject constructor(
 
     val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
         .observeSelf()
-        .map { it.shouldShowProBadge }
+        .map { it.isPro } // this is one place where the badge shows even if you decided to hide it - always show it on the home screen is the user is pro
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private var userProfileModalJob: Job? = null
