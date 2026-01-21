@@ -61,7 +61,7 @@ class SnodeClientErrorManagerTest {
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, swarmPublicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, forceRemove = true)
     }
 
     @Test
@@ -108,7 +108,7 @@ class SnodeClientErrorManagerTest {
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, swarmPublicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, forceRemove = true)
         verify(snodeClock, never()).resyncClock()
     }
 
@@ -174,7 +174,7 @@ class SnodeClientErrorManagerTest {
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, swarmPublicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, forceRemove = true)
     }
 
     @Test
@@ -193,8 +193,8 @@ class SnodeClientErrorManagerTest {
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
         // NOTE: forceRemove defaults false here
-        verify(pathManager).handleBadSnode(snode = target, swarmPublicKey = "pub")
-        verify(pathManager, never()).handleBadSnode(snode = target, swarmPublicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target)
+        verify(pathManager, never()).handleBadSnode(snode = target, forceRemove = true)
     }
 
     @Test

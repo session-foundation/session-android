@@ -213,7 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name} tarvitsee kameran käyttöoikeuden skannatakseen QR- koodeja</string>
     <string name="cancel">Peruuta</string>
     <string name="cancelAccess">Peruuta {pro}</string>
-    <string name="cancelProPlan">Peruuta {pro}-tilaus</string>
     <string name="cancelProPlatform">Peru tilaamasi {pro}-palvelu {platform}-verkkosivustolla käyttämällä {platform_account}-tiliä, jolla rekisteröidyit.</string>
     <string name="cancelProPlatformStore">Peru tilaamasi {pro}-palvelu {platform_store}-verkkosivustolla käyttämällä {platform_account}-tiliä, jolla rekisteröidyit.</string>
     <string name="change">Vaihda</string>
@@ -1391,7 +1390,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="useFastMode">Käytä nopeaa tilaa</string>
     <string name="viaPlatformWebsiteDescription">Vaihda suunnitelmasi käyttämällä {platform_account}-tiliä, jolla rekisteröidyin, <b><font color="0">{platform}</font></b>-verkkosivuston kautta.</string>
     <string name="viaStoreWebsite">{platform}-sivuston kautta</string>
-    <string name="viaStoreWebsiteDescription">Päivitä {pro}-käyttöoikeutesi käyttämällä {platform_account}-tiliä, jolla rekisteröidyin, <b><font color="0">{platform_store}</font></b>-verkkosivuston kautta.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videon toisto epäonnistui.</string>
     <string name="view">Näytä</string>

@@ -483,6 +483,18 @@ class SnodeClient @Inject constructor(
         }
     }
 
+    suspend fun fetchActiveNodesBin(
+        snode: Snode,
+        version: Version = Version.V3,
+    ): ByteArraySlice {
+        return sendToSnode(
+            method = Snode.Method.ActiveSnodesBin,
+            snode = snode,
+            parameters = emptyMap(),
+            publicKey = null,
+            version = version
+        )
+    }
 
     suspend fun getAccountID(onsName: String): String {
         val validationCount = 3

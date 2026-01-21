@@ -216,7 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} heeft toegang tot de camera nodig om QR-codes te scannen</string>
     <string name="cancel">Annuleren</string>
     <string name="cancelAccess">{pro} annuleren</string>
-    <string name="cancelProPlan">{pro}-abonnement annuleren</string>
     <string name="cancelProPlatform">Annuleer op de {platform}-website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="cancelProPlatformStore">Annuleer op de {platform_store}-website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="change">Wijzigen</string>
@@ -1402,7 +1401,6 @@
     <string name="useFastMode">Gebruik Snelle Modus</string>
     <string name="viaPlatformWebsiteDescription">Wijzig je abonnement met het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform}-website</font></b>.</string>
     <string name="viaStoreWebsite">Via de {platform} website</string>
-    <string name="viaStoreWebsiteDescription">Werk je {pro}-toegang bij met behulp van het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform_store}</font></b>-website.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan video niet afspelen.</string>
     <string name="view">Bekijken</string>

@@ -365,7 +365,7 @@ class HttpOnionTransport @Inject constructor(
                 val sf = currentHf[1]
                 val newForkInfo = ForkInfo(hf, sf)
 
-                snodeDirectory.get().updateForkInfo(newForkInfo)
+//                snodeDirectory.get().updateForkInfo(newForkInfo)
             }
         } catch (e: Exception) {
             Log.w("Onion Request", "Failed to parse fork info", e)

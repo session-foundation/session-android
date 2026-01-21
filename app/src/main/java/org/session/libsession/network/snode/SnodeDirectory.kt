@@ -1,14 +1,15 @@
 package org.session.libsession.network.snode
 
-import android.os.SystemClock
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
-import org.session.libsignal.utilities.ForkInfo
+import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
@@ -18,6 +19,7 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.io.encoding.Base64
 
 @Singleton
 class SnodeDirectory @Inject constructor(
@@ -28,7 +30,6 @@ class SnodeDirectory @Inject constructor(
 
     companion object {
         private const val MINIMUM_SNODE_POOL_COUNT = 12
-        private const val MINIMUM_SNODE_REFRESH_COUNT = 3
         private const val SEED_NODE_PORT = 4443
 
         private const val POOL_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000L // 2h
@@ -48,8 +49,6 @@ class SnodeDirectory @Inject constructor(
 
     // Refresh state (non-blocking trigger + real exclusion inside mutex)
     @Volatile private var snodePoolRefreshing = false
-
-    @Volatile private var lastRefreshElapsedMs: Long = 0L
 
     private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {
         Environment.DEV_NET -> setOf("http://sesh-net.local:1280")
@@ -85,8 +84,9 @@ class SnodeDirectory @Inject constructor(
     fun getSnodePool(): Set<Snode> = storage.getSnodePool()
 
     private fun persistSnodePool(newPool: Set<Snode>) {
+        //todo ONION in the new db paradigm we will need to ensure our path doesn't have snode not in this pool
         storage.setSnodePool(newPool)
-        lastRefreshElapsedMs = SystemClock.elapsedRealtime()
+        prefs.setLastSnodePoolRefresh(System.currentTimeMillis())
     }
 
     /**
@@ -106,10 +106,12 @@ class SnodeDirectory @Inject constructor(
 
         if (current.size >= minCount) {
             // ensure we set the refresh timestamp in case we are starting the app
-            // with already cached snodes
-            if (lastRefreshElapsedMs == 0L) {
-                lastRefreshElapsedMs = SystemClock.elapsedRealtime()
+            // with already cached snodes - set the timestamp to stale to enforce a refresh soon
+            if (prefs.getLastSnodePoolRefresh() == 0L) {
+                // Force a refresh on next opportunity
+                prefs.setLastSnodePoolRefresh(System.currentTimeMillis() - POOL_REFRESH_INTERVAL_MS - 1)
             }
+
             return current
         }
 
@@ -130,12 +132,6 @@ class SnodeDirectory @Inject constructor(
         val target = seedNodePool.random()
         Log.d("SnodeDirectory", "Fetching snode pool using seed node: $target")
         return fetchSnodePool(target, fromSeed = true)
-    }
-
-    private suspend fun fetchSnodePoolFromSnode(snode: Snode): Set<Snode> {
-        val target = "${snode.address}:${snode.port}"
-        Log.d("SnodeDirectory", "Fetching snode pool using snode: $target")
-        return fetchSnodePool(target, fromSeed = false)
     }
 
     private suspend fun fetchSnodePool(target: String, fromSeed: Boolean): Set<Snode> {
@@ -182,6 +178,22 @@ class SnodeDirectory @Inject constructor(
             }
             .toSet()
     }
+
+    private suspend fun fetchSnodePoolFromSnode(snode: Snode): Set<Snode> {
+        val target = "${snode.address}:${snode.port}"
+        Log.d("SnodeDirectory", "Fetching snode pool using snode: $target")
+        //todo ONION use fetchSnodePoolCompact when ready
+        return fetchSnodePool(target, fromSeed = false)
+    }
+
+    /**
+     * Calling the compact version of the snode pool api
+     */
+    private suspend fun fetchSnodePoolCompact(snode: Snode): Set<Snode>{
+        //todo ONION link up with new logic
+        return emptySet()
+    }
+
 
     /**
      * Returns a random snode from the generic snode pool.
@@ -236,21 +248,10 @@ class SnodeDirectory @Inject constructor(
      * Remove a snode from the pool by its ed25519 key.
      */
     fun dropSnodeFromPool(ed25519Key: String) {
-        val current = getSnodePool()
-        val hit = current.firstOrNull { it.publicKeySet?.ed25519Key == ed25519Key } ?: return
-        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): $hit")
-        storage.setSnodePool(current - hit)
-        // NOTE: do NOT touch lastRefreshElapsedMs here; dropping isn’t a “refresh”.
-    }
+        val removed = storage.removeSnode(ed25519Key)
+        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): ${removed != null}")
 
-    fun updateForkInfo(newForkInfo: ForkInfo) {
-        val current = storage.getForkInfo()
-        if (newForkInfo > current) {
-            Log.d("Loki", "Updating fork info: $current -> $newForkInfo")
-            storage.setForkInfo(newForkInfo)
-        } else if (newForkInfo < current) {
-            Log.w("Loki", "Got stale fork info $newForkInfo (current: $current)")
-        }
+        // NOTE: do NOT touch lastRefreshElapsedMs here; dropping isn’t a “refresh”.
     }
 
     fun getSnodeByKey(ed25519Key: String?): Snode? {
@@ -268,21 +269,36 @@ class SnodeDirectory @Inject constructor(
      */
     fun refreshPoolIfStaleAsync() {
         // Don’t refresh until we’ve successfully seeded at least once
-        if (lastRefreshElapsedMs == 0L) return
+        val last = prefs.getLastSnodePoolRefresh()
+        if (last == 0L) return
 
-        val now = SystemClock.elapsedRealtime()
+        val now = System.currentTimeMillis()
         if (snodePoolRefreshing) return
-        if (now - lastRefreshElapsedMs < POOL_REFRESH_INTERVAL_MS) return
+        if (now >= last && now - last < POOL_REFRESH_INTERVAL_MS) return
 
-        scope.launch { refreshPoolFromSnodes() }
+        scope.launch {
+            refreshPoolFromSnodes(
+                totalSnodeQueries = 3,
+                minAppearance = 2,
+                distinctQuerySubnetPrefix = 24,
+            )
+        }
     }
 
-    private suspend fun refreshPoolFromSnodes() {
+    private suspend fun refreshPoolFromSnodes(
+        totalSnodeQueries: Int,
+        minAppearance: Int,
+        distinctQuerySubnetPrefix: Int?,
+    ) {
+        require(totalSnodeQueries >= 1) { "totalSnodeQueries must be >= 1" }
+        require(minAppearance in 1..totalSnodeQueries) { "minAppearance must be within 1..totalSnodeQueries" }
+
         poolWriteMutex.withLock {
             // Re-check staleness INSIDE the lock to avoid “double refresh” races
-            if (lastRefreshElapsedMs == 0L) return // still not seeded
-            val now = SystemClock.elapsedRealtime()
-            if (now - lastRefreshElapsedMs < POOL_REFRESH_INTERVAL_MS) return
+            val last = prefs.getLastSnodePoolRefresh()
+            if (last == 0L) return// still not seeded
+            val now = System.currentTimeMillis()
+            if (now >= last && now - last < POOL_REFRESH_INTERVAL_MS) return
 
             if (snodePoolRefreshing) return
             snodePoolRefreshing = true
@@ -290,50 +306,63 @@ class SnodeDirectory @Inject constructor(
             try {
                 val current = getSnodePool()
 
-                // If pool has less than 3 snodes, refresh from seed
-                if (current.size < MINIMUM_SNODE_REFRESH_COUNT) {
+                suspend fun getFromSeed(msg: String){
                     val seeded = fetchSnodePoolFromSeed()
                     if (seeded.isNotEmpty()) {
-                        Log.d("SnodeDirectory", "Refreshing pool from seed (pool too small). New size=${seeded.size}")
+                        Log.d("SnodeDirectory", "$msg New size=${seeded.size}")
                         persistSnodePool(seeded)
                     }
+                }
+
+                // If pool is too small, refresh from seed
+                if (current.size < totalSnodeQueries) {
+                    getFromSeed("Refreshing pool from seed (pool too small)")
                     return
                 }
 
-                // Otherwise fetch from 3 random snodes (no special filtering requested)
-                val results = mutableListOf<Set<Snode>>()
-                val attempts = current.shuffled().iterator()
+                // Choose snodes to query pool from
+                val snodesToQuery = pickViableSnodesForPoolQuery(
+                    pool = current,
+                    count = totalSnodeQueries,
+                    distinctSubnetPrefix = distinctQuerySubnetPrefix
+                )
 
-                while (results.size < MINIMUM_SNODE_REFRESH_COUNT && attempts.hasNext()) {
-                    val snode = attempts.next()
+                // If we don't have enough snodes meeting our requirements, fallback to seed
+                if (snodesToQuery.size < totalSnodeQueries) {
+                    getFromSeed("Not enough snodes meeting our requirements; refreshing pool from seed instead.")
+                    return
+                }
+
+                // Fetch pools from responders until we have totalSnodeQueries successful results
+                val results = mutableListOf<Set<Snode>>()
+
+                for (snode in snodesToQuery) {
+                    if (results.size >= totalSnodeQueries) break
                     val fetched = runCatching { fetchSnodePoolFromSnode(snode) }.getOrNull()
                     if (!fetched.isNullOrEmpty()) results += fetched
                 }
 
-                if (results.size < MINIMUM_SNODE_REFRESH_COUNT) {
-                    // Could not fetch 3 pools reliably, fallback to seed
-                    val seeded = fetchSnodePoolFromSeed()
-                    if (seeded.isNotEmpty()) {
-                        Log.d("SnodeDirectory", "Refreshing pool from seed (3-snode fetch failed). New size=${seeded.size}")
-                        persistSnodePool(seeded)
-                    }
+                if (results.size < totalSnodeQueries) {
+                    getFromSeed( "Refreshing pool from seed (insufficient responder fetches).")
                     return
                 }
 
-                val intersected = intersectByEd25519(results)
+                val quorum = quorumByEd25519(pools = results, minAppearance = minAppearance)
 
-                // If intersection is empty, fallback to seed
-                if (intersected.isEmpty()) {
-                    val seeded = fetchSnodePoolFromSeed()
-                    if (seeded.isNotEmpty()) {
-                        Log.d("SnodeDirectory", "Intersection empty; refreshing pool from seed instead. New size=${seeded.size}")
-                        persistSnodePool(seeded)
-                    }
+                if (quorum.isEmpty()) {
+                    getFromSeed("Quorum empty; refreshing pool from seed instead.")
+                    return
+                }
+                if (quorum.size < MINIMUM_SNODE_POOL_COUNT) {
+                    getFromSeed("Quorum too small (${quorum.size}); refreshing pool from seed instead.")
                     return
                 }
 
-                Log.d("SnodeDirectory", "Refreshing pool via 3-node intersection. New size=${intersected.size}")
-                persistSnodePool(intersected)
+                Log.d(
+                    "SnodeDirectory",
+                    "Refreshing pool via quorum (minAppearance=$minAppearance of $totalSnodeQueries, distinctSubnetPrefix=$distinctQuerySubnetPrefix). New size=${quorum.size}"
+                )
+                persistSnodePool(quorum)
 
             } finally {
                 snodePoolRefreshing = false
@@ -341,20 +370,90 @@ class SnodeDirectory @Inject constructor(
         }
     }
 
-    /**
-     * Get the intersection of snodes from the various snode pool results
-     */
-    private fun intersectByEd25519(pools: List<Set<Snode>>): Set<Snode> {
-        if (pools.isEmpty()) return emptySet()
+    private fun pickViableSnodesForPoolQuery(
+        pool: Set<Snode>,
+        count: Int,
+        distinctSubnetPrefix: Int?
+    ): List<Snode> {
+        if (pool.isEmpty() || count <= 0) return emptyList()
 
-        val candidates = pools.first()
-        val otherPoolKeys = pools.drop(1).map { pool ->
-            pool.mapNotNull { it.publicKeySet?.ed25519Key }.toSet()
+        val shuffled = pool.shuffled()
+
+        // If subnet diversification disabled, just take first N
+        if (distinctSubnetPrefix == null) {
+            return shuffled.take(count)
         }
 
-        return candidates.filter { snode ->
-            val key = snode.publicKeySet?.ed25519Key ?: return@filter false
-            otherPoolKeys.all { it.contains(key) }
-        }.toSet()
+        // Enforce distinct subnet prefix where possible
+        val picked = ArrayList<Snode>(count)
+        val used = mutableSetOf<String>()
+        for (snode in shuffled) {
+            if (picked.size >= count) break
+            val subnet = subnetPrefixOrNull(snode.ip, distinctSubnetPrefix) ?: continue
+            if (!used.add(subnet)) continue
+            picked += snode
+        }
+
+        return picked
+    }
+
+    /**
+     * Returns a subnet prefix string like:
+     * - prefix=24 -> "a.b.c"
+     * - prefix=16 -> "a.b"
+     * - prefix=8  -> "a"
+     *
+     * Returns null if prefix is null/unsupported or IP isn't IPv4.
+     */
+    private fun subnetPrefixOrNull(ip: String, prefix: Int?): String? {
+        if (prefix == null) return null
+        val octetsToKeep = when (prefix) {
+            8 -> 1
+            16 -> 2
+            24 -> 3
+            else -> return null
+        }
+
+        val parts = ip.split('.')
+        if (parts.size != 4) return null
+
+        val octets = parts.map { it.toIntOrNull() ?: return null }
+        if (octets.any { it !in 0..255 }) return null
+
+        return octets.take(octetsToKeep).joinToString(".")
+    }
+
+    private fun quorumByEd25519(
+        pools: List<Set<Snode>>,
+        minAppearance: Int
+    ): Set<Snode> {
+        if (pools.isEmpty()) return emptySet()
+
+        val voteCount = mutableMapOf<String, Int>()
+        val bestByKey = mutableMapOf<String, Snode>()
+
+        for (pool in pools) {
+            // using this in spite of Set in case we get bad data with snodes that use the same key with diff address/port
+            val seenThisPool = mutableSetOf<String>()
+
+            for (snode in pool) {
+                val key = snode.publicKeySet?.ed25519Key ?: continue
+                if (!seenThisPool.add(key)) continue  // <-- important
+
+                voteCount[key] = (voteCount[key] ?: 0) + 1
+
+                val currentBest = bestByKey[key]
+                bestByKey[key] = when {
+                    currentBest == null -> snode
+                    snode.version > currentBest.version -> snode
+                    else -> currentBest
+                }
+            }
+        }
+
+        return voteCount.asSequence()
+            .filter { (_, count) -> count >= minAppearance }
+            .mapNotNull { (key, _) -> bestByKey[key] }
+            .toSet()
     }
 }
