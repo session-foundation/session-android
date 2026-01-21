@@ -100,6 +100,16 @@
         app:drawableStartCompat="@drawable/ic_mail" />
 
     <TextView
+        android:id="@+id/adminLeaveGroupTextView"
+        style="@style/BottomSheetActionItem"
+        android:contentDescription="@string/AccessibilityId_groupLeave"
+        android:visibility="gone"
+        android:text="@string/leave"
+        app:drawableStartCompat="@drawable/ic_log_out"
+        app:drawableTint="?attr/colorControlNormal" />
+
+
+    <TextView
         android:id="@+id/deleteTextView"
         style="@style/BottomSheetActionItem"
         android:contentDescription="@string/AccessibilityId_delete"
