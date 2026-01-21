@@ -78,7 +78,7 @@ class NetworkErrorManager @Inject constructor(
                 val failedKey = error.failedPublicKey ?: return FailureDecision.Fail(error)
                 val snodeToRemove = snodeDirectory.getSnodeByKey(failedKey)
                 if(snodeToRemove != null) {
-                    pathManager.handleBadSnode(snodeToRemove, ctx.publicKey)
+                    pathManager.handleBadSnode(snodeToRemove)
                     return FailureDecision.Retry
                 } else {
                     return FailureDecision.Fail(error)

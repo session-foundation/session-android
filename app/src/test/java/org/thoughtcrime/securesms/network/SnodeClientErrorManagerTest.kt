@@ -5,7 +5,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -62,7 +61,7 @@ class SnodeClientErrorManagerTest {
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, publicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, forceRemove = true)
     }
 
     @Test
@@ -109,7 +108,7 @@ class SnodeClientErrorManagerTest {
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, publicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, forceRemove = true)
         verify(snodeClock, never()).resyncClock()
     }
 
@@ -175,7 +174,7 @@ class SnodeClientErrorManagerTest {
         val decision = manager.onFailure(error, ctx)
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
-        verify(pathManager).handleBadSnode(snode = target, publicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target, forceRemove = true)
     }
 
     @Test
@@ -194,8 +193,8 @@ class SnodeClientErrorManagerTest {
 
         assertThat(decision).isEqualTo(FailureDecision.Retry)
         // NOTE: forceRemove defaults false here
-        verify(pathManager).handleBadSnode(snode = target, publicKey = "pub")
-        verify(pathManager, never()).handleBadSnode(snode = target, publicKey = "pub", forceRemove = true)
+        verify(pathManager).handleBadSnode(snode = target)
+        verify(pathManager, never()).handleBadSnode(snode = target, forceRemove = true)
     }
 
     @Test
