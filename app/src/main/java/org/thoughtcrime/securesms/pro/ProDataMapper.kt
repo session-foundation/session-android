@@ -20,15 +20,16 @@ fun ProDetails.toProStatus(): ProStatus {
 
             if (autoRenewing == true) {
                 ProStatus.Active.AutoRenewing(
-                    validUntil = expiry!!,
+                    renewingAt = expiry!!,
                     duration = paymentItem.planDuration.toSubscriptionDuration(),
                     providerData = paymentItem.paymentProvider.getMetadata(),
                     quickRefundExpiry = paymentItem.platformExpiry,
-                    refundInProgress = refundRequestedAtMs > 0
+                    refundInProgress = refundRequestedAtMs > 0,
+                    inGracePeriod = graceDurationMs != null
                 )
             } else {
                 ProStatus.Active.Expiring(
-                    validUntil = expiry!!,
+                    renewingAt = expiry!!,
                     duration = paymentItem.planDuration.toSubscriptionDuration(),
                     providerData = paymentItem.paymentProvider.getMetadata(),
                     quickRefundExpiry = paymentItem.platformExpiry,
@@ -93,11 +94,12 @@ val previewAppleMetaData = PaymentProviderMetadata(
 )
 
 val previewAutoRenewingApple = ProStatus.Active.AutoRenewing(
-    validUntil = Instant.now() + Duration.ofDays(14),
+    renewingAt = Instant.now() + Duration.ofDays(14),
     duration = ProSubscriptionDuration.THREE_MONTHS,
     providerData = previewAppleMetaData,
     quickRefundExpiry = Instant.now() + Duration.ofDays(14),
-    refundInProgress = false
+    refundInProgress = false,
+    inGracePeriod = false
 )
 
 val previewExpiredApple = ProStatus.Expired(

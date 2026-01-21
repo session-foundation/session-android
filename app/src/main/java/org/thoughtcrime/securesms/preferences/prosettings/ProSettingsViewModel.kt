@@ -206,35 +206,45 @@ class ProSettingsViewModel @AssistedInject constructor(
             _proSettingsUIState.update {
                 it.copy(
                     proDataState = proDataState,
+                    inGracePeriod = (subType as? ProStatus.Active.AutoRenewing)?.inGracePeriod ?: false,
                     subscriptionExpiryLabel = when(subType){
-                        is ProStatus.Active.AutoRenewing ->
-                            Phrase.from(context, R.string.proAutoRenewTime)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .put(TIME_KEY, dateUtils.getExpiryString(
-                                    remaining = Duration.between(now, subType.validUntil)
-                                        .coerceAtLeast(Duration.ZERO)))
-                                .format()
+                        is ProStatus.Active.AutoRenewing -> {
+                            // in grace period
+                            if(subType.inGracePeriod) {
+                                context.getText(R.string.proRenewalUnsuccessful)
+                            } else {
+                                Phrase.from(context, R.string.proAutoRenewTime)
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .put(
+                                        TIME_KEY, dateUtils.getExpiryString(
+                                            remaining = Duration.between(now, subType.renewingAt)
+                                                .coerceAtLeast(Duration.ZERO)
+                                        )
+                                    )
+                                    .format()
+                            }
+                        }
 
                         is ProStatus.Active.Expiring ->
                             Phrase.from(context, R.string.proExpiringTime)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .put(TIME_KEY, dateUtils.getExpiryString(
-                                    remaining = Duration.between(now, subType.validUntil)
+                                    remaining = Duration.between(now, subType.renewingAt)
                                         .coerceAtLeast(Duration.ZERO)))
                                 .format()
 
                         else -> ""
                     },
                     subscriptionExpiryDate = when(subType){
-                        is ProStatus.Active -> subType.validUntilFormatted()
+                        is ProStatus.Active -> subType.renewingAtFormatted()
                         else -> ""
                     },
                 )
             }
 
             if (subType is ProStatus.Active.AutoRenewing || subType is ProStatus.Active.Expiring) {
-                if (subType.validUntil.isAfter(now)) {
-                    val secondsTilExpired = subType.validUntil.epochSecond - now.epochSecond
+                if (subType.renewingAt.isAfter(now)) {
+                    val secondsTilExpired = subType.renewingAt.epochSecond - now.epochSecond
                     if (secondsTilExpired > 120) {
                         // Tick every minute
                         delay(1.minutes)
@@ -525,7 +535,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                 val selectedPlan = getSelectedPlan() ?: return
 
                 if(currentSubscription is ProStatus.Active){
-                    val newSubscriptionExpiryString = currentSubscription.validUntilFormatted()
+                    val newSubscriptionExpiryString = currentSubscription.renewingAtFormatted()
 
                     val currentSubscriptionDuration = DateUtils.getLocalisedTimeDuration(
                         context = context,
@@ -934,6 +944,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         val proStats: State<ProStats> = State.Loading,
         val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
         val subscriptionExpiryDate: CharSequence = "", // eg: "May 21st, 2025"
+        val inGracePeriod: Boolean = false
     )
 
     data class ChoosePlanState(

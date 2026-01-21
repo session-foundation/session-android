@@ -276,6 +276,7 @@ fun ProSettingsHome(
                 proStatus = data.proDataState.type,
                 subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
+                inGracePeriod = data.inGracePeriod,
                 expiry = data.subscriptionExpiryLabel,
                 sendCommand = sendCommand,
             )
@@ -524,6 +525,7 @@ fun ProSettings(
     subscriptionRefreshState: State<Unit>,
     inSheet: Boolean,
     expiry: CharSequence,
+    inGracePeriod: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -572,7 +574,8 @@ fun ProSettings(
                             .put(PLATFORM_KEY, proStatus.providerData.platform)
                             .format().toString()
                         else expiry,
-                        LocalColors.current.text,
+                        if(inGracePeriod) LocalColors.current.warning
+                                else LocalColors.current.text,
                         if(refunding){{
                             Icon(
                                 modifier = Modifier.align(Alignment.Center)
