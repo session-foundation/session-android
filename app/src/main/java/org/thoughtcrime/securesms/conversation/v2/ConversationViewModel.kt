@@ -199,7 +199,7 @@ class ConversationViewModel @AssistedInject constructor(
      *
      */
     @Deprecated("Use threadIdFlow instead")
-    val threadId: Long get() = threadIdFlow.value ?: -1L
+    val threadId: Long get() = threadIdFlow.value ?: 0L
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
