@@ -18,6 +18,8 @@ fun Snode(string: String): Snode? {
 
 data class Snode(val address: String, val port: Int, val publicKeySet: KeySet?, val version: Version) {
     val ip: String get() = address.removePrefix("https://")
+    val ed25519Key: String get() = publicKeySet!!.ed25519Key
+    val x25519Key: String get() = publicKeySet!!.x25519Key
 
     enum class Method(val rawValue: String) {
         GetSwarm("get_snodes_for_pubkey"),

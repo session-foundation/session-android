@@ -7,8 +7,10 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,39 +25,39 @@ class SnodeDatabaseTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val config = SupportSQLiteOpenHelper.Configuration.builder(context)
-            .name(null)
-            .callback(object : SupportSQLiteOpenHelper.Callback(1) {
-                override fun onCreate(db: SupportSQLiteDatabase) {
-                    SnodeDatabase.createTableAndMigrateData(db, migrateOldData = false)
-                }
+        db = createInMemorySnodeDatabase()
+    }
 
-                override fun onUpgrade(
-                    db: SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int
-                ) {}
+    companion object {
+        fun createInMemorySnodeDatabase(): SnodeDatabase {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            val config = SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(null)
+                .callback(object : SupportSQLiteOpenHelper.Callback(1) {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        SnodeDatabase.createTableAndMigrateData(db, migrateOldData = false)
+                    }
 
-                override fun onOpen(db: SupportSQLiteDatabase) {
-                    super.onOpen(db)
+                    override fun onUpgrade(
+                        db: SupportSQLiteDatabase,
+                        oldVersion: Int,
+                        newVersion: Int
+                    ) {}
 
-                    db.execSQL("PRAGMA foreign_keys=ON")
-                }
-            })
-            .build()
+                    override fun onOpen(db: SupportSQLiteDatabase) {
+                        super.onOpen(db)
 
-        val openHelper = FrameworkSQLiteOpenHelperFactory().create(config)
+                        db.execSQL("PRAGMA foreign_keys=ON")
+                    }
+                })
+                .build()
 
-        db = SnodeDatabase(
-            helper = { openHelper },
-            json = Json
-        )
+            val openHelper = FrameworkSQLiteOpenHelperFactory().create(config)
 
-        openHelper.readableDatabase.query("SELECT sqlite_version()").use {
-            check(it.moveToNext())
-            val version = it.getString(0)
-            check(version.isNotBlank())
+            return SnodeDatabase(
+                helper = { openHelper },
+                json = Json
+            )
         }
     }
 
@@ -85,6 +87,30 @@ class SnodeDatabaseTest {
 
         db.setOnionRequestPaths(paths)
         assertEquals(paths, db.getOnionRequestPaths())
+
+        val newPaths = listOf(
+            listOf(snodes[0], snodes[1]),
+            listOf(snodes[5], snodes[6], snodes[7]),
+        )
+
+        db.setOnionRequestPaths(newPaths)
+        assertEquals(newPaths, db.getOnionRequestPaths())
+    }
+
+    @Test
+    fun `should persist path while retaining strikes`() {
+        db.setSnodePool(snodes.toSet())
+
+        val path1 = listOf(snodes[0], snodes[1], snodes[2])
+
+        db.setOnionRequestPaths(listOf(path1))
+        assertEquals(1, db.increaseOnionRequestPathStrike(path1, 1))
+
+        val path2 = listOf(snodes[3], snodes[4])
+        db.setOnionRequestPaths(listOf(path1, path2))
+        assertEquals(listOf(path1, path2), db.getOnionRequestPaths())
+        assertEquals(1, db.increaseOnionRequestPathStrike(path1, 0))
+        assertEquals(0, db.increaseOnionRequestPathStrike(path2, 0))
     }
 
     @Test
@@ -139,6 +165,15 @@ class SnodeDatabaseTest {
     }
 
     @Test
+    fun `increase path strikes with snode works`() {
+        db.setSnodePool(snodes.toSet())
+
+        val path1 = listOf(snodes[0], snodes[1], snodes[2])
+        val path2 = listOf(snodes[3], snodes[4])
+        db.setOnionRequestPaths(listOf(path1, path2))
+    }
+
+    @Test
     fun `increase snode strike works`() {
         db.setSnodePool(snodes.toSet())
 
@@ -166,6 +201,48 @@ class SnodeDatabaseTest {
 
         // Since snode is not in any path, paths should remain unchanged
         assertEquals(paths, db.getOnionRequestPaths())
+    }
+
+    @Test
+    fun `drop snode with min strikes works`() {
+        db.setSnodePool(snodes.toSet())
+
+        assertEquals(4, db.increaseSnodeStrike(snodes[0], 4))
+        assertEquals(3, db.increaseSnodeStrike(snodes[1], 3))
+
+        db.removeSnodesWithStrikesGreaterThan(2)
+        val expectingRemaining = snodes.drop(2).toSet()
+        assertEquals(expectingRemaining, db.getSnodePool())
+    }
+
+    @Test
+    fun `should be able to find random unused snodes for path`() {
+        db.setSnodePool(snodes.toSet())
+
+        val paths = listOf(
+            listOf(snodes[0], snodes[1]),
+            listOf(snodes[2], snodes[3])
+        )
+        db.setOnionRequestPaths(paths)
+
+        val found = db.findRandomUnusedSnodesForNewPath(2)
+        assertEquals(2, found.size)
+        assertFalse(paths.flatMap { it }.any { it in found })
+        assertTrue(found.all { it in snodes })
+    }
+
+    @Test
+    fun `replace path works`() {
+        db.setSnodePool(snodes.toSet())
+
+        val oldPath = listOf(snodes[0], snodes[1])
+        val newPath = listOf(snodes[2], snodes[3])
+
+        db.setOnionRequestPaths(listOf(oldPath))
+        assertEquals(2, db.increaseOnionRequestPathStrike(oldPath, 2))
+        db.replaceOnionRequestPath(oldPath, newPath)
+
+        assertEquals(2, db.increaseOnionRequestPathStrike(newPath, 0))
     }
 
     @Test
