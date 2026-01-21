@@ -110,7 +110,7 @@ fun ChoosePlan(
         val title = when (planData.proStatus) {
             is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                .put(DATE_KEY, planData.proStatus.validUntilFormatted())
+                .put(DATE_KEY, planData.proStatus.renewingAtFormatted())
                 .format()
 
             is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
@@ -122,7 +122,7 @@ fun ChoosePlan(
                         unit = MeasureUnit.MONTH
                     )
                 )
-                .put(DATE_KEY, planData.proStatus.validUntilFormatted())
+                .put(DATE_KEY, planData.proStatus.renewingAtFormatted())
                 .format()
 
             else ->
