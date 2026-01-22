@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.google.services)
 
     id("generate-ip-country-data")
+    id("local-snode-pool")
     id("rename-apk")
     id("witness")
 }

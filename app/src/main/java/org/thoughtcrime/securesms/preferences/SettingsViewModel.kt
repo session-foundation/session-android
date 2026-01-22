@@ -311,6 +311,9 @@ class SettingsViewModel @Inject constructor(
             return
         }
 
+        // close avatar dialog when removing picture
+        onAvatarDialogDismissed()
+
         // otherwise this action is for removing the existing avatar
         val haveNetworkConnection = connectivity.networkAvailable.value
         if (!haveNetworkConnection) {

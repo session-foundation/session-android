@@ -503,7 +503,6 @@ class SnodeDatabase @Inject constructor(
                 ed25519Key = getString(indices.ed25519Index),
                 x25519Key = getString(indices.x25519Index)
             ),
-            version = Snode.Version.ZERO
         )
     }
 
