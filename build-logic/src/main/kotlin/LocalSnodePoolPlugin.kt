@@ -1,4 +1,5 @@
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.api.variant.HasUnitTest
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -41,6 +42,12 @@ class LocalSnodePoolPlugin : Plugin<Project> {
 
                 // Add generated assets directory
                 variant.sources.assets?.addGeneratedSourceDirectory(
+                    task,
+                    GenerateLocalSnodePoolTask::outputDir
+                )
+
+                // Also add the generated dir to unit test resources so Gradle wires task deps correctly
+                (variant as? HasUnitTest)?.unitTest?.sources?.resources?.addGeneratedSourceDirectory(
                     task,
                     GenerateLocalSnodePoolTask::outputDir
                 )
