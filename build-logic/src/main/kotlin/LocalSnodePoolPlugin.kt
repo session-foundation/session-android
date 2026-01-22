@@ -77,7 +77,7 @@ abstract class GenerateLocalSnodePoolTask : DefaultTask() {
 
         val requestBody = """
             {
-              "method": "get_n_service_nodes",
+              "method": "get_service_nodes",
               "params": {
                 "active_only": true,
                 "fields": {
@@ -146,7 +146,7 @@ abstract class GenerateLocalSnodePoolTask : DefaultTask() {
                 "-k",
                 "-X", "POST",
                 "-H", "Content-Type: application/json",
-                "--data", requestBody,
+                "--data-binary", requestBody,
                 seed
             )
             standardOutput = stdout
