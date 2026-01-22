@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
@@ -177,30 +178,18 @@ class ConversationViewModel @AssistedInject constructor(
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
     val threadIdFlow: StateFlow<Long?> =
-        threadDb.getThreadIdIfExistsFor(address).takeIf { it != -1L }
+        threadDb.getThreadIdOrNullFor(address)
             ?.let { MutableStateFlow(it) }
-            ?: threadDb
-                .updateNotifications
-                .map {
-                    withContext(Dispatchers.Default) {
-                        threadDb.getThreadIdIfExistsFor(address)
-                    }
-                }
-                .filter { it != -1L }
+            ?: threadDb.updateNotifications
+                .map { threadDb.getThreadIdOrNullFor(address) }
+                .flowOn(Dispatchers.Default)
+                .filterNotNull()
                 .take(1)
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.Eagerly,
-                    initialValue = null
-                )
+                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /**
-     * Current thread ID, or 0 if it doesn't exist yet.
-     * Setting this to 0 for now to avoid seeing messages with -1 threadId
-     * when trying to create a new message request
-     */
+     // Current thread ID, or -1L if it doesn't exist yet.
     @Deprecated("Use threadIdFlow instead")
-    val threadId: Long get() = threadIdFlow.value ?: 0L
+    val threadId: Long? get() = threadIdFlow.value
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
@@ -274,7 +263,8 @@ class ConversationViewModel @AssistedInject constructor(
         get() {
             if (!recipient.isGroupV2Recipient) return null
 
-            return repository.getInvitingAdmin(threadId)?.let(recipientRepository::getRecipientSync)
+            if (threadId == null) return null
+            return repository.getInvitingAdmin(threadId!!)?.let(recipientRepository::getRecipientSync)
         }
 
     val groupV2ThreadState: Flow<GroupThreadStatus> get() = when {
@@ -689,16 +679,21 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun saveDraft(text: String) {
-        GlobalScope.launch(Dispatchers.IO) {
-            repository.saveDraft(threadId, text)
+        threadId?.let { threadID ->
+            GlobalScope.launch(Dispatchers.IO) {
+                repository.saveDraft(threadID, text)
+            }
         }
+
     }
 
     fun getDraft(): String? {
-        val draft: String? = repository.getDraft(threadId)
+        val threadID = threadId ?: return null
+
+        val draft = repository.getDraft(threadID)
 
         viewModelScope.launch(Dispatchers.IO) {
-            repository.clearDrafts(threadId)
+            repository.clearDrafts(threadID)
         }
 
         return draft

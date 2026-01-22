@@ -45,11 +45,13 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -76,6 +78,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -378,7 +381,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val adapter by lazy {
         val adapter = ConversationAdapter(
             this,
-            storage.getLastSeen(viewModel.threadId),
+            originalLastSeen = viewModel.threadId
+                ?.let { storage.getLastSeen(it) },
             false,
             onItemPress = { message, position, view, event ->
                 handlePress(message, position, view, event)
@@ -638,8 +642,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         try {
                             when (it) {
                                 is Long -> {
-                                    if (storage.getLastSeen(viewModel.threadId) < it) {
-                                        storage.markConversationAsRead(viewModel.threadId, it)
+                                    viewModel.threadId?.let { threadId ->
+                                        if (storage.getLastSeen(threadId) < it) {
+                                            storage.markConversationAsRead(threadId, it)
+                                        }
                                     }
                                 }
 
@@ -661,8 +667,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 viewModel.conversationReloadNotification
                     .collect {
                         if (!firstLoad.get()) {
-                            LoaderManager.getInstance(this@ConversationActivityV2)
-                                .restartLoader(0, null, this@ConversationActivityV2)
+                            restartConversationLoader()
                         }
                     }
             }
@@ -679,6 +684,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
+    private fun restartConversationLoader() {
+        LoaderManager.getInstance(this).restartLoader(0, null, this)
+    }
     private fun stopConversationLoader() {
         // Cancel the delayed load animation
         conversationLoadAnimationJob?.cancel()
@@ -782,7 +790,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onResume() {
         super.onResume()
-        messageNotifier.setVisibleThread(viewModel.threadId)
+        viewModel.threadId?.let { threadId ->
+            messageNotifier.setVisibleThread(threadId)
+        }
     }
 
     override fun onPause() {
@@ -844,11 +854,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                                 )
                             }
 
-                            if (isUnread) {
-                                storage.markConversationAsRead(
-                                    viewModel.threadId,
-                                    clock.currentTimeMillis()
-                                )
+                            viewModel.threadId?.let { threadId ->
+                                if (isUnread) {
+                                    storage.markConversationAsRead(
+                                        threadId,
+                                        clock.currentTimeMillis()
+                                    )
+                                }
                             }
                         }
                     }
@@ -882,7 +894,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.conversationRecyclerView.layoutManager = layoutManager
         // Workaround for the fact that CursorRecyclerViewAdapter doesn't auto-update automatically (even though it says it will)
-        LoaderManager.getInstance(this).restartLoader(0, null, this)
+        restartConversationLoader()
         binding.conversationRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -1026,19 +1038,45 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     // called from onCreate
+    private var typistsLiveData: LiveData<TypingStatusRepository.TypingState>? = null
     private fun setUpTypingObserver() {
-        typingStatusRepository.getTypists(viewModel.threadId).observe(this) { state ->
-            val recipients = if (state != null) state.typists else listOf()
-            // FIXME: Also checking isScrolledToBottom is a quick fix for an issue where the
-            //        typing indicator overlays the recycler view when scrolled up
-            val viewContainer = binding.typingIndicatorViewContainer
-            viewContainer.isVisible = recipients.isNotEmpty() && isScrolledToBottom
-            viewContainer.setTypists(recipients)
+        // Observe typists only when we have a real threadId,
+        // and swap if it changes, example: message request was created then accepted
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.threadIdFlow
+                    .collect { threadId ->
+                        // Detach any previous observer
+                        typistsLiveData?.removeObservers(this@ConversationActivityV2)
+                        typistsLiveData = null
+
+                        if (threadId == null) {
+                            binding.typingIndicatorViewContainer.isVisible = false
+                            return@collect
+                        }
+
+                        // Attach observer for the real threadId
+                        typistsLiveData =
+                            typingStatusRepository.getTypists(threadId).also { liveData ->
+                                liveData.observe(this@ConversationActivityV2) { state ->
+                                    val recipients = state?.typists ?: emptyList()
+
+                                    // Quick-fix behavior kept as-is
+                                    val viewContainer = binding.typingIndicatorViewContainer
+                                    viewContainer.isVisible =
+                                        recipients.isNotEmpty() && isScrolledToBottom
+                                    viewContainer.setTypists(recipients)
+                                }
+                            }
+                    }
+            }
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
             binding.inputBar.addTextChangedListener {
-                if(it.isNotEmpty()) {
-                    typingStatusSender.onTypingStarted(viewModel.threadId)
+                if (it.isNotEmpty()) {
+                    viewModel.threadId?.let { threadId ->
+                        typingStatusSender.onTypingStarted(threadId)
+                    }
                 }
             }
         }
@@ -1194,7 +1232,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     viewModel.recipientFlow,
                     viewModel.openGroupFlow,
                     viewModel.groupV2ThreadState,
-                    lastCursorLoaded,
+                    lastCursorLoaded.onStart { emit(-1L) },
                 ) { r, og, groupState, _ ->
                     Triple(r, og, groupState)
                 } .collectLatest { (r, og, groupState) ->
@@ -1241,7 +1279,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         }
 
-        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(viewModel.threadId).first()
+        val threadId = viewModel.threadId
+        if (threadId == null) return // Maybe don't scroll
+
+        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(threadId).first()
         val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return
 
         binding.conversationRecyclerView.runWhenLaidOut {
@@ -1250,7 +1291,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 ((layoutManager?.height ?: 0) / 2)
             )
         }
-
     }
 
     private fun highlightViewAtPosition(position: Int) {
@@ -1847,7 +1887,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 messageSender.send(reactionMessage, recipient.address)
             }
 
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
+            restartConversationLoader()
         }
     }
 
@@ -1903,7 +1943,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } else {
                 messageSender.send(message, recipient.address)
             }
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
+
+            restartConversationLoader()
         }
     }
 
@@ -2197,8 +2238,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             waitForApprovalJobToBeSubmitted()
             messageSender.send(message, recipient.address)
         }
-        // Send a typing stopped message
-        typingStatusSender.onTypingStopped(viewModel.threadId)
+
+        stopTyping()
         return Pair(recipient.address, sentTimestamp)
     }
 
@@ -2294,9 +2335,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        // Send a typing stopped message
-        typingStatusSender.onTypingStopped(viewModel.threadId)
+        stopTyping()
         return Pair(recipient.address, sentTimestamp)
+    }
+
+    private fun stopTyping(){
+        // Send a typing stopped message
+        viewModel.threadId?.let { threadId ->
+            typingStatusSender.onTypingStopped(threadId)
+        }
     }
 
     private fun showGIFPicker() {
@@ -2849,9 +2896,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     fun onSearchQueryUpdated(query: String) {
-        binding.searchBottomBar.showLoading()
-        searchViewModel.onQueryUpdated(query, viewModel.threadId)
-        adapter.onSearchQueryUpdated(query.takeUnless { it.length < 2 })
+        viewModel.threadId?.let {  threadId ->
+            binding.searchBottomBar.showLoading()
+            searchViewModel.onQueryUpdated(query, threadId)
+            adapter.onSearchQueryUpdated(query.takeUnless { it.length < 2 })
+        }
     }
 
     override fun onSearchMoveUpPressed() {
@@ -2863,9 +2912,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {
-        SimpleTask.run(lifecycle, {
-            mmsSmsDb.getMessagePositionInConversation(viewModel.threadId, timestamp, author, false)
-        }) { p: Int -> moveToMessagePosition(p, highlight, onMessageNotFound) }
+        viewModel.threadId?.let { threadId ->
+            SimpleTask.run(lifecycle, {
+                mmsSmsDb.getMessagePositionInConversation(threadId, timestamp, author, false)
+            }) { p: Int -> moveToMessagePosition(p, highlight, onMessageNotFound) }
+        }
     }
 
     private fun moveToMessagePosition(position: Int, highlight: Boolean, onMessageNotFound: Runnable?) {

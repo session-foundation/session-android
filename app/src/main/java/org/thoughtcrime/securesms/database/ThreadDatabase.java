@@ -657,6 +657,11 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     return getThreadIdIfExistsFor(address.getAddress());
   }
 
+  public @Nullable Long getThreadIdOrNullFor(Address address){
+    long id = getThreadIdIfExistsFor(address.getAddress());
+    return id != -1L ? id : null;
+  }
+
   public long getOrCreateThreadIdFor(Address address) {
     boolean created = false;
 
