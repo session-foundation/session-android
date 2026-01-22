@@ -146,7 +146,7 @@ abstract class GenerateLocalSnodePoolTask : DefaultTask() {
                 "-k",
                 "-X", "POST",
                 "-H", "Content-Type: application/json",
-                "--data-binary", requestBody,
+                "--data", requestBody,
                 seed
             )
             standardOutput = stdout
