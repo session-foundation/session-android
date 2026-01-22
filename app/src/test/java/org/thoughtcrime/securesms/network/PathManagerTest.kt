@@ -39,7 +39,6 @@ class PathManagerTest {
             address = "https://$id.example",
             port = 443,
             publicKeySet = Snode.KeySet(ed25519Key = "ed_$id", x25519Key = "x_$id"),
-            version = Snode.Version.ZERO
         )
 
 

@@ -31,5 +31,10 @@ gradlePlugin {
             id = "rename-apk"
             implementationClass = "RenameApkPlugin"
         }
+
+        create("local-snode-pool") {
+            id = "local-snode-pool"
+            implementationClass = "LocalSnodePoolPlugin"
+        }
     }
 }

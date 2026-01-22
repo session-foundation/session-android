@@ -62,7 +62,7 @@ class SnodeDatabaseTest {
     }
 
     private val snodes = List(20) { idx ->
-        Snode("https://1.2.3.1$idx", 5000, Snode.KeySet("edKey$idx", "xkey$idx"), Snode.Version.ZERO)
+        Snode("https://1.2.3.1$idx", 5000, Snode.KeySet("edKey$idx", "xkey$idx"))
     }
 
     @Test
