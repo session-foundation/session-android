@@ -43,6 +43,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_PATH_ROTATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SEEN_DONATION_CTA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SNODE_POOL_REFRESH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -252,7 +253,8 @@ interface TextSecurePreferences {
 
     fun getLastSnodePoolRefresh(): Long
     fun setLastSnodePoolRefresh(epochMs: Long)
-
+    fun getLastPathRotation(): Long
+    fun setLastPathRotation(epochMs: Long)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -423,6 +425,7 @@ interface TextSecurePreferences {
         const val DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "debug_show_donation_cta_from_positive_review"
 
         const val LAST_SNODE_POOL_REFRESH = "last_snode_pool_refresh"
+        const val LAST_PATH_ROTATION = "last_path_rotation"
 
         @JvmStatic
         fun isPushEnabled(context: Context): Boolean {
@@ -1150,6 +1153,14 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setLastSnodePoolRefresh(epochMs: Long) {
         setLongPreference(LAST_SNODE_POOL_REFRESH, epochMs)
+    }
+
+    override fun getLastPathRotation(): Long {
+        return getLongPreference(LAST_PATH_ROTATION, 0)
+    }
+
+    override fun setLastPathRotation(epochMs: Long) {
+        setLongPreference(LAST_PATH_ROTATION, epochMs)
     }
 
     override fun getLastOpenTimeDate(): Long {

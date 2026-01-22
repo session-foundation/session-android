@@ -25,8 +25,6 @@ class NetworkErrorManager @Inject constructor(
 
         //todo ONION investigate why we got stuck in a invalid cyphertext state
 
-        //todo ONION  add time based path rotation
-
         // --------------------------------------------------------------------
         // 1) "Found anywhere" rules (path OR destination) - currently no custom handling here
         // as we now default to non penalising path logic
