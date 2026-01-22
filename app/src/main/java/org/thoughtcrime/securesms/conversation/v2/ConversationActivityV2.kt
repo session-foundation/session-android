@@ -828,7 +828,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<ConversationLoader.Data> {
         return conversationLoaderFactory.create(
-            threadID = viewModel.threadId,
+            threadID = viewModel.threadId!!,
             reverse = false,
         )
     }
