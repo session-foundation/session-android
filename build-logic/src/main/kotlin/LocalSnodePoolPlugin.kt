@@ -185,7 +185,6 @@ abstract class GenerateLocalSnodePoolTask : DefaultTask() {
             val x = m["pubkey_x25519"] as? String ?: throw IllegalStateException("Missing pubkey_x25519")
 
             val port = portNum.toInt()
-            if (port !in 1..65535) throw IllegalStateException("Invalid storage_port=$port")
             if (ip.isBlank()) throw IllegalStateException("Blank public_ip")
             if (ed.length < 32) throw IllegalStateException("pubkey_ed25519 too short")
             if (x.length < 32) throw IllegalStateException("pubkey_x25519 too short")
