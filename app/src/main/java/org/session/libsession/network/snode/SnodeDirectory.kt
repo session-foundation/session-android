@@ -54,9 +54,9 @@ class SnodeDirectory @Inject constructor(
         Environment.DEV_NET -> setOf("http://sesh-net.local:1280")
         Environment.TEST_NET -> setOf("http://public.loki.foundation:38157")
         Environment.MAIN_NET -> setOf(
-            "https://seed1sdsdds.getsession.org:$SEED_NODE_PORT",
-            "https://seed2sdfsdf.getsession.org:$SEED_NODE_PORT",
-            "https://seed3sd.sdfsdfgetsession.org:$SEED_NODE_PORT",
+            "https://seed1.getsession.org:$SEED_NODE_PORT",
+            "https://seed2.getsession.org:$SEED_NODE_PORT",
+            "https://seed3.getsession.org:$SEED_NODE_PORT",
         )
     }
 
