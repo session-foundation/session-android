@@ -33,6 +33,7 @@ import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -69,12 +70,15 @@ abstract class BaseGroupMembersViewModel(
 
                     val memberState = mutableListOf<GroupMemberState>()
                     for ((member, status) in rawMembers) {
-                        memberState.add(createGroupMember(
+                        val createdMember = createGroupMember(
                             member = member, status = status,
                             shouldShowProBadge = recipientRepository.getRecipient(member.accountId().toAddress()).shouldShowProBadge,
                             myAccountId = currentUserId,
                             amIAdmin = displayInfo.isUserAdmin
-                        ))
+                        )
+
+                        Log.d("GROUP_ADMIN: ", "$createdMember")
+                        memberState.add(createdMember)
                     }
 
                     displayInfo to sortMembers(memberState, currentUserId)

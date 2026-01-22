@@ -664,18 +664,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.threadIdFlow
-                    .collect {
-                        if (it != null) {
-                            // threadId was fetched/created
-                            restartConversationLoader()
-                        }
-                    }
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.conversationReloadNotification
                     .collect {
                         if (!firstLoad.get()) {
@@ -690,14 +678,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun restartConversationLoader() {
-        if(viewModel.threadId == null) return
         LoaderManager.getInstance(this).restartLoader(0, null, this)
     }
 
     private fun startConversationLoaderWithDelay() {
         conversationLoadAnimationJob = lifecycleScope.launch {
             delay(700)
-            binding.conversationLoader.isVisible = true && viewModel.threadId != null
+            binding.conversationLoader.isVisible = true
         }
     }
 
@@ -828,7 +815,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<ConversationLoader.Data> {
         return conversationLoaderFactory.create(
-            threadID = viewModel.threadId!!,
+            threadID = viewModel.threadId,
             reverse = false,
         )
     }
@@ -853,7 +840,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 updateUnreadCountIndicator()
             }
 
-            if (!firstLoad.get() && author != null && messageTimestamp >= 0) {
+            if (author != null && messageTimestamp >= 0) {
                 jumpToMessage(author, messageTimestamp, firstLoad.get(), null)
             } else {
                 if (firstLoad.getAndSet(false)) {
@@ -1246,7 +1233,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     viewModel.recipientFlow,
                     viewModel.openGroupFlow,
                     viewModel.groupV2ThreadState,
-                    lastCursorLoaded.onStart { emit(-1L) },
+                    lastCursorLoaded,
                 ) { r, og, groupState, _ ->
                     Triple(r, og, groupState)
                 } .collectLatest { (r, og, groupState) ->

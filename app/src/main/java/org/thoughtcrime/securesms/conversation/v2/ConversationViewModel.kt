@@ -178,16 +178,16 @@ class ConversationViewModel @AssistedInject constructor(
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
     val threadIdFlow: StateFlow<Long?> =
-        threadDb.getThreadIdOrNullFor(address)
+        storage.getThreadId(address)
             ?.let { MutableStateFlow(it) }
             ?: threadDb.updateNotifications
-                .map { threadDb.getThreadIdOrNullFor(address) }
+                .map { storage.getThreadId(address) }
                 .flowOn(Dispatchers.Default)
                 .filterNotNull()
                 .take(1)
                 .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-     // Current thread ID, or -1L if it doesn't exist yet.
+     // Current thread ID, or null if it doesn't exist yet.
     @Deprecated("Use threadIdFlow instead")
     val threadId: Long? get() = threadIdFlow.value
 
