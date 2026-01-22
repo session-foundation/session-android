@@ -12,22 +12,16 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.util.AbstractCursorLoader
 
 class ConversationLoader @AssistedInject constructor(
-    @Assisted private val threadID: Long?,
+    @Assisted private val threadID: Long,
     @Assisted private val reverse: Boolean,
     application: Application,
     private val mmsSmsDatabase: MmsSmsDatabase,
 ) : AbstractCursorLoader<ConversationLoader.Data>(application) {
 
     override fun getData(): Data {
-        // empty loader
-        val threadId = threadID ?: return Data(
-            messageCursor = MatrixCursor(arrayOf("_id")),
-            threadUnreadCount = 0
-        )
-
         return Data(
-            messageCursor = mmsSmsDatabase.getConversation(threadId, reverse),
-            threadUnreadCount = mmsSmsDatabase.getUnreadCount(threadId),
+            messageCursor = mmsSmsDatabase.getConversation(threadID, reverse),
+            threadUnreadCount = mmsSmsDatabase.getUnreadCount(threadID),
         )
     }
 
@@ -44,6 +38,6 @@ class ConversationLoader @AssistedInject constructor(
     
     @AssistedFactory
     interface Factory {
-        fun create(threadID: Long?, reverse: Boolean): ConversationLoader
+        fun create(threadID: Long, reverse: Boolean): ConversationLoader
     }
 }

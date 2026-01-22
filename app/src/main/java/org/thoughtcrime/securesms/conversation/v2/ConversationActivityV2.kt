@@ -664,6 +664,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.threadIdFlow
+                    .collect {
+                        if (it != null) {
+                            // threadId was fetched/created
+                            restartConversationLoader()
+                        }
+                    }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.conversationReloadNotification
                     .collect {
                         if (!firstLoad.get()) {
@@ -677,16 +689,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         setupUiEventsObserver()
     }
 
+    private fun restartConversationLoader() {
+        if(viewModel.threadId == null) return
+        LoaderManager.getInstance(this).restartLoader(0, null, this)
+    }
+
     private fun startConversationLoaderWithDelay() {
         conversationLoadAnimationJob = lifecycleScope.launch {
             delay(700)
-            binding.conversationLoader.isVisible = true
+            binding.conversationLoader.isVisible = true && viewModel.threadId != null
         }
     }
 
-    private fun restartConversationLoader() {
-        LoaderManager.getInstance(this).restartLoader(0, null, this)
-    }
     private fun stopConversationLoader() {
         // Cancel the delayed load animation
         conversationLoadAnimationJob?.cancel()
@@ -839,7 +853,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 updateUnreadCountIndicator()
             }
 
-            if (author != null && messageTimestamp >= 0) {
+            if (!firstLoad.get() && author != null && messageTimestamp >= 0) {
                 jumpToMessage(author, messageTimestamp, firstLoad.get(), null)
             } else {
                 if (firstLoad.getAndSet(false)) {
