@@ -1,42 +1,51 @@
 package org.thoughtcrime.securesms.api.server
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
-import okhttp3.HttpUrl
-import okhttp3.Request
-import okhttp3.Response
 import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
-import org.thoughtcrime.securesms.api.SessionDestination
+import org.thoughtcrime.securesms.api.SessionApiRequest
+import org.thoughtcrime.securesms.api.execute
+import javax.inject.Inject
 
-class ServerAddress(
-    val url: HttpUrl,
-    val x25519PubKey: String
+class ServerApiRequest<RespType: ServerApiResponse>(
+    val serverBaseUrl: String,
+    val serverX25519PubKeyHex: String,
+    val api: ServerApi<RespType>,
 )
 
-class ServerApiExecutor(
+typealias ServerApiResponse = Any
+
+typealias ServerApiExecutor = ApiExecutor<ServerApiRequest<*>, ServerApiResponse>
+
+class ServerApiExecutorImpl @Inject constructor(
     private val apiExecutor: SessionApiExecutor,
-) : ApiExecutor<ServerAddress, Request, Response> {
+) : ServerApiExecutor {
     override suspend fun send(
         ctx: ApiExecutorContext,
-        dest: ServerAddress,
-        req: Request
-    ): Response {
-        apiExecutor.send(
+        req: ServerApiRequest<*>
+    ): ServerApiResponse {
+        val resp = apiExecutor.execute(
             ctx = ctx,
-            dest = SessionDestination.HttpServer(
-                url = dest.url,
-                x25519PubKeyHex = dest.x25519PubKey
-            ),
-            req = byteArrayOf()
+            req = SessionApiRequest.HttpServerRequest(
+                req.api.buildRequest(
+                    baseUrl = req.serverBaseUrl,
+                    x25519PubKeyHex = req.serverX25519PubKeyHex,
+                ),
+                serverX25519PubKeyHex = req.serverX25519PubKeyHex,
+            )
+        )
+
+        return req.api.processResponse(
+            executorContext = ctx,
+            baseUrl = req.serverBaseUrl,
+            response = resp.response
         )
     }
+}
 
-    @Serializable
-    private class Payload(
-        val endpoint: String,
-        val method: String,
-        val headers: Map<String, String>,
-    )
+suspend inline fun <reified ResponseType : ServerApiResponse> ServerApiExecutor.execute(
+    req: ServerApiRequest<ResponseType>,
+    ctx: ApiExecutorContext = ApiExecutorContext()
+): ResponseType {
+    return send(ctx, req) as ResponseType
 }

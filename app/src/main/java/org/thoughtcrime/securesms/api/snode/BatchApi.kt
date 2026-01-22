@@ -11,7 +11,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.snode.model.BatchResponse
 
-class BatchRequestApi @AssistedInject constructor(
+class BatchApi @AssistedInject constructor(
     @Assisted val requests: List<SnodeApi<*>>,
     private val json: Json,
     snodeClientErrorManager: SnodeClientErrorManager,
@@ -43,6 +43,6 @@ class BatchRequestApi @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(requests: List<SnodeApi<*>>): BatchRequestApi
+        fun create(requests: List<SnodeApi<*>>): BatchApi
     }
 }

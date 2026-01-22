@@ -1,8 +1,5 @@
 package org.thoughtcrime.securesms.api
 
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import org.session.libsession.network.model.FailureDecision
@@ -11,14 +8,14 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.util.findCause
 
-class AutoRetryApiExecutor<Dest, Req, Res> @AssistedInject constructor(
-    @Assisted private val actualExecutor: ApiExecutor<Dest, Req, Res>,
-) : ApiExecutor<Dest, Req, Res> {
-    override suspend fun send(ctx: ApiExecutorContext, dest: Dest, req: Req): Res {
+class AutoRetryApiExecutor<Req, Res>(
+    private val actualExecutor: ApiExecutor<Req, Res>,
+) : ApiExecutor<Req, Res> {
+    override suspend fun send(ctx: ApiExecutorContext, req: Req): Res {
         var numRetried = 0
         while (true) {
             try {
-                return actualExecutor.send(ctx, dest, req)
+                return actualExecutor.send(ctx, req)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -35,10 +32,6 @@ class AutoRetryApiExecutor<Dest, Req, Res> @AssistedInject constructor(
         }
     }
 
-    @AssistedFactory
-    interface Factory<Dest, Req, Res> {
-        fun create(actualExecutor: ApiExecutor<Dest, Req, Res>): AutoRetryApiExecutor<Dest, Req, Res>
-    }
 
     companion object {
         private const val TAG = "AutoRetryApiExecutor"

@@ -19,6 +19,7 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.network.model.ErrorStatus
+import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.onion.Version
@@ -121,14 +122,7 @@ class SnodeClient @Inject constructor(
                             if (!item.isSuccessful) {
                                 val bodySlice = item.body.toString().toByteArray(Charsets.UTF_8).view()
 
-                                throw OnionError.DestinationError(
-                                    status = ErrorStatus(
-                                        code = item.code,
-                                        message = "Batch Item Failure",
-                                        body = bodySlice
-                                    ),
-                                    destination = OnionDestination.SnodeDestination(snode)
-                                )
+                                error("Batch fail")
                             }
 
                             // Decode each sub-response body into expected type
@@ -250,14 +244,15 @@ class SnodeClient @Inject constructor(
             operationName = operationName,
             classifier = { error, previous ->
                 // use the most recent target we tried
-                errorManager.onFailure(
-                    error = error,
-                    ctx = SnodeClientFailureContext(
-                        targetSnode = lastTarget,
-                        swarmPublicKey = publicKey,
-                        previousError = previous
-                    )
-                )
+//                errorManager.onFailure(
+//                    error = error,
+//                    ctx = SnodeClientFailureContext(
+//                        targetSnode = lastTarget,
+//                        swarmPublicKey = publicKey,
+//                        previousError = previous
+//                    )
+//                )
+                FailureDecision.Fail
             }
         ) { attempt ->
             if (attempt != 1) lastTarget = pickTarget()

@@ -1,6 +1,7 @@
 package org.session.libsession.network
 
 import okhttp3.Request
+import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionResponse
 import org.session.libsession.network.onion.Version
@@ -38,13 +39,14 @@ class ServerClient @Inject constructor(
         return retryWithBackOff(
             operationName = operationName,
             classifier = { error, previous ->
-                errorManager.onFailure(
-                    error = error,
-                    ctx = ServerClientFailureContext(
-                        url = serverBaseUrl,
-                        previousError = previous
-                    )
-                )
+//                errorManager.onFailure(
+//                    error = error,
+//                    ctx = ServerClientFailureContext(
+//                        url = serverBaseUrl,
+//                        previousError = previous
+//                    )
+//                )
+                FailureDecision.Fail
             }
         ) { _ ->
             val (data, request) = requestFactory()

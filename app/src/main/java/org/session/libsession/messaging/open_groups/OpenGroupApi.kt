@@ -139,6 +139,7 @@ object OpenGroupApi {
         val body: T?
     )
 
+    @Serializable
     data class Capabilities(
         val capabilities: List<String> = emptyList(),
         val missing: List<String> = emptyList()
@@ -174,31 +175,40 @@ object OpenGroupApi {
     )
 
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
+    @Serializable
     data class DirectMessage(
         val id: Long = 0,
         val sender: String = "",
         val recipient: String = "",
+        @SerialName("posted_at")
         val postedAt: Long = 0,
+        @SerialName("expires_at")
         val expiresAt: Long = 0,
         val message: String = "",
     )
 
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
+    @Serializable
     data class Message(
         val id : Long = 0,
+        @SerialName("session_id")
         val sessionId: String = "",
         val posted: Double = 0.0,
         val edited: Long = 0,
         val seqno: Long = 0,
         val deleted: Boolean = false,
         val whisper: Boolean = false,
+        @SerialName("whisper_mods")
         val whisperMods: String = "",
+
+        @SerialName("whisper_to")
         val whisperTo: String = "",
         val data: String? = null,
         val signature: String? = null,
         val reactions: Map<String, Reaction>? = null,
     )
 
+    @Serializable
     data class Reaction(
         val count: Long = 0,
         val reactors: List<String> = emptyList(),

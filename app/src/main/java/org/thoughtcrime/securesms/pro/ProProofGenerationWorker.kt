@@ -16,11 +16,11 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.ProConfig
-import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.server.ServerApiError
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.pro.api.GenerateProProofRequest
 import org.thoughtcrime.securesms.pro.api.ProApiExecutor
@@ -85,7 +85,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
             Log.e(WORK_NAME, "Error generating Pro proof", e)
             if (e is NonRetryableException ||
                 // HTTP 403 indicates that the user is not
-                e.findCause<OnionError.DestinationError>()?.status?.code == 403) {
+                e.findCause<ServerApiError.UnknownStatusCode>()?.code == 403) {
                 Result.failure()
             } else {
                 Result.retry()

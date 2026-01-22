@@ -1,25 +1,30 @@
 package org.thoughtcrime.securesms.api.snode
 
 import org.session.libsession.snode.model.BatchResponse
-import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.BatchApiExecutor
 import javax.inject.Inject
 
 class SnodeApiBatcher @Inject constructor(
-    private val batchRequestAPIFactory: BatchRequestApi.Factory,
-) : BatchApiExecutor.Batcher<Snode, SnodeApi<*>, SnodeApiResponse> {
+    private val batchAPIFactory: BatchApi.Factory,
+) : BatchApiExecutor.Batcher<SnodeApiRequest<*>, SnodeApiResponse> {
     override fun constructBatchRequest(
-        requests: List<Pair<ApiExecutorContext, SnodeApi<*>>>
-    ): SnodeApi<*> {
-        return batchRequestAPIFactory.create(requests.map { it.second })
+        requests: List<Pair<ApiExecutorContext, SnodeApiRequest<*>>>
+    ): SnodeApiRequest<*> {
+        return SnodeApiRequest(
+            snode = requests.first().second.snode,
+            api = batchAPIFactory.create(requests.map { it.second.api })
+        )
+    }
+
+    override fun batchKey(req: SnodeApiRequest<*>): Any {
+        return req.snode.ed25519Key
     }
 
     override suspend fun deconstructBatchResponse(
-        dest: Snode,
-        requests: List<Pair<ApiExecutorContext, SnodeApi<*>>>,
+        requests: List<Pair<ApiExecutorContext, SnodeApiRequest<*>>>,
         response: SnodeApiResponse
-    ): List<SnodeApiResponse> {
+    ): List<Result<SnodeApiResponse>> {
         val results = (response as BatchResponse).results
         check(results.size == requests.size) {
             "Mismatched batch response size: expected ${requests.size}, got ${results.size}"
@@ -29,16 +34,18 @@ class SnodeApiBatcher @Inject constructor(
             val (ctx, request) = requests[i]
             val result = results[i]
 
-            if (!result.isSuccessful) {
-                throw BatchResponse.Error(result)
-            }
+            runCatching {
+                if (!result.isSuccessful) {
+                    throw BatchResponse.Error(result)
+                }
 
-            request.handleResponse(
-                ctx = ctx,
-                snode = dest,
-                code = result.code,
-                body = result.body
-            )
+                request.api.handleResponse(
+                    ctx = ctx,
+                    snode = request.snode,
+                    code = result.code,
+                    body = result.body
+                )
+            }
         }
     }
 }

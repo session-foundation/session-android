@@ -11,23 +11,23 @@ import org.session.libsignal.utilities.Log
 import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
-    private val realExecutor: ApiExecutor<Dest, Req, Res>,
-    private val batcher: Batcher<Dest, Req, Res>,
+class BatchApiExecutor<Req, Res>(
+    private val actualExecutor: ApiExecutor<Req, Res>,
+    private val batcher: Batcher<Req, Res>,
     private val scope: CoroutineScope,
-) : ApiExecutor<Dest, Req, Res> {
-    private val batchCommandSender: SendChannel<BatchCommand<Dest, Req, Res>>
+) : ApiExecutor<Req, Res> {
+    private val batchCommandSender: SendChannel<BatchCommand<Req, Res>>
 
     init {
-        val channel = Channel<BatchCommand<Dest, Req, Res>>(capacity = 100)
+        val channel = Channel<BatchCommand<Req, Res>>(capacity = 100)
         batchCommandSender = channel
 
         scope.launch {
-            val pendingRequests = linkedMapOf<Any, BatchInfo<Dest, Req, Res>>()
+            val pendingRequests = linkedMapOf<Any, BatchInfo<Req, Res>>()
             var nextDeadline: Instant? = null
 
             while (true) {
-                val command: BatchCommand<Dest, Req, Res>? = if (nextDeadline == null) {
+                val command: BatchCommand<Req, Res>? = if (nextDeadline == null) {
                     channel.receive()
                 } else {
                     val now = Instant.now()
@@ -44,11 +44,10 @@ class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
                 var calculateNextDeadline = false
 
                 when (command) {
-                    is BatchCommand.Send<Dest, Req, Res> -> {
-                        val batchKey = command.dest.batchKey!!
-                        val existingBatch = pendingRequests[batchKey]
+                    is BatchCommand.Send<Req, Res> -> {
+                        val existingBatch = pendingRequests[command.batchKey]
                         if (existingBatch == null) {
-                            pendingRequests[batchKey] = BatchInfo(
+                            pendingRequests[command.batchKey] = BatchInfo(
                                 requests = arrayListOf(command),
                                 deadline = Instant.now().plusMillis(100L),
                             )
@@ -59,12 +58,12 @@ class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
                         }
                     }
 
-                    is BatchCommand.Cancel<Dest, Req, Res> -> {
-                        val existingBatch = pendingRequests[command.dest.batchKey!!]
+                    is BatchCommand.Cancel<Req, Res> -> {
+                        val existingBatch = pendingRequests[command.batchKey]
                         if (existingBatch != null) {
                             existingBatch.requests.removeIf { it.req == command.req }
                             if (existingBatch.requests.isEmpty()) {
-                                pendingRequests.remove(command.dest.batchKey!!)
+                                pendingRequests.remove(command.batchKey)
                                 calculateNextDeadline = true
                             }
                         }
@@ -88,8 +87,8 @@ class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
         }
     }
 
-    private class BatchInfo<Dest: Batchable, Req, Res>(
-        val requests: ArrayList<BatchCommand.Send<Dest, Req, Res>>,
+    private class BatchInfo<Req, Res>(
+        val requests: ArrayList<BatchCommand.Send<Req, Res>>,
         val deadline: Instant,
     ) {
         init {
@@ -99,22 +98,19 @@ class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
         }
     }
 
-    private fun executeBatch(batch: BatchInfo<Dest, Req, Res>) {
+    private fun executeBatch(batch: BatchInfo<Req, Res>) {
         scope.launch {
             val requests = batch.requests.map { it.ctx to it.req }
-            val dest = batch.requests.first().dest
 
-            Log.d(TAG, "Sending ${requests.size} batched requests to $dest")
+            Log.d(TAG, "Sending ${requests.size} batched requests")
 
             try {
-                val resp = realExecutor.send(
+                val resp = actualExecutor.send(
                     ctx = ApiExecutorContext(), // Blank context for a batched request (each sub-request has its own context)
-                    dest = dest,
                     req = batcher.constructBatchRequest(requests)
                 )
 
                 val responses = batcher.deconstructBatchResponse(
-                    dest = dest,
                     requests = requests,
                     response = resp
                 )
@@ -126,7 +122,7 @@ class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
                 for (i in batch.requests.indices) {
                     val request = batch.requests[i]
                     val response = responses[i]
-                    request.callback.send(Result.success(response))
+                    request.callback.send(response)
                 }
 
             } catch (e: Throwable) {
@@ -147,42 +143,46 @@ class BatchApiExecutor<Dest: BatchApiExecutor.Batchable, Req, Res>(
         return first.value
     }
 
-    override suspend fun send(ctx: ApiExecutorContext, dest: Dest, req: Req): Res {
-        if (dest.batchKey == null) {
-            // No batching key == no batching possible
-            return realExecutor.send(ctx, dest, req)
-        }
+    override suspend fun send(ctx: ApiExecutorContext, req: Req): Res {
+        val batchKey = batcher.batchKey(req)
+            ?: return actualExecutor.send(ctx, req)
 
         val callback = Channel<Result<*>>(1)
-        batchCommandSender.send(BatchCommand.Send(ctx, dest, req, callback))
+        batchCommandSender.send(BatchCommand.Send(
+            ctx = ctx,
+            batchKey = batchKey,
+            req = req,
+            callback = callback
+        ))
+
         try {
             @Suppress("UNCHECKED_CAST")
             return callback.receive().getOrThrow() as Res
         } catch (e: CancellationException) {
             // Best effort cancellation
-            batchCommandSender.trySend(BatchCommand.Cancel(dest, req))
+            batchCommandSender.trySend(BatchCommand.Cancel(batchKey, req))
 
             throw e
         }
     }
 
-    private interface BatchCommand<Dest, Req, Res> {
-        class Send<Dest: Batchable, Req, Res>(
+    private interface BatchCommand<Req, Res> {
+        class Send<Req, Res>(
             val ctx: ApiExecutorContext,
-            val dest: Dest,
+            val batchKey: Any,
             val req: Req,
             val callback: SendChannel<Result<Res>>,
-        ) : BatchCommand<Dest, Req, Res>
-        class Cancel<Dest, Req, Res>(val dest: Dest, val req: Req) : BatchCommand<Dest, Req, Res>
+        ) : BatchCommand<Req, Res>
+        class Cancel<Req, Res>(val batchKey: Any, val req: Req) : BatchCommand<Req, Res>
     }
 
-    interface Batchable {
-        val batchKey: Any?
-    }
-
-    interface Batcher<Dest, Req, Res> {
+    interface Batcher<Req, Res> {
+        fun batchKey(req: Req): Any?
         fun constructBatchRequest(requests: List<Pair<ApiExecutorContext, Req>>): Req
-        suspend fun deconstructBatchResponse(dest: Dest, requests: List<Pair<ApiExecutorContext, Req>>, response: Res): List<Res>
+        suspend fun deconstructBatchResponse(
+            requests: List<Pair<ApiExecutorContext, Req>>,
+            response: Res
+        ): List<Result<Res>>
     }
 
     companion object {

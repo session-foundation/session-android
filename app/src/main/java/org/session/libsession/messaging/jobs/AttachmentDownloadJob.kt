@@ -21,8 +21,10 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.server.ServerApiError
 import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.util.findCause
 
 class AttachmentDownloadJob @AssistedInject constructor(
     @Assisted("attachmentID") val attachmentID: Long,
@@ -94,7 +96,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
             } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
-                    || (exception is OnionError.DestinationError && exception.status?.code == 400)
+                    || (exception.findCause<ServerApiError.UnknownStatusCode>()?.code  == 400)
                     || exception is NonRetryableException) {
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")

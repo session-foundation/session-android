@@ -39,10 +39,10 @@ suspend inline fun <T> retryWithBackOff(
             previousError = onionError
 
             when (decision) {
-                is FailureDecision.Fail -> {
-                    throw decision.throwable
+                FailureDecision.Fail -> {
+                    throw currentError
                 }
-                is FailureDecision.Retry -> {
+                FailureDecision.Retry -> {
                     //Log.w("NetworkRetry", "$operationName failed (attempt $attempt/$maxAttempts): ${currentError.message}")
 
                     if (attempt < maxAttempts) {

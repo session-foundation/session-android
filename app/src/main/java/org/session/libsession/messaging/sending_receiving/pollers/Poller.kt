@@ -46,8 +46,9 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
-import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
-import org.thoughtcrime.securesms.api.snode.execute
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Duration.Companion.days
@@ -70,7 +71,7 @@ class Poller @AssistedInject constructor(
     private val snodeClient: SnodeClient,
     private val swarmDirectory: SwarmDirectory,
     private val retrieveMessageAPIFactory: RetrieveMessageApi.Factory,
-    private val snodeAPIExecutor: SnodeApiExecutor,
+    private val swarmApiExecutor: SwarmApiExecutor,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -310,7 +311,7 @@ class Poller @AssistedInject constructor(
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
-            val request = retrieveMessageAPIFactory.create(
+            val retrieveMessageApi = retrieveMessageAPIFactory.create(
                 namespace = Namespace.DEFAULT(),
                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                     snode = snode,
@@ -323,9 +324,11 @@ class Poller @AssistedInject constructor(
 
             this.async {
                 runCatching {
-                    snodeAPIExecutor.execute(
-                        dest = snode,
-                        req = request
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = retrieveMessageApi
+                        )
                     )
                 }
             }
@@ -346,7 +349,7 @@ class Poller @AssistedInject constructor(
                 .map { type ->
                     val config = configs.getConfig(type)
                     hashesToExtend += config.activeHashes()
-                    val request = retrieveMessageAPIFactory.create(
+                    val retrieveApi = retrieveMessageAPIFactory.create(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,
                             publicKey = userAuth.accountId.hexString,
@@ -359,9 +362,11 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            snodeAPIExecutor.execute(
-                                dest = snode,
-                                req = request
+                            swarmApiExecutor.execute(
+                                SwarmApiRequest(
+                                    swarmPubKeyHex = userAuth.accountId.hexString,
+                                    api = retrieveApi
+                                )
                             )
                         }
                     }

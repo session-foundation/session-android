@@ -7,7 +7,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Semaphore
-import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.http.HTTP_EXECUTOR_SEMAPHORE_NAME
 import org.thoughtcrime.securesms.api.http.HttpApiExecutor
 import org.thoughtcrime.securesms.api.http.OkHttpApiExecutor
@@ -15,11 +14,11 @@ import org.thoughtcrime.securesms.api.http.createRegularNodeOkHttpClient
 import org.thoughtcrime.securesms.api.http.createSeedSnodeOkHttpClient
 import org.thoughtcrime.securesms.api.onion.OnionSessionApiExecutor
 import org.thoughtcrime.securesms.api.onion.REGULAR_SNODE_HTTP_EXECUTOR_NAME
-import org.thoughtcrime.securesms.api.snode.SnodeApi
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiExecutorImpl
 import org.thoughtcrime.securesms.api.snode.SnodeApiBatcher
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutorImpl
-import org.thoughtcrime.securesms.api.snode.SnodeApiResponse
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutorImpl
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -34,26 +33,28 @@ abstract class APIModuleBinding {
 
     @Binds
     abstract fun bindSwarmApiExecutor(executor: SwarmApiExecutorImpl): SwarmApiExecutor
+
+    @Binds
+    abstract fun bindServerApiExecutor(executor: ServerApiExecutorImpl) : ServerApiExecutor
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
-class APIModule{
+class APIModule {
     @Provides
     @Singleton
     fun provideSnodeAPIExecutor(
         executor: SnodeApiExecutorImpl,
         batcher: SnodeApiBatcher,
         @ManagerScope scope: CoroutineScope,
-        autoRetryExecutor: AutoRetryApiExecutor.Factory<Snode, SnodeApi<*>, SnodeApiResponse>
     ): SnodeApiExecutor {
-        val batchExecutor = BatchApiExecutor(
-            realExecutor = executor,
-            batcher = batcher,
-            scope = scope,
+        return AutoRetryApiExecutor(
+            actualExecutor = BatchApiExecutor(
+                actualExecutor = executor,
+                batcher = batcher,
+                scope = scope,
+            )
         )
-
-        return autoRetryExecutor.create(batchExecutor)
     }
 
     @Provides
