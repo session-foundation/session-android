@@ -43,7 +43,6 @@ class NetworkErrorManagerTest {
             address = "https://$id.example",
             port = 443,
             publicKeySet = Snode.KeySet("ed_$id", "x_$id"),
-            version = Snode.Version.ZERO
         )
 
     @Test

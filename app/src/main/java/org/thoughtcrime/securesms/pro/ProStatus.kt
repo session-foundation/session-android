@@ -6,44 +6,44 @@ import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
 import java.time.Instant
-import java.time.ZoneId
 
 sealed interface ProStatus{
     data object NeverSubscribed: ProStatus
 
     sealed interface Active: ProStatus{
-        val validUntil: Instant
+        val renewingAt: Instant //this takes into account the expiry and the grace period
         val duration: ProSubscriptionDuration
         val providerData: PaymentProviderMetadata
         val quickRefundExpiry: Instant?
         val refundInProgress: Boolean
 
         data class AutoRenewing(
-            override val validUntil: Instant,
+            override val renewingAt: Instant,
             override val duration: ProSubscriptionDuration,
             override val providerData: PaymentProviderMetadata,
             override val quickRefundExpiry: Instant?,
-            override val refundInProgress: Boolean
+            override val refundInProgress: Boolean,
+            val inGracePeriod: Boolean
         ): Active
 
         data class Expiring(
-            override val validUntil: Instant,
+            override val renewingAt: Instant,
             override val duration: ProSubscriptionDuration,
             override val providerData: PaymentProviderMetadata,
             override val quickRefundExpiry: Instant?,
-            override val refundInProgress: Boolean
+            override val refundInProgress: Boolean,
         ): Active
 
         fun isWithinQuickRefundWindow(): Boolean {
             return quickRefundExpiry != null && quickRefundExpiry!!.isAfter(Instant.now())
         }
 
-        fun validUntilFormatted(): String {
+        fun renewingAtFormatted(): String {
             val pattern = if (BuildConfig.BUILD_TYPE != "release")
                 "MMMM d, yyyy, h:mm a" // non prod builds can show seconds for debugging purposes
             else "MMMM d, yyyy"
             return DateUtils.getLocaleFormattedDate(
-                validUntil.toEpochMilli(), pattern
+                renewingAt.toEpochMilli(), pattern
             )
         }
     }

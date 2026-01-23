@@ -45,7 +45,7 @@ fun ChoosePlanNonOriginating(
     val headerTitle = when(subscription) {
         is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessExpireDate))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(DATE_KEY, subscription.validUntilFormatted())
+            .put(DATE_KEY, subscription.renewingAtFormatted())
             .format()
 
         is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatedAutoShort))
@@ -55,7 +55,7 @@ fun ChoosePlanNonOriginating(
                 amount = subscription.duration.duration.months,
                 unit = MeasureUnit.MONTH
             ))
-            .put(DATE_KEY, subscription.validUntilFormatted())
+            .put(DATE_KEY, subscription.renewingAtFormatted())
             .format()
 
         else -> ""
