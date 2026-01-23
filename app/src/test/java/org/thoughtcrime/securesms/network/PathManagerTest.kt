@@ -57,7 +57,8 @@ class PathManagerTest {
             scope = backgroundScope,
             directory = mock(),
             storage = snodeDb,
-            snodePoolStorage = snodeDb
+            snodePoolStorage = snodeDb,
+            prefs = mock()
         )
 
         val chosen = pm.getPath(exclude = b)
@@ -80,7 +81,8 @@ class PathManagerTest {
             scope = backgroundScope,
             directory = mock(),
             storage = snodeDb,
-            snodePoolStorage = snodeDb
+            snodePoolStorage = snodeDb,
+            prefs = mock()
         )
 
         pm.handleBadSnode(snode = b, forceRemove = true)
@@ -109,7 +111,8 @@ class PathManagerTest {
             scope = backgroundScope,
             directory = mock(),
             storage = snodeDb,
-            snodePoolStorage = snodeDb
+            snodePoolStorage = snodeDb,
+            prefs = mock()
         )
 
         pm.handleBadSnode(snode = b, forceRemove = true)
