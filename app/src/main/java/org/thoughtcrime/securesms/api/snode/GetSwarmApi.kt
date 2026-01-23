@@ -22,7 +22,7 @@ class GetSwarmApi @AssistedInject constructor(
     override val methodName: String
         get() = "get_snodes_for_pubkey"
 
-    override fun buildParams(): JsonObject {
+    override fun buildParams(): JsonElement {
         return JsonObject(
             mapOf("pubkey" to JsonPrimitive(pubKey))
         )
@@ -33,7 +33,7 @@ class GetSwarmApi @AssistedInject constructor(
     }
 
     @Serializable
-    class Response(val snodes: List<SnodeInfo>): SnodeApiResponse
+    class Response(val snodes: List<SnodeInfo>)
 
     @Serializable
     class SnodeInfo(

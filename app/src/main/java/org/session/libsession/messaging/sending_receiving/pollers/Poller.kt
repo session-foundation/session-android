@@ -30,7 +30,6 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.model.RetrieveMessageResponse
@@ -44,11 +43,12 @@ import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
+import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Duration.Companion.days
@@ -68,9 +68,9 @@ class Poller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val processor: ReceivedMessageProcessor,
     private val messageParser: MessageParser,
-    private val snodeClient: SnodeClient,
     private val swarmDirectory: SwarmDirectory,
-    private val retrieveMessageAPIFactory: RetrieveMessageApi.Factory,
+    private val retrieveMessageFactory: RetrieveMessageApi.Factory,
+    private val alterTtlApiFactory: AlterTtlApi.Factory,
     private val swarmApiExecutor: SwarmApiExecutor,
     @Assisted scope: CoroutineScope
 ) {
@@ -311,7 +311,7 @@ class Poller @AssistedInject constructor(
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
-            val retrieveMessageApi = retrieveMessageAPIFactory.create(
+            val retrieveMessageApi = retrieveMessageFactory.create(
                 namespace = Namespace.DEFAULT(),
                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                     snode = snode,
@@ -349,7 +349,7 @@ class Poller @AssistedInject constructor(
                 .map { type ->
                     val config = configs.getConfig(type)
                     hashesToExtend += config.activeHashes()
-                    val retrieveApi = retrieveMessageAPIFactory.create(
+                    val retrieveApi = retrieveMessageFactory.create(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,
                             publicKey = userAuth.accountId.hexString,
@@ -376,14 +376,15 @@ class Poller @AssistedInject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    snodeClient.sendBatchRequest(
-                        snode,
-                        userPublicKey,
-                        snodeClient.buildAuthenticatedAlterTtlBatchRequest(
-                            messageHashes = hashesToExtend.toList(),
-                            auth = userAuth,
-                            newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds,
-                            extend = true
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = alterTtlApiFactory.create(
+                                messageHashes = hashesToExtend,
+                                auth = userAuth,
+                                alterType = AlterTtlApi.AlterType.Extend,
+                                newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds
+                            )
                         )
                     )
                 } catch (e: Exception) {

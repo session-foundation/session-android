@@ -26,6 +26,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
@@ -41,6 +42,10 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
@@ -79,7 +84,9 @@ class DefaultConversationRepository @Inject constructor(
     private val messageSender: MessageSender,
     private val loginStateRepository: LoginStateRepository,
     private val proStatusManager: ProStatusManager,
-    private val snodeClient: SnodeClient
+    private val snodeClient: SnodeClient,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory
 ) : ConversationRepository {
 
     override val conversationListAddressesFlow get() = loginStateRepository.flowWithLoggedInState {
@@ -355,7 +362,15 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    snodeClient.deleteMessage(recipient.address, userAuth, listOf(serverHash))
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = deleteMessageApiFactory.create(
+                                messageHashes = listOf(serverHash),
+                                swarmAuth = userAuth
+                            )
+                        )
+                    )
                 }
 
             // send an UnsendRequest to user's swarm
@@ -412,7 +427,15 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    snodeClient.deleteMessage(recipient.address, userAuth, listOf(serverHash))
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = deleteMessageApiFactory.create(
+                                messageHashes = listOf(serverHash),
+                                swarmAuth = userAuth
+                            )
+                        )
+                    )
                 }
 
             // send an UnsendRequest to user's swarm

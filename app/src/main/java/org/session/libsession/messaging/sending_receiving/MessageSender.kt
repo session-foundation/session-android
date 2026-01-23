@@ -42,6 +42,10 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos
+import org.thoughtcrime.securesms.api.snode.StoreMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.copyFromLibSession
@@ -63,6 +67,8 @@ class MessageSender @Inject constructor(
     private val messageExpirationManager: ExpiringMessageManager,
     private val snodeClock: SnodeClock,
     private val snodeClient: SnodeClient,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val storeMessageApiFactory: StoreMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
 
@@ -247,14 +253,28 @@ class MessageSender @Inject constructor(
                             "Unable to authorize group message send"
                         }
 
-                        snodeClient.sendMessage(
-                            auth = groupAuth,
-                            message = snodeMessage,
-                            namespace = Namespace.GROUP_MESSAGES(),
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = destination.publicKey,
+                                api = storeMessageApiFactory.create(
+                                    message = snodeMessage,
+                                    auth = groupAuth,
+                                    namespace = Namespace.GROUP_MESSAGES(),
+                                )
+                            )
                         )
                     }
                     is Destination.Contact -> {
-                        snodeClient.sendMessage(snodeMessage, auth = null, namespace = Namespace.DEFAULT())
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = destination.publicKey,
+                                api = storeMessageApiFactory.create(
+                                    message = snodeMessage,
+                                    auth = null,
+                                    namespace = Namespace.DEFAULT()
+                                )
+                            )
+                        )
                     }
                     is Destination.OpenGroup,
                     is Destination.OpenGroupInbox -> throw IllegalStateException("Destination should not be an open group.")

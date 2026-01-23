@@ -3,11 +3,10 @@ package org.thoughtcrime.securesms.api.snode
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
 import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.snode.model.BatchResponse
 
@@ -22,20 +21,29 @@ class BatchApi @AssistedInject constructor(
     override val methodName: String
         get() = "batch"
 
-    override fun buildParams(): JsonObject {
-        return JsonObject(
-            mapOf(
-                "requests" to JsonArray(requests.map { req ->
-                    JsonObject(
-                        mapOf(
-                            "method" to JsonPrimitive(req.methodName),
-                            "params" to req.buildParams()
-                        )
+    override fun buildParams(): JsonElement {
+        return json.encodeToJsonElement(
+            Request(
+                requests = requests.map { req ->
+                    RequestItem(
+                        method = req.methodName,
+                        params = req.buildParams()
                     )
-                })
+                }
             )
         )
     }
+
+    @Serializable
+    private class RequestItem(
+        val method: String,
+        val params: JsonElement
+    )
+
+    @Serializable
+    private class Request(
+        val requests: List<RequestItem>
+    )
 
     override fun deserializeSuccessResponse(body: JsonElement): BatchResponse {
         return json.decodeFromJsonElement(BatchResponse.serializer(), body)

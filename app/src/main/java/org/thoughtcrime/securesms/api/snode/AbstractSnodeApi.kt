@@ -66,9 +66,9 @@ fun buildAuthenticatedParameters(
     namespace: Int?,
     timestamp: Long,
     verificationData: ((namespaceText: String, timestamp: Long) -> Any)? = null,
-    builder: MutableMap<String, JsonPrimitive>.() -> Unit = {}
+    builder: MutableMap<String, JsonElement>.() -> Unit = {}
 ): JsonObject {
-    return JsonObject(buildMap<String, JsonPrimitive> {
+    return JsonObject(buildMap<String, JsonElement> {
         this.builder()
 
         if (verificationData != null) {

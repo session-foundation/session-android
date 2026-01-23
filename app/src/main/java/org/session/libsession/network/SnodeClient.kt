@@ -13,15 +13,12 @@ import kotlinx.coroutines.selects.select
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
-import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
-import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.onion.Version
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
@@ -29,7 +26,6 @@ import org.session.libsession.network.utilities.retryWithBackOff
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.BatchResponse
-import org.session.libsession.snode.model.StoreMessageResponse
 import org.session.libsession.utilities.mapValuesNotNull
 import org.session.libsession.utilities.toByteArray
 import org.session.libsignal.utilities.Base64
@@ -265,144 +261,6 @@ class SnodeClient @Inject constructor(
     //todo ONION refactor batching and decide on whether we should have a public send vs every methods defined here
 
     // Client methods
-
-    suspend fun fetchSwarm(publicKey: String): Map<*, *> {
-        return retryWithBackOffForSnode(
-            operationName = "fetchSwarm",
-            publicKey = publicKey,
-            pickTarget = { snodeDirectory.getRandomSnode() }
-        ) { snode ->
-            send(
-                method = Snode.Method.GetSwarm,
-                snode = snode,
-                parameters = mapOf("pubKey" to publicKey)
-            )
-        }
-    }
-
-    /**
-     * Note: After this method returns, [auth] will not be used by any of async calls and it's afe
-     * for the caller to clean up the associated resources if needed.
-     */
-    suspend fun sendMessage(
-        message: SnodeMessage,
-        auth: SwarmAuth?,
-        namespace: Int = 0,
-    ): StoreMessageResponse {
-        return retryWithBackOffForSnode(
-            maxAttempts = 2,
-            operationName = "sendMessage",
-            publicKey = message.recipient,
-            pickTarget = { swarmDirectory.getSingleTargetSnode(message.recipient) }
-        ) { target ->
-            val params: Map<String, Any> = if (auth != null) {
-                check(auth.accountId.hexString == message.recipient) {
-                    "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
-                }
-
-                val timestamp = snodeClock.currentTimeMillis()
-
-                buildAuthenticatedParameters(
-                    auth = auth,
-                    namespace = namespace,
-                    verificationData = { ns, t -> "${Snode.Method.SendMessage.rawValue}$ns$t" },
-                    timestamp = timestamp
-                ) {
-                    put("sig_timestamp", timestamp)
-                    putAll(message.toJSON())
-                }
-            } else {
-                buildMap {
-                    putAll(message.toJSON())
-                    if (namespace != 0) put("namespace", namespace)
-                }
-            }
-
-            sendBatchRequest(
-                snode = target,
-                publicKey = message.recipient,
-                request = SnodeBatchRequestInfo(
-                    method = Snode.Method.SendMessage.rawValue,
-                    params = params,
-                    namespace = namespace
-                ),
-                responseType = StoreMessageResponse.serializer(),
-                sequence = false,
-            )
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    suspend fun deleteMessage(
-        publicKey: String,
-        swarmAuth: SwarmAuth,
-        serverHashes: List<String>,
-    ): Map<*, *> {
-        return retryWithBackOffForSnode(
-            operationName = "deleteMessage",
-            publicKey = publicKey,
-            pickTarget = { swarmDirectory.getSingleTargetSnode(publicKey) }
-        ) { snode ->
-            val params = buildAuthenticatedParameters(
-                auth = swarmAuth,
-                namespace = null,
-                verificationData = { _, _ ->
-                    buildString {
-                        append(Snode.Method.DeleteMessage.rawValue)
-                        serverHashes.forEach(this::append)
-                    }
-                }
-            ) {
-                this["messages"] = serverHashes
-            }
-
-            val rawResponse = send(
-                method = Snode.Method.DeleteMessage,
-                snode = snode,
-                parameters = params,
-                publicKey = publicKey,
-            )
-
-            val swarms = rawResponse["swarm"] as? Map<String, Any>
-                ?: throw Error.Generic("Missing swarm in delete response")
-
-            val deletedMessages: Map<String, Boolean> = swarms.mapValuesNotNull { (hexSnodePublicKey, rawJSON) ->
-                val json = rawJSON as? Map<String, Any> ?: return@mapValuesNotNull null
-                val isFailed = json["failed"] as? Boolean ?: false
-                val statusCode = json["code"]?.toString()
-                val reason = json["reason"] as? String
-
-                if (isFailed) {
-                    Log.d("SessionClient", "DeleteMessage failed on $hexSnodePublicKey: $reason ($statusCode)")
-                    false
-                } else {
-                    val hashes = (json["deleted"] as? List<*>)?.filterIsInstance<String>()
-                        ?: return@mapValuesNotNull false
-
-                    val signature = json["signature"] as? String
-                        ?: return@mapValuesNotNull false
-
-                    val message = sequenceOf(swarmAuth.accountId.hexString)
-                        .plus(serverHashes)
-                        .plus(hashes)
-                        .toByteArray()
-
-                    ED25519.verify(
-                        ed25519PublicKey = Hex.fromStringCondensed(hexSnodePublicKey),
-                        signature = Base64.decode(signature),
-                        message = message
-                    )
-                }
-            }
-
-            if (deletedMessages.entries.all { !it.value }) {
-                throw Error.Generic("DeleteMessage did not succeed on any swarm member")
-            }
-
-            rawResponse
-        }
-    }
-
     suspend fun deleteAllMessages(auth: SwarmAuth): Map<String, Boolean> {
         val publicKey = auth.accountId.hexString
 
@@ -544,33 +402,6 @@ class SnodeClient @Inject constructor(
         }
     }
 
-
-    suspend fun alterTtl(
-        auth: SwarmAuth,
-        messageHashes: List<String>,
-        newExpiry: Long,
-        shorten: Boolean = false,
-        extend: Boolean = false,
-    ): Map<*, *> {
-        val publicKey = auth.accountId.hexString
-
-        return retryWithBackOffForSnode(
-            operationName = "alterTtl",
-            publicKey = publicKey,
-            pickTarget = { swarmDirectory.getSingleTargetSnode(publicKey) }
-        ) { snode ->
-            val params = buildAlterTtlParams(auth, messageHashes, newExpiry, shorten, extend)
-
-            send(
-                method = Snode.Method.Expire,
-                snode = snode,
-                parameters = params,
-                publicKey = auth.accountId.hexString,
-            )
-        }
-    }
-
-
     // Batch logic
 
     private fun buildAuthenticatedParameters(
@@ -660,70 +491,6 @@ class SnodeClient @Inject constructor(
         }
     }
 
-    suspend fun sendBatchRequest(
-        snode: Snode,
-        publicKey: String,
-        request: SnodeBatchRequestInfo,
-        sequence: Boolean = false,
-    ): JsonElement {
-        return sendBatchRequest(
-            snode = snode,
-            publicKey = publicKey,
-            request = request,
-            responseType = JsonElement.serializer(),
-            sequence = sequence,
-        )
-    }
-
-    fun buildAuthenticatedAlterTtlBatchRequest(
-        auth: SwarmAuth,
-        messageHashes: List<String>,
-        newExpiry: Long,
-        shorten: Boolean = false,
-        extend: Boolean = false
-    ): SnodeBatchRequestInfo {
-        val params = buildAlterTtlParams(auth, messageHashes, newExpiry, shorten, extend)
-        return SnodeBatchRequestInfo(
-            method = Snode.Method.Expire.rawValue,
-            params = params,
-            namespace = null
-        )
-    }
-
-    private fun buildAlterTtlParams(
-        auth: SwarmAuth,
-        messageHashes: List<String>,
-        newExpiry: Long,
-        shorten: Boolean,
-        extend: Boolean
-    ): Map<String, Any> {
-        val modifier = when {
-            extend -> "extend"
-            shorten -> "shorten"
-            else -> ""
-        }
-
-        return buildAuthenticatedParameters(
-            auth = auth,
-            namespace = null,
-            verificationData = { _, _ ->
-                buildString {
-                    append(Snode.Method.Expire.rawValue)
-                    append(modifier)
-                    append(newExpiry.toString())
-                    messageHashes.forEach(this::append)
-                }
-            }
-        ) {
-            put("expiry", newExpiry)
-            put("messages", messageHashes)
-            when {
-                extend -> put("extend", true)
-                shorten -> put("shorten", true)
-            }
-        }
-    }
-
     fun buildAuthenticatedStoreBatchInfo(
         namespace: Int,
         message: SnodeMessage,
@@ -748,53 +515,6 @@ class SnodeClient @Inject constructor(
         )
     }
 
-    fun buildAuthenticatedRetrieveBatchRequest(
-        auth: SwarmAuth,
-        lastHash: String?,
-        namespace: Int = 0,
-        maxSize: Int? = null
-    ): SnodeBatchRequestInfo {
-        val params = buildAuthenticatedParameters(
-            namespace = namespace,
-            auth = auth,
-            verificationData = { ns, t -> "${Snode.Method.Retrieve.rawValue}$ns$t" },
-        ) {
-            put("last_hash", lastHash.orEmpty())
-            if (maxSize != null) put("max_size", maxSize)
-        }
-
-        return SnodeBatchRequestInfo(
-            method = Snode.Method.Retrieve.rawValue,
-            params = params,
-            namespace = namespace
-        )
-    }
-
-    fun buildAuthenticatedDeleteBatchInfo(
-        auth: SwarmAuth,
-        messageHashes: List<String>,
-        required: Boolean = false
-    ): SnodeBatchRequestInfo {
-        val params = buildAuthenticatedParameters(
-            namespace = null,
-            auth = auth,
-            verificationData = { _, _ ->
-                buildString {
-                    append(Snode.Method.DeleteMessage.rawValue)
-                    messageHashes.forEach(this::append)
-                }
-            }
-        ) {
-            put("messages", messageHashes)
-            put("required", required)
-        }
-
-        return SnodeBatchRequestInfo(
-            method = Snode.Method.DeleteMessage.rawValue,
-            params = params,
-            namespace = null
-        )
-    }
 
     fun buildAuthenticatedUnrevokeSubKeyBatchRequest(
         groupAdminAuth: SwarmAuth,

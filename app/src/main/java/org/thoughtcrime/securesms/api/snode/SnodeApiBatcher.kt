@@ -35,10 +35,6 @@ class SnodeApiBatcher @Inject constructor(
             val result = results[i]
 
             runCatching {
-                if (!result.isSuccessful) {
-                    throw BatchResponse.Error(result)
-                }
-
                 request.api.handleResponse(
                     ctx = ctx,
                     snode = request.snode,

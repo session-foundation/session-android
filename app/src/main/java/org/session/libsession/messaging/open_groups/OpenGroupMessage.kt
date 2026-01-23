@@ -1,5 +1,9 @@
 package org.session.libsession.messaging.open_groups
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -77,8 +81,8 @@ data class OpenGroupMessage(
         return copy(base64EncodedSignature = Base64.encodeBytes(signature))
     }
 
-    fun toJSON(): Map<String, Any?> {
-        val json = mutableMapOf( "data" to base64EncodedData, "timestamp" to sentTimestamp )
+    fun toJSON(): JsonObject {
+        val json = mutableMapOf( "data" to JsonPrimitive(base64EncodedData), "timestamp" to sentTimestamp )
         serverID?.let { json["server_id"] = it }
         sender?.let { json["public_key"] = it }
         base64EncodedSignature?.let { json["signature"] = it }

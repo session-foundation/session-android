@@ -22,10 +22,8 @@ import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.snode.SwarmDirectory
-import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -37,11 +35,13 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.execute
+import org.thoughtcrime.securesms.api.swarm.SwarmApiError
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.findCause
 import java.time.Instant
@@ -61,8 +61,8 @@ class GroupPoller @AssistedInject constructor(
     private val messageParser: MessageParser,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val swarmDirectory: SwarmDirectory,
-    private val snodeClient: SnodeClient,
     private val retrieveMessageFactory: RetrieveMessageApi.Factory,
+    private val alterTtlApiApiFactory: AlterTtlApi.Factory,
     private val snodeApiExecutor: SnodeApiExecutor,
 ) {
     companion object {
@@ -272,15 +272,16 @@ class GroupPoller @AssistedInject constructor(
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
                     pollingTasks += "extending group config TTL" to async {
-                        snodeClient.sendBatchRequest(
-                            snode,
-                            groupId.hexString,
-                            snodeClient.buildAuthenticatedAlterTtlBatchRequest(
-                                messageHashes = configHashesToExtends.toList(),
-                                auth = groupAuth,
-                                newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
-                                extend = true
-                            ),
+                        snodeApiExecutor.execute(
+                            SnodeApiRequest(
+                                snode = snode,
+                                api = alterTtlApiApiFactory.create(
+                                    messageHashes = configHashesToExtends,
+                                    auth = groupAuth,
+                                    alterType = AlterTtlApi.AlterType.Extend,
+                                    newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
+                                )
+                            )
                         )
                     }
                 }
@@ -397,7 +398,7 @@ class GroupPoller @AssistedInject constructor(
             if (error != null && currentSnode != null) {
                 val badResponse = (sequenceOf(error) + error.suppressedExceptions.asSequence())
                     .firstOrNull { err ->
-                        err.findCause<BatchResponse.Error>()?.item?.let { it.isServerError || it.isSnodeNoLongerPartOfSwarm } == true
+                        err.findCause<SwarmApiError.SnodeNotLongerPartOfSwarmError>() != null
                     }
 
                 if (badResponse != null) {

@@ -12,7 +12,7 @@ data class StoreMessageResponse(
     val hash: String,
     @Serializable(InstantAsMillisSerializer::class)
     @SerialName("t") val timestamp: Instant,
-)
+) : SnodeApiResponse
 
 @Serializable
 data class RetrieveMessageResponse(

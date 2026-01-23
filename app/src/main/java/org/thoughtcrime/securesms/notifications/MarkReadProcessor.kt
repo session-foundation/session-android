@@ -17,6 +17,10 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.snode.AlterTtlApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
@@ -41,6 +45,8 @@ class MarkReadProcessor @Inject constructor(
     private val snodeClock: SnodeClock,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val snodeClient: SnodeClient,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val alterTtyFactory: AlterTtlApi.Factory,
     @param:ManagerScope private val coroutineScope: CoroutineScope,
 ) {
     fun process(
@@ -96,16 +102,23 @@ class MarkReadProcessor @Inject constructor(
         hashToMessage: Map<String, MarkedMessageInfo>
     ) {
         coroutineScope.launch {
+            val userAuth = checkNotNull(storage.userAuth) { "No authorized user" }
+
             hashToMessage.entries
                 .groupBy(
                     keySelector = { it.value.expirationInfo.expiresIn },
                     valueTransform = { it.key }
                 ).forEach { (expiresIn, hashes) ->
-                    snodeClient.alterTtl(
-                        messageHashes = hashes,
-                        newExpiry = snodeClock.currentTimeMillis() + expiresIn,
-                        auth = checkNotNull(storage.userAuth) { "No authorized user" },
-                        shorten = true
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = alterTtyFactory.create(
+                                messageHashes = hashes,
+                                auth = userAuth,
+                                alterType = AlterTtlApi.AlterType.Shorten,
+                                newExpiry = snodeClock.currentTimeMillis() + expiresIn
+                            )
+                        )
                     )
                 }
         }

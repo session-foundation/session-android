@@ -5,7 +5,6 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.session.libsession.network.SnodeClientErrorManager
@@ -27,7 +26,7 @@ class RetrieveMessageApi @AssistedInject constructor(
     override val methodName: String
         get() = "retrieve"
 
-    override fun buildParams(): JsonObject {
+    override fun buildParams(): JsonElement {
         return buildAuthenticatedParameters(
             auth = auth,
             namespace = namespace,

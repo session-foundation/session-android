@@ -44,6 +44,12 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.StoreMessageApi
+import org.thoughtcrime.securesms.api.snode.execute
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -68,8 +74,10 @@ class ConfigUploader @Inject constructor(
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
     private val swarmDirectory: SwarmDirectory,
-    private val snodeClient: SnodeClient,
-    private val pathManager: PathManager
+    private val pathManager: PathManager,
+    private val snodeApiExecutor: SnodeApiExecutor,
+    private val storeMessageApiFactory: StoreMessageApi.Factory,
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory,
 ) : AuthAwareComponent {
     /**
      * A flow that only emits when
@@ -209,20 +217,20 @@ class ConfigUploader @Inject constructor(
         // Keys push is different: it doesn't have the delete call so we don't call pushConfig.
         // Keys must be pushed first because the other configs depend on it.
         val keysPushResult = keysPush?.let { push ->
-            snodeClient.sendBatchRequest(
-                snode = snode,
-                publicKey = auth.accountId.hexString,
-                request = snodeClient.buildAuthenticatedStoreBatchInfo(
-                    Namespace.GROUP_KEYS(),
-                    SnodeMessage(
-                        auth.accountId.hexString,
-                        Base64.encodeBytes(push),
-                        SnodeMessage.CONFIG_TTL,
-                        clock.currentTimeMillis(),
-                    ),
-                    auth
-                ),
-                responseType = StoreMessageResponse.serializer()
+            snodeApiExecutor.execute(
+                SnodeApiRequest(
+                    snode = snode,
+                    api = storeMessageApiFactory.create(
+                        namespace = Namespace.GROUP_KEYS(),
+                        message = SnodeMessage(
+                            auth.accountId.hexString,
+                            Base64.encodeBytes(push),
+                            SnodeMessage.CONFIG_TTL,
+                            clock.currentTimeMillis(),
+                        ),
+                        auth = auth
+                    )
+                )
             ).let(::listOf).toConfigPushResult()
         }
 
@@ -288,20 +296,20 @@ class ConfigUploader @Inject constructor(
             push.messages
                 .map { message ->
                     async {
-                        snodeClient.sendBatchRequest(
-                            snode = snode,
-                            publicKey = auth.accountId.hexString,
-                            request = snodeClient.buildAuthenticatedStoreBatchInfo(
-                                namespace,
-                                SnodeMessage(
-                                    auth.accountId.hexString,
-                                    Base64.encodeBytes(message.data),
-                                    SnodeMessage.CONFIG_TTL,
-                                    timestamp,
-                                ),
-                                auth,
-                            ),
-                            responseType = StoreMessageResponse.serializer()
+                        snodeApiExecutor.execute(
+                            SnodeApiRequest(
+                                snode = snode,
+                                api = storeMessageApiFactory.create(
+                                    namespace = namespace,
+                                    message = SnodeMessage(
+                                        auth.accountId.hexString,
+                                        Base64.encodeBytes(message.data),
+                                        SnodeMessage.CONFIG_TTL,
+                                        timestamp,
+                                    ),
+                                    auth = auth
+                                )
+                            )
                         )
                     }
                 }
@@ -309,10 +317,14 @@ class ConfigUploader @Inject constructor(
         }
 
         if (push.obsoleteHashes.isNotEmpty()) {
-            snodeClient.sendBatchRequest(
-                snode = snode,
-                publicKey = auth.accountId.hexString,
-                request = snodeClient.buildAuthenticatedDeleteBatchInfo(auth, push.obsoleteHashes)
+            snodeApiExecutor.execute(
+                SnodeApiRequest(
+                    snode = snode,
+                    api = deleteMessageApiFactory.create(
+                        swarmAuth = auth,
+                        messageHashes = push.obsoleteHashes
+                    )
+                )
             )
         }
 
