@@ -12,6 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -54,7 +55,8 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
     storage = storage,
     configFactory = configFactory,
     avatarUtils = avatarUtils,
-    recipientRepository = recipientRepository
+    recipientRepository = recipientRepository,
+    groupManager = groupManager
 ) {
     private val groupId = groupAddress.accountId
 
@@ -84,7 +86,7 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
     init {
         // Build footer from selected admins + collapsed state
         viewModelScope.launch {
-            kotlinx.coroutines.flow.combine(
+            combine(
                 selectedAdmins,
                 footerCollapsed,
                 ::buildFooterState

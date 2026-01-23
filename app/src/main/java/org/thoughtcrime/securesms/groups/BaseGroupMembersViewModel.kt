@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.groups
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.ui.input.key.Key.Companion.G
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -13,18 +14,23 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -45,10 +51,12 @@ abstract class BaseGroupMembersViewModel(
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUtils: AvatarUtils,
     private val recipientRepository: RecipientRepository,
+    private val groupManager: GroupManagerV2,
 ) : ViewModel() {
     private val groupId = groupAddress.accountId
 
     // Output: the source-of-truth group information. Other states are derived from this.
+    @OptIn(FlowPreview::class)
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
         (configFactory.configUpdateNotifications
             .filter {
@@ -65,21 +73,27 @@ abstract class BaseGroupMembersViewModel(
                     val displayInfo = storage.getClosedGroupDisplayInfo(groupId.hexString)
                         ?: return@withContext null
 
-                    val rawMembers = configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
+                    val rawMembers =
+                        configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
 
                     val memberState = mutableListOf<GroupMemberState>()
                     for ((member, status) in rawMembers) {
-                        memberState.add(createGroupMember(
-                            member = member, status = status,
-                            shouldShowProBadge = recipientRepository.getRecipient(member.accountId().toAddress()).shouldShowProBadge,
-                            myAccountId = currentUserId,
-                            amIAdmin = displayInfo.isUserAdmin
-                        ))
+                        memberState.add(
+                            createGroupMember(
+                                member = member, status = status,
+                                shouldShowProBadge = recipientRepository.getRecipient(
+                                    member.accountId().toAddress()
+                                ).shouldShowProBadge,
+                                myAccountId = currentUserId,
+                                amIAdmin = displayInfo.isUserAdmin
+                            )
+                        )
                     }
 
                     displayInfo to sortMembers(memberState, currentUserId)
                 }
-          }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+            }.debounce(200)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Current group name (for header / text, if needed)
     val groupName: StateFlow<String> = groupInfo
@@ -128,6 +142,16 @@ abstract class BaseGroupMembersViewModel(
                 )
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    init {
+        viewModelScope.launch {
+            groupInfo
+                .map { it?.second.orEmpty() }
+                .map { members -> members.firstOrNull { it.isSelf }?.status /* or status */ }
+                .debounce(200L)
+                .collectLatest { groupManager.manuallyAcceptPromotion(groupId) }
+        }
+    }
 
     fun onSearchQueryChanged(query: String) {
         mutableSearchQuery.value = query

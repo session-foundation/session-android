@@ -43,7 +43,8 @@ class PromoteMembersViewModel @AssistedInject constructor(
     storage = storage,
     configFactory = configFactory,
     avatarUtils = avatarUtils,
-    recipientRepository = recipientRepository
+    recipientRepository = recipientRepository,
+    groupManager = groupManager
 ) {
     private val groupId = groupAddress.accountId
 
