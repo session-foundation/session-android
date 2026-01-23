@@ -5,7 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
-import org.session.libsession.messaging.open_groups.api.CommunityRequestBatcher
+import org.session.libsession.messaging.open_groups.api.CommunityApiBatcher
 import org.thoughtcrime.securesms.api.AutoRetryApiExecutor
 import org.thoughtcrime.securesms.api.BatchApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
@@ -23,7 +23,7 @@ class CommunityModule {
     @Named(COMMUNITY_API_EXECUTOR_NAME)
     fun provideCommunityApiExecutor(
         executor: ServerApiExecutor,
-        batcher: CommunityRequestBatcher,
+        batcher: CommunityApiBatcher,
         @ManagerScope scope: CoroutineScope,
     ): ServerApiExecutor {
         return AutoRetryApiExecutor(

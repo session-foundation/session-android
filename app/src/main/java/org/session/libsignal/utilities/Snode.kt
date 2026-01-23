@@ -21,8 +21,6 @@ data class Snode(val address: String, val port: Int, val publicKeySet: KeySet?) 
     val ed25519Key: String get() = publicKeySet!!.ed25519Key
     val x25519Key: String get() = publicKeySet!!.x25519Key
 
-    override val batchKey: Any get() = publicKeySet?.ed25519Key ?: "$address:$port"
-
     enum class Method(val rawValue: String) {
         GetSwarm("get_snodes_for_pubkey"),
         Retrieve("retrieve"),

@@ -6,15 +6,15 @@ import dagger.assisted.AssistedInject
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromStream
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody
-import okhttp3.Response
-import okio.Buffer
+import org.session.libsignal.utilities.Base64
+import org.thoughtcrime.securesms.api.http.HttpBody
+import org.thoughtcrime.securesms.api.http.HttpRequest
+import org.thoughtcrime.securesms.api.http.HttpResponse
 
 class BatchApi @AssistedInject constructor(
     @Assisted private val items: List<CommunityApi<*>>,
@@ -23,8 +23,9 @@ class BatchApi @AssistedInject constructor(
     override val room: String?
         get() = null
 
-    override val requiresSigning: Boolean
-        get() = false
+    override val requiresSigning: Boolean by lazy {
+        items.any { it.requiresSigning }
+    }
 
     override val httpMethod: String
         get() = "POST"
@@ -35,28 +36,49 @@ class BatchApi @AssistedInject constructor(
     override val httpEndpoint: String
         get() = "/batch"
 
-    override fun buildRequestBody(serverBaseUrl: String, x25519PubKeyHex: String): Pair<MediaType, ByteArray> {
-        return "application/json".toMediaType() to json.encodeToString(JsonArray(items.map {
-            val req = it.buildRequest(serverBaseUrl, x25519PubKeyHex)
-            JsonObject(
-                buildMap {
-                    put("method", JsonPrimitive(req.method))
-                    put("endpoint", JsonPrimitive(it.httpEndpoint))
-                    put("headers", JsonObject(req.headers.associate { (k, v) -> k to JsonPrimitive(v) }) )
+    override fun buildRequestBody(
+        serverBaseUrl: String,
+        x25519PubKeyHex: String
+    ): Pair<MediaType, HttpBody> {
+        val requestItems = items.map {
+            BatchRequestItem(httpRequest = it.buildRequest(serverBaseUrl, x25519PubKeyHex), json)
+        }
 
-                    if (req.body != null && req.header("Content-Type")?.startsWith("application/json") == true) {
-                        put("body", JsonPrimitive(req.body!!.readText()))
-                    }
-                }
-            )
-        })).toByteArray()
+        val text = json.encodeToString(requestItems)
+
+        return "application/json".toMediaType() to HttpBody.Text(text)
     }
 
-    private fun RequestBody.readText(): String {
-        val buffer = Buffer()
-        this.writeTo(buffer)
-        return buffer.readUtf8()
+    @Serializable
+    private class BatchRequestItem(
+        val method: String,
+        val path: String,
+        val headers: Map<String, String>,
+        val json: JsonElement? = null,
+        val b64: String? = null
+    ) {
+        init {
+            check(json == null || b64 == null) { "Only one of 'json' or 'b64' can be set" }
+        }
+
+        constructor(httpRequest: HttpRequest, json: Json) : this(
+            method = httpRequest.method,
+            path = httpRequest.url.encodedPath,
+            headers = httpRequest.headers.toMap(),
+            json = if (httpRequest.isJsonBody) {
+                @Suppress("OPT_IN_USAGE")
+                httpRequest.body?.asInputStream()?.use(json::decodeFromStream)
+            } else {
+                null
+            },
+            b64 = if (!httpRequest.isJsonBody) {
+                httpRequest.body?.toBytes()?.let(Base64::encodeBytes)
+            } else {
+                null
+            }
+        )
     }
+
 
     @Serializable
     class BatchResponseItem(
@@ -64,13 +86,26 @@ class BatchApi @AssistedInject constructor(
         val headers: Map<String, String>,
         val body: JsonElement?
     ) {
-        fun toHttpResponse(): Response {
-            TODO()
+        fun toHttpResponse(json: Json): HttpResponse {
+            return HttpResponse(
+                statusCode = code,
+                headers = headers,
+                body = body?.let {
+                    HttpBody.Text(json.encodeToString(it))
+                } ?: HttpBody.empty()
+            )
         }
     }
 
     @AssistedFactory
     interface Factory {
         fun create(items: List<CommunityApi<*>>): BatchApi
+    }
+
+    companion object {
+        private val HttpRequest.isJsonBody: Boolean
+            get() {
+                return getHeader("Content-Type")?.startsWith("application/json", ignoreCase = true) == true
+            }
     }
 }

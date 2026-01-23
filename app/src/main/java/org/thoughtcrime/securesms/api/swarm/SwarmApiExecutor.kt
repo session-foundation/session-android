@@ -17,7 +17,6 @@ import javax.inject.Inject
 
 class SwarmApiRequest<T : SnodeApiResponse>(
     val swarmPubKeyHex: String,
-    val chooseStrategy: SwarmNodeChooseStrategy,
     val api: SnodeApi<T>
 )
 
@@ -29,7 +28,6 @@ suspend inline fun <reified Res, Req> SwarmApiExecutor.execute(
 ): Res where Res : SnodeApiResponse, Req : SnodeApi<Res> {
     return send(ctx, req) as Res
 }
-
 
 class SwarmApiExecutorImpl @Inject constructor(
     private val snodeApiExecutor: SnodeApiExecutor,

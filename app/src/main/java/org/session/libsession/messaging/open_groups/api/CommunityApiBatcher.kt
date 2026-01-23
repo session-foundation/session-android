@@ -1,12 +1,14 @@
 package org.session.libsession.messaging.open_groups.api
 
+import kotlinx.serialization.json.Json
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.BatchApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import javax.inject.Inject
 
-class CommunityRequestBatcher @Inject constructor(
+class CommunityApiBatcher @Inject constructor(
     private val batchApiFactory: BatchApi.Factory,
+    private val json: Json,
 ) : BatchApiExecutor.Batcher<ServerApiRequest<*>, Any> {
 
     override fun constructBatchRequest(requests: List<Pair<ApiExecutorContext, ServerApiRequest<*>>>): ServerApiRequest<*> {
@@ -42,7 +44,7 @@ class CommunityRequestBatcher @Inject constructor(
             runCatching {
                 req.api.processResponse(
                     executorContext = ctx,
-                    response = responseList[index].toHttpResponse(),
+                    response = responseList[index].toHttpResponse(json),
                     baseUrl = req.serverBaseUrl,
                 )
             }

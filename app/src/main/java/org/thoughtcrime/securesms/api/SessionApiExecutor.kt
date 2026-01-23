@@ -1,9 +1,9 @@
 package org.thoughtcrime.securesms.api
 
 import kotlinx.serialization.json.JsonElement
-import okhttp3.Request
-import okhttp3.Response
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.http.HttpRequest
+import org.thoughtcrime.securesms.api.http.HttpResponse
 
 
 sealed interface SessionApiRequest<ResponseType : SessionApiResponse> {
@@ -14,7 +14,7 @@ sealed interface SessionApiRequest<ResponseType : SessionApiResponse> {
     ) : SessionApiRequest<SessionApiResponse.JsonRPCResponse>
 
     data class HttpServerRequest(
-        val request: Request,
+        val request: HttpRequest,
         val serverX25519PubKeyHex: String
     ) : SessionApiRequest<SessionApiResponse.HttpServerResponse>
 }
@@ -26,7 +26,7 @@ sealed interface SessionApiResponse {
         val bodyAsJson: JsonElement?,
     ) : SessionApiResponse
 
-    class HttpServerResponse(val response: Response) : SessionApiResponse
+    class HttpServerResponse(val response: HttpResponse) : SessionApiResponse
 }
 
 typealias SessionApiExecutor = ApiExecutor<SessionApiRequest<*>, SessionApiResponse>

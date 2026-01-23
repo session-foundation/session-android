@@ -14,6 +14,7 @@ import org.thoughtcrime.securesms.api.http.createRegularNodeOkHttpClient
 import org.thoughtcrime.securesms.api.http.createSeedSnodeOkHttpClient
 import org.thoughtcrime.securesms.api.onion.OnionSessionApiExecutor
 import org.thoughtcrime.securesms.api.onion.REGULAR_SNODE_HTTP_EXECUTOR_NAME
+import org.thoughtcrime.securesms.api.onion.SEED_SNODE_HTTP_EXECUTOR_NAME
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiExecutorImpl
 import org.thoughtcrime.securesms.api.snode.SnodeApiBatcher
@@ -41,6 +42,8 @@ abstract class APIModuleBinding {
 @Module
 @InstallIn(SingletonComponent::class)
 class APIModule {
+
+
     @Provides
     @Singleton
     fun provideSnodeAPIExecutor(
@@ -79,7 +82,7 @@ class APIModule {
 
 
     @Provides
-    @Named(REGULAR_SNODE_HTTP_EXECUTOR_NAME)
+    @Named(SEED_SNODE_HTTP_EXECUTOR_NAME)
     @Singleton
     fun provideSeedSnodeApiExecutor(
         @Named(HTTP_EXECUTOR_SEMAPHORE_NAME) semaphore: Semaphore,

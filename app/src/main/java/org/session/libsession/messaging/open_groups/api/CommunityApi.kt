@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.open_groups.api
 
+import androidx.collection.arrayMapOf
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -8,9 +9,6 @@ import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.network.ServerClientErrorManager
@@ -21,6 +19,9 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.http.HttpBody
+import org.thoughtcrime.securesms.api.http.HttpRequest
+import org.thoughtcrime.securesms.api.http.HttpResponse
 import org.thoughtcrime.securesms.api.server.ServerApi
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import java.io.ByteArrayOutputStream
@@ -57,26 +58,29 @@ abstract class CommunityApi<ResponseType>(
     abstract val responseDeserializer: DeserializationStrategy<ResponseType>
     abstract val httpEndpoint: String
 
-    open fun buildRequestBody(serverBaseUrl: String, x25519PubKeyHex: String): Pair<MediaType, ByteArray>? = null
+    open fun buildRequestBody(serverBaseUrl: String, x25519PubKeyHex: String): Pair<MediaType, HttpBody>? = null
 
-    override fun buildRequest(baseUrl: String, x25519PubKeyHex: String): Request {
-        val builder = Request.Builder()
+    override fun buildRequest(baseUrl: String, x25519PubKeyHex: String): HttpRequest {
+        val builtBody = buildRequestBody(baseUrl, x25519PubKeyHex)
+        val headers = arrayMapOf<String, String>()
 
-        val body = buildRequestBody(baseUrl, x25519PubKeyHex)
-        val url = baseUrl.toHttpUrl()
+        val httpBody = if (builtBody != null) {
+            headers["Content-Type"] = builtBody.first.toString()
+            headers["Content-Length"] = builtBody.second.byteLength.toString()
+            builtBody.second
+        } else {
+            null
+        }
 
-        builder.method(
-            httpMethod,
-            body?.let { (mediaType, bytes) -> bytes.toRequestBody(mediaType) })
-            .url(requireNotNull(url.resolve(httpEndpoint)) {
-                "Failed to resolve URL for OpenGroupApi: base=${url}, endpoint=$httpEndpoint"
-            })
+        room?.let {
+            headers["Room"] = it
+        }
 
         if (requiresSigning) {
             val loggedInState = loginStateRepository.get().requireLoggedInState()
-            val bodyHash = body?.let { Hash.hash64(it.second) } ?: byteArrayOf()
+            val bodyHash = builtBody?.let { Hash.hash64(it.second.toBytes()) } ?: byteArrayOf()
             val nonce = ByteArray(16).also(SecureRandom()::nextBytes)
-            val timestamp = clock.currentTimeMillis().toString()
+            val timestamp = clock.currentTimeSeconds().toString()
 
             val messageToSign = ByteArrayOutputStream().use { stream ->
                 stream.write(Hex.fromStringCondensed(x25519PubKeyHex))
@@ -103,7 +107,7 @@ abstract class CommunityApi<ResponseType>(
                         ed25519SecretKey = loggedInState.accountEd25519KeyPair.secretKey.data,
                         serverPubKey = Hex.fromStringCondensed(x25519PubKeyHex)
                     ).pubKey.data
-                ).hexString
+                 ).hexString
 
                 signature = BlindKeyAPI.blind15Sign(
                     ed25519SecretKey = loggedInState.accountEd25519KeyPair.secretKey.data,
@@ -111,29 +115,43 @@ abstract class CommunityApi<ResponseType>(
                     message = messageToSign
                 )
             } else {
-                pubKeyHexUsedToSign = loggedInState.accountId.hexString
+                pubKeyHexUsedToSign = AccountId(
+                    IdPrefix.UN_BLINDED,
+                    loggedInState.accountEd25519KeyPair.pubKey.data
+                ).hexString
+
                 signature = ED25519.sign(
                     ed25519PrivateKey = loggedInState.accountEd25519KeyPair.secretKey.data,
                     message = messageToSign
                 )
             }
 
-            builder.addHeader("X-SOGS-Nonce", Base64.encodeBytes(nonce))
-                .addHeader("X-SOGS-Timestamp", timestamp)
-                .addHeader("X-SOGS-PubKey", pubKeyHexUsedToSign)
-                .addHeader("X-SOGS-Signature", Base64.encodeBytes(signature))
+            headers["X-SOGS-Nonce"] = Base64.encodeBytes(nonce)
+            headers["X-SOGS-Timestamp"] = timestamp
+            headers["X-SOGS-PubKey"] = pubKeyHexUsedToSign
+            headers["X-SOGS-Signature"] = Base64.encodeBytes(signature)
         }
 
-        return builder.build()
+        return HttpRequest(
+            url = requireNotNull(baseUrl.toHttpUrl().resolve(httpEndpoint)) {
+                "Could not resolve URL for endpoint $httpEndpoint with base $baseUrl"
+            },
+            method = httpMethod,
+            headers = headers,
+            body = httpBody,
+        )
     }
 
     override suspend fun handleSuccessResponse(
         executorContext: ApiExecutorContext,
         baseUrl: String,
-        response: Response
+        response: HttpResponse
     ): ResponseType {
         @Suppress("OPT_IN_USAGE")
-        return json.decodeFromStream(responseDeserializer, response.body.byteStream())
+        return json.decodeFromStream(
+            responseDeserializer,
+            response.body.asInputStream()
+        )
     }
 
     class CommunityApiDependencies @Inject constructor(

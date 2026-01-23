@@ -1,6 +1,7 @@
 package org.session.libsignal.utilities
 
 import okhttp3.MediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import okio.BufferedSource
 import okio.buffer
@@ -56,8 +57,12 @@ class ByteArraySlice private constructor(
         }
     }
 
-    fun decodeToString(): String {
-        return data.decodeToString(offset, offset + len)
+    fun decodeToString(throwOnInvalidSequence: Boolean = false): String {
+        return data.decodeToString(
+            startIndex = offset,
+            endIndex = offset + len,
+            throwOnInvalidSequence = throwOnInvalidSequence
+        )
     }
 
     fun inputStream(): InputStream {
@@ -113,6 +118,12 @@ class ByteArraySlice private constructor(
                     return inputStream().source().buffer()
                 }
             }
+        }
+
+        fun ByteArraySlice.toRequestBody(
+            contentType: MediaType? = null
+        ): okhttp3.RequestBody {
+            return data.toRequestBody(contentType, offset, len)
         }
     }
 }

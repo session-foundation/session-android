@@ -1,23 +1,23 @@
 package org.thoughtcrime.securesms.api.server
 
-import okhttp3.Request
-import okhttp3.Response
 import org.session.libsession.network.ServerClientErrorManager
 import org.session.libsession.network.ServerClientFailureContext
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
+import org.thoughtcrime.securesms.api.http.HttpRequest
+import org.thoughtcrime.securesms.api.http.HttpResponse
 
 abstract class ServerApi<ResponseType>(
     private val errorManager: ServerClientErrorManager,
 ) {
-    abstract fun buildRequest(baseUrl: String, x25519PubKeyHex: String): Request
+    abstract fun buildRequest(baseUrl: String, x25519PubKeyHex: String): HttpRequest
 
     suspend fun processResponse(
         executorContext: ApiExecutorContext,
         baseUrl: String,
-        response: Response
+        response: HttpResponse
     ): ResponseType {
-        if (response.code !in 200..299) {
+        if (response.statusCode !in 200..299) {
             val failureContext = executorContext.getOrPut(ServerClientFailureContextKey) {
                 ServerClientFailureContext(
                     url = baseUrl,
@@ -26,18 +26,19 @@ abstract class ServerApi<ResponseType>(
             }
 
             val failureDecision = errorManager.onFailure(
-                errorCode = response.code,
+                errorCode = response.statusCode,
                 ctx = failureContext,
             )
 
             executorContext.set(
                 key = ServerClientFailureContextKey,
-                value = failureContext.copy(previousErrorCode = response.code)
+                value = failureContext.copy(previousErrorCode = response.statusCode)
             )
 
-            val exception =  ServerApiError.UnknownStatusCode(
-                code = response.code,
-                bodyText = null // TODO: extract body text if needed
+            val exception = ServerApiError.UnknownStatusCode(
+                api = this::class.java,
+                code = response.statusCode,
+                body = response.body,
             )
 
             if (failureDecision != null) {
@@ -57,7 +58,7 @@ abstract class ServerApi<ResponseType>(
     abstract suspend fun handleSuccessResponse(
         executorContext: ApiExecutorContext,
         baseUrl: String,
-        response: Response
+        response: HttpResponse
     ): ResponseType
 
     private object ServerClientFailureContextKey :

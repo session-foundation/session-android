@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.api.onion
 
 import androidx.annotation.VisibleForTesting
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -10,12 +8,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
-import okhttp3.ResponseBody
-import okio.Buffer
 import okio.IOException
 import okio.utf8Size
 import org.session.libsession.network.NetworkErrorManager
@@ -33,7 +25,6 @@ import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.AESGCM
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.ByteArraySlice
-import org.session.libsignal.utilities.ByteArraySlice.Companion.toResponseBody
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
@@ -41,11 +32,13 @@ import org.thoughtcrime.securesms.api.SessionApiRequest
 import org.thoughtcrime.securesms.api.SessionApiResponse
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.api.http.HttpApiExecutor
+import org.thoughtcrime.securesms.api.http.HttpBody
+import org.thoughtcrime.securesms.api.http.HttpRequest
+import org.thoughtcrime.securesms.api.http.HttpResponse
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
-import okhttp3.Request as HttpRequest
 
 const val SEED_SNODE_HTTP_EXECUTOR_NAME = "seed_snode_executor"
 const val REGULAR_SNODE_HTTP_EXECUTOR_NAME = "regular_snode_executor"
@@ -90,7 +83,7 @@ class OnionSessionApiExecutor @Inject constructor(
                     port = req.request.url.port,
                     x25519PublicKey = req.serverX25519PubKeyHex,
                     scheme = req.request.url.scheme,
-                    target = req.request.url.encodedPath.removePrefix("/"),
+                    target = Version.V4.value,
                 )
                 payload = generateV4HttpServerPayload(req.request)
             }
@@ -111,7 +104,7 @@ class OnionSessionApiExecutor @Inject constructor(
         )
 
         val guard = builtOnion.guard
-        val normalizedBaseUrl = buildString {
+        val guardBaseUrl = buildString {
             append(guard.address)
             if ((guard.address.startsWith("http://") && guard.port == 80) ||
                 (guard.address.startsWith("https://") && guard.port == 443)) {
@@ -122,33 +115,36 @@ class OnionSessionApiExecutor @Inject constructor(
             }
         }.lowercase()
 
-        val url = "$normalizedBaseUrl/onion_req/v2".toHttpUrl()
+        val url = "$guardBaseUrl/onion_req/v2".toHttpUrl()
 
-        val executor = if (snodeDirectory.get().seedNodePool.contains(normalizedBaseUrl)) {
+        val httpExecutor = if (snodeDirectory.get().seedNodePool.contains(guardBaseUrl)) {
             seedSnodeHttpApiExecutor.get()
         } else {
             regularSnodeHttpApiExecutor.get()
         }
 
+        val httpRequest = HttpRequest(
+            url = url,
+            method = "POST",
+            headers = mapOf(),
+            body = HttpBody.Bytes(body)
+        )
+
         val result = runCatching {
-            executor.send(
+            httpExecutor.send(
                 ctx = ctx,
-                req = HttpRequest.Builder()
-                    .url(url)
-                    .post(
-                        body.toRequestBody(
-                            contentType = "application/json; charset=utf-8".toMediaType()
-                        )
-                    )
-                    .build()
+                req = httpRequest
             )
         }
 
         return when {
-            result.isSuccess && result.getOrThrow().isSuccessful -> {
+            result.isSuccess && result.getOrThrow().statusCode in 200..299 -> {
                 when (onionRequestVersion) {
                     Version.V3 -> handleV3Response(result.getOrThrow().body, builtOnion)
-                    Version.V4 -> handleV4Response(result.getOrThrow().body, builtOnion)
+                    Version.V4 -> handleV4Response(
+                        body = result.getOrThrow().body,
+                        builtOnion = builtOnion
+                    )
                 }
             }
 
@@ -156,10 +152,8 @@ class OnionSessionApiExecutor @Inject constructor(
                 val error = if (result.isSuccess) {
                     mapHttpError(
                         path = path,
-                        httpResponseCode = result.getOrThrow().code,
-                        httpResponseBody = withContext(Dispatchers.IO) {
-                            result.getOrThrow().body.string()
-                        },
+                        httpResponseCode = result.getOrThrow().statusCode,
+                        httpResponseBody = (result.getOrThrow().body as? HttpBody.Text)?.text,
                         destination = onionDestination,
                     )
                 } else if (result.exceptionOrNull() is IOException) {
@@ -326,21 +320,18 @@ class OnionSessionApiExecutor @Inject constructor(
         )
     }
 
-    private fun generateV4HttpServerPayload(req: Request): ByteArray {
+    private fun generateV4HttpServerPayload(req: HttpRequest): ByteArray {
         val meta = json.encodeToString(V4RequestMeta(req))
-        val body = req.body?.let { body ->
-            Buffer().also(body::writeTo)
-        }
 
         return ByteArrayOutputStream().use { outputStream ->
             outputStream.writer().use { writer ->
                 writer.write("l${meta.utf8Size()}:")
                 writer.write(meta)
 
-                if (body != null) {
-                    writer.write("${body.size}:")
+                if (req.body != null) {
+                    writer.write("${req.body.byteLength}:")
                     writer.flush() // Flush before writing raw bytes
-                    body.writeTo(outputStream)
+                    req.body.asInputStream().use { it.copyTo(outputStream) }
                 }
 
                 writer.write("e")
@@ -356,7 +347,7 @@ class OnionSessionApiExecutor @Inject constructor(
         val method: String,
         val headers: Map<String, String>,
     ) {
-        constructor(request: Request)
+        constructor(request: HttpRequest)
                 : this(
             endpoint = buildString {
                 append(request.url.encodedPath)
@@ -371,16 +362,12 @@ class OnionSessionApiExecutor @Inject constructor(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    private suspend fun handleV4Response(
-        body: ResponseBody,
+    private fun handleV4Response(
+        body: HttpBody,
         builtOnion: OnionBuilder.BuiltOnion
     ): SessionApiResponse.HttpServerResponse {
-        val bodyBytes = withContext(Dispatchers.IO) {
-            body.bytes() // Read all bytes into memory
-        }
-
         val decrypted = AESGCM.decrypt(
-            bodyBytes,
+            body.toBytes(),
             symmetricKey = builtOnion.destinationSymmetricKey
         )
 
@@ -404,16 +391,13 @@ class OnionSessionApiExecutor @Inject constructor(
 
         val bodySlice = decrypted.getBody(infoLength, infoEndIndex)
 
-        val builder = Response.Builder()
-            .code(info.code)
-
-        if (!info.headers.isNullOrEmpty()) {
-            info.headers.forEach { (name, value) -> builder.addHeader(name, value) }
-        }
-
-        builder.body(bodySlice.toResponseBody())
-
-        return SessionApiResponse.HttpServerResponse(builder.build())
+        return SessionApiResponse.HttpServerResponse(
+            HttpResponse(
+                statusCode = info.code,
+                headers = info.headers.orEmpty(),
+                body = HttpBody.ByteSlice(bodySlice)
+            )
+        )
     }
 
     private fun ByteArray.getBody(infoLength: Int, infoEndIndex: Int): ByteArraySlice {
@@ -428,13 +412,11 @@ class OnionSessionApiExecutor @Inject constructor(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    private suspend fun handleV3Response(
-        body: ResponseBody,
+    private fun handleV3Response(
+        body: HttpBody,
         builtOnion: OnionBuilder.BuiltOnion
     ): SessionApiResponse.JsonRPCResponse {
-        val ivAndCipherText = Base64.decode(withContext(Dispatchers.IO) {
-            body.bytes()
-        })
+        val ivAndCipherText = Base64.decode(body.toBytes())
 
         val response: V3Response =
             AESGCM.decrypt(ivAndCipherText, symmetricKey = builtOnion.destinationSymmetricKey)
@@ -442,7 +424,7 @@ class OnionSessionApiExecutor @Inject constructor(
                 .use(json::decodeFromStream)
 
         return SessionApiResponse.JsonRPCResponse(
-            code = response.code,
+            code = response.status,
             bodyAsText = response.body,
             bodyAsJson = runCatching {
                 json.decodeFromString<JsonElement>(response.body)
@@ -452,7 +434,7 @@ class OnionSessionApiExecutor @Inject constructor(
 
     @Serializable
     private class V3Response(
-        val code: Int,
+        val status: Int,
         val body: String,
     )
 

@@ -101,9 +101,12 @@ class NetworkErrorManager @Inject constructor(
 
                 return FailureDecision.Retry
             }
-            is OnionError.InvalidResponse -> TODO()
-            is OnionError.PathError -> TODO()
-            is OnionError.Unknown -> TODO()
+            is OnionError.InvalidResponse,
+            is OnionError.PathError,
+            is OnionError.Unknown -> {
+                //TODO ONION investigate if we can do better here
+                return FailureDecision.Fail
+            }
         }
 
         // --------------------------------------------------------------------

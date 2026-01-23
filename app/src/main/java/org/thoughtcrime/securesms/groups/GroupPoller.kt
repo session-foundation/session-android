@@ -40,6 +40,7 @@ import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.findCause
@@ -61,8 +62,8 @@ class GroupPoller @AssistedInject constructor(
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val swarmDirectory: SwarmDirectory,
     private val snodeClient: SnodeClient,
-    private val retrieveMessageAPIFactory: RetrieveMessageApi.Factory,
-    private val snodeAPIExecutor: SnodeApiExecutor,
+    private val retrieveMessageFactory: RetrieveMessageApi.Factory,
+    private val snodeApiExecutor: SnodeApiExecutor,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -252,17 +253,19 @@ class GroupPoller @AssistedInject constructor(
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
                 val receiveRevokeMessage = async {
-                    snodeAPIExecutor.execute(
-                        snode,
-                        retrieveMessageAPIFactory.create(
-                            lastHash = lokiApiDatabase.getLastMessageHashValue(
-                                snode,
-                                groupId.hexString,
-                                Namespace.REVOKED_GROUP_MESSAGES()
-                            ).orEmpty(),
-                            auth = groupAuth,
-                            namespace = Namespace.REVOKED_GROUP_MESSAGES(),
-                            maxSize = null,
+                    snodeApiExecutor.execute(
+                        SnodeApiRequest(
+                            snode = snode,
+                            api = retrieveMessageFactory.create(
+                                lastHash = lokiApiDatabase.getLastMessageHashValue(
+                                    snode,
+                                    groupId.hexString,
+                                    Namespace.REVOKED_GROUP_MESSAGES()
+                                ).orEmpty(),
+                                auth = groupAuth,
+                                namespace = Namespace.REVOKED_GROUP_MESSAGES(),
+                                maxSize = null,
+                            )
                         )
                     ).messages
                 }
@@ -290,14 +293,16 @@ class GroupPoller @AssistedInject constructor(
                     ).orEmpty()
 
 
-                    snodeAPIExecutor.execute(
-                        snode,
-                        retrieveMessageAPIFactory.create(
-                            lastHash = lastHash,
-                            auth = groupAuth,
-                            namespace = Namespace.GROUP_MESSAGES(),
-                            maxSize = null,
-                        ),
+                    snodeApiExecutor.execute(
+                        SnodeApiRequest(
+                            snode = snode,
+                            retrieveMessageFactory.create(
+                                lastHash = lastHash,
+                                auth = groupAuth,
+                                namespace = Namespace.GROUP_MESSAGES(),
+                                maxSize = null,
+                            )
+                        )
                     )
                 }
 
@@ -307,18 +312,20 @@ class GroupPoller @AssistedInject constructor(
                     Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
-                        snodeAPIExecutor.execute(
-                            snode,
-                            retrieveMessageAPIFactory.create(
-                                lastHash = lokiApiDatabase.getLastMessageHashValue(
-                                    snode,
-                                    groupId.hexString,
-                                    ns
-                                ).orEmpty(),
-                                auth = groupAuth,
-                                namespace = ns,
-                                maxSize = null,
-                            ),
+                        snodeApiExecutor.execute(
+                            SnodeApiRequest(
+                                snode = snode,
+                                api = retrieveMessageFactory.create(
+                                    lastHash = lokiApiDatabase.getLastMessageHashValue(
+                                        snode,
+                                        groupId.hexString,
+                                        ns
+                                    ).orEmpty(),
+                                    auth = groupAuth,
+                                    namespace = ns,
+                                    maxSize = null,
+                                )
+                            )
                         ).messages
                     }
                 }

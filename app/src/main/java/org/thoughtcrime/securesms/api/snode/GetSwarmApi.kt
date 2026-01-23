@@ -49,7 +49,6 @@ class GetSwarmApi @AssistedInject constructor(
                 ip.takeUnless { it == "0.0.0.0" }?.let { "https://$it" } ?: return null,
                 port,
                 Snode.KeySet(ed25519PubKey, x25519PubKey),
-                Snode.Version.ZERO,
             )
         }
     }
