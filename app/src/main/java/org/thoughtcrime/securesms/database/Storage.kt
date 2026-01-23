@@ -880,7 +880,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadId(address: Address): Long? {
-        val threadID = threadDatabase.getThreadIdIfExistsFor(address)
+        val threadID = threadDatabase.getThreadIdIfExistsFor(address.address)
         return if (threadID < 0) null else threadID
     }
 
