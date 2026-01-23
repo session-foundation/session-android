@@ -311,6 +311,9 @@ class SettingsViewModel @Inject constructor(
             return
         }
 
+        // close avatar dialog when removing picture
+        onAvatarDialogDismissed()
+
         // otherwise this action is for removing the existing avatar
         val haveNetworkConnection = connectivity.networkAvailable.value
         if (!haveNetworkConnection) {
@@ -337,6 +340,7 @@ class SettingsViewModel @Inject constructor(
                 if (profilePicture.isEmpty()) {
                     configFactory.withMutableUserConfigs {
                         it.userProfile.setPic(UserPic.DEFAULT)
+                        it.userProfile.setAnimatedAvatar(false)
                     }
 
                     // update dialog state

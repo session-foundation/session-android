@@ -1,15 +1,14 @@
 package org.session.libsession.network.snode
 
-import dagger.Lazy
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
-import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
@@ -19,13 +18,13 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.io.encoding.Base64
 
 @Singleton
 class SnodeDirectory @Inject constructor(
     private val storage: SnodePoolStorage,
     private val prefs: TextSecurePreferences,
     @param:ManagerScope private val scope: CoroutineScope,
+    @param:ApplicationContext private val appContext: Context,
 ) : OnAppStartupComponent {
 
     companion object {
@@ -38,7 +37,6 @@ class SnodeDirectory @Inject constructor(
         private const val KEY_PORT = "storage_port"
         private const val KEY_X25519 = "pubkey_x25519"
         private const val KEY_ED25519 = "pubkey_ed25519"
-        private const val KEY_VERSION = "storage_server_version"
 
         private val DEV_NET_SEED_NODES = setOf(
             "http://sesh-net.local:1280"
@@ -53,6 +51,8 @@ class SnodeDirectory @Inject constructor(
             "https://seed2.getsession.org:$SEED_NODE_PORT",
             "https://seed3.getsession.org:$SEED_NODE_PORT"
         )
+
+        private const val LOCAL_SNODE_POOL_ASSET = "snodes/snode_pool.json"
     }
 
     /**
@@ -74,7 +74,7 @@ class SnodeDirectory @Inject constructor(
         this["method"] = "get_n_service_nodes"
         this["params"] = buildMap {
             this["active_only"] = true
-            this["fields"] = sequenceOf(KEY_IP, KEY_PORT, KEY_X25519, KEY_ED25519, KEY_VERSION)
+            this["fields"] = sequenceOf(KEY_IP, KEY_PORT, KEY_X25519, KEY_ED25519)
                 .associateWith { true }
         }
     }
@@ -129,7 +129,7 @@ class SnodeDirectory @Inject constructor(
             val freshCurrent = getSnodePool()
             if (freshCurrent.size >= minCount) return@withLock freshCurrent
 
-            val seeded = fetchSnodePoolFromSeed()
+            val seeded = fetchSnodePoolFromSeedWithFallback()
             if (seeded.isEmpty()) throw IllegalStateException("Seed node returned empty snode pool")
 
             Log.d("SnodeDirectory", "Persisting snode pool with ${seeded.size} snodes (seed bootstrap).")
@@ -138,10 +138,35 @@ class SnodeDirectory @Inject constructor(
         }
     }
 
-    private suspend fun fetchSnodePoolFromSeed(): Set<Snode> {
-        val target = seedNodePool.random()
-        Log.d("SnodeDirectory", "Fetching snode pool using seed node: $target")
-        return fetchSnodePool(target, fromSeed = true)
+    private suspend fun fetchSnodePoolFromSeedWithFallback(): Set<Snode> {
+        val seeds = seedNodePool.shuffled()
+
+        var lastError: Throwable? = null
+
+        for (target in seeds) {
+            Log.d("SnodeDirectory", "Fetching snode pool using seed node: $target")
+            val result = runCatching { fetchSnodePool(target, fromSeed = true) }
+                .onFailure { e ->
+                    lastError = e
+                    Log.w("SnodeDirectory", "Seed node failed: $target", e)
+                }
+                .getOrNull()
+
+            if (!result.isNullOrEmpty()) return result
+        }
+
+        // All seeds failed -> local fallback
+        Log.w("SnodeDirectory", "All seed nodes failed; falling back to local snode pool file.", lastError)
+
+        val localBytes = readLocalSnodePoolJsonBytes()
+        val parsed = parseSnodePoolFromJsonBytes(localBytes)
+
+        if (parsed.isEmpty()) {
+            throw IllegalStateException("Local snode pool file parsed empty", lastError)
+        }
+
+        Log.w("SnodeDirectory", "Successfully parsed snodes from local file.")
+        return parsed
     }
 
     private suspend fun fetchSnodePool(target: String, fromSeed: Boolean): Set<Snode> {
@@ -152,7 +177,21 @@ class SnodeDirectory @Inject constructor(
             parameters = getRandomSnodeParams,
             useSeedNodeConnection = fromSeed
         )
+        return parseSnodePoolFromJsonBytes(responseBytes)
+    }
 
+    /**
+     * Reads the bundled local snode pool JSON.
+     * Throws if missing/unreadable.
+     */
+    private fun readLocalSnodePoolJsonBytes(): ByteArray {
+        return appContext.assets.open(LOCAL_SNODE_POOL_ASSET).use { it.readBytes() }
+    }
+
+    /**
+     * Parse the JSON-RPC response format into a Set<Snode>.
+     */
+    private fun parseSnodePoolFromJsonBytes(responseBytes: ByteArray): Set<Snode> {
         val json = runCatching {
             JsonUtil.fromJson(responseBytes, Map::class.java)
         }.getOrNull() ?: buildMap<String, Any> {
@@ -161,13 +200,13 @@ class SnodeDirectory @Inject constructor(
 
         @Suppress("UNCHECKED_CAST")
         val intermediate = json["result"] as? Map<*, *>
-            ?: throw IllegalStateException("Failed to update snode pool, 'result' was null.")
-                .also { Log.d("SnodeDirectory", "Failed to update snode pool, intermediate was null.") }
+            ?: throw IllegalStateException("Failed to parse snode pool, 'result' was null.")
+                .also { Log.d("SnodeDirectory", "Failed to parse snode pool, intermediate was null.") }
 
         @Suppress("UNCHECKED_CAST")
         val rawSnodes = intermediate["service_node_states"] as? List<*>
-            ?: throw IllegalStateException("Failed to update snode pool, 'service_node_states' was null.")
-                .also { Log.d("SnodeDirectory", "Failed to update snode pool, rawSnodes was null.") }
+            ?: throw IllegalStateException("Failed to parse snode pool, 'service_node_states' was null.")
+                .also { Log.d("SnodeDirectory", "Failed to parse snode pool, rawSnodes was null.") }
 
         return rawSnodes.asSequence()
             .mapNotNull { it as? Map<*, *> }
@@ -177,9 +216,6 @@ class SnodeDirectory @Inject constructor(
                     port = raw[KEY_PORT] as? Int,
                     ed25519Key = raw[KEY_ED25519] as? String,
                     x25519Key = raw[KEY_X25519] as? String,
-                    version = (raw[KEY_VERSION] as? List<*>)
-                        ?.filterIsInstance<Int>()
-                        ?.let(Snode::Version)
                 ).also {
                     if (it == null) {
                         Log.d("SnodeDirectory", "Failed to parse snode from: ${raw.prettifiedDescription()}.")
@@ -221,13 +257,11 @@ class SnodeDirectory @Inject constructor(
         port: Int?,
         ed25519Key: String?,
         x25519Key: String?,
-        version: Snode.Version? = Snode.Version.ZERO
     ): Snode? {
         return Snode(
             address?.takeUnless { it == "0.0.0.0" }?.let { "https://$it" } ?: return null,
             port ?: return null,
             Snode.KeySet(ed25519Key ?: return null, x25519Key ?: return null),
-            version ?: return null
         )
     }
 
@@ -317,7 +351,7 @@ class SnodeDirectory @Inject constructor(
                 val current = getSnodePool()
 
                 suspend fun getFromSeed(msg: String){
-                    val seeded = fetchSnodePoolFromSeed()
+                    val seeded = fetchSnodePoolFromSeedWithFallback()
                     if (seeded.isNotEmpty()) {
                         Log.d("SnodeDirectory", "$msg New size=${seeded.size}")
                         persistSnodePool(seeded)
@@ -455,7 +489,6 @@ class SnodeDirectory @Inject constructor(
                 val currentBest = bestByKey[key]
                 bestByKey[key] = when {
                     currentBest == null -> snode
-                    snode.version > currentBest.version -> snode
                     else -> currentBest
                 }
             }

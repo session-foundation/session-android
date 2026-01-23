@@ -62,7 +62,7 @@ class SnodeDatabaseTest {
     }
 
     private val snodes = List(20) { idx ->
-        Snode("https://1.2.3.1$idx", 5000, Snode.KeySet("edKey$idx", "xkey$idx"), Snode.Version.ZERO)
+        Snode("https://1.2.3.1$idx", 5000, Snode.KeySet("edKey$idx", "xkey$idx"))
     }
 
     @Test
@@ -88,8 +88,9 @@ class SnodeDatabaseTest {
         db.setOnionRequestPaths(paths)
         assertEquals(paths, db.getOnionRequestPaths())
 
+        // Changing the order of paths while adding a new one
         val newPaths = listOf(
-            listOf(snodes[0], snodes[1]),
+            listOf(snodes[3], snodes[4]),
             listOf(snodes[5], snodes[6], snodes[7]),
         )
 

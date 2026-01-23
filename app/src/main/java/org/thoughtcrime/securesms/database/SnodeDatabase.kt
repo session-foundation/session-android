@@ -145,53 +145,57 @@ class SnodeDatabase @Inject constructor(
         writableDatabase.transaction {
             val newPathKeysAsJson = json.encodeToString(paths.map { it.pathKey() })
 
-            // Clear paths that no longer exist
-            //language=roomsql
-            execSQL(
-                """
-                WITH path_keys AS ($PATH_KEYS_CTE_SQL)
-                DELETE FROM onion_paths
-                WHERE id NOT IN (
-                    SELECT path_id
-                    FROM path_keys
-                    WHERE path_key IN (SELECT value FROM json_each(?1))
-                )
-            """, arrayOf(newPathKeysAsJson)
+            class PathInfo(
+                val strike: Int,
+                val createdAtMs: Long,
             )
 
-            // Find out new paths to insert
             //language=roomsql
-            query(
-                """
-               WITH path_keys AS ($PATH_KEYS_CTE_SQL)
-               SELECT `key` FROM json_each(?1)
-               WHERE value NOT IN (
-                   SELECT path_key FROM path_keys
-               )
-            """, arrayOf(newPathKeysAsJson)
-            ).use { cursor ->
+            val existingPathInfoByPathKey = query("""
+                WITH path_keys AS ($PATH_KEYS_CTE_SQL)
+                SELECT path_key, strikes, created_at_ms FROM onion_paths
+                INNER JOIN path_keys ON onion_paths.id = path_keys.path_id
+            """).use { cursor ->
                 cursor.asSequence()
-                    .map { it.getInt(0) }
-                    .forEach { newPathIndex ->
-                        execSQL(
-                            """
-                            INSERT INTO onion_paths (id, created_at_ms)
-                            VALUES (?1, ?2)
-                        """, arrayOf<Any>(newPathIndex, System.currentTimeMillis())
+                    .associate {
+                        val pathKey = cursor.getString(0)
+                        pathKey to PathInfo(
+                            strike = cursor.getInt(1),
+                            createdAtMs = cursor.getLong(2),
                         )
+                    }
+            }
 
-                        compileStatement(
-                            """
+            // Clear all paths
+            //language=roomsql
+            execSQL("DELETE FROM onion_paths WHERE 1")
+
+            // Insert all paths, retaining path info where applicable
+            //language=roomsql
+            compileStatement("INSERT INTO onion_paths (id, created_at_ms, strikes) VALUES (?1, ?2, ?3)")
+                .use { pathInsertStmt ->
+                    compileStatement(
+                        """
                             INSERT OR ABORT INTO onion_path_snodes (path_id, snode_id, position)
                             SELECT ?1, (SELECT id FROM snodes WHERE ed25519_pub_key = ?2), ?3
                         """
-                        ).use { stmt ->
-                            paths[newPathIndex].forEachIndexed { snodeIdx, snode ->
-                                stmt.clearBindings()
-                                stmt.bindLong(1, newPathIndex.toLong())
-                                stmt.bindString(2, snode.ed25519Key)
-                                stmt.bindLong(3, snodeIdx.toLong())
-                                stmt.execute()
+                    ).use { pathSnodeInsertStmt ->
+                        paths.forEachIndexed { pathIdx, path ->
+                            val pathKey = path.pathKey()
+                            val existingInfo = existingPathInfoByPathKey[pathKey]
+
+                            pathInsertStmt.clearBindings()
+                            pathInsertStmt.bindLong(1, pathIdx.toLong())
+                            pathInsertStmt.bindLong(2, existingInfo?.createdAtMs ?: System.currentTimeMillis())
+                            pathInsertStmt.bindLong(3, existingInfo?.strike?.toLong() ?: 0L)
+                            pathInsertStmt.execute()
+
+                            path.forEachIndexed { snodeIdx, snode ->
+                                pathSnodeInsertStmt.clearBindings()
+                                pathSnodeInsertStmt.bindLong(1, pathIdx.toLong())
+                                pathSnodeInsertStmt.bindString(2, snode.ed25519Key)
+                                pathSnodeInsertStmt.bindLong(3, snodeIdx.toLong())
+                                pathSnodeInsertStmt.execute()
                             }
                         }
                     }
@@ -503,7 +507,6 @@ class SnodeDatabase @Inject constructor(
                 ed25519Key = getString(indices.ed25519Index),
                 x25519Key = getString(indices.x25519Index)
             ),
-            version = Snode.Version.ZERO
         )
     }
 
