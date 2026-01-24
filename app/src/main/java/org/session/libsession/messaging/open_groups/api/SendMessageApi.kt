@@ -23,13 +23,8 @@ class SendMessageApi @AssistedInject constructor(
     @Assisted val fileIds: List<String>,
     deps: CommunityApiDependencies,
 ) : CommunityApi<SendMessageApi.Response>(deps) {
-
-    override val requiresSigning: Boolean
-        get() = true
-
-    override val httpMethod: String
-        get() = "POST"
-
+    override val requiresSigning: Boolean get() = true
+    override val httpMethod: String get() = "POST"
     override val httpEndpoint: String = "room/$room/message"
 
     override fun buildRequestBody(

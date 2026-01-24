@@ -19,8 +19,9 @@ class CommunityApiBatcher @Inject constructor(
         )
     }
 
-    override fun batchKey(req: CommunityApiRequest<*>): Any {
-        return req.serverBaseUrl
+    override fun batchKey(req: CommunityApiRequest<*>): Any? {
+        // Requests can only be batched if they require signing
+        return req.serverBaseUrl.takeIf { req.api.requiresSigning }
     }
 
     override suspend fun deconstructBatchResponse(

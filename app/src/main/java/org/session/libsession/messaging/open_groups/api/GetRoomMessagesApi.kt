@@ -14,6 +14,8 @@ class GetRoomMessagesApi @AssistedInject constructor(
     @Assisted reactors: Int?,
     deps: CommunityApiDependencies,
 ) : CommunityApi<List<OpenGroupApi.Message>>(deps) {
+    override val requiresSigning: Boolean get() = false
+    override val httpMethod: String get() = "GET"
     override val httpEndpoint: String = buildString {
         append("/room/")
         append(room)
@@ -30,12 +32,6 @@ class GetRoomMessagesApi @AssistedInject constructor(
             append(reactors)
         }
     }
-
-    override val requiresSigning: Boolean
-        get() = false
-
-    override val httpMethod: String
-        get() = "GET"
 
     override suspend fun handleSuccessResponse(
         executorContext: ApiExecutorContext,

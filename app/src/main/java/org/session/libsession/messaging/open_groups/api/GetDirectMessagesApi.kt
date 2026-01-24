@@ -13,21 +13,15 @@ class GetDirectMessagesApi @AssistedInject constructor(
     @Assisted sinceLastId: Long?,
     deps: CommunityApiDependencies,
 ) : CommunityApi<List<OpenGroupApi.DirectMessage>>(deps) {
-    override val room: String?
-        get() = null
-
-    override val requiresSigning: Boolean
-        get() = true
-
+    override val room: String? get() = null
+    override val requiresSigning: Boolean get() = true
+    override val httpMethod: String get() = "GET"
     override val httpEndpoint: String = when {
         inboxOrOutbox && sinceLastId == null -> "/inbox"
         inboxOrOutbox && sinceLastId != null -> "/inbox/since/$sinceLastId"
         !inboxOrOutbox && sinceLastId == null -> "/outbox"
         else /* !isInboxOrOutbox && sinceSeqNo != null */ -> "/outbox/since/$sinceLastId"
     }
-
-    override val httpMethod: String
-        get() = "GET"
 
     override suspend fun handleSuccessResponse(
         executorContext: ApiExecutorContext,

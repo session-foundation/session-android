@@ -13,13 +13,9 @@ class PollRoomApi @AssistedInject constructor(
     @Assisted infoUpdates: Int,
     deps: CommunityApiDependencies,
 ) : CommunityApi<JsonObject>(deps) {
-    override val httpMethod: String
-        get() = "GET"
-
+    override val httpMethod: String get() = "GET"
     override val httpEndpoint: String = "room/$room/pollInfo/$infoUpdates"
-
-    override val requiresSigning: Boolean
-        get() = false
+    override val requiresSigning: Boolean get() = false
 
     @Suppress("OPT_IN_USAGE")
     override suspend fun handleSuccessResponse(

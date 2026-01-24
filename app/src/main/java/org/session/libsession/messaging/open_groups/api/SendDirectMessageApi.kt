@@ -20,15 +20,9 @@ class SendDirectMessageApi @AssistedInject constructor(
     @Assisted private val messageContent: String,
     deps: CommunityApiDependencies,
 ) : CommunityApi<OpenGroupApi.DirectMessage>(deps) {
-    override val room: String?
-        get() = null
-
-    override val requiresSigning: Boolean
-        get() = true
-
-    override val httpMethod: String
-        get() = "POST"
-
+    override val room: String? get() = null
+    override val requiresSigning: Boolean get() = true
+    override val httpMethod: String get() = "POST"
     override val httpEndpoint: String = "/inbox/${recipient.blindedId.hexString}"
 
     override suspend fun handleSuccessResponse(

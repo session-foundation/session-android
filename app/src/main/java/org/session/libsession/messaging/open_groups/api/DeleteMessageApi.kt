@@ -11,12 +11,8 @@ class DeleteMessageApi @AssistedInject constructor(
     @Assisted private val messageId: Long,
     deps: CommunityApiDependencies
 ) : CommunityApi<Unit>(deps) {
-    override val requiresSigning: Boolean
-        get() = true
-
-    override val httpMethod: String
-        get() = "DELETE"
-
+    override val requiresSigning: Boolean get() = true
+    override val httpMethod: String get() = "DELETE"
     override val httpEndpoint: String = "/room/$room/message/$messageId"
 
     override suspend fun handleSuccessResponse(

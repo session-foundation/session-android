@@ -19,15 +19,9 @@ class BatchApi @AssistedInject constructor(
     @Assisted private val items: List<CommunityApi<*>>,
     deps: CommunityApiDependencies,
 ) : CommunityApi<List<BatchApi.BatchResponseItem>>(deps) {
-    override val room: String?
-        get() = null
-
-    override val requiresSigning: Boolean by lazy {
-        items.any { it.requiresSigning }
-    }
-
-    override val httpMethod: String
-        get() = "POST"
+    override val room: String? get() = null
+    override val requiresSigning: Boolean get() = true
+    override val httpMethod: String get() = "POST"
 
     @OptIn(ExperimentalSerializationApi::class)
     override suspend fun handleSuccessResponse(

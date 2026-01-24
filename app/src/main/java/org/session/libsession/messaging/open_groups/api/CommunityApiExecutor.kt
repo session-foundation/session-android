@@ -9,7 +9,6 @@ import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import org.thoughtcrime.securesms.api.server.ServerApiResponse
 import javax.inject.Inject
 
-
 data class CommunityApiRequest<Api: CommunityApi<*>>(
     val serverBaseUrl: String,
     val api: Api,
