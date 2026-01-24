@@ -1,7 +1,9 @@
 package org.session.libsession.messaging.open_groups.api
 
-import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.json.decodeFromStream
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capabilities
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.http.HttpResponse
 import javax.inject.Inject
 
 class GetCapsApi @Inject constructor(
@@ -16,9 +18,15 @@ class GetCapsApi @Inject constructor(
     override val httpMethod: String
         get() = "GET"
 
-    override val responseDeserializer: DeserializationStrategy<Capabilities>
-        get() = Capabilities.serializer()
-
     override val httpEndpoint: String
         get() = "/capabilities"
+
+    override suspend fun handleSuccessResponse(
+        executorContext: ApiExecutorContext,
+        baseUrl: String,
+        response: HttpResponse
+    ): Capabilities {
+        @Suppress("OPT_IN_USAGE")
+        return response.body.asInputStream().use(json::decodeFromStream)
+    }
 }

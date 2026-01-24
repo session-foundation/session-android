@@ -3,34 +3,28 @@ package org.session.libsession.messaging.open_groups.api
 import kotlinx.serialization.json.Json
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.BatchApiExecutor
-import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import javax.inject.Inject
 
 class CommunityApiBatcher @Inject constructor(
     private val batchApiFactory: BatchApi.Factory,
     private val json: Json,
-) : BatchApiExecutor.Batcher<ServerApiRequest<*>, Any> {
+) : BatchApiExecutor.Batcher<CommunityApiRequest<*>, Any> {
 
-    override fun constructBatchRequest(requests: List<Pair<ApiExecutorContext, ServerApiRequest<*>>>): ServerApiRequest<*> {
-        return ServerApiRequest(
+    override fun constructBatchRequest(requests: List<Pair<ApiExecutorContext, CommunityApiRequest<*>>>): CommunityApiRequest<*> {
+        return CommunityApiRequest(
             serverBaseUrl = requests.first().second.serverBaseUrl,
-            serverX25519PubKeyHex = requests.first().second.serverX25519PubKeyHex,
             api = batchApiFactory.create(
-                requests.map { it.second.api as CommunityApi<*> }
+                requests.map { it.second.api }
             )
         )
     }
 
-    override fun batchKey(req: ServerApiRequest<*>): Any? {
-        if (req.api is CommunityApi<*>) {
-            return req.serverBaseUrl
-        }
-
-        return null
+    override fun batchKey(req: CommunityApiRequest<*>): Any {
+        return req.serverBaseUrl
     }
 
     override suspend fun deconstructBatchResponse(
-        requests: List<Pair<ApiExecutorContext, ServerApiRequest<*>>>,
+        requests: List<Pair<ApiExecutorContext, CommunityApiRequest<*>>>,
         response: Any
     ): List<Result<Any>> {
         @Suppress("UNCHECKED_CAST") val responseList =

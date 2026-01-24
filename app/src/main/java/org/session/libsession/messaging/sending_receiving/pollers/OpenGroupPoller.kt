@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
@@ -22,25 +21,23 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
 import org.session.libsession.messaging.jobs.TrimThreadJob
-import org.session.libsession.messaging.open_groups.COMMUNITY_API_EXECUTOR_NAME
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupApi.DirectMessage
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
 import org.session.libsession.messaging.open_groups.api.GetCapsApi
 import org.session.libsession.messaging.open_groups.api.GetDirectMessagesApi
 import org.session.libsession.messaging.open_groups.api.GetRoomMessagesApi
 import org.session.libsession.messaging.open_groups.api.PollRoomApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.server.ServerApiExecutor
-import org.thoughtcrime.securesms.api.server.ServerApiRequest
-import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import javax.inject.Named
 import javax.inject.Provider
 
 private typealias PollRequestToken = Channel<Result<List<String>>>
@@ -61,7 +58,7 @@ class OpenGroupPoller @AssistedInject constructor(
     private val openGroupDeleteJobFactory: OpenGroupDeleteJob.Factory,
     private val communityDatabase: CommunityDatabase,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
-    @param:Named(COMMUNITY_API_EXECUTOR_NAME) private val communityApiExecutor: ServerApiExecutor,
+    private val communityApiExecutor: CommunityApiExecutor,
     private val getRoomMessagesFactory: GetRoomMessagesApi.Factory,
     private val getDirectMessageFactory: GetDirectMessagesApi.Factory,
     private val pollRoomInfoFactory: PollRoomApi.Factory,
@@ -168,10 +165,10 @@ class OpenGroupPoller @AssistedInject constructor(
             var caps = storage.getServerCapabilities(server)
             if (caps == null) {
                 val fetched = communityApiExecutor.execute(
-                    ServerApiRequest(
+                    CommunityApiRequest(
                         serverBaseUrl = server,
-                        serverX25519PubKeyHex = serverKey,
-                        api = getCapsApi.get()
+                        serverPubKey = serverKey,
+                        api = getCapsApi.get(),
                     )
                 )
                 storage.setServerCapabilities(server, fetched.capabilities)
@@ -187,9 +184,9 @@ class OpenGroupPoller @AssistedInject constructor(
                 // Poll room info
                 launch {
                     val roomInfo = communityApiExecutor.execute(
-                        ServerApiRequest(
+                        CommunityApiRequest(
                             serverBaseUrl = server,
-                            serverX25519PubKeyHex = serverKey,
+                            serverPubKey = serverKey,
                             api = pollRoomInfoFactory.create(
                                 room = room,
                                 infoUpdates = infoUpdates
@@ -206,9 +203,9 @@ class OpenGroupPoller @AssistedInject constructor(
                 // Poll room messages
                 launch {
                     val messages = communityApiExecutor.execute(
-                        ServerApiRequest(
+                        CommunityApiRequest(
                             serverBaseUrl = server,
-                            serverX25519PubKeyHex = serverKey,
+                            serverPubKey = serverKey,
                             api = getRoomMessagesFactory.create(
                                 room = room,
                                 sinceLastId = lastMessageServerId,
@@ -227,9 +224,9 @@ class OpenGroupPoller @AssistedInject constructor(
                     // Poll inbox messages
                     launch {
                         val inboxMessages = communityApiExecutor.execute(
-                            ServerApiRequest(
+                            CommunityApiRequest(
                                 serverBaseUrl = server,
-                                serverX25519PubKeyHex = serverKey,
+                                serverPubKey = serverKey,
                                 api = getDirectMessageFactory.create(
                                     inboxOrOutbox = true,
                                     sinceLastId = storage.getLastInboxMessageId(server),
@@ -244,9 +241,9 @@ class OpenGroupPoller @AssistedInject constructor(
                 // Poll outbox messages regardless because these are messages we sent
                 launch {
                     val outboxMessages = communityApiExecutor.execute(
-                        ServerApiRequest(
+                        CommunityApiRequest(
                             serverBaseUrl = server,
-                            serverX25519PubKeyHex = serverKey,
+                            serverPubKey = serverKey,
                             api = getDirectMessageFactory.create(
                                 inboxOrOutbox = false,
                                 sinceLastId = storage.getLastOutboxMessageId(server),

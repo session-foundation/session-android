@@ -3,15 +3,14 @@ package org.session.libsession.messaging.open_groups.api
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaType
 import org.session.libsignal.utilities.Base64
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
@@ -30,8 +29,14 @@ class BatchApi @AssistedInject constructor(
     override val httpMethod: String
         get() = "POST"
 
-    override val responseDeserializer: DeserializationStrategy<List<BatchResponseItem>>
-        get() = ListSerializer(BatchResponseItem.serializer())
+    @OptIn(ExperimentalSerializationApi::class)
+    override suspend fun handleSuccessResponse(
+        executorContext: ApiExecutorContext,
+        baseUrl: String,
+        response: HttpResponse
+    ): List<BatchResponseItem> {
+        return response.body.asInputStream().use(json::decodeFromStream)
+    }
 
     override val httpEndpoint: String
         get() = "/batch"
@@ -40,13 +45,9 @@ class BatchApi @AssistedInject constructor(
         serverBaseUrl: String,
         x25519PubKeyHex: String
     ): Pair<MediaType, HttpBody> {
-        val requestItems = items.map {
+        return buildJsonRequestBody(items.map {
             BatchRequestItem(httpRequest = it.buildRequest(serverBaseUrl, x25519PubKeyHex), json)
-        }
-
-        val text = json.encodeToString(requestItems)
-
-        return "application/json".toMediaType() to HttpBody.Text(text)
+        })
     }
 
     @Serializable

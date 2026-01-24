@@ -3,9 +3,10 @@ package org.session.libsession.messaging.open_groups.api
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.decodeFromStream
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.http.HttpResponse
 
 class GetDirectMessagesApi @AssistedInject constructor(
     @Assisted inboxOrOutbox: Boolean,
@@ -28,8 +29,14 @@ class GetDirectMessagesApi @AssistedInject constructor(
     override val httpMethod: String
         get() = "GET"
 
-    override val responseDeserializer: DeserializationStrategy<List<OpenGroupApi.DirectMessage>>
-        get() = ListSerializer(OpenGroupApi.DirectMessage.serializer())
+    override suspend fun handleSuccessResponse(
+        executorContext: ApiExecutorContext,
+        baseUrl: String,
+        response: HttpResponse
+    ): List<OpenGroupApi.DirectMessage> {
+        @Suppress("OPT_IN_USAGE")
+        return response.body.asInputStream().use(json::decodeFromStream)
+    }
 
     @AssistedFactory
     interface Factory {

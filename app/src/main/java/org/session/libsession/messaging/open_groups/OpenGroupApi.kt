@@ -194,7 +194,7 @@ object OpenGroupApi {
         @SerialName("session_id")
         val sessionId: String = "",
         val posted: Double = 0.0,
-        val edited: Long = 0,
+        val edited: Double = 0.0,
         val seqno: Long = 0,
         val deleted: Boolean = false,
         val whisper: Boolean = false,
@@ -242,15 +242,6 @@ object OpenGroupApi {
         val emoji: String,
         val add: Boolean,
         var seqNo: Long? = null
-    )
-
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
-    data class SendMessageRequest(
-        val data: String? = null,
-        val signature: String? = null,
-        val whisperTo: List<String>? = null,
-        val whisperMods: Boolean? = null,
-        val files: List<String>? = null
     )
 
     data class MessageDeletion(
@@ -510,40 +501,6 @@ object OpenGroupApi {
     }
     // endregion
 
-    // region Sending
-    suspend fun sendMessage(
-        message: OpenGroupMessage,
-        room: String,
-        server: String,
-        whisperTo: List<String>? = null,
-        whisperMods: Boolean? = null,
-        fileIds: List<String>? = null
-    ): OpenGroupMessage {
-        val signedMessage = message.sign(server) ?:throw Error.SigningFailed
-        val parameters = signedMessage.toJSON().toMutableMap()
-
-        // add file IDs if there are any (from attachments)
-        if (!fileIds.isNullOrEmpty()) {
-            parameters += "files" to fileIds
-        }
-
-        val request = Request(
-            verb = POST,
-            room = room,
-            server = server,
-            endpoint = Endpoint.RoomMessage(room),
-            parameters = parameters
-        )
-        val json =  getResponseBodyJson(request, signRequest = true)
-        @Suppress("UNCHECKED_CAST") val rawMessage = json as? Map<String, Any>
-            ?: throw Error.ParsingFailed
-        val result = OpenGroupMessage.fromJSON(rawMessage) ?: throw Error.ParsingFailed
-        val storage = MessagingModuleConfiguration.shared.storage
-        storage.addReceivedMessageTimestamp(result.sentTimestamp)
-        return result
-    }
-    // endregion
-
     @OptIn(ExperimentalSerializationApi::class)
     suspend fun addReaction(room: String, server: String, messageId: Long, emoji: String): AddReactionResponse {
         val request = Request(
@@ -585,15 +542,6 @@ object OpenGroupApi {
         val response = getResponseBody(request, signRequest = true)
         return JsonUtil.fromJson(response, DeleteAllReactionsResponse::class.java)
     }
-    // endregion
-
-    // region Message Deletion
-    suspend fun deleteMessage(serverID: Long, room: String, server: String) {
-        val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.RoomMessageIndividual(room, serverID))
-        send(request, signRequest = true, operationName = "OpenGroupAPI.deleteMessage")
-        Log.d("Loki", "Message deletion successful.")
-    }
-
     // endregion
 
     // region Moderation
@@ -756,18 +704,6 @@ object OpenGroupApi {
         val request = Request(verb = GET, room = null, server = server, endpoint = Endpoint.Capabilities)
         val response = getResponseBody(request, signRequest = false, serverPubKeyHex)
         return JsonUtil.fromJson(response, Capabilities::class.java)
-    }
-
-    suspend fun sendDirectMessage(message: String, blindedAccountId: String, server: String): DirectMessage {
-        val request = Request(
-            verb = POST,
-            room = null,
-            server = server,
-            endpoint = Endpoint.InboxFor(blindedAccountId),
-            parameters = mapOf("message" to message)
-        )
-        val response = getResponseBody(request)
-        return JsonUtil.fromJson(response, DirectMessage::class.java)
     }
 
     suspend fun deleteAllInboxMessages(server: String): Map<*, *> {

@@ -1,14 +1,13 @@
 package org.session.libsession.messaging.open_groups.api
 
 import androidx.collection.arrayMapOf
-import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.network.ServerClientErrorManager
@@ -18,10 +17,8 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
-import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpRequest
-import org.thoughtcrime.securesms.api.http.HttpResponse
 import org.thoughtcrime.securesms.api.server.ServerApi
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import java.io.ByteArrayOutputStream
@@ -29,7 +26,7 @@ import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Provider
 
-abstract class CommunityApi<ResponseType>(
+abstract class CommunityApi<ResponseType: Any>(
     errorManager: ServerClientErrorManager,
     protected val json: Json,
     protected val loginStateRepository: Provider<LoginStateRepository>,
@@ -55,10 +52,13 @@ abstract class CommunityApi<ResponseType>(
     abstract val requiresSigning: Boolean
 
     abstract val httpMethod: String
-    abstract val responseDeserializer: DeserializationStrategy<ResponseType>
     abstract val httpEndpoint: String
 
     open fun buildRequestBody(serverBaseUrl: String, x25519PubKeyHex: String): Pair<MediaType, HttpBody>? = null
+
+    protected inline fun <reified T> buildJsonRequestBody(obj: T): Pair<MediaType, HttpBody> {
+        return "application/json".toMediaType() to HttpBody.Text(json.encodeToString(obj))
+    }
 
     override fun buildRequest(baseUrl: String, x25519PubKeyHex: String): HttpRequest {
         val builtBody = buildRequestBody(baseUrl, x25519PubKeyHex)
@@ -142,17 +142,6 @@ abstract class CommunityApi<ResponseType>(
         )
     }
 
-    override suspend fun handleSuccessResponse(
-        executorContext: ApiExecutorContext,
-        baseUrl: String,
-        response: HttpResponse
-    ): ResponseType {
-        @Suppress("OPT_IN_USAGE")
-        return json.decodeFromStream(
-            responseDeserializer,
-            response.body.asInputStream()
-        )
-    }
 
     class CommunityApiDependencies @Inject constructor(
         val errorManager: ServerClientErrorManager,

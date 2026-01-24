@@ -23,10 +23,11 @@ import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
@@ -42,7 +43,6 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
@@ -65,6 +65,8 @@ import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.session.libsession.messaging.open_groups.api.DeleteMessageApi as DeleteCommunityMessageApi
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi as DeleteSnodeMessageApi
 
 @Singleton
 class DefaultConversationRepository @Inject constructor(
@@ -84,9 +86,10 @@ class DefaultConversationRepository @Inject constructor(
     private val messageSender: MessageSender,
     private val loginStateRepository: LoginStateRepository,
     private val proStatusManager: ProStatusManager,
-    private val snodeClient: SnodeClient,
     private val swarmApiExecutor: SwarmApiExecutor,
-    private val deleteMessageApiFactory: DeleteMessageApi.Factory
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val deleteSwarmMessageApiFactory: DeleteSnodeMessageApi.Factory,
+    private val deleteCommunityMessageApiFactory: DeleteCommunityMessageApi.Factory,
 ) : ConversationRepository {
 
     override val conversationListAddressesFlow get() = loginStateRepository.flowWithLoggedInState {
@@ -343,7 +346,15 @@ class DefaultConversationRepository @Inject constructor(
     ) {
         messages.forEach { message ->
             lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
-                OpenGroupApi.deleteMessage(messageServerID, community.room, community.serverUrl)
+                communityApiExecutor.execute(
+                    CommunityApiRequest(
+                        serverBaseUrl = community.serverUrl,
+                        api = deleteCommunityMessageApiFactory.create(
+                            room = community.room,
+                            messageId = messageServerID
+                        )
+                    )
+                )
             }
         }
     }
@@ -365,7 +376,7 @@ class DefaultConversationRepository @Inject constructor(
                     swarmApiExecutor.execute(
                         SwarmApiRequest(
                             swarmPubKeyHex = userAuth.accountId.hexString,
-                            api = deleteMessageApiFactory.create(
+                            api = deleteSwarmMessageApiFactory.create(
                                 messageHashes = listOf(serverHash),
                                 swarmAuth = userAuth
                             )
@@ -430,7 +441,7 @@ class DefaultConversationRepository @Inject constructor(
                     swarmApiExecutor.execute(
                         SwarmApiRequest(
                             swarmPubKeyHex = userAuth.accountId.hexString,
-                            api = deleteMessageApiFactory.create(
+                            api = deleteSwarmMessageApiFactory.create(
                                 messageHashes = listOf(serverHash),
                                 swarmAuth = userAuth
                             )

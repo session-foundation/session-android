@@ -25,13 +25,17 @@ import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.Quote
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
-import org.session.libsession.network.SnodeClient
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.SendDirectMessageApi
+import org.session.libsession.messaging.open_groups.api.SendMessageApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsession.utilities.withMutableUserConfigs
@@ -66,9 +70,11 @@ class MessageSender @Inject constructor(
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val messageExpirationManager: ExpiringMessageManager,
     private val snodeClock: SnodeClock,
-    private val snodeClient: SnodeClient,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val sendCommunityMessageApiFactory: SendMessageApi.Factory,
+    private val sendCommunityDirectMessageApiFactory: SendDirectMessageApi.Factory,
     private val swarmApiExecutor: SwarmApiExecutor,
-    private val storeMessageApiFactory: StoreMessageApi.Factory,
+    private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
 
@@ -256,7 +262,7 @@ class MessageSender @Inject constructor(
                         swarmApiExecutor.execute(
                             SwarmApiRequest(
                                 swarmPubKeyHex = destination.publicKey,
-                                api = storeMessageApiFactory.create(
+                                api = storeSnodeMessageApiFactory.create(
                                     message = snodeMessage,
                                     auth = groupAuth,
                                     namespace = Namespace.GROUP_MESSAGES(),
@@ -268,7 +274,7 @@ class MessageSender @Inject constructor(
                         swarmApiExecutor.execute(
                             SwarmApiRequest(
                                 swarmPubKeyHex = destination.publicKey,
-                                api = storeMessageApiFactory.create(
+                                api = storeSnodeMessageApiFactory.create(
                                     message = snodeMessage,
                                     auth = null,
                                     namespace = Namespace.DEFAULT()
@@ -389,17 +395,19 @@ class MessageSender @Inject constructor(
                         base64EncodedData = Base64.encodeBytes(plaintext),
                     )
 
-                    val response = OpenGroupApi.sendMessage(
-                        openGroupMessage,
-                        destination.roomToken,
-                        destination.server,
-                        destination.whisperTo,
-                        destination.whisperMods,
-                        destination.fileIds
+                    val response = communityApiExecutor.execute(
+                        CommunityApiRequest(
+                            serverBaseUrl = destination.server,
+                            api = sendCommunityMessageApiFactory.create(
+                                room = destination.roomToken,
+                                message = openGroupMessage,
+                                fileIds = destination.fileIds
+                            )
+                        ),
                     )
 
-                    message.openGroupServerMessageID = response.serverID
-                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.sentTimestamp)
+                    message.openGroupServerMessageID = response.id
+                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.postedMills)
                     return
                 }
                 is Destination.OpenGroupInbox -> {
@@ -417,12 +425,13 @@ class MessageSender @Inject constructor(
                         proRotatingEd25519PrivKey = null,
                     )
 
-                    val base64EncodedData = Base64.encodeBytes(ciphertext)
-                    val response = OpenGroupApi.sendDirectMessage(
-                        base64EncodedData,
-                        destination.blindedPublicKey,
-                        destination.server
-                    )
+                    val response = communityApiExecutor.execute(CommunityApiRequest(
+                        serverBaseUrl = destination.server,
+                        api = sendCommunityDirectMessageApiFactory.create(
+                            recipient = destination.blindedPublicKey.toAddress() as Address.Blinded,
+                            messageContent = Base64.encodeBytes(ciphertext)
+                        )
+                    ))
 
                     message.openGroupServerMessageID = response.id
                     handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = TimeUnit.SECONDS.toMillis(response.postedAt))
