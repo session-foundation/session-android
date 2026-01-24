@@ -18,12 +18,10 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
-import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration
 
 @Singleton
 class FileServerApi @Inject constructor(
@@ -39,6 +37,104 @@ class FileServerApi @Inject constructor(
             url = "http://filev2.getsession.org",
             ed25519PublicKeyHex = "b8eef9821445ae16e2e97ef8aa6fe782fd11ad5253cd6723b281341dba22e371"
         )
+
+
+        fun buildAttachmentUrl(
+            fileId: String,
+            fileServer: FileServer,
+            usesDeterministicEncryption: Boolean
+        ): HttpUrl {
+            val urlFragment = sequenceOf(
+                "d".takeIf { usesDeterministicEncryption },
+                if (!fileServer.url.isOfficial || fileServer.ed25519PublicKeyHex != DEFAULT_FILE_SERVER.ed25519PublicKeyHex) {
+                    "p=${fileServer.ed25519PublicKeyHex}"
+                } else {
+                    null
+                }
+            ).filterNotNull()
+                .joinToString(separator = "&")
+
+            return fileServer.url
+                .newBuilder()
+                .addPathSegment("file")
+                .addPathSegment(fileId)
+                .fragment(urlFragment.takeIf { it.isNotBlank() })
+                .build()
+        }
+
+        fun parseAttachmentUrl(url: HttpUrl): URLParseResult {
+            check(url.pathSegments.size == 2) {
+                "Invalid URL: requiring exactly 2 path segments"
+            }
+
+            check(url.pathSegments[0] == "file") {
+                "Invalid URL: first path segment must be 'file'"
+            }
+
+            val id = url.pathSegments[1]
+            check(id.isNotBlank()) {
+                "Invalid URL: id must not be blank"
+            }
+
+            var deterministicEncryption = false
+            var fileServerPubKeyHex: String? = null
+
+            url.fragment
+                .orEmpty()
+                .splitToSequence('&')
+                .forEach { fragment ->
+                    when {
+                        fragment == "d" || fragment == "d=" -> deterministicEncryption = true
+                        fragment.startsWith("p=", ignoreCase = true) -> {
+                            fileServerPubKeyHex = fragment.substringAfter("p=").takeIf { it.isNotBlank() }
+                        }
+                    }
+                }
+
+            val fileServerUrl = url.newBuilder()
+                .removePathSegment(0) // remove "file"
+                .removePathSegment(0) // remove id
+                .fragment(null) // remove fragment
+                .build()
+
+            when {
+                !fileServerPubKeyHex.isNullOrEmpty() -> {
+                    // We'll use the public key we get from the URL
+                    return URLParseResult(
+                        fileId = id,
+                        fileServer = FileServer(url = fileServerUrl, ed25519PublicKeyHex = fileServerPubKeyHex),
+                        usesDeterministicEncryption = deterministicEncryption
+                    )
+                }
+
+                fileServerUrl == DEFAULT_FILE_SERVER.url -> {
+                    // We'll use the default file server
+                    return URLParseResult(
+                        fileId = id,
+                        fileServer = DEFAULT_FILE_SERVER,
+                        usesDeterministicEncryption = deterministicEncryption
+                    )
+                }
+
+                fileServerUrl.isOfficial -> {
+                    // We don't have a public key, but given it's an official file server,
+                    // we can use the default public key
+                    return URLParseResult(
+                        fileId = id,
+                        fileServer = FileServer(
+                            url = fileServerUrl,
+                            ed25519PublicKeyHex = DEFAULT_FILE_SERVER.ed25519PublicKeyHex
+                        ),
+                        usesDeterministicEncryption = deterministicEncryption
+                    )
+                }
+
+                else -> {
+                    // We don't have a public key, and it's not the default file server
+                    throw Error.InvalidURL
+                }
+            }
+        }
     }
 
     sealed class Error(message: String) : Exception(message) {
@@ -132,92 +228,6 @@ class FileServerApi @Inject constructor(
         }
     }
 
-    suspend fun upload(
-        file: ByteArray,
-        usedDeterministicEncryption: Boolean,
-        fileServer: FileServer,
-        customExpiresDuration: Duration? = null
-    ): UploadResult {
-        val request = Request(
-            fileServer = fileServer,
-            verb = HTTP.Verb.POST,
-            endpoint = "file",
-            body = file,
-            headers = buildMap {
-                put("Content-Disposition", "attachment")
-                put("Content-Type", "application/octet-stream")
-                if (customExpiresDuration != null) {
-                    put("X-FS-TTL", customExpiresDuration.inWholeSeconds.toString())
-                }
-            }
-        )
-        val response = send(request, "FileServer.upload")
-        val json = JsonUtil.fromJson(response.body, Map::class.java)
-        val id = json["id"]!!.toString()
-        val expiresEpochSeconds = (json.getOrDefault("expires", null) as? Number)?.toLong()
-
-        return UploadResult(
-            fileId = id,
-            fileUrl = buildAttachmentUrl(
-                fileId = id,
-                fileServer = fileServer,
-                usesDeterministicEncryption = usedDeterministicEncryption
-            ).toString(),
-            expires = expiresEpochSeconds?.asEpochSeconds()
-        )
-    }
-
-    suspend fun download(
-        fileId: String,
-        fileServer: FileServer = DEFAULT_FILE_SERVER
-    ): SendResponse {
-        val request = Request(
-            fileServer = fileServer,
-            verb = HTTP.Verb.GET,
-            endpoint = "file/$fileId"
-        )
-        return send(request, "FileServer.download")
-    }
-
-    suspend fun renew(fileId: String,
-                      customTtl: Duration? = null,
-                      fileServer: FileServer = DEFAULT_FILE_SERVER) {
-        val resp = send(Request(
-            fileServer = fileServer,
-            verb = HTTP.Verb.POST,
-            endpoint = "file/$fileId/extend",
-            headers = customTtl?.let {
-                buildMap {
-                    "X-FS-TTL" to it.inWholeSeconds.toString()
-                }
-            } ?: mapOf()
-        ), "FileServer.renew")
-
-        resp.expires
-    }
-
-    fun buildAttachmentUrl(
-        fileId: String,
-        fileServer: FileServer,
-        usesDeterministicEncryption: Boolean
-    ): HttpUrl {
-        val urlFragment = sequenceOf(
-            "d".takeIf { usesDeterministicEncryption },
-            if (!fileServer.url.isOfficial || fileServer.ed25519PublicKeyHex != DEFAULT_FILE_SERVER.ed25519PublicKeyHex) {
-                "p=${fileServer.ed25519PublicKeyHex}"
-            } else {
-                null
-            }
-        ).filterNotNull()
-            .joinToString(separator = "&")
-
-        return fileServer.url
-            .newBuilder()
-            .addPathSegment("file")
-            .addPathSegment(fileId)
-            .fragment(urlFragment.takeIf { it.isNotBlank() })
-            .build()
-    }
 
     data class URLParseResult(
         val fileId: String,
@@ -225,79 +235,6 @@ class FileServerApi @Inject constructor(
         val usesDeterministicEncryption: Boolean
     )
 
-    fun parseAttachmentUrl(url: HttpUrl): URLParseResult {
-        check(url.pathSegments.size == 2) {
-            "Invalid URL: requiring exactly 2 path segments"
-        }
-
-        check(url.pathSegments[0] == "file") {
-            "Invalid URL: first path segment must be 'file'"
-        }
-
-        val id = url.pathSegments[1]
-        check(id.isNotBlank()) {
-            "Invalid URL: id must not be blank"
-        }
-
-        var deterministicEncryption = false
-        var fileServerPubKeyHex: String? = null
-
-        url.fragment
-            .orEmpty()
-            .splitToSequence('&')
-            .forEach { fragment ->
-                when {
-                    fragment == "d" || fragment == "d=" -> deterministicEncryption = true
-                    fragment.startsWith("p=", ignoreCase = true) -> {
-                        fileServerPubKeyHex = fragment.substringAfter("p=").takeIf { it.isNotBlank() }
-                    }
-                }
-            }
-
-        val fileServerUrl = url.newBuilder()
-            .removePathSegment(0) // remove "file"
-            .removePathSegment(0) // remove id
-            .fragment(null) // remove fragment
-            .build()
-
-        when {
-            !fileServerPubKeyHex.isNullOrEmpty() -> {
-                // We'll use the public key we get from the URL
-                return URLParseResult(
-                    fileId = id,
-                    fileServer = FileServer(url = fileServerUrl, ed25519PublicKeyHex = fileServerPubKeyHex),
-                    usesDeterministicEncryption = deterministicEncryption
-                )
-            }
-
-            fileServerUrl == DEFAULT_FILE_SERVER.url -> {
-                // We'll use the default file server
-                return URLParseResult(
-                    fileId = id,
-                    fileServer = DEFAULT_FILE_SERVER,
-                    usesDeterministicEncryption = deterministicEncryption
-                )
-            }
-
-            fileServerUrl.isOfficial -> {
-                // We don't have a public key, but given it's an official file server,
-                // we can use the default public key
-                return URLParseResult(
-                    fileId = id,
-                    fileServer = FileServer(
-                        url = fileServerUrl,
-                        ed25519PublicKeyHex = DEFAULT_FILE_SERVER.ed25519PublicKeyHex
-                    ),
-                    usesDeterministicEncryption = deterministicEncryption
-                )
-            }
-
-            else -> {
-                // We don't have a public key, and it's not the default file server
-                throw Error.InvalidURL
-            }
-        }
-    }
 
     /**
      * Returns the current version of session

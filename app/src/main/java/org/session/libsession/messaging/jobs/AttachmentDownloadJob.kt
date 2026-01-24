@@ -7,13 +7,13 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.file_server.FileDownloadApi
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
@@ -22,6 +22,9 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.server.ServerApiError
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.util.findCause
@@ -32,7 +35,8 @@ class AttachmentDownloadJob @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
     private val attachmentProcessor: AttachmentProcessor,
-    private val fileServerApi: FileServerApi,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val fileDownloadApiFactory: FileDownloadApi.Factory,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -159,7 +163,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
 
             val decrypted = if (threadRecipient?.address !is Address.Community) {
                 Log.d("AttachmentDownloadJob", "downloading normal attachment")
-                val r = runCatching { fileServerApi.parseAttachmentUrl(attachment.url.toHttpUrl()) }
+                val r = runCatching { FileServerApi.parseAttachmentUrl(attachment.url.toHttpUrl()) }
                     .recover { throw NonRetryableException("Invalid file server URL", it) }
                     .getOrThrow()
 
@@ -167,10 +171,12 @@ class AttachmentDownloadJob @AssistedInject constructor(
                     throw NonRetryableException("Missing attachment key")
                 }.let(Base64::decode)
 
-                val cipherText = fileServerApi.download(
-                    fileId = r.fileId,
-                    fileServer = r.fileServer
-                ).body
+                val cipherText = serverApiExecutor.execute(
+                    ServerApiRequest(
+                        fileServer = r.fileServer,
+                        api = fileDownloadApiFactory.create(r.fileId)
+                    )
+                ).data.toByteArraySlice()
 
                 runCatching {
                     if (r.usesDeterministicEncryption) {

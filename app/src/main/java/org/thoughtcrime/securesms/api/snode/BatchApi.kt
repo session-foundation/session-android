@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.snode.model.BatchResponse
@@ -58,7 +59,7 @@ class BatchApi @AssistedInject constructor(
     override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): Response {
          val items = json.decodeFromJsonElement(BatchResponse.serializer(), body).results
         return Response(
-            requestParams = requestParams as JsonArray,
+            requestParams = ((requestParams as JsonObject)["requests"]) as JsonArray,
             responses = items
         )
     }

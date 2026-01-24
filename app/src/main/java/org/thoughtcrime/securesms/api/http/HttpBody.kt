@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.api.http
 
 import okio.utf8Size
 import org.session.libsignal.utilities.ByteArraySlice
+import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import java.io.InputStream
 
 sealed interface HttpBody {
@@ -9,6 +10,9 @@ sealed interface HttpBody {
 
     fun asInputStream(): InputStream
     fun toBytes(): ByteArray
+    fun toByteArraySlice(): ByteArraySlice {
+        return toBytes().view()
+    }
 
     fun toText(): String?
 
@@ -71,6 +75,10 @@ sealed interface HttpBody {
 
         override val byteLength: Int
             get() = slice.len
+
+        override fun toByteArraySlice(): ByteArraySlice {
+            return slice
+        }
 
         override fun toText(): String? {
             return runCatching {

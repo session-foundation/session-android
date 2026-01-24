@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.util.Bytes
 import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileUploadApi
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
@@ -17,6 +18,9 @@ import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
@@ -26,6 +30,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 
 /**
@@ -37,8 +42,9 @@ class AvatarUploadManager @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val prefs: TextSecurePreferences,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
-    private val fileServerApi: FileServerApi,
     private val attachmentProcessor: AttachmentProcessor,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val fileUploadApiFactory: FileUploadApi.Factory,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
         TextSecurePreferences._events.filter { it == TextSecurePreferences.DEBUG_AVATAR_REUPLOAD }
@@ -80,11 +86,17 @@ class AvatarUploadManager @Inject constructor(
             AttachmentProcessor.EncryptResult(ciphertext = ciphertext, key = key)
         }
 
-        val uploadResult = fileServerApi.upload(
-            file = result.ciphertext,
-            fileServer = prefs.alternativeFileServer ?: FileServerApi.DEFAULT_FILE_SERVER,
-            usedDeterministicEncryption = usesDeterministicEncryption,
-            customExpiresDuration = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }
+        val fileServer = prefs.alternativeFileServer ?: FileServerApi.DEFAULT_FILE_SERVER
+        val uploadResult = serverApiExecutor.execute(
+            ServerApiRequest(
+                fileServer = fileServer,
+                api = fileUploadApiFactory.create(
+                    fileServer = fileServer,
+                    data = result.ciphertext,
+                    usedDeterministicEncryption = usesDeterministicEncryption,
+                    customExpiresDuration = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }?.toJavaDuration()
+                )
+            )
         )
 
         Log.d(DebugLogGroup.AVATAR.label, "Avatar upload finished with $uploadResult")

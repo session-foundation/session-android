@@ -10,6 +10,7 @@ import network.loki.messenger.libsession_util.encrypt.Attachments
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileUploadApi
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -22,6 +23,9 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UploadResult
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.ThreadDatabase
 
@@ -36,8 +40,9 @@ class AttachmentUploadJob @AssistedInject constructor(
     private val threadDatabase: ThreadDatabase,
     private val attachmentProcessor: AttachmentProcessor,
     private val preferences: TextSecurePreferences,
-    private val fileServerApi: FileServerApi,
     private val messageSender: MessageSender,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val fileUploadApiFactory: FileUploadApi.Factory,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -85,10 +90,16 @@ class AttachmentUploadJob @AssistedInject constructor(
                     attachment = attachment,
                     encrypt = true
                 ) { data, isDeterministicallyEncrypted ->
-                    val result = fileServerApi.upload(
-                        file = data,
-                        usedDeterministicEncryption = isDeterministicallyEncrypted,
-                        fileServer = fileServer
+                    val result = serverApiExecutor.execute(
+                        ServerApiRequest(
+                            fileServer = fileServer,
+                            api = fileUploadApiFactory.create(
+                                data = data,
+                                usedDeterministicEncryption = isDeterministicallyEncrypted,
+                                fileServer = fileServer,
+                                customExpiresDuration = null,
+                            )
+                        )
                     )
 
                     result.fileId to result.fileUrl

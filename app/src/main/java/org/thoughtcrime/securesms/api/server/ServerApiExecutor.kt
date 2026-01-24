@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.api.server
 
+import org.session.libsession.messaging.file_server.FileServer
 import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
@@ -11,7 +12,13 @@ class ServerApiRequest<RespType: ServerApiResponse>(
     val serverBaseUrl: String,
     val serverX25519PubKeyHex: String,
     val api: ServerApi<RespType>,
-)
+) {
+    constructor(fileServer: FileServer, api: ServerApi<RespType>) : this(
+        serverBaseUrl = fileServer.url.toString(),
+        serverX25519PubKeyHex = fileServer.x25519PubKeyHex,
+        api = api,
+    )
+}
 
 typealias ServerApiResponse = Any
 
