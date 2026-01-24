@@ -28,7 +28,7 @@ class GetSwarmApi @AssistedInject constructor(
         )
     }
 
-    override fun deserializeSuccessResponse(body: JsonElement): Response {
+    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): Response {
         return json.decodeFromJsonElement(Response.serializer(), body)
     }
 

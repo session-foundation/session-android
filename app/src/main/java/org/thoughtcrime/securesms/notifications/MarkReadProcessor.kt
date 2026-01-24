@@ -9,7 +9,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
@@ -44,7 +43,6 @@ class MarkReadProcessor @Inject constructor(
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
     private val lokiMessageDatabase: LokiMessageDatabase,
-    private val snodeClient: SnodeClient,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val alterTtyFactory: AlterTtlApi.Factory,
     @param:ManagerScope private val coroutineScope: CoroutineScope,

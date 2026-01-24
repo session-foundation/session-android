@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.api.snode
 
-import org.session.libsession.snode.model.BatchResponse
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.BatchApiExecutor
 import javax.inject.Inject
@@ -17,7 +16,12 @@ class SnodeApiBatcher @Inject constructor(
         )
     }
 
-    override fun batchKey(req: SnodeApiRequest<*>): Any {
+    override fun batchKey(req: SnodeApiRequest<*>): Any? {
+        // Shouldn't batch the batch requests themselves
+        if (req.api is BatchApi) {
+            return null
+        }
+
         return req.snode.ed25519Key
     }
 
@@ -25,21 +29,20 @@ class SnodeApiBatcher @Inject constructor(
         requests: List<Pair<ApiExecutorContext, SnodeApiRequest<*>>>,
         response: SnodeApiResponse
     ): List<Result<SnodeApiResponse>> {
-        val results = (response as BatchResponse).results
-        check(results.size == requests.size) {
-            "Mismatched batch response size: expected ${requests.size}, got ${results.size}"
-        }
+        response as BatchApi.Response
 
         return requests.indices.map { i ->
             val (ctx, request) = requests[i]
-            val result = results[i]
+            val result = response.responses[i]
+            val requestParams = response.requestParams[i]
 
             runCatching {
                 request.api.handleResponse(
                     ctx = ctx,
                     snode = request.snode,
                     code = result.code,
-                    body = result.body
+                    body = result.body,
+                    requestParams = requestParams,
                 )
             }
         }

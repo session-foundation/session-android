@@ -18,7 +18,6 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.Address
@@ -92,7 +91,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
-    private val snodeClient: SnodeClient,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val deleteMessageApiFactory: DeleteMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,

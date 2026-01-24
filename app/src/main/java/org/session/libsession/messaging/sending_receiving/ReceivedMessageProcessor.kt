@@ -3,7 +3,6 @@ package org.session.libsession.messaging.sending_receiving
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
@@ -29,7 +28,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.utilities.WebRtcUtils
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -81,7 +79,6 @@ class ReceivedMessageProcessor @Inject constructor(
     private val visibleMessageHandler: Provider<VisibleMessageHandler>,
     private val blindMappingRepository: BlindMappingRepository,
     private val messageParser: MessageParser,
-    private val snodeClient: SnodeClient,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val deleteMessageApiFactory: DeleteMessageApi.Factory
 ) {

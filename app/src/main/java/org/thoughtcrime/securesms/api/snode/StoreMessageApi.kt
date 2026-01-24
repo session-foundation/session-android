@@ -23,7 +23,7 @@ class StoreMessageApi @AssistedInject constructor(
 ) : AbstractSnodeApi<StoreMessageResponse>(
     snodeClientErrorManager = errorManager
 ) {
-    override fun deserializeSuccessResponse(body: JsonElement): StoreMessageResponse {
+    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): StoreMessageResponse {
         return json.decodeFromJsonElement(StoreMessageResponse.serializer(), body)
     }
 

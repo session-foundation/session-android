@@ -24,7 +24,7 @@ class DeleteMessageApi @AssistedInject constructor(
     errorManager: SnodeClientErrorManager
 ) : AbstractSnodeApi<DeleteMessageApi.SuccessResponse>(errorManager) {
 
-    override fun deserializeSuccessResponse(body: JsonElement): SuccessResponse {
+    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): SuccessResponse {
         val response: Response = json.decodeFromJsonElement(body)
 
         val totalSuccessSnodes = response.swarm

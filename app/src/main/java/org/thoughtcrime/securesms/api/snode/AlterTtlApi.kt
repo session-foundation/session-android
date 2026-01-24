@@ -18,7 +18,7 @@ class AlterTtlApi @AssistedInject constructor(
     errorManager: SnodeClientErrorManager,
     private val snodeClock: SnodeClock,
 ) : AbstractSnodeApi<Unit>(errorManager) {
-    override fun deserializeSuccessResponse(body: JsonElement) {}
+    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement) {}
 
     override val methodName: String
         get() = "expire"

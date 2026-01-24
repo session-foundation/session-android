@@ -15,12 +15,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
+import org.thoughtcrime.securesms.api.snode.SnodeApiError
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
@@ -28,7 +28,7 @@ import javax.inject.Inject
 @HiltViewModel
 class NewMessageViewModel @Inject constructor(
     private val application: Application,
-    private val sesionClient: SnodeClient,
+    private val onsResolver: OnsResolver,
 ) : ViewModel(), Callbacks {
     private val HELP_URL : String = "https://getsession.org/account-ids"
 
@@ -126,7 +126,7 @@ class NewMessageViewModel @Inject constructor(
         loadOnsJob = viewModelScope.launch {
             try {
                 val publicKey = withTimeout(30_000L, {
-                    sesionClient.getAccountID(ons)
+                    onsResolver.resolve(ons)
                 })
                 onPublicKey(publicKey)
             } catch (e: Exception) {
@@ -169,7 +169,7 @@ class NewMessageViewModel @Inject constructor(
     }
 
     private fun Exception.toMessage() = when (this) {
-        is SnodeClient.Error.Generic -> application.getString(R.string.errorUnregisteredOns)
+        is SnodeApiError.UnknownStatusCode -> application.getString(R.string.errorUnregisteredOns)
         else -> Phrase.from(application, R.string.errorNoLookupOns)
             .put(APP_NAME_KEY, application.getString(R.string.app_name))
             .format().toString()

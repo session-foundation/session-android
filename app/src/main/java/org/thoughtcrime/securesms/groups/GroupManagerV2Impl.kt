@@ -37,12 +37,9 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
@@ -63,7 +60,11 @@ import org.session.protos.SessionProtos.GroupUpdateInviteResponseMessage
 import org.session.protos.SessionProtos.GroupUpdateMemberChangeMessage
 import org.session.protos.SessionProtos.GroupUpdateMessage
 import org.session.protos.SessionProtos.GroupUpdatePromoteMessage
+import org.thoughtcrime.securesms.api.snode.BatchApi
 import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.snode.SnodeApi
+import org.thoughtcrime.securesms.api.snode.StoreMessageApi
+import org.thoughtcrime.securesms.api.snode.UnrevokeSubKeyApi
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
@@ -73,7 +74,6 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
@@ -90,7 +90,6 @@ class GroupManagerV2Impl @Inject constructor(
     private val configFactory: ConfigFactory,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiDatabase: LokiMessageDatabase,
-    private val threadDatabase: ThreadDatabase,
     @param:ApplicationContext val application: Context,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
@@ -102,10 +101,11 @@ class GroupManagerV2Impl @Inject constructor(
     private val recipientRepository: RecipientRepository,
     private val messageSender: MessageSender,
     private val inviteContactJobFactory: InviteContactsJob.Factory,
-    private val snodeClient: SnodeClient,
-    private val swarmDirectory: SwarmDirectory,
     private val swarmApiExecutor: SwarmApiExecutor,
-    private val deleteMessageApiFactory: DeleteMessageApi.Factory
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory,
+    private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
+    private val unrevokeSubKeyApiFactory: UnrevokeSubKeyApi.Factory,
+    private val batchApiFactory: BatchApi.Factory,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -268,7 +268,7 @@ class GroupManagerV2Impl @Inject constructor(
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
 
-        val batchRequests = mutableListOf<SnodeClient.SnodeBatchRequestInfo>()
+        val batchApis = mutableListOf<SnodeApi<*>>()
 
         val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
             val shareHistoryHexes = mutableListOf<String>()
@@ -298,8 +298,8 @@ class GroupManagerV2Impl @Inject constructor(
 
             if (shareHistoryHexes.isNotEmpty()) {
                 val memberKey = configs.groupKeys.supplementFor(shareHistoryHexes)
-                batchRequests.add(
-                    snodeClient.buildAuthenticatedStoreBatchInfo(
+                batchApis.add(
+                    storeSnodeMessageApiFactory.create(
                         namespace = Namespace.GROUP_KEYS(),
                         message = SnodeMessage(
                             recipient = group.hexString,
@@ -317,15 +317,17 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Call un-revocate API on new members, in case they have been removed before
-        batchRequests += snodeClient.buildAuthenticatedUnrevokeSubKeyBatchRequest(
-            groupAdminAuth = groupAuth,
+        batchApis += unrevokeSubKeyApiFactory.create(
+            auth = groupAuth,
             subAccountTokens = subAccountTokens
         )
 
         // Call the API
         try {
-            val swarmNode = swarmDirectory.getSingleTargetSnode(group.hexString)
-            val response = snodeClient.getBatchResponse(swarmNode, group.hexString, batchRequests)
+            val response = swarmApiExecutor.execute(SwarmApiRequest(
+                swarmPubKeyHex = group.hexString,
+                api = batchApiFactory.create(batchApis)
+            ))
 
             // Make sure every request is successful
             response.requireAllRequestsSuccessful("Failed to invite members")
@@ -1371,8 +1373,8 @@ class GroupManagerV2Impl @Inject constructor(
         return amAdmin && adminCount == 1
     }
 
-    private fun BatchResponse.requireAllRequestsSuccessful(errorMessage: String) {
-        val firstError = this.results.firstOrNull { it.code != 200 }
+    private fun BatchApi.Response.requireAllRequestsSuccessful(errorMessage: String) {
+        val firstError = this.responses.firstOrNull { it.code != 200 }
         require(firstError == null) { "$errorMessage: ${firstError!!.body}" }
     }
 }

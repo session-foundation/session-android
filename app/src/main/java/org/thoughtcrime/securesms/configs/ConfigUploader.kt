@@ -20,7 +20,6 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
@@ -49,7 +48,6 @@ import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.StoreMessageApi
 import org.thoughtcrime.securesms.api.snode.execute
-import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.util.NetworkConnectivity

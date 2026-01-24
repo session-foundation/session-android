@@ -9,5 +9,11 @@ typealias SnodeApiResponse = Any
 interface SnodeApi<RespType : SnodeApiResponse> {
     val methodName: String
     fun buildParams(): JsonElement
-    suspend fun handleResponse(ctx: ApiExecutorContext, snode: Snode, code: Int, body: JsonElement?): RespType
+    suspend fun handleResponse(
+        ctx: ApiExecutorContext,
+        snode: Snode,
+        requestParams: JsonElement,
+        code: Int,
+        body: JsonElement?
+    ): RespType
 }

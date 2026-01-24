@@ -40,7 +40,7 @@ class RetrieveMessageApi @AssistedInject constructor(
         }
     }
 
-    override fun deserializeSuccessResponse(body: JsonElement): RetrieveMessageResponse {
+    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): RetrieveMessageResponse {
         return json.decodeFromJsonElement(body)
     }
 

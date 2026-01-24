@@ -19,11 +19,12 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
     final override suspend fun handleResponse(
         ctx: ApiExecutorContext,
         snode: Snode,
+        requestParams: JsonElement,
         code: Int,
         body: JsonElement?
     ): RespType {
         if (code in 200..299) {
-            return deserializeSuccessResponse(checkNotNull(body) {
+            return deserializeSuccessResponse(requestParams, checkNotNull(body) {
                 "Expected non-null body for successful response"
             })
         } else {
@@ -58,7 +59,7 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
         }
     }
 
-    abstract fun deserializeSuccessResponse(body: JsonElement): RespType
+    abstract fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): RespType
 }
 
 fun buildAuthenticatedParameters(
@@ -68,7 +69,7 @@ fun buildAuthenticatedParameters(
     verificationData: ((namespaceText: String, timestamp: Long) -> Any)? = null,
     builder: MutableMap<String, JsonElement>.() -> Unit = {}
 ): JsonObject {
-    return JsonObject(buildMap<String, JsonElement> {
+    return JsonObject(buildMap {
         this.builder()
 
         if (verificationData != null) {
