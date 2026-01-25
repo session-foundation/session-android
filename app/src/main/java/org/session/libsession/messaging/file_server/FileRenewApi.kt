@@ -13,7 +13,6 @@ import java.time.Duration
 
 class FileRenewApi @AssistedInject constructor(
     @Assisted private val fileId: String,
-    @Assisted private val customTtl: Duration?,
     errorManager: ServerClientErrorManager,
 ) : ServerApi<Unit>(errorManager) {
 
@@ -24,11 +23,7 @@ class FileRenewApi @AssistedInject constructor(
         return HttpRequest(
             url = "$baseUrl/file/$fileId/extend".toHttpUrl(),
             method = "POST",
-            headers = buildMap {
-                customTtl?.let {
-                    put("X-File-TTL", it.toSeconds().toString())
-                }
-            },
+            headers = emptyMap(),
             body = null,
         )
     }
@@ -41,6 +36,6 @@ class FileRenewApi @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(fileId: String, customTtl: Duration? = null): FileRenewApi
+        fun create(fileId: String): FileRenewApi
     }
 }

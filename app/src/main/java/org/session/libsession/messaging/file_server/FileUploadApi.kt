@@ -21,7 +21,6 @@ class FileUploadApi @AssistedInject constructor(
     @Assisted private val fileServer: FileServer,
     @Assisted private val data: ByteArray,
     @Assisted private val usedDeterministicEncryption: Boolean,
-    @Assisted private val customExpiresDuration: Duration?,
     errorManager: ServerClientErrorManager,
     private val json: Json,
 ) : ServerApi<FileServerApi.UploadResult>(
@@ -41,9 +40,6 @@ class FileUploadApi @AssistedInject constructor(
             headers = buildMap {
                 put("Content-Disposition", "attachment")
                 put("Content-Type", "application/octet-stream")
-                if (customExpiresDuration != null) {
-                    put("X-FS-TTL", customExpiresDuration.toSeconds().toString())
-                }
             },
             body = HttpBody.Bytes(data),
         )
@@ -81,7 +77,6 @@ class FileUploadApi @AssistedInject constructor(
             fileServer: FileServer,
             data: ByteArray,
             usedDeterministicEncryption: Boolean,
-            customExpiresDuration: Duration? = null,
         ): FileUploadApi
     }
 }
