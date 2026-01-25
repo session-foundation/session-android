@@ -25,7 +25,7 @@ class AutoRetryApiExecutor<Req, Res>(
                     throw e
                 } else {
                     numRetried += 1
-                    Log.e(TAG, "Retrying ${actualExecutor.javaClass.simpleName} $numRetried times due to error", e)
+                    Log.e(TAG, "Retrying $req $numRetried times due to error", e)
                     delay(numRetried * 2000L)
                 }
             }

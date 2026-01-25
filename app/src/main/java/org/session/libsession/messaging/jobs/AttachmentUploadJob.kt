@@ -14,6 +14,10 @@ import org.session.libsession.messaging.file_server.FileUploadApi
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.CommunityFileUploadApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.Address
@@ -23,6 +27,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UploadResult
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import org.thoughtcrime.securesms.api.server.execute
@@ -43,6 +48,8 @@ class AttachmentUploadJob @AssistedInject constructor(
     private val messageSender: MessageSender,
     private val serverApiExecutor: ServerApiExecutor,
     private val fileUploadApiFactory: FileUploadApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val communityFileUploadApiFactory: CommunityFileUploadApi.Factory,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -80,7 +87,15 @@ class AttachmentUploadJob @AssistedInject constructor(
                     attachment = attachment,
                     encrypt = false
                 ) { data, _ ->
-                    val id = OpenGroupApi.upload(data, threadAddress.room, threadAddress.serverUrl)
+                    val id = communityApiExecutor.execute(
+                        CommunityApiRequest(
+                            serverBaseUrl = threadAddress.serverUrl,
+                            api = communityFileUploadApiFactory.create(
+                                file = HttpBody.Bytes(data),
+                                room = threadAddress.room,
+                            )
+                        )
+                    )
                     id to "${threadAddress.serverUrl}/file/$id"
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)

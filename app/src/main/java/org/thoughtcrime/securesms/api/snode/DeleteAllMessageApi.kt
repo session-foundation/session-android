@@ -26,13 +26,17 @@ class DeleteAllMessageApi @AssistedInject constructor(
     override val methodName: String get() = "delete_all"
 
     override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): Map<String, Boolean> {
-        val requestTimestamp = ((requestParams as JsonObject)["timestamp"] as JsonPrimitive).long
+        requestParams as JsonObject
+
+        val params = requestParams["params"] as JsonObject
+        val timestamp = (params["timestamp"] as JsonPrimitive).long
+
         return json.decodeFromJsonElement<Response>(body)
             .swarm
             .mapValues { (snodePubKeyHex, state) ->
                 !state.failed && state.verify(
                     snodePubKeyHex = snodePubKeyHex,
-                    timestamp = requestTimestamp,
+                    timestamp = timestamp,
                     userPublicKey = auth.accountId.hexString
                 )
             }

@@ -10,6 +10,10 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileDownloadApi
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.CommunityFileDownloadApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
@@ -37,6 +41,8 @@ class AttachmentDownloadJob @AssistedInject constructor(
     private val attachmentProcessor: AttachmentProcessor,
     private val serverApiExecutor: ServerApiExecutor,
     private val fileDownloadApiFactory: FileDownloadApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val communityFileDownloadApiFactory: CommunityFileDownloadApi.Factory,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -197,7 +203,16 @@ class AttachmentDownloadJob @AssistedInject constructor(
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, room = threadRecipient.address.room, server = threadRecipient.address.serverUrl)
+
+                communityApiExecutor.execute(
+                    CommunityApiRequest(
+                        serverBaseUrl = threadRecipient.address.serverUrl,
+                        api = communityFileDownloadApiFactory.create(
+                            room = threadRecipient.address.room,
+                            fileId = fileID
+                        )
+                    )
+                ).toByteArraySlice()
             }
 
             Log.d("AttachmentDownloadJob", "getting input stream")

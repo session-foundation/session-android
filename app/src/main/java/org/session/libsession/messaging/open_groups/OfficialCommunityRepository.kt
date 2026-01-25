@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.shareIn
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
-import org.session.libsession.messaging.open_groups.api.DownloadFileApi
+import org.session.libsession.messaging.open_groups.api.CommunityFileDownloadApi
 import org.session.libsession.messaging.open_groups.api.GetCapsApi
 import org.session.libsession.messaging.open_groups.api.GetRoomsApi
 import org.session.libsession.messaging.open_groups.api.execute
@@ -30,7 +30,7 @@ class OfficialCommunityRepository @Inject constructor(
     communityApiExecutor: CommunityApiExecutor,
     getRoomsApi: Provider<GetRoomsApi>,
     getCapsApi: Provider<GetCapsApi>,
-    downloadFileApiFactory: DownloadFileApi.Factory,
+    communityFileDownloadApiFactory: CommunityFileDownloadApi.Factory,
     @ManagerScope scope: CoroutineScope,
 ) {
     private val refreshTrigger = MutableSharedFlow<Unit>()
@@ -72,7 +72,7 @@ class OfficialCommunityRepository @Inject constructor(
                                             CommunityApiRequest(
                                                 serverBaseUrl = OFFICIAL_COMMUNITY_URL,
                                                 serverPubKey = OFFICIAL_COMMUNITY_X25519_PUB_KEY_HEX,
-                                                api = downloadFileApiFactory.create(
+                                                api = communityFileDownloadApiFactory.create(
                                                     room = room.token,
                                                     fileId = fileId,
                                                 )

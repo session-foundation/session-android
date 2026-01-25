@@ -10,7 +10,10 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileDownloadApi
 import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.CommunityFileDownloadApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -51,11 +54,12 @@ class AvatarDownloadManager @Inject constructor(
     private val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val configFactory: ConfigFactoryProtocol,
-    private val fileServerApi: FileServerApi,
     private val attachmentProcessor: AttachmentProcessor,
     private val loginStateRepository: LoginStateRepository,
     private val serverApiExecutor: ServerApiExecutor,
     private val fileDownloadApiFactory: FileDownloadApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val communityFileDownloadApiFactory: CommunityFileDownloadApi.Factory,
 ) {
     /**
      * A map of mutexes to synchronize downloads for each remote file.
@@ -272,11 +276,15 @@ class AvatarDownloadManager @Inject constructor(
             }
 
             is RemoteFile.Community -> {
-                val data = OpenGroupApi.download(
-                    fileId = file.fileId,
-                    room = file.roomId,
-                    server = file.communityServerBaseUrl
-                )
+                val data = communityApiExecutor.execute(
+                    CommunityApiRequest(
+                        serverBaseUrl = file.communityServerBaseUrl,
+                        api = communityFileDownloadApiFactory.create(
+                            room = file.roomId,
+                            fileId = file.fileId
+                        )
+                    )
+                ).toByteArraySlice()
 
                 data to FileMetadata()
             }

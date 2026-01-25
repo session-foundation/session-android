@@ -457,50 +457,6 @@ object OpenGroupApi {
         )
     }
 
-    suspend fun downloadOpenGroupProfilePicture(
-        server: String,
-        roomID: String,
-        imageId: String,
-        signRequest: Boolean = true,
-        serverPubKeyHex: String? = null,
-    ): ByteArraySlice {
-        val request = Request(
-            verb = GET,
-            room = roomID,
-            server = server,
-            endpoint = Endpoint.RoomFileIndividual(roomID, imageId)
-        )
-        return getResponseBody(request, signRequest = signRequest, serverPubKeyHex = serverPubKeyHex)
-    }
-
-    // region Upload/Download
-    suspend fun upload(file: ByteArray, room: String, server: String): String {
-        val request = Request(
-            verb = POST,
-            room = room,
-            server = server,
-            endpoint = Endpoint.RoomFile(room),
-            body = file,
-            headers = mapOf(
-                "Content-Disposition" to "attachment",
-                "Content-Type" to "application/octet-stream"
-            )
-        )
-        val json =  getResponseBodyJson(request, signRequest = true)
-        return json["id"]?.toString() ?: throw Error.ParsingFailed
-    }
-
-    suspend fun download(fileId: String, room: String, server: String): ByteArraySlice {
-        val request = Request(
-            verb = GET,
-            room = room,
-            server = server,
-            endpoint = Endpoint.RoomFileIndividual(room, fileId)
-        )
-        return getResponseBody(request, signRequest = true)
-    }
-    // endregion
-
     // region Moderation
     suspend fun ban(publicKey: String, room: String, server: String) {
         val parameters =  mapOf("rooms" to listOf(room))
