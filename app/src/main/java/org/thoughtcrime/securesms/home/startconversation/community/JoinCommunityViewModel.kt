@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import org.session.libsession.messaging.open_groups.OfficialCommunityRepository
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.OpenGroupUrlParser
@@ -30,6 +32,7 @@ import javax.inject.Inject
 class JoinCommunityViewModel @Inject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val openGroupManager: OpenGroupManager,
+    private val officialCommunityRepository: OfficialCommunityRepository,
 ): ViewModel() {
 
     private val _state = MutableStateFlow(JoinCommunityState(defaultCommunities = State.Loading))
@@ -42,9 +45,20 @@ class JoinCommunityViewModel @Inject constructor(
     private val qrDebounceTime = 3000L
 
     init {
-        viewModelScope.launch(Dispatchers.Default) {
-            OpenGroupApi.defaultRooms.collect { defaultCommunities ->
-                _state.update { it.copy(defaultCommunities = State.Success(defaultCommunities)) }
+        viewModelScope.launch {
+            val groups = try {
+                officialCommunityRepository.fetchOfficialCommunities()
+            }
+            catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("JoinCommunityViewModel", "Couldn't fetch official communities.", e)
+                _state.update { it.copy(defaultCommunities = State.Error(e)) }
+                return@launch
+            }
+
+            _state.update {
+                it.copy(loading = false, defaultCommunities = State.Success(groups))
             }
         }
     }

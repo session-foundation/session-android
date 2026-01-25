@@ -9,7 +9,7 @@ import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpResponse
 
 class DownloadFileApi @AssistedInject constructor(
-    @Assisted override val room: String?,
+    @Assisted("room") override val room: String?,
     @Assisted val fileId: String,
     deps: CommunityApiDependencies,
 ) : CommunityApi<HttpBody>(deps) {
@@ -32,7 +32,7 @@ class DownloadFileApi @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(
-            room: String?,
+            @Assisted("room") room: String?,
             fileId: String
         ): DownloadFileApi
     }

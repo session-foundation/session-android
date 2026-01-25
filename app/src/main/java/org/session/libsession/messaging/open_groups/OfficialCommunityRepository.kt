@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
@@ -37,6 +38,7 @@ class OfficialCommunityRepository @Inject constructor(
     @Suppress("OPT_IN_USAGE")
     private val officialCommunitiesCache =
         refreshTrigger
+            .onStart { emit(Unit) }
             .flatMapLatest {
                 flow {
                     emit(runCatching {
@@ -111,7 +113,7 @@ class OfficialCommunityRepository @Inject constructor(
     }
 
     companion object {
-        private const val OFFICIAL_COMMUNITY_URL = "https://official.session.org"
+        private const val OFFICIAL_COMMUNITY_URL = "https://open.getsession.org"
         private const val OFFICIAL_COMMUNITY_X25519_PUB_KEY_HEX = "a03c383cf63c3c4efe67acc52112a6dd734b3a946b9545f488aaa93da7991238"
 
         private const val TAG = "OfficialCommunityRepo"
