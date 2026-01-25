@@ -43,13 +43,6 @@ class JoinCommunityViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
-            runCatching {
-                OpenGroupApi.getDefaultServerCapabilities()
-                OpenGroupApi.getDefaultRoomsIfNeeded()
-            }
-        }
-
-        viewModelScope.launch(Dispatchers.Default) {
             OpenGroupApi.defaultRooms.collect { defaultCommunities ->
                 _state.update { it.copy(defaultCommunities = State.Success(defaultCommunities)) }
             }

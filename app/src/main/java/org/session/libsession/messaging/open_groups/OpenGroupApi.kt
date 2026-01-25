@@ -58,9 +58,9 @@ object OpenGroupApi {
         object NoEd25519KeyPair : Error("Couldn't find ed25519 key pair.")
     }
 
-    data class DefaultGroup(val id: String, val name: String, val image: ByteArraySlice?) {
+    data class DefaultGroup(val serverUrl: String, val publicKey: String, val id: String, val name: String, val image: ByteArraySlice?) {
 
-        val joinURL: String get() = "$defaultServer/$id?public_key=$defaultServerPublicKey"
+        val joinURL: String get() = "$serverUrl/$id?public_key=$publicKey"
     }
 
     @Serializable
@@ -650,38 +650,6 @@ object OpenGroupApi {
         return getOrFetchServerCapabilities(defaultServer)
     }
 
-    suspend fun getDefaultRoomsIfNeeded(): List<DefaultGroup> {
-        val groups = getAllRooms()
-
-        val earlyGroups = groups.map { group ->
-            DefaultGroup(group.token, group.name, null)
-        }
-        // See if we have any cached rooms, and if they already have images don't overwrite them with early non-image results
-        defaultRooms.replayCache.firstOrNull()?.let { replayed ->
-            if (replayed.none { it.image?.isNotEmpty() == true }) {
-                defaultRooms.tryEmit(earlyGroups)
-            }
-        }
-        val images = groups.associate { group ->
-            group.token to group.imageId?.let { downloadOpenGroupProfilePicture(
-                server = defaultServer,
-                roomID = group.token,
-                imageId = it,
-                signRequest = false,
-                serverPubKeyHex = defaultServerPublicKey,
-            ) }
-        }
-
-        return groups.map { group ->
-            val image = try {
-                images[group.token]!!
-            } catch (e: Exception) {
-                // No image or image failed to download
-                null
-            }
-            DefaultGroup(group.token, group.name, image)
-        }.also(defaultRooms::tryEmit)
-    }
 
     private suspend fun getAllRooms(): List<RoomInfoDetails> {
         val request = Request(
