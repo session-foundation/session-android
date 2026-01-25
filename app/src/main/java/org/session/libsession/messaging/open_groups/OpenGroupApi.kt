@@ -501,49 +501,6 @@ object OpenGroupApi {
     }
     // endregion
 
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun addReaction(room: String, server: String, messageId: Long, emoji: String): AddReactionResponse {
-        val request = Request(
-            verb = PUT,
-            room = room,
-            server = server,
-            endpoint = Endpoint.Reaction(room, messageId, emoji),
-            parameters = emptyMap<String, String>()
-        )
-
-        val response = getResponseBody(request, signRequest = true)
-        val reaction: AddReactionResponse =  response.inputStream().use( MessagingModuleConfiguration.shared.json::decodeFromStream)
-
-        return reaction
-    }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun deleteReaction(room: String, server: String, messageId: Long, emoji: String): DeleteReactionResponse {
-        val request = Request(
-            verb = DELETE,
-            room = room,
-            server = server,
-            endpoint = Endpoint.Reaction(room, messageId, emoji)
-        )
-
-        val response = getResponseBody(request, signRequest = true)
-        val reaction: DeleteReactionResponse = MessagingModuleConfiguration.shared.json.decodeFromStream(response.inputStream())
-
-        return reaction
-    }
-
-    suspend fun deleteAllReactions(room: String, server: String, messageId: Long, emoji: String): DeleteAllReactionsResponse {
-        val request = Request(
-            verb = DELETE,
-            room = room,
-            server = server,
-            endpoint = Endpoint.ReactionDelete(room, messageId, emoji)
-        )
-        val response = getResponseBody(request, signRequest = true)
-        return JsonUtil.fromJson(response, DeleteAllReactionsResponse::class.java)
-    }
-    // endregion
-
     // region Moderation
     suspend fun ban(publicKey: String, room: String, server: String) {
         val parameters =  mapOf("rooms" to listOf(room))

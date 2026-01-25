@@ -92,6 +92,11 @@ import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.AddReactionApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteReactionApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
@@ -273,6 +278,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     @Inject
     lateinit var conversationLoaderFactory: ConversationLoader.Factory
+
+    @Inject
+    lateinit var communityApiExecutor: CommunityApiExecutor
+
+    @Inject
+    lateinit var addReactionApiFactory: AddReactionApi.Factory
+
+    @Inject
+    lateinit var deleteReactionApiFactory: DeleteReactionApi.Factory
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -1835,11 +1849,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 scope.launch {
                     runCatching {
-                        OpenGroupApi.addReaction(
-                            room = recipient.address.room,
-                            server = recipient.address.serverUrl,
-                            messageId = messageServerId,
-                            emoji = emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = recipient.address.serverUrl,
+                                api = addReactionApiFactory.create(
+                                    room = recipient.address.room,
+                                    messageId = messageServerId,
+                                    emoji = emoji
+                                )
+                            )
                         )
                     }
                 }
@@ -1892,11 +1910,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 scope.launch {
                     runCatching {
-                        OpenGroupApi.deleteReaction(
-                            recipient.address.room,
-                            recipient.address.serverUrl,
-                            messageServerId,
-                            emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = recipient.address.serverUrl,
+                                api = deleteReactionApiFactory.create(
+                                    room = recipient.address.room,
+                                    messageId = messageServerId,
+                                    emoji = emoji
+                                )
+                            )
                         )
                     }
                 }
@@ -1918,7 +1940,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             ReactWithAnyEmojiDialogFragment
                 .createForMessageRecord(messageRecord, reactWithAnyEmojiStartPage)
-                .show(supportFragmentManager, "BOTTOM");
+                .show(supportFragmentManager, "BOTTOM")
         }
     }
 

@@ -38,13 +38,6 @@ class GetRoomMessagesApi @AssistedInject constructor(
         }
     }
 
-    override fun buildRequestBody(
-        serverBaseUrl: String,
-        x25519PubKeyHex: String
-    ): Pair<MediaType, HttpBody>? {
-        return super.buildRequestBody(serverBaseUrl, x25519PubKeyHex)
-    }
-
     override suspend fun handleSuccessResponse(
         executorContext: ApiExecutorContext,
         baseUrl: String,
