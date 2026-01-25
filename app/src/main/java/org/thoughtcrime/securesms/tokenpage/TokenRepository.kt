@@ -2,20 +2,11 @@ package org.thoughtcrime.securesms.tokenpage
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import okhttp3.Headers.Companion.toHeaders
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.file_server.FileServerApis
-import org.session.libsession.network.ServerClient
-import org.session.libsession.network.SnodeClock
-import org.session.libsignal.utilities.Base64
-import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 interface TokenRepository {
@@ -25,95 +16,21 @@ interface TokenRepository {
 @Singleton
 class TokenRepositoryImpl @Inject constructor(
     @param:ApplicationContext val context: Context,
-    private val storage: StorageProtocol,
-    private val json: Json,
-    private val serverClient: ServerClient,
-    private val snodeClock: SnodeClock
+    private val serverApiExecutor: ServerApiExecutor,
+    private val getTokenApi: Provider<GetTokenApi>,
 ): TokenRepository {
-    private val TAG = "TokenRepository"
-
-    private val TOKEN_SERVER_URL = "http://networkv1.getsession.org"
-    private val TOKEN_SERVER_INFO_ENDPOINT = "$TOKEN_SERVER_URL/info"
-    private val SERVER_PUBLIC_KEY = "cbf461a4431dc9174dceef4421680d743a2a0e1a3131fc794240bcb0bc3dd449"
-
-    private val secretKey by lazy {
-        storage.getUserED25519KeyPair()?.secretKey?.data
-            ?: throw (FileServerApis.Error.NoEd25519KeyPair)
-    }
-
-    private val userBlindedKeys by lazy {
-        BlindKeyAPI.blindVersionKeyPair(secretKey)
-    }
-
-    private fun <T>defaultErrorHandling(e: Exception): T? {
-        Log.e("TokenRepo", "Server error getting data: $e")
-        return null
-    }
-
     // Method to access the /info endpoint and retrieve a InfoResponse via onion-routing.
-    override suspend fun getInfoResponse(): InfoResponse? {
-        return sendOnionRequest<InfoResponse>(
-            path = "info",
-            url = TOKEN_SERVER_INFO_ENDPOINT
-        )
+    override suspend fun getInfoResponse(): InfoResponse {
+        return serverApiExecutor.execute(ServerApiRequest(
+            serverBaseUrl = TOKEN_SERVER_URL,
+            serverX25519PubKeyHex = TOKEN_SERVER_PUBLIC_KEY,
+            api = getTokenApi.get(),
+        ))
     }
 
-    private suspend inline fun <reified T>sendOnionRequest(
-        path: String, url: String, body: ByteArray? = null,
-        noinline customCatch: (Exception) -> T? = { e -> defaultErrorHandling(e) }
-    ): T? {
-        var response: T? = null
-        try {
-            val rawResponse = serverClient.send(
-                requestFactory = {
-                    val timestampSeconds = snodeClock.currentTimeSeconds()
-                    val signature = BlindKeyAPI.blindVersionSignRequest(
-                        ed25519SecretKey = secretKey,
-                        timestamp = timestampSeconds,
-                        path = ("/$path"),
-                        body = body,
-                        method = if (body == null) "GET" else "POST"
-                    )
-
-                    val headersMap = mapOf(
-                        "X-FS-Pubkey" to "07" + userBlindedKeys.pubKey.data.toHexString(),
-                        "X-FS-Timestamp" to timestampSeconds.toString(),
-                        "X-FS-Signature" to Base64.encodeBytes(signature)
-                    )
-
-                    val requestBuilder = Request.Builder()
-                        .url(url)
-                        .headers(headersMap.toHeaders())
-
-                    if (body == null) {
-                        requestBuilder.get()
-                    } else {
-                        requestBuilder.post(body.toRequestBody())
-                    }
-
-                    requestBuilder.build()
-                },
-                serverBaseUrl = TOKEN_SERVER_URL,
-                x25519PublicKey = SERVER_PUBLIC_KEY,
-                operationName = "TokenRepository.sendOnionRequest.$path"
-            )
-
-            val resultJsonString = rawResponse.body?.decodeToString()
-            if (resultJsonString == null) {
-                Log.w(TAG, "${T::class.java} decoded to null")
-            } else {
-                response = json.decodeFromString(resultJsonString)
-            }
-        }
-        catch (se: SerializationException) {
-            Log.e(TAG, "Got a serialization exception attempting to decode ${T::class.java}", se)
-        }
-        catch (e: Exception) {
-            val catchResponse = customCatch(e)
-            Log.e(TAG, "Got an error: $catchResponse")
-            return catchResponse
-        }
-
-        return response
+    companion object {
+        private const val TOKEN_SERVER_URL = "http://networkv1.getsession.org"
+        private const val TOKEN_SERVER_PUBLIC_KEY = "cbf461a4431dc9174dceef4421680d743a2a0e1a3131fc794240bcb0bc3dd449"
     }
+
 }

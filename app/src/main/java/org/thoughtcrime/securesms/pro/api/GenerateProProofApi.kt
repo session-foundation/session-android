@@ -8,11 +8,12 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.ProProof
 import org.session.libsession.network.SnodeClock
 
-class GenerateProProofRequest @AssistedInject constructor(
+class GenerateProProofApi @AssistedInject constructor(
     @Assisted("master") private val masterPrivateKey: ByteArray,
     @Assisted private val rotatingPrivateKey: ByteArray,
     private val snodeClock: SnodeClock,
-) : ApiRequest<GetProProofStatus, ProProof> {
+    deps: ProApiDependencies,
+) : ProApi<GetProProofStatus, ProProof>(deps) {
 
     override val endpoint: String
         get() = "generate_pro_proof"
@@ -37,7 +38,7 @@ class GenerateProProofRequest @AssistedInject constructor(
         fun create(
             @Assisted("master") masterPrivateKey: ByteArray,
             rotatingPrivateKey: ByteArray,
-        ): GenerateProProofRequest
+        ): GenerateProProofApi
     }
 }
 

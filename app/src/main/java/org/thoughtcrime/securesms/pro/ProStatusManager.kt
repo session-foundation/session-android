@@ -51,6 +51,8 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -60,9 +62,9 @@ import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
-import org.thoughtcrime.securesms.pro.api.AddProPaymentRequest
-import org.thoughtcrime.securesms.pro.api.ProApiExecutor
+import org.thoughtcrime.securesms.pro.api.AddProPaymentApi
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
+import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
@@ -71,6 +73,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.EnumSet
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -81,7 +84,9 @@ class ProStatusManager @Inject constructor(
     private val prefs: TextSecurePreferences,
     recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
-    private val apiExecutor: ProApiExecutor,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val addProPaymentApiFactory: AddProPaymentApi.Factory,
+    private val backendConfig: Provider<ProBackendConfig>,
     private val loginState: LoginStateRepository,
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
@@ -467,14 +472,21 @@ class ProStatusManager @Inject constructor(
             try {
                 // 5s timeout as per PRD
                 val paymentResponse = withTimeout(5_000L) {
-                    apiExecutor.executeRequest(
-                        request = AddProPaymentRequest(
-                            googlePaymentToken = paymentId,
-                            googleOrderId = orderId,
-                            masterPrivateKey = keyData.seeded.proMasterPrivateKey,
-                            rotatingPrivateKey = rotatingKeyPair.secretKey.data
+                    runCatching {
+                        serverApiExecutor.execute(
+                            ServerApiRequest(
+                                proBackendConfig = backendConfig.get(),
+                                api = addProPaymentApiFactory.create(
+                                    googlePaymentToken = paymentId,
+                                    googleOrderId = orderId,
+                                    masterPrivateKey = keyData.seeded.proMasterPrivateKey,
+                                    rotatingPrivateKey = rotatingKeyPair.secretKey.data
+                                )
+                            )
                         )
-                    )
+                    }.getOrElse {
+                        ProApiResponse.Failure(AddPaymentErrorStatus.GenericError, emptyList())
+                    }
                 }
 
                 when (paymentResponse) {

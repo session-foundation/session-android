@@ -12,10 +12,11 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import java.time.Instant
 
-class GetProDetailsRequest @AssistedInject constructor(
+class GetProDetailsApi @AssistedInject constructor(
     private val snodeClock: SnodeClock,
     @Assisted private val masterPrivateKey: ByteArray,
-) : ApiRequest<Int, ProDetails> {
+    deps: ProApiDependencies,
+) : ProApi<Int, ProDetails>(deps) {
     override val endpoint: String
         get() = "get_pro_details"
 
@@ -35,7 +36,7 @@ class GetProDetailsRequest @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(masterPrivateKey: ByteArray): GetProDetailsRequest
+        fun create(masterPrivateKey: ByteArray): GetProDetailsApi
     }
 }
 

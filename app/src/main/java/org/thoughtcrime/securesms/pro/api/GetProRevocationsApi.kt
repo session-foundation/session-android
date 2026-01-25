@@ -10,10 +10,11 @@ import kotlinx.serialization.json.Json
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import java.time.Instant
 
-class GetProRevocationRequest @AssistedInject constructor(
+class GetProRevocationApi @AssistedInject constructor(
     @Assisted private val ticket: Long?,
     private val json: Json,
-) : ApiRequest<Int, ProRevocations> {
+    deps: ProApiDependencies,
+) : ProApi<Int, ProRevocations>(deps) {
     override val responseDeserializer: DeserializationStrategy<ProRevocations>
         get() = ProRevocations.serializer()
 
@@ -33,7 +34,7 @@ class GetProRevocationRequest @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(ticket: Long?): GetProRevocationRequest
+        fun create(ticket: Long?): GetProRevocationApi
     }
 }
 

@@ -21,14 +21,17 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.server.ServerApiError
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.pro.api.GenerateProProofRequest
-import org.thoughtcrime.securesms.pro.api.ProApiExecutor
+import org.thoughtcrime.securesms.pro.api.GenerateProProofApi
 import org.thoughtcrime.securesms.pro.api.ProDetails
+import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.util.findCause
 import java.time.Duration
 import java.time.Instant
+import javax.inject.Provider
 
 /**
  * A worker that generates a new [network.loki.messenger.libsession_util.pro.ProProof] and stores it
@@ -41,8 +44,9 @@ import java.time.Instant
 class ProProofGenerationWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
-    private val proApiExecutor: ProApiExecutor,
-    private val generateProProofRequest: GenerateProProofRequest.Factory,
+    private val apiExecutor: ServerApiExecutor,
+    private val proBackendConfig: Provider<ProBackendConfig>,
+    private val generateProProofApi: GenerateProProofApi.Factory,
     private val proDetailsRepository: ProDetailsRepository,
     private val loginStateRepository: LoginStateRepository,
     private val configFactory: ConfigFactoryProtocol,
@@ -63,10 +67,13 @@ class ProProofGenerationWorker @AssistedInject constructor(
         return try {
             val rotatingPrivateKey = ED25519.generate(null).secretKey.data
 
-            val proof = proApiExecutor.executeRequest(
-                request = generateProProofRequest.create(
-                    masterPrivateKey = proMasterKey,
-                    rotatingPrivateKey = rotatingPrivateKey
+            val proof = apiExecutor.execute(
+                ServerApiRequest(
+                    proBackendConfig = proBackendConfig.get(),
+                    api = generateProProofApi.create(
+                        masterPrivateKey = proMasterKey,
+                        rotatingPrivateKey = rotatingPrivateKey
+                    ),
                 )
             ).successOrThrow()
 
