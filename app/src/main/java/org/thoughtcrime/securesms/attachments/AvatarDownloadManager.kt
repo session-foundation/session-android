@@ -9,7 +9,7 @@ import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileDownloadApi
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
 import org.session.libsession.messaging.open_groups.api.CommunityFileDownloadApi
@@ -242,7 +242,7 @@ class AvatarDownloadManager @Inject constructor(
                     }
                 }
 
-                val result = FileServerApi.parseAttachmentUrl(file.url.toHttpUrl())
+                val result = FileServerApis.parseAttachmentUrl(file.url.toHttpUrl())
 
                 val response = serverApiExecutor.execute(
                     ServerApiRequest(

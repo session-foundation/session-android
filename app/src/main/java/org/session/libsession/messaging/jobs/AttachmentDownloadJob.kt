@@ -8,8 +8,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileDownloadApi
-import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
 import org.session.libsession.messaging.open_groups.api.CommunityFileDownloadApi
@@ -169,7 +168,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
 
             val decrypted = if (threadRecipient?.address !is Address.Community) {
                 Log.d("AttachmentDownloadJob", "downloading normal attachment")
-                val r = runCatching { FileServerApi.parseAttachmentUrl(attachment.url.toHttpUrl()) }
+                val r = runCatching { FileServerApis.parseAttachmentUrl(attachment.url.toHttpUrl()) }
                     .recover { throw NonRetryableException("Invalid file server URL", it) }
                     .getOrThrow()
 

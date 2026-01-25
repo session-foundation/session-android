@@ -5,11 +5,8 @@ import android.os.Looper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.file_server.GetClientVersionApi
-import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
-import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
-import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
@@ -37,7 +34,7 @@ class VersionDataFetcher @Inject constructor(
                 // Perform the version check
                 val clientVersion = serverApiExecutor.execute(
                     ServerApiRequest(
-                        fileServer = FileServerApi.DEFAULT_FILE_SERVER,
+                        fileServer = FileServerApis.DEFAULT_FILE_SERVER,
                         api = getClientVersionApi.get()
                     )
                 )

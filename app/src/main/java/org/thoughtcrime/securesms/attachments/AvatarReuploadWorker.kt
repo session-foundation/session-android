@@ -22,7 +22,7 @@ import okio.BufferedSource
 import okio.buffer
 import okio.source
 import org.session.libsession.messaging.file_server.FileRenewApi
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
@@ -125,7 +125,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
         }
 
         // Otherwise, we only need to renew the same avatar on the server
-        val parsed = FileServerApi.parseAttachmentUrl(profile.url.toHttpUrl())
+        val parsed = FileServerApis.parseAttachmentUrl(profile.url.toHttpUrl())
 
         log("Renewing user avatar on ${parsed.fileServer}")
         try {

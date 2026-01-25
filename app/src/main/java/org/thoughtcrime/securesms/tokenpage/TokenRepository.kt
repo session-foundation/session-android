@@ -9,7 +9,7 @@ import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.network.ServerClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsignal.utilities.Base64
@@ -17,7 +17,6 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 
 interface TokenRepository {
     suspend fun getInfoResponse(): InfoResponse?
@@ -39,7 +38,7 @@ class TokenRepositoryImpl @Inject constructor(
 
     private val secretKey by lazy {
         storage.getUserED25519KeyPair()?.secretKey?.data
-            ?: throw (FileServerApi.Error.NoEd25519KeyPair)
+            ?: throw (FileServerApis.Error.NoEd25519KeyPair)
     }
 
     private val userBlindedKeys by lazy {

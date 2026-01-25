@@ -9,11 +9,10 @@ import dagger.assisted.AssistedInject
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.file_server.FileUploadApi
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
 import org.session.libsession.messaging.open_groups.api.CommunityFileUploadApi
@@ -100,7 +99,7 @@ class AttachmentUploadJob @AssistedInject constructor(
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
-                val fileServer = preferences.alternativeFileServer ?: FileServerApi.DEFAULT_FILE_SERVER
+                val fileServer = preferences.alternativeFileServer ?: FileServerApis.DEFAULT_FILE_SERVER
                 val keyAndResult = upload(
                     attachment = attachment,
                     encrypt = true
@@ -112,7 +111,6 @@ class AttachmentUploadJob @AssistedInject constructor(
                                 data = data,
                                 usedDeterministicEncryption = isDeterministicallyEncrypted,
                                 fileServer = fileServer,
-                                customExpiresDuration = null,
                             )
                         )
                     )

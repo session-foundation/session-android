@@ -12,7 +12,7 @@ class FileServerApiTest {
     private data class Case(
         val name: String,
         val url: HttpUrl,
-        val successfulParseResult: FileServerApi.URLParseResult?,
+        val successfulParseResult: FileServerApis.URLParseResult?,
     )
 
     @Test
@@ -23,7 +23,7 @@ class FileServerApiTest {
             Case(
                 name = "With deterministic flag",
                 url = "http://fileserver/file/id1#d&p=1234".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = true,
                     fileServer = FileServer(
@@ -35,7 +35,7 @@ class FileServerApiTest {
             Case(
                 name = "With deterministic flag variant1",
                 url = "http://fileserver/file/id1#d=&p=1234".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = true,
                     fileServer = FileServer(
@@ -47,7 +47,7 @@ class FileServerApiTest {
             Case(
                 name = "Without deterministic flag",
                 url = "http://fileserver/file/id1#p=1234".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = false,
                     fileServer = FileServer(
@@ -58,22 +58,22 @@ class FileServerApiTest {
             ),
             Case(
                 name = "Official server without public key",
-                url = "http://${FileServerApi.DEFAULT_FILE_SERVER.url.host}/file/id1".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                url = "http://${FileServerApis.DEFAULT_FILE_SERVER.url.host}/file/id1".toHttpUrl(),
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = false,
-                    fileServer = FileServerApi.DEFAULT_FILE_SERVER
+                    fileServer = FileServerApis.DEFAULT_FILE_SERVER
                 ),
             ),
             Case(
                 name = "Alt official server without public key",
                 url = "http://fileabc.getsession.org/file/id1".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = false,
                     fileServer = FileServer(
                         "http://fileabc.getsession.org",
-                        FileServerApi.DEFAULT_FILE_SERVER.ed25519PublicKeyHex
+                        FileServerApis.DEFAULT_FILE_SERVER.ed25519PublicKeyHex
                     )
                 ),
             ),

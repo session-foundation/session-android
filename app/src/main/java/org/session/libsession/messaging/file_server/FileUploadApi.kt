@@ -15,15 +15,15 @@ import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 import org.thoughtcrime.securesms.api.server.ServerApi
 import org.thoughtcrime.securesms.util.DateUtils.Companion.asEpochSeconds
-import java.time.Duration
 
 class FileUploadApi @AssistedInject constructor(
     @Assisted private val fileServer: FileServer,
     @Assisted private val data: ByteArray,
     @Assisted private val usedDeterministicEncryption: Boolean,
+    @Assisted private val customExpiresSeconds: Long?,
     errorManager: ServerClientErrorManager,
     private val json: Json,
-) : ServerApi<FileServerApi.UploadResult>(
+) : ServerApi<FileServerApis.UploadResult>(
     errorManager
 ) {
     override fun buildRequest(
@@ -40,6 +40,9 @@ class FileUploadApi @AssistedInject constructor(
             headers = buildMap {
                 put("Content-Disposition", "attachment")
                 put("Content-Type", "application/octet-stream")
+                if (customExpiresSeconds != null) {
+                    put("X-FS-TTL", customExpiresSeconds.toString())
+                }
             },
             body = HttpBody.Bytes(data),
         )
@@ -49,12 +52,12 @@ class FileUploadApi @AssistedInject constructor(
         executorContext: ApiExecutorContext,
         baseUrl: String,
         response: HttpResponse
-    ): FileServerApi.UploadResult {
+    ): FileServerApis.UploadResult {
         @Suppress("OPT_IN_USAGE")
         val response = json.decodeFromStream<Response>(response.body.asInputStream())
-        return FileServerApi.UploadResult(
+        return FileServerApis.UploadResult(
             fileId = response.id,
-            fileUrl = FileServerApi.buildAttachmentUrl(
+            fileUrl = FileServerApis.buildAttachmentUrl(
                 fileId = response.id,
                 fileServer = fileServer,
                 usesDeterministicEncryption = usedDeterministicEncryption
@@ -77,6 +80,7 @@ class FileUploadApi @AssistedInject constructor(
             fileServer: FileServer,
             data: ByteArray,
             usedDeterministicEncryption: Boolean,
+            customExpiresSeconds: Long? = null,
         ): FileUploadApi
     }
 }

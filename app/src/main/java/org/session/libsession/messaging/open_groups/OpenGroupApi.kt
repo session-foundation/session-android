@@ -105,30 +105,6 @@ object OpenGroupApi {
         val pinnedBy: String = ""
     )
 
-    data class BatchRequestInfo<T>(
-        val request: BatchRequest,
-        val endpoint: Endpoint,
-        val queryParameters: Map<String, String> = mapOf(),
-        val responseType: TypeReference<T>?
-    )
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    data class BatchRequest(
-        val method: HTTP.Verb,
-        val path: String,
-        val headers: Map<String, String> = emptyMap(),
-        val json: Map<String, Any>? = null,
-        val b64: String? = null,
-        val bytes: ByteArray? = null,
-    )
-
-    data class BatchResponse<T>(
-        val endpoint: Endpoint,
-        val code: Int,
-        val headers: Map<String, String>,
-        val body: T?
-    )
-
     @Serializable
     data class Capabilities(
         val capabilities: List<String> = emptyList(),

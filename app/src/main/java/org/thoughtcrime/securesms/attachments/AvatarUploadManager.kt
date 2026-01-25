@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.util.Bytes
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.file_server.FileUploadApi
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -30,7 +30,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 
 /**
@@ -86,7 +85,7 @@ class AvatarUploadManager @Inject constructor(
             AttachmentProcessor.EncryptResult(ciphertext = ciphertext, key = key)
         }
 
-        val fileServer = prefs.alternativeFileServer ?: FileServerApi.DEFAULT_FILE_SERVER
+        val fileServer = prefs.alternativeFileServer ?: FileServerApis.DEFAULT_FILE_SERVER
         val uploadResult = serverApiExecutor.execute(
             ServerApiRequest(
                 fileServer = fileServer,
@@ -94,7 +93,7 @@ class AvatarUploadManager @Inject constructor(
                     fileServer = fileServer,
                     data = result.ciphertext,
                     usedDeterministicEncryption = usesDeterministicEncryption,
-                    customExpiresDuration = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }?.toJavaDuration()
+                    customExpiresSeconds = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }?.inWholeSeconds
                 )
             )
         )
