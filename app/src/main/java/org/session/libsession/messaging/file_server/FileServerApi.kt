@@ -1,34 +1,12 @@
 package org.session.libsession.messaging.file_server
 
-import android.util.Base64
-import kotlinx.coroutines.CancellationException
-import network.loki.messenger.libsession_util.Curve25519
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.session.libsession.database.StorageProtocol
-import org.session.libsession.network.ServerClient
-import org.session.libsession.network.SnodeClock
-import org.session.libsignal.utilities.ByteArraySlice
-import org.session.libsignal.utilities.HTTP
-import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.JsonUtil
-import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.toHexString
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FileServerApi @Inject constructor(
-    private val storage: StorageProtocol,
-    private val serverClient: ServerClient,
-    private val snodeClock: SnodeClock
-) {
+class FileServerApi @Inject constructor() {
 
     companion object {
         const val MAX_FILE_SIZE = 10_000_000 // 10 MB
@@ -143,92 +121,6 @@ class FileServerApi @Inject constructor(
         object NoEd25519KeyPair : Error("Couldn't find ed25519 key pair.")
     }
 
-    private data class Request(
-        val fileServer: FileServer,
-        val verb: HTTP.Verb,
-        val endpoint: String,
-        val queryParameters: Map<String, String> = mapOf(),
-        val parameters: Any? = null,
-        val headers: Map<String, String> = mapOf(),
-        val body: ByteArray? = null,
-            /**
-         * Always `true` under normal circumstances. You might want to disable
-         * this when running over Lokinet.
-         */
-        val useOnionRouting: Boolean = true,
-
-        // Computed fresh for each attempt (after clock resync etc.)
-        val dynamicHeaders: (() -> Map<String, String>)? = null
-    )
-
-    private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {
-        if (body != null) return body.toRequestBody(
-            "application/octet-stream".toMediaType(),
-            0,
-            body.size
-        )
-
-        if (parameters == null) return null
-        val parametersAsJSON = JsonUtil.toJson(parameters)
-        return parametersAsJSON.toRequestBody("application/json".toMediaType())
-    }
-
-
-    private suspend fun send(request: Request, operationName: String): SendResponse {
-        return if (request.useOnionRouting) {
-            try {
-                val response = serverClient.send(
-                    operationName = operationName,
-                    requestFactory = {
-                        val urlBuilder = request.fileServer.url
-                            .newBuilder()
-                            .addPathSegments(request.endpoint)
-
-                        if (request.verb == HTTP.Verb.GET) {
-                            for ((k, v) in request.queryParameters) urlBuilder.addQueryParameter(k, v)
-                        }
-
-                        val computed = request.dynamicHeaders?.invoke().orEmpty()
-                        val mergedHeaders = (request.headers + computed)
-
-                        val builder = okhttp3.Request.Builder()
-                            .url(urlBuilder.build())
-                            .headers(mergedHeaders.toHeaders())
-
-                        when (request.verb) {
-                            HTTP.Verb.GET -> builder.get()
-                            HTTP.Verb.PUT -> builder.put(createBody(request.body, request.parameters) ?: RequestBody.EMPTY)
-                            HTTP.Verb.POST -> builder.post(createBody(request.body, request.parameters) ?: RequestBody.EMPTY)
-                            HTTP.Verb.DELETE -> builder.delete(createBody(request.body, request.parameters))
-                        }
-
-                        builder.build()
-                    },
-                    serverBaseUrl = request.fileServer.url.host,
-                    x25519PublicKey =
-                        Hex.toStringCondensed(
-                            Curve25519.pubKeyFromED25519(Hex.fromStringCondensed(request.fileServer.ed25519PublicKeyHex))
-                        )
-                )
-
-                val body = response.body ?: throw Error.ParsingFailed
-
-                SendResponse(
-                    body = body,
-                    headers = response.info["headers"] as? Map<String, String>
-                )
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e("Loki", "File server request failed", e)
-                throw e
-            }
-        } else {
-            error("It's currently not allowed to send non onion routed requests.")
-        }
-    }
-
-
     data class URLParseResult(
         val fileId: String,
         val fileServer: FileServer,
@@ -236,56 +128,6 @@ class FileServerApi @Inject constructor(
     )
 
 
-    /**
-     * Returns the current version of session
-     * This is effectively proxying (and caching) the response from the github release
-     * page.
-     *
-     * Note that the value is cached and can be up to 30 minutes out of date normally, and up to 24
-     * hours out of date if we cannot reach the Github API for some reason.
-     *
-     * https://github.com/session-foundation/session-file-server/blob/dev/doc/api.yaml#L119
-     */
-    suspend fun getClientVersion(fileServer: FileServer = DEFAULT_FILE_SERVER): VersionData {
-        // Generate the auth signature
-        val secretKey =  storage.getUserED25519KeyPair()?.secretKey?.data
-            ?: throw (Error.NoEd25519KeyPair)
-
-        val blindedKeys = BlindKeyAPI.blindVersionKeyPair(secretKey)
-
-        // The hex encoded version-blinded public key with a 07 prefix
-        val blindedPkHex = "07" + blindedKeys.pubKey.data.toHexString()
-
-        val request = Request(
-            fileServer = fileServer,
-            verb = HTTP.Verb.GET,
-            endpoint = "session_version",
-            queryParameters = mapOf("platform" to "android"),
-            headers = mapOf("X-FS-Pubkey" to blindedPkHex),
-            // dynamic ones recomputed every attempt:
-            dynamicHeaders = {
-                val timestamp = snodeClock.currentTimeSeconds()
-                val signature = BlindKeyAPI.blindVersionSign(secretKey, timestamp)
-
-                mapOf(
-                    "X-FS-Timestamp" to timestamp.toString(),
-                    "X-FS-Signature" to Base64.encodeToString(signature, Base64.NO_WRAP)
-                )
-            }
-        )
-
-        // transform the promise into a coroutine
-        val result = send(request, "FileServer.getClientVersion")
-
-        // map out the result
-        return JsonUtil.fromJson(result.body, Map::class.java).let {
-            VersionData(
-                statusCode = it["status_code"] as? Int ?: 0,
-                version = it["result"] as? String ?: "",
-                updated = it["updated"] as? Double ?: 0.0
-            )
-        }
-    }
 
     data class UploadResult(
         val fileId: String,
@@ -293,17 +135,4 @@ class FileServerApi @Inject constructor(
         val expires: ZonedDateTime?
     )
 
-    data class SendResponse(
-        val body: ByteArraySlice,
-        val headers: Map<String, String>?
-    ) {
-        /**
-         * The "expires" header's value if any
-         */
-        val expires: ZonedDateTime? by lazy {
-            headers?.get("expires")?.let {
-                 ZonedDateTime.parse(it, DateTimeFormatter.RFC_1123_DATE_TIME)
-            }
-        }
-    }
 }

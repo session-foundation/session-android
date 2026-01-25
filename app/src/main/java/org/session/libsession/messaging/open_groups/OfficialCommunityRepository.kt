@@ -113,7 +113,8 @@ class OfficialCommunityRepository @Inject constructor(
     }
 
     companion object {
-        private const val OFFICIAL_COMMUNITY_URL = "https://open.getsession.org"
+        const val OFFICIAL_COMMUNITY_URL = "https://open.getsession.org"
+        const val OFFICIAL_COMMUNITY_URL_INSECURE = "http://open.getsession.org"
         private const val OFFICIAL_COMMUNITY_X25519_PUB_KEY_HEX = "a03c383cf63c3c4efe67acc52112a6dd734b3a946b9545f488aaa93da7991238"
 
         private const val TAG = "OfficialCommunityRepo"

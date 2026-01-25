@@ -33,7 +33,10 @@ import okio.buffer
 import okio.source
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteAllInboxMessagesApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
@@ -73,6 +76,7 @@ import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Provider
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -93,7 +97,9 @@ class SettingsViewModel @Inject constructor(
     private val donationManager: DonationManager,
     private val pathManager: PathManager,
     private val swarmApiExecutor: SwarmApiExecutor,
-    private val deleteAllMessageApiFactory: DeleteAllMessageApi.Factory
+    private val deleteAllMessageApiFactory: DeleteAllMessageApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val deleteAllInboxMessagesApi: Provider<DeleteAllInboxMessagesApi>,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -479,8 +485,14 @@ class SettingsViewModel @Inject constructor(
             coroutineScope {
                 allCommunityServers.map { server ->
                     launch {
-                        runCatching { OpenGroupApi.deleteAllInboxMessages(server) }
-                            .onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
+                        runCatching {
+                            communityApiExecutor.execute(
+                                CommunityApiRequest(
+                                    serverBaseUrl = server,
+                                    api = deleteAllInboxMessagesApi.get()
+                                )
+                            )
+                        }.onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
                     }
                 }.joinAll()
             }

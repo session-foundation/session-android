@@ -5,12 +5,17 @@ import kotlinx.coroutines.flow.mapNotNull
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.GetCapsApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 private const val TAG = "OpenGroupManager"
@@ -23,6 +28,8 @@ class OpenGroupManager @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val pollerManager: OpenGroupPollerManager,
     private val lokiAPIDatabase: LokiAPIDatabase,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val getCapsApi: Provider<GetCapsApi>,
 ) {
     suspend fun add(server: String, room: String, publicKey: String) {
         // Fetch the server's capabilities upfront to see if this server is actually running
@@ -30,7 +37,13 @@ class OpenGroupManager @Inject constructor(
         // for the user to see if the server they are adding is reachable.
         // The addition of the community to the config later will always succeed and the poller
         // will be started regardless of the server's status.
-        val caps = OpenGroupApi.getCapabilities(server, serverPubKeyHex = publicKey)
+        val caps = communityApiExecutor.execute(
+            CommunityApiRequest(
+                serverBaseUrl = server,
+                serverPubKey = publicKey,
+                api = getCapsApi.get()
+            )
+        )
         lokiAPIDatabase.setServerCapabilities(server, caps.capabilities)
 
         // We should be good, now go ahead and add the community to the config
