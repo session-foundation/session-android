@@ -156,7 +156,7 @@ class RemoveGroupMemberHandler @Inject constructor(
         val response = swarmApiExecutor.execute(
             SwarmApiRequest(
                 swarmPubKeyHex = groupAccountId.hexString,
-                api = batchApiFactory.create(batchCalls)
+                api = batchApiFactory.createFromApis(batchCalls)
             )
         )
 

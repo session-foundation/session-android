@@ -9,7 +9,7 @@ import org.session.libsession.messaging.open_groups.api.CommunityApiBatcher
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutorImpl
 import org.thoughtcrime.securesms.api.AutoRetryApiExecutor
-import org.thoughtcrime.securesms.api.BatchApiExecutor
+import org.thoughtcrime.securesms.api.batch.BatchApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Named

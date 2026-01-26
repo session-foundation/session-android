@@ -2,7 +2,7 @@ package org.session.libsignal.utilities
 
 import android.annotation.SuppressLint
 import android.util.LruCache
-import org.thoughtcrime.securesms.api.BatchApiExecutor
+import org.thoughtcrime.securesms.api.batch.BatchApiExecutor
 
 /**
  * Create a Snode from a "-" delimited String if valid, null otherwise.

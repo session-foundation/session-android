@@ -16,7 +16,7 @@ import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 
 class BatchApi @AssistedInject constructor(
-    @Assisted private val items: List<CommunityApi<*>>,
+    @Assisted private val items: List<BatchRequestItem>,
     deps: CommunityApiDependencies,
 ) : CommunityApi<List<BatchApi.BatchResponseItem>>(deps) {
     override val room: String? get() = null
@@ -39,13 +39,11 @@ class BatchApi @AssistedInject constructor(
         serverBaseUrl: String,
         x25519PubKeyHex: String
     ): Pair<MediaType, HttpBody> {
-        return buildJsonRequestBody(items.map {
-            BatchRequestItem(httpRequest = it.buildRequest(serverBaseUrl, x25519PubKeyHex), json)
-        })
+        return buildJsonRequestBody(items)
     }
 
     @Serializable
-    private class BatchRequestItem(
+    class BatchRequestItem(
         val method: String,
         val path: String,
         val headers: Map<String, String>,
@@ -94,7 +92,7 @@ class BatchApi @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(items: List<CommunityApi<*>>): BatchApi
+        fun create(items: List<BatchRequestItem>): BatchApi
     }
 
     companion object {

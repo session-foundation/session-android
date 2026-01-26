@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.api
+package org.thoughtcrime.securesms.api.batch
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -8,12 +8,14 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.ApiExecutor
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class BatchApiExecutor<Req, Res>(
+class BatchApiExecutor<Req, Res, T>(
     private val actualExecutor: ApiExecutor<Req, Res>,
-    private val batcher: Batcher<Req, Res>,
+    private val batcher: Batcher<Req, Res, T>,
     private val scope: CoroutineScope,
 ) : ApiExecutor<Req, Res> {
     private val batchCommandSender: SendChannel<BatchCommand<Req, Res>>
@@ -100,18 +102,39 @@ class BatchApiExecutor<Req, Res>(
 
     private fun executeBatch(batch: BatchInfo<Req, Res>) {
         scope.launch {
-            val requests = batch.requests.map { it.ctx to it.req }
+            val requestsToSend = mutableListOf<Pair<BatchCommand.Send<Req, Res>, T>>()
 
-            Log.d(TAG, "Sending ${requests.size} batched requests")
+            // Transform each request for batching
+            for (r in batch.requests) {
+                val transformed = runCatching {
+                    batcher.transformRequestForBatching(r.ctx, r.req)
+                }
+
+                if (transformed.isFailure) {
+                    // Notify individual request of failure
+                    r.callback.send(Result.failure(transformed.exceptionOrNull()!!))
+                    continue
+                }
+
+                requestsToSend += r to transformed.getOrThrow()
+            }
+
+            if (requestsToSend.isEmpty()) {
+                return@launch
+            }
+
+            val firstRequest = requestsToSend.first().first.req
+
+            Log.d(TAG, "Sending ${requestsToSend.size} batched requests, with first = $firstRequest")
 
             try {
                 val resp = actualExecutor.send(
                     ctx = ApiExecutorContext(), // Blank context for a batched request (each sub-request has its own context)
-                    req = batcher.constructBatchRequest(requests)
+                    req = batcher.constructBatchRequest(firstRequest, requestsToSend.map { it.second })
                 )
 
                 val responses = batcher.deconstructBatchResponse(
-                    requests = requests,
+                    requests = requestsToSend.map { it.first.ctx to it.first.req },
                     response = resp
                 )
 
@@ -129,8 +152,8 @@ class BatchApiExecutor<Req, Res>(
                 if (e is CancellationException) throw e
 
                 // Notify all requests of the failure
-                for (request in batch.requests) {
-                    request.callback.send(Result.failure(e))
+                for (request in requestsToSend) {
+                    request.first.callback.send(Result.failure(e))
                 }
             }
         }
@@ -176,16 +199,7 @@ class BatchApiExecutor<Req, Res>(
         class Cancel<Req, Res>(val batchKey: Any, val req: Req) : BatchCommand<Req, Res>
     }
 
-    interface Batcher<Req, Res> {
-        fun batchKey(req: Req): Any?
-        fun constructBatchRequest(requests: List<Pair<ApiExecutorContext, Req>>): Req
-        suspend fun deconstructBatchResponse(
-            requests: List<Pair<ApiExecutorContext, Req>>,
-            response: Res
-        ): List<Result<Res>>
-    }
-
     companion object {
-        private const val TAG = "BatchRPCExecutor"
+        private const val TAG = "BatchApiExecutor"
     }
 }

@@ -326,7 +326,7 @@ class GroupManagerV2Impl @Inject constructor(
         try {
             val response = swarmApiExecutor.execute(SwarmApiRequest(
                 swarmPubKeyHex = group.hexString,
-                api = batchApiFactory.create(batchApis)
+                api = batchApiFactory.createFromApis(batchApis)
             ))
 
             // Make sure every request is successful

@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Semaphore
+import org.thoughtcrime.securesms.api.batch.BatchApiExecutor
 import org.thoughtcrime.securesms.api.http.HTTP_EXECUTOR_SEMAPHORE_NAME
 import org.thoughtcrime.securesms.api.http.HttpApiExecutor
 import org.thoughtcrime.securesms.api.http.OkHttpApiExecutor

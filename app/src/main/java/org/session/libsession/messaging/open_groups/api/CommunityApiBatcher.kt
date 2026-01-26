@@ -1,21 +1,41 @@
 package org.session.libsession.messaging.open_groups.api
 
 import kotlinx.serialization.json.Json
+import org.session.libsession.database.StorageProtocol
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import org.thoughtcrime.securesms.api.BatchApiExecutor
+import org.thoughtcrime.securesms.api.batch.Batcher
 import javax.inject.Inject
 
 class CommunityApiBatcher @Inject constructor(
     private val batchApiFactory: BatchApi.Factory,
     private val json: Json,
-) : BatchApiExecutor.Batcher<CommunityApiRequest<*>, Any> {
+    private val storage: StorageProtocol,
+) : Batcher<CommunityApiRequest<*>, Any, BatchApi.BatchRequestItem> {
+    override fun transformRequestForBatching(
+        ctx: ApiExecutorContext,
+        req: CommunityApiRequest<*>
+    ): BatchApi.BatchRequestItem {
+        val pubKey = requireNotNull(req.serverPubKey ?: storage.getOpenGroupPublicKey(req.serverBaseUrl)) {
+            "No stored x25519 public key for server ${req.serverBaseUrl}"
+        }
 
-    override fun constructBatchRequest(requests: List<Pair<ApiExecutorContext, CommunityApiRequest<*>>>): CommunityApiRequest<*> {
+        return BatchApi.BatchRequestItem(
+            httpRequest = req.api.buildRequest(
+                baseUrl = req.serverBaseUrl,
+                x25519PubKeyHex = pubKey
+            ),
+            json = json
+        )
+    }
+
+    override fun constructBatchRequest(
+        firstRequest: CommunityApiRequest<*>,
+        intermediateRequests: List<BatchApi.BatchRequestItem>
+    ): CommunityApiRequest<*> {
         return CommunityApiRequest(
-            serverBaseUrl = requests.first().second.serverBaseUrl,
-            api = batchApiFactory.create(
-                requests.map { it.second.api }
-            )
+            serverBaseUrl = firstRequest.serverBaseUrl,
+            serverPubKey = firstRequest.serverPubKey,
+            api = batchApiFactory.create(intermediateRequests)
         )
     }
 
@@ -33,22 +53,22 @@ class CommunityApiBatcher @Inject constructor(
         return req.serverBaseUrl
     }
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun deconstructBatchResponse(
         requests: List<Pair<ApiExecutorContext, CommunityApiRequest<*>>>,
         response: Any
     ): List<Result<Any>> {
-        @Suppress("UNCHECKED_CAST") val responseList =
-            (response as List<BatchApi.BatchResponseItem>)
+        response as List<BatchApi.BatchResponseItem>
 
-        check(requests.size == responseList.size) {
-            "Mismatched batch response size: expected=${requests.size}, actual=${responseList.size}"
+        check(requests.size == response.size) {
+            "Mismatched batch response size: expected=${requests.size}, actual=${response.size}"
         }
 
         return requests.mapIndexed { index, (ctx, req) ->
             runCatching {
                 req.api.processResponse(
                     executorContext = ctx,
-                    response = responseList[index].toHttpResponse(json),
+                    response = response[index].toHttpResponse(json),
                     baseUrl = req.serverBaseUrl,
                 )
             }

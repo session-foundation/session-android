@@ -18,6 +18,10 @@ class ServerApiRequest<RespType: ServerApiResponse>(
         serverX25519PubKeyHex = fileServer.x25519PubKeyHex,
         api = api,
     )
+
+    override fun toString(): String {
+        return "ServerApiRequest(api=${api::class.java.simpleName}, serverBaseUrl='$serverBaseUrl')"
+    }
 }
 
 typealias ServerApiResponse = Any

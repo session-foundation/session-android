@@ -13,29 +13,18 @@ import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.snode.model.BatchResponse
 
 class BatchApi @AssistedInject constructor(
-    @Assisted val requests: List<SnodeApi<*>>,
+    @Assisted val requests: List<RequestItem>,
     private val json: Json,
-    snodeClientErrorManager: SnodeClientErrorManager,
-) : AbstractSnodeApi<BatchApi.Response>(
-    snodeClientErrorManager = snodeClientErrorManager,
-) {
+    errorManager: SnodeClientErrorManager,
+) : AbstractSnodeApi<BatchApi.Response>(errorManager) {
     override val methodName: String get() = "batch"
 
     override fun buildParams(): JsonElement {
-        return json.encodeToJsonElement(
-            Request(
-                requests = requests.map { req ->
-                    RequestItem(
-                        method = req.methodName,
-                        params = req.buildParams()
-                    )
-                }
-            )
-        )
+        return json.encodeToJsonElement(Request(requests))
     }
 
     @Serializable
-    private class RequestItem(
+    class RequestItem(
         val method: String,
         val params: JsonElement
     )
@@ -65,7 +54,17 @@ class BatchApi @AssistedInject constructor(
     }
 
     @AssistedFactory
-    interface Factory {
-        fun create(requests: List<SnodeApi<*>>): BatchApi
+    abstract class Factory {
+        abstract fun create(requests: List<RequestItem>): BatchApi
+
+        fun createFromApis(apis: List<SnodeApi<*>>): BatchApi {
+            val requestItems = apis.map { api ->
+                RequestItem(
+                    method = api.methodName,
+                    params = api.buildParams()
+                )
+            }
+            return create(requestItems)
+        }
     }
 }

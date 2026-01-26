@@ -1,18 +1,29 @@
 package org.thoughtcrime.securesms.api.snode
 
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import org.thoughtcrime.securesms.api.BatchApiExecutor
+import org.thoughtcrime.securesms.api.batch.Batcher
 import javax.inject.Inject
 
 class SnodeApiBatcher @Inject constructor(
     private val batchAPIFactory: BatchApi.Factory,
-) : BatchApiExecutor.Batcher<SnodeApiRequest<*>, SnodeApiResponse> {
+) : Batcher<SnodeApiRequest<*>, SnodeApiResponse, BatchApi.RequestItem> {
     override fun constructBatchRequest(
-        requests: List<Pair<ApiExecutorContext, SnodeApiRequest<*>>>
+        firstRequest: SnodeApiRequest<*>,
+        intermediateRequests: List<BatchApi.RequestItem>
     ): SnodeApiRequest<*> {
         return SnodeApiRequest(
-            snode = requests.first().second.snode,
-            api = batchAPIFactory.create(requests.map { it.second.api })
+            snode = firstRequest.snode,
+            api = batchAPIFactory.create(intermediateRequests)
+        )
+    }
+
+    override fun transformRequestForBatching(
+        ctx: ApiExecutorContext,
+        req: SnodeApiRequest<*>
+    ): BatchApi.RequestItem {
+        return BatchApi.RequestItem(
+            method = req.api.methodName,
+            params = req.api.buildParams()
         )
     }
 
