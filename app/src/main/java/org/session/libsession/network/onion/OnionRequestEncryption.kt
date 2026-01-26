@@ -5,8 +5,6 @@ import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.toHexString
-import java.io.ByteArrayOutputStream
-import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -32,9 +30,9 @@ object OnionRequestEncryption {
     internal fun encryptPayloadForDestination(
         payload: ByteArray,
         destination: OnionDestination,
-        version: Version
+        onionRequestVersion: OnionRequestVersion
     ): EncryptionResult {
-        val plaintext = if (version == Version.V4) {
+        val plaintext = if (onionRequestVersion == OnionRequestVersion.V4) {
             payload
         } else {
             // Wrapping isn't needed for file server or open group onion requests

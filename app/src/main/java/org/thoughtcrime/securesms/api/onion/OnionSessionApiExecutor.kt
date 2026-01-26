@@ -20,7 +20,7 @@ import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.OnionBuilder
 import org.session.libsession.network.onion.OnionRequestEncryption
 import org.session.libsession.network.onion.PathManager
-import org.session.libsession.network.onion.Version
+import org.session.libsession.network.onion.OnionRequestVersion
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.AESGCM
 import org.session.libsignal.utilities.Base64
@@ -60,13 +60,13 @@ class OnionSessionApiExecutor @Inject constructor(
         req: SessionApiRequest<*>
     ): SessionApiResponse {
         val path = pathManager.getPath()
-        val onionRequestVersion: Version
+        val onionRequestVersion: OnionRequestVersion
         val onionDestination: OnionDestination
         val payload: ByteArray
 
         when (req) {
             is SessionApiRequest.SnodeJsonRPC -> {
-                onionRequestVersion = Version.V3
+                onionRequestVersion = OnionRequestVersion.V3
                 onionDestination = OnionDestination.SnodeDestination(req.snode)
                 payload = json.encodeToString(JsonObject(
                     mapOf(
@@ -77,13 +77,13 @@ class OnionSessionApiExecutor @Inject constructor(
             }
 
             is SessionApiRequest.HttpServerRequest -> {
-                onionRequestVersion = Version.V4
+                onionRequestVersion = OnionRequestVersion.V4
                 onionDestination = OnionDestination.ServerDestination(
                     host = req.request.url.host,
                     port = req.request.url.port,
                     x25519PublicKey = req.serverX25519PubKeyHex,
                     scheme = req.request.url.scheme,
-                    target = Version.V4.value,
+                    target = OnionRequestVersion.V4.value,
                 )
                 payload = generateV4HttpServerPayload(req.request)
             }
@@ -94,7 +94,7 @@ class OnionSessionApiExecutor @Inject constructor(
                 path = path,
                 destination = onionDestination,
                 payload = payload,
-                version = onionRequestVersion
+                onionRequestVersion = onionRequestVersion
             )
         } catch (e: Exception) {
             throw OnionError.EncodingError(
@@ -154,8 +154,8 @@ class OnionSessionApiExecutor @Inject constructor(
         return when {
             result.isSuccess && result.getOrThrow().statusCode in 200..299 -> {
                 when (onionRequestVersion) {
-                    Version.V3 -> handleV3Response(result.getOrThrow().body, builtOnion)
-                    Version.V4 -> handleV4Response(
+                    OnionRequestVersion.V3 -> handleV3Response(result.getOrThrow().body, builtOnion)
+                    OnionRequestVersion.V4 -> handleV4Response(
                         body = result.getOrThrow().body,
                         builtOnion = builtOnion
                     )

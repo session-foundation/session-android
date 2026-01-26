@@ -17,12 +17,12 @@ object OnionBuilder {
         path: Path,
         destination: OnionDestination,
         payload: ByteArray,
-        version: Version
+        onionRequestVersion: OnionRequestVersion
     ): BuiltOnion {
         require(path.isNotEmpty()) { "Path must not be empty" }
 
         val destinationResult =
-            OnionRequestEncryption.encryptPayloadForDestination(payload, destination, version)
+            OnionRequestEncryption.encryptPayloadForDestination(payload, destination, onionRequestVersion)
 
         val encryptionResult = path.foldRight(
             destination to destinationResult
