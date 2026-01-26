@@ -45,9 +45,9 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
-import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
-import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
-import org.thoughtcrime.securesms.api.swarm.execute
+import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -71,7 +71,7 @@ class Poller @AssistedInject constructor(
     private val swarmDirectory: SwarmDirectory,
     private val retrieveMessageFactory: RetrieveMessageApi.Factory,
     private val alterTtlApiFactory: AlterTtlApi.Factory,
-    private val swarmApiExecutor: SwarmApiExecutor,
+    private val snodeApiExecutor: SnodeApiExecutor,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -324,9 +324,9 @@ class Poller @AssistedInject constructor(
 
             this.async {
                 runCatching {
-                    swarmApiExecutor.execute(
-                        SwarmApiRequest(
-                            swarmPubKeyHex = userAuth.accountId.hexString,
+                    snodeApiExecutor.execute(
+                        SnodeApiRequest(
+                            snode = snode,
                             api = retrieveMessageApi
                         )
                     )
@@ -362,9 +362,9 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            swarmApiExecutor.execute(
-                                SwarmApiRequest(
-                                    swarmPubKeyHex = userAuth.accountId.hexString,
+                            snodeApiExecutor.execute(
+                                SnodeApiRequest(
+                                    snode = snode,
                                     api = retrieveApi
                                 )
                             )
@@ -376,9 +376,9 @@ class Poller @AssistedInject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    swarmApiExecutor.execute(
-                        SwarmApiRequest(
-                            swarmPubKeyHex = userAuth.accountId.hexString,
+                    snodeApiExecutor.execute(
+                        SnodeApiRequest(
+                            snode = snode,
                             api = alterTtlApiFactory.create(
                                 messageHashes = hashesToExtend,
                                 auth = userAuth,

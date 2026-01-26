@@ -89,19 +89,33 @@ class OnionSessionApiExecutor @Inject constructor(
             }
         }
 
-        val builtOnion = OnionBuilder.build(
-            path = path,
-            destination = onionDestination,
-            payload = payload,
-            version = onionRequestVersion
-        )
-
-        val body = OnionRequestEncryption.encode(
-            ciphertext = builtOnion.ciphertext,
-            json = mapOf(
-                "ephemeral_key" to builtOnion.ephemeralPublicKey.toHexString(),
+        val builtOnion = try {
+            OnionBuilder.build(
+                path = path,
+                destination = onionDestination,
+                payload = payload,
+                version = onionRequestVersion
             )
-        )
+        } catch (e: Exception) {
+            throw OnionError.EncodingError(
+                destination = onionDestination,
+                cause = e
+            )
+        }
+
+        val body = try {
+            OnionRequestEncryption.encode(
+                ciphertext = builtOnion.ciphertext,
+                json = mapOf(
+                    "ephemeral_key" to builtOnion.ephemeralPublicKey.toHexString(),
+                )
+            )
+        } catch (e: Exception) {
+            throw OnionError.EncodingError(
+                destination = onionDestination,
+                cause = e
+            )
+        }
 
         val guard = builtOnion.guard
         val guardBaseUrl = buildString {
