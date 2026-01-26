@@ -61,7 +61,7 @@ interface GroupManagerV2 {
     suspend fun leaveGroup(groupId: AccountId, deleteGroup : Boolean = false)
     suspend fun promoteMember(group: AccountId, members: List<AccountId>, isRepromote: Boolean)
 
-    suspend fun manuallyAcceptPromotion(groupId : AccountId)
+    suspend fun resolvePromotionAccept(groupId : AccountId)
 
     suspend fun handleInvitation(
         groupId: AccountId,

@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.groups
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.ui.input.key.Key.Companion.G
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,12 +17,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -147,9 +144,11 @@ abstract class BaseGroupMembersViewModel(
         viewModelScope.launch {
             groupInfo
                 .map { it?.second.orEmpty() }
-                .map { members -> members.firstOrNull { it.isSelf }?.status /* or status */ }
+                .map { members -> members.firstOrNull { it.isSelf && it.showAsAdmin }?.status /* or status */ }
+                .distinctUntilChanged()
+                .filter { it == GroupMember.Status.PROMOTION_SENT }
                 .debounce(200L)
-                .collectLatest { groupManager.manuallyAcceptPromotion(groupId) }
+                .collectLatest { groupManager.resolvePromotionAccept(groupId) }
         }
     }
 
@@ -198,7 +197,7 @@ abstract class BaseGroupMembersViewModel(
             canResendInvite = amIAdmin && memberAccountId != myAccountId
                     && !member.isRemoved(status)
                     && (status == GroupMember.Status.INVITE_SENT || status == GroupMember.Status.INVITE_FAILED),
-            status = status.takeIf { !isMyself }, // Status is only meant for other members
+            status = status,
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
             showProBadge = shouldShowProBadge,
