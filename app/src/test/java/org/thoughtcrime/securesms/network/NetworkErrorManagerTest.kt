@@ -9,7 +9,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.session.libsession.network.NetworkErrorManager
+import org.thoughtcrime.securesms.api.onion.OnionSessionApiErrorManager
 import org.session.libsession.network.NetworkFailureContext
 import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.FailureDecision
@@ -32,7 +32,7 @@ class NetworkErrorManagerTest {
         on { networkAvailable } doReturn MutableStateFlow(true)
     }
 
-    private val manager = NetworkErrorManager(
+    private val manager = OnionSessionApiErrorManager(
         pathManager = pathManager,
         snodeDirectory = snodeDirectory,
         connectivity = connectivity

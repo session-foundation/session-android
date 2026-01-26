@@ -1,4 +1,4 @@
-package org.session.libsession.network
+package org.thoughtcrime.securesms.api.onion
 
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionDestination
@@ -11,7 +11,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class NetworkErrorManager @Inject constructor(
+class OnionSessionApiErrorManager @Inject constructor(
     private val pathManager: PathManager,
     private val snodeDirectory: SnodeDirectory,
     private val connectivity: NetworkConnectivity

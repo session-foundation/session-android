@@ -10,7 +10,6 @@ import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.IOException
 import okio.utf8Size
-import org.session.libsession.network.NetworkErrorManager
 import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
@@ -51,7 +50,7 @@ class OnionSessionApiExecutor @Inject constructor(
     private val snodeDirectory: Provider<SnodeDirectory>,
     private val pathManager: PathManager,
     private val json: Json,
-    private val networkErrorManager: NetworkErrorManager,
+    private val onionSessionApiErrorManager: OnionSessionApiErrorManager,
 ) : SessionApiExecutor {
     override suspend fun send(
         ctx: ApiExecutorContext,
@@ -181,7 +180,7 @@ class OnionSessionApiExecutor @Inject constructor(
 
             throw ErrorWithFailureDecision(
                 cause = error,
-                failureDecision = networkErrorManager.onFailure(
+                failureDecision = onionSessionApiErrorManager.onFailure(
                     error = error,
                     path = path,
                 )
