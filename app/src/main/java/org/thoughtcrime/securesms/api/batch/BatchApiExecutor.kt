@@ -125,7 +125,7 @@ class BatchApiExecutor<Req, Res, T>(
 
             val firstRequest = requestsToSend.first().first.req
 
-            Log.d(TAG, "Sending ${requestsToSend.size} batched requests, with first = $firstRequest")
+            Log.d(TAG, "Sending ${requestsToSend.size} batched requests, with first=$firstRequest")
 
             try {
                 val resp = actualExecutor.send(

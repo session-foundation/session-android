@@ -22,7 +22,7 @@ import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.sending_receiving.notifications.Server
+import org.session.libsession.messaging.sending_receiving.notifications.NotificationServer
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.exceptions.NonRetryableException
@@ -84,8 +84,8 @@ class PushRegistrationWorker @AssistedInject constructor(
                         r to runCatching {
                             serverApiExecutor.execute(
                                 ServerApiRequest(
-                                    serverBaseUrl = Server.LATEST.url,
-                                    serverX25519PubKeyHex = Server.LATEST.publicKey,
+                                    serverBaseUrl = NotificationServer.LATEST.url,
+                                    serverX25519PubKeyHex = NotificationServer.LATEST.publicKey,
                                     api = pushUnregisterApiFactory.create(
                                         token = r.input.pushToken,
                                         swarmAuth = swarmAuthForAccount(AccountId(r.accountId)),
@@ -102,8 +102,8 @@ class PushRegistrationWorker @AssistedInject constructor(
                         r to runCatching {
                             serverApiExecutor.execute(
                                 ServerApiRequest(
-                                    serverBaseUrl = Server.LATEST.url,
-                                    serverX25519PubKeyHex = Server.LATEST.publicKey,
+                                    serverBaseUrl = NotificationServer.LATEST.url,
+                                    serverX25519PubKeyHex = NotificationServer.LATEST.publicKey,
                                     api = pushRegisterApiFactory.create(
                                         token = r.input.pushToken,
                                         swarmAuth = swarmAuthForAccount(AccountId(r.accountId)),

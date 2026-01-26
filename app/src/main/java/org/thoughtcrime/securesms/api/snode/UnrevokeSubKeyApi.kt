@@ -6,7 +6,6 @@ import dagger.assisted.AssistedInject
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Base64
@@ -14,7 +13,7 @@ import org.session.libsignal.utilities.Base64
 class UnrevokeSubKeyApi @AssistedInject constructor(
     @Assisted private val auth: SwarmAuth,
     @Assisted private val subAccountTokens: List<ByteArray>,
-    errorManager: SnodeClientErrorManager,
+    errorManager: SnodeApiErrorManager,
     private val snodeClock: SnodeClock,
 ) : AbstractSnodeApi<Unit>(errorManager) {
     override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement) = Unit

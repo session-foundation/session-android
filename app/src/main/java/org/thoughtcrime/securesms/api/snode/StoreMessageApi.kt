@@ -7,7 +7,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
@@ -17,11 +16,11 @@ class StoreMessageApi @AssistedInject constructor(
     @Assisted private val message: SnodeMessage,
     @Assisted private val auth: SwarmAuth?,
     @Assisted private val namespace: Int,
-    errorManager: SnodeClientErrorManager,
+    errorManager: SnodeApiErrorManager,
     private val snodeClock: SnodeClock,
     private val json: Json,
 ) : AbstractSnodeApi<StoreMessageResponse>(
-    snodeClientErrorManager = errorManager
+    snodeApiErrorManager = errorManager
 ) {
     override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): StoreMessageResponse {
         return json.decodeFromJsonElement(StoreMessageResponse.serializer(), body)

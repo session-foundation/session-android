@@ -13,7 +13,11 @@ data class CommunityApiRequest<Api: CommunityApi<*>>(
     val serverBaseUrl: String,
     val api: Api,
     val serverPubKey: String? = null, // Null to let executor fill in from config data
-)
+) {
+    override fun toString(): String {
+        return "CommunityApiRequest(api=${api::class.java.simpleName}, serverBaseUrl='$serverBaseUrl')"
+    }
+}
 
 typealias CommunityApiExecutor = ApiExecutor<CommunityApiRequest<*>, ServerApiResponse>
 

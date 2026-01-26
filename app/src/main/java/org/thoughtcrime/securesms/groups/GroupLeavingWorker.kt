@@ -17,7 +17,7 @@ import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.notifications.Server
+import org.session.libsession.messaging.sending_receiving.notifications.NotificationServer
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.getGroup
@@ -76,8 +76,8 @@ class GroupLeavingWorker @AssistedInject constructor(
                     if (groupAuth != null) {
                         serverApiExecutor.execute(
                             ServerApiRequest(
-                                serverBaseUrl = Server.LATEST.url,
-                                serverX25519PubKeyHex = Server.LATEST.publicKey,
+                                serverBaseUrl = NotificationServer.LATEST.url,
+                                serverX25519PubKeyHex = NotificationServer.LATEST.publicKey,
                                 api = pushUnregisterApiFactory.create(
                                     token = currentToken,
                                     swarmAuth = groupAuth,

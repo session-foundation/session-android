@@ -11,7 +11,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.long
 import network.loki.messenger.libsession_util.ED25519
-import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Base64
@@ -19,7 +18,7 @@ import org.session.libsignal.utilities.Hex
 
 class DeleteAllMessageApi @AssistedInject constructor(
     @Assisted private val auth: SwarmAuth,
-    errorManager: SnodeClientErrorManager,
+    errorManager: SnodeApiErrorManager,
     private val snodeClock: SnodeClock,
     private val json: Json,
 ) : AbstractSnodeApi<Map<String, Boolean>>(errorManager) {

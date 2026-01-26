@@ -1,14 +1,12 @@
 package org.thoughtcrime.securesms.api.server
 
-import org.session.libsession.network.ServerClientErrorManager
-import org.session.libsession.network.ServerClientFailureContext
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 
 abstract class ServerApi<ResponseType>(
-    private val errorManager: ServerClientErrorManager,
+    private val errorManager: ServerApiErrorManager,
 ) {
     abstract fun buildRequest(baseUrl: String, x25519PubKeyHex: String): HttpRequest
 

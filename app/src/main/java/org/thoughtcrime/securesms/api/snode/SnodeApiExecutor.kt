@@ -12,7 +12,11 @@ import javax.inject.Inject
 data class SnodeApiRequest<Resp : SnodeApiResponse>(
     val snode: Snode,
     val api: SnodeApi<Resp>
-)
+) {
+    override fun toString(): String {
+        return "SnodeApiRequest(api=${api::class.java.simpleName}, snode=${snode})"
+    }
+}
 
 typealias SnodeApiExecutor = ApiExecutor<SnodeApiRequest<*>, SnodeApiResponse>
 

@@ -4,12 +4,11 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.long
-import org.session.libsession.network.SnodeClientErrorManager
 import java.time.Instant
 import javax.inject.Inject
 
 class GetNetworkTimeApi @Inject constructor(
-    errorManager: SnodeClientErrorManager,
+    errorManager: SnodeApiErrorManager,
 ) : AbstractSnodeApi<Instant>(
     errorManager
 ) {

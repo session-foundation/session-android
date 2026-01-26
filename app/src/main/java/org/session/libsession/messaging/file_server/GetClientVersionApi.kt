@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.api.ApiExecutorContext
@@ -27,7 +27,7 @@ import javax.inject.Inject
  * https://github.com/session-foundation/session-file-server/blob/dev/doc/api.yaml#L119
  */
 class GetClientVersionApi @Inject constructor(
-    errorManager: ServerClientErrorManager,
+    errorManager: ServerApiErrorManager,
     private val loginStateRepository: LoginStateRepository,
     private val snodeClock: SnodeClock,
     private val json: Json,

@@ -4,7 +4,7 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.batch.Batcher
 import org.thoughtcrime.securesms.api.http.HttpBody
@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 class PushApiBatcher @Inject constructor(
     private val json: Json,
-    private val serverClientErrorManager: ServerClientErrorManager,
+    private val serverApiErrorManager: ServerApiErrorManager,
 ) : Batcher<ServerApiRequest<*>, Any, JsonElement> {
     override fun batchKey(req: ServerApiRequest<*>): Any? {
         return when (req.api) {
@@ -45,7 +45,7 @@ class PushApiBatcher @Inject constructor(
         return ServerApiRequest(
             serverBaseUrl = firstRequest.serverBaseUrl,
             serverX25519PubKeyHex = firstRequest.serverX25519PubKeyHex,
-            api = object : JsonServerApi<JsonArray>(json, serverClientErrorManager) {
+            api = object : JsonServerApi<JsonArray>(json, serverApiErrorManager) {
                 override val httpMethod: String get() = firstRequest.api.httpMethod
                 override val httpEndpoint: String get() = firstRequest.api.httpEndpoint
                 override val responseSerializer: DeserializationStrategy<JsonArray>

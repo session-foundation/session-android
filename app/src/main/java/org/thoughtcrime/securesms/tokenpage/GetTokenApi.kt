@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.toHexString
@@ -20,7 +20,7 @@ class GetTokenApi @Inject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val clock: SnodeClock,
     private val json: Json,
-    errorManager: ServerClientErrorManager
+    errorManager: ServerApiErrorManager
 ) : ServerApi<InfoResponse>(errorManager) {
     override fun buildRequest(
         baseUrl: String,

@@ -13,13 +13,12 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
-import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 
 class OnsResolveApi @AssistedInject constructor(
     @Assisted private val name: String,
-    errorManager: SnodeClientErrorManager,
+    errorManager: SnodeApiErrorManager,
     private val json: Json,
 ) : AbstractSnodeApi<String>(errorManager) {
     override val methodName: String get() = "oxend_request"

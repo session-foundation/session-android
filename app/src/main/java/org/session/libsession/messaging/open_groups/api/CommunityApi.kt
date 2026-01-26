@@ -10,7 +10,7 @@ import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
@@ -27,7 +27,7 @@ import javax.inject.Inject
 import javax.inject.Provider
 
 abstract class CommunityApi<ResponseType: Any>(
-    errorManager: ServerClientErrorManager,
+    errorManager: ServerApiErrorManager,
     protected val json: Json,
     protected val loginStateRepository: Provider<LoginStateRepository>,
     protected val configFactory: ConfigFactoryProtocol,
@@ -144,7 +144,7 @@ abstract class CommunityApi<ResponseType: Any>(
 
 
     class CommunityApiDependencies @Inject constructor(
-        val errorManager: ServerClientErrorManager,
+        val errorManager: ServerApiErrorManager,
         val json: Json,
         val loginStateRepository: Provider<LoginStateRepository>,
         val configFactory: ConfigFactoryProtocol,

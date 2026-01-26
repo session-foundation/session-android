@@ -3,9 +3,6 @@ package org.thoughtcrime.securesms.api.snode
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import org.session.libsession.network.SnodeClientErrorManager
-import org.session.libsession.network.SnodeClientFailureContext
-import org.session.libsession.network.SnodeClientFailureKey
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
@@ -14,7 +11,7 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 
 abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
-    private val snodeClientErrorManager: SnodeClientErrorManager,
+    private val snodeApiErrorManager: SnodeApiErrorManager,
 ) : SnodeApi<RespType> {
     final override suspend fun handleResponse(
         ctx: ApiExecutorContext,
@@ -34,7 +31,7 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
                 )
             }
 
-            val (error, decision) = snodeClientErrorManager.onFailure(
+            val (error, decision) = snodeApiErrorManager.onFailure(
                 errorCode = code,
                 bodyText = (body as? JsonPrimitive)?.let { p ->
                     p.content.takeIf { p.isString }

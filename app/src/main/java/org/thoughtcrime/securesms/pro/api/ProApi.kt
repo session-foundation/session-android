@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpRequest
@@ -75,7 +75,7 @@ abstract class ProApi<ErrorStatus, Res>(private val deps: ProApiDependencies)
     }
 
     class ProApiDependencies @Inject constructor(
-        val errorManager: ServerClientErrorManager,
+        val errorManager: ServerApiErrorManager,
         val json: Json,
     )
 

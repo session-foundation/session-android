@@ -11,8 +11,8 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
-import org.session.libsession.network.SnodeClientErrorManager
-import org.session.libsession.network.SnodeClientFailureContext
+import org.thoughtcrime.securesms.api.snode.SnodeApiErrorManager
+import org.thoughtcrime.securesms.api.snode.SnodeClientFailureContext
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.FailureDecision
@@ -33,7 +33,7 @@ class SnodeClientErrorManagerTest {
     private val swarmDirectory = mock<SwarmDirectory>()
     private val snodeClock = mock<SnodeClock>()
 
-    private val manager = SnodeClientErrorManager(
+    private val manager = SnodeApiErrorManager(
         pathManager = pathManager,
         swarmDirectory = swarmDirectory,
         snodeClock = snodeClock

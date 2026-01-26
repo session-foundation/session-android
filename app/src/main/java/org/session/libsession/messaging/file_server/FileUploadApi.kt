@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpRequest
@@ -21,7 +21,7 @@ class FileUploadApi @AssistedInject constructor(
     @Assisted private val data: ByteArray,
     @Assisted private val usedDeterministicEncryption: Boolean,
     @Assisted private val customExpiresSeconds: Long?,
-    errorManager: ServerClientErrorManager,
+    errorManager: ServerApiErrorManager,
     private val json: Json,
 ) : ServerApi<FileServerApis.UploadResult>(
     errorManager

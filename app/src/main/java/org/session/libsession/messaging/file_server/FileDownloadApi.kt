@@ -4,7 +4,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpRequest
@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter
 
 class FileDownloadApi @AssistedInject constructor(
     @Assisted private val fileId: String,
-    errorManager: ServerClientErrorManager,
+    errorManager: ServerApiErrorManager,
 ) : ServerApi<FileDownloadApi.Response>(errorManager) {
     override fun buildRequest(
         baseUrl: String,

@@ -12,7 +12,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionResponse
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.Device
@@ -28,7 +28,7 @@ class PushRegisterApi @AssistedInject constructor(
     private val device: Device,
     private val loginStateRepository: LoginStateRepository,
     json: Json,
-    errorManager: ServerClientErrorManager
+    errorManager: ServerApiErrorManager
 ) : JsonServerApi<SubscriptionResponse>(json, errorManager) {
     override val httpMethod: String get() = "POST"
     override val httpEndpoint: String get() = "subscribe"

@@ -4,16 +4,15 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 import org.thoughtcrime.securesms.api.server.ServerApi
-import java.time.Duration
 
 class FileRenewApi @AssistedInject constructor(
     @Assisted private val fileId: String,
-    errorManager: ServerClientErrorManager,
+    errorManager: ServerApiErrorManager,
 ) : ServerApi<Unit>(errorManager) {
 
     override fun buildRequest(

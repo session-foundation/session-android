@@ -8,8 +8,8 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.session.libsession.network.ServerClientErrorManager
-import org.session.libsession.network.ServerClientFailureContext
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
+import org.thoughtcrime.securesms.api.server.ServerClientFailureContext
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.FailureDecision
@@ -23,7 +23,7 @@ class ServerClientErrorManagerTest {
     val logRule = MockLoggingRule()
 
     private val snodeClock = mock<SnodeClock>()
-    private val manager = ServerClientErrorManager(snodeClock = snodeClock)
+    private val manager = ServerApiErrorManager(snodeClock = snodeClock)
 
     private fun serverDest() = OnionDestination.ServerDestination(
         host = "example.com",

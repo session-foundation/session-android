@@ -1,5 +1,6 @@
-package org.session.libsession.network
+package org.thoughtcrime.securesms.api.snode
 
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.onion.PathManager
 import org.session.libsignal.utilities.Log
@@ -7,19 +8,18 @@ import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ClockOutOfSyncException
 import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
-import org.thoughtcrime.securesms.api.snode.SnodeNotPartOfSwarmException
 import javax.inject.Inject
 import javax.inject.Singleton
 
 
 @Singleton
-class SnodeClientErrorManager @Inject constructor(
+class SnodeApiErrorManager @Inject constructor(
     private val pathManager: PathManager,
     private val snodeClock: SnodeClock,
 ) {
 
     /**
-     * Inspect the error code coming from an [org.thoughtcrime.securesms.api.snode.SnodeApi],
+     * Inspect the error code coming from an [SnodeApi],
      * returning a [Throwable] for error propagating and a [FailureDecision] if an error handling
      * decision is made.
      */

@@ -5,7 +5,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.session.libsession.network.ServerClientErrorManager
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpRequest
@@ -13,7 +12,7 @@ import org.thoughtcrime.securesms.api.http.HttpResponse
 
 abstract class JsonServerApi<RespType>(
     protected val json: Json,
-    errorManager: ServerClientErrorManager
+    errorManager: ServerApiErrorManager
 ): ServerApi<RespType>(errorManager) {
     abstract val httpMethod: String
     abstract val httpEndpoint: String

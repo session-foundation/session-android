@@ -12,7 +12,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
-import org.session.libsession.network.ServerClientErrorManager
+import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.Device
@@ -24,7 +24,7 @@ class PushUnregisterApi @AssistedInject constructor(
     private val clock: SnodeClock,
     private val device: Device,
     json: Json,
-    errorManager: ServerClientErrorManager
+    errorManager: ServerApiErrorManager
 ) : JsonServerApi<UnsubscribeResponse>(json, errorManager) {
     override val httpMethod: String get() = "POST"
     override val httpEndpoint: String get() = "unsubscribe"

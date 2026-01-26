@@ -10,7 +10,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import network.loki.messenger.libsession_util.ED25519
-import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Base64
@@ -21,7 +20,7 @@ class DeleteMessageApi @AssistedInject constructor(
     @Assisted private val messageHashes: Collection<String>,
     private val json: Json,
     private val snodeClock: SnodeClock,
-    errorManager: SnodeClientErrorManager
+    errorManager: SnodeApiErrorManager
 ) : AbstractSnodeApi<DeleteMessageApi.SuccessResponse>(errorManager) {
 
     override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): SuccessResponse {

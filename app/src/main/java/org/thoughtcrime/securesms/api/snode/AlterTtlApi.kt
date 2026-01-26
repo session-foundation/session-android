@@ -6,7 +6,6 @@ import dagger.assisted.AssistedInject
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import org.session.libsession.network.SnodeClientErrorManager
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 
@@ -15,7 +14,7 @@ class AlterTtlApi @AssistedInject constructor(
     @Assisted private val auth: SwarmAuth,
     @Assisted private val alterType: AlterType,
     @Assisted private val newExpiry: Long,
-    errorManager: SnodeClientErrorManager,
+    errorManager: SnodeApiErrorManager,
     private val snodeClock: SnodeClock,
 ) : AbstractSnodeApi<Unit>(errorManager) {
     override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement) {}

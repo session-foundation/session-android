@@ -1,7 +1,7 @@
-package org.session.libsession.network
+package org.thoughtcrime.securesms.api.server
 
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.FailureDecision
-import org.session.libsession.network.model.OnionError
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.ClockOutOfSyncException
 import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
@@ -10,7 +10,7 @@ import javax.inject.Singleton
 
 
 @Singleton
-class ServerClientErrorManager @Inject constructor(
+class ServerApiErrorManager @Inject constructor(
     private val snodeClock: SnodeClock,
 ) {
 
