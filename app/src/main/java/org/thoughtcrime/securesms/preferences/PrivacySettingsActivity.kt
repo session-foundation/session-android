@@ -14,7 +14,8 @@ import kotlin.getValue
 @AndroidEntryPoint
 class PrivacySettingsActivity :
 //    ScreenLockActionBarActivity()
-    FullComposeScreenLockActivity() {
+    FullComposeScreenLockActivity()
+{
 
     @Composable
     override fun ComposeContent() {
@@ -26,7 +27,7 @@ class PrivacySettingsActivity :
         const val SCROLL_KEY = "privacy_scroll_key"
         const val SCROLL_AND_TOGGLE_KEY = "privacy_scroll_and_toggle_key"
     }
-//
+
 //    override val applyDefaultWindowInsets: Boolean
 //        get() = false
 //

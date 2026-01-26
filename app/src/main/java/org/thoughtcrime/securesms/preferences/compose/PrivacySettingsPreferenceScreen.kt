@@ -1,21 +1,36 @@
 package org.thoughtcrime.securesms.preferences.compose
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.squareup.phrase.Phrase
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_FOUNDATION
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.SESSION_FOUNDATION_KEY
+import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.*
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CategoryCell
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.util.IntentUtils
 
 @Composable
 fun PrivacySettingsPreferenceScreen(
@@ -26,11 +41,22 @@ fun PrivacySettingsPreferenceScreen(
         viewModel.refreshKeyguardSecure()
     }
 
-    PrivacySettingsPreference()
+    val uiState = viewModel.uiState.collectAsState().value
+
+    PrivacySettingsPreference(
+        uiState = uiState,
+        sendCommand = viewModel::onCommand
+    )
 }
 
 @Composable
-fun PrivacySettingsPreference() {
+fun PrivacySettingsPreference(
+    uiState: PrivacySettingsPreferenceViewModel.UIState,
+    sendCommand: (command: PrivacySettingsPreferenceViewModel.Commands) -> Unit
+) {
+
+    val context = LocalContext.current
+
     BasePreferenceScreens(
         onBack = {},
         title = GetString(R.string.sessionPrivacy).string()
@@ -45,9 +71,9 @@ fun PrivacySettingsPreference() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.callsVoiceAndVideo),
                     subtitle = annotatedStringResource(R.string.callsVoiceAndVideoToggleDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    checked = uiState.callNotificationsEnabled,
+                    qaTag = R.string.qa_preferences_voice_calls,
+                    onCheckedChange = { sendCommand(ToggleCallsNotification) }
                 )
             }
         }
@@ -63,10 +89,14 @@ fun PrivacySettingsPreference() {
             ) {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.lockApp),
-                    subtitle = annotatedStringResource(R.string.lockAppDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    subtitle = annotatedStringResource(
+                        Phrase.from(context, R.string.lockAppDescription)
+                            .put(APP_NAME_KEY, R.string.app_name)
+                            .format()
+                    ),
+                    checked = uiState.screenLockChecked,
+                    qaTag = R.string.qa_preferences_lock_app,
+                    onCheckedChange = { sendCommand(ToggleLockApp) }
                 )
             }
         }
@@ -83,9 +113,9 @@ fun PrivacySettingsPreference() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.messageRequestsCommunities),
                     subtitle = annotatedStringResource(R.string.messageRequestsCommunitiesDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    checked = uiState.allowCommunityMessageRequests,
+                    qaTag = R.string.qa_preferences_message_requests,
+                    onCheckedChange = { sendCommand(ToggleCommunityRequests) }
                 )
             }
         }
@@ -102,9 +132,9 @@ fun PrivacySettingsPreference() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.readReceipts),
                     subtitle = annotatedStringResource(R.string.readReceiptsDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    checked = uiState.readReceiptsEnabled,
+                    qaTag = R.string.qa_preferences_read_receipt,
+                    onCheckedChange = { sendCommand(ToggleReadReceipts) }
                 )
             }
         }
@@ -121,9 +151,9 @@ fun PrivacySettingsPreference() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.typingIndicators),
                     subtitle = annotatedStringResource(R.string.typingIndicatorsDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    checked = uiState.typingIndicators,
+                    qaTag = R.string.qa_preferences_typing_indicator,
+                    onCheckedChange = { sendCommand(ToggleTypingIndicators) }
                 )
             }
         }
@@ -140,9 +170,9 @@ fun PrivacySettingsPreference() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.linkPreviewsSend),
                     subtitle = annotatedStringResource(R.string.linkPreviewsDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    checked = uiState.linkPreviewEnabled,
+                    qaTag = R.string.qa_preferences_link_previews,
+                    onCheckedChange = { sendCommand(ToggleLinkPreviews) }
                 )
             }
         }
@@ -159,17 +189,81 @@ fun PrivacySettingsPreference() {
                 SwitchActionRowItem(
                     title = annotatedStringResource(R.string.incognitoKeyboard),
                     subtitle = annotatedStringResource(R.string.incognitoKeyboardDescription),
-                    checked = false,
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    onCheckedChange = { }
+                    checked = uiState.incognitoKeyboardEnabled,
+                    qaTag = R.string.qa_preferences_incognito_keyboard,
+                    onCheckedChange = { sendCommand(ToggleIncognitoKeyboard) }
                 )
             }
         }
     }
+
+    if (uiState.showCallsWarningDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideCallsWarningDialog)
+            },
+            title = stringResource(R.string.callsVoiceAndVideoBeta),
+            text = Phrase.from(context, R.string.callsVoiceAndVideoModalDescription)
+                .put(SESSION_FOUNDATION_KEY, SESSION_FOUNDATION)
+                .format().toString(),
+            buttons = listOf(
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.enable)),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
+                    onClick = {
+                        sendCommand(EnableCalls)
+                    }
+                ),
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.cancel)),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
+                    onClick = {
+                        sendCommand(HideCallsWarningDialog)
+                    }
+                ),
+            )
+        )
+    }
+
+    if (uiState.showCallsNotificationDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideCallsNotificationDialog)
+            },
+            title = stringResource(R.string.sessionNotifications),
+            text = stringResource(R.string.callsNotificationsRequired),
+            buttons = listOf(
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.enable)),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
+                    onClick = {
+//                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+//                            .putExtra(Settings.EXTRA_APP_PACKAGE, BuildConfig.APPLICATION_ID)
+//                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//                            .takeIf { IntentUtils.isResolvable(requireContext(), it) }
+//                            ?.let { startActivity(it) }
+                    }
+                ),
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.cancel)),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
+                    onClick = {
+                        sendCommand(HideCallsNotificationDialog)
+                    }
+                ),
+            )
+        )
+    }
+
 }
 
 @Preview
 @Composable
 fun PreviewPrivacySettingsPreference() {
-    PrivacySettingsPreference()
+    PrivacySettingsPreference(
+        uiState = PrivacySettingsPreferenceViewModel.UIState(),
+        sendCommand = {}
+    )
 }

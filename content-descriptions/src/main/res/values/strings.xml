@@ -304,6 +304,8 @@
     <string name="qa_preferences_sound_when_app_is_open">preferences-option-sound-when-app-is-open</string>
     <string name="qa_preferences_whitelist">preferences-option-whitelist</string>
     <string name="qa_preferences_enable_push">preferences-option-enable-push</string>
+    <string name="qa_preferences_dialog_enable">preferences-dialog-option-enable</string>
+    <string name="qa_preferences_dialog_cancel">preferences-dialog-option-cancel</string>
 
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>

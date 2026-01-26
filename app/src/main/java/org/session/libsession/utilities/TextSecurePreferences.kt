@@ -108,6 +108,7 @@ interface TextSecurePreferences {
     fun getDatabaseUnencryptedSecret(): String?
     fun getDatabaseEncryptedSecret(): String?
     fun isIncognitoKeyboardEnabled(): Boolean
+    fun setIncognitoKeyboardEnabled(enabled : Boolean)
     fun isReadReceiptsEnabled(): Boolean
     fun setReadReceiptsEnabled(enabled: Boolean)
     fun isTypingIndicatorsEnabled(): Boolean
@@ -325,7 +326,7 @@ interface TextSecurePreferences {
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
         const val READ_RECEIPTS_PREF = "pref_read_receipts"
-        const val INCOGNITO_KEYBORAD_PREF = "pref_incognito_keyboard"
+        const val INCOGNITO_KEYBOARD_PREF = "pref_incognito_keyboard"
         const val DATABASE_ENCRYPTED_SECRET = "pref_database_encrypted_secret"
         const val DATABASE_UNENCRYPTED_SECRET = "pref_database_unencrypted_secret"
         const val ATTACHMENT_ENCRYPTED_SECRET = "pref_attachment_encrypted_secret"
@@ -512,7 +513,7 @@ interface TextSecurePreferences {
 
         @JvmStatic
         fun isIncognitoKeyboardEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, INCOGNITO_KEYBORAD_PREF, true)
+            return getBooleanPreference(context, INCOGNITO_KEYBOARD_PREF, true)
         }
 
         @JvmStatic
@@ -542,6 +543,7 @@ interface TextSecurePreferences {
 
         fun setPasswordDisabled(context: Context, disabled: Boolean) {
             setBooleanPreference(context, DISABLE_PASSPHRASE_PREF, disabled)
+            _events.tryEmit(DISABLE_PASSPHRASE_PREF)
         }
 
         fun getLastVersionCode(context: Context): Int {
@@ -889,7 +891,12 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun isIncognitoKeyboardEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBORAD_PREF, true)
+        return getBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, true)
+    }
+
+    override fun setIncognitoKeyboardEnabled(enabled: Boolean) {
+        setBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, enabled)
+        _events.tryEmit(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF)
     }
 
     override fun isReadReceiptsEnabled(): Boolean {
@@ -915,6 +922,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setLinkPreviewsEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.LINK_PREVIEWS, enabled)
+        _events.tryEmit(TextSecurePreferences.LINK_PREVIEWS)
     }
 
     override fun hasSeenGIFMetaDataWarning(): Boolean {
