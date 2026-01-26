@@ -8,12 +8,26 @@ import java.io.InputStream
 sealed interface HttpBody {
     val byteLength: Int
 
+    /**
+     * Returns the body as an InputStream. You are responsible for closing the stream after use.
+     */
     fun asInputStream(): InputStream
+
+    /**
+     * Returns the body as a ByteArray, in the most efficient way possible.
+     */
     fun toBytes(): ByteArray
+
+    /**
+     * Returns the body as a ByteArraySlice, in the most efficient way possible.
+     */
     fun toByteArraySlice(): ByteArraySlice {
         return toBytes().view()
     }
 
+    /**
+     * Attempts to decode the body as UTF-8 text, returning null if decoding fails.
+     */
     fun toText(): String?
 
     class Text(val text: String): HttpBody {

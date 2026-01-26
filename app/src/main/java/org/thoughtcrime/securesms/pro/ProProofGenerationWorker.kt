@@ -20,7 +20,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.server.ServerApiError
+import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -92,7 +92,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
             Log.e(WORK_NAME, "Error generating Pro proof", e)
             if (e is NonRetryableException ||
                 // HTTP 403 indicates that the user is not
-                e.findCause<ServerApiError.UnknownStatusCode>()?.code == 403) {
+                e.findCause<UnknownHttpStatusCodeException>()?.code == 403) {
                 Result.failure()
             } else {
                 Result.retry()

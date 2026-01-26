@@ -20,10 +20,6 @@ class NetworkErrorManager @Inject constructor(
 ) {
 
     suspend fun onFailure(error: OnionError, ctx: NetworkFailureContext): FailureDecision {
-        val status = error.status
-        val code = status?.code
-        val bodyText = status?.bodyText
-
         //todo ONION investigate why we got stuck in a invalid cyphertext state
 
         // --------------------------------------------------------------------
@@ -102,7 +98,6 @@ class NetworkErrorManager @Inject constructor(
             is OnionError.InvalidResponse,
             is OnionError.PathError,
             is OnionError.Unknown -> {
-                //TODO ONION investigate if we can do better here
                 return FailureDecision.Fail
             }
         }

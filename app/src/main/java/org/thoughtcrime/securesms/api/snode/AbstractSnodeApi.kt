@@ -30,16 +30,16 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
         } else {
             val failureContext = ctx.getOrPut(SnodeClientFailureKey) {
                 SnodeClientFailureContext(
-                    targetSnode = snode,
                     previousErrorCode = null
                 )
             }
 
-            val decision = snodeClientErrorManager.onFailure(
-                code = code,
+            val (error, decision) = snodeClientErrorManager.onFailure(
+                errorCode = code,
                 bodyText = (body as? JsonPrimitive)?.let { p ->
                     p.content.takeIf { p.isString }
                 },
+                snode = snode,
                 ctx = failureContext
             )
 
@@ -47,14 +47,11 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
 
             if (decision != null) {
                 throw ErrorWithFailureDecision(
-                    cause = RuntimeException("Snode API error: code=$code, body=$body"),
+                    cause = error,
                     failureDecision = decision,
                 )
             } else {
-                throw SnodeApiError.UnknownStatusCode(
-                    code = code,
-                    bodyText = (body as? JsonPrimitive)?.content
-                )
+                throw error
             }
         }
     }

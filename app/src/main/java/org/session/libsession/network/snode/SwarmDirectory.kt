@@ -96,7 +96,7 @@ class SwarmDirectory @Inject constructor(
      *
      * @return true if swarm was updated from body JSON, false otherwise.
      */
-    fun updateSwarmFromResponse(swarmPublicKey: String, errorResponseBody: ByteArraySlice?): Boolean {
+    fun updateSwarmFromResponse(swarmPublicKey: String, errorResponseBody: String?): Boolean {
         if (errorResponseBody == null || errorResponseBody.isEmpty()) return false
 
         val json: Map<*, *> = try {

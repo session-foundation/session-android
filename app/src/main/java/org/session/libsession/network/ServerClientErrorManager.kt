@@ -3,6 +3,8 @@ package org.session.libsession.network
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.model.OnionError
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.error.ClockOutOfSyncException
+import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,13 +14,21 @@ class ServerClientErrorManager @Inject constructor(
     private val snodeClock: SnodeClock,
 ) {
 
-    suspend fun onFailure(errorCode: Int, ctx: ServerClientFailureContext): FailureDecision? {
+    /**
+     * Handles server api error and returning a mapped [Throwable] and optionally, its decision for error
+     * handling.
+     *
+     */
+    suspend fun onFailure(errorCode: Int,
+                          bodyAsText: String?,
+                          serverBaseUrl: String,
+                          ctx: ServerClientFailureContext): Pair<Throwable, FailureDecision?> {
         // 425 is 'Clock out of sync' for a server destination
         if (errorCode == 425) {
             // if this is the first time we got a COS, retry, since we should have resynced the clock
-            Log.w("Onion Request", "Clock out of sync (code: $errorCode) for destination server ${ctx.url} - Local Snode clock at ${snodeClock.currentTime()} - First time? ${ctx.previousErrorCode == null}")
-            if (ctx.previousErrorCode == 425) {
-                return FailureDecision.Fail
+            Log.w("Onion Request", "Clock out of sync (code: $errorCode) for destination server ${serverBaseUrl} - Local Snode clock at ${snodeClock.currentTime()} - First time? ${ctx.previousErrorCode == null}")
+            return ClockOutOfSyncException() to if (ctx.previousErrorCode == 425) {
+                FailureDecision.Fail
             } else {
                 // reset the clock
                 val resync = runCatching {
@@ -26,15 +36,18 @@ class ServerClientErrorManager @Inject constructor(
                 }.getOrDefault(false)
 
                 // only retry if we were able to resync the clock
-                return if(resync) FailureDecision.Retry else FailureDecision.Fail
+                if(resync) FailureDecision.Retry else FailureDecision.Fail
             }
         }
 
-        return null
+        return UnknownHttpStatusCodeException(
+            code = errorCode,
+            origin = serverBaseUrl,
+            bodyText = bodyAsText
+        ) to null
     }
 }
 
 data class ServerClientFailureContext(
-    val url: String,
     val previousErrorCode: Int? = null,
 )

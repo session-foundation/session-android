@@ -20,13 +20,14 @@ abstract class ServerApi<ResponseType>(
         if (response.statusCode !in 200..299) {
             val failureContext = executorContext.getOrPut(ServerClientFailureContextKey) {
                 ServerClientFailureContext(
-                    url = baseUrl,
                     previousErrorCode = null
                 )
             }
 
-            val failureDecision = errorManager.onFailure(
+            val (error, decision) = errorManager.onFailure(
                 errorCode = response.statusCode,
+                serverBaseUrl = baseUrl,
+                bodyAsText = response.body.toText(),
                 ctx = failureContext,
             )
 
@@ -35,19 +36,13 @@ abstract class ServerApi<ResponseType>(
                 value = failureContext.copy(previousErrorCode = response.statusCode)
             )
 
-            val exception = ServerApiError.UnknownStatusCode(
-                api = this::class.java,
-                code = response.statusCode,
-                body = response.body,
-            )
-
-            if (failureDecision != null) {
+            if (decision != null) {
                 throw ErrorWithFailureDecision(
-                    cause = exception,
-                    failureDecision = failureDecision
+                    cause = error,
+                    failureDecision = decision
                 )
             } else {
-                throw exception
+                throw error
             }
         }
 

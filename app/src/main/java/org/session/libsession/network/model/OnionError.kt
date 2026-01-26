@@ -86,6 +86,6 @@ sealed class OnionError(
     /**
      * Fallback for anything we haven't classified yet.
      */
-    class Unknown(destination: OnionDestination?, cause: Throwable)
+    class Unknown(destination: OnionDestination, cause: Throwable)
         : OnionError(cause = cause, destination = destination)
 }

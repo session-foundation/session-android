@@ -67,8 +67,7 @@ import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.api.snode.SnodeApiError
-import org.thoughtcrime.securesms.api.swarm.SwarmApiError
+import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -592,7 +591,7 @@ open class Storage @Inject constructor(
         }
         if (error.localizedMessage != null) {
             val message: String
-            if (error.findCause<SnodeApiError.UnknownStatusCode>()?.code == 429) {
+            if (error.findCause<UnknownHttpStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -608,7 +607,7 @@ open class Storage @Inject constructor(
 
         if (error.localizedMessage != null) {
             val message: String
-            if (error.findCause<SnodeApiError.UnknownStatusCode>()?.code == 429) {
+            if (error.findCause<UnknownHttpStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!

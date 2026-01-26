@@ -40,8 +40,8 @@ import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.SnodeNotPartOfSwarmException
 import org.thoughtcrime.securesms.api.snode.execute
-import org.thoughtcrime.securesms.api.swarm.SwarmApiError
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.findCause
 import java.time.Instant
@@ -397,13 +397,24 @@ class GroupPoller @AssistedInject constructor(
             // then we will remove this snode from our swarm nodes set
             if (error != null && currentSnode != null) {
                 val badResponse = (sequenceOf(error) + error.suppressedExceptions.asSequence())
-                    .firstOrNull { err ->
-                        err.findCause<SwarmApiError.SnodeNotLongerPartOfSwarmError>() != null
+                    .map { err ->
+                        err.findCause<SnodeNotPartOfSwarmException>()
                     }
+                    .first()
 
                 if (badResponse != null) {
                     Log.e(TAG, "Group polling failed due to a server error", badResponse)
                     pollState.swarmNodes -= currentSnode
+                    if (!swarmDirectory.updateSwarmFromResponse(
+                            swarmPublicKey = groupId.hexString,
+                            errorResponseBody = badResponse.responseBodyText,
+                        )
+                    ) {
+                        swarmDirectory.dropSnodeFromSwarmIfNeeded(
+                            snode = badResponse.snode,
+                            swarmPublicKey = groupId.hexString
+                        )
+                    }
                 }
             }
         }

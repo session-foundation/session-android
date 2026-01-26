@@ -47,10 +47,12 @@ import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.SnodeNotPartOfSwarmException
 import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import org.thoughtcrime.securesms.util.findCause
 import kotlin.time.Duration.Companion.days
 
 private const val TAG = "Poller"
@@ -208,6 +210,22 @@ class Poller @AssistedInject constructor(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error while polling:", e)
+
+                e.findCause<SnodeNotPartOfSwarmException>()?.let { err ->
+                    if (!swarmDirectory.updateSwarmFromResponse(
+                        swarmPublicKey = userPublicKey,
+                        errorResponseBody = err.responseBodyText,
+                    )) {
+                        swarmDirectory.dropSnodeFromSwarmIfNeeded(
+                            snode = err.snode,
+                            swarmPublicKey = userPublicKey
+                        )
+                    }
+
+                    // Also remove from our memory pool
+                    pollPool.remove(err.snode)
+                }
+
                 pollDelay = minOf(
                     MAX_RETRY_INTERVAL_MS,
                     (RETRY_INTERVAL_MS * (NEXT_RETRY_MULTIPLIER * retryScalingFactor)).toLong()
@@ -399,11 +417,6 @@ class Poller @AssistedInject constructor(
         for (task in configFetchTasks) {
             val (configType, result) = task.await()
 
-            if (result.isFailure) {
-                Log.e(TAG, "Error while fetching config for $configType", result.exceptionOrNull())
-                continue
-            }
-
             val messages = result.getOrThrow().messages
             processConfig(messages = messages, forConfig = configType)
 
@@ -420,21 +433,16 @@ class Poller @AssistedInject constructor(
 
         // Process the messages if we requested them
         if (fetchMessageTask != null) {
-            val result = fetchMessageTask.await()
-            if (result.isFailure) {
-                Log.e(TAG, "Error while fetching messages", result.exceptionOrNull())
-            } else {
-                val messages = result.getOrThrow().messages
-                processPersonalMessages(messages)
+            val messages = fetchMessageTask.await().getOrThrow().messages
+            processPersonalMessages(messages)
 
-                messages.maxByOrNull { it.timestamp }?.let { newest ->
-                    lokiApiDatabase.setLastMessageHashValue(
-                        snode = snode,
-                        publicKey = userPublicKey,
-                        newValue = newest.hash,
-                        namespace = Namespace.DEFAULT()
-                    )
-                }
+            messages.maxByOrNull { it.timestamp }?.let { newest ->
+                lokiApiDatabase.setLastMessageHashValue(
+                    snode = snode,
+                    publicKey = userPublicKey,
+                    newValue = newest.hash,
+                    namespace = Namespace.DEFAULT()
+                )
             }
         }
     }

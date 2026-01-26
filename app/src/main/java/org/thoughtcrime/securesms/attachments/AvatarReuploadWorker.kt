@@ -29,7 +29,7 @@ import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemote
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.server.ServerApiError
+import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import org.thoughtcrime.securesms.api.server.execute
@@ -37,6 +37,7 @@ import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.ImageUtils
+import org.thoughtcrime.securesms.util.findCause
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -140,7 +141,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
             // When renew fails, we will try to re-upload the avatar if:
             // 1. The file is expired (we have the record of this file's expiry time), or
             // 2. The last update was more than 12 days ago.
-            if ((e is NonRetryableException || e is ServerApiError)) {
+            if ((e is NonRetryableException || e.findCause<UnknownHttpStatusCodeException>() != null)) {
                 val now = Instant.now()
                 if (fileExpiry?.isBefore(now) == true ||
                     (lastUpdated?.isBefore(now.minus(Duration.ofDays(12)))) == true) {

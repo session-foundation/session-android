@@ -9,10 +9,10 @@ import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.api.snode.SnodeApi
-import org.thoughtcrime.securesms.api.snode.SnodeApiError
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.SnodeApiResponse
+import org.thoughtcrime.securesms.api.snode.SnodeNotPartOfSwarmException
 import javax.inject.Inject
 
 class SwarmApiRequest<T : SnodeApiResponse>(
@@ -51,37 +51,27 @@ class SwarmApiExecutorImpl @Inject constructor(
 
         try {
             return snodeApiExecutor.send(ctx, SnodeApiRequest(snode, req.api))
-        } catch (e: SnodeApiError.UnknownStatusCode) {
-            when (e.code) {
-                421 -> {
-                    Log.d(TAG, "Snode $snode is no longer part of swarm for publicKey=${req.swarmPubKeyHex}, updating swarm")
-                    val updated = swarmDirectory.updateSwarmFromResponse(
-                        swarmPublicKey = req.swarmPubKeyHex,
-                        errorResponseBody = e.bodyText?.toByteArray()?.view()
-                    )
+        } catch (e: SnodeNotPartOfSwarmException) {
+            Log.d(TAG, "Snode $snode is no longer part of swarm for publicKey=${req.swarmPubKeyHex}, updating swarm")
+            val updated = swarmDirectory.updateSwarmFromResponse(
+                swarmPublicKey = req.swarmPubKeyHex,
+                errorResponseBody = e.responseBodyText,
+            )
 
-                    if (!updated) {
-                        swarmDirectory.dropSnodeFromSwarmIfNeeded(
-                            snode = snode,
-                            swarmPublicKey = req.swarmPubKeyHex
-                        )
-                    }
-
-                    // drop the cached snode so we pick a new one upon retry
-                    ctx.remove(SwarmApiContextKey)
-
-                    throw ErrorWithFailureDecision(
-                        cause = SwarmApiError.SnodeNotLongerPartOfSwarmError(snode, req.swarmPubKeyHex),
-                        failureDecision = FailureDecision.Retry,
-                    )
-                }
-
-                else -> {
-                    // for other status codes, we don't know how to handle them here,
-                    // just throw them here instead of making a decision to fail or retry
-                    throw e
-                }
+            if (!updated) {
+                swarmDirectory.dropSnodeFromSwarmIfNeeded(
+                    snode = snode,
+                    swarmPublicKey = req.swarmPubKeyHex
+                )
             }
+
+            // drop the cached snode so we pick a new one upon retry
+            ctx.remove(SwarmApiContextKey)
+
+            throw ErrorWithFailureDecision(
+                cause = e,
+                failureDecision = FailureDecision.Retry,
+            )
         }
     }
 

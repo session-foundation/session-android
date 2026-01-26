@@ -167,7 +167,7 @@ class OnionSessionApiExecutor @Inject constructor(
                     mapHttpError(
                         path = path,
                         httpResponseCode = result.getOrThrow().statusCode,
-                        httpResponseBody = (result.getOrThrow().body as? HttpBody.Text)?.text,
+                        httpResponseBody = result.getOrThrow().body.toText(),
                         destination = onionDestination,
                     )
                 } else if (result.exceptionOrNull() is IOException) {
@@ -439,10 +439,10 @@ class OnionSessionApiExecutor @Inject constructor(
 
         return SessionApiResponse.JsonRPCResponse(
             code = response.status,
-            bodyAsText = response.body,
             bodyAsJson = runCatching {
                 json.decodeFromString<JsonElement>(response.body)
-            }.getOrNull()
+            }.getOrNull(),
+            bodyAsText = response.body,
         )
     }
 
