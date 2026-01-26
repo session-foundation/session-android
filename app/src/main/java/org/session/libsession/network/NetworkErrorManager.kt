@@ -6,8 +6,6 @@ import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
-import org.session.libsignal.utilities.Snode
-import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,7 +17,10 @@ class NetworkErrorManager @Inject constructor(
     private val connectivity: NetworkConnectivity
 ) {
 
-    suspend fun onFailure(error: OnionError, ctx: NetworkFailureContext): FailureDecision {
+    suspend fun onFailure(
+        error: OnionError,
+        path: Path,
+    ): FailureDecision {
         //todo ONION investigate why we got stuck in a invalid cyphertext state
 
         // --------------------------------------------------------------------
@@ -41,7 +42,7 @@ class NetworkErrorManager @Inject constructor(
                 // We couldn't reach the guard, yet we seem to have network connectivity:
                 // punish the node and try again
                 if(connectivity.networkAvailable.value) {
-                    pathManager.handleBadSnode(ctx.path.first())
+                    pathManager.handleBadSnode(path.first())
                     return FailureDecision.Retry
                 }
 
@@ -53,7 +54,7 @@ class NetworkErrorManager @Inject constructor(
                 val failedKey = error.failedPublicKey
 
                 // Get the snode from the path (it should be there based on the error type)
-                val snodeInPath = ctx.path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
+                val snodeInPath = path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
 
                 // Fall back to pool instance only for cleanup (won’t help this request’s path)
                 // If for some reason it isn't in the path, we'll still look for it in the pool
@@ -84,7 +85,7 @@ class NetworkErrorManager @Inject constructor(
                  is OnionError.InvalidHopResponse -> {
                 // we don't have enough information to penalise a specific snode,
                 // so we penalise the whole path and try again
-                pathManager.handleBadPath(ctx.path)
+                pathManager.handleBadPath(path)
                 return FailureDecision.Retry
             }
 
@@ -108,13 +109,3 @@ class NetworkErrorManager @Inject constructor(
         // --------------------------------------------------------------------
     }
 }
-
-data class NetworkFailureContext(
-    val path: Path,
-    val destination: OnionDestination,
-    val targetSnode: Snode? = null,
-    val publicKey: String? = null,
-    val previousError: OnionError? = null // in some situations we could be coming from a retry to a previous error
-)
-
-object NetworkFailureKey : ApiExecutorContext.Key<NetworkFailureContext>

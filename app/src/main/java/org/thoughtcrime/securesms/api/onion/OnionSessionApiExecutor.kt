@@ -11,16 +11,14 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.IOException
 import okio.utf8Size
 import org.session.libsession.network.NetworkErrorManager
-import org.session.libsession.network.NetworkFailureContext
-import org.session.libsession.network.NetworkFailureKey
 import org.session.libsession.network.model.ErrorStatus
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.OnionBuilder
 import org.session.libsession.network.onion.OnionRequestEncryption
-import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.onion.OnionRequestVersion
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.AESGCM
 import org.session.libsignal.utilities.Base64
@@ -151,60 +149,43 @@ class OnionSessionApiExecutor @Inject constructor(
             )
         }
 
-        return when {
-            result.isSuccess && result.getOrThrow().statusCode in 200..299 -> {
-                when (onionRequestVersion) {
-                    OnionRequestVersion.V3 -> handleV3Response(result.getOrThrow().body, builtOnion)
-                    OnionRequestVersion.V4 -> handleV4Response(
-                        body = result.getOrThrow().body,
-                        builtOnion = builtOnion
-                    )
-                }
+        return if (result.isSuccess && result.getOrThrow().statusCode in 200..299) {
+            when (onionRequestVersion) {
+                OnionRequestVersion.V3 -> handleV3Response(result.getOrThrow().body, builtOnion)
+                OnionRequestVersion.V4 -> handleV4Response(
+                    body = result.getOrThrow().body,
+                    builtOnion = builtOnion
+                )
+            }
+        }
+        else {
+            val error = if (result.isSuccess) {
+                mapHttpError(
+                    path = path,
+                    httpResponseCode = result.getOrThrow().statusCode,
+                    httpResponseBody = result.getOrThrow().body.toText(),
+                    destination = onionDestination,
+                )
+            } else if (result.exceptionOrNull() is IOException) {
+                OnionError.GuardUnreachable(
+                    guard = path.first(),
+                    destination = onionDestination,
+                    cause = result.exceptionOrNull()!!
+                )
+            } else {
+                OnionError.Unknown(
+                    destination = onionDestination,
+                    cause = result.exceptionOrNull()!!
+                )
             }
 
-            else -> {
-                val error = if (result.isSuccess) {
-                    mapHttpError(
-                        path = path,
-                        httpResponseCode = result.getOrThrow().statusCode,
-                        httpResponseBody = result.getOrThrow().body.toText(),
-                        destination = onionDestination,
-                    )
-                } else if (result.exceptionOrNull() is IOException) {
-                    OnionError.GuardUnreachable(
-                        guard = path.first(),
-                        destination = onionDestination,
-                        cause = result.exceptionOrNull()!!
-                    )
-                } else {
-                    OnionError.Unknown(
-                        destination = onionDestination,
-                        cause = result.exceptionOrNull()!!
-                    )
-                }
-
-                val failureContext = ctx.getOrPut(NetworkFailureKey) {
-                    NetworkFailureContext(
-                        path = path,
-                        destination = onionDestination,
-                        targetSnode = (req as? SessionApiRequest.SnodeJsonRPC)?.snode,
-                        publicKey = (req as? SessionApiRequest.SnodeJsonRPC)?.snode?.publicKeySet?.x25519Key, //TODO: Check if it's the right key
-                        previousError = null
-                    )
-                }
-
-                val decision = networkErrorManager.onFailure(
+            throw ErrorWithFailureDecision(
+                cause = error,
+                failureDecision = networkErrorManager.onFailure(
                     error = error,
-                    ctx = failureContext
+                    path = path,
                 )
-
-                ctx.set(NetworkFailureKey, failureContext.copy(previousError = error))
-
-                throw ErrorWithFailureDecision(
-                    cause = error,
-                    failureDecision = decision
-                )
-            }
+            )
         }
     }
 
