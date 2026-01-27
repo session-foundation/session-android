@@ -1169,7 +1169,6 @@
     <string name="proRenewPinFiveConversations">Бажаєте знову закріпити більше ніж {limit} розмов?\nПоновіть свій доступ до {pro}, щоб отримати функції, яких вам бракувало.</string>
     <string name="proRenewPinMoreConversations">Хочете знову закріпити більше розмов?\nПоновіть свій доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
     <string name="proRenewTosPrivacy">Поновлюючи, ви погоджуєтеся з <b>Умовами надання послуг</b> {icon} та <b>Політикою конфіденційності</b> {icon} сервісу {app_pro}.</string>
-    <string name="proRenewalUnsuccessful">Помилка поновлення Pro, повторна спроба незабаром</string>
     <string name="proRenewingAction">поновлення</string>
     <string name="proRenewingNoAccessBilling">На даний момент доступ {pro} можна придбати та оновити лише через {platform_store} або {platform_store_other}. Оскільки ви встановили {app_name}, використовуючи {build_variant}, ви не можете поновити доступ тут.\n\nРозробники {app_name} активно працюють над альтернативними способами оплати, щоб надати змогу користувачам купувати доступ {pro} поза межами {platform_store} та {platform_store_other}.<b> Дорожня карта {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Вимогу повернення грошей надіслано</string>

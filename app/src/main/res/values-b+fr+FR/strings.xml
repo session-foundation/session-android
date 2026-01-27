@@ -1111,7 +1111,6 @@
     <string name="proRenewPinFiveConversations">Vous souhaitez à nouveau épingler plus de {limit} conversations?\nRenouvelez votre accès {pro} pour débloquer les fonctionnalités qui vous manquent.</string>
     <string name="proRenewPinMoreConversations">Envie d’épingler à nouveau plus de conversations ?\n Renouvelez votre accès {pro} pour débloquer les fonctionnalités qui vous manquent.</string>
     <string name="proRenewTosPrivacy">En renouvelant, vous acceptez les <b>Conditions d\'utilisation</b> {icon} et la <b>Politique de confidentialité</b> {icon} de {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Renouvellement Pro échoué, nouvelle tentative bientôt</string>
     <string name="proRenewingAction">renouvellement</string>
     <string name="proRenewingNoAccessBilling">Actuellement, les accès {pro} ne peuvent être achetés et renouvelés que via les boutiques {platform_store} et {platform_store_other}. Étant donné que vous avez installé {app_name} à l\'aide de la version {build_variant}, vous ne pouvez pas renouveler votre abonnement ici.\n\nLes développeurs de {app_name} travaillent activement sur des options de paiement alternatives pour permettre aux utilisateurs d\'acheter des abonnements {pro} en dehors des boutiques {platform_store} et {platform_store_other}. <b>Feuille de route {pro}</b>{icon}</string>
     <string name="proRequestedRefund">Remboursement demandé</string>

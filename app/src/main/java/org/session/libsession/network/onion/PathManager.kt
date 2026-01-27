@@ -20,9 +20,11 @@ import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SnodePoolStorage
 import org.session.libsession.network.snode.SwarmDirectory
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,10 +34,11 @@ class PathManager @Inject constructor(
     private val directory: SnodeDirectory,
     private val storage: SnodePathStorage,
     private val snodePoolStorage: SnodePoolStorage,
-    private val swarmDirectory: SwarmDirectory,
+    private val prefs: TextSecurePreferences,
 ) {
     companion object {
         private const val STRIKE_THRESHOLD = 3
+        private const val PATH_ROTATE_INTERVAL_MS = 10 * 60 * 1000L // 10min
     }
 
     private val pathSize: Int = 3
@@ -50,27 +53,8 @@ class PathManager @Inject constructor(
     private val buildMutex = Mutex()
     private val _isBuilding = MutableStateFlow(false)
 
-    private fun snodeKey(snode: Snode): String =
-        snode.publicKeySet?.ed25519Key ?: snode.toString()
-
-    private fun pathKey(path: Path): String =
-        path.joinToString(separator = "|") { it.publicKeySet?.ed25519Key ?: it.toString() }
-
-    private fun increasePathStrike(path: Path): Int {
-        return requireNotNull(storage.increaseOnionRequestPathStrike(path, 1))
-    }
-
-    private fun increaseSnodeStrike(snode: Snode): Int {
-        return requireNotNull(snodePoolStorage.increaseSnodeStrike(snode, 1))
-    }
-
-    private fun clearPathStrike(path: Path) {
-        storage.clearOnionRequestPathStrikes(path)
-    }
-
-    private fun clearSnodeStrike(snode: Snode) {
-        snodePoolStorage.clearSnodeStrike(snode)
-    }
+    // path rotation
+    private val isRotating = AtomicBoolean(false)
 
     // -----------------------------
     // Flow Setup
@@ -108,6 +92,7 @@ class PathManager @Inject constructor(
 
     suspend fun getPath(exclude: Snode? = null): Path {
         directory.refreshPoolIfStaleAsync()
+        rotatePathsIfStale()
 
         val current = _paths.value
         if (current.size >= targetPathCount && current.any { exclude == null || !it.contains(exclude) }) {
@@ -122,6 +107,112 @@ class PathManager @Inject constructor(
         val rebuilt = _paths.value
         if (rebuilt.isEmpty()) throw IllegalStateException("No paths after rebuild")
         return selectPath(rebuilt, exclude)
+    }
+
+    private fun rotatePathsIfStale() {
+        val now = System.currentTimeMillis()
+        val last = prefs.getLastPathRotation()
+
+        // if we have never done a path rotation, mark now as the starting time
+        // so we can rotate on the next tick
+        if (last == 0L){
+            prefs.setLastPathRotation(now)
+            return
+        }
+
+        // no rotation needed if it's been less than our interval time
+        if (now - last < PATH_ROTATE_INTERVAL_MS) return
+
+        if (!isRotating.compareAndSet(false, true)) return
+        scope.launch {
+            try {
+                rotatePaths()
+            } finally {
+                isRotating.set(false)
+            }
+        }
+    }
+
+    /**
+     * Rotates existing paths by keeping the guard node but replacing the rest.
+     * Validates connectivity via /info before committing.
+     */
+    private suspend fun rotatePaths() {
+        // Phase 1: decide + build candidates under lock
+        val candidates: List<Path> = buildMutex.withLock {
+            val now = System.currentTimeMillis()
+            val last = prefs.getLastPathRotation()
+            if (now - last < PATH_ROTATE_INTERVAL_MS) return@withLock emptyList()
+
+            val current = _paths.value
+            if (current.isEmpty()) return@withLock emptyList()
+
+            if (current.size < targetPathCount) {
+                // Don't rotate if we're already degraded - rebuildPaths will handle this.
+                return@withLock emptyList()
+            }
+
+            // Keep the same guards
+            val guards = current.take(targetPathCount).map { it.first() }
+
+            val pool = directory.ensurePoolPopulated()
+
+            // do not reuse path snodes
+            val avoid = current.flatten().toSet()
+
+            var unused = pool.minus(avoid)
+
+            val neededPerPath = pathSize - 1
+            val totalNeeded = targetPathCount * neededPerPath
+            if (unused.size < totalNeeded) {
+                // Not enough to rotate cleanly, skip silently.
+                return@withLock emptyList()
+            }
+
+            val rotated = guards.map { guard ->
+                val rest = (0 until neededPerPath).map {
+                    val next = unused.secureRandom()
+                    unused = unused - next
+                    next
+                }
+                listOf(guard) + rest
+            }
+
+            sanitizePaths(rotated)
+        }
+
+        if (candidates.isEmpty()) return
+
+        // Phase 2: test out our paths
+        val working = ArrayList<Path>(targetPathCount)
+        for (p in candidates) {
+            //todo ONION v Replace true v We need to test the path here - need a function with a custom path - Fanchao
+            if (true) {
+                working += p
+            }
+            if (working.size >= targetPathCount) break
+        }
+
+        if (working.isEmpty()) return
+
+        // Phase 3: commit under lock (guards must match current guards)
+        buildMutex.withLock {
+            val current = sanitizePaths(_paths.value)
+            if (current.isEmpty()) return@withLock
+
+            val currentGuards = current.take(targetPathCount).map { it.first() }.toSet()
+            val newGuards = working.map { it.first() }.toSet()
+
+            if (currentGuards != newGuards) {
+                // Guards changed (likely rebuild happened)
+                Log.i("Onion Request", "Rotation aborted: Guards changed during validation (likely due to concurrent repair).")
+                return@withLock
+            }
+
+            val committed = sanitizePaths(working.take(targetPathCount))
+            _paths.value = committed
+            prefs.setLastPathRotation(System.currentTimeMillis())
+        }
     }
 
     suspend fun rebuildPaths(reusablePaths: List<Path>) {
@@ -181,59 +272,57 @@ class PathManager @Inject constructor(
      * - Dropping a snode swaps it out in any path(s) that contain it (drops path only if unrepairable).
      * - Dropping a snode also removes it from pool and (if pubkey known) swarm.
      */
-    //todo ONION we might not need the key here since a bad snode can be removed from all swarms
     suspend fun handleBadSnode(
         snode: Snode,
-        publicKey: String? = null,
         forceRemove: Boolean = false
     ) {
         buildMutex.withLock {
-            val paths = _paths.value.toMutableList()
-            val droppedPathKeys = mutableSetOf<String>()
-            val droppedSnodeKeys = mutableSetOf<String>()
+            val shouldRemoveSnode = forceRemove ||
+                    snodePoolStorage.increaseSnodeStrike(snode, 1) == STRIKE_THRESHOLD
 
-            val snodeStrikes = if (forceRemove) {
-                STRIKE_THRESHOLD
-            } else {
-                increaseSnodeStrike(snode)
-            }
-
-            Log.w(
-                "Onion Request",
-                "Bad snode reported: ${snode.address} (strikes=$snodeStrikes/$STRIKE_THRESHOLD, forceRemove=$forceRemove)"
+            // First we need to punish the path that contains this snode
+            val pathWithStrikes = storage.increaseOnionRequestPathStrikeContainingSnode(
+                snodeEd25519PubKey = snode.ed25519Key,
+                increment = 1
             )
 
-            // Striking a snode also strikes the containing path(s)
-            val containing = paths.filter { it.contains(snode) }.toList()
-            for (p in containing) {
-                val pathStrikes = increasePathStrike(p)
-                Log.w("Onion Request", "  -> Also struck containing path (strikes=$pathStrikes/$STRIKE_THRESHOLD)")
+            when {
+                // If containing path hit remove threshold, remove the path without trying to repair
+                pathWithStrikes != null && pathWithStrikes.second >= STRIKE_THRESHOLD -> {
+                    storage.removePath(pathWithStrikes.first)
+                }
 
-                if (pathStrikes >= STRIKE_THRESHOLD) {
-                    Log.w("Onion Request", "  -> Path hit threshold due to snode strike, dropping path (cascade)")
-                    performPathDrop(
-                        path = p,
-                        paths = paths,
-                        publicKey = publicKey,
-                        droppedPathKeys = droppedPathKeys,
-                        droppedSnodeKeys = droppedSnodeKeys,
-                    )
+                // If containing path did not hit remove threshold, and we need to remove the snode,
+                // we try to repair the path by swapping out the bad snode
+                pathWithStrikes != null && shouldRemoveSnode -> {
+                    val replacementSnode = storage.findRandomUnusedSnodesForNewPath(1)
+                        .firstOrNull()
+
+                    val containingPath = pathWithStrikes.first
+
+                    if (replacementSnode == null) {
+                        // No replacement available, remove the path
+                        storage.removePath(containingPath)
+                    } else {
+                        val repairedPath = pathWithStrikes.first.map { node ->
+                            if (node == snode) replacementSnode else node
+                        }
+
+                        // Swap in the repaired path
+                        storage.replaceOnionRequestPath(
+                            oldPath =  containingPath,
+                            newPath = repairedPath
+                        )
+                    }
                 }
             }
 
-            // If snode reached strike threshold => drop snode
-            if (snodeStrikes >= STRIKE_THRESHOLD) {
-                Log.w("Onion Request", "Strike threshold reached for snode ${snode.address}, initiating drop cascade")
-                performSnodeDrop(
-                    snode = snode,
-                    working = paths,
-                    publicKey = publicKey,
-                    droppedPathKeys = droppedPathKeys,
-                    droppedSnodeKeys = droppedSnodeKeys,
-                )
+            if (shouldRemoveSnode) {
+                // Now we should be able to drop the snode from pool and swarm
+                snodePoolStorage.removeSnode(snode.ed25519Key)
             }
 
-            _paths.value = sanitizePaths(paths)
+            _paths.value = storage.getOnionRequestPaths()
         }
     }
 
@@ -246,169 +335,55 @@ class PathManager @Inject constructor(
      */
     suspend fun handleBadPath(path: Path) {
         buildMutex.withLock {
-            val paths = _paths.value.toMutableList()
-            val target = paths.firstOrNull { it == path } ?: run {
-                Log.w("Onion Request", "Attempted to strike path not in current list, ignoring")
+            val newPathStrike = storage.increaseOnionRequestPathStrike(path, 1)
+
+            if (newPathStrike == null) {
+                Log.w("Onion Request", "Attempted to strike path not in storage, ignoring")
                 return
             }
 
-            val pathStrikes = increasePathStrike(target)
-            Log.w("Onion Request", "Bad path reported (strikes=$pathStrikes/$STRIKE_THRESHOLD)")
-
-            if (pathStrikes < STRIKE_THRESHOLD) return
-
-            Log.w("Onion Request", "Strike threshold reached for path, initiating drop cascade")
-
-            val droppedPathKeys = mutableSetOf<String>()
-            val droppedSnodeKeys = mutableSetOf<String>()
-
-            performPathDrop(
-                path = target,
-                paths = paths,
-                publicKey = null, // handleBadPath has no swarm context
-                droppedPathKeys = droppedPathKeys,
-                droppedSnodeKeys = droppedSnodeKeys,
-            )
-
-            _paths.value = sanitizePaths(paths)
-        }
-    }
-
-    /**
-     * Drops a path immediately and strikes all nodes within it.
-     * If any node reaches threshold, drops that node (which swaps it out in any remaining paths).
-     */
-    private suspend fun performPathDrop(
-        path: Path,
-        paths: MutableList<Path>,
-        publicKey: String?,
-        droppedPathKeys: MutableSet<String>,
-        droppedSnodeKeys: MutableSet<String>,
-    ) {
-        if (!paths.contains(path)) return
-
-        val pk = pathKey(path)
-        if (!droppedPathKeys.add(pk)) return // already dropped in this cascade
-
-        Log.w("Onion Request", "Dropping path: ${path.joinToString(" -> ") { it.address }}")
-        paths.remove(path)
-        clearPathStrike(path)
-
-        // Dropping a path strikes each node in that path (may cascade)
-        for (node in path) {
-            val sStrikes = increaseSnodeStrike(node)
-            Log.w("Onion Request", "  Struck node ${node.address} from dropped path (strikes=$sStrikes/$STRIKE_THRESHOLD)")
-
-            if (sStrikes >= STRIKE_THRESHOLD) {
-                Log.w("Onion Request", "  Node ${node.address} hit threshold from path drop, dropping snode (cascade)")
-                performSnodeDrop(
-                    snode = node,
-                    working = paths,
-                    publicKey = publicKey,
-                    droppedPathKeys = droppedPathKeys,
-                    droppedSnodeKeys = droppedSnodeKeys,
-                )
+            // First, strike each node in the path and find out what nodes need to be removed
+            val nodesToRemove = path.filter { node ->
+                val nodeStrike = snodePoolStorage.increaseSnodeStrike(node, 1)
+                nodeStrike != null && nodeStrike >= STRIKE_THRESHOLD
             }
-        }
-    }
 
-    /**
-     * Drops a snode from external systems and swaps it out of any paths that contain it.
-     * Only drops a path if it cannot be repaired.
-     *
-     * This does NOT rebuild paths; it swaps only the bad node.
-     */
-    private suspend fun performSnodeDrop(
-        snode: Snode,
-        working: MutableList<Path>,
-        publicKey: String?,
-        droppedPathKeys: MutableSet<String>,
-        droppedSnodeKeys: MutableSet<String>,
-    ) {
-        val sk = snodeKey(snode)
-        if (!droppedSnodeKeys.add(sk)) return // already dropped in this cascade
+            // Find out if we need to remove the path
+            if (newPathStrike >= STRIKE_THRESHOLD || nodesToRemove.size == path.size) {
+                Log.w("Onion Request", "Path hit strike threshold or all snodes need removing, dropping path")
+                storage.removePath(path)
+            } else if (nodesToRemove.isNotEmpty()) {
+                // We have partial nodes to remove, so we will look at their replacements in paths
+                val newNodes = storage.findRandomUnusedSnodesForNewPath(nodesToRemove.size)
+                if (newNodes.size < nodesToRemove.size) {
+                    Log.w("Onion Request", "Not enough available snodes to replace bad nodes in path, dropping path")
+                    storage.removePath(path)
+                } else {
+                    // Swap out the bad nodes in the path
+                    val repairedPath = path.map { node ->
+                        val idx = nodesToRemove.indexOfFirst { it == node }
+                        if (idx != -1) {
+                            newNodes[idx]
+                        } else {
+                            node
+                        }
+                    }
 
-        Log.w("Onion Request", "Dropping snode ${snode.address} from systems + swapping out of paths")
-
-        // External cleanup (pool + swarm)
-        snode.publicKeySet?.ed25519Key?.let { ed25519 ->
-            directory.dropSnodeFromPool(ed25519)
-            Log.d("Onion Request", "  Removed snode from pool: ${snode.address}")
-        }
-        if (publicKey != null) {
-            swarmDirectory.dropSnodeFromSwarmIfNeeded(snode, publicKey)
-            Log.d("Onion Request", "  Removed snode from swarm for pubkey=$publicKey: ${snode.address}")
-        }
-
-        // Swap out in any path(s) that still contain it
-        val pathsToCheck = working.filter { it.contains(snode) }.toList()
-        for (path in pathsToCheck) {
-            val result = trySwapOutSnodeInPath(path, snode, working)
-
-            if (result != null) {
-                val (repaired, replacement) = result
-                val idx = working.indexOf(path)
-                if (idx != -1) {
-                    // Path identity changes; clear strikes for the old path identity
-                    clearPathStrike(path)
-                    working[idx] = repaired
-                    Log.w("Onion Request", "  Repaired path by swapping ${snode.address} -> ${replacement.address}")
+                    Log.w("Onion Request", "Repaired path by swapping out bad nodes: ${nodesToRemove.map { it.address }}")
+                    // Update storage with repaired path
+                    storage.replaceOnionRequestPath(oldPath = path, newPath = repairedPath)
                 }
-            } else {
-                Log.w("Onion Request", "  Could not repair path after snode drop; dropping path (cascade)")
-                performPathDrop(
-                    path = path,
-                    paths = working,
-                    publicKey = publicKey,
-                    droppedPathKeys = droppedPathKeys,
-                    droppedSnodeKeys = droppedSnodeKeys,
-                )
             }
-        }
 
-        // Clear strike once it's dropped and we've finished processing
-        clearSnodeStrike(snode)
+            // It's now safe to remove the snodes from pool
+            nodesToRemove.forEach { snode ->
+                snodePoolStorage.removeSnode(snode.ed25519Key)
+            }
+
+            _paths.value = sanitizePaths(storage.getOnionRequestPaths())
+        }
     }
 
-    /**
-     * Swap a single bad snode out of a path, respecting disjointness:
-     * - cannot use nodes already in other paths
-     * - cannot use nodes already in this path (except the bad one)
-     * - cannot use the bad node itself
-     *
-     * @return Pair(repairedPath, replacementSnode) or null if no replacement available.
-     */
-    private fun trySwapOutSnodeInPath(
-        path: Path,
-        badSnode: Snode,
-        currentPaths: List<Path>,
-    ): Pair<Path, Snode>? {
-        val index = path.indexOfFirst { it == badSnode }
-        if (index == -1) return null
-
-        val pool = directory.getSnodePool()
-
-        val usedByOtherPaths = currentPaths
-            .filter { it != path }
-            .flatMap { it }
-            .toSet()
-
-        val usedInThisPath = path.toSet() - badSnode
-        val forbidden = usedByOtherPaths + usedInThisPath + badSnode
-
-        val candidates = pool - forbidden
-        if (candidates.isEmpty()) {
-            Log.w("Onion Request", "  No available snodes for path repair")
-            return null
-        }
-
-        val replacement = candidates.secureRandom()
-        val repaired = path.toMutableList()
-        repaired[index] = replacement
-
-        Log.d("Onion Request", "  Path repair: ${badSnode.address} -> ${replacement.address}")
-        return repaired to replacement
-    }
 
     private fun selectPath(paths: List<Path>, exclude: Snode?): Path {
         val candidates = if (exclude != null) {

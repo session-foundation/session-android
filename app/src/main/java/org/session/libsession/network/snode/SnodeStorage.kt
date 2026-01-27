@@ -7,6 +7,7 @@ import org.session.libsignal.utilities.Snode
 interface SnodePathStorage {
     fun getOnionRequestPaths(): List<Path>
     fun setOnionRequestPaths(paths: List<Path>)
+    fun replaceOnionRequestPath(oldPath: Path, newPath: Path)
 
     /**
      * Increase strike count for a request path and return the new strike count.
@@ -17,8 +18,12 @@ interface SnodePathStorage {
      * @return The new strike count for the request path if the path exists
      */
     fun increaseOnionRequestPathStrike(path: Path, increment: Int): Int?
-    fun clearOnionRequestPathStrikes(path: Path)
+    fun increaseOnionRequestPathStrikeContainingSnode(snodeEd25519PubKey: String, increment: Int): Pair<Path, Int>?
+
+    fun findRandomUnusedSnodesForNewPath(n: Int): List<Snode>
+
     fun clearOnionRequestPaths()
+    fun removePath(path: Path)
 }
 
 interface SwarmStorage {
@@ -32,6 +37,8 @@ interface SnodePoolStorage {
     fun removeSnode(ed25519PubKey: String): Snode?
     fun setSnodePool(newValue: Set<Snode>)
 
+    fun removeSnodesWithStrikesGreaterThan(n: Int): Int
+
     /**
      * Increase strike count for a snode and return the new strike count
      *
@@ -40,5 +47,4 @@ interface SnodePoolStorage {
      * @return The new strike count for the snode, or null if the snode does not exist in the pool
      */
     fun increaseSnodeStrike(snode: Snode, increment: Int): Int?
-    fun clearSnodeStrike(snode: Snode)
 }

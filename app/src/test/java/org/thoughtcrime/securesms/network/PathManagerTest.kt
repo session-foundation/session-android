@@ -3,84 +3,44 @@ package org.thoughtcrime.securesms.network
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.advanceUntilIdle
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.kotlin.*
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.database.SnodeDatabase
+import org.thoughtcrime.securesms.database.SnodeDatabaseTest
 import org.thoughtcrime.securesms.util.MockLoggingRule
 
+@RunWith(RobolectricTestRunner::class)
+@Config(minSdk = 36) // Setting min sdk 36 to use recent sqlite version as we use some modern features in the app code
 class PathManagerTest {
 
     @get:Rule
     val logRule = MockLoggingRule()
+
+    lateinit var snodeDb: SnodeDatabase
+
+    @Before
+    fun setUp() {
+        snodeDb = SnodeDatabaseTest.createInMemorySnodeDatabase()
+    }
 
     private fun snode(id: String): Snode =
         Snode(
             address = "https://$id.example",
             port = 443,
             publicKeySet = Snode.KeySet(ed25519Key = "ed_$id", x25519Key = "x_$id"),
-            version = Snode.Version.ZERO
         )
 
-    private class FakePathStorage(initial: List<Path>) : SnodePathStorage {
-        private var value: List<Path> = initial
-        var lastSet: List<Path>? = null
-        var cleared = false
-        val pathStrikes = mutableMapOf<Path, Int>()
-
-        override fun getOnionRequestPaths(): List<Path> = value
-
-        override fun setOnionRequestPaths(paths: List<Path>) {
-            value = paths
-            lastSet = paths
-        }
-
-        override fun clearOnionRequestPaths() {
-            value = emptyList()
-            cleared = true
-        }
-
-        override fun increaseOnionRequestPathStrike(
-            path: Path,
-            increment: Int
-        ): Int {
-            val newStrike = (pathStrikes[path] ?: 0) + increment
-            pathStrikes[path] = newStrike
-            return newStrike
-        }
-
-        override fun clearOnionRequestPathStrikes(path: Path) {
-            pathStrikes.remove(path)
-        }
-    }
-
-    @Test
-    fun `init sanitize drops backup when overlapping`() = runTest {
-        val a = snode("a"); val b = snode("b"); val c = snode("c"); val d = snode("d")
-
-        val p1: Path = listOf(a, b, c)
-        val p2: Path = listOf(a, d, c) // overlaps
-
-        val storage = FakePathStorage(listOf(p1, p2))
-        val directory = mock<SnodeDirectory>()
-        val swarmDirectory = mock<SwarmDirectory>()
-
-        val pm = PathManager(
-            scope = backgroundScope,
-            directory = directory,
-            storage = storage,
-            swarmDirectory = swarmDirectory,
-            snodePoolStorage = mock(),
-        )
-
-        assertThat(pm.paths.value).hasSize(1)
-        assertThat(pm.paths.value.first()).isEqualTo(p1)
-    }
 
     @Test
     fun `getPath excludes node when possible`() = runTest {
@@ -90,10 +50,16 @@ class PathManagerTest {
         val p1: Path = listOf(a, b, c)
         val p2: Path = listOf(d, e, f)
 
-        val storage = FakePathStorage(listOf(p1, p2))
-        val directory = mock<SnodeDirectory>()
+        snodeDb.setSnodePool(setOf(a,b,c,d,e,f))
+        snodeDb.setOnionRequestPaths(listOf(p1, p2))
 
-        val pm = PathManager(backgroundScope, directory, storage, mock(), mock())
+        val pm = PathManager(
+            scope = backgroundScope,
+            directory = mock(),
+            storage = snodeDb,
+            snodePoolStorage = snodeDb,
+            prefs = mock()
+        )
 
         val chosen = pm.getPath(exclude = b)
         assertThat(chosen).isEqualTo(p2)
@@ -108,26 +74,22 @@ class PathManagerTest {
         val p1: Path = listOf(a, b, c)
         val p2: Path = listOf(d, e, f)
 
-        val storage = FakePathStorage(listOf(p1, p2))
+        snodeDb.setSnodePool(setOf(a,b,c,d,e,f,x))
+        snodeDb.setOnionRequestPaths(listOf(p1, p2))
 
-        val directory = mock<SnodeDirectory> {
-            // repair uses getSnodePool()
-            on { getSnodePool() } doReturn setOf(a,b,c,d,e,f,x)
-        }
-        val swarmDirectory = mock<SwarmDirectory>()
+        val pm = PathManager(
+            scope = backgroundScope,
+            directory = mock(),
+            storage = snodeDb,
+            snodePoolStorage = snodeDb,
+            prefs = mock()
+        )
 
-        val pm = PathManager(backgroundScope, directory, storage, mock(), swarmDirectory)
-
-        pm.handleBadSnode(snode = b, publicKey = "pubkey123", forceRemove = true)
-        advanceUntilIdle()
+        pm.handleBadSnode(snode = b, forceRemove = true)
 
         val newPaths = pm.paths.value
         assertThat(newPaths).hasSize(2)
         assertThat(newPaths.flatten()).doesNotContain(b)
-
-        // verify external cleanup
-        verify(directory).dropSnodeFromPool("ed_b") // called when ed25519 present :contentReference[oaicite:9]{index=9}
-        verify(swarmDirectory).dropSnodeFromSwarmIfNeeded(b, "pubkey123") // pubKey context :contentReference[oaicite:10]{index=10}
 
         // disjoint invariant
         val flat = newPaths.flatten()
@@ -142,18 +104,18 @@ class PathManagerTest {
         val p1: Path = listOf(a, b, c)
         val p2: Path = listOf(d, e, f)
 
-        val storage = FakePathStorage(listOf(p1, p2))
+        snodeDb.setSnodePool(setOf(a,b,c,d,e,f))
+        snodeDb.setOnionRequestPaths(listOf(p1, p2))
 
-        val directory = mock<SnodeDirectory> {
-            // pool has only used nodes, so no candidates remain after forbidding
-            on { getSnodePool() } doReturn setOf(a,b,c,d,e,f)
-        }
-        val swarmDirectory = mock<SwarmDirectory>()
+        val pm = PathManager(
+            scope = backgroundScope,
+            directory = mock(),
+            storage = snodeDb,
+            snodePoolStorage = snodeDb,
+            prefs = mock()
+        )
 
-        val pm = PathManager(backgroundScope, directory, storage, mock(), swarmDirectory)
-
-        pm.handleBadSnode(snode = b, publicKey = "pubkey123", forceRemove = true)
-        advanceUntilIdle()
+        pm.handleBadSnode(snode = b, forceRemove = true)
 
         val newPaths = pm.paths.value
         assertThat(newPaths.flatten()).doesNotContain(b)

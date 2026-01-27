@@ -1179,7 +1179,6 @@
     <string name="proRenewPinFiveConversations">Хотите снова закреплять более {limit} бесед?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
     <string name="proRenewPinMoreConversations">Хотите снова закреплять больше бесед?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
     <string name="proRenewTosPrivacy">Продлевая подписку, вы соглашаетесь с <b>Условиями использования</b> {icon} и <b>Политикой конфиденциальности</b> {icon} {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Не удалось продлить подписку Pro, повторная попытка скоро</string>
     <string name="proRenewingAction">продление</string>
     <string name="proRenewingNoAccessBilling">В настоящее время доступ к {pro} можно приобрести и продлить только через {platform_store} или {platform_store_other}. Поскольку вы установили {app_name} с использованием сборки {build_variant}, продление здесь недоступно.\n\nРазработчики {app_name} активно работают над альтернативными способами оплаты, чтобы пользователи могли приобретать доступ к {pro} вне {platform_store} и {platform_store_other}.<b> Дорожная карта {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Возврат Средств Запрошен</string>
