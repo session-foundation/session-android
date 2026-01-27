@@ -1111,7 +1111,6 @@
     <string name="proRenewPinFiveConversations">Szeretne ismét több mint {limit} beszélgetést rögzíteni?\nMeglévő {pro} hozzáférésének megújításával feloldhatja a kihagyott funkciókat.</string>
     <string name="proRenewPinMoreConversations">Szeretne ismét több beszélgetést rögzíteni?\nMeglévő {pro} hozzáférésének megújításával feloldhatja a kihagyott funkciókat.</string>
     <string name="proRenewTosPrivacy">A megújítással elfogadja a(z) {app_pro} <b>Felhasználási feltételeit</b> {icon} és az <b>Adatvédelmi szabályzatát</b> {icon}</string>
-    <string name="proRenewalUnsuccessful">A Pro megújítása sikertelen, hamarosan újrapróbálkozunk</string>
     <string name="proRenewingAction">megújítás</string>
     <string name="proRenewingNoAccessBilling">Jelenleg a {pro} hozzáférés csak a(z) {platform_store} vagy a(z) {platform_store_other} áruházon keresztül vásárolható meg és újítható meg. Mivel a(z) {app_name} alkalmazást a(z) {build_variant} használatával telepítetted, itt nem tudod megújítani.\n\nA {app_name} fejlesztői keményen dolgoznak alternatív fizetési lehetőségeken, hogy a felhasználók a(z) {platform_store} és {platform_store_other} áruházakon kívül is megvásárolhassák a {pro} hozzáférést.<b> {pro} ütemterv</b> {icon}</string>
     <string name="proRequestedRefund">Visszatérítés kérve</string>
