@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 import javax.inject.Inject
 
 class ListSnodeApi @Inject constructor(
@@ -17,14 +18,14 @@ class ListSnodeApi @Inject constructor(
     errorManager: SnodeApiErrorManager,
 ) : AbstractSnodeApi<ListSnodeApi.Response>(errorManager) {
     override fun deserializeSuccessResponse(
-        requestParams: JsonElement,
+        ctx: ApiExecutorContext,
         body: JsonElement
     ): Response {
         return json.decodeFromJsonElement(body)
     }
 
     override val methodName: String get() = "get_n_service_nodes"
-    override fun buildParams(): JsonElement = buildRequestJson()
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement = buildRequestJson()
 
     @Serializable
     class Response(

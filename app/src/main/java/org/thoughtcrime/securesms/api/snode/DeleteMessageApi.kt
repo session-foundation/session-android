@@ -14,6 +14,7 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class DeleteMessageApi @AssistedInject constructor(
     @Assisted private val swarmAuth: SwarmAuth,
@@ -23,7 +24,7 @@ class DeleteMessageApi @AssistedInject constructor(
     errorManager: SnodeApiErrorManager
 ) : AbstractSnodeApi<DeleteMessageApi.SuccessResponse>(errorManager) {
 
-    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): SuccessResponse {
+    override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): SuccessResponse {
         val response: Response = json.decodeFromJsonElement(body)
 
         val totalSuccessSnodes = response.swarm
@@ -49,7 +50,7 @@ class DeleteMessageApi @AssistedInject constructor(
     override val methodName: String
         get() = "delete"
 
-    override fun buildParams(): JsonElement {
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement {
         return buildAuthenticatedParameters(
             auth = swarmAuth,
             namespace = null,

@@ -3,37 +3,32 @@ package org.thoughtcrime.securesms.api.snode
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.encodeToJsonElement
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
-import org.thoughtcrime.securesms.api.snode.BatchApi.Request
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
     private val snodeApiErrorManager: SnodeApiErrorManager,
 ) : SnodeApi<RespType> {
-    final override fun buildRequest(): SnodeJsonRequest {
+    final override fun buildRequest(ctx: ApiExecutorContext): SnodeJsonRequest {
         return SnodeJsonRequest(
             method = methodName,
-            params = buildParams()
+            params = buildParams(ctx)
         )
     }
 
     abstract val methodName: String
-    abstract fun buildParams(): JsonElement
+    abstract fun buildParams(ctx: ApiExecutorContext): JsonElement
 
     final override suspend fun handleResponse(
         ctx: ApiExecutorContext,
         snode: Snode,
-        requestParams: JsonElement,
         code: Int,
         body: JsonElement?
     ): RespType {
         if (code in 200..299) {
-            return deserializeSuccessResponse(requestParams, checkNotNull(body) {
+            return deserializeSuccessResponse(ctx, checkNotNull(body) {
                 "Expected non-null body for successful response"
             })
         } else {
@@ -65,7 +60,7 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
         }
     }
 
-    abstract fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): RespType
+    protected abstract fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): RespType
 }
 
 fun buildAuthenticatedParameters(

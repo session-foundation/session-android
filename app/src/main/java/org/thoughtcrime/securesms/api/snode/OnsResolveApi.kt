@@ -15,6 +15,7 @@ import network.loki.messenger.libsession_util.Hash
 import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class OnsResolveApi @AssistedInject constructor(
     @Assisted private val name: String,
@@ -23,7 +24,7 @@ class OnsResolveApi @AssistedInject constructor(
 ) : AbstractSnodeApi<String>(errorManager) {
     override val methodName: String get() = "oxend_request"
 
-    override fun buildParams(): JsonElement {
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement {
         val normalizedName = name.lowercase()
 
         return json.encodeToJsonElement(OxendRequest(
@@ -35,7 +36,7 @@ class OnsResolveApi @AssistedInject constructor(
         ))
     }
 
-    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): String {
+    override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): String {
         val response = json.decodeFromJsonElement<OxendResponse>(body)
 
         val ciphertext = Hex.fromStringCondensed(response.result.encryptedValue)

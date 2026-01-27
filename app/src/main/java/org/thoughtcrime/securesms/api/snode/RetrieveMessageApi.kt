@@ -10,6 +10,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.RetrieveMessageResponse
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class RetrieveMessageApi @AssistedInject constructor(
     @Assisted private val namespace: Int,
@@ -25,7 +26,7 @@ class RetrieveMessageApi @AssistedInject constructor(
     override val methodName: String
         get() = "retrieve"
 
-    override fun buildParams(): JsonElement {
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement {
         return buildAuthenticatedParameters(
             auth = auth,
             namespace = namespace,
@@ -39,7 +40,7 @@ class RetrieveMessageApi @AssistedInject constructor(
         }
     }
 
-    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): RetrieveMessageResponse {
+    override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): RetrieveMessageResponse {
         return json.decodeFromJsonElement(body)
     }
 

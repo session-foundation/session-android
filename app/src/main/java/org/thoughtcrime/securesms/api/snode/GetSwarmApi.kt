@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class GetSwarmApi @AssistedInject constructor(
     @Assisted private val pubKey: String,
@@ -21,13 +22,13 @@ class GetSwarmApi @AssistedInject constructor(
     override val methodName: String
         get() = "get_snodes_for_pubkey"
 
-    override fun buildParams(): JsonElement {
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement {
         return JsonObject(
             mapOf("pubkey" to JsonPrimitive(pubKey))
         )
     }
 
-    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): Response {
+    override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): Response {
         return json.decodeFromJsonElement(Response.serializer(), body)
     }
 

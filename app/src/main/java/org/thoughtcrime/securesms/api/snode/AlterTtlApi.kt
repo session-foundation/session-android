@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class AlterTtlApi @AssistedInject constructor(
     @Assisted private val messageHashes: Collection<String>,
@@ -17,12 +18,12 @@ class AlterTtlApi @AssistedInject constructor(
     errorManager: SnodeApiErrorManager,
     private val snodeClock: SnodeClock,
 ) : AbstractSnodeApi<Unit>(errorManager) {
-    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement) {}
+    override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement) {}
 
     override val methodName: String
         get() = "expire"
 
-    override fun buildParams(): JsonElement {
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement {
         return buildAuthenticatedParameters(
             auth = auth,
             namespace = null,

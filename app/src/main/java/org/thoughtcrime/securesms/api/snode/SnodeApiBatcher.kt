@@ -21,7 +21,7 @@ class SnodeApiBatcher @Inject constructor(
         ctx: ApiExecutorContext,
         req: SnodeApiRequest<*>
     ): SnodeJsonRequest {
-        return req.api.buildRequest()
+        return req.api.buildRequest(ctx)
     }
 
     override fun batchKey(req: SnodeApiRequest<*>): Any? {
@@ -42,7 +42,6 @@ class SnodeApiBatcher @Inject constructor(
         return requests.indices.map { i ->
             val (ctx, request) = requests[i]
             val result = response.responses[i]
-            val requestParams = response.requestParams[i]
 
             runCatching {
                 request.api.handleResponse(
@@ -50,7 +49,6 @@ class SnodeApiBatcher @Inject constructor(
                     snode = request.snode,
                     code = result.code,
                     body = result.body,
-                    requestParams = requestParams,
                 )
             }
         }

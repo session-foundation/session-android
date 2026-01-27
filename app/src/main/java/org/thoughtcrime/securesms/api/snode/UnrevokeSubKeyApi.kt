@@ -9,6 +9,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Base64
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class UnrevokeSubKeyApi @AssistedInject constructor(
     @Assisted private val auth: SwarmAuth,
@@ -16,10 +17,10 @@ class UnrevokeSubKeyApi @AssistedInject constructor(
     errorManager: SnodeApiErrorManager,
     private val snodeClock: SnodeClock,
 ) : AbstractSnodeApi<Unit>(errorManager) {
-    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement) = Unit
+    override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement) = Unit
     override val methodName: String get() = "unrevoke_subaccount"
 
-    override fun buildParams(): JsonElement {
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement {
         return buildAuthenticatedParameters(
             auth = auth,
             timestamp = snodeClock.currentTimeMillis(),

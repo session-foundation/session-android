@@ -15,6 +15,7 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class DeleteAllMessageApi @AssistedInject constructor(
     @Assisted private val auth: SwarmAuth,
@@ -24,11 +25,10 @@ class DeleteAllMessageApi @AssistedInject constructor(
 ) : AbstractSnodeApi<Map<String, Boolean>>(errorManager) {
     override val methodName: String get() = "delete_all"
 
-    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): Map<String, Boolean> {
-        requestParams as JsonObject
-
-        val params = requestParams["params"] as JsonObject
-        val timestamp = (params["timestamp"] as JsonPrimitive).long
+    override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): Map<String, Boolean> {
+        val timestamp = requireNotNull(ctx.get<Long>(SignedRequestTimestampKey)) {
+            "Missing signed request timestamp in context. Are you sure you are giving the context from buildParams() to handleResponse()?"
+        }
 
         return json.decodeFromJsonElement<Response>(body)
             .swarm
@@ -41,12 +41,15 @@ class DeleteAllMessageApi @AssistedInject constructor(
             }
     }
 
-    override fun buildParams(): JsonElement {
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement {
+        val timestamp = snodeClock.currentTimeMillis()
+        ctx.set(SignedRequestTimestampKey, timestamp)
+
         return buildAuthenticatedParameters(
             auth = auth,
             namespace = null,
             verificationData = { _, t -> "${methodName}all$t" },
-            timestamp = snodeClock.currentTimeMillis()
+            timestamp = timestamp
         ) {
             put("namespace", JsonPrimitive("all"))
         }
@@ -82,6 +85,8 @@ class DeleteAllMessageApi @AssistedInject constructor(
             )
         }
     }
+
+    private object SignedRequestTimestampKey : ApiExecutorContext.Key<Long>
 
     @AssistedFactory
     interface Factory {

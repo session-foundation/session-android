@@ -18,13 +18,9 @@ import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
 import org.thoughtcrime.securesms.api.SessionApiRequest
-import org.thoughtcrime.securesms.api.direct.DirectSessionApiExecutor
 import org.thoughtcrime.securesms.api.execute
-import org.thoughtcrime.securesms.api.http.HttpApiExecutor
-import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.snode.ListSnodeApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
-import org.thoughtcrime.securesms.api.snode.SnodeApiExecutorImpl
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -157,7 +153,7 @@ class SnodeDirectory @Inject constructor(
             val result = runCatching {
                 val api = listSnodeApi.get()
                 val ctx = ApiExecutorContext()
-                val request = api.buildRequest()
+                val request = api.buildRequest(ctx)
                 val resp = sessionApiExecutor.get().execute(
                     ctx = ctx,
                     req = SessionApiRequest.SeedNodeJsonRPC(
@@ -169,7 +165,6 @@ class SnodeDirectory @Inject constructor(
                 api.handleResponse(
                     ctx = ctx,
                     snode = Snode(target, null),
-                    requestParams = request.params,
                     code = resp.code,
                     body = resp.bodyAsJson
                 )

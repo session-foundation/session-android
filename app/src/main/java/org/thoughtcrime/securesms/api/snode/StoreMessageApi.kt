@@ -11,6 +11,7 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.StoreMessageResponse
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class StoreMessageApi @AssistedInject constructor(
     @Assisted private val message: SnodeMessage,
@@ -22,14 +23,14 @@ class StoreMessageApi @AssistedInject constructor(
 ) : AbstractSnodeApi<StoreMessageResponse>(
     snodeApiErrorManager = errorManager
 ) {
-    override fun deserializeSuccessResponse(requestParams: JsonElement, body: JsonElement): StoreMessageResponse {
+    override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): StoreMessageResponse {
         return json.decodeFromJsonElement(StoreMessageResponse.serializer(), body)
     }
 
     override val methodName: String
         get() = "store"
 
-    override fun buildParams(): JsonElement {
+    override fun buildParams(ctx: ApiExecutorContext): JsonElement {
         return if (auth != null) {
             check(auth.accountId.hexString == message.recipient) {
                 "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
