@@ -13,13 +13,11 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
@@ -31,8 +29,7 @@ class GroupMembersViewModel @AssistedInject constructor(
     configFactory: ConfigFactoryProtocol,
     avatarUtils: AvatarUtils,
     recipientRepository: RecipientRepository,
-    groupManager : GroupManagerV2
-) : BaseGroupMembersViewModel(address, context, storage, configFactory, avatarUtils, recipientRepository, groupManager) {
+) : BaseGroupMembersViewModel(address, context, storage, configFactory, avatarUtils, recipientRepository) {
 
     private val _navigationActions = Channel<Intent>()
     val navigationActions get() = _navigationActions.receiveAsFlow()
