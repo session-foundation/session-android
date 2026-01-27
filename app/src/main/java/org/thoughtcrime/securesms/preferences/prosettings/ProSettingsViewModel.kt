@@ -38,6 +38,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PERCENT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
@@ -261,7 +263,9 @@ class ProSettingsViewModel @AssistedInject constructor(
                         is ProStatus.Active.AutoRenewing -> {
                             // in grace period
                             if(subType.inGracePeriod) {
-                                context.getText(R.string.proRenewalUnsuccessful)
+                                Phrase.from(context, R.string.proRenewalUnsuccessful)
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format()
                             } else {
                                 Phrase.from(context, R.string.proAutoRenewTime)
                                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
@@ -493,8 +497,35 @@ class ProSettingsViewModel @AssistedInject constructor(
                         }
                     }
 
-                    // go to the "choose plan" screen
-                    else -> goToChoosePlan()
+                    // Not loading nor error. If in grace period show a dialog
+                    // otherwise go to the "choose plan" screen
+                    else -> {
+                        val provider = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)?.providerData
+                        if(_proSettingsUIState.value.inGracePeriod){
+                            _dialogState.update {
+                                it.copy(
+                                    showSimpleDialog = SimpleDialogData(
+                                        title = Phrase.from(context, R.string.proRenewalUnsuccessfulTitle)
+                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                            .format().toString(),
+                                        message = Phrase.from(context, R.string.proUnsuccessfulRenewalDescription)
+                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                            .put(PLATFORM_ACCOUNT_KEY, provider?.platformAccount ?: "")
+                                            .put(PLATFORM_STORE_KEY, provider?.store ?: "")
+                                            .format(),
+                                        positiveText = context.getString(R.string.theContinue),
+                                        positiveStyleDanger = false,
+                                        onPositive = {
+                                            goToChoosePlan()
+                                        },
+                                        showXIcon = true
+                                    )
+                                )
+                            }
+                        } else {
+                            goToChoosePlan()
+                        }
+                    }
                 }
             }
 
