@@ -7,15 +7,15 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Semaphore
+import org.session.libsession.network.snode.SnodeDirectory
 import org.thoughtcrime.securesms.api.batch.BatchApiExecutor
 import org.thoughtcrime.securesms.api.http.HTTP_EXECUTOR_SEMAPHORE_NAME
 import org.thoughtcrime.securesms.api.http.HttpApiExecutor
 import org.thoughtcrime.securesms.api.http.OkHttpApiExecutor
+import org.thoughtcrime.securesms.api.http.SessionHttpApiExecutor
 import org.thoughtcrime.securesms.api.http.createRegularNodeOkHttpClient
 import org.thoughtcrime.securesms.api.http.createSeedSnodeOkHttpClient
 import org.thoughtcrime.securesms.api.onion.OnionSessionApiExecutor
-import org.thoughtcrime.securesms.api.onion.REGULAR_SNODE_HTTP_EXECUTOR_NAME
-import org.thoughtcrime.securesms.api.onion.SEED_SNODE_HTTP_EXECUTOR_NAME
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiExecutorImpl
 import org.thoughtcrime.securesms.api.snode.SnodeApiBatcher
@@ -25,7 +25,9 @@ import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutorImpl
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Named
+import javax.inject.Provider
 import javax.inject.Singleton
+
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -68,29 +70,22 @@ class APIModule {
         return Semaphore(20)
     }
 
-
     @Provides
-    @Named(REGULAR_SNODE_HTTP_EXECUTOR_NAME)
     @Singleton
-    fun provideRegularSnodeApiExecutor(
+    fun provideHttpApiExecutor(
         @Named(HTTP_EXECUTOR_SEMAPHORE_NAME) semaphore: Semaphore,
+        snodeDirectory: Provider<SnodeDirectory>,
     ): HttpApiExecutor {
-        return OkHttpApiExecutor(
-            client = createRegularNodeOkHttpClient().build(),
-            semaphore = semaphore
-        )
-    }
-
-
-    @Provides
-    @Named(SEED_SNODE_HTTP_EXECUTOR_NAME)
-    @Singleton
-    fun provideSeedSnodeApiExecutor(
-        @Named(HTTP_EXECUTOR_SEMAPHORE_NAME) semaphore: Semaphore,
-    ): HttpApiExecutor {
-        return OkHttpApiExecutor(
-            client = createSeedSnodeOkHttpClient().build(),
-            semaphore = semaphore
+        return SessionHttpApiExecutor(
+            seedSnodeHttpApiExecutor = OkHttpApiExecutor(
+                client = createSeedSnodeOkHttpClient().build(),
+                semaphore = semaphore
+            ),
+            regularSnodeHttpApiExecutor = OkHttpApiExecutor(
+                client = createRegularNodeOkHttpClient().build(),
+                semaphore = semaphore
+            ),
+            snodeDirectory
         )
     }
 }

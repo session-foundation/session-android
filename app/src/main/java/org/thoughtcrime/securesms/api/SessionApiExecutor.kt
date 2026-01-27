@@ -1,16 +1,22 @@
 package org.thoughtcrime.securesms.api
 
 import kotlinx.serialization.json.JsonElement
+import okhttp3.HttpUrl
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
+import org.thoughtcrime.securesms.api.snode.SnodeJsonRequest
 
 
 sealed interface SessionApiRequest<ResponseType : SessionApiResponse> {
     data class SnodeJsonRPC(
         val snode: Snode,
-        val methodName: String,
-        val params: JsonElement,
+        val request: SnodeJsonRequest,
+    ) : SessionApiRequest<SessionApiResponse.JsonRPCResponse>
+
+    data class SeedNodeJsonRPC(
+        val seedNodeUrl: HttpUrl,
+        val request: SnodeJsonRequest,
     ) : SessionApiRequest<SessionApiResponse.JsonRPCResponse>
 
     data class HttpServerRequest(
@@ -22,7 +28,7 @@ sealed interface SessionApiRequest<ResponseType : SessionApiResponse> {
 sealed interface SessionApiResponse {
     class JsonRPCResponse(
         val code: Int,
-        val bodyAsText: String,
+        val bodyAsText: String?,
         val bodyAsJson: JsonElement?,
     ) : SessionApiResponse
 

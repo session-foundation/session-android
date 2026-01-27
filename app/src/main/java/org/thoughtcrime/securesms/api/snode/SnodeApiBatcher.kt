@@ -6,10 +6,10 @@ import javax.inject.Inject
 
 class SnodeApiBatcher @Inject constructor(
     private val batchAPIFactory: BatchApi.Factory,
-) : Batcher<SnodeApiRequest<*>, SnodeApiResponse, BatchApi.RequestItem> {
+) : Batcher<SnodeApiRequest<*>, SnodeApiResponse, SnodeJsonRequest> {
     override fun constructBatchRequest(
         firstRequest: SnodeApiRequest<*>,
-        intermediateRequests: List<BatchApi.RequestItem>
+        intermediateRequests: List<SnodeJsonRequest>
     ): SnodeApiRequest<*> {
         return SnodeApiRequest(
             snode = firstRequest.snode,
@@ -20,11 +20,8 @@ class SnodeApiBatcher @Inject constructor(
     override fun transformRequestForBatching(
         ctx: ApiExecutorContext,
         req: SnodeApiRequest<*>
-    ): BatchApi.RequestItem {
-        return BatchApi.RequestItem(
-            method = req.api.methodName,
-            params = req.api.buildParams()
-        )
+    ): SnodeJsonRequest {
+        return req.api.buildRequest()
     }
 
     override fun batchKey(req: SnodeApiRequest<*>): Any? {

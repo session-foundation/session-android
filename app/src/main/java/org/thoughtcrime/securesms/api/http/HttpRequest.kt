@@ -15,4 +15,24 @@ data class HttpRequest(
     fun getHeader(name: String): String? {
         return headers.entries.firstOrNull { it.key.equals(name, ignoreCase = true) }?.value
     }
+
+    companion object {
+        fun createFromJson(
+            url: HttpUrl,
+            method: String,
+            jsonText: String
+        ): HttpRequest {
+            val body = HttpBody.Text(jsonText)
+
+            return HttpRequest(
+                url = url,
+                method = method,
+                headers = mapOf(
+                    "Content-Type" to "application/json",
+                    "Content-Length" to body.byteLength.toString()
+                ),
+                body = body,
+            )
+        }
+    }
 }

@@ -7,8 +7,7 @@ import org.thoughtcrime.securesms.api.ApiExecutorContext
 typealias SnodeApiResponse = Any
 
 interface SnodeApi<RespType : SnodeApiResponse> {
-    val methodName: String
-    fun buildParams(): JsonElement
+    fun buildRequest(): SnodeJsonRequest
     suspend fun handleResponse(
         ctx: ApiExecutorContext,
         snode: Snode,

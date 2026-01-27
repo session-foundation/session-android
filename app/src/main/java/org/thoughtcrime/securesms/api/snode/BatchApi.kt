@@ -12,7 +12,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import org.session.libsession.snode.model.BatchResponse
 
 class BatchApi @AssistedInject constructor(
-    @Assisted val requests: List<RequestItem>,
+    @Assisted val requests: List<SnodeJsonRequest>,
     private val json: Json,
     errorManager: SnodeApiErrorManager,
 ) : AbstractSnodeApi<BatchApi.Response>(errorManager) {
@@ -23,14 +23,8 @@ class BatchApi @AssistedInject constructor(
     }
 
     @Serializable
-    class RequestItem(
-        val method: String,
-        val params: JsonElement
-    )
-
-    @Serializable
     private class Request(
-        val requests: List<RequestItem>
+        val requests: List<SnodeJsonRequest>
     )
 
     class Response(
@@ -54,16 +48,10 @@ class BatchApi @AssistedInject constructor(
 
     @AssistedFactory
     abstract class Factory {
-        abstract fun create(requests: List<RequestItem>): BatchApi
+        abstract fun create(requests: List<SnodeJsonRequest>): BatchApi
 
         fun createFromApis(apis: List<SnodeApi<*>>): BatchApi {
-            val requestItems = apis.map { api ->
-                RequestItem(
-                    method = api.methodName,
-                    params = api.buildParams()
-                )
-            }
-            return create(requestItems)
+            return create(apis.map { it.buildRequest() })
         }
     }
 }

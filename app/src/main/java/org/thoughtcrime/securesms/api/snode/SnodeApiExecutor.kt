@@ -28,18 +28,17 @@ class SnodeApiExecutorImpl @Inject constructor(
         ctx: ApiExecutorContext,
         req: SnodeApiRequest<*>
     ): SnodeApiResponse {
-        val requestParams = req.api.buildParams()
+        val request = req.api.buildRequest()
         val response = executor.execute(
             ctx = ctx,
             req = SessionApiRequest.SnodeJsonRPC(
                 snode = req.snode,
-                methodName = req.api.methodName,
-                params = requestParams
+                request = request
             ))
 
         return req.api.handleResponse(
             ctx = ctx,
-            requestParams = requestParams,
+            requestParams = request.params,
             snode = req.snode,
             code = response.code,
             body = response.bodyAsJson

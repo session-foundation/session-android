@@ -20,7 +20,7 @@ class AutoRetryApiExecutor<Req, Res>(
                 throw e
             } catch (e: Throwable) {
                 if (e.findCause<NonRetryableException>() != null ||
-                    e.findCause<ErrorWithFailureDecision>()?.failureDecision == FailureDecision.Fail ||
+                    e.findCause<ErrorWithFailureDecision>()?.failureDecision != FailureDecision.Retry ||
                     numRetried == 2) {
                     throw e
                 } else {

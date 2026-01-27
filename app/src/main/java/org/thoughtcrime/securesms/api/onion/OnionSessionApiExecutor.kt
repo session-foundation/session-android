@@ -5,7 +5,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.IOException
@@ -18,7 +17,6 @@ import org.session.libsession.network.onion.OnionBuilder
 import org.session.libsession.network.onion.OnionRequestEncryption
 import org.session.libsession.network.onion.OnionRequestVersion
 import org.session.libsession.network.onion.PathManager
-import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.AESGCM
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.ByteArraySlice
@@ -27,6 +25,7 @@ import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
 import org.thoughtcrime.securesms.api.SessionApiRequest
 import org.thoughtcrime.securesms.api.SessionApiResponse
+import org.thoughtcrime.securesms.api.direct.DirectSessionApiExecutor
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.api.http.HttpApiExecutor
 import org.thoughtcrime.securesms.api.http.HttpBody
@@ -34,29 +33,20 @@ import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
-import javax.inject.Named
 import javax.inject.Provider
 
-const val SEED_SNODE_HTTP_EXECUTOR_NAME = "seed_snode_executor"
-const val REGULAR_SNODE_HTTP_EXECUTOR_NAME = "regular_snode_executor"
 
 class OnionSessionApiExecutor @Inject constructor(
-    @param:Named(SEED_SNODE_HTTP_EXECUTOR_NAME)
-    private val seedSnodeHttpApiExecutor: Provider<HttpApiExecutor>,
-
-    @param:Named(REGULAR_SNODE_HTTP_EXECUTOR_NAME)
-    private val regularSnodeHttpApiExecutor: Provider<HttpApiExecutor>,
-
-    private val snodeDirectory: Provider<SnodeDirectory>,
+    private val httpApiExecutor: HttpApiExecutor,
     private val pathManager: PathManager,
     private val json: Json,
     private val onionSessionApiErrorManager: OnionSessionApiErrorManager,
+    private val directSessionApiExecutor: Provider<DirectSessionApiExecutor>,
 ) : SessionApiExecutor {
     override suspend fun send(
         ctx: ApiExecutorContext,
         req: SessionApiRequest<*>
     ): SessionApiResponse {
-        val path = pathManager.getPath()
         val onionRequestVersion: OnionRequestVersion
         val onionDestination: OnionDestination
         val payload: ByteArray
@@ -65,12 +55,13 @@ class OnionSessionApiExecutor @Inject constructor(
             is SessionApiRequest.SnodeJsonRPC -> {
                 onionRequestVersion = OnionRequestVersion.V3
                 onionDestination = OnionDestination.SnodeDestination(req.snode)
-                payload = json.encodeToString(JsonObject(
-                    mapOf(
-                        "method" to json.parseToJsonElement(req.methodName),
-                        "params" to req.params
-                    )
-                )).toByteArray()
+                payload = json.encodeToString(req.request).toByteArray()
+            }
+
+            is SessionApiRequest.SeedNodeJsonRPC -> {
+                // A request to seed node can't be routed via onion request atm so we will
+                // go direct.
+                return directSessionApiExecutor.get().send(ctx, req)
             }
 
             is SessionApiRequest.HttpServerRequest -> {
@@ -85,6 +76,9 @@ class OnionSessionApiExecutor @Inject constructor(
                 payload = generateV4HttpServerPayload(req.request)
             }
         }
+
+        val pathOverrides = ctx.get(OnionPathOverridesKey)
+        val path = pathOverrides ?: pathManager.getPath()
 
         val builtOnion = try {
             OnionBuilder.build(
@@ -115,24 +109,7 @@ class OnionSessionApiExecutor @Inject constructor(
         }
 
         val guard = builtOnion.guard
-        val guardBaseUrl = buildString {
-            append(guard.address)
-            if ((guard.address.startsWith("http://") && guard.port == 80) ||
-                (guard.address.startsWith("https://") && guard.port == 443)) {
-                // default port, do not append
-            } else {
-                append(':')
-                append(guard.port)
-            }
-        }.lowercase()
-
-        val url = "$guardBaseUrl/onion_req/v2".toHttpUrl()
-
-        val httpExecutor = if (snodeDirectory.get().seedNodePool.contains(guardBaseUrl)) {
-            seedSnodeHttpApiExecutor.get()
-        } else {
-            regularSnodeHttpApiExecutor.get()
-        }
+        val url = "${guard.address}:${guard.port}/onion_req/v2".toHttpUrl()
 
         val httpRequest = HttpRequest(
             url = url,
@@ -142,7 +119,7 @@ class OnionSessionApiExecutor @Inject constructor(
         )
 
         val result = runCatching {
-            httpExecutor.send(
+            httpApiExecutor.send(
                 ctx = ctx,
                 req = httpRequest
             )
@@ -178,13 +155,20 @@ class OnionSessionApiExecutor @Inject constructor(
                 )
             }
 
-            throw ErrorWithFailureDecision(
-                cause = error,
-                failureDecision = onionSessionApiErrorManager.onFailure(
-                    error = error,
-                    path = path,
+            if (pathOverrides != null) {
+                // When path overrides are used, we don't want to apply any failure decision logic
+                // on the path, so we just re-throw the error as-is
+                throw error
+            } else {
+                throw ErrorWithFailureDecision(
+                    cause = error,
+                    failureDecision = onionSessionApiErrorManager.onFailure(
+                        error = error,
+                        path = path,
+                    )
+
                 )
-            )
+            }
         }
     }
 
@@ -438,4 +422,5 @@ class OnionSessionApiExecutor @Inject constructor(
         val headers: Map<String, String>? = emptyMap()
     )
 
+    object OnionPathOverridesKey : ApiExecutorContext.Key<Path>
 }

@@ -3,16 +3,28 @@ package org.thoughtcrime.securesms.api.snode
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
+import org.thoughtcrime.securesms.api.snode.BatchApi.Request
 import kotlin.collections.component1
 import kotlin.collections.component2
 
 abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
     private val snodeApiErrorManager: SnodeApiErrorManager,
 ) : SnodeApi<RespType> {
+    final override fun buildRequest(): SnodeJsonRequest {
+        return SnodeJsonRequest(
+            method = methodName,
+            params = buildParams()
+        )
+    }
+
+    abstract val methodName: String
+    abstract fun buildParams(): JsonElement
+
     final override suspend fun handleResponse(
         ctx: ApiExecutorContext,
         snode: Snode,
