@@ -14,7 +14,7 @@ data class SnodeApiRequest<Resp : SnodeApiResponse>(
     val api: SnodeApi<Resp>
 ) {
     override fun toString(): String {
-        return "SnodeApiRequest(api=${api::class.java.simpleName}, snode=${snode})"
+        return "SnodeApiRequest(${api::class.java.simpleName}, snode=${snode})"
     }
 }
 
