@@ -2,7 +2,17 @@ package org.thoughtcrime.securesms.api
 
 import androidx.collection.arrayMapOf
 
-
+/**
+ * A general-purpose context for passing data between API executor layers.
+ *
+ * To use, define a unique [Key] for data you want to store, and use [get], [set], and [getOrPut]
+ * to manage values associated with that key. The context is normally created per API request,
+ * allowing different layers of the request handling process to share information.
+ *
+ * Example usage: somewhere down in the middle of all the executor layers, a layer wants
+ * to store the number of same exception's occurrence, so it can make decision on what to do for
+ * next
+ */
 class ApiExecutorContext {
     private var values: MutableMap<Any, Any>? = null
 

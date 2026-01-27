@@ -9,16 +9,25 @@ import org.thoughtcrime.securesms.api.snode.SnodeJsonRequest
 
 
 sealed interface SessionApiRequest<ResponseType : SessionApiResponse> {
+    /**
+     * Send a JSON-RPC request to a specific snode.
+     */
     data class SnodeJsonRPC(
         val snode: Snode,
         val request: SnodeJsonRequest,
     ) : SessionApiRequest<SessionApiResponse.JsonRPCResponse>
 
+    /**
+     * Send a JSON-RPC request to a specific seed node.
+     */
     data class SeedNodeJsonRPC(
         val seedNodeUrl: HttpUrl,
         val request: SnodeJsonRequest,
     ) : SessionApiRequest<SessionApiResponse.JsonRPCResponse>
 
+    /**
+     * Send/proxy a raw HTTP request to a server.
+     */
     data class HttpServerRequest(
         val request: HttpRequest,
         val serverX25519PubKeyHex: String
@@ -35,6 +44,9 @@ sealed interface SessionApiResponse {
     class HttpServerResponse(val response: HttpResponse) : SessionApiResponse
 }
 
+/**
+ * An [ApiExecutor] for sending [SessionApiRequest]s.
+ */
 typealias SessionApiExecutor = ApiExecutor<SessionApiRequest<*>, SessionApiResponse>
 
 suspend inline fun <reified Res, Req> SessionApiExecutor.execute(

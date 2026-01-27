@@ -1,5 +1,12 @@
 package org.thoughtcrime.securesms.api.error
 
+/**
+ * An exception indicating that the HTTP status code received is
+ * erroneous or unrecognized. This exception is normally thrown when none of the
+ * [org.thoughtcrime.securesms.api.ApiExecutor] layers know how to handle the status code.
+ *
+ * Normally this is up to the caller to handle.
+ */
 class UnknownHttpStatusCodeException(
     val code: Int,
     val origin: String,

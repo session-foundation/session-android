@@ -8,6 +8,13 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.util.findCause
 
+/**
+ * An [ApiExecutor] that automatically retries a request that fails with a [ErrorWithFailureDecision]
+ * with a [FailureDecision.Retry], up to 3 times, with exponential backoff.
+ *
+ * **Note**:, this executor should normally be at the outermost layer of executors, so that it can
+ * retry the entire request.
+ */
 class AutoRetryApiExecutor<Req, Res>(
     private val actualExecutor: ApiExecutor<Req, Res>,
 ) : ApiExecutor<Req, Res> {
@@ -21,7 +28,7 @@ class AutoRetryApiExecutor<Req, Res>(
             } catch (e: Throwable) {
                 if (e.findCause<NonRetryableException>() != null ||
                     e.findCause<ErrorWithFailureDecision>()?.failureDecision != FailureDecision.Retry ||
-                    numRetried == 2) {
+                    numRetried == 3) {
                     throw e
                 } else {
                     numRetried += 1

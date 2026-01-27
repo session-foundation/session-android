@@ -20,6 +20,10 @@ class SwarmApiRequest<T : SnodeApiResponse>(
     val api: SnodeApi<T>
 )
 
+/**
+ * An [ApiExecutor] that routes [SnodeApi]s to a swarm of snodes, handling snode selection
+ * and removal of snodes that are no longer part of the swarm.
+ */
 typealias SwarmApiExecutor = ApiExecutor<SwarmApiRequest<*>, SnodeApiResponse>
 
 suspend inline fun <reified Res, Req> SwarmApiExecutor.execute(
@@ -29,6 +33,9 @@ suspend inline fun <reified Res, Req> SwarmApiExecutor.execute(
     return send(ctx, req) as Res
 }
 
+/**
+ * Default implementation of [SwarmApiExecutor].
+ */
 class SwarmApiExecutorImpl @Inject constructor(
     private val snodeApiExecutor: SnodeApiExecutor,
     private val swarmDirectory: SwarmDirectory,

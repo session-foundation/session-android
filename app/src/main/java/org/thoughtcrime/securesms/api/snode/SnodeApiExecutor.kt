@@ -18,8 +18,14 @@ data class SnodeApiRequest<Resp : SnodeApiResponse>(
     }
 }
 
+/**
+ * An [ApiExecutor] for sending [SnodeApi]s over to snodes.
+ */
 typealias SnodeApiExecutor = ApiExecutor<SnodeApiRequest<*>, SnodeApiResponse>
 
+/**
+ * Default implementation of [SnodeApiExecutor].
+ */
 class SnodeApiExecutorImpl @Inject constructor(
     private val executor: SessionApiExecutor,
 ) : SnodeApiExecutor {

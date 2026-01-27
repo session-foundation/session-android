@@ -36,6 +36,11 @@ import javax.inject.Inject
 import javax.inject.Provider
 
 
+/**
+ * An implementation of [SessionApiExecutor] that routes requests over onion paths.
+ *
+ * Note: requests to seed nodes are sent directly, as onion routing to seed nodes is not supported.
+ */
 class OnionSessionApiExecutor @Inject constructor(
     private val httpApiExecutor: HttpApiExecutor,
     private val pathManager: PathManager,

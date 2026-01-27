@@ -27,7 +27,8 @@ class DeleteAllMessageApi @AssistedInject constructor(
 
     override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): Map<String, Boolean> {
         val timestamp = requireNotNull(ctx.get<Long>(SignedRequestTimestampKey)) {
-            "Missing signed request timestamp in context. Are you sure you are giving the context from buildParams() to handleResponse()?"
+            "Missing signed request timestamp in context. " +
+                    "Are you sure you are giving us the same context you used to build the request?"
         }
 
         return json.decodeFromJsonElement<Response>(body)

@@ -12,6 +12,18 @@ import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import java.time.Instant
 
+/**
+ * An [ApiExecutor] that batches requests together based on a [Batcher.batchKey].
+ *
+ * Requests that share the same batch key within a short time window (100ms) are grouped
+ * together into a single batch request, which is sent using the provided [actualExecutor].
+ * The [batcher] is used to transform individual requests into a batched request and
+ * to deconstruct the batched response back into individual responses.
+ *
+ * Requests that do not have a batch key (i.e., [Batcher.batchKey] returns null)
+ * are sent immediately without batching.
+ *
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class BatchApiExecutor<Req, Res, T>(
     private val actualExecutor: ApiExecutor<Req, Res>,
