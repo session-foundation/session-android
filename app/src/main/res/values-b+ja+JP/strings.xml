@@ -1074,7 +1074,6 @@
     <string name="proRenewPinFiveConversations">{limit} 件以上の会話を再びピン留めしたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewPinMoreConversations">さらに多くの会話を再びピン留めしたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewTosPrivacy">更新することで、{app_pro} の<b>利用規約</b> {icon} および <b>プライバシーポリシー</b> {icon} に同意したことになります</string>
-    <string name="proRenewalUnsuccessful">Pro の更新に失敗しました。まもなく再試行します。</string>
     <string name="proRenewingAction">更新中</string>
     <string name="proRenewingNoAccessBilling">現在、{pro} へのアクセスの購入および更新は、{platform_store} または {platform_store_other} を通じてのみ可能です。{build_variant} を使用して {app_name} をインストールしたため、ここでは更新できません。\n\n{app_name} の開発者は、{platform_store} および {platform_store_other} 以外からも {pro} アクセスを購入できるよう、代替支払い方法の提供に向けて取り組んでいます。<b>{pro} のロードマップ</b> {icon}</string>
     <string name="proRequestedRefund">返金をリクエストしました</string>

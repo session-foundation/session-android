@@ -1109,7 +1109,6 @@
     <string name="proRenewPinFiveConversations">Vill du fästa fler än {limit} konversationer igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
     <string name="proRenewPinMoreConversations">Vill du fästa fler konversationer igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
     <string name="proRenewTosPrivacy">Genom att förnya godkänner du {app_pro} <b>Användarvillkoren</b> {icon} och <b>Sekretesspolicyn</b> {icon}</string>
-    <string name="proRenewalUnsuccessful">Pro-förnyelsen misslyckades, försöker igen snart</string>
     <string name="proRenewingAction">förnyar</string>
     <string name="proRenewingNoAccessBilling">För närvarande kan åtkomst till {pro} endast köpas och förnyas via {platform_store} eller {platform_store_other}. Eftersom du installerade {app_name} med hjälp av {build_variant}, så kan du inte förnya här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att göra det möjligt för användare att köpa åtkomst till {pro} utanför {platform_store} och {platform_store_other}.<b> Utvecklingsplan för {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Återbetalning begärd</string>
