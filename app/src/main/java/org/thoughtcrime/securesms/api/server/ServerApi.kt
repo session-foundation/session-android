@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.api.server
 
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
-import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
 import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 

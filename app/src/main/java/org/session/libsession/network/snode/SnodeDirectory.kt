@@ -7,6 +7,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -20,9 +22,12 @@ import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
 import org.thoughtcrime.securesms.api.SessionApiRequest
 import org.thoughtcrime.securesms.api.execute
+import org.thoughtcrime.securesms.api.http.HttpApiExecutor
+import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.snode.ListSnodeApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.SnodeJsonRequest
 import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -35,7 +40,7 @@ import javax.inject.Singleton
 class SnodeDirectory @Inject constructor(
     private val storage: SnodePoolStorage,
     private val prefs: TextSecurePreferences,
-    private val sessionApiExecutor: Provider<SessionApiExecutor>,
+    private val httpExecutor: Provider<HttpApiExecutor>,
     private val snodeAPiExecutor: Provider<SnodeApiExecutor>,
     private val listSnodeApi: Provider<ListSnodeApi>,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -149,25 +154,24 @@ class SnodeDirectory @Inject constructor(
 
         for (target in seeds) {
             Log.d("SnodeDirectory", "Fetching snode pool using seed node: $target")
-            val result = runCatching {
-                val api = listSnodeApi.get()
-                val ctx = ApiExecutorContext()
-                val request = api.buildRequest(ctx)
-                val resp = sessionApiExecutor.get().execute(
-                    ctx = ctx,
-                    req = SessionApiRequest.SeedNodeJsonRPC(
-                        seedNodeUrl = target,
-                        request = request
+            @Suppress("OPT_IN_USAGE") val result = runCatching {
+                httpExecutor.get().send(
+                    ctx = ApiExecutorContext(),
+                    req = HttpRequest.createFromJson(
+                        url = target.resolve("/json_rpc")!!,
+                        method = "POST",
+                        jsonText = json.encodeToString(SnodeJsonRequest(
+                            method = "get_n_service_nodes",
+                            params = ListSnodeApi.buildRequestJson()
+                        ))
                     )
-                )
-
-                api.handleResponse(
-                    ctx = ctx,
-                    snode = Snode(target, null),
-                    code = resp.code,
-                    body = resp.bodyAsJson
-                )
-
+                ).throwIfNotSuccessful()
+                    .body
+                    .asInputStream()
+                    .use {
+                        val result = checkNotNull(json.decodeFromStream<JsonObject>(it)["result"])
+                        json.decodeFromJsonElement<ListSnodeApi.Response>(result)
+                    }
             }.onFailure { e ->
                 lastError = e
                 Log.w("SnodeDirectory", "Seed node failed: $target", e)

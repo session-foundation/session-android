@@ -1,30 +1,90 @@
 package org.thoughtcrime.securesms.api.snode
 
-import androidx.collection.arraySetOf
+import android.util.Base64
+import android.util.Base64InputStream
+import androidx.compose.ui.platform.LocalGraphicsContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.decodeFromJsonElement
+import network.loki.messenger.libsession_util.Curve25519
+import okio.EOFException
+import okio.buffer
+import okio.source
+import org.session.libsignal.utilities.Hex
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
+import java.net.Inet4Address
 import javax.inject.Inject
 
 class ListSnodeApi @Inject constructor(
-    private val json: Json,
     errorManager: SnodeApiErrorManager,
 ) : AbstractSnodeApi<ListSnodeApi.Response>(errorManager) {
     override fun deserializeSuccessResponse(
         ctx: ApiExecutorContext,
         body: JsonElement
     ): Response {
-        return json.decodeFromJsonElement(body)
+        val b64 = (body as JsonPrimitive).content
+
+        val ed25519PubKeyBuffer = ByteArray(32)
+        val zeroEd25519PubKey = ByteArray(ed25519PubKeyBuffer.size)
+        val ipBytes = ByteArray(4)
+        val versionBytes = ByteArray(3)
+
+        val snodes = mutableListOf<SnodeInfo>()
+
+        // Decode the base64 string and read the snode info out from the binary as:
+        // - 32 byte Ed25519 pubkey
+        // - 8 byte u64 swarm ID, in network order.
+        // - 4 bytes public ip, in network (big-endian) order (i.e. 1.2.3.4 is "\x01\x02\x03\x04")
+        // - 2 byte https port, in network order (i.e. port 259 is "\x01\x03")
+        // - 2 byte OMQ (TCP)/QUIC (UDP) port, in network order
+        // - 3 byte storage server version, e.g. 1.2.3 is "\x01\x02\x03"
+        b64.byteInputStream().use { rawStream ->
+            Base64InputStream(rawStream, Base64.DEFAULT)
+                .source()
+                .buffer()
+                .use { bufferedSource ->
+                    while (true) {
+                        try {
+                            bufferedSource.readFully(ed25519PubKeyBuffer)
+                            val swarmId = bufferedSource.readLong()
+                            bufferedSource.readFully(ipBytes)
+                            val httpsPort = bufferedSource.readShort().toUShort().toInt()
+                            val omqPort = bufferedSource.readShort().toUShort().toInt()
+                            bufferedSource.readFully(versionBytes)
+
+                            val x25519PubKey = runCatching {
+                                if (!ed25519PubKeyBuffer.contentEquals(zeroEd25519PubKey)) {
+                                    Curve25519.pubKeyFromED25519(ed25519PubKeyBuffer)
+                                } else {
+                                    error("Invalid ed25519 pubkey")
+                                }
+                            }.onFailure {
+                                Log.w("ListSnodeApi", "Invalid ed25519 pub key", it)
+                            }.getOrNull() ?: continue
+
+                            snodes += SnodeInfo(
+                                ip = Inet4Address.getByAddress(ipBytes).hostAddress!!,
+                                port = httpsPort,
+                                ed25519PubKey = Hex.toStringCondensed(ed25519PubKeyBuffer),
+                                x25519PubKey = Hex.toStringCondensed(x25519PubKey)
+                            )
+                        } catch (_: EOFException) {
+                            break
+                        }
+                    }
+                }
+        }
+
+
+        return Response(snodes)
     }
 
-    override val methodName: String get() = "get_n_service_nodes"
+    override val methodName: String get() = "active_nodes_bin"
     override fun buildParams(ctx: ApiExecutorContext): JsonElement = buildRequestJson()
 
     @Serializable
@@ -50,7 +110,7 @@ class ListSnodeApi @Inject constructor(
     ) {
         fun toSnode(): Snode? {
             return Snode(
-                ip.takeUnless { it == "0.0.0.0" }?.let { "https://$it" } ?: return null,
+                ip.takeUnless { it == "0.0.0.0" || it == "255.255.255.255" }?.let { "https://$it" } ?: return null,
                 port,
                 Snode.KeySet(ed25519PubKey, x25519PubKey),
             )
