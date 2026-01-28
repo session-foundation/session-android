@@ -202,11 +202,11 @@ class RecipientRepository @Inject constructor(
         )
 
         val changeSources: MutableList<Flow<*>>?
-        val value: Recipient
+        val recipient: Recipient
 
         when (configData) {
             is RecipientData.Self -> {
-                value = createLocalRecipient(address, configData)
+                recipient = createLocalRecipient(address, configData)
                 changeSources = if (needFlow) {
                     arrayListOf(
                         configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
@@ -221,7 +221,7 @@ class RecipientRepository @Inject constructor(
             }
 
             is RecipientData.BlindedContact -> {
-                value = Recipient(address = address, data = configData)
+                recipient = Recipient(address = address, data = configData)
 
                 changeSources = if (needFlow) {
                     arrayListOf(
@@ -235,7 +235,7 @@ class RecipientRepository @Inject constructor(
             }
 
             is RecipientData.Contact -> {
-                value = createContactRecipient(
+                recipient = createContactRecipient(
                     address = address,
                     configData = configData,
                     fallbackSettings = settingsFetcher(address)
@@ -254,7 +254,7 @@ class RecipientRepository @Inject constructor(
             }
 
             is RecipientData.Group -> {
-                value = createGroupV2Recipient(
+                recipient = createGroupV2Recipient(
                     address = address,
                     proDataContext = proDataContext,
                     configData = configData,
@@ -321,9 +321,8 @@ class RecipientRepository @Inject constructor(
                         } else {
                             null
                         }
-                        value = group?.let {
+                        recipient = group?.let {
                             createLegacyGroupRecipient(
-                                proDataContext = proDataContext,
                                 address = address,
                                 config = groupConfig,
                                 group = it,
@@ -338,7 +337,7 @@ class RecipientRepository @Inject constructor(
                     }
 
                     is Address.Community -> {
-                        value = configFactory.withUserConfigs {
+                        recipient = configFactory.withUserConfigs {
                             it.userGroups.getCommunityInfo(address.serverUrl, address.room)
                         }?.let { groupConfig ->
                             createCommunityRecipient(
@@ -374,7 +373,7 @@ class RecipientRepository @Inject constructor(
                         // members:
                         val allGroups =
                             configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
-                        value = allGroups
+                        recipient = allGroups
                             .asSequence()
                             .mapNotNull { groupInfo ->
                                 configFactory.withGroupConfigs(AccountId(groupInfo.groupAccountId)) {
@@ -384,7 +383,7 @@ class RecipientRepository @Inject constructor(
                             .firstOrNull()
                             ?.let { groupMember ->
                                 fetchGroupMember(
-                                    proDataContext = proDataContext,
+                                    groupProDataContext = proDataContext,
                                     member = groupMember,
                                     settingsFetcher = settingsFetcher
                                 )
@@ -410,7 +409,7 @@ class RecipientRepository @Inject constructor(
                     }
 
                     else -> {
-                        value = createGenericRecipient(
+                        recipient = createGenericRecipient(
                             address = address,
                             proDataContext = proDataContext,
                             settings = settings
@@ -431,50 +430,72 @@ class RecipientRepository @Inject constructor(
         }
 
         // Calculate the ProData for this recipient
-        val proDataList = proDataContext?.proDataList
+        val updatedValue = resolveProStatus(recipient, proDataContext)
 
+        // FLOW MANAGEMENT
+        // We still need to access the proDataList to schedule flow updates (timers)
+        // Since resolveProStatus filtered the list inside the context/recipient logic,
+        // we should look at the proDataContext list again (which might need re-filtering here or
+        // relied upon if resolveProStatus modified the list in place)
+
+        // Safety: Let's filter again for the flow logic to be 100% sure we are only setting timers for valid proofs
+        val validProDataList = proDataContext?.proDataList?.filter {
+            !it.isExpired(now) && !proDatabase.isRevoked(it.genIndexHash)
+        }
+
+        if (changeSources != null && !validProDataList.isNullOrEmpty()) {
+            val earliestProExpiry = validProDataList.minOf { it.expiry }
+            val delayMills = Duration.between(now, earliestProExpiry).toMillis()
+            changeSources.add(flowOf("Pro proof expires").onStart { delay(delayMills) })
+        }
+
+        changeSources?.add(proStatusManager.get().postProLaunchStatus.drop(1))
+
+        return updatedValue to changeSources?.let { merge(*it.toTypedArray()) }
+    }
+
+    /**
+     * Resolves the final Pro status for a recipient.
+     * 1. Filters expired/revoked proofs.
+     * 2. Checks Debug preferences overrides.
+     * 3. Updates the recipient data with the final result.
+     */
+    private fun resolveProStatus(
+        recipient: Recipient,
+        context: ProDataContext?
+    ): Recipient {
+        val now = snodeClock.get().currentTime()
+        val proDataList = context?.proDataList
+
+        // 1. Filter invalid proofs
         proDataList?.removeAll {
             it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
         }
 
+        // 2. Determine base Pro Data from valid proofs
         var proData = if (!proDataList.isNullOrEmpty()) {
             RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
         } else {
             null
         }
 
-        // Debug overrides from preferences
-        if (value.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
+        // 3. Apply Debug Overrides
+        if (recipient.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
             proData = RecipientData.ProData(showProBadge = true)
-        } else if (!value.isSelf
-            && (value.address is Address.Standard || value.address is Address.Group)
+        } else if (!recipient.isSelf
+            && (recipient.address is Address.Standard)
             && proData == null
-            && prefs.forceOtherUsersAsPro()) {
+            && prefs.forceOtherUsersAsPro()
+        ) {
             proData = RecipientData.ProData(showProBadge = true)
         }
 
-        val updatedValue = if (value.data.proData != proData && proData != null) {
-            value.copy(data = value.data.setProData(proData))
+        // 4. Update Recipient if data changed
+        return if (recipient.data.proData != proData && proData != null) {
+            recipient.copy(data = recipient.data.setProData(proData))
         } else {
-            value
+            recipient
         }
-
-        if (changeSources != null && !proDataList.isNullOrEmpty()) {
-            // If we have valid pro data, we need to add a flow to trigger a re-fetch when
-            // the earliest pro proof expires.
-            val earliestProExpiry = proDataList.minOf { it.expiry }
-
-            val delayMills = Duration.between(now, earliestProExpiry).toMillis()
-            // Add a flow that triggers when the pro proof expires
-            changeSources.add(flowOf("Pro proof expires")
-                .onStart { delay(delayMills) })
-        }
-
-        // Add post-pro status as a change source to ensure recipients are updated after
-        // post-pro launch flag is toggled.
-        changeSources?.add(proStatusManager.get().postProLaunchStatus.drop(1))
-
-        return updatedValue to changeSources?.let { merge(*it.toTypedArray()) }
     }
 
     /**
@@ -482,15 +503,22 @@ class RecipientRepository @Inject constructor(
      * for a group member purpose.
      */
     private inline fun fetchGroupMember(
-        proDataContext: ProDataContext?,
+        groupProDataContext: ProDataContext?, // The GROUP'S context
         member: RecipientData.GroupMemberInfo,
         settingsFetcher: (address: Address) -> RecipientSettings
     ): Recipient {
-        return when (val configData = getDataFromConfig(member.address, proDataContext)) {
+        // 1. Create a local context specifically for this member
+        val memberProDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
+            ProDataContext()
+        } else {
+            null
+        }
+
+        // 2. Fetch the basic recipient data
+        val rawRecipient = when (val configData = getDataFromConfig(member.address, memberProDataContext)) {
             is RecipientData.Self -> {
                 createLocalRecipient(member.address, configData)
             }
-
             is RecipientData.Contact -> {
                 createContactRecipient(
                     address = member.address,
@@ -498,26 +526,45 @@ class RecipientRepository @Inject constructor(
                     fallbackSettings = settingsFetcher(member.address)
                 )
             }
-
             else -> {
                 // If we don't have the right config data, we can still create a generic recipient
                 // with the settings fetched from the database.
                 createGenericRecipient(
                     address = member.address,
-                    proDataContext = proDataContext,
+                    proDataContext = memberProDataContext,
                     settings = settingsFetcher(member.address),
                     groupMemberInfo = member
                 )
             }
         }
+
+        // 3. Resolve the MEMBER'S pro status
+        val resolvedMember = resolveProStatus(rawRecipient, memberProDataContext)
+
+        // 4. Logic: If Member is Admin, their proofs contribute to the Group's Pro Status.
+        // We copy the data from the member's context to the parent (Group) context.
+        if (member.isAdmin && groupProDataContext != null && memberProDataContext?.proDataList != null) {
+            memberProDataContext.proDataList?.forEach {
+                groupProDataContext.addProData(it)
+            }
+        }
+
+        return resolvedMember
     }
 
     private inline fun fetchLegacyGroupMember(
         address: Address.Standard,
-        proDataContext: ProDataContext?,
         settingsFetcher: (address: Address) -> RecipientSettings,
     ): Recipient {
-        return when (val configData = getDataFromConfig(address, proDataContext)) {
+        // 1. Create Local Context
+        val memberProDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
+            ProDataContext()
+        } else {
+            null
+        }
+
+        // 2. Fetch Data
+        val rawRecipient = when (val configData = getDataFromConfig(address, memberProDataContext)) {
             is RecipientData.Self -> {
                 createLocalRecipient(address, configData)
             }
@@ -535,12 +582,16 @@ class RecipientRepository @Inject constructor(
                 // with the settings fetched from the database.
                 createGenericRecipient(
                     address = address,
-                    proDataContext = proDataContext,
+                    proDataContext = memberProDataContext,
                     settings = settingsFetcher(address),
                 )
             }
         }
 
+        // 3. Resolve Member Status
+        val resolvedMember = resolveProStatus(rawRecipient, memberProDataContext)
+
+        return resolvedMember
     }
 
     suspend fun getRecipient(address: Address): Recipient {
@@ -764,10 +815,10 @@ class RecipientRepository @Inject constructor(
             address = address,
             data = configData.copy(
                 firstMember = configData.members.firstOrNull()?.let { member ->
-                    fetchGroupMember(proDataContext?.takeIf { member.isAdmin }, member, settingsFetcher)
+                    fetchGroupMember(proDataContext, member, settingsFetcher)
                 } ?: getSelf(), // Fallback to have self as first member if no members are present
                 secondMember = configData.members.getOrNull(1)?.let { member ->
-                    fetchGroupMember(proDataContext?.takeIf { member.isAdmin }, member, settingsFetcher)
+                    fetchGroupMember(proDataContext, member, settingsFetcher)
                 },
             ),
             mutedUntil = settings?.muteUntil,
@@ -777,7 +828,6 @@ class RecipientRepository @Inject constructor(
     }
 
     private inline fun createLegacyGroupRecipient(
-        proDataContext: ProDataContext?,
         address: Address,
         config: GroupInfo.LegacyGroupInfo?,
         group: GroupRecord, // Local db data
@@ -811,10 +861,10 @@ class RecipientRepository @Inject constructor(
                     }
                 },
                 firstMember = memberAddresses.firstOrNull()
-                    ?.let { fetchLegacyGroupMember(it, proDataContext, settingsFetcher) }
+                    ?.let { fetchLegacyGroupMember(it, settingsFetcher) }
                     ?: getSelf(),  // Fallback to have self as first member if no members are present
                 secondMember = memberAddresses.getOrNull(1)
-                    ?.let { fetchLegacyGroupMember(it, proDataContext, settingsFetcher) },
+                    ?.let { fetchLegacyGroupMember(it, settingsFetcher) },
                 isCurrentUserAdmin = Address.Standard(myAccountId) in group.admins
             ),
             mutedUntil = settings?.muteUntil,
