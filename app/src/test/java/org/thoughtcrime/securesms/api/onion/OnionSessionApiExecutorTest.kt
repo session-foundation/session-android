@@ -19,6 +19,7 @@ import org.session.libsession.network.onion.PathManager
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.AESGCM
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiRequest
 import org.thoughtcrime.securesms.api.SessionApiResponse
 import org.thoughtcrime.securesms.api.direct.DirectSessionApiExecutor
@@ -106,13 +107,17 @@ class OnionSessionApiExecutorTest {
             publicKeySet = Snode.KeySet(ed25519Key = "ed_$id", x25519Key = "x_$id"),
         )
 
-    private suspend fun runExecutor(target: Snode = snode("target")): Result<SessionApiResponse.JsonRPCResponse> {
+    private suspend fun runExecutor(
+        target: Snode = snode("target"),
+        ctx: ApiExecutorContext = ApiExecutorContext()
+    ): Result<SessionApiResponse.JsonRPCResponse> {
         return runCatching {
             executor.execute(
                 SessionApiRequest.SnodeJsonRPC(
                     snode = target,
                     SnodeJsonRequest("test", JsonObject(emptyMap()))
-                )
+                ),
+                ctx = ctx
             )
         }
     }
@@ -381,6 +386,32 @@ class OnionSessionApiExecutorTest {
 
         // Should punish the whole path for a timeout
         coVerify(exactly = 1) { pathManager.handleBadPath(path1) }
+    }
+
+    @Test
+    fun `504 request timeout with path override should not strike path and fail`() = runTest {
+        coEvery {
+            httpExecutor.send(any(), any())
+        } returns HttpResponse(
+            statusCode = 504,
+            body = HttpBody.Text("Request time out"),
+            headers = emptyMap(),
+        )
+
+        val result = runExecutor(ctx = ApiExecutorContext().also { it.set(OnionSessionApiExecutor.OnionPathOverridesKey, path1) })
+
+        val exception =
+            checkNotNull(result.exceptionOrNull()?.findCause<ErrorWithFailureDecision>())
+
+        assertThat(exception.failureDecision).isEqualTo(FailureDecision.Fail)
+
+        assertIs<OnionError.PathTimedOut>(exception.cause)
+
+        // Should not strike any specific snode
+        coVerify(exactly = 0) { pathManager.handleBadSnode(any(), any()) }
+
+        // Should not punish the whole path for a timeout
+        coVerify(exactly = 0) { pathManager.handleBadPath(any()) }
     }
 
     @Test
