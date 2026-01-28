@@ -39,7 +39,18 @@ import javax.inject.Provider
 /**
  * An implementation of [SessionApiExecutor] that routes requests over onion paths.
  *
- * Note: requests to seed nodes are sent directly, as onion routing to seed nodes is not supported.
+ * Responsibilities:
+ * - Pick a path (via [PathManager])
+ * - Build onion request (via [OnionBuilder])
+ * - Encrypt onion request payload (via [OnionRequestEncryption])
+ * - Send request via [HttpApiExecutor]
+ * - Handle exception specific to onion requests (via [OnionSessionApiErrorManager])
+ *
+ * To override the path used for a specific request, set [OnionPathOverridesKey] in the
+ * [ApiExecutorContext] passed to [send].
+ *
+ * Note: requests to seed nodes are sent directly, as onion routing to seed nodes is currently not
+ * supported.
  */
 class OnionSessionApiExecutor @Inject constructor(
     private val httpApiExecutor: HttpApiExecutor,
@@ -47,6 +58,8 @@ class OnionSessionApiExecutor @Inject constructor(
     private val json: Json,
     private val onionSessionApiErrorManager: OnionSessionApiErrorManager,
     private val directSessionApiExecutor: Provider<DirectSessionApiExecutor>,
+    private val onionRequestEncryption: OnionRequestEncryption,
+    private val onionBuilder: OnionBuilder,
 ) : SessionApiExecutor {
     override suspend fun send(
         ctx: ApiExecutorContext,
@@ -86,7 +99,7 @@ class OnionSessionApiExecutor @Inject constructor(
         val path = pathOverrides ?: pathManager.getPath()
 
         val builtOnion = try {
-            OnionBuilder.build(
+            onionBuilder.build(
                 path = path,
                 destination = onionDestination,
                 payload = payload,
@@ -100,7 +113,7 @@ class OnionSessionApiExecutor @Inject constructor(
         }
 
         val body = try {
-            OnionRequestEncryption.encode(
+            onionRequestEncryption.encode(
                 ciphertext = builtOnion.ciphertext,
                 json = mapOf(
                     "ephemeral_key" to builtOnion.ephemeralPublicKey.toHexString(),
@@ -160,20 +173,16 @@ class OnionSessionApiExecutor @Inject constructor(
                 )
             }
 
-            if (pathOverrides != null) {
-                // When path overrides are used, we don't want to apply any failure decision logic
-                // on the path, so we just re-throw the error as-is
-                throw error
-            } else {
-                throw ErrorWithFailureDecision(
-                    cause = error,
-                    failureDecision = onionSessionApiErrorManager.onFailure(
-                        error = error,
-                        path = path,
-                    )
-
+            throw ErrorWithFailureDecision(
+                cause = error,
+                failureDecision = onionSessionApiErrorManager.onFailure(
+                    error = error,
+                    path = path,
+                    // When path overrides are used, we skip any path punishment logic,
+                    // as that path is not selected by us.
+                    shouldPunishPath = pathOverrides == null,
                 )
-            }
+            )
         }
     }
 
@@ -216,8 +225,7 @@ class OnionSessionApiExecutor @Inject constructor(
                 )
             } else {
                 OnionError.IntermediateNodeUnreachable(
-                    reportingNode = guardSnode,
-                    failedPublicKey = failedPk,
+                    offendingSnode = path.firstOrNull { it.ed25519Key == failedPk },
                     status = ErrorStatus(
                         code = httpResponseCode,
                         message = httpResponseBody,
@@ -239,7 +247,7 @@ class OnionSessionApiExecutor @Inject constructor(
 
             if (guardNotReady) {
                 return OnionError.SnodeNotReady(
-                    failedPublicKey = path.first().publicKeySet?.x25519Key,
+                    offendingSnode = path.first(),
                     status = ErrorStatus(
                         code = httpResponseCode,
                         message = httpResponseBody,
@@ -250,7 +258,7 @@ class OnionSessionApiExecutor @Inject constructor(
             } else if (snodeNotReady) {
                 val pk = httpResponseBody.removePrefix(snodeNotReadyPrefix).trim()
                 return OnionError.SnodeNotReady(
-                    failedPublicKey = pk,
+                    offendingSnode = path.firstOrNull { it.ed25519Key == pk },
                     status = ErrorStatus(
                         code = httpResponseCode,
                         message = httpResponseBody,
@@ -278,7 +286,6 @@ class OnionSessionApiExecutor @Inject constructor(
         }
 
         // ---- 500: invalid response from next hop ----
-        //todo ONION currently we have no handling of 5xx for snode destination as it's unclear how to best handle them
         if (httpResponseCode == 500 && httpResponseBody?.contains(
                 "Invalid response from snode",
                 ignoreCase = true
@@ -295,9 +302,11 @@ class OnionSessionApiExecutor @Inject constructor(
             )
         }
 
+        //todo ONION currently we have no handling of 5xx for snode destination as it's unclear how to best handle them
+
         // Default: generic path error
         return OnionError.PathError(
-            node = guardSnode,
+            guardNode = guardSnode,
             status = ErrorStatus(code = httpResponseCode, message = httpResponseBody, body = null),
             destination = destination
         )

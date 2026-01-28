@@ -5,7 +5,6 @@ import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.PathManager
-import org.session.libsession.network.snode.SnodeDirectory
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -13,13 +12,13 @@ import javax.inject.Singleton
 @Singleton
 class OnionSessionApiErrorManager @Inject constructor(
     private val pathManager: PathManager,
-    private val snodeDirectory: SnodeDirectory,
     private val connectivity: NetworkConnectivity
 ) {
 
     suspend fun onFailure(
         error: OnionError,
         path: Path,
+        shouldPunishPath: Boolean,
     ): FailureDecision {
         //todo ONION investigate why we got stuck in a invalid cyphertext state
 
@@ -42,7 +41,7 @@ class OnionSessionApiErrorManager @Inject constructor(
                 // We couldn't reach the guard, yet we seem to have network connectivity:
                 // punish the node and try again
                 if(connectivity.networkAvailable.value) {
-                    pathManager.handleBadSnode(path.first())
+                    pathManager.handleBadSnode(error.guard)
                     return FailureDecision.Retry
                 }
 
@@ -51,52 +50,43 @@ class OnionSessionApiErrorManager @Inject constructor(
             }
 
             is OnionError.IntermediateNodeUnreachable -> {
-                val failedKey = error.failedPublicKey
-
-                // Get the snode from the path (it should be there based on the error type)
-                val snodeInPath = path.firstOrNull { it.publicKeySet?.ed25519Key == failedKey }
-
-                // Fall back to pool instance only for cleanup (won’t help this request’s path)
-                // If for some reason it isn't in the path, we'll still look for it in the pool
-                val snodeToRemove = snodeInPath ?: snodeDirectory.getSnodeByKey(failedKey)
-
                 // drop the bad snode, including cascading clean ups
-                if (snodeToRemove != null) {
-                    pathManager.handleBadSnode(snode = snodeToRemove, forceRemove = true)
+                if (error.offendingSnode != null) {
+                    pathManager.handleBadSnode(snode = error.offendingSnode, forceRemove = true)
                 }
 
                 // Only retry if we actually changed the path used by this request
-                return if (snodeInPath != null) FailureDecision.Retry else FailureDecision.Fail
+                return if (error.offendingSnode != null) FailureDecision.Retry else FailureDecision.Fail
             }
 
             is OnionError.SnodeNotReady -> {
                 // penalise the snode and retry
-                val failedKey = error.failedPublicKey
-                val snodeToRemove = snodeDirectory.getSnodeByKey(failedKey)
-                if(snodeToRemove != null) {
-                    pathManager.handleBadSnode(snodeToRemove)
-                    return FailureDecision.Retry
+                return if(error.offendingSnode != null) {
+                    pathManager.handleBadSnode(error.offendingSnode)
+                    FailureDecision.Retry
                 } else {
-                    return FailureDecision.Fail
+                    FailureDecision.Fail
                 }
             }
 
-            is OnionError.PathTimedOut,
-                 is OnionError.InvalidHopResponse -> {
-                // we don't have enough information to penalise a specific snode,
-                // so we penalise the whole path and try again
-                pathManager.handleBadPath(path)
-                return FailureDecision.Retry
+            is OnionError.PathTimedOut, is OnionError.InvalidHopResponse -> {
+                return if (shouldPunishPath) {
+                    // we don't have enough information to penalise a specific snode,
+                    // so we penalise the whole path and try again
+                    pathManager.handleBadPath(path)
+                    FailureDecision.Retry
+                } else {
+                    FailureDecision.Fail
+                }
             }
 
             is OnionError.DestinationUnreachable -> {
                 if (error.destination is OnionDestination.SnodeDestination) {
-                    pathManager.handleBadSnode(error.destination.snode)
+                    pathManager.handleBadSnode(error.destination.snode, forceRemove = true)
                 }
 
                 return FailureDecision.Retry
             }
-            is OnionError.InvalidResponse,
             is OnionError.PathError,
             is OnionError.Unknown -> {
                 return FailureDecision.Fail

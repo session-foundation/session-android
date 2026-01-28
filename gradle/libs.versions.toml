@@ -169,6 +169,8 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVe
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilVersion" }
 android-billing = { module = "com.android.billingclient:billing", version.ref = "billingVersion" }
 android-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingVersion" }
+mockk = { module = "io.mockk:mockk", version = "1.14.9" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlinVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

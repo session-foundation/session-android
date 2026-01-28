@@ -19,7 +19,6 @@ import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SnodePoolStorage
-import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.Log
@@ -29,7 +28,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class PathManager @Inject constructor(
+open class PathManager @Inject constructor(
     private val scope: CoroutineScope,
     private val directory: SnodeDirectory,
     private val storage: SnodePathStorage,
@@ -187,6 +186,7 @@ class PathManager @Inject constructor(
         val working = ArrayList<Path>(targetPathCount)
         for (p in candidates) {
             //todo ONION v Replace true v We need to test the path here - need a function with a custom path - Fanchao
+            // p is the one to test for connectivity
             if (true) {
                 working += p
             }
@@ -271,6 +271,8 @@ class PathManager @Inject constructor(
      * - Third strike means drop snode immediately.
      * - Dropping a snode swaps it out in any path(s) that contain it (drops path only if unrepairable).
      * - Dropping a snode also removes it from pool and (if pubkey known) swarm.
+     *
+     * @return true if the snode was punished/removed, false if it was not found in pool.
      */
     suspend fun handleBadSnode(
         snode: Snode,
@@ -323,6 +325,7 @@ class PathManager @Inject constructor(
             }
 
             _paths.value = storage.getOnionRequestPaths()
+
         }
     }
 

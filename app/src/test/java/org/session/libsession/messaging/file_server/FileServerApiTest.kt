@@ -2,9 +2,9 @@ package org.session.libsession.messaging.file_server
 
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.mockito.kotlin.mock
 
 class FileServerApiTest {
 
@@ -17,8 +17,6 @@ class FileServerApiTest {
 
     @Test
     fun `can build and parse attachment url`() {
-        val api = FileServerApi(storage = mock(), serverClient = mock(), snodeClock = mock())
-
         val testCases = listOf(
             Case(
                 name = "With deterministic flag",
@@ -93,13 +91,13 @@ class FileServerApiTest {
 
         for (case in testCases) {
             try {
-                val result = runCatching { api.parseAttachmentUrl(case.url) }
+                val result = runCatching { FileServerApis.parseAttachmentUrl(case.url) }
                 if (case.successfulParseResult != null) {
                     val actual = result.getOrThrow()
                     assertEquals("Parse result differs!",case.successfulParseResult, actual)
 
-                    val url = api.buildAttachmentUrl(actual.fileId, actual.fileServer, actual.usesDeterministicEncryption)
-                    val reversed = api.parseAttachmentUrl(url)
+                    val url = FileServerApis.buildAttachmentUrl(actual.fileId, actual.fileServer, actual.usesDeterministicEncryption)
+                    val reversed = FileServerApis.parseAttachmentUrl(url)
                     assertEquals("Build URL differs!", actual, reversed)
 
                 } else {

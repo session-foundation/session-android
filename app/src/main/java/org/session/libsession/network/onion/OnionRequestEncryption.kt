@@ -7,10 +7,11 @@ import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.toHexString
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import javax.inject.Inject
 
-object OnionRequestEncryption {
+open class OnionRequestEncryption @Inject constructor() {
 
-    internal fun encode(ciphertext: ByteArray, json: Map<*, *>): ByteArray {
+    fun encode(ciphertext: ByteArray, json: Map<*, *>): ByteArray {
         // The encoding of V2 onion requests looks like: | 4 bytes: size N of ciphertext | N bytes: ciphertext | json as utf8 |
         val jsonAsData = JsonUtil.toJson(json).toByteArray()
         val output = ByteArray(4 + ciphertext.size + jsonAsData.size)
@@ -27,7 +28,7 @@ object OnionRequestEncryption {
     /**
      * Encrypts `payload` for `destination` and returns the result. Use this to build the core of an onion request.
      */
-    internal fun encryptPayloadForDestination(
+    fun encryptPayloadForDestination(
         payload: ByteArray,
         destination: OnionDestination,
         onionRequestVersion: OnionRequestVersion
@@ -51,7 +52,7 @@ object OnionRequestEncryption {
     /**
      * Encrypts the previous encryption result (i.e. that of the hop after this one) for this hop. Use this to build the layers of an onion request.
      */
-    internal fun encryptHop(lhs: OnionDestination, rhs: OnionDestination, previousEncryptionResult: EncryptionResult): EncryptionResult {
+    fun encryptHop(lhs: OnionDestination, rhs: OnionDestination, previousEncryptionResult: EncryptionResult): EncryptionResult {
         val payload: MutableMap<String, Any> = when (rhs) {
             is OnionDestination.SnodeDestination -> {
                 mutableMapOf("destination" to rhs.snode.publicKeySet!!.ed25519Key)
