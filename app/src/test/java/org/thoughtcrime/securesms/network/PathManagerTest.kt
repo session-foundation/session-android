@@ -58,7 +58,9 @@ class PathManagerTest {
             directory = mock(),
             storage = snodeDb,
             snodePoolStorage = snodeDb,
-            prefs = mock()
+            prefs = mock(),
+            snodeApiExecutor = { mock() },
+            getNetworkTimeApi = { mock() },
         )
 
         val chosen = pm.getPath(exclude = b)
@@ -82,7 +84,9 @@ class PathManagerTest {
             directory = mock(),
             storage = snodeDb,
             snodePoolStorage = snodeDb,
-            prefs = mock()
+            prefs = mock(),
+            snodeApiExecutor = { mock() },
+            getNetworkTimeApi = { mock() },
         )
 
         pm.handleBadSnode(snode = b, forceRemove = true)
@@ -112,7 +116,9 @@ class PathManagerTest {
             directory = mock(),
             storage = snodeDb,
             snodePoolStorage = snodeDb,
-            prefs = mock()
+            prefs = mock(),
+            snodeApiExecutor = { mock() },
+            getNetworkTimeApi = { mock() },
         )
 
         pm.handleBadSnode(snode = b, forceRemove = true)

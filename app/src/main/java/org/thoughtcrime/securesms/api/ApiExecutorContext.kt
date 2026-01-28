@@ -13,7 +13,7 @@ import androidx.collection.arrayMapOf
  * to store the number of same exception's occurrence, so it can make decision on what to do for
  * next
  */
-class ApiExecutorContext {
+class ApiExecutorContext{
     private var values: MutableMap<Any, Any>? = null
 
     private fun ensureInitialized(): MutableMap<Any, Any> {
@@ -25,8 +25,9 @@ class ApiExecutorContext {
         return current
     }
 
-    fun <T: Any> set(key: Key<T>, value: T) {
+    fun <T: Any> set(key: Key<T>, value: T): ApiExecutorContext {
         ensureInitialized()[key] = value
+        return this
     }
 
     fun remove(key: Key<*>) {

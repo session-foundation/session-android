@@ -1,9 +1,7 @@
 package org.thoughtcrime.securesms.api.direct
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
@@ -33,32 +31,12 @@ class DirectSessionApiExecutor @Inject constructor(
                 )
             }
 
-            is SessionApiRequest.SeedNodeJsonRPC -> {
-                HttpRequest.createFromJson(
-                    url = req.seedNodeUrl.resolve("/json_rpc")!!,
-                    method = "POST",
-                    jsonText = json.encodeToString(req.request)
-                )
-            }
-
             is SessionApiRequest.HttpServerRequest -> req.request
         }
 
         val httpResponse = httpApiExecutor.send(ctx, underlyingRequest)
 
         return when (req) {
-            is SessionApiRequest.SeedNodeJsonRPC -> {
-                @Suppress("OPT_IN_USAGE")
-                val bodyAsJson: SeedNodeJsonRPCResponse = httpResponse.body.asInputStream()
-                    .use(json::decodeFromStream)
-
-                SessionApiResponse.JsonRPCResponse(
-                    code = httpResponse.statusCode,
-                    bodyAsText = null,
-                    bodyAsJson = bodyAsJson.result,
-                )
-            }
-
             is SessionApiRequest.SnodeJsonRPC -> {
                 val bodyAsText = httpResponse.body.toText()
                 SessionApiResponse.JsonRPCResponse(
@@ -74,7 +52,4 @@ class DirectSessionApiExecutor @Inject constructor(
             is SessionApiRequest.HttpServerRequest -> SessionApiResponse.HttpServerResponse(httpResponse)
         }
     }
-
-    @Serializable
-    private class SeedNodeJsonRPCResponse(val result: JsonElement)
 }

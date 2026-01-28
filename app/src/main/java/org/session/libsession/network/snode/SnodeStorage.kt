@@ -33,9 +33,9 @@ interface SwarmStorage {
 }
 
 interface SnodePoolStorage {
-    fun getSnodePool(): Set<Snode>
+    fun getSnodePool(): List<Snode>
     fun removeSnode(ed25519PubKey: String): Snode?
-    fun setSnodePool(newValue: Set<Snode>)
+    fun setSnodePool(newValue: Collection<Snode>)
 
     fun removeSnodesWithStrikesGreaterThan(n: Int): Int
 

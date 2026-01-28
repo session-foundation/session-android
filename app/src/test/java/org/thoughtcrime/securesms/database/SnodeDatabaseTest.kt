@@ -275,6 +275,20 @@ class SnodeDatabaseTest {
     }
 
     @Test
+    fun `replacing snode pool should remove path that contains non-exist snode`() {
+        db.setSnodePool(snodes.toSet())
+
+        val path1 = listOf(snodes[0], snodes[1])
+        val path2 = listOf(snodes[2], snodes[3])
+        db.setOnionRequestPaths(listOf(path1, path2))
+
+        val newPool = snodes.drop(1).toSet()
+        db.setSnodePool(newPool)
+
+        assertEquals(listOf(path2), db.getOnionRequestPaths())
+    }
+
+    @Test
     fun `drop snode from swarm works`() {
         db.setSnodePool(snodes.toSet())
 

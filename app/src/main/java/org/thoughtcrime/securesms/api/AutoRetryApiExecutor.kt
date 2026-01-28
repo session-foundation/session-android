@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.api
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import org.session.libsession.network.model.FailureDecision
-import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.util.findCause
@@ -26,19 +25,23 @@ class AutoRetryApiExecutor<Req, Res>(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
-                if (e.findCause<NonRetryableException>() != null ||
-                    e.findCause<ErrorWithFailureDecision>()?.failureDecision != FailureDecision.Retry ||
-                    numRetried == 3) {
-                    throw e
-                } else {
+                if (e.findCause<ErrorWithFailureDecision>()?.failureDecision == FailureDecision.Retry &&
+                    ctx.get(DisableRetryKey) == null &&
+                    numRetried <= 3) {
                     numRetried += 1
                     Log.e(TAG, "Retrying $req $numRetried times due to error", e)
                     delay(numRetried * 2000L)
+                } else {
+                    throw e
                 }
             }
         }
     }
 
+    /**
+     * A key that can be added to the [ApiExecutorContext] to disable automatic retries.
+     */
+    object DisableRetryKey : ApiExecutorContext.Key<Unit>
 
     companion object {
         private const val TAG = "AutoRetryApiExecutor"

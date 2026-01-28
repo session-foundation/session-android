@@ -26,7 +26,6 @@ import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
 import org.thoughtcrime.securesms.api.SessionApiRequest
 import org.thoughtcrime.securesms.api.SessionApiResponse
-import org.thoughtcrime.securesms.api.direct.DirectSessionApiExecutor
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.api.http.HttpApiExecutor
 import org.thoughtcrime.securesms.api.http.HttpBody
@@ -34,7 +33,6 @@ import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
-import javax.inject.Provider
 
 
 /**
@@ -58,7 +56,6 @@ class OnionSessionApiExecutor @Inject constructor(
     private val pathManager: PathManager,
     private val json: Json,
     private val onionSessionApiErrorManager: OnionSessionApiErrorManager,
-    private val directSessionApiExecutor: Provider<DirectSessionApiExecutor>,
     private val onionRequestEncryption: OnionRequestEncryption,
     private val onionBuilder: OnionBuilder,
 ) : SessionApiExecutor {
@@ -75,12 +72,6 @@ class OnionSessionApiExecutor @Inject constructor(
                 onionRequestVersion = OnionRequestVersion.V3
                 onionDestination = OnionDestination.SnodeDestination(req.snode)
                 payload = json.encodeToString(req.request).toByteArray()
-            }
-
-            is SessionApiRequest.SeedNodeJsonRPC -> {
-                // A request to seed node can't be routed via onion request atm so we will
-                // go direct.
-                return directSessionApiExecutor.get().send(ctx, req)
             }
 
             is SessionApiRequest.HttpServerRequest -> {

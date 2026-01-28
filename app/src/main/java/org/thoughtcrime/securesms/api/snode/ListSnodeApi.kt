@@ -32,8 +32,8 @@ class ListSnodeApi @Inject constructor(
         @SerialName("service_node_states")
         val nodes: List<SnodeInfo>
     ) {
-        fun toSnodeSet(): Set<Snode> {
-            return nodes.mapNotNullTo(arraySetOf()) { it.toSnode() }
+        fun toSnodeList(): List<Snode> {
+            return nodes.mapNotNull { it.toSnode() }
         }
     }
 

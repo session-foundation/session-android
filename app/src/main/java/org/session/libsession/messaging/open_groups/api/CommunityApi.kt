@@ -9,16 +9,21 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpRequest
+import org.thoughtcrime.securesms.api.http.HttpResponse
 import org.thoughtcrime.securesms.api.server.ServerApi
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import java.io.ByteArrayOutputStream
@@ -142,6 +147,23 @@ abstract class CommunityApi<ResponseType: Any>(
         )
     }
 
+
+    override suspend fun handleErrorResponse(
+        executorContext: ApiExecutorContext,
+        baseUrl: String,
+        response: HttpResponse
+    ): Nothing {
+        if (response.statusCode == 400 &&
+            response.body.toText()?.contains("Invalid authentication: this server requires the use of blinded ids", ignoreCase = true) == true) {
+            storage.clearServerCapabilities(baseUrl)
+            throw ErrorWithFailureDecision(
+                cause = RuntimeException("Server requires blinded ids"),
+                failureDecision = FailureDecision.Retry,
+            )
+        }
+
+        super.handleErrorResponse(executorContext, baseUrl, response)
+    }
 
     class CommunityApiDependencies @Inject constructor(
         val errorManager: ServerApiErrorManager,

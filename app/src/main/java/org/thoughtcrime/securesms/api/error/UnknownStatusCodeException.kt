@@ -11,7 +11,7 @@ class UnknownStatusCodeException(
     val code: Int,
     val origin: String,
     val bodyText: String? = null
-) : RuntimeException("Unknown HTTP status code $code from $origin") {
+) : RuntimeException("Unknown HTTP status code $code from $origin: body=\"${bodyText.orEmpty()}\"") {
     init {
         check(code !in 200..299) {
             "HTTP status code $code indicates success, cannot be used with UnknownHttpStatusCodeException"
