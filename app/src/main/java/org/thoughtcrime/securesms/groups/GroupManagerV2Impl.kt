@@ -625,6 +625,19 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
+    override suspend fun resolvePromotionAccept(groupId: AccountId) {
+        val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
+
+        if(configFactory.getGroup(groupId)?.hasAdminKey() != true) return
+
+        configFactory.withMutableGroupConfigs(groupId) { groupConfigs ->
+            groupConfigs.groupMembers.get(currentUserId)?.let { member ->
+                member.setPromotionAccepted()
+                groupConfigs.groupMembers.set(member)
+            }
+        }
+    }
+
     /**
      * Mark this member as "removed" in the group config.
      *

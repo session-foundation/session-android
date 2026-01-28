@@ -51,7 +51,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     private val groupManager: GroupManagerV2,
     private val recipientRepository: RecipientRepository,
     avatarUtils: AvatarUtils,
-) : BaseGroupMembersViewModel(groupAddress, context, storage, configFactory, avatarUtils, recipientRepository) {
+) : BaseGroupMembersViewModel(groupAddress, context, storage, configFactory, avatarUtils, recipientRepository, groupManager) {
     private val groupId = groupAddress.accountId
 
     // Output: whether we should show the "add members" button

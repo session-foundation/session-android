@@ -9,13 +9,16 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
@@ -31,6 +34,7 @@ class PromoteMembersViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
+    private val groupManager: GroupManagerV2,
     private val recipientRepository: RecipientRepository,
     avatarUtils: AvatarUtils,
 ) : BaseGroupMembersViewModel(
@@ -39,7 +43,8 @@ class PromoteMembersViewModel @AssistedInject constructor(
     storage = storage,
     configFactory = configFactory,
     avatarUtils = avatarUtils,
-    recipientRepository = recipientRepository
+    recipientRepository = recipientRepository,
+    groupManager = groupManager
 ) {
     private val groupId = groupAddress.accountId
 
