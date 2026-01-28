@@ -20,9 +20,11 @@ import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SnodePoolStorage
 import org.session.libsession.network.snode.SwarmDirectory
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,9 +34,11 @@ class PathManager @Inject constructor(
     private val directory: SnodeDirectory,
     private val storage: SnodePathStorage,
     private val snodePoolStorage: SnodePoolStorage,
+    private val prefs: TextSecurePreferences,
 ) {
     companion object {
         private const val STRIKE_THRESHOLD = 3
+        private const val PATH_ROTATE_INTERVAL_MS = 10 * 60 * 1000L // 10min
     }
 
     private val pathSize: Int = 3
@@ -49,6 +53,8 @@ class PathManager @Inject constructor(
     private val buildMutex = Mutex()
     private val _isBuilding = MutableStateFlow(false)
 
+    // path rotation
+    private val isRotating = AtomicBoolean(false)
 
     // -----------------------------
     // Flow Setup
@@ -86,6 +92,7 @@ class PathManager @Inject constructor(
 
     suspend fun getPath(exclude: Snode? = null): Path {
         directory.refreshPoolIfStaleAsync()
+        rotatePathsIfStale()
 
         val current = _paths.value
         if (current.size >= targetPathCount && current.any { exclude == null || !it.contains(exclude) }) {
@@ -100,6 +107,112 @@ class PathManager @Inject constructor(
         val rebuilt = _paths.value
         if (rebuilt.isEmpty()) throw IllegalStateException("No paths after rebuild")
         return selectPath(rebuilt, exclude)
+    }
+
+    private fun rotatePathsIfStale() {
+        val now = System.currentTimeMillis()
+        val last = prefs.getLastPathRotation()
+
+        // if we have never done a path rotation, mark now as the starting time
+        // so we can rotate on the next tick
+        if (last == 0L){
+            prefs.setLastPathRotation(now)
+            return
+        }
+
+        // no rotation needed if it's been less than our interval time
+        if (now - last < PATH_ROTATE_INTERVAL_MS) return
+
+        if (!isRotating.compareAndSet(false, true)) return
+        scope.launch {
+            try {
+                rotatePaths()
+            } finally {
+                isRotating.set(false)
+            }
+        }
+    }
+
+    /**
+     * Rotates existing paths by keeping the guard node but replacing the rest.
+     * Validates connectivity via /info before committing.
+     */
+    private suspend fun rotatePaths() {
+        // Phase 1: decide + build candidates under lock
+        val candidates: List<Path> = buildMutex.withLock {
+            val now = System.currentTimeMillis()
+            val last = prefs.getLastPathRotation()
+            if (now - last < PATH_ROTATE_INTERVAL_MS) return@withLock emptyList()
+
+            val current = _paths.value
+            if (current.isEmpty()) return@withLock emptyList()
+
+            if (current.size < targetPathCount) {
+                // Don't rotate if we're already degraded - rebuildPaths will handle this.
+                return@withLock emptyList()
+            }
+
+            // Keep the same guards
+            val guards = current.take(targetPathCount).map { it.first() }
+
+            val pool = directory.ensurePoolPopulated()
+
+            // do not reuse path snodes
+            val avoid = current.flatten().toSet()
+
+            var unused = pool.minus(avoid)
+
+            val neededPerPath = pathSize - 1
+            val totalNeeded = targetPathCount * neededPerPath
+            if (unused.size < totalNeeded) {
+                // Not enough to rotate cleanly, skip silently.
+                return@withLock emptyList()
+            }
+
+            val rotated = guards.map { guard ->
+                val rest = (0 until neededPerPath).map {
+                    val next = unused.secureRandom()
+                    unused = unused - next
+                    next
+                }
+                listOf(guard) + rest
+            }
+
+            sanitizePaths(rotated)
+        }
+
+        if (candidates.isEmpty()) return
+
+        // Phase 2: test out our paths
+        val working = ArrayList<Path>(targetPathCount)
+        for (p in candidates) {
+            //todo ONION v Replace true v We need to test the path here - need a function with a custom path - Fanchao
+            if (true) {
+                working += p
+            }
+            if (working.size >= targetPathCount) break
+        }
+
+        if (working.isEmpty()) return
+
+        // Phase 3: commit under lock (guards must match current guards)
+        buildMutex.withLock {
+            val current = sanitizePaths(_paths.value)
+            if (current.isEmpty()) return@withLock
+
+            val currentGuards = current.take(targetPathCount).map { it.first() }.toSet()
+            val newGuards = working.map { it.first() }.toSet()
+
+            if (currentGuards != newGuards) {
+                // Guards changed (likely rebuild happened)
+                Log.i("Onion Request", "Rotation aborted: Guards changed during validation (likely due to concurrent repair).")
+                return@withLock
+            }
+
+            val committed = sanitizePaths(working.take(targetPathCount))
+            _paths.value = committed
+            prefs.setLastPathRotation(System.currentTimeMillis())
+        }
     }
 
     suspend fun rebuildPaths(reusablePaths: List<Path>) {

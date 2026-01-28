@@ -84,7 +84,7 @@ class SnodeDirectory @Inject constructor(
     fun getSnodePool(): Set<Snode> = storage.getSnodePool()
 
     private fun persistSnodePool(newPool: Set<Snode>) {
-        //todo ONION in the new db paradigm we will need to ensure our path doesn't have snode not in this pool
+        //todo ONION in the new db paradigm we will need to ensure our path doesn't have snode not in this pool << Fanchao
         storage.setSnodePool(newPool)
         prefs.setLastSnodePoolRefresh(System.currentTimeMillis())
     }
@@ -218,7 +218,7 @@ class SnodeDirectory @Inject constructor(
     private suspend fun fetchSnodePoolFromSnode(snode: Snode): Set<Snode> {
         val target = "${snode.address}:${snode.port}"
         Log.d("SnodeDirectory", "Fetching snode pool using snode: $target")
-        //todo ONION use fetchSnodePoolCompact when ready
+        //todo ONION use fetchSnodePoolCompact when ready << Fanchao
         return fetchSnodePool(target, fromSeed = false)
     }
 
@@ -226,7 +226,7 @@ class SnodeDirectory @Inject constructor(
      * Calling the compact version of the snode pool api
      */
     private suspend fun fetchSnodePoolCompact(snode: Snode): Set<Snode>{
-        //todo ONION link up with new logic
+        //todo ONION link up with new logic << Fanchao
         return emptySet()
     }
 

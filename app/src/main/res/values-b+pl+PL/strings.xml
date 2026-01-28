@@ -1178,7 +1178,6 @@
     <string name="proRenewPinFiveConversations">Chcesz znowu przypiąć więcej niż {limit} konwersacji?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewPinMoreConversations">Chcesz ponownie przypinać więcej konwersacji?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewTosPrivacy">Odnawiając, wyrażasz zgodę na <b>Warunki świadczenia usług</b> {icon} oraz <b>Politykę prywatności</b> {icon} {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Nie udało się odnowić Pro, spróbujemy ponownie wkrótce</string>
     <string name="proRenewingAction">odnawianie</string>
     <string name="proRenewingNoAccessBilling">Obecnie dostęp do {pro} można kupić i odnowić wyłącznie przez {platform_store} lub {platform_store_other}. Ponieważ zainstalowałeś {app_name} za pomocą {build_variant}, nie możesz odnowić tutaj.\n\nDeweloperzy {app_name} intensywnie pracują nad alternatywnymi metodami płatności, które umożliwią zakup dostępu do {pro} poza {platform_store} i {platform_store_other}.<b> Plan rozwoju {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Wniosek o zwrot wysłany</string>

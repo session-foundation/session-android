@@ -1110,7 +1110,6 @@
     <string name="proRenewPinFiveConversations">क्या आप फिर से {limit} से अधिक बातचीत को पिन करना चाहते हैं?\nअपनी {pro} एक्सेस को नवीनीकृत करें ताकि आप जिन सुविधाओं से चूक रहे थे उन्हें अनलॉक कर सकें।</string>
     <string name="proRenewPinMoreConversations">क्या आप फिर से अधिक बातचीत को पिन करना चाहते हैं?\nअपनी {pro} एक्सेस को नवीनीकृत करें ताकि आप जिन सुविधाओं से चूक रहे थे उन्हें अनलॉक कर सकें।</string>
     <string name="proRenewTosPrivacy">नवीनीकरण करके, आप {app_pro} की <b>सेवा की शर्तों</b> {icon} और <b>गोपनीयता नीति</b> {icon} से सहमत होते हैं</string>
-    <string name="proRenewalUnsuccessful">Pro नवीनीकरण असफल रहा, जल्द ही पुनः प्रयास किया जाएगा</string>
     <string name="proRenewingAction">नवीनीकरण कर रहे हैं</string>
     <string name="proRenewingNoAccessBilling">वर्तमान में, {pro} एक्सेस केवल {platform_store} या {platform_store_other} के माध्यम से ही खरीदी और नवीनीकृत की जा सकती है। चूंकि आपने {build_variant} का उपयोग करके {app_name} इंस्टॉल किया है, आप यहां नवीनीकरण नहीं कर सकते।\n\n{app_name} के डेवलपर्स वैकल्पिक भुगतान विकल्पों पर काम कर रहे हैं ताकि उपयोगकर्ता {platform_store} और {platform_store_other} से बाहर {pro} एक्सेस खरीद सकें।<b> {pro} रोडमैप</b> {icon}</string>
     <string name="proRequestedRefund">रिफंड का अनुरोध किया गया</string>
