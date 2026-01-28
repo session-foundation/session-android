@@ -52,8 +52,7 @@ class SnodeDirectory @Inject constructor(
         private const val MINIMUM_SNODE_POOL_COUNT = 12
         private const val SEED_NODE_PORT = 4443
 
-        private const val POOL_REFRESH_INTERVAL_MS = 10 * 1000L
-//        private const val POOL_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000L // 2h
+        private const val POOL_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000L // 2h
 
 
         private val DEV_NET_SEED_NODES = setOf(
