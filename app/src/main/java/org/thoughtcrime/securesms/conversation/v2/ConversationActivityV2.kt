@@ -657,13 +657,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         lifecycleScope.launch {
-            viewModel.conversationReloadNotification
-                .collect {
-                    if (!firstLoad.get()) {
-                        LoaderManager.getInstance(this@ConversationActivityV2)
-                            .restartLoader(0, null, this@ConversationActivityV2)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.conversationReloadNotification
+                    .collect {
+                        if (!firstLoad.get()) {
+                            LoaderManager.getInstance(this@ConversationActivityV2)
+                                .restartLoader(0, null, this@ConversationActivityV2)
+                        }
                     }
-                }
+            }
         }
 
         setupMentionView()

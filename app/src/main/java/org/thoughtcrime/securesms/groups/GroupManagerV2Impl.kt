@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
@@ -77,6 +78,7 @@ import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "GroupManagerV2Impl"
 
@@ -529,7 +531,9 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             // Ensure this push is complete before promotion messages go out
-            configFactory.waitUntilGroupConfigsPushed(group)
+            withTimeoutOrNull(10.seconds) {
+                configFactory.waitUntilGroupConfigsPushed(group)
+            }
 
             // Build a group update message to the group telling members someone has been promoted
             val timestamp = clock.currentTimeMillis()
