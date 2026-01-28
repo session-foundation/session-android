@@ -797,12 +797,11 @@ open class Storage @Inject constructor(
         val address = Address.Group(closedGroup)
         val recipient = recipientRepository.getRecipientSync(address)
         val threadDb = threadDatabase
-        val threadID = threadDb.getThreadIdIfExistsFor(address)
+        val threadID = threadDb.getOrCreateThreadIdFor(address)
         val expiryMode = recipient.expiryMode
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val inviteJson = updateData.toJSON()
-
 
         if (senderPublicKey == null || senderPublicKey == userPublicKey) {
             val infoMessage = OutgoingMediaMessage(
@@ -881,7 +880,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadId(address: Address): Long? {
-        val threadID = threadDatabase.getThreadIdIfExistsFor(address)
+        val threadID = threadDatabase.getThreadIdIfExistsFor(address.address)
         return if (threadID < 0) null else threadID
     }
 

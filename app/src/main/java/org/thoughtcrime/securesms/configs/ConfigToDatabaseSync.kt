@@ -347,9 +347,9 @@ class ConfigToDatabaseSync @Inject constructor(
                 }
             }
 
-            val threadId = threadDatabase.getThreadIdIfExistsFor(address)
+            val threadId = storage.getThreadId(address)
 
-            if (threadId != -1L) {
+            if (threadId != null) {
                 if (conversation.lastRead > storage.getLastSeen(threadId)) {
                     storage.markConversationAsRead(
                         threadId,
