@@ -76,6 +76,11 @@ sealed class OnionError(
     class InvalidHopResponse(val node: Snode, status: ErrorStatus, destination: OnionDestination,)
         : OnionError(status = status, destination = destination)
 
+    /**
+     * The onion payload returned something that we couldn't decode as a valid onion response.
+     */
+    class InvalidResponse(destination: OnionDestination, cause: Throwable)
+        : OnionError(cause = cause, destination = destination)
 
     /**
      * Fallback for anything we haven't classified yet.

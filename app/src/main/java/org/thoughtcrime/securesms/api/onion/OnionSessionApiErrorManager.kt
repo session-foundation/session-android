@@ -87,6 +87,7 @@ class OnionSessionApiErrorManager @Inject constructor(
 
                 return FailureDecision.Retry
             }
+            is OnionError.InvalidResponse,
             is OnionError.PathError,
             is OnionError.Unknown -> {
                 return FailureDecision.Fail

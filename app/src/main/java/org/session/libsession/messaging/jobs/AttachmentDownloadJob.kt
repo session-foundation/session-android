@@ -24,7 +24,7 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import org.thoughtcrime.securesms.api.server.execute
@@ -105,7 +105,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
             } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
-                    || (exception.findCause<UnknownHttpStatusCodeException>()?.code  == 400)
+                    || (exception.findCause<UnknownStatusCodeException>()?.code  == 400)
                     || exception is NonRetryableException) {
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")

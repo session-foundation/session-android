@@ -20,7 +20,7 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
-import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
@@ -169,7 +169,7 @@ class NewMessageViewModel @Inject constructor(
     }
 
     private fun Exception.toMessage() = when (this) {
-        is UnknownHttpStatusCodeException -> application.getString(R.string.errorUnregisteredOns)
+        is UnknownStatusCodeException -> application.getString(R.string.errorUnregisteredOns)
         else -> Phrase.from(application, R.string.errorNoLookupOns)
             .put(APP_NAME_KEY, application.getString(R.string.app_name))
             .format().toString()

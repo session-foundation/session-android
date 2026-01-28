@@ -7,7 +7,7 @@ package org.thoughtcrime.securesms.api.error
  *
  * Normally this is up to the caller to handle.
  */
-class UnknownHttpStatusCodeException(
+class UnknownStatusCodeException(
     val code: Int,
     val origin: String,
     val bodyText: String? = null

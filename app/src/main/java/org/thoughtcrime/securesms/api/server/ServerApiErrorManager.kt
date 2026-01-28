@@ -4,7 +4,7 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.ClockOutOfSyncException
-import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,7 +40,7 @@ class ServerApiErrorManager @Inject constructor(
             }
         }
 
-        return UnknownHttpStatusCodeException(
+        return UnknownStatusCodeException(
             code = errorCode,
             origin = serverBaseUrl,
             bodyText = bodyAsText

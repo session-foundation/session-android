@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.api.onion
 
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -141,48 +142,51 @@ class OnionSessionApiExecutor @Inject constructor(
                 ctx = ctx,
                 req = httpRequest
             )
-        }
-
-        return if (result.isSuccess && result.getOrThrow().statusCode in 200..299) {
-            when (onionRequestVersion) {
-                OnionRequestVersion.V3 -> handleV3Response(result.getOrThrow().body, builtOnion)
-                OnionRequestVersion.V4 -> handleV4Response(
-                    body = result.getOrThrow().body,
-                    builtOnion = builtOnion
-                )
-            }
-        }
-        else {
-            val error = if (result.isSuccess) {
-                mapHttpError(
-                    path = path,
-                    httpResponseCode = result.getOrThrow().statusCode,
-                    httpResponseBody = result.getOrThrow().body.toText(),
-                    destination = onionDestination,
-                )
-            } else if (result.exceptionOrNull() is IOException) {
-                OnionError.GuardUnreachable(
-                    guard = path.first(),
-                    destination = onionDestination,
-                    cause = result.exceptionOrNull()!!
-                )
+        }.mapCatching { resp ->
+            if (resp.statusCode in 200..299) {
+                try {
+                    when (onionRequestVersion) {
+                        OnionRequestVersion.V3 -> handleV3Response(resp.body, builtOnion)
+                        OnionRequestVersion.V4 -> handleV4Response(resp.body, builtOnion)
+                    }
+                } catch (e: Throwable) {
+                    throw OnionError.InvalidResponse(onionDestination, e)
+                }
             } else {
-                OnionError.Unknown(
+                throw mapHttpError(
+                    path = path,
+                    httpResponseCode = resp.statusCode,
+                    httpResponseBody = resp.body.toText(),
                     destination = onionDestination,
-                    cause = result.exceptionOrNull()!!
                 )
             }
+        }
 
-            throw ErrorWithFailureDecision(
-                cause = error,
-                failureDecision = onionSessionApiErrorManager.onFailure(
-                    error = error,
-                    path = path,
-                    // When path overrides are used, we skip any path punishment logic,
-                    // as that path is not selected by us.
-                    shouldPunishPath = pathOverrides == null,
+        return when {
+            result.isSuccess -> result.getOrThrow()
+            else -> {
+                val error = when (val e = result.exceptionOrNull()!!) {
+                    is CancellationException -> throw e
+                    is IOException -> OnionError.GuardUnreachable(
+                        guard = path.first(),
+                        destination = onionDestination,
+                        cause = e
+                    )
+                    is OnionError -> e
+                    else -> OnionError.Unknown(onionDestination, e)
+                }
+
+                throw ErrorWithFailureDecision(
+                    cause = error,
+                    failureDecision = onionSessionApiErrorManager.onFailure(
+                        error = error,
+                        path = path,
+                        // When path overrides are used, we skip any path punishment logic,
+                        // as that path is not selected by us.
+                        shouldPunishPath = pathOverrides == null,
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -247,7 +251,7 @@ class OnionSessionApiExecutor @Inject constructor(
 
             if (guardNotReady) {
                 return OnionError.SnodeNotReady(
-                    offendingSnode = path.first(),
+                    offendingSnode = guardSnode,
                     status = ErrorStatus(
                         code = httpResponseCode,
                         message = httpResponseBody,

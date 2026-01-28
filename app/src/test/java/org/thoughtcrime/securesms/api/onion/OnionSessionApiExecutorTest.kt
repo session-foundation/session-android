@@ -166,6 +166,31 @@ class OnionSessionApiExecutorTest {
     }
 
     @Test
+    fun `Invalid onion response from destination should just fail`() = runTest {
+        coEvery { pathManager.getPath(any()) } returns path1
+        coEvery {
+            httpExecutor.send(any(), any())
+        } returns HttpResponse(
+            statusCode = 200,
+            body = HttpBody.Text("OK"),
+            headers = emptyMap(),
+        )
+
+        val result = runExecutor()
+        val exception =
+            checkNotNull(result.exceptionOrNull()?.findCause<ErrorWithFailureDecision>())
+
+        assertThat(exception.failureDecision).isEqualTo(FailureDecision.Fail)
+        assertIs<OnionError.InvalidResponse>(exception.cause)
+
+        // Should not strike any node
+        coVerify(exactly = 0) { pathManager.handleBadSnode(any(), any()) }
+
+        // Should not punish any path
+        coVerify(exactly = 0) { pathManager.handleBadPath(any()) }
+    }
+
+    @Test
     fun `Unknown error response should just fail`() = runTest {
         coEvery { pathManager.getPath(any()) } returns path1
         coEvery {

@@ -29,7 +29,7 @@ import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
-import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import org.thoughtcrime.securesms.api.server.execute
@@ -123,7 +123,7 @@ class AvatarDownloadManager @Inject constructor(
                 downloadAndDecryptFile(file)
             } catch (e: Exception) {
                 if (e.findCause<NonRetryableException>() != null ||
-                    e.findCause<UnknownHttpStatusCodeException>()?.code == 404
+                    e.findCause<UnknownStatusCodeException>()?.code == 404
                 ) {
                     Log.w(TAG, "Download failed permanently for file $file", e)
                     // Write an empty file with a permanent error metadata if the download failed permanently.

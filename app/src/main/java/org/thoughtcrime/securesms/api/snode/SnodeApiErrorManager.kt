@@ -7,7 +7,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ClockOutOfSyncException
-import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -68,7 +68,7 @@ class SnodeApiErrorManager @Inject constructor(
             return RuntimeException("Snode not ready") to FailureDecision.Retry
         }
 
-        return UnknownHttpStatusCodeException(errorCode, "Snode ${snode.address}", bodyText) to null
+        return UnknownStatusCodeException(errorCode, "Snode ${snode.address}", bodyText) to null
     }
 }
 

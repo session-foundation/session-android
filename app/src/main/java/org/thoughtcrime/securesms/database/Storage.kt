@@ -44,7 +44,6 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -67,7 +66,7 @@ import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.api.error.UnknownHttpStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -591,7 +590,7 @@ open class Storage @Inject constructor(
         }
         if (error.localizedMessage != null) {
             val message: String
-            if (error.findCause<UnknownHttpStatusCodeException>()?.code == 429) {
+            if (error.findCause<UnknownStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -607,7 +606,7 @@ open class Storage @Inject constructor(
 
         if (error.localizedMessage != null) {
             val message: String
-            if (error.findCause<UnknownHttpStatusCodeException>()?.code == 429) {
+            if (error.findCause<UnknownStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
