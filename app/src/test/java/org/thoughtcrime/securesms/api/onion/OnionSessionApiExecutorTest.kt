@@ -71,7 +71,6 @@ class OnionSessionApiExecutorTest {
                 pathManager = pathManager,
                 connectivity = connectivity,
             ),
-            directSessionApiExecutor = { directSessionApiExecutor },
             onionBuilder = mockk {
                 every {
                     build(any(), any(), any(), any())
