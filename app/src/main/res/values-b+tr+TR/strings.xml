@@ -1109,7 +1109,6 @@
     <string name="proRenewPinFiveConversations">Yine {limit}’den fazla sohbeti sabitlemek mi istiyorsunuz?\nKaçırdığınız özellikleri açmak için {pro} erişiminizi yenileyin.</string>
     <string name="proRenewPinMoreConversations">Yine daha fazla sohbet sabitlemek mi istiyorsunuz?\nKaçırdığınız özellikleri açmak için {pro} erişiminizi yenileyin.</string>
     <string name="proRenewTosPrivacy">Yenileyerek, {app_pro} <b>Hizmet Şartları</b> {icon} ve <b>Gizlilik Politikası</b> {icon}’nı kabul etmiş olursunuz.</string>
-    <string name="proRenewalUnsuccessful">Pro yenilemesi başarısız oldu, yakında tekrar deneniyor</string>
     <string name="proRenewingAction">yenileniyor</string>
     <string name="proRenewingNoAccessBilling">Şu anda, {pro} erişimi yalnızca {platform_store} veya {platform_store_other} üzerinden satın alınabilir ve yenilenebilir. {app_name} uygulamasını {build_variant} kullanarak yüklediğiniz için burada yenileme işlemi yapamazsınız.\n\n{app_name} geliştiricileri, kullanıcıların {platform_store} ve {platform_store_other} dışında {pro} erişimi satın alabilmesi için alternatif ödeme seçenekleri üzerinde yoğun şekilde çalışıyor.<b> {pro} Yol Haritası</b> {icon}</string>
     <string name="proRequestedRefund">Geri Ödeme Talep Edildi</string>

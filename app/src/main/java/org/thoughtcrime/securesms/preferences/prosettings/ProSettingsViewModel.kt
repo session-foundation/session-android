@@ -38,6 +38,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PERCENT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
@@ -103,6 +105,8 @@ class ProSettingsViewModel @AssistedInject constructor(
 
     private val _cancelPlanState: MutableStateFlow<State<CancelPlanState>> = MutableStateFlow(State.Loading)
     val cancelPlanState: StateFlow<State<CancelPlanState>> = _cancelPlanState
+
+    private var recovering: Boolean = false
 
     init {
         // observe subscription status
@@ -200,41 +204,101 @@ class ProSettingsViewModel @AssistedInject constructor(
         // calculate stats for pro users
         if (subType is ProStatus.Active) refreshProStats()
 
+        // we got a new state - if we were recovering, we can mark it as done
+        if(proDataState.refreshState is State.Success && recovering){
+            // we are back with a state after attempting to recover
+            // show a confirmation dialog whose text depends on the current pro status
+            // if we are now pro after recovery:
+            if(proDataState.type is ProStatus.Active){
+                _dialogState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = Phrase.from(context, R.string.proAccessRestored)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .format().toString(),
+                            message = Phrase.from(context, R.string.proAccessRestoredDescription)
+                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format(),
+                            positiveText = context.getString(R.string.okay),
+                            positiveStyleDanger = false,
+                        )
+                    )
+                }
+            } else {
+                _dialogState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = Phrase.from(context, R.string.proAccessNotFound)
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format().toString(),
+                            message = Phrase.from(context, R.string.proAccessNotFoundDescription)
+                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                .format(),
+                            positiveText = context.getString(R.string.helpSupport),
+                            negativeText = context.getString(R.string.close),
+                            positiveStyleDanger = false,
+                            negativeStyleDanger = true,
+                            onPositive = { onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT)) },
+                        )
+                    )
+                }
+            }
+        }
+
+        // clear recovery on non loads
+        if(proDataState.refreshState !is State.Loading){
+            recovering = false
+        }
+
         while (true) {
             val now = clock.currentTime()
 
             _proSettingsUIState.update {
                 it.copy(
                     proDataState = proDataState,
+                    inGracePeriod = (subType as? ProStatus.Active.AutoRenewing)?.inGracePeriod ?: false,
                     subscriptionExpiryLabel = when(subType){
-                        is ProStatus.Active.AutoRenewing ->
-                            Phrase.from(context, R.string.proAutoRenewTime)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .put(TIME_KEY, dateUtils.getExpiryString(
-                                    remaining = Duration.between(now, subType.validUntil)
-                                        .coerceAtLeast(Duration.ZERO)))
-                                .format()
+                        is ProStatus.Active.AutoRenewing -> {
+                            // in grace period
+                            if(subType.inGracePeriod) {
+                                Phrase.from(context, R.string.proRenewalUnsuccessful)
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .format()
+                            } else {
+                                Phrase.from(context, R.string.proAutoRenewTime)
+                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                    .put(
+                                        TIME_KEY, dateUtils.getExpiryString(
+                                            remaining = Duration.between(now, subType.renewingAt)
+                                                .coerceAtLeast(Duration.ZERO)
+                                        )
+                                    )
+                                    .format()
+                            }
+                        }
 
                         is ProStatus.Active.Expiring ->
                             Phrase.from(context, R.string.proExpiringTime)
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .put(TIME_KEY, dateUtils.getExpiryString(
-                                    remaining = Duration.between(now, subType.validUntil)
+                                    remaining = Duration.between(now, subType.renewingAt)
                                         .coerceAtLeast(Duration.ZERO)))
                                 .format()
 
                         else -> ""
                     },
                     subscriptionExpiryDate = when(subType){
-                        is ProStatus.Active -> subType.validUntilFormatted()
+                        is ProStatus.Active -> subType.renewingAtFormatted()
                         else -> ""
                     },
                 )
             }
 
             if (subType is ProStatus.Active.AutoRenewing || subType is ProStatus.Active.Expiring) {
-                if (subType.validUntil.isAfter(now)) {
-                    val secondsTilExpired = subType.validUntil.epochSecond - now.epochSecond
+                if (subType.renewingAt.isAfter(now)) {
+                    val secondsTilExpired = subType.renewingAt.epochSecond - now.epochSecond
                     if (secondsTilExpired > 120) {
                         // Tick every minute
                         delay(1.minutes)
@@ -252,7 +316,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                 break  // pro not active, no need to refresh any UI
             }
         }
-
     }
 
     fun ensureChoosePlanState(){
@@ -434,8 +497,35 @@ class ProSettingsViewModel @AssistedInject constructor(
                         }
                     }
 
-                    // go to the "choose plan" screen
-                    else -> goToChoosePlan()
+                    // Not loading nor error. If in grace period show a dialog
+                    // otherwise go to the "choose plan" screen
+                    else -> {
+                        val provider = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)?.providerData
+                        if(_proSettingsUIState.value.inGracePeriod){
+                            _dialogState.update {
+                                it.copy(
+                                    showSimpleDialog = SimpleDialogData(
+                                        title = Phrase.from(context, R.string.proRenewalUnsuccessfulTitle)
+                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                            .format().toString(),
+                                        message = Phrase.from(context, R.string.proUnsuccessfulRenewalDescription)
+                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                            .put(PLATFORM_ACCOUNT_KEY, provider?.platformAccount ?: "")
+                                            .put(PLATFORM_STORE_KEY, provider?.store ?: "")
+                                            .format(),
+                                        positiveText = context.getString(R.string.theContinue),
+                                        positiveStyleDanger = false,
+                                        onPositive = {
+                                            goToChoosePlan()
+                                        },
+                                        showXIcon = true
+                                    )
+                                )
+                            }
+                        } else {
+                            goToChoosePlan()
+                        }
+                    }
                 }
             }
 
@@ -478,7 +568,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            is Commands.RefeshProDetails -> {
+            is Commands.RecoverAccount -> {
+                recovering = true
                 refreshProDetails(true)
             }
 
@@ -525,7 +616,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                 val selectedPlan = getSelectedPlan() ?: return
 
                 if(currentSubscription is ProStatus.Active){
-                    val newSubscriptionExpiryString = currentSubscription.validUntilFormatted()
+                    val newSubscriptionExpiryString = currentSubscription.renewingAtFormatted()
 
                     val currentSubscriptionDuration = DateUtils.getLocalisedTimeDuration(
                         context = context,
@@ -926,7 +1017,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         data class OnHeaderClicked(val inSheet: Boolean): Commands
         data object OnProStatsClicked: Commands
 
-        data object RefeshProDetails: Commands
+        data object RecoverAccount: Commands
     }
 
     data class ProSettingsState(
@@ -934,6 +1025,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         val proStats: State<ProStats> = State.Loading,
         val subscriptionExpiryLabel: CharSequence = "", // eg: "Pro auto renewing in 3 days"
         val subscriptionExpiryDate: CharSequence = "", // eg: "May 21st, 2025"
+        val inGracePeriod: Boolean = false
     )
 
     data class ChoosePlanState(

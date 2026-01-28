@@ -1,10 +1,8 @@
 package org.session.libsession.network
 
 import org.session.libsession.network.model.FailureDecision
-import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.OnionError
 import org.session.libsession.network.onion.PathManager
-import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
@@ -32,7 +30,7 @@ class SnodeClientErrorManager @Inject constructor(
             // from the pool and swarm (if pubkey is available)
             // handleBadSnode will handle removing the snode from the paths/pool/swarm and clean up the strikes
             // if needed
-            pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey, forceRemove = true)
+            pathManager.handleBadSnode(snode = ctx.targetSnode, forceRemove = true)
             return FailureDecision.Retry
         }
 
@@ -57,7 +55,7 @@ class SnodeClientErrorManager @Inject constructor(
                     // we should consider the destination snode faulty. Drop from pool and swarm swarm and retry
                     // handleBadSnode will handle removing the snode from the paths/pool/swarm and clean up the strikes
                     // if needed
-                    pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey, forceRemove = true)
+                    pathManager.handleBadSnode(snode = ctx.targetSnode, forceRemove = true)
                     return FailureDecision.Retry
                 }
             }
@@ -88,14 +86,14 @@ class SnodeClientErrorManager @Inject constructor(
             // Unparseable data: 502 + "oxend returned unparsable data"
             if (code == 502 && bodyText?.contains("oxend returned unparsable data", ignoreCase = true) == true) {
                 // penalise the destination snode and retry
-                pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey, forceRemove = true)
+                pathManager.handleBadSnode(snode = ctx.targetSnode, forceRemove = true)
                 return FailureDecision.Retry
             }
 
             // Destination snode not ready
             if(code == 503 && bodyText?.contains("Snode not ready", ignoreCase = true) == true){
                 // penalise the destination snode and retry
-                pathManager.handleBadSnode(snode = ctx.targetSnode, publicKey = ctx.publicKey)
+                pathManager.handleBadSnode(snode = ctx.targetSnode)
                 return FailureDecision.Retry
             }
         }

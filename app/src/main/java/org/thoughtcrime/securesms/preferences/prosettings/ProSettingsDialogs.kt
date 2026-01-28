@@ -55,6 +55,8 @@ fun ProSettingsDialogs(
             buttons.add(
                 DialogButtonData(
                     text = GetString(dialogsState.showSimpleDialog.negativeText),
+                    color = if (dialogsState.showSimpleDialog.negativeStyleDanger) LocalColors.current.danger
+                    else LocalColors.current.text,
                     qaTag = dialogsState.showSimpleDialog.negativeQaTag,
                     onClick = dialogsState.showSimpleDialog.onNegative
                 )

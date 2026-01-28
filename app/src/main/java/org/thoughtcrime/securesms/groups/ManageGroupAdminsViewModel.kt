@@ -10,10 +10,8 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -84,7 +82,7 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
     init {
         // Build footer from selected admins + collapsed state
         viewModelScope.launch {
-            kotlinx.coroutines.flow.combine(
+            combine(
                 selectedAdmins,
                 footerCollapsed,
                 ::buildFooterState

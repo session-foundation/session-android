@@ -6,11 +6,13 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
@@ -44,6 +46,7 @@ import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
@@ -75,6 +78,7 @@ import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "GroupManagerV2Impl"
 
@@ -519,10 +523,15 @@ class GroupManagerV2Impl @Inject constructor(
                 // Update the group member's promotion status
                 members.asSequence()
                     .mapNotNull { configs.groupMembers.get(it.hexString) }
-                    .onEach(GroupMember::setPromoted)
+                    .onEach(GroupMember::setPromotionSent)
                     .forEach(configs.groupMembers::set)
 
                 configs.groupInfo.getName()
+            }
+
+            // Ensure this push is complete before promotion messages go out
+            withTimeoutOrNull(10.seconds) {
+                configFactory.waitUntilGroupConfigsPushed(group)
             }
 
             // Build a group update message to the group telling members someone has been promoted
@@ -588,10 +597,11 @@ class GroupManagerV2Impl @Inject constructor(
                 promotedByMemberIDs.asSequence()
                     .mapNotNull { (member, result) ->
                         configs.groupMembers.get(member.hexString)?.apply {
-                            if (result.isSuccess) {
-                                setPromotionSent()
-                            } else {
-                                setPromotionFailed()
+                            if (result.isFailure) {
+                                configs.groupMembers.get(member.hexString)?.let { member ->
+                                    member.setPromotionFailed()
+                                    configs.groupMembers.set(member)
+                                }
                             }
                         }
                     }

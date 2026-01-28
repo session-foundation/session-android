@@ -10,7 +10,6 @@ import org.session.libsession.network.model.Path
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SnodePoolStorage
 import org.session.libsession.network.snode.SwarmStorage
-import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.util.asSequence
 import java.util.concurrent.ConcurrentHashMap
@@ -18,6 +17,8 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
+import kotlin.math.max
+import kotlin.math.min
 
 @Singleton
 class SnodeDatabase @Inject constructor(
@@ -38,7 +39,8 @@ class SnodeDatabase @Inject constructor(
         }
 
         //language=roomsql
-        return readableDatabase.query("""
+        return readableDatabase.query(
+            """
             SELECT snodes.*
             FROM snodes
             WHERE snodes.id IN (
@@ -46,9 +48,12 @@ class SnodeDatabase @Inject constructor(
                 FROM swarm_snodes
                 WHERE pubkey = ?
             )
-        """, arrayOf(publicKey)).use { cursor ->
-            cursor.mapSnodeSequence { _, snode -> snode }
-                .mapTo(ArraySet(cursor.count)) { it }
+        """, arrayOf(publicKey)
+        ).use { cursor ->
+            val indices = SnodeColumnIndices(cursor)
+
+            cursor.asSequence()
+                .mapTo(ArraySet(cursor.count)) { it.toSnode(indices) }
         }.also {
             swarmCache[publicKey] = it
         }
@@ -64,16 +69,18 @@ class SnodeDatabase @Inject constructor(
 
             // Insert the swarm mapping but only for snodes that exist in the snodes table
             //language=roomsql
-            compileStatement("""
+            compileStatement(
+                """
                 INSERT OR REPLACE INTO swarm_snodes (pubkey, snode_id)
                 SELECT ?1, id
                 FROM snodes
                 WHERE ed25519_pub_key = ?2
-            """).use { stmt ->
+            """
+            ).use { stmt ->
                 swarm.forEach { snode ->
                     stmt.clearBindings()
                     stmt.bindString(1, publicKey)
-                    stmt.bindString(2, snode.publicKeySet!!.ed25519Key)
+                    stmt.bindString(2, snode.ed25519Key)
                     stmt.execute()
                 }
             }
@@ -86,11 +93,13 @@ class SnodeDatabase @Inject constructor(
         swarmCache.remove(publicKey)
 
         //language=roomsql
-        writableDatabase.execSQL("""
+        writableDatabase.execSQL(
+            """
             DELETE FROM swarm_snodes
             WHERE pubkey = ?1 AND snode_id = (
                 SELECT id FROM snodes WHERE ed25519_pub_key = ?2
-            )""", arrayOf(publicKey, snodeEd25519PubKey))
+            )""", arrayOf(publicKey, snodeEd25519PubKey)
+        )
     }
 
     override fun getOnionRequestPaths(): List<Path> {
@@ -102,16 +111,20 @@ class SnodeDatabase @Inject constructor(
         }
 
         //language=roomsql
-        return readableDatabase.query("""
+        return readableDatabase.query(
+            """
             SELECT onion_path_snodes.path_id, snodes.*
             FROM snodes
             INNER JOIN onion_path_snodes ON onion_path_snodes.snode_id = snodes.id
             ORDER BY path_id, onion_path_snodes.position
-        """, emptyArray()).use { cursor ->
+        """, emptyArray()
+        ).use { cursor ->
+            val indices = SnodeColumnIndices(cursor)
             cursor
-                .mapSnodeSequence { cursor, snode ->
+                .asSequence()
+                .map {
                     val pathId = cursor.getInt(0)
-                    pathId to snode
+                    pathId to cursor.toSnode(indices)
                 }
                 .fold(FoldState()) { state, (pathId, snode) ->
                     if (state.lastPathId == pathId) {
@@ -130,40 +143,127 @@ class SnodeDatabase @Inject constructor(
     override fun setOnionRequestPaths(paths: List<Path>) {
         onionPathsCache.set(null)
         writableDatabase.transaction {
-            // Clear existing paths
-            execSQL("DELETE FROM onion_paths WHERE 1")
+            val newPathKeysAsJson = json.encodeToString(paths.map { it.pathKey() })
+
+            class PathInfo(
+                val strike: Int,
+                val createdAtMs: Long,
+            )
 
             //language=roomsql
-            compileStatement("""
-                INSERT INTO onion_paths (id, created_at_ms)
-                VALUES (?1, ?2)
-            """).use { stmt ->
-                val currentTime = System.currentTimeMillis()
-                paths.forEachIndexed { pathIndex, _ ->
-                    stmt.clearBindings()
-                    stmt.bindLong(1, pathIndex.toLong())
-                    stmt.bindLong(2, currentTime)
-                    stmt.execute()
-                }
+            val existingPathInfoByPathKey = query("""
+                WITH path_keys AS ($PATH_KEYS_CTE_SQL)
+                SELECT path_key, strikes, created_at_ms FROM onion_paths
+                INNER JOIN path_keys ON onion_paths.id = path_keys.path_id
+            """).use { cursor ->
+                cursor.asSequence()
+                    .associate {
+                        val pathKey = cursor.getString(0)
+                        pathKey to PathInfo(
+                            strike = cursor.getInt(1),
+                            createdAtMs = cursor.getLong(2),
+                        )
+                    }
             }
 
-            // Insert new paths (the sql must make sure the snode exists)
+            // Clear all paths
+            //language=roomsql
+            execSQL("DELETE FROM onion_paths WHERE 1")
+
+            // Insert all paths, retaining path info where applicable
+            //language=roomsql
+            compileStatement("INSERT INTO onion_paths (id, created_at_ms, strikes) VALUES (?1, ?2, ?3)")
+                .use { pathInsertStmt ->
+                    compileStatement(
+                        """
+                            INSERT OR ABORT INTO onion_path_snodes (path_id, snode_id, position)
+                            SELECT ?1, (SELECT id FROM snodes WHERE ed25519_pub_key = ?2), ?3
+                        """
+                    ).use { pathSnodeInsertStmt ->
+                        paths.forEachIndexed { pathIdx, path ->
+                            val pathKey = path.pathKey()
+                            val existingInfo = existingPathInfoByPathKey[pathKey]
+
+                            pathInsertStmt.clearBindings()
+                            pathInsertStmt.bindLong(1, pathIdx.toLong())
+                            pathInsertStmt.bindLong(2, existingInfo?.createdAtMs ?: System.currentTimeMillis())
+                            pathInsertStmt.bindLong(3, existingInfo?.strike?.toLong() ?: 0L)
+                            pathInsertStmt.execute()
+
+                            path.forEachIndexed { snodeIdx, snode ->
+                                pathSnodeInsertStmt.clearBindings()
+                                pathSnodeInsertStmt.bindLong(1, pathIdx.toLong())
+                                pathSnodeInsertStmt.bindString(2, snode.ed25519Key)
+                                pathSnodeInsertStmt.bindLong(3, snodeIdx.toLong())
+                                pathSnodeInsertStmt.execute()
+                            }
+                        }
+                    }
+            }
+        }
+    }
+
+    override fun replaceOnionRequestPath(
+        oldPath: Path,
+        newPath: Path
+    ) {
+        if (oldPath == newPath) {
+            return
+        }
+
+        onionPathsCache.set(null)
+        writableDatabase.transaction {
+            //language=roomsql
+            val pathId = query(
+                """
+                WITH path_keys AS ($PATH_KEYS_CTE_SQL) 
+                SELECT path_id FROM path_keys WHERE path_key = ?1
+                """, arrayOf(oldPath.pathKey())
+            ).use { cursor ->
+                check(cursor.moveToNext()) { "Old path does not exist" }
+
+                cursor.getInt(0)
+            }
+
+            // Delete all existing snodes for the path
+            //language=roomsql
+            execSQL(
+                "DELETE FROM onion_path_snodes WHERE path_id = ?1",
+                arrayOf(pathId)
+            )
+
+            // Insert new snodes for the path
             //language=roomsql
             compileStatement("""
                 INSERT OR ABORT INTO onion_path_snodes (path_id, snode_id, position)
                 SELECT ?1, (SELECT id FROM snodes WHERE ed25519_pub_key = ?2), ?3
             """).use { stmt ->
-                paths.forEachIndexed { pathId, path ->
-                    path.forEachIndexed { snodeIdx, snode ->
-                        stmt.clearBindings()
-                        stmt.bindLong(1, pathId.toLong())
-                        stmt.bindString(2, snode.publicKeySet!!.ed25519Key)
-                        stmt.bindLong(3, snodeIdx.toLong())
-                        stmt.execute()
-                    }
+                newPath.forEachIndexed { snodeIdx, snode ->
+                    stmt.clearBindings()
+                    stmt.bindLong(1, pathId.toLong())
+                    stmt.bindString(2, snode.ed25519Key)
+                    stmt.bindLong(3, snodeIdx.toLong())
+                    stmt.execute()
                 }
             }
         }
+    }
+
+    override fun removePath(path: Path) {
+        onionPathsCache.set(null)
+
+        //language=roomsql
+        writableDatabase.execSQL(
+            """
+            WITH path_keys AS ($PATH_KEYS_CTE_SQL)
+            DELETE FROM onion_paths
+            WHERE id = (
+                SELECT path_id
+                FROM path_keys
+                WHERE path_key = ?1
+            )
+        """, arrayOf(path.pathKey())
+        )
     }
 
     override fun clearOnionRequestPaths() {
@@ -176,55 +276,115 @@ class SnodeDatabase @Inject constructor(
         increment: Int
     ): Int? {
         //language=roomsql
-        return writableDatabase.query("""
-            WITH path_snode_keys AS ($PATH_KEYS_CTE_SQL)
+        return writableDatabase.query(
+            """
+            WITH path_keys AS ($PATH_KEYS_CTE_SQL)
             UPDATE onion_paths
             SET strikes = max(0, strikes + ?1)
             WHERE id = (
                 SELECT path_id
-                FROM path_snode_keys
-                WHERE snode_keys = ?2
+                FROM path_keys
+                WHERE path_key = ?2
             )
             RETURNING strikes
-        """, arrayOf<Any>(increment, path.snodeKeys())).use { cursor ->
+        """, arrayOf<Any>(increment, path.pathKey())
+        ).use { cursor ->
             cursor.asSequence()
                 .map { it.getInt(0) }
                 .firstOrNull()
         }
     }
 
-    override fun clearOnionRequestPathStrikes(path: Path) {
+    override fun increaseOnionRequestPathStrikeContainingSnode(
+        snodeEd25519PubKey: String,
+        increment: Int
+    ): Pair<Path, Int>? {
+        return writableDatabase.transaction {
+            //language=roomsql
+            val (pathId, newStrikes) = query(
+                """
+                UPDATE onion_paths
+                SET strikes = max(0, strikes + ?1)
+                WHERE id IN (
+                    SELECT ops.path_id
+                    FROM onion_path_snodes AS ops
+                    INNER JOIN snodes ON ops.snode_id = snodes.id
+                    WHERE snodes.ed25519_pub_key = ?2
+                )
+                RETURNING id, strikes
+            """, arrayOf<Any>(increment, snodeEd25519PubKey)
+            ).use { cursor ->
+                if (!cursor.moveToNext()) return null
+
+                cursor.getInt(0) to cursor.getInt(1)
+            }
+
+            //language=roomsql
+            query(
+                """
+                SELECT snodes.*
+                FROM snodes
+                INNER JOIN onion_path_snodes ON onion_path_snodes.snode_id = snodes.id
+                WHERE onion_path_snodes.path_id = ?1
+                ORDER BY onion_path_snodes.position
+            """, arrayOf(pathId)
+            ).use { cursor ->
+                cursor.toSnodeList() to newStrikes
+            }
+        }
+    }
+
+    override fun findRandomUnusedSnodesForNewPath(n: Int): List<Snode> {
+        require(n > 0) {
+            "n(number of snodes) must be positive"
+        }
+
         //language=roomsql
-        writableDatabase.query("""
-            WITH path_snode_keys AS ($PATH_KEYS_CTE_SQL)
-            UPDATE onion_paths
-            SET strikes = 0
-            WHERE id = (
-                SELECT path_id
-                FROM path_snode_keys
-                WHERE snode_keys = ?1
-            )
-        """, arrayOf(path.snodeKeys()))
+        return readableDatabase.query(
+            """
+            SELECT * FROM snodes
+            WHERE id NOT IN (SELECT snode_id FROM onion_path_snodes)
+        """
+        ).use { cursor ->
+            val totalAvailable = cursor.count
+            generateSequence { (0 until totalAvailable).random() }
+                .distinct()
+                .take(
+                    min(
+                        totalAvailable,
+                        n
+                    )
+                ) // In case there are less available snodes than requested
+                .mapTo(ArrayList(2)) { randomIndex ->
+                    cursor.moveToPosition(randomIndex)
+                    cursor.toSnode()
+                }
+        }
     }
 
     override fun getSnodePool(): Set<Snode> {
         poolCache.get()?.let { return it }
 
         return readableDatabase.query("SELECT * FROM snodes").use { cursor ->
-            cursor.mapSnodeSequence { _, snode -> snode }.mapTo(ArraySet(cursor.count)) { it }
+            cursor.toSnodeList().toSet()
         }.also(poolCache::set)
     }
 
     override fun removeSnode(ed25519PubKey: String): Snode? {
         poolCache.set(null)
+        swarmCache.clear() // Removing a snode may affect multiple swarms
 
         //language=roomsql
-        return writableDatabase.query("""
+        return writableDatabase.query(
+            """
             DELETE FROM snodes
             WHERE ed25519_pub_key = ?1
             RETURNING *
-        """, arrayOf(ed25519PubKey)).use { cursor ->
-            cursor.mapSnodeSequence { _, snode -> snode }
+        """, arrayOf(ed25519PubKey)
+        ).use { cursor ->
+            cursor
+                .asSequence()
+                .map { it.toSnode() }
                 .firstOrNull()
         }
     }
@@ -242,21 +402,24 @@ class SnodeDatabase @Inject constructor(
             compileStatement("INSERT INTO temp_snode_keys(ed25519_pub_key) VALUES (?)").use { stmt ->
                 newValue.forEach { snode ->
                     stmt.clearBindings()
-                    stmt.bindString(1, snode.publicKeySet!!.ed25519Key)
+                    stmt.bindString(1, snode.ed25519Key)
                     stmt.execute()
                 }
             }
 
             // Remove non-existing snodes
             //language=roomsql
-            compileStatement("""
+            compileStatement(
+                """
                 DELETE FROM snodes
                 WHERE ed25519_pub_key NOT IN (SELECT ed25519_pub_key FROM temp_snode_keys)
-            """)
+            """
+            )
 
             // Actually inserting the new snodes, or updating the ip if they already exist
             //language=roomsql
-            compileStatement("""
+            compileStatement(
+                """
                 INSERT INTO snodes (ed25519_pub_key, x25519_pub_key, ip, https_port)
                 VALUES (?1, ?2, ?3, ?4)
                 ON CONFLICT(ed25519_pub_key) DO UPDATE SET
@@ -264,11 +427,12 @@ class SnodeDatabase @Inject constructor(
                     https_port = excluded.https_port,
                     strikes = 0
                 WHERE snodes.ip != excluded.ip OR snodes.https_port != excluded.https_port OR snodes.strikes != 0
-            """).use { stmt ->
+            """
+            ).use { stmt ->
                 newValue.forEach { snode ->
                     stmt.clearBindings()
-                    stmt.bindString(1, snode.publicKeySet!!.ed25519Key)
-                    stmt.bindString(2, snode.publicKeySet.x25519Key)
+                    stmt.bindString(1, snode.ed25519Key)
+                    stmt.bindString(2, snode.x25519Key)
                     stmt.bindString(3, snode.ip)
                     stmt.bindLong(4, snode.port.toLong())
                     stmt.execute()
@@ -280,66 +444,87 @@ class SnodeDatabase @Inject constructor(
         }
     }
 
+    override fun removeSnodesWithStrikesGreaterThan(n: Int): Int {
+        return writableDatabase.transaction {
+            //language=roomsql
+            val numDeleted = compileStatement("DELETE FROM snodes WHERE strikes > ?1").use { stmt ->
+                stmt.bindLong(1, n.toLong())
+                stmt.executeUpdateDelete()
+            }
+
+            if (numDeleted > 0) {
+                poolCache.set(null)
+                swarmCache.clear() // Removing snodes may affect multiple swarms
+            }
+
+            numDeleted
+        }
+    }
+
     override fun increaseSnodeStrike(
         snode: Snode,
         increment: Int
     ): Int? {
         //language=roomsql
-        return writableDatabase.query("""
+        return writableDatabase.query(
+            """
             UPDATE snodes
             SET strikes = max(0, strikes + ?1)
             WHERE ed25519_pub_key = ?2
             RETURNING strikes
-        """, arrayOf<Any>(increment, snode.publicKeySet!!.ed25519Key)).use { cursor ->
+        """, arrayOf<Any>(increment, snode.ed25519Key)
+        ).use { cursor ->
             cursor.asSequence()
                 .map { it.getInt(0) }
                 .firstOrNull()
         }
     }
 
-    override fun clearSnodeStrike(snode: Snode) {
-        //language=roomsql
-        writableDatabase.query("""
-            UPDATE snodes
-            SET strikes = 0
-            WHERE ed25519_pub_key = ?1
-        """, arrayOf<Any>(snode.publicKeySet!!.ed25519Key))
+    private fun Path.pathKey(): String {
+        return joinToString(separator = ",", transform = { it.ed25519Key })
     }
 
-    private fun Path.snodeKeys(): String {
-        return joinToString(separator = ",", transform = { it.publicKeySet!!.ed25519Key })
-    }
-
-    private fun <T> Cursor.mapSnodeSequence(mapper: (Cursor, Snode) -> T): Sequence<T> {
-        val ed25519Index = getColumnIndexOrThrow("ed25519_pub_key")
-        val x25519Index = getColumnIndexOrThrow("x25519_pub_key")
-        val ipIndex = getColumnIndexOrThrow("ip")
-        val httpsPortIndex = getColumnIndexOrThrow("https_port")
-
-        return asSequence()
-            .map {
-                val snode = Snode(
-                    address = "https://${getString(ipIndex)}",
-                    port = getInt(httpsPortIndex),
-                    publicKeySet = Snode.KeySet(
-                        ed25519Key = getString(ed25519Index),
-                        x25519Key = getString(x25519Index)
-                    ),
-                    version = Snode.Version.ZERO
+    private class SnodeColumnIndices(
+        val ed25519Index: Int,
+        val x25519Index: Int,
+        val ipIndex: Int,
+        val httpsPortIndex: Int
+    ) {
+        constructor(cursor: Cursor) :
+                this(
+                    ed25519Index = cursor.getColumnIndexOrThrow("ed25519_pub_key"),
+                    x25519Index = cursor.getColumnIndexOrThrow("x25519_pub_key"),
+                    ipIndex = cursor.getColumnIndexOrThrow("ip"),
+                    httpsPortIndex = cursor.getColumnIndexOrThrow("https_port")
                 )
-
-                mapper(this, snode)
-            }
     }
+
+    private fun Cursor.toSnode(indices: SnodeColumnIndices = SnodeDatabase.SnodeColumnIndices(this)): Snode {
+        return Snode(
+            address = "https://${getString(indices.ipIndex)}",
+            port = getInt(indices.httpsPortIndex),
+            publicKeySet = Snode.KeySet(
+                ed25519Key = getString(indices.ed25519Index),
+                x25519Key = getString(indices.x25519Index)
+            ),
+        )
+    }
+
+    private fun Cursor.toSnodeList(): List<Snode> {
+        val indices = SnodeColumnIndices(this)
+        return asSequence()
+            .mapTo(ArrayList(count)) { toSnode(indices) }
+    }
+
 
     companion object {
 
         // Common table expression for getting a deterministic representation of path in a form
         // of comma separated list of each snode's ed25519 pubkey in order of their position in the path.
-        // Column: path_id, snode_keys
+        // Column: path_id, path_key
         //language=roomsql
         private const val PATH_KEYS_CTE_SQL = """
-            SELECT ops.path_id, group_concat(snodes.ed25519_pub_key ORDER BY ops.position) AS snode_keys
+            SELECT ops.path_id, group_concat(snodes.ed25519_pub_key ORDER BY ops.position) AS path_key
             FROM onion_path_snodes AS ops
             INNER JOIN snodes ON ops.snode_id = snodes.id
             GROUP BY ops.path_id
@@ -414,13 +599,9 @@ class SnodeDatabase @Inject constructor(
                 .plus(oldPaths.asSequence().flatMap { it.asSequence() })
                 .forEach { snode ->
                     //language=roomsql
-                    db.execSQL("INSERT OR IGNORE INTO snodes (ed25519_pub_key, x25519_pub_key, ip, https_port) VALUES (?, ?, ?, ?)",
-                        arrayOf<Any>(
-                            snode.publicKeySet!!.ed25519Key,
-                            snode.publicKeySet.x25519Key,
-                            snode.ip,
-                            snode.port
-                        )
+                    db.execSQL(
+                        "INSERT OR IGNORE INTO snodes (ed25519_pub_key, x25519_pub_key, ip, https_port) VALUES (?, ?, ?, ?)",
+                        arrayOf<Any>(snode.ed25519Key, snode.x25519Key, snode.ip, snode.port)
                     )
                 }
 
@@ -428,32 +609,38 @@ class SnodeDatabase @Inject constructor(
             oldSwarms.forEach { (pubkey, swarm) ->
                 swarm.forEach { snode ->
                     //language=roomsql
-                    db.execSQL("""
+                    db.execSQL(
+                        """
                     INSERT OR IGNORE INTO swarm_snodes (pubkey, snode_id) 
                     SELECT ?1, id FROM snodes WHERE ed25519_pub_key = ?2
                     """, arrayOf<Any>(
-                        pubkey,
-                        snode.publicKeySet!!.ed25519Key
-                    ))
+                            pubkey,
+                            snode.ed25519Key
+                        )
+                    )
                 }
             }
 
             // Migrate paths
             oldPaths.forEachIndexed { pathIndex, path ->
                 //language=roomsql
-                db.execSQL("INSERT INTO onion_paths (id, created_at_ms) VALUES (?1, ?2)",
-                    arrayOf<Any>(pathIndex, System.currentTimeMillis()))
+                db.execSQL(
+                    "INSERT INTO onion_paths (id, created_at_ms) VALUES (?1, ?2)",
+                    arrayOf<Any>(pathIndex, System.currentTimeMillis())
+                )
 
                 path.forEachIndexed { snodeIndex, snode ->
                     //language=roomsql
-                    db.execSQL("""
+                    db.execSQL(
+                        """
                     INSERT OR IGNORE INTO onion_path_snodes (path_id, snode_id, position) 
                     SELECT ?1, id, ?2 FROM snodes WHERE ed25519_pub_key = ?3
                     """, arrayOf<Any>(
-                        pathIndex,
-                        snodeIndex,
-                        snode.publicKeySet!!.ed25519Key
-                    ))
+                            pathIndex,
+                            snodeIndex,
+                            snode.ed25519Key
+                        )
+                    )
                 }
             }
 
