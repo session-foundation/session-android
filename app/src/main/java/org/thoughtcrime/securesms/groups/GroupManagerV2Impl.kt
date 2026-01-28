@@ -6,6 +6,7 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.supervisorScope
@@ -44,6 +45,7 @@ import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
@@ -520,11 +522,14 @@ class GroupManagerV2Impl @Inject constructor(
                 // Update the group member's promotion status
                 members.asSequence()
                     .mapNotNull { configs.groupMembers.get(it.hexString) }
-                    .onEach(GroupMember::setPromoted)
+                    .onEach(GroupMember::setPromotionSent)
                     .forEach(configs.groupMembers::set)
 
                 configs.groupInfo.getName()
             }
+
+            // Ensure this push is complete before promotion messages go out
+            configFactory.waitUntilGroupConfigsPushed(group)
 
             // Build a group update message to the group telling members someone has been promoted
             val timestamp = clock.currentTimeMillis()
@@ -589,10 +594,11 @@ class GroupManagerV2Impl @Inject constructor(
                 promotedByMemberIDs.asSequence()
                     .mapNotNull { (member, result) ->
                         configs.groupMembers.get(member.hexString)?.apply {
-                            if (result.isSuccess) {
-                                setPromotionSent()
-                            } else {
-                                setPromotionFailed()
+                            if (result.isFailure) {
+                                configs.groupMembers.get(member.hexString)?.let { member ->
+                                    member.setPromotionFailed()
+                                    configs.groupMembers.set(member)
+                                }
                             }
                         }
                     }
@@ -621,19 +627,6 @@ class GroupManagerV2Impl @Inject constructor(
 
             if (!isRepromote) {
                 messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
-            }
-        }
-    }
-
-    override suspend fun resolvePromotionAccept(groupId: AccountId) {
-        val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
-
-        if(configFactory.getGroup(groupId)?.hasAdminKey() != true) return
-
-        configFactory.withMutableGroupConfigs(groupId) { groupConfigs ->
-            groupConfigs.groupMembers.get(currentUserId)?.let { member ->
-                member.setPromotionAccepted()
-                groupConfigs.groupMembers.set(member)
             }
         }
     }

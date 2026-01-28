@@ -13,10 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -27,7 +25,6 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -47,8 +44,7 @@ abstract class BaseGroupMembersViewModel(
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUtils: AvatarUtils,
-    private val recipientRepository: RecipientRepository,
-    private val groupManager: GroupManagerV2,
+    private val recipientRepository: RecipientRepository
 ) : ViewModel() {
     private val groupId = groupAddress.accountId
 
@@ -89,8 +85,7 @@ abstract class BaseGroupMembersViewModel(
 
                     displayInfo to sortMembers(memberState, currentUserId)
                 }
-            }.debounce(200)
-            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Current group name (for header / text, if needed)
     val groupName: StateFlow<String> = groupInfo
@@ -140,18 +135,6 @@ abstract class BaseGroupMembersViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    init {
-        viewModelScope.launch {
-            groupInfo
-                .map { it?.second.orEmpty() }
-                .map { members -> members.firstOrNull { it.isSelf && it.showAsAdmin }?.status /* or status */ }
-                .distinctUntilChanged()
-                .filter { it == GroupMember.Status.PROMOTION_SENT }
-                .debounce(200L)
-                .collectLatest { groupManager.resolvePromotionAccept(groupId) }
-        }
-    }
-
     fun onSearchQueryChanged(query: String) {
         mutableSearchQuery.value = query
     }
@@ -197,7 +180,7 @@ abstract class BaseGroupMembersViewModel(
             canResendInvite = amIAdmin && memberAccountId != myAccountId
                     && !member.isRemoved(status)
                     && (status == GroupMember.Status.INVITE_SENT || status == GroupMember.Status.INVITE_FAILED),
-            status = status,
+            status = status.takeIf { !isMyself }, // status is only for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
             showProBadge = shouldShowProBadge,
