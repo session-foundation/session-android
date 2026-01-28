@@ -1144,7 +1144,6 @@
     <string name="proRenewPinFiveConversations">Vrei să fixezi din nou mai mult de {limit} conversații?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
     <string name="proRenewPinMoreConversations">Vrei să fixezi din nou mai multe conversații?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
     <string name="proRenewTosPrivacy">Prin reînnoire, ești de acord cu <b>Termenii de utilizare</b> {icon} și <b>Politica de confidențialitate</b> {icon} ale {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Reînnoirea Pro a eșuat, se va reîncerca în curând</string>
     <string name="proRenewingAction">reînnoire</string>
     <string name="proRenewingNoAccessBilling">În prezent, accesul {pro} poate fi achiziționat și reînnoit doar prin intermediul {platform_store} sau {platform_store_other}. Deoarece ai instalat {app_name} folosind {build_variant}, nu poți reînnoi de aici.\n\nDezvoltatorii {app_name} lucrează intens la opțiuni alternative de plată, pentru a permite utilizatorilor să cumpere accesul {pro} în afara {platform_store} și {platform_store_other}.<b> Planul {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Rambursare solicitată</string>

@@ -318,8 +318,12 @@ fun NonOriginatingLinkCell(
                 )
                 .clip(MaterialTheme.shapes.small)
                 .background(color = LocalColors.current.backgroundSecondary)
-                .background(
-                    color = LocalColors.current.accent.copy(alpha = 0.2f),
+                .then(
+                    if (!LocalColors.current.isLight)
+                        Modifier.background(
+                            color = LocalColors.current.accent.copy(alpha = 0.2f),
+                        )
+                    else Modifier
                 )
                 .padding(10.dp)
             ){
@@ -327,7 +331,7 @@ fun NonOriginatingLinkCell(
                     modifier = Modifier.align(Center)
                         .size(LocalDimensions.current.iconMedium),
                     painter = painterResource(id = data.iconRes),
-                    tint = LocalColors.current.accent,
+                    tint = LocalColors.current.accentText,
                     contentDescription = null
                 )
             }

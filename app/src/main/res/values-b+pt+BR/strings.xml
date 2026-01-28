@@ -1110,7 +1110,6 @@
     <string name="proRenewPinFiveConversations">Quer fixar mais de {limit} conversas novamente?\nRenove seu acesso ao {pro} para desbloquear os recursos que você perdeu.</string>
     <string name="proRenewPinMoreConversations">Quer fixar mais conversas novamente?\nRenove seu acesso ao {pro} para desbloquear os recursos que você perdeu.</string>
     <string name="proRenewTosPrivacy">Ao renovar, você concorda com os <b>Termos de Serviço</b> {icon} e a <b>Política de Privacidade</b> {icon} do {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Renovação do Pro não foi bem-sucedida, tentando novamente em breve</string>
     <string name="proRenewingAction">renovando</string>
     <string name="proRenewingNoAccessBilling">Atualmente, o acesso ao {pro} só pode ser adquirido e renovado por meio da {platform_store} ou da {platform_store_other}. Como você instalou o {app_name} usando o {build_variant}, não é possível renovar aqui.\n\nOs desenvolvedores do {app_name} estão trabalhando intensamente em opções alternativas de pagamento para permitir que os usuários adquiram o acesso ao {pro} fora da {platform_store} e da {platform_store_other}.<b> Roteiro do {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Reembolso Solicitado</string>
