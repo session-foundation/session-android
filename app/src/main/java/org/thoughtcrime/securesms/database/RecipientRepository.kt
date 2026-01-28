@@ -556,10 +556,17 @@ class RecipientRepository @Inject constructor(
 
     private inline fun fetchLegacyGroupMember(
         address: Address.Standard,
-        proDataContext: ProDataContext?,
         settingsFetcher: (address: Address) -> RecipientSettings,
     ): Recipient {
-        return when (val configData = getDataFromConfig(address, proDataContext)) {
+        // 1. Create Local Context
+        val memberProDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
+            ProDataContext()
+        } else {
+            null
+        }
+
+        // 2. Fetch Data
+        val rawRecipient = when (val configData = getDataFromConfig(address, memberProDataContext)) {
             is RecipientData.Self -> {
                 createLocalRecipient(address, configData)
             }
@@ -577,12 +584,16 @@ class RecipientRepository @Inject constructor(
                 // with the settings fetched from the database.
                 createGenericRecipient(
                     address = address,
-                    proDataContext = proDataContext,
+                    proDataContext = memberProDataContext,
                     settings = settingsFetcher(address),
                 )
             }
         }
 
+        // 3. Resolve Member Status
+        val resolvedMember = resolveProStatus(rawRecipient, memberProDataContext)
+
+        return resolvedMember
     }
 
     suspend fun getRecipient(address: Address): Recipient {
@@ -853,10 +864,10 @@ class RecipientRepository @Inject constructor(
                     }
                 },
                 firstMember = memberAddresses.firstOrNull()
-                    ?.let { fetchLegacyGroupMember(it, proDataContext, settingsFetcher) }
+                    ?.let { fetchLegacyGroupMember(it, settingsFetcher) }
                     ?: getSelf(),  // Fallback to have self as first member if no members are present
                 secondMember = memberAddresses.getOrNull(1)
-                    ?.let { fetchLegacyGroupMember(it, proDataContext, settingsFetcher) },
+                    ?.let { fetchLegacyGroupMember(it, settingsFetcher) },
                 isCurrentUserAdmin = Address.Standard(myAccountId) in group.admins
             ),
             mutedUntil = settings?.muteUntil,
