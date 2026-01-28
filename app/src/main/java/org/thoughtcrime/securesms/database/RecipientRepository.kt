@@ -323,7 +323,6 @@ class RecipientRepository @Inject constructor(
                         }
                         recipient = group?.let {
                             createLegacyGroupRecipient(
-                                proDataContext = proDataContext,
                                 address = address,
                                 config = groupConfig,
                                 group = it,
@@ -545,7 +544,6 @@ class RecipientRepository @Inject constructor(
         // 4. Logic: If Member is Admin, their proofs contribute to the Group's Pro Status.
         // We copy the data from the member's context to the parent (Group) context.
         if (member.isAdmin && groupProDataContext != null && memberProDataContext?.proDataList != null) {
-            // We transfer the raw list. The parent (fetchRecipient) will handle expiry filtering for the group later.
             memberProDataContext.proDataList?.forEach {
                 groupProDataContext.addProData(it)
             }
@@ -830,7 +828,6 @@ class RecipientRepository @Inject constructor(
     }
 
     private inline fun createLegacyGroupRecipient(
-        proDataContext: ProDataContext?,
         address: Address,
         config: GroupInfo.LegacyGroupInfo?,
         group: GroupRecord, // Local db data
