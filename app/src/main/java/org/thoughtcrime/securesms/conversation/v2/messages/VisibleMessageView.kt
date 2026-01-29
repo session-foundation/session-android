@@ -159,7 +159,7 @@ class VisibleMessageView : FrameLayout {
         next: MessageRecord? = null,
         glide: RequestManager = Glide.with(this),
         searchQuery: String? = null,
-        lastSeen: Long,
+        lastSeen: Long?,
         lastSentMessageId: MessageId?,
         delegate: VisibleMessageViewDelegate? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
@@ -254,7 +254,7 @@ class VisibleMessageView : FrameLayout {
         }
 
         // Unread marker
-        val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
+        val shouldShowUnreadMarker = lastSeen != null && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
         if (shouldShowUnreadMarker) {
             markerContainerBinding.value.root.isVisible = true
         } else if (markerContainerBinding.isInitialized()) {

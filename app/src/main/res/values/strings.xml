@@ -61,6 +61,8 @@
     <string name="admins">Admins</string>
     <string name="allow">Allow</string>
     <string name="andMore">+{count}</string>
+    <string name="announcementDebBreakingUpdateDescription">Starting on February 1st 2026, you will need to manually update your configuration for the deb.oxen.io APT repository to continue receiving Session updates. <font color="0">See Details {icon}</font></string>
+    <string name="announcementDebBreakingUpdateTitle">Auto Update Breaking Changes</string>
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
     <string name="appIconAndNameChange">Change App Icon and Name</string>
@@ -1140,7 +1142,7 @@
     <string name="proUnlimitedPins">Unlimited Pins</string>
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
     <string name="proUnsuccessfulRenewalDescription">Your {pro} access couldn’t be renewed due to a payment issue with your {platform_account}. Please check the status of your payment on the {platform_store}.\n\nYour {pro} access will remain active and you may continue to make billing changes while the {platform_store} retries your payment.</string>
-    <string name="proUpdateAccessDescription">Your current billing option grants <b>{current_plan_length}</b> of {pro} access. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
+    <string name="proUpdateAccessDescription">Your current billing option will grant an additional <b>{current_plan_length}</b> of {pro} access when your next renewal occurs. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUpdateAccessExpireDescription">Your {pro} access will expire on <b>{date}</b>.\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUpdatingAction">updating</string>
     <string name="proUpgradeAccess">Upgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
