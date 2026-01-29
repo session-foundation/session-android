@@ -281,7 +281,8 @@ class AvatarDownloadManager @Inject constructor(
                         serverBaseUrl = file.communityServerBaseUrl,
                         api = communityFileDownloadApiFactory.create(
                             room = file.roomId,
-                            fileId = file.fileId
+                            fileId = file.fileId,
+                            requiresSigning = true,
                         )
                     )
                 ).toByteArraySlice()

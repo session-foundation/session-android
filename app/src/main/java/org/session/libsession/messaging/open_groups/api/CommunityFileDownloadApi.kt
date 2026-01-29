@@ -9,11 +9,11 @@ import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpResponse
 
 class CommunityFileDownloadApi @AssistedInject constructor(
+    @Assisted override val requiresSigning: Boolean,
     @Assisted("room") override val room: String?,
     @Assisted val fileId: String,
     deps: CommunityApiDependencies,
 ) : CommunityApi<HttpBody>(deps) {
-    override val requiresSigning: Boolean get() = false
     override val httpMethod: String get() = "GET"
     override val httpEndpoint: String = if (room != null) {
         "/room/${Uri.encode(room)}/file/${Uri.encode(fileId)}"
@@ -32,8 +32,10 @@ class CommunityFileDownloadApi @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(
-            @Assisted("room") room: String?,
-            fileId: String
+            @Assisted("room")
+            room: String?,
+            fileId: String,
+            requiresSigning: Boolean,
         ): CommunityFileDownloadApi
     }
 }
