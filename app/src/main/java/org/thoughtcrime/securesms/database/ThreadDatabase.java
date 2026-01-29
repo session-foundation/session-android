@@ -653,10 +653,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     }
   }
 
-  public long getThreadIdIfExistsFor(Address address) {
-    return getThreadIdIfExistsFor(address.getAddress());
-  }
-
   public long getOrCreateThreadIdFor(Address address) {
     boolean created = false;
 
@@ -665,7 +661,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     long threadId = getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
 
     if (threadId < 0) {
-      threadId = getThreadIdIfExistsFor(address);
+      threadId = getThreadIdIfExistsFor(address.getAddress());
     } else {
       created = true;
     }

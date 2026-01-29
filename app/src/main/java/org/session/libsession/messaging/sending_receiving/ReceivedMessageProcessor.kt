@@ -156,9 +156,9 @@ class ReceivedMessageProcessor @Inject constructor(
             threadDatabase.getOrCreateThreadIdFor(threadAddress)
                 .also { context.threadIDs[threadAddress] = it }
         } else {
-            threadDatabase.getThreadIdIfExistsFor(threadAddress)
+            storage.getThreadId(threadAddress)
                 .also { id ->
-                    if (id == -1L) {
+                    if (id == null) {
                         log { "Dropping message for non-existing thread ${threadAddress.debugString}" }
                         return@withThreadLock
                     } else {
@@ -203,16 +203,18 @@ class ReceivedMessageProcessor @Inject constructor(
                     context.maxOutgoingMessageTimestamp = message.sentTimestamp!!
                 }
 
-                visibleMessageHandler.get().handleVisibleMessage(
-                    ctx = context,
-                    message = message,
-                    threadId = threadId,
-                    threadAddress = threadAddress,
-                    proto = proto,
-                    runThreadUpdate = false,
-                    runProfileUpdate = true,
-                    pro = pro,
-                )
+                threadId?.let {
+                    visibleMessageHandler.get().handleVisibleMessage(
+                        ctx = context,
+                        message = message,
+                        threadId = it,
+                        threadAddress = threadAddress,
+                        proto = proto,
+                        runThreadUpdate = false,
+                        runProfileUpdate = true,
+                        pro = pro,
+                    )
+                }
             }
 
             is CallMessage -> handleCallMessage(message)

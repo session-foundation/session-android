@@ -44,7 +44,7 @@ abstract class BaseGroupMembersViewModel(
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUtils: AvatarUtils,
-    private val recipientRepository: RecipientRepository,
+    private val recipientRepository: RecipientRepository
 ) : ViewModel() {
     private val groupId = groupAddress.accountId
 
@@ -79,7 +79,7 @@ abstract class BaseGroupMembersViewModel(
 
                     displayInfo to sortMembers(memberState, currentUserId)
                 }
-          }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Current group name (for header / text, if needed)
     val groupName: StateFlow<String> = groupInfo

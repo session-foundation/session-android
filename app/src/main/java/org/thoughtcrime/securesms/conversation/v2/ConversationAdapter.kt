@@ -19,11 +19,12 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
 class ConversationAdapter(
     context: Context,
-    originalLastSeen: Long,
+    originalLastSeen: Long?,
     private val isReversed: Boolean,
     private val onItemPress: (MessageRecord, Int, VisibleMessageView, MotionEvent) -> Unit,
     private val onItemSwipeToReply: (MessageRecord, Int) -> Unit,
@@ -42,7 +43,7 @@ class ConversationAdapter(
     private var searchQuery: String? = null
     var visibleMessageViewDelegate: VisibleMessageViewDelegate? = null
 
-    private val lastSeen = AtomicLong(originalLastSeen)
+    private val lastSeen :  AtomicReference<Long?> = AtomicReference(originalLastSeen)
 
     var lastSentMessageId: MessageId? = null
         set(value) {
