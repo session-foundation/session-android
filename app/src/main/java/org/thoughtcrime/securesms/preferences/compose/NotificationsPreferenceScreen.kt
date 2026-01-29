@@ -122,192 +122,198 @@ fun NotificationsPreference(
         onBack = { onBackPressed() },
         title = GetString(R.string.sessionNotifications).string()
     ) {
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.notificationsStrategy).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.notificationsStrategy).string()
             ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.useFastMode),
-                    subtitle = annotatedStringResource(fastModeDescription),
-                    checked = uiState.isPushEnabled,
-                    qaTag = R.string.qa_preferences_enable_push,
-                    onCheckedChange = { sendCommand(TogglePushEnabled) }
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.useFastMode),
+                        subtitle = annotatedStringResource(fastModeDescription),
+                        checked = uiState.isPushEnabled,
+                        qaTag = R.string.qa_preferences_enable_push,
+                        onCheckedChange = { sendCommand(TogglePushEnabled) }
+                    )
 
-                Divider()
+                    Divider()
 
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.runAppBackground),
-                    checked = uiState.isWhitelistedFromDoze,
-                    qaTag = R.string.qa_preferences_whitelist,
-                    onCheckedChange = { sendCommand(WhiteListClicked) }
-                )
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.runAppBackground),
+                        checked = uiState.isWhitelistedFromDoze,
+                        qaTag = R.string.qa_preferences_whitelist,
+                        onCheckedChange = { sendCommand(WhiteListClicked) }
+                    )
 
-                Divider()
+                    Divider()
 
-                ActionRowItem(
-                    title = annotatedStringResource(R.string.notificationsGoToDevice),
-                    qaTag = R.string.qa_preferences_navigate_device_settings,
-                    onClick = { sendCommand(OpenSystemNotificationSettings) }
-                )
+                    ActionRowItem(
+                        title = annotatedStringResource(R.string.notificationsGoToDevice),
+                        qaTag = R.string.qa_preferences_navigate_device_settings,
+                        onClick = { sendCommand(OpenSystemNotificationSettings) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+        }
+
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.notificationsStyle).string()
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    IconTextActionRowItem(
+                        title = annotatedStringResource(R.string.notificationsSound),
+                        qaTag = R.string.qa_preferences_ringtone,
+                        icon = R.drawable.ic_baseline_arrow_drop_down_24,
+                        endText = annotatedStringResource(uiState.ringtone.toString()),
+                        onClick = { sendCommand(RingtoneClicked) }
+                    )
+
+                    Divider()
+
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.notificationsSoundDescription),
+                        checked = uiState.soundWhenAppIsOpen,
+                        qaTag = R.string.qa_preferences_sound_when_app_is_open,
+                        onCheckedChange = { sendCommand(ToggleSoundWhenOpen) }
+                    )
+
+                    Divider()
+
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.notificationsVibrate),
+                        checked = uiState.vibrate,
+                        qaTag = R.string.qa_preferences_vibrate,
+                        onCheckedChange = { sendCommand(ToggleVibrate) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+        }
+
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.notificationsContent).string()
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+
+                    IconTextActionRowItem(
+                        title = annotatedStringResource(R.string.notificationsContent),
+                        subtitle = annotatedStringResource(R.string.notificationsContentDescription),
+                        qaTag = R.string.qa_pro_settings_action_show_badge,
+                        icon = R.drawable.ic_baseline_arrow_drop_down_24,
+                        endText = annotatedStringResource(uiState.notificationPrivacy.toString()),
+                        onClick = { sendCommand(ShowNotificationPrivacyDialog) }
+                    )
+                }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.notificationsStyle).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                IconTextActionRowItem(
-                    title = annotatedStringResource(R.string.notificationsSound),
-                    qaTag = R.string.qa_preferences_ringtone,
-                    icon = R.drawable.ic_baseline_arrow_drop_down_24,
-                    endText = annotatedStringResource(uiState.ringtone.toString()),
-                    onClick = { sendCommand(RingtoneClicked) }
-                )
-
-                Divider()
-
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.notificationsSoundDescription),
-                    checked = uiState.soundWhenAppIsOpen,
-                    qaTag = R.string.qa_preferences_sound_when_app_is_open,
-                    onCheckedChange = { sendCommand(ToggleSoundWhenOpen) }
-                )
-
-                Divider()
-
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.notificationsVibrate),
-                    checked = uiState.vibrate,
-                    qaTag = R.string.qa_preferences_vibrate,
-                    onCheckedChange = { sendCommand(ToggleVibrate) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.notificationsContent).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-
-                IconTextActionRowItem(
-                    title = annotatedStringResource(R.string.notificationsContent),
-                    subtitle = annotatedStringResource(R.string.notificationsContentDescription),
-                    qaTag = R.string.qa_pro_settings_action_show_badge,
-                    icon = R.drawable.ic_baseline_arrow_drop_down_24,
-                    endText = annotatedStringResource(uiState.notificationPrivacy.toString()),
-                    onClick = { sendCommand(ShowNotificationPrivacyDialog) }
-                )
-            }
-        }
-
-        if (uiState.showWhitelistEnableDialog) {
-            AlertDialog(
-                onDismissRequest = {
-                    // hide dialog
-                    sendCommand(HideWhitelistEnableDialog)
-                },
-                title = Phrase.from(LocalContext.current, R.string.runSessionBackground)
-                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                    .format().toString(),
-                text = Phrase.from(LocalContext.current, R.string.runSessionBackgroundDescription)
-                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                    .format().toString(),
-                buttons = listOf(
-                    DialogButtonData(
-                        text = GetString(R.string.allow),
-                        qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_confirm),
-                        onClick = {
-                            sendCommand(OpenSystemBgWhitelist)
-                        }
-                    ),
-                    DialogButtonData(
-                        text = GetString(R.string.cancel),
-                        qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_cancel),
-                        onClick = {
-                            sendCommand(HideWhitelistEnableDialog)
-                        }
-                    ),
-                )
-            )
-        }
-
-        if (uiState.showWhitelistDisableDialog) {
-            AlertDialog(
-                onDismissRequest = {
-                    // hide dialog
-                    sendCommand(HideWhitelistDisableDialog)
-                },
-                title = stringResource(R.string.limitBackgroundActivity),
-                text = Phrase.from(
-                    LocalContext.current,
-                    R.string.limitBackgroundActivityDescription
-                )
-                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                    .format().toString(),
-                buttons = listOf(
-                    DialogButtonData(
-                        text = GetString("Change Setting"),
-                        qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_confirm),
-                        color = LocalColors.current.danger,
-                        onClick = {
-                            // we can't disable it ourselves, but we can take the user to the right settings instead
-                            sendCommand(OpenBatteryOptimizationSettings)
-                        }
-                    ),
-                    DialogButtonData(
-                        text = GetString(R.string.cancel),
-                        qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_cancel),
-                        onClick = { sendCommand(HideWhitelistDisableDialog) }
-                    ),
-                )
-            )
-        }
-
-        if (uiState.showNotificationPrivacyDialog) {
-            AlertDialog(
-                onDismissRequest = {
-                    // hide dialog
-                    sendCommand(HideNotificationPrivacyDialog)
-                },
-                title = stringResource(R.string.notificationsContent),
-                content = {
-                    privacyOptions.forEachIndexed { index, option ->
-                        DialogTitledRadioButton(
-                            option = RadioOption(
-                                value = Unit,
-                                title = GetString(option.label),
-                                qaTag = GetString(stringResource(R.string.qa_preferences_option_notification_privacy) + "-${option.value}"),
-                                selected = option.label == uiState.notificationPrivacy
-                            )
-                        ) {
-                            sendCommand(SelectNotificationPrivacyOption(option.value))
-                        }
-
+    if (uiState.showWhitelistEnableDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideWhitelistEnableDialog)
+            },
+            title = Phrase.from(LocalContext.current, R.string.runSessionBackground)
+                .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                .format().toString(),
+            text = Phrase.from(LocalContext.current, R.string.runSessionBackgroundDescription)
+                .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                .format().toString(),
+            buttons = listOf(
+                DialogButtonData(
+                    text = GetString(R.string.allow),
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                    onClick = {
+                        sendCommand(OpenSystemBgWhitelist)
                     }
-                },
-                buttons = listOf(
-                    DialogButtonData(
-                        text = GetString(stringResource(R.string.cancel)),
-                        qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_cancel),
-                    ),
-                )
+                ),
+                DialogButtonData(
+                    text = GetString(R.string.cancel),
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                    onClick = {
+                        sendCommand(HideWhitelistEnableDialog)
+                    }
+                ),
             )
-        }
+        )
+    }
 
+    if (uiState.showWhitelistDisableDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideWhitelistDisableDialog)
+            },
+            title = stringResource(R.string.limitBackgroundActivity),
+            text = Phrase.from(
+                LocalContext.current,
+                R.string.limitBackgroundActivityDescription
+            )
+                .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                .format().toString(),
+            buttons = listOf(
+                DialogButtonData(
+                    text = GetString("Change Setting"),
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                    color = LocalColors.current.danger,
+                    onClick = {
+                        // we can't disable it ourselves, but we can take the user to the right settings instead
+                        sendCommand(OpenBatteryOptimizationSettings)
+                    }
+                ),
+                DialogButtonData(
+                    text = GetString(R.string.cancel),
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                    onClick = { sendCommand(HideWhitelistDisableDialog) }
+                ),
+            )
+        )
+    }
+
+    if (uiState.showNotificationPrivacyDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideNotificationPrivacyDialog)
+            },
+            title = stringResource(R.string.notificationsContent),
+            content = {
+                privacyOptions.forEachIndexed { index, option ->
+                    DialogTitledRadioButton(
+                        option = RadioOption(
+                            value = Unit,
+                            title = GetString(option.label),
+                            qaTag = GetString(stringResource(R.string.qa_preferences_option_notification_privacy) + "-${option.value}"),
+                            selected = option.label == uiState.notificationPrivacy
+                        )
+                    ) {
+                        sendCommand(SelectNotificationPrivacyOption(option.value))
+                    }
+
+                }
+            },
+            buttons = listOf(
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.cancel)),
+                    qaTag = stringResource(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                ),
+            )
+        )
     }
 }
 

@@ -110,144 +110,164 @@ fun PrivacySettingsPreference(
         onBack = { onBackPressed() },
         title = GetString(R.string.sessionPrivacy).string()
     ) {
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.callsVoiceAndVideoBeta).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.callsVoiceAndVideoBeta).string()
             ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.callsVoiceAndVideo),
-                    subtitle = annotatedStringResource(R.string.callsVoiceAndVideoToggleDescription),
-                    checked = uiState.callNotificationsEnabled,
-                    qaTag = R.string.qa_preferences_voice_calls,
-                    onCheckedChange = { isChecked ->
-                        if (isChecked) {
-                            sendCommand(ShowCallsWarningDialog)
-                        } else {
-                            sendCommand(ToggleCallsNotification(false))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.callsVoiceAndVideo),
+                        subtitle = annotatedStringResource(R.string.callsVoiceAndVideoToggleDescription),
+                        checked = uiState.callNotificationsEnabled,
+                        qaTag = R.string.qa_preferences_voice_calls,
+                        onCheckedChange = { isChecked ->
+                            if (isChecked) {
+                                sendCommand(ShowCallsWarningDialog)
+                            } else {
+                                sendCommand(ToggleCallsNotification(false))
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+        }
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.screenSecurity).string()
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.lockApp),
+                        subtitle = annotatedStringResource(
+                            Phrase.from(context, R.string.lockAppDescription)
+                                .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                                .format()
+                        ),
+                        enabled = uiState.screenLockEnabled,
+                        checked = uiState.screenLockChecked,
+                        qaTag = R.string.qa_preferences_lock_app,
+                        onCheckedChange = { isEnabled -> sendCommand(ToggleLockApp(isEnabled)) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         }
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.screenSecurity).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.sessionMessageRequests).string()
             ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.lockApp),
-                    subtitle = annotatedStringResource(
-                        Phrase.from(context, R.string.lockAppDescription)
-                            .put(APP_NAME_KEY, stringResource( R.string.app_name))
-                            .format()),
-                    enabled = uiState.screenLockEnabled,
-                    checked = uiState.screenLockChecked,
-                    qaTag = R.string.qa_preferences_lock_app,
-                    onCheckedChange = { isEnabled -> sendCommand(ToggleLockApp(isEnabled)) }
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.messageRequestsCommunities),
+                        subtitle = annotatedStringResource(R.string.messageRequestsCommunitiesDescription),
+                        checked = uiState.allowCommunityMessageRequests,
+                        qaTag = R.string.qa_preferences_message_requests,
+                        onCheckedChange = { sendCommand(ToggleCommunityRequests) }
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         }
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.sessionMessageRequests).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.readReceipts).string()
             ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.messageRequestsCommunities),
-                    subtitle = annotatedStringResource(R.string.messageRequestsCommunitiesDescription),
-                    checked = uiState.allowCommunityMessageRequests,
-                    qaTag = R.string.qa_preferences_message_requests,
-                    onCheckedChange = { sendCommand(ToggleCommunityRequests) }
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.readReceipts),
+                        subtitle = annotatedStringResource(R.string.readReceiptsDescription),
+                        checked = uiState.readReceiptsEnabled,
+                        qaTag = R.string.qa_preferences_read_receipt,
+                        onCheckedChange = { isEnabled -> sendCommand(ToggleReadReceipts(isEnabled)) }
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         }
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.readReceipts).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.typingIndicators).string()
             ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.readReceipts),
-                    subtitle = annotatedStringResource(R.string.readReceiptsDescription),
-                    checked = uiState.readReceiptsEnabled,
-                    qaTag = R.string.qa_preferences_read_receipt,
-                    onCheckedChange = { isEnabled -> sendCommand(ToggleReadReceipts(isEnabled)) }
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.typingIndicators),
+                        subtitle = annotatedStringResource(R.string.typingIndicatorsDescription),
+                        checked = uiState.typingIndicators,
+                        qaTag = R.string.qa_preferences_typing_indicator,
+                        onCheckedChange = { isEnabled ->
+                            sendCommand(
+                                ToggleTypingIndicators(
+                                    isEnabled
+                                )
+                            )
+                        }
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         }
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.typingIndicators).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.linkPreviews).string()
             ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.typingIndicators),
-                    subtitle = annotatedStringResource(R.string.typingIndicatorsDescription),
-                    checked = uiState.typingIndicators,
-                    qaTag = R.string.qa_preferences_typing_indicator,
-                    onCheckedChange = { isEnabled -> sendCommand(ToggleTypingIndicators(isEnabled)) }
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.linkPreviewsSend),
+                        subtitle = annotatedStringResource(R.string.linkPreviewsDescription),
+                        checked = uiState.linkPreviewEnabled,
+                        qaTag = R.string.qa_preferences_link_previews,
+                        onCheckedChange = { sendCommand(ToggleLinkPreviews) }
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         }
 
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.linkPreviews).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+        item {
+            CategoryCell(
+                modifier = Modifier,
+                title = GetString(R.string.incognitoKeyboard).string()
             ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.linkPreviewsSend),
-                    subtitle = annotatedStringResource(R.string.linkPreviewsDescription),
-                    checked = uiState.linkPreviewEnabled,
-                    qaTag = R.string.qa_preferences_link_previews,
-                    onCheckedChange = { sendCommand(ToggleLinkPreviews) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-        CategoryCell(
-            modifier = Modifier,
-            title = GetString(R.string.incognitoKeyboard).string()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                SwitchActionRowItem(
-                    title = annotatedStringResource(R.string.incognitoKeyboard),
-                    subtitle = annotatedStringResource(R.string.incognitoKeyboardDescription),
-                    checked = uiState.incognitoKeyboardEnabled,
-                    qaTag = R.string.qa_preferences_incognito_keyboard,
-                    onCheckedChange = { sendCommand(ToggleIncognitoKeyboard) }
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    SwitchActionRowItem(
+                        title = annotatedStringResource(R.string.incognitoKeyboard),
+                        subtitle = annotatedStringResource(R.string.incognitoKeyboardDescription),
+                        checked = uiState.incognitoKeyboardEnabled,
+                        qaTag = R.string.qa_preferences_incognito_keyboard,
+                        onCheckedChange = { sendCommand(ToggleIncognitoKeyboard) }
+                    )
+                }
             }
         }
     }
@@ -308,7 +328,6 @@ fun PrivacySettingsPreference(
             )
         )
     }
-
 }
 
 @Preview

@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -23,7 +26,8 @@ fun BasePreferenceScreens(
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
     title: String = "",
-    content: @Composable LazyItemScope.() -> Unit
+    listState: LazyListState? = null,
+    content: LazyListScope.() -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -35,14 +39,15 @@ fun BasePreferenceScreens(
         contentWindowInsets = WindowInsets.systemBars,
     ) { paddings ->
         LazyColumn(
+            state = listState ?: rememberLazyListState(),
             modifier = Modifier
                 .fillMaxSize()
                 .background(LocalColors.current.background)
                 .padding(paddings),
-            contentPadding = PaddingValues( LocalDimensions.current.smallSpacing),
+            contentPadding = PaddingValues(LocalDimensions.current.smallSpacing),
             horizontalAlignment = CenterHorizontally
         ) {
-            item { content() }
+            content()
         }
     }
 }
