@@ -23,6 +23,21 @@ class GetDirectMessagesApi @AssistedInject constructor(
         else /* !isInboxOrOutbox && sinceSeqNo != null */ -> "/outbox/since/$sinceLastId"
     }
 
+    override suspend fun processResponse(
+        executorContext: ApiExecutorContext,
+        baseUrl: String,
+        response: HttpResponse
+    ): List<OpenGroupApi.DirectMessage> {
+        if (response.statusCode == 304) {
+            // This "Not Modified" error is specific to the direct messages API to indicate there
+            // are no new messages, this is not an error for our purposes, so we won't go through
+            // the usual error handling path.
+            return emptyList()
+        }
+
+        return super.processResponse(executorContext, baseUrl, response)
+    }
+
     override suspend fun handleSuccessResponse(
         executorContext: ApiExecutorContext,
         baseUrl: String,
