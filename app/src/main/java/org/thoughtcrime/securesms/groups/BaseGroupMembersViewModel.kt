@@ -49,7 +49,6 @@ abstract class BaseGroupMembersViewModel(
     private val groupId = groupAddress.accountId
 
     // Output: the source-of-truth group information. Other states are derived from this.
-    @OptIn(FlowPreview::class)
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
         (configFactory.configUpdateNotifications
             .filter {
@@ -66,21 +65,16 @@ abstract class BaseGroupMembersViewModel(
                     val displayInfo = storage.getClosedGroupDisplayInfo(groupId.hexString)
                         ?: return@withContext null
 
-                    val rawMembers =
-                        configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
+                    val rawMembers = configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
 
                     val memberState = mutableListOf<GroupMemberState>()
                     for ((member, status) in rawMembers) {
-                        memberState.add(
-                            createGroupMember(
-                                member = member, status = status,
-                                shouldShowProBadge = recipientRepository.getRecipient(
-                                    member.accountId().toAddress()
-                                ).shouldShowProBadge,
-                                myAccountId = currentUserId,
-                                amIAdmin = displayInfo.isUserAdmin
-                            )
-                        )
+                        memberState.add(createGroupMember(
+                            member = member, status = status,
+                            shouldShowProBadge = recipientRepository.getRecipient(member.accountId().toAddress()).shouldShowProBadge,
+                            myAccountId = currentUserId,
+                            amIAdmin = displayInfo.isUserAdmin
+                        ))
                     }
 
                     displayInfo to sortMembers(memberState, currentUserId)
@@ -180,7 +174,7 @@ abstract class BaseGroupMembersViewModel(
             canResendInvite = amIAdmin && memberAccountId != myAccountId
                     && !member.isRemoved(status)
                     && (status == GroupMember.Status.INVITE_SENT || status == GroupMember.Status.INVITE_FAILED),
-            status = status.takeIf { !isMyself }, // status is only for other members
+            status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
             showProBadge = shouldShowProBadge,

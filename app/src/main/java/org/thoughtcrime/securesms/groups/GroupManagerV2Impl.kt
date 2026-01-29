@@ -397,9 +397,8 @@ class GroupManagerV2Impl @Inject constructor(
                 .build()
         ).apply { this.sentTimestamp = timestamp }
 
-        storage.insertGroupInfoChange(updatedMessage, group)
-
         messageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
+        storage.insertGroupInfoChange(updatedMessage, group)
     }
 
     override suspend fun removeMembers(
