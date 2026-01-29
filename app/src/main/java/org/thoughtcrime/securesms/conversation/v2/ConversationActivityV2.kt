@@ -687,6 +687,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         setupUiEventsObserver()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+
+        // Make sure we scroll on new intent
+        // This is used, for example, in the case of an audio notification tap
+        val messageId = IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)
+        if (messageId != null) {
+            jumpToMessage(messageId, true, null)
+        }
+    }
+
     private fun restartConversationLoader() {
         LoaderManager.getInstance(this).restartLoader(0, null, this)
     }

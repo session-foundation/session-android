@@ -154,7 +154,7 @@ class AudioPlaybackManager @Inject constructor(
         scope.cancel()
     }
 
-    // --- Controller setup ---
+    // Controller setup
 
     private fun ensureController(onReady: (MediaController) -> Unit) {
         controller?.let { onReady(it); return }
@@ -197,7 +197,7 @@ class AudioPlaybackManager @Inject constructor(
         }
     }
 
-    // --- State mapping ---
+    // State mapping
 
     private fun startProgressTracking() {
         if (progressJob?.isActive == true) return
@@ -288,7 +288,7 @@ class AudioPlaybackManager @Inject constructor(
         }
     }
 
-    // --- Restoration helpers (no extra “contract” beyond MediaId + MediaMetadata) ---
+    // Restoration helpers (no extra “contract” beyond MediaId + MediaMetadata)
 
     private fun playableFromMediaItem(item: MediaItem?): PlayableAudio? {
         if (item == null) return null
