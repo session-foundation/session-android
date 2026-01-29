@@ -6,7 +6,6 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.supervisorScope
@@ -46,7 +45,6 @@ import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
@@ -1309,7 +1307,6 @@ class GroupManagerV2Impl @Inject constructor(
                 .map { (member, _) -> member }
         }
 
-    // Checking for admin key is better than checking promotion status
     // returns null if the group is not found
     override fun isCurrentUserGroupAdmin(groupId: AccountId): Boolean? {
         return configFactory.withUserConfigs { it.userGroups.getClosedGroup(groupId.hexString) }?.hasAdminKey()
