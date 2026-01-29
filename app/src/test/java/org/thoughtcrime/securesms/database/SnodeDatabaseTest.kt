@@ -145,7 +145,7 @@ class SnodeDatabaseTest {
     fun `should persist swarm`() {
         db.setSnodePool(snodes)
 
-        val swarmNodes = setOf(snodes[0], snodes[1], snodes[2])
+        val swarmNodes = listOf(snodes[0], snodes[1], snodes[2])
 
         assertEquals(0, db.getSwarm("key1").size)
         db.setSwarm("key1", swarmNodes)
