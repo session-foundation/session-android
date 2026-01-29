@@ -10,7 +10,6 @@
     <string name="accountIdErrorInvalid">Toto ID účtu je neplatné. Zkontrolujte to prosím a zkuste to znovu.</string>
     <string name="accountIdOrOnsEnter">Zadejte ID účtu nebo ONS</string>
     <string name="accountIdOrOnsInvite">Pozvat ID účtu nebo ONS</string>
-    <string name="accountIdShare">Ahoj, používám {app_name} k rychlou komunikaci s úplným soukromím a bezpečností. Připoj se ke mě! Moje ID účtu je\n\n{account_id}\n\nAdresa pro stažení je {session_download_url}</string>
     <string name="accountIdYours">ID vašeho účtu</string>
     <string name="accountIdYoursDescription">Toto je vaše ID účtu. Ostatní uživatelé jej mohou naskenovat, aby s vámi mohli zahájit konverzaci.</string>
     <string name="actualSize">Skutečná velikost</string>
@@ -222,7 +221,6 @@
     <string name="cameraGrantAccessQr">{app_name} potřebuje přístup k fotoaparátu ke skenování QR kódů</string>
     <string name="cancel">Zrušit</string>
     <string name="cancelAccess">Zrušit {pro}</string>
-    <string name="cancelProPlan">Zrušit tarif {pro}</string>
     <string name="cancelProPlatform">Zrušení proveďte na webu {platform} pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
     <string name="cancelProPlatformStore">Zrušení proveďte na webu {platform_store} pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
     <string name="change">Změnit</string>
@@ -1180,7 +1178,6 @@
     <string name="proRenewPinFiveConversations">Chcete si znovu připnout více než {limit} konverzací?\nProdlužte si přístup k {pro} pro odemknutí funkcí, které vám chyběly.</string>
     <string name="proRenewPinMoreConversations">Chcete si znovu připnout více konverzací?\nProdlužte si přístup k {pro} pro odemknutí funkcí, které vám chyběly.</string>
     <string name="proRenewTosPrivacy">Prodloužením souhlasíte s <b>Podmínkami služby</b> {icon} a <b>Zásadami ochrany osobních údajů</b> {icon} {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Prodloužení Pro selhalo, brzy proběhne další pokus</string>
     <string name="proRenewingAction">prodlužování</string>
     <string name="proRenewingNoAccessBilling">V současnosti lze přístup k {pro} zakoupit a prodloužit pouze prostřednictvím {platform_store} nebo {platform_store_other}. Protože jste nainstalovali {app_name} pomocí {build_variant}, nemůžete zde prodloužit přístup.\n\nVývojáři {app_name} intenzivně pracují na alternativních platebních možnostech, které by uživatelům umožnily zakoupit přístup k {pro} mimo {platform_store} a {platform_store_other}.<b> Plán vývoje {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Žádost o vrácení peněz</string>
@@ -1497,7 +1494,6 @@
     <string name="useFastMode">Použít rychlý režim</string>
     <string name="viaPlatformWebsiteDescription">Změňte svůj tarif pomocí {platform_account}, kterým jste se zaregistrovali, prostřednictvím <b><font color="0">webu {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Přes webové stránky {platform}</string>
-    <string name="viaStoreWebsiteDescription">Aktualizujte svůj přístup k {pro} pomocí {platform_account}, se kterým jste se zaregistrovali, prostřednictvím webu <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Nelze přehrát video.</string>
     <string name="view">Zobrazit</string>

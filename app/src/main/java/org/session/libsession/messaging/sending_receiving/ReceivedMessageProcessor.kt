@@ -29,7 +29,7 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.utilities.WebRtcUtils
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClient
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -77,6 +77,7 @@ class ReceivedMessageProcessor @Inject constructor(
     private val visibleMessageHandler: Provider<VisibleMessageHandler>,
     private val blindMappingRepository: BlindMappingRepository,
     private val messageParser: MessageParser,
+    private val snodeClient: SnodeClient
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
@@ -152,9 +153,9 @@ class ReceivedMessageProcessor @Inject constructor(
             threadDatabase.getOrCreateThreadIdFor(threadAddress)
                 .also { context.threadIDs[threadAddress] = it }
         } else {
-            threadDatabase.getThreadIdIfExistsFor(threadAddress)
+            storage.getThreadId(threadAddress)
                 .also { id ->
-                    if (id == -1L) {
+                    if (id == null) {
                         log { "Dropping message for non-existing thread ${threadAddress.debugString}" }
                         return@withThreadLock
                     } else {
@@ -199,16 +200,18 @@ class ReceivedMessageProcessor @Inject constructor(
                     context.maxOutgoingMessageTimestamp = message.sentTimestamp!!
                 }
 
-                visibleMessageHandler.get().handleVisibleMessage(
-                    ctx = context,
-                    message = message,
-                    threadId = threadId,
-                    threadAddress = threadAddress,
-                    proto = proto,
-                    runThreadUpdate = false,
-                    runProfileUpdate = true,
-                    pro = pro,
-                )
+                threadId?.let {
+                    visibleMessageHandler.get().handleVisibleMessage(
+                        ctx = context,
+                        message = message,
+                        threadId = it,
+                        threadAddress = threadAddress,
+                        proto = proto,
+                        runThreadUpdate = false,
+                        runProfileUpdate = true,
+                        pro = pro,
+                    )
+                }
             }
 
             is CallMessage -> handleCallMessage(message)
@@ -389,7 +392,7 @@ class ReceivedMessageProcessor @Inject constructor(
      * Return true if this message should result in the creation of a thread.
      */
     private fun shouldCreateThread(message: Message): Boolean {
-        return message is VisibleMessage
+        return message is VisibleMessage || message is GroupUpdated
     }
 
     private fun handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
@@ -453,7 +456,7 @@ class ReceivedMessageProcessor @Inject constructor(
             messageDataProvider.getServerHashForMessage(messageIdToDelete)?.let { serverHash ->
                 scope.launch(Dispatchers.IO) { // using scope as we are slowly migrating to coroutines but we can't migrate everything at once
                     try {
-                        SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))
+                        snodeClient.deleteMessage(author, userAuth, listOf(serverHash))
                     } catch (e: Exception) {
                         Log.e("Loki", "Failed to delete message", e)
                     }

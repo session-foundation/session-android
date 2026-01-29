@@ -65,7 +65,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.model.PathStatus
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -408,11 +408,52 @@ fun Settings(
         }
 
         // Animated avatar CTA
-        if(uiState.showAnimatedProCTA){
-            AnimatedProCTA(
-                proSubscription = uiState.proDataState.type,
-                sendCommand = sendCommand
-            )
+        when(uiState.avatarCTAState){
+            is SettingsViewModel.AvatarCTAState.Pro -> {
+                SessionProCTA (
+                    title = stringResource(R.string.proActivated),
+                    badgeAtStart = true,
+                    textContent = {
+                        ProBadgeText(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.proAlreadyPurchased),
+                            textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                        )
+
+                        Spacer(Modifier.height(2.dp))
+
+                        // main message
+                        Text(
+                            modifier = Modifier
+                                .qaTag(R.string.qa_cta_body)
+                                .align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.proAnimatedDisplayPicture),
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+                    },
+                    content = {
+                        CTAAnimatedImages(
+                            heroImageBg = R.drawable.cta_hero_animated_bg,
+                            heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                        )
+                    },
+                    positiveButtonText = null,
+                    negativeButtonText = stringResource(R.string.close),
+                    onCancel = { sendCommand(HideAnimatedProCTA) }
+                )
+            }
+
+            is SettingsViewModel.AvatarCTAState.NonPro -> {
+                AnimatedProfilePicProCTA(
+                    expired = uiState.avatarCTAState.expired,
+                    onDismissRequest = { sendCommand(HideAnimatedProCTA) },
+                )
+            }
+
+            else -> {}
         }
 
         // donate confirmation
@@ -498,7 +539,7 @@ fun Settings(
 @Composable
 fun Buttons(
     recoveryHidden: Boolean,
-    pathStatus: OnionRequestAPI.PathStatus,
+    pathStatus: PathStatus,
     postPro: Boolean,
     proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
@@ -610,8 +651,8 @@ fun Buttons(
                 Divider()
 
                 Crossfade(when (pathStatus){
-                        OnionRequestAPI.PathStatus.BUILDING -> LocalColors.current.warning
-                        OnionRequestAPI.PathStatus.ERROR -> LocalColors.current.danger
+                        PathStatus.BUILDING -> LocalColors.current.warning
+                        PathStatus.ERROR -> LocalColors.current.danger
                         else -> primaryGreen
                     }, label = "path") {
                     ItemButton(
@@ -1014,54 +1055,6 @@ fun AvatarDialog(
     )
 }
 
-@Composable
-fun AnimatedProCTA(
-    proSubscription: ProStatus,
-    sendCommand: (SettingsViewModel.Commands) -> Unit,
-){
-    if(proSubscription is ProStatus.Active) {
-        SessionProCTA (
-            title = stringResource(R.string.proActivated),
-            badgeAtStart = true,
-            textContent = {
-                ProBadgeText(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = stringResource(R.string.proAlreadyPurchased),
-                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                )
-
-                Spacer(Modifier.height(2.dp))
-
-                // main message
-                Text(
-                    modifier = Modifier
-                        .qaTag(R.string.qa_cta_body)
-                        .align(Alignment.CenterHorizontally),
-                    text = stringResource(R.string.proAnimatedDisplayPicture),
-                    textAlign = TextAlign.Center,
-                    style = LocalType.current.base.copy(
-                        color = LocalColors.current.textSecondary
-                    )
-                )
-            },
-            content = {
-                CTAAnimatedImages(
-                    heroImageBg = R.drawable.cta_hero_animated_bg,
-                    heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-                )
-            },
-            positiveButtonText = null,
-            negativeButtonText = stringResource(R.string.close),
-            onCancel = { sendCommand(HideAnimatedProCTA) }
-        )
-    } else {
-        AnimatedProfilePicProCTA(
-            proSubscription = proSubscription,
-            onDismissRequest = { sendCommand(HideAnimatedProCTA) },
-        )
-    }
-}
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @SuppressLint("UnusedContentLambdaTargetStateParameter")
 @Preview
@@ -1077,7 +1070,7 @@ private fun SettingsScreenPreview() {
                 showAvatarDialog = false,
                 showAvatarPickerOptionCamera = false,
                 showAvatarPickerOptions = false,
-                showAnimatedProCTA = false,
+                avatarCTAState = SettingsViewModel.AvatarCTAState.Hidden,
                 avatarData = AvatarUIData(
                     listOf(
                         AvatarUIElement(
@@ -1094,7 +1087,7 @@ private fun SettingsScreenPreview() {
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                pathStatus = OnionRequestAPI.PathStatus.READY,
+                pathStatus = PathStatus.READY,
                 version = "1.26.0",
             ),
             sendCommand = {},

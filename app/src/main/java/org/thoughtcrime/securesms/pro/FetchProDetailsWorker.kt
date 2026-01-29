@@ -18,10 +18,11 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -50,8 +51,14 @@ class FetchProDetailsWorker @AssistedInject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val snodeClock: SnodeClock,
     private val configFactory: ConfigFactoryProtocol,
+    private val prefs: TextSecurePreferences,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        if (!prefs.forcePostPro()) {
+            Log.d(TAG, "Pro details fetch skipped because pro is not enabled")
+            return Result.success()
+        }
+
         val proMasterKey =
             requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
                 "User must be logged in to fetch pro details"
@@ -101,7 +108,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
 
     private suspend fun scheduleProofGenerationIfNeeded(details: ProDetails) {
-        val now = snodeClock.currentTimeMills()
+        val now = snodeClock.currentTimeMillis()
 
         if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
             Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")

@@ -2,14 +2,15 @@ package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClient
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.isGroupOrCommunity
@@ -25,6 +26,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 
 class MarkReadProcessor @Inject constructor(
@@ -38,6 +40,8 @@ class MarkReadProcessor @Inject constructor(
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
     private val lokiMessageDatabase: LokiMessageDatabase,
+    private val snodeClient: SnodeClient,
+    @param:ManagerScope private val coroutineScope: CoroutineScope,
 ) {
     fun process(
         markedReadMessages: List<MarkedMessageInfo>
@@ -64,7 +68,7 @@ class MarkReadProcessor @Inject constructor(
                     smsDatabase
                 }
 
-                db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMills())
+                db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMillis())
             }
 
         hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
@@ -91,18 +95,20 @@ class MarkReadProcessor @Inject constructor(
     private fun shortenExpiryOfDisappearingAfterRead(
         hashToMessage: Map<String, MarkedMessageInfo>
     ) {
-        hashToMessage.entries
-            .groupBy(
-                keySelector =  { it.value.expirationInfo.expiresIn },
-                valueTransform = { it.key }
-            ).forEach { (expiresIn, hashes) ->
-                SnodeAPI.alterTtl(
-                    messageHashes = hashes,
-                    newExpiry = snodeClock.currentTimeMills() + expiresIn,
-                    auth = checkNotNull(storage.userAuth) { "No authorized user" },
-                    shorten = true
-                )
-            }
+        coroutineScope.launch {
+            hashToMessage.entries
+                .groupBy(
+                    keySelector = { it.value.expirationInfo.expiresIn },
+                    valueTransform = { it.key }
+                ).forEach { (expiresIn, hashes) ->
+                    snodeClient.alterTtl(
+                        messageHashes = hashes,
+                        newExpiry = snodeClock.currentTimeMillis() + expiresIn,
+                        auth = checkNotNull(storage.userAuth) { "No authorized user" },
+                        shorten = true
+                    )
+                }
+        }
     }
 
     private val Recipient.shouldSendReadReceipt: Boolean
@@ -123,7 +129,7 @@ class MarkReadProcessor @Inject constructor(
             .forEach { (address, messages) ->
                 messages.map { it.timetamp }
                     .let(::ReadReceipt)
-                    .apply { sentTimestamp = snodeClock.currentTimeMills() }
+                    .apply { sentTimestamp = snodeClock.currentTimeMillis() }
                     .let { messageSender.send(it, address) }
             }
     }

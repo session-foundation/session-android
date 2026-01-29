@@ -26,7 +26,6 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.C
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
-import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
@@ -46,7 +45,7 @@ fun ChoosePlanNonOriginating(
     val headerTitle = when(subscription) {
         is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessExpireDate))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(DATE_KEY, subscription.duration.expiryFromNow())
+            .put(DATE_KEY, subscription.renewingAtFormatted())
             .format()
 
         is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatedAutoShort))
@@ -56,7 +55,7 @@ fun ChoosePlanNonOriginating(
                 amount = subscription.duration.duration.months,
                 unit = MeasureUnit.MONTH
             ))
-            .put(DATE_KEY, subscription.duration.expiryFromNow())
+            .put(DATE_KEY, subscription.renewingAtFormatted())
             .format()
 
         else -> ""

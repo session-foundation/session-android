@@ -22,8 +22,9 @@ import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClient
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
@@ -55,6 +56,8 @@ class GroupPoller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val messageParser: MessageParser,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
+    private val swarmDirectory: SwarmDirectory,
+    private val snodeClient: SnodeClient,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -195,7 +198,7 @@ class GroupPoller @AssistedInject constructor(
                 // Fetch snodes if we don't have any
                 val swarmNodes = if (pollState.shouldFetchSwarmNodes()) {
                     Log.d(TAG, "Fetching swarm nodes for $groupId")
-                    val fetched = SnodeAPI.fetchSwarmNodes(groupId.hexString).toSet()
+                    val fetched = swarmDirectory.fetchSwarm(groupId.hexString).toSet()
                     pollState.swarmNodes = fetched
                     fetched
                 } else {
@@ -244,10 +247,10 @@ class GroupPoller @AssistedInject constructor(
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
                 val receiveRevokeMessage = async {
-                    SnodeAPI.sendBatchRequest(
+                    snodeClient.sendBatchRequest(
                         snode,
                         groupId.hexString,
-                        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                        snodeClient.buildAuthenticatedRetrieveBatchRequest(
                             lastHash = lokiApiDatabase.getLastMessageHashValue(
                                 snode,
                                 groupId.hexString,
@@ -263,13 +266,13 @@ class GroupPoller @AssistedInject constructor(
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
                     pollingTasks += "extending group config TTL" to async {
-                        SnodeAPI.sendBatchRequest(
+                        snodeClient.sendBatchRequest(
                             snode,
                             groupId.hexString,
-                            SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                            snodeClient.buildAuthenticatedAlterTtlBatchRequest(
                                 messageHashes = configHashesToExtends.toList(),
                                 auth = groupAuth,
-                                newExpiry = clock.currentTimeMills() + 14.days.inWholeMilliseconds,
+                                newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
                                 extend = true
                             ),
                         )
@@ -284,10 +287,10 @@ class GroupPoller @AssistedInject constructor(
                     ).orEmpty()
 
 
-                    SnodeAPI.sendBatchRequest(
+                    snodeClient.sendBatchRequest(
                         snode = snode,
                         publicKey = groupId.hexString,
-                        request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                        request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
                             lastHash = lastHash,
                             auth = groupAuth,
                             namespace = Namespace.GROUP_MESSAGES(),
@@ -303,10 +306,10 @@ class GroupPoller @AssistedInject constructor(
                     Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
-                        SnodeAPI.sendBatchRequest(
+                        snodeClient.sendBatchRequest(
                             snode = snode,
                             publicKey = groupId.hexString,
-                            request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                            request = snodeClient.buildAuthenticatedRetrieveBatchRequest(
                                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                                     snode,
                                     groupId.hexString,

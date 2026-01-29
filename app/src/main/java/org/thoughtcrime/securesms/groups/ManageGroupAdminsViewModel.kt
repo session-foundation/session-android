@@ -10,10 +10,8 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -67,7 +65,8 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
                 // use plural version of this string resource
                 name = context.resources.getQuantityString(R.plurals.promoteMember, 2, 2),
                 icon = R.drawable.ic_add_admin_custom,
-                onClick = ::navigateToPromoteMembers
+                onClick = ::navigateToPromoteMembers,
+                qaTag = R.string.qa_manage_members_promote_members
             )
         )
     }
@@ -83,7 +82,7 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
     init {
         // Build footer from selected admins + collapsed state
         viewModelScope.launch {
-            kotlinx.coroutines.flow.combine(
+            combine(
                 selectedAdmins,
                 footerCollapsed,
                 ::buildFooterState
@@ -146,13 +145,13 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
 
         val accountIds = members.map { it.accountId }
 
-        val resendingText = context.resources.getQuantityString(
-            R.plurals.resendingPromotion,
+        val sendingPromotionText = context.resources.getQuantityString(
+            if (isRepromote) R.plurals.resendingPromotion else R.plurals.sendingPromotion,
             accountIds.size,
             accountIds.size
         )
 
-        showToast(resendingText)
+        showToast(sendingPromotionText)
 
         performGroupOperationCore(
             showLoading = false,

@@ -18,10 +18,9 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
+import org.session.libsession.network.SnodeClient
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -89,6 +88,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
+    private val snodeClient: SnodeClient,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
@@ -203,9 +203,7 @@ class ConfigToDatabaseSync @Inject constructor(
         storage.addClosedGroupPublicKey(group.accountId)
         // Store the encryption key pair
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
-        storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
-        // Notify the PN server
-        PushRegistryV1.subscribeGroup(group.accountId, publicKey = myAccountId.hexString)
+        storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMillis())
         threadDatabase.setCreationDate(threadId, formationTimestamp)
     }
 
@@ -255,8 +253,6 @@ class ConfigToDatabaseSync @Inject constructor(
         // Remove the key pairs
         storage.removeAllClosedGroupEncryptionKeyPairs(address.groupPublicKeyHex)
         storage.removeMember(address.address, myAccountId.toAddress())
-        // Notify the PN server
-        PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = address.groupPublicKeyHex, publicKey = myAccountId.hexString)
         messageNotifier.updateNotification(context)
     }
 
@@ -314,11 +310,11 @@ class ConfigToDatabaseSync @Inject constructor(
                     OwnedSwarmAuth.ofClosedGroup(groupInfoConfig.id, it)
                 } ?: return
 
-                // remove messages from swarm SnodeAPI.deleteMessage
+                // remove messages from swarm deleteMessage
                 scope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
                         messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
-                    if (cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(
+                    if (cleanedHashes.isNotEmpty()) snodeClient.deleteMessage(
                         groupInfoConfig.id.hexString,
                         groupAdminAuth,
                         cleanedHashes
@@ -351,9 +347,9 @@ class ConfigToDatabaseSync @Inject constructor(
                 }
             }
 
-            val threadId = threadDatabase.getThreadIdIfExistsFor(address)
+            val threadId = storage.getThreadId(address)
 
-            if (threadId != -1L) {
+            if (threadId != null) {
                 if (conversation.lastRead > storage.getLastSeen(threadId)) {
                     storage.markConversationAsRead(
                         threadId,

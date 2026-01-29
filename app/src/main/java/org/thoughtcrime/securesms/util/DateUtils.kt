@@ -297,7 +297,12 @@ class DateUtils @Inject constructor(
         fun getLocalisedTimeDuration(context: Context, amount: Int, unit: MeasureUnit): String {
             val locale = context.resources.configuration.locales[0]
             val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
-            return format.format(Measure(amount, unit))
+            val rawString = format.format(Measure(amount, unit))
+
+            // capitalise duration
+            return rawString.replace(Regex("""(\d+\p{Z}+)(\p{L})""")) {
+                it.groupValues[1] + it.groupValues[2].uppercase(locale)
+            }
         }
 
         // Format a given timestamp with a specific pattern

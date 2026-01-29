@@ -245,8 +245,8 @@ fun AlertDialogContent(
                             color = it.color,
                             enabled = it.enabled
                         ) {
-                            if (it.dismissOnClick) onDismissRequest()
                             it.onClick()
+                            if (it.dismissOnClick) onDismissRequest()
                         }
                     }
                 }

@@ -43,8 +43,8 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -589,7 +589,7 @@ open class Storage @Inject constructor(
         }
         if (error.localizedMessage != null) {
             val message: String
-            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+            if (error is OnionError.DestinationError && error.status?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -605,7 +605,7 @@ open class Storage @Inject constructor(
 
         if (error.localizedMessage != null) {
             val message: String
-            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+            if (error is OnionError.DestinationError && error.status?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -750,7 +750,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId) {
-        val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMills()
+        val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMillis()
         val senderPublicKey = message.sender
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
             ?: configFactory.getGroup(closedGroup)?.name
@@ -761,7 +761,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoLeaving(closedGroup: AccountId) {
-        val sentTimestamp = clock.currentTimeMills()
+        val sentTimestamp = clock.currentTimeMillis()
         val senderPublicKey = getUserPublicKey() ?: return
         val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupLeaving)
 
@@ -769,7 +769,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoErrorQuit(closedGroup: AccountId) {
-        val sentTimestamp = clock.currentTimeMills()
+        val sentTimestamp = clock.currentTimeMillis()
         val senderPublicKey = getUserPublicKey() ?: return
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
             ?: configFactory.getGroup(closedGroup)?.name
@@ -797,12 +797,11 @@ open class Storage @Inject constructor(
         val address = Address.Group(closedGroup)
         val recipient = recipientRepository.getRecipientSync(address)
         val threadDb = threadDatabase
-        val threadID = threadDb.getThreadIdIfExistsFor(address)
+        val threadID = threadDb.getOrCreateThreadIdFor(address)
         val expiryMode = recipient.expiryMode
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val inviteJson = updateData.toJSON()
-
 
         if (senderPublicKey == null || senderPublicKey == userPublicKey) {
             val infoMessage = OutgoingMediaMessage(
@@ -864,6 +863,10 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getServerCapabilities(server)
     }
 
+    override fun clearServerCapabilities(server: String) {
+        lokiAPIDatabase.clearServerCapabilities(server)
+    }
+
     override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
         return groupDatabase.getAllGroups(includeInactive)
     }
@@ -877,7 +880,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadId(address: Address): Long? {
-        val threadID = threadDatabase.getThreadIdIfExistsFor(address)
+        val threadID = threadDatabase.getThreadIdIfExistsFor(address.address)
         return if (threadID < 0) null else threadID
     }
 
@@ -1096,7 +1099,7 @@ open class Storage @Inject constructor(
 
         val message = IncomingMediaMessage(
             from = fromSerialized(userPublicKey),
-            sentTimeMillis = clock.currentTimeMills(),
+            sentTimeMillis = clock.currentTimeMillis(),
             expiresIn = 0,
             expireStartedAt = 0,
             isMessageRequestResponse = true,
@@ -1118,7 +1121,7 @@ open class Storage @Inject constructor(
         val recipient = recipientRepository.getRecipientSync(address)
         val expiryMode = recipient.expiryMode.coerceSendToRead()
         val expiresInMillis = expiryMode.expiryMillis
-        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
+        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMillis() else 0
         val callMessage = IncomingTextMessage(
             callMessageType = callMessageType,
             sender = address,

@@ -4,10 +4,8 @@ import android.content.Context
 import android.hardware.Camera
 import android.net.Uri
 import android.provider.Settings
-import androidx.annotation.ArrayRes
 import androidx.annotation.StyleRes
 import androidx.camera.core.CameraSelector
-import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -45,7 +43,9 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_PATH_ROTATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SEEN_DONATION_CTA
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SNODE_POOL_REFRESH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LEGACY_PREF_KEY_SELECTED_UI_MODE
@@ -68,8 +68,6 @@ import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
-import java.util.Arrays
-import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -130,7 +128,6 @@ interface TextSecurePreferences {
     fun getUpdateApkDigest(): String?
     fun getHasLegacyConfig(): Boolean
     fun setHasLegacyConfig(newValue: Boolean)
-    fun isEnterSendsEnabled(): Boolean
     fun isPasswordDisabled(): Boolean
     fun setPasswordDisabled(disabled: Boolean)
     fun getLastVersionCode(): Int
@@ -168,8 +165,6 @@ interface TextSecurePreferences {
     fun setStringSetPreference(key: String, value: Set<String>)
     fun getHasViewedSeed(): Boolean
     fun setHasViewedSeed(hasViewedSeed: Boolean)
-    fun getLastSnodePoolRefreshDate(): Long
-    fun setLastSnodePoolRefreshDate(date: Date)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -256,6 +251,11 @@ interface TextSecurePreferences {
     fun showDonationCTAFromPositiveReviewDebug(): String?
     fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
 
+    fun getLastSnodePoolRefresh(): Long
+    fun setLastSnodePoolRefresh(epochMs: Long)
+    fun getLastPathRotation(): Long
+    fun setLastPathRotation(epochMs: Long)
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
@@ -289,33 +289,22 @@ interface TextSecurePreferences {
 
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
-        const val THREAD_TRIM_NOW = "pref_trim_now"
         const val LAST_VERSION_CODE_PREF = "last_version_code"
         const val RINGTONE_PREF = "pref_key_ringtone"
         const val VIBRATE_PREF = "pref_key_vibrate"
         const val NOTIFICATION_PREF = "pref_key_enable_notifications"
-        const val LED_COLOR_PREF = "pref_led_color"
         const val LED_COLOR_PREF_PRIMARY = "pref_led_color_primary"
-        const val LED_BLINK_PREF = "pref_led_blink"
-        const val LED_BLINK_PREF_CUSTOM = "pref_led_blink_custom"
         const val PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval"
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
-        const val ENTER_SENDS_PREF = "pref_enter_sends"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
-        const val REGISTERED_GCM_PREF = "pref_gcm_registered"
         const val UPDATE_APK_REFRESH_TIME_PREF = "pref_update_apk_refresh_time"
         const val UPDATE_APK_DOWNLOAD_ID = "pref_update_apk_download_id"
         const val UPDATE_APK_DIGEST = "pref_update_apk_digest"
         const val IN_THREAD_NOTIFICATION_PREF = "pref_key_inthread_notifications"
-        const val IN_APP_NOTIFICATION_SOUNDS = "pref_sound_when_app_open"
         const val MESSAGE_BODY_TEXT_SIZE_PREF = "pref_message_body_text_size"
         @Deprecated("No longer used, kept for migration purposes")
-        const val LOCAL_REGISTRATION_ID_PREF = "pref_local_registration_id"
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
-        const val MEDIA_DOWNLOAD_MOBILE_PREF = "pref_media_download_mobile"
-        const val MEDIA_DOWNLOAD_WIFI_PREF = "pref_media_download_wifi"
-        const val MEDIA_DOWNLOAD_ROAMING_PREF = "pref_media_download_roaming"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
         const val READ_RECEIPTS_PREF = "pref_read_receipts"
         const val INCOGNITO_KEYBORAD_PREF = "pref_incognito_keyboard"
@@ -328,7 +317,6 @@ interface TextSecurePreferences {
         const val BACKUP_PASSPHRASE = "pref_backup_passphrase"
         const val ENCRYPTED_BACKUP_PASSPHRASE = "pref_encrypted_backup_passphrase"
         const val BACKUP_TIME = "pref_backup_next_time"
-        const val BACKUP_NOW = "pref_backup_create"
         const val BACKUP_SAVE_DIR = "pref_save_dir"
         const val SCREEN_LOCK = "pref_android_screen_lock"
         const val SCREEN_LOCK_TIMEOUT = "pref_android_screen_lock_timeout"
@@ -364,7 +352,6 @@ interface TextSecurePreferences {
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
         const val MIGRATED_TO_MULTIPART_CONFIG = "migrated_to_multi_part_config"
-        const val FORCED_COMMUNITY_DESCRIPTION_POLL = "forced_community_description_poll"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -437,25 +424,12 @@ interface TextSecurePreferences {
         const val DEBUG_SEEN_DONATION_CTA_AMOUNT = "debug_seen_donation_cta_amount"
         const val DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "debug_show_donation_cta_from_positive_review"
 
-        @JvmStatic
-        fun getConfigurationMessageSynced(context: Context): Boolean {
-            return getBooleanPreference(context, CONFIGURATION_SYNCED, false)
-        }
-
-        @JvmStatic
-        fun setConfigurationMessageSynced(context: Context, value: Boolean) {
-            setBooleanPreference(context, CONFIGURATION_SYNCED, value)
-            _events.tryEmit(CONFIGURATION_SYNCED)
-        }
+        const val LAST_SNODE_POOL_REFRESH = "last_snode_pool_refresh"
+        const val LAST_PATH_ROTATION = "last_path_rotation"
 
         @JvmStatic
         fun isPushEnabled(context: Context): Boolean {
             return getBooleanPreference(context, IS_PUSH_ENABLED, false)
-        }
-
-        @JvmStatic
-        fun setPushEnabled(context: Context, value: Boolean) {
-            setBooleanPreference(context, IS_PUSH_ENABLED, value)
         }
 
         // endregion
@@ -477,58 +451,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setScreenLockTimeout(context: Context, value: Long) {
             setLongPreference(context, SCREEN_LOCK_TIMEOUT, value)
-        }
-
-        @JvmStatic
-        fun setBackupPassphrase(context: Context, passphrase: String?) {
-            setStringPreference(context, BACKUP_PASSPHRASE, passphrase)
-        }
-
-        @JvmStatic
-        fun getBackupPassphrase(context: Context): String? {
-            return getStringPreference(context, BACKUP_PASSPHRASE, null)
-        }
-
-        @JvmStatic
-        fun setEncryptedBackupPassphrase(context: Context, encryptedPassphrase: String?) {
-            setStringPreference(context, ENCRYPTED_BACKUP_PASSPHRASE, encryptedPassphrase)
-        }
-
-        @JvmStatic
-        fun getEncryptedBackupPassphrase(context: Context): String? {
-            return getStringPreference(context, ENCRYPTED_BACKUP_PASSPHRASE, null)
-        }
-
-        fun setBackupEnabled(context: Context, value: Boolean) {
-            setBooleanPreference(context, BACKUP_ENABLED, value)
-        }
-
-        @JvmStatic
-        fun isBackupEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, BACKUP_ENABLED, false)
-        }
-
-        @JvmStatic
-        fun setNextBackupTime(context: Context, time: Long) {
-            setLongPreference(context, BACKUP_TIME, time)
-        }
-
-        @JvmStatic
-        fun getNextBackupTime(context: Context): Long {
-            return getLongPreference(context, BACKUP_TIME, -1)
-        }
-
-        fun setBackupSaveDir(context: Context, dirUri: String?) {
-            setStringPreference(context, BACKUP_SAVE_DIR, dirUri)
-        }
-
-        fun getBackupSaveDir(context: Context): String? {
-            return getStringPreference(context, BACKUP_SAVE_DIR, null)
-        }
-
-        @JvmStatic
-        fun getNeedsSqlCipherMigration(context: Context): Boolean {
-            return getBooleanPreference(context, NEEDS_SQLCIPHER_MIGRATION, false)
         }
 
         @JvmStatic
@@ -581,40 +503,6 @@ interface TextSecurePreferences {
             return getBooleanPreference(context, READ_RECEIPTS_PREF, false)
         }
 
-        fun setReadReceiptsEnabled(context: Context, enabled: Boolean) {
-            setBooleanPreference(context, READ_RECEIPTS_PREF, enabled)
-        }
-
-        @JvmStatic
-        fun isTypingIndicatorsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, TYPING_INDICATORS, false)
-        }
-
-        @JvmStatic
-        fun setTypingIndicatorsEnabled(context: Context, enabled: Boolean) {
-            setBooleanPreference(context, TYPING_INDICATORS, enabled)
-        }
-
-        @JvmStatic
-        fun isLinkPreviewsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, LINK_PREVIEWS, false)
-        }
-
-        @JvmStatic
-        fun setLinkPreviewsEnabled(context: Context, enabled: Boolean) {
-            setBooleanPreference(context, LINK_PREVIEWS, enabled)
-        }
-
-        @JvmStatic
-        fun hasSeenGIFMetaDataWarning(context: Context): Boolean {
-            return getBooleanPreference(context, GIF_METADATA_WARNING, false)
-        }
-
-        @JvmStatic
-        fun setHasSeenGIFMetaDataWarning(context: Context) {
-            setBooleanPreference(context, GIF_METADATA_WARNING, true)
-        }
-
         @JvmStatic
         fun isGifSearchInGridLayout(context: Context): Boolean {
             return getBooleanPreference(context, GIF_GRID_LAYOUT, false)
@@ -628,81 +516,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getNotificationPrivacy(context: Context): NotificationPrivacyPreference {
             return NotificationPrivacyPreference(getStringPreference(context, NOTIFICATION_PRIVACY_PREF, "all"))
-        }
-
-        @JvmStatic
-        fun getRepeatAlertsCount(context: Context): Int {
-            return try {
-                getStringPreference(context, REPEAT_ALERTS_PREF, "0")!!.toInt()
-            } catch (e: NumberFormatException) {
-                Log.w(TAG, e)
-                0
-            }
-        }
-
-        fun getLocalRegistrationId(context: Context): Int {
-            return getIntegerPreference(context, LOCAL_REGISTRATION_ID_PREF, 0)
-        }
-
-        fun setLocalRegistrationId(context: Context, registrationId: Int) {
-            setIntegerPreference(context, LOCAL_REGISTRATION_ID_PREF, registrationId)
-        }
-
-        @JvmStatic
-        fun isInThreadNotifications(context: Context): Boolean {
-            return getBooleanPreference(context, IN_THREAD_NOTIFICATION_PREF, true)
-        }
-
-        @JvmStatic
-        fun isUniversalUnidentifiedAccess(context: Context): Boolean {
-            return getBooleanPreference(context, UNIVERSAL_UNIDENTIFIED_ACCESS, false)
-        }
-
-        @JvmStatic
-        fun getUpdateApkRefreshTime(context: Context): Long {
-            return getLongPreference(context, UPDATE_APK_REFRESH_TIME_PREF, 0L)
-        }
-
-        @JvmStatic
-        fun setUpdateApkRefreshTime(context: Context, value: Long) {
-            setLongPreference(context, UPDATE_APK_REFRESH_TIME_PREF, value)
-        }
-
-        @JvmStatic
-        fun setUpdateApkDownloadId(context: Context, value: Long) {
-            setLongPreference(context, UPDATE_APK_DOWNLOAD_ID, value)
-        }
-
-        @JvmStatic
-        fun getUpdateApkDownloadId(context: Context): Long {
-            return getLongPreference(context, UPDATE_APK_DOWNLOAD_ID, -1)
-        }
-
-        @JvmStatic
-        fun setUpdateApkDigest(context: Context, value: String?) {
-            setStringPreference(context, UPDATE_APK_DIGEST, value)
-        }
-
-        @JvmStatic
-        fun getUpdateApkDigest(context: Context): String? {
-            return getStringPreference(context, UPDATE_APK_DIGEST, null)
-        }
-
-        @JvmStatic
-        fun getHasLegacyConfig(context: Context): Boolean {
-            return getBooleanPreference(context, HAS_RECEIVED_LEGACY_CONFIG, false)
-        }
-
-        @JvmStatic
-        fun setHasLegacyConfig(context: Context, newValue: Boolean) {
-            setBooleanPreference(context, HAS_RECEIVED_LEGACY_CONFIG, newValue)
-            _events.tryEmit(HAS_RECEIVED_LEGACY_CONFIG)
-        }
-
-
-        @JvmStatic
-        fun isEnterSendsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, ENTER_SENDS_PREF, false)
         }
 
         @JvmStatic
@@ -736,11 +549,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun getLanguage(context: Context): String? {
-            return getStringPreference(context, LANGUAGE_PREF, "zz")
-        }
-
-        @JvmStatic
         fun isNotificationsEnabled(context: Context): Boolean {
             return getBooleanPreference(context, NOTIFICATION_PREF, true)
         }
@@ -752,21 +560,6 @@ interface TextSecurePreferences {
                 result = Settings.System.DEFAULT_NOTIFICATION_URI.toString()
             }
             return Uri.parse(result)
-        }
-
-        @JvmStatic
-        fun removeNotificationRingtone(context: Context) {
-            removePreference(context, RINGTONE_PREF)
-        }
-
-        @JvmStatic
-        fun setNotificationRingtone(context: Context, ringtone: String?) {
-            setStringPreference(context, RINGTONE_PREF, ringtone)
-        }
-
-        @JvmStatic
-        fun setNotificationVibrateEnabled(context: Context, enabled: Boolean) {
-            setBooleanPreference(context, VIBRATE_PREF, enabled)
         }
 
         @JvmStatic
@@ -784,10 +577,6 @@ interface TextSecurePreferences {
             return getBooleanPreference(context, THREAD_TRIM_ENABLED, true)
         }
 
-        private fun getMediaDownloadAllowed(context: Context, key: String, @ArrayRes defaultValuesRes: Int): Set<String>? {
-            return getStringSetPreference(context, key, HashSet(Arrays.asList(*context.resources.getStringArray(defaultValuesRes))))
-        }
-
         @JvmStatic
         fun getLogEncryptedSecret(context: Context): String? {
             return getStringPreference(context, LOG_ENCRYPTED_SECRET, null)
@@ -801,11 +590,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getLogUnencryptedSecret(context: Context): String? {
             return getStringPreference(context, LOG_UNENCRYPTED_SECRET, null)
-        }
-
-        @JvmStatic
-        fun setLogUnencryptedSecret(context: Context, base64Secret: String?) {
-            setStringPreference(context, LOG_UNENCRYPTED_SECRET, base64Secret)
         }
 
         @JvmStatic
@@ -826,19 +610,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setNotificationMessagesChannelVersion(context: Context, version: Int) {
             setIntegerPreference(context, NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
-        }
-
-        @JvmStatic
-        fun hasForcedNewConfig(context: Context): Boolean {
-            return getBooleanPreference(context, HAS_FORCED_NEW_CONFIG, false)
-        }
-        
-        fun forcedCommunityDescriptionPoll(context: Context, room: String): Boolean {
-            return getBooleanPreference(context, FORCED_COMMUNITY_DESCRIPTION_POLL+room, false)
-        }
-
-        fun setForcedCommunityDescriptionPoll(context: Context, room: String, forced: Boolean) {
-            setBooleanPreference(context, FORCED_COMMUNITY_DESCRIPTION_POLL+room, forced)
         }
 
         @JvmStatic
@@ -898,50 +669,10 @@ interface TextSecurePreferences {
             return getBooleanPreference(context, "has_viewed_seed", false)
         }
 
-        fun setHasViewedSeed(context: Context, hasViewedSeed: Boolean) {
-            setBooleanPreference(context, "has_viewed_seed", hasViewedSeed)
-        }
-
-        fun setRestorationTime(context: Context, time: Long) {
-            setLongPreference(context, "restoration_time", time)
-        }
-
-        fun getRestorationTime(context: Context): Long {
-            return getLongPreference(context, "restoration_time", 0)
-        }
-
         @Deprecated("We no longer keep the profile expiry in prefs, we write them in the file instead. Keeping it here for migration purposes")
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
-        }
-
-        fun getLastSnodePoolRefreshDate(context: Context?): Long {
-            return getLongPreference(context!!, "last_snode_pool_refresh_date", 0)
-        }
-
-        fun setLastSnodePoolRefreshDate(context: Context?, date: Date) {
-            setLongPreference(context!!, "last_snode_pool_refresh_date", date.time)
-        }
-        fun getLastOpenTimeDate(context: Context): Long {
-            return getLongPreference(context, LAST_OPEN_DATE, 0)
-        }
-
-        fun setLastOpenDate(context: Context) {
-            setLongPreference(context, LAST_OPEN_DATE, System.currentTimeMillis())
-        }
-
-        fun hasSeenLinkPreviewSuggestionDialog(context: Context): Boolean {
-            return getBooleanPreference(context, "has_seen_link_preview_suggestion_dialog", false)
-        }
-
-        fun setHasSeenLinkPreviewSuggestionDialog(context: Context) {
-            setBooleanPreference(context, "has_seen_link_preview_suggestion_dialog", true)
-        }
-
-        @JvmStatic
-        fun hasHiddenMessageRequests(context: Context): Boolean {
-            return getBooleanPreference(context, HAS_HIDDEN_MESSAGE_REQUESTS, false)
         }
 
         @JvmStatic
@@ -953,17 +684,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun isCallNotificationsEnabled(context: Context): Boolean {
             return getBooleanPreference(context, CALL_NOTIFICATIONS_ENABLED, false)
-        }
-
-        @JvmStatic
-        fun setShownCallWarning(context: Context): Boolean {
-            val previousValue = getBooleanPreference(context, SHOWN_CALL_WARNING, false)
-            if (previousValue) {
-                return false
-            }
-            val setValue = true
-            setBooleanPreference(context, SHOWN_CALL_WARNING, setValue)
-            return previousValue != setValue
         }
 
         @JvmStatic
@@ -997,21 +717,6 @@ interface TextSecurePreferences {
         fun setHaveWarnedUserAboutSavingAttachments(context: Context) {
             setBooleanPreference(context, HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS, true)
         }
-
-        // ----- Get / set methods for the user's date format preference -----
-        @JvmStatic
-        fun getDateFormatPref(context: Context): Int {
-            // Note: 0 means "follow system setting" (default) - go to the declaration of DATE_FORMAT_PREF for further details.
-            return getIntegerPreference(context, DATE_FORMAT_PREF, -1)
-        }
-
-        @JvmStatic
-        fun setDateFormatPref(context: Context, value: Int) { setIntegerPreference(context, DATE_FORMAT_PREF, value) }
-
-        @JvmStatic
-        fun forcedShortTTL(context: Context): Boolean {
-            return getBooleanPreference(context, FORCED_SHORT_TTL, false)
-        }
     }
 }
 
@@ -1020,7 +725,7 @@ class AppTextSecurePreferences @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val json: Json,
 ): TextSecurePreferences {
-    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
+    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, if (BuildConfig.BUILD_TYPE != "release") true else false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
     override var migratedToGroupV2Config: Boolean
@@ -1275,10 +980,6 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
     }
 
-    override fun isEnterSendsEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.ENTER_SENDS_PREF, false)
-    }
-
     override fun isPasswordDisabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.DISABLE_PASSPHRASE_PREF, true)
     }
@@ -1446,12 +1147,20 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference("has_viewed_seed", hasViewedSeed)
     }
 
-    override fun getLastSnodePoolRefreshDate(): Long {
-        return getLongPreference("last_snode_pool_refresh_date", 0)
+    override fun getLastSnodePoolRefresh(): Long {
+        return getLongPreference(LAST_SNODE_POOL_REFRESH, 0)
     }
 
-    override fun setLastSnodePoolRefreshDate(date: Date) {
-        setLongPreference("last_snode_pool_refresh_date", date.time)
+    override fun setLastSnodePoolRefresh(epochMs: Long) {
+        setLongPreference(LAST_SNODE_POOL_REFRESH, epochMs)
+    }
+
+    override fun getLastPathRotation(): Long {
+        return getLongPreference(LAST_PATH_ROTATION, 0)
+    }
+
+    override fun setLastPathRotation(epochMs: Long) {
+        setLongPreference(LAST_PATH_ROTATION, epochMs)
     }
 
     override fun getLastOpenTimeDate(): Long {

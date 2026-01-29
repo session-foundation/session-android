@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.google.services)
 
     id("generate-ip-country-data")
+    id("local-snode-pool")
     id("rename-apk")
     id("witness")
 }
@@ -25,8 +26,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 434
-val canonicalVersionName = "1.30.1"
+val canonicalVersionCode = 436
+val canonicalVersionName = "1.30.3"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -394,8 +395,6 @@ dependencies {
     implementation(libs.copper.flow)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.guava)
-    implementation(libs.kovenant)
-    implementation(libs.kovenant.android)
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
@@ -421,6 +420,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.truth)
     testImplementation(libs.truth)
+    testImplementation(libs.androidx.sqlite.framework)
     androidTestImplementation(libs.truth)
     testRuntimeOnly(libs.mockito.core)
 
@@ -436,7 +436,6 @@ dependencies {
     androidTestUtil(libs.androidx.orchestrator)
 
     testImplementation(libs.robolectric)
-    testImplementation(libs.robolectric.shadows.multidex)
     testImplementation(libs.conscrypt.openjdk.uber)
     testImplementation(libs.turbine)
 

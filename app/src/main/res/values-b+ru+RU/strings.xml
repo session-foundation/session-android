@@ -222,7 +222,6 @@
     <string name="cameraGrantAccessQr">{app_name} требуется доступ к камере для сканирования QR-кодов</string>
     <string name="cancel">Отмена</string>
     <string name="cancelAccess">Отменить {pro}</string>
-    <string name="cancelProPlan">Отменить план {pro}</string>
     <string name="cancelProPlatform">Отмените на сайте {platform}, используя учётную запись {platform_account}, с которой вы оформили подписку на {pro}.</string>
     <string name="cancelProPlatformStore">Отмените на сайте {platform_store}, используя учётную запись {platform_account}, с которой вы оформили подписку на {pro}.</string>
     <string name="change">Изменить</string>
@@ -1049,7 +1048,7 @@
     <string name="preview">Предварительный просмотр</string>
     <string name="previewNotification">Предпросмотр уведомления</string>
     <string name="proAccessActivatedAutoShort">Ваш доступ к {pro} активен!\n\n{pro} автоматически продлевается <b>{date}</b> на <b>{current_plan_length}</b>.</string>
-    <string name="proAccessActivatedNotAuto">Ваш {pro} истечёт <b>{date}</b>.\n\nПродлите {pro} сейчас, чтобы автоматически продлить его до окончания срока действия.</string>
+    <string name="proAccessActivatedNotAuto">Срок действия вашего доступа к {pro} истечет <b>{date}</b>.\n\nОбновите свой доступ к {pro} сейчас, чтобы гарантировать автоматическое продление до истечения срока действия вашего доступа к {pro}.</string>
     <string name="proAccessActivatesAuto">Ваш доступ к {pro} активен!\n\n{pro} будет автоматически продлён <b>{date}</b> ещё на\n<b>{current_plan_length}</b>. Все внесённые здесь изменения вступят в силу при следующем продлении.</string>
     <string name="proAccessError">Ошибка доступа к {pro}</string>
     <string name="proAccessExpireDate">Ваш доступ {pro} истекает <b>{date}</b>.</string>
@@ -1130,7 +1129,7 @@
         <item quantity="many">%1$s Групп Улучшены</item>
         <item quantity="other">%1$s Групп Улучшены</item>
     </plurals>
-    <string name="proImportantDescription">Форма запроса на возврат средств готова. При одобрении, ваш доступ к {pro} будет отключён, и вы потеряете доступ ко всем его функциям.</string>
+    <string name="proImportantDescription">Запрос на возврат средств является окончательным. В случае одобрения ваш доступ к {pro} будет немедленно аннулирован, и вы потеряете доступ ко всем функциям {pro}.</string>
     <string name="proIncreasedAttachmentSizeFeature">Увеличенный размер вложений</string>
     <string name="proIncreasedMessageLengthFeature">Увеличенная длина сообщения</string>
     <string name="proLargerGroups">Большие Группы</string>
@@ -1170,7 +1169,7 @@
     <string name="proRefundRequestSessionSupport">Ваш запрос на возврат средств будет рассмотрен службой поддержки {app_name}.\n\nОтправьте запрос, нажав на кнопку ниже и заполнив форму возврата.\n\nХотя служба поддержки {app_name} стремится обрабатывать запросы на возврат в течение 24–72 часов, время обработки может увеличиться при большом объёме обращений.</string>
     <string name="proRefundRequestStorePolicies">Ваш запрос на возврат средств будет обрабатываться исключительно через <b>веб-сайт {platform}</b> самой платформой {platform}.\n\nВ соответствии с политикой возврата {platform}, разработчики {app_name} не могут повлиять на результат обработки запроса. Это касается как его одобрения или отклонения, так и вопроса о полном или частичном возврате.</string>
     <string name="proRefundSupport">Пожалуйста, свяжитесь с {platform} для получения дополнительной информации о статусе вашего запроса на возврат. Из-за политики возвратов {platform} разработчики {app_name} не могут повлиять на результат рассмотрения запроса.\n\n<font color="0">Служба поддержки возвратов {platform}</font></string>
-    <string name="proRefunding">Возвращаем средства</string>
+    <string name="proRefunding">Возврат средств {pro}</string>
     <string name="proRefundingDescription">Возвраты за {app_pro} обрабатываются исключительно {platform} через {platform_store}.\n\nИз-за политики возвратов {platform} разработчики {app_name} не могут повлиять на результат рассмотрения запроса на возврат. Это касается как одобрения или отклонения запроса, так и решения о полном или частичном возврате.</string>
     <string name="proRenewAnimatedDisplayPicture">Хотите снова использовать анимированные изображения профиля?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
     <string name="proRenewBeta">Продлить {pro} Beta</string>
@@ -1180,7 +1179,6 @@
     <string name="proRenewPinFiveConversations">Хотите снова закреплять более {limit} бесед?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
     <string name="proRenewPinMoreConversations">Хотите снова закреплять больше бесед?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
     <string name="proRenewTosPrivacy">Продлевая подписку, вы соглашаетесь с <b>Условиями использования</b> {icon} и <b>Политикой конфиденциальности</b> {icon} {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Не удалось продлить подписку Pro, повторная попытка скоро</string>
     <string name="proRenewingAction">продление</string>
     <string name="proRenewingNoAccessBilling">В настоящее время доступ к {pro} можно приобрести и продлить только через {platform_store} или {platform_store_other}. Поскольку вы установили {app_name} с использованием сборки {build_variant}, продление здесь недоступно.\n\nРазработчики {app_name} активно работают над альтернативными способами оплаты, чтобы пользователи могли приобретать доступ к {pro} вне {platform_store} и {platform_store_other}.<b> Дорожная карта {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Возврат Средств Запрошен</string>
@@ -1498,7 +1496,6 @@
     <string name="useFastMode">Использовать быстрый режим</string>
     <string name="viaPlatformWebsiteDescription">Измените свой план, используя {platform_account}, с которым вы зарегистрировались, через <b><font color="0">веб-сайт {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Через сайт {platform}</string>
-    <string name="viaStoreWebsiteDescription">Обновите доступ к {pro}, используя аккаунт {platform_account}, с которым вы зарегистрировались, через веб-сайт <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Видео</string>
     <string name="videoErrorPlay">Невозможно воспроизвести видео.</string>
     <string name="view">Просмотреть</string>

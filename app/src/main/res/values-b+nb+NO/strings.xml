@@ -216,7 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} trenger kameratilgang for å skanne QR-koder</string>
     <string name="cancel">Avbryt</string>
     <string name="cancelAccess">Kanseller {pro}</string>
-    <string name="cancelProPlan">Kanseller {pro}-abonnementet</string>
     <string name="cancelProPlatform">Avbryt på {platform}-nettstedet, ved å bruke {platform_account} du registrerte deg for {pro} med.</string>
     <string name="cancelProPlatformStore">Avbryt på {platform_store}-nettstedet, ved å bruke {platform_account} du registrerte deg for {pro} med.</string>
     <string name="change">Endre</string>
@@ -1109,7 +1108,6 @@
     <string name="proRenewPinFiveConversations">Vil du feste mer enn {limit} samtaler igjen?\nForny {pro}-tilgangen din for å låse opp funksjonene du har gått glipp av.</string>
     <string name="proRenewPinMoreConversations">Vil du feste flere samtaler igjen?\nForny {pro}-tilgangen din for å låse opp funksjonene du har gått glipp av.</string>
     <string name="proRenewTosPrivacy">Ved å fornye godtar du {app_pro} sine <b>Vilkår for tjenesten</b> {icon} og <b>Personvernerklæring</b> {icon}</string>
-    <string name="proRenewalUnsuccessful">Fornyelse av Pro mislyktes, prøver igjen snart</string>
     <string name="proRenewingAction">fornyer</string>
     <string name="proRenewingNoAccessBilling">For øyeblikket kan {pro}-tilgang bare kjøpes og fornyes via {platform_store} eller {platform_store_other}. Fordi du installerte {app_name} ved bruk av {build_variant}, kan du ikke fornye her.\n\nUtviklerne av {app_name} jobber hardt med alternative betalingsalternativer for å gjøre det mulig å kjøpe {pro}-tilgang utenfor {platform_store} og {platform_store_other}.<b> Veikart for {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Refusjon forespurt</string>
@@ -1399,7 +1397,6 @@
     <string name="useFastMode">Bruk rask modus</string>
     <string name="viaPlatformWebsiteDescription">Endre abonnementet ditt ved å bruke {platform_account}-kontoen du registrerte deg med, via <b><font color="0">{platform}-nettstedet</font></b>.</string>
     <string name="viaStoreWebsite">Via {platform}-nettstedet</string>
-    <string name="viaStoreWebsiteDescription">Oppdater {pro}-tilgangen din ved å bruke {platform_account}-kontoen du registrerte deg med, via <b><font color="0">{platform_store}</font></b>-nettstedet.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan ikke spille av video.</string>
     <string name="view">Vis</string>

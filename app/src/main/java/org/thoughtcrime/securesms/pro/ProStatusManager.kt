@@ -41,7 +41,7 @@ import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.Util
 import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
@@ -102,14 +102,18 @@ class ProStatusManager @Inject constructor(
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
-        ){ shouldShowProBadge, proDetailsState, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
+        ){ shouldShowProBadge, proDetailsState,
+           debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
                 else -> {
                     // calculate the real refresh state here
                     when(proDetailsState){
-                        is ProDetailsRepository.LoadState.Loading -> State.Loading
+                        is ProDetailsRepository.LoadState.Loading -> {
+                            if(proDetailsState.waitingForNetwork) State.Error(Exception())
+                            else State.Loading
+                        }
                         is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
                         else -> State.Success(Unit)
                     }
@@ -118,9 +122,10 @@ class ProStatusManager @Inject constructor(
 
             if(!forceCurrentUserAsPro){
                 Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
+                val nowMs = snodeClock.currentTimeMillis()
 
                 ProDataState(
-                    type = proDetailsState.lastUpdated?.first?.toProStatus() ?: ProStatus.NeverSubscribed,
+                    type = proDetailsState.lastUpdated?.first?.toProStatus(nowMs) ?: ProStatus.NeverSubscribed,
                     showProBadge = shouldShowProBadge,
                     refreshState = proDataRefreshState
                 )
@@ -132,23 +137,25 @@ class ProStatusManager @Inject constructor(
                 ProDataState(
                     type = when(subscriptionState){
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
-                            validUntil = Instant.now() + Duration.ofDays(14),
+                            renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.THREE_MONTHS,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
-                            refundInProgress = false
+                            refundInProgress = false,
+                            inGracePeriod = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE_REFUNDING -> ProStatus.Active.AutoRenewing(
-                            validUntil = Instant.now() + Duration.ofDays(14),
+                            renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.THREE_MONTHS,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
-                            refundInProgress = true
+                            refundInProgress = true,
+                            inGracePeriod = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
-                            validUntil = Instant.now() + Duration.ofDays(2),
+                            renewingAt = Instant.now() + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
@@ -156,7 +163,7 @@ class ProStatusManager @Inject constructor(
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
-                            validUntil = Instant.now() + Duration.ofDays(40),
+                            renewingAt = Instant.now() + Duration.ofDays(40),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
@@ -164,15 +171,16 @@ class ProStatusManager @Inject constructor(
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
-                            validUntil = Instant.now() + Duration.ofDays(14),
+                            renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.ONE_MONTH,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
-                            refundInProgress = false
+                            refundInProgress = false,
+                            inGracePeriod = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
-                            validUntil = Instant.now() + Duration.ofDays(2),
+                            renewingAt = Instant.now() + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.ONE_MONTH,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
@@ -388,7 +396,8 @@ class ProStatusManager @Inject constructor(
      */
     fun getIncomingMessageMaxLength(message: VisibleMessage): Int {
         // if the debug is set, return that
-        if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
+        // of if we are in pre-pro world
+        if (prefs.forceIncomingMessagesAsPro() || !isPostPro()) return MAX_CHARACTER_PRO
 
         if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
             return MAX_CHARACTER_PRO

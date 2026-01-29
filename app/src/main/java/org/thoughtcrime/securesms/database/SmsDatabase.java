@@ -36,7 +36,7 @@ import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
-import org.session.libsession.snode.SnodeAPI;
+import org.session.libsession.network.SnodeClock;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
@@ -55,7 +55,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -64,9 +63,6 @@ import javax.inject.Singleton;
 import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import network.loki.messenger.libsession_util.protocol.ProFeature;
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature;
-import network.loki.messenger.libsession_util.protocol.ProProfileFeature;
-import network.loki.messenger.libsession_util.util.BitSet;
 
 /**
  * Database for storage of SMS messages.
@@ -146,6 +142,7 @@ public class SmsDatabase extends MessagingDatabase {
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
 
   private final RecipientRepository recipientRepository;
+  private final SnodeClock snodeClock;
   private final Lazy<@NonNull ThreadDatabase> threadDatabase;
   private final Lazy<@NonNull ReactionDatabase> reactionDatabase;
 
@@ -153,10 +150,12 @@ public class SmsDatabase extends MessagingDatabase {
   public SmsDatabase(@ApplicationContext Context context,
                      Provider<SQLCipherOpenHelper> databaseHelper,
                      RecipientRepository recipientRepository,
+                     SnodeClock snodeClock,
                      Lazy<@NonNull ThreadDatabase> threadDatabase,
                      Lazy<@NonNull ReactionDatabase> reactionDatabase) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
+    this.snodeClock = snodeClock;
     this.threadDatabase = threadDatabase;
     this.reactionDatabase = reactionDatabase;
   }
@@ -549,7 +548,7 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(ADDRESS, address.toString());
     contentValues.put(THREAD_ID, threadId);
     contentValues.put(BODY, message.getMessage());
-    contentValues.put(DATE_RECEIVED, SnodeAPI.getNowWithOffset());
+    contentValues.put(DATE_RECEIVED, snodeClock.currentTimeMillis());
     contentValues.put(DATE_SENT, message.getSentTimestampMillis());
     contentValues.put(READ, 1);
     contentValues.put(TYPE, type);

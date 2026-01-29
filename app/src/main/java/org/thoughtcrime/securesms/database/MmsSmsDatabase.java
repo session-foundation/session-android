@@ -187,7 +187,7 @@ public class MmsSmsDatabase extends Database {
 
   public Cursor getConversation(long threadId, boolean reverse, long offset, long limit) {
     String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + (reverse ? " DESC" : " ASC");
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + THREAD_ID + " != " + -1L;
     String limitStr  = limit > 0 || offset > 0 ? offset + ", " + limit : null;
 
     return queryTables(PROJECTION_ALL, selection, true, null, order, limitStr);
@@ -397,7 +397,7 @@ public class MmsSmsDatabase extends Database {
   }
 
   public int getUnreadCount(long threadId) {
-    String selection = READ + " = 0 AND " + NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
+    String selection = READ + " = 0 AND " + NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.THREAD_ID + " != " + -1L;
 
     try (Cursor cursor = queryTables(ID, selection, true, null, null, null)) {
       return cursor != null ? cursor.getCount() : 0;

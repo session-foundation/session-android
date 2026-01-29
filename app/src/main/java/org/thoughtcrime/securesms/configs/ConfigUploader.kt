@@ -20,14 +20,15 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.SnodeClient
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.model.PathStatus
+import org.session.libsession.network.onion.PathManager
+import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.StoreMessageResponse
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigPushResult
 import org.session.libsession.utilities.ConfigUpdateNotification
@@ -66,6 +67,9 @@ class ConfigUploader @Inject constructor(
     private val storageProtocol: StorageProtocol,
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
+    private val swarmDirectory: SwarmDirectory,
+    private val snodeClient: SnodeClient,
+    private val pathManager: PathManager
 ) : AuthAwareComponent {
     /**
      * A flow that only emits when
@@ -78,7 +82,7 @@ class ConfigUploader @Inject constructor(
     private fun pathBecomesAvailable(): Flow<*> = networkConnectivity.networkAvailable
         .flatMapLatest { hasNetwork ->
             if (hasNetwork) {
-                OnionRequestAPI.pathStatus.filter { it == OnionRequestAPI.PathStatus.READY }
+                pathManager.status.filter { it == PathStatus.READY }
             } else {
                 emptyFlow()
             }
@@ -199,22 +203,22 @@ class ConfigUploader @Inject constructor(
 
         Log.d(TAG, "Pushing group configs")
 
-        val snode = SnodeAPI.getSingleTargetSnode(groupId.hexString).await()
+        val snode = swarmDirectory.getSingleTargetSnode(groupId.hexString)
         val auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
 
         // Keys push is different: it doesn't have the delete call so we don't call pushConfig.
         // Keys must be pushed first because the other configs depend on it.
         val keysPushResult = keysPush?.let { push ->
-            SnodeAPI.sendBatchRequest(
+            snodeClient.sendBatchRequest(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
-                request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                request = snodeClient.buildAuthenticatedStoreBatchInfo(
                     Namespace.GROUP_KEYS(),
                     SnodeMessage(
                         auth.accountId.hexString,
                         Base64.encodeBytes(push),
                         SnodeMessage.CONFIG_TTL,
-                        clock.currentTimeMills(),
+                        clock.currentTimeMillis(),
                     ),
                     auth
                 ),
@@ -277,17 +281,17 @@ class ConfigUploader @Inject constructor(
         // process will be cancelled. This is the requirement of pushing config: all messages have
         // to be sent successfully for us to consider this process as success
         val responses = coroutineScope {
-            val timestamp = clock.currentTimeMills()
+            val timestamp = clock.currentTimeMillis()
 
             Log.d(TAG, "Pushing ${push.messages.size} config messages")
 
             push.messages
                 .map { message ->
                     async {
-                        SnodeAPI.sendBatchRequest(
+                        snodeClient.sendBatchRequest(
                             snode = snode,
                             publicKey = auth.accountId.hexString,
-                            request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                            request = snodeClient.buildAuthenticatedStoreBatchInfo(
                                 namespace,
                                 SnodeMessage(
                                     auth.accountId.hexString,
@@ -305,10 +309,10 @@ class ConfigUploader @Inject constructor(
         }
 
         if (push.obsoleteHashes.isNotEmpty()) {
-            SnodeAPI.sendBatchRequest(
+            snodeClient.sendBatchRequest(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
-                request = SnodeAPI.buildAuthenticatedDeleteBatchInfo(auth, push.obsoleteHashes)
+                request = snodeClient.buildAuthenticatedDeleteBatchInfo(auth, push.obsoleteHashes)
             )
         }
 
@@ -344,7 +348,7 @@ class ConfigUploader @Inject constructor(
 
         Log.d(TAG, "Pushing ${pushes.size} user configs")
 
-        val snode = SnodeAPI.getSingleTargetSnode(userAuth.accountId.hexString).await()
+        val snode = swarmDirectory.getSingleTargetSnode(userAuth.accountId.hexString)
 
         val pushTasks = pushes.map { (configType, configPush) ->
             async {
