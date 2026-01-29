@@ -7,9 +7,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.network.ServerClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -35,10 +33,8 @@ class MessagingModuleConfiguration @Inject constructor(
     val recipientRepository: RecipientRepository,
     val avatarUtils: AvatarUtils,
     val proStatusManager: ProStatusManager,
-    val messageSendJobFactory: MessageSendJob.Factory,
     val json: Json,
     val snodeClock: SnodeClock,
-    val serverClient: ServerClient,
     val pathManager: PathManager
 ) {
 

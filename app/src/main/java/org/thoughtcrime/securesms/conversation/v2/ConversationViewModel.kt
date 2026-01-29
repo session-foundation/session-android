@@ -59,6 +59,10 @@ import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteAllReactionsApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
@@ -144,7 +148,6 @@ class ConversationViewModel @AssistedInject constructor(
     private val threadDb: ThreadDatabase,
     private val reactionDb: ReactionDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val lokiAPIDb: LokiAPIDatabase,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
     private val callManager: CallManager,
@@ -160,7 +163,9 @@ class ConversationViewModel @AssistedInject constructor(
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
     private val openGroupManager: OpenGroupManager,
-    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory
+    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val deleteAllReactionsApiFactory: DeleteAllReactionsApi.Factory,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -1370,11 +1375,15 @@ class ConversationViewModel @AssistedInject constructor(
             (address as? Address.Community)?.let { openGroup ->
                 lokiMessageDb.getServerID(messageId)?.let { serverId ->
                     runCatching {
-                        OpenGroupApi.deleteAllReactions(
-                            openGroup.room,
-                            openGroup.serverUrl,
-                            serverId,
-                            emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = openGroup.serverUrl,
+                                api = deleteAllReactionsApiFactory.create(
+                                    room = openGroup.room,
+                                    messageId = serverId,
+                                    emoji = emoji
+                                )
+                            )
                         )
                     }
                 }

@@ -6,25 +6,47 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.decodeFromStream
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
-import org.session.libsignal.utilities.HTTP
-import org.session.libsignal.utilities.JsonUtil
+import org.session.libsignal.crypto.shuffledSequence
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
-import org.session.libsignal.utilities.prettifiedDescription
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.SessionApiExecutor
+import org.thoughtcrime.securesms.api.SessionApiRequest
+import org.thoughtcrime.securesms.api.execute
+import org.thoughtcrime.securesms.api.http.HttpApiExecutor
+import org.thoughtcrime.securesms.api.http.HttpRequest
+import org.thoughtcrime.securesms.api.snode.ListSnodeApi
+import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.SnodeJsonRequest
+import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import java.security.SecureRandom
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
 class SnodeDirectory @Inject constructor(
     private val storage: SnodePoolStorage,
     private val prefs: TextSecurePreferences,
-    @ManagerScope private val scope: CoroutineScope,
-    @ApplicationContext private val appContext: Context,
+    private val httpExecutor: Provider<HttpApiExecutor>,
+    private val snodeAPiExecutor: Provider<SnodeApiExecutor>,
+    private val listSnodeApi: Provider<ListSnodeApi>,
+    @param:ManagerScope private val scope: CoroutineScope,
+    @param:ApplicationContext private val appContext: Context,
+    private val json: Json,
 ) : OnAppStartupComponent {
 
     companion object {
@@ -33,10 +55,20 @@ class SnodeDirectory @Inject constructor(
 
         private const val POOL_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000L // 2h
 
-        private const val KEY_IP = "public_ip"
-        private const val KEY_PORT = "storage_port"
-        private const val KEY_X25519 = "pubkey_x25519"
-        private const val KEY_ED25519 = "pubkey_ed25519"
+
+        private val DEV_NET_SEED_NODES = setOf(
+            "http://sesh-net.local:1280".toHttpUrl()
+        )
+
+        private val TEST_NET_SEED_NODES = setOf(
+            "http://public.loki.foundation:38157".toHttpUrl()
+        )
+
+        private val MAIN_NET_SEED_NODES = setOf(
+            "https://seed1.getsession.org:$SEED_NODE_PORT".toHttpUrl(),
+            "https://seed2.getsession.org:$SEED_NODE_PORT".toHttpUrl(),
+            "https://seed3.getsession.org:$SEED_NODE_PORT".toHttpUrl()
+        )
 
         private const val LOCAL_SNODE_POOL_ASSET = "snodes/snode_pool.json"
     }
@@ -50,23 +82,10 @@ class SnodeDirectory @Inject constructor(
     // Refresh state (non-blocking trigger + real exclusion inside mutex)
     @Volatile private var snodePoolRefreshing = false
 
-    private val seedNodePool: Set<String> = when (prefs.getEnvironment()) {
-        Environment.DEV_NET -> setOf("http://sesh-net.local:1280")
-        Environment.TEST_NET -> setOf("http://public.loki.foundation:38157")
-        Environment.MAIN_NET -> setOf(
-            "https://seed1.getsession.org:$SEED_NODE_PORT",
-            "https://seed2.getsession.org:$SEED_NODE_PORT",
-            "https://seed3.getsession.org:$SEED_NODE_PORT",
-        )
-    }
-
-    private val getRandomSnodeParams: Map<String, Any> = buildMap {
-        this["method"] = "get_n_service_nodes"
-        this["params"] = buildMap {
-            this["active_only"] = true
-            this["fields"] = sequenceOf(KEY_IP, KEY_PORT, KEY_X25519, KEY_ED25519)
-                .associateWith { true }
-        }
+    val seedNodePool: Set<HttpUrl> get() = when (prefs.getEnvironment()) {
+        Environment.DEV_NET -> DEV_NET_SEED_NODES
+        Environment.TEST_NET -> TEST_NET_SEED_NODES
+        Environment.MAIN_NET -> MAIN_NET_SEED_NODES
     }
 
     override fun onPostAppStarted() {
@@ -81,10 +100,9 @@ class SnodeDirectory @Inject constructor(
         }
     }
 
-    fun getSnodePool(): Set<Snode> = storage.getSnodePool()
+    fun getSnodePool(): List<Snode> = storage.getSnodePool()
 
-    private fun persistSnodePool(newPool: Set<Snode>) {
-        //todo ONION in the new db paradigm we will need to ensure our path doesn't have snode not in this pool << Fanchao
+    private fun persistSnodePool(newPool: List<Snode>) {
         storage.setSnodePool(newPool)
         prefs.setLastSnodePoolRefresh(System.currentTimeMillis())
     }
@@ -101,7 +119,7 @@ class SnodeDirectory @Inject constructor(
      */
     suspend fun ensurePoolPopulated(
         minCount: Int = MINIMUM_SNODE_POOL_COUNT
-    ): Set<Snode> {
+    ): List<Snode> {
         val current = getSnodePool()
 
         if (current.size >= minCount) {
@@ -128,19 +146,35 @@ class SnodeDirectory @Inject constructor(
         }
     }
 
-    private suspend fun fetchSnodePoolFromSeedWithFallback(): Set<Snode> {
+    private suspend fun fetchSnodePoolFromSeedWithFallback(): List<Snode> {
         val seeds = seedNodePool.shuffled()
 
         var lastError: Throwable? = null
 
         for (target in seeds) {
             Log.d("SnodeDirectory", "Fetching snode pool using seed node: $target")
-            val result = runCatching { fetchSnodePool(target, fromSeed = true) }
-                .onFailure { e ->
-                    lastError = e
-                    Log.w("SnodeDirectory", "Seed node failed: $target", e)
-                }
-                .getOrNull()
+            @Suppress("OPT_IN_USAGE") val result = runCatching {
+                httpExecutor.get().send(
+                    ctx = ApiExecutorContext(),
+                    req = HttpRequest.createFromJson(
+                        url = target.resolve("/json_rpc")!!,
+                        method = "POST",
+                        jsonText = json.encodeToString(SnodeJsonRequest(
+                            method = "get_n_service_nodes",
+                            params = ListSnodeApi.buildRequestJson()
+                        ))
+                    )
+                ).throwIfNotSuccessful()
+                    .body
+                    .asInputStream()
+                    .use { json.decodeFromStream<SeedNodeSnodeFetchResult>(it) }
+                    .result
+            }.onFailure { e ->
+                lastError = e
+                Log.w("SnodeDirectory", "Seed node failed: $target", e)
+            }
+            .getOrNull()
+            ?.toSnodeList()
 
             if (!result.isNullOrEmpty()) return result
         }
@@ -148,88 +182,30 @@ class SnodeDirectory @Inject constructor(
         // All seeds failed -> local fallback
         Log.w("SnodeDirectory", "All seed nodes failed; falling back to local snode pool file.", lastError)
 
-        val localBytes = readLocalSnodePoolJsonBytes()
-        val parsed = parseSnodePoolFromJsonBytes(localBytes)
+        @Suppress("OPT_IN_USAGE")
+        val parsed: SeedNodeSnodeFetchResult = appContext.assets.open(LOCAL_SNODE_POOL_ASSET)
+            .use(json::decodeFromStream)
 
-        if (parsed.isEmpty()) {
+        val nodes = parsed.result.toSnodeList()
+
+        if (nodes.isEmpty()) {
             throw IllegalStateException("Local snode pool file parsed empty", lastError)
         }
 
         Log.w("SnodeDirectory", "Successfully parsed snodes from local file.")
-        return parsed
+        return nodes
     }
 
-    private suspend fun fetchSnodePool(target: String, fromSeed: Boolean): Set<Snode> {
-        val url = "$target/json_rpc"
-        val responseBytes = HTTP.execute(
-            HTTP.Verb.POST,
-            url = url,
-            parameters = getRandomSnodeParams,
-            useSeedNodeConnection = fromSeed
-        )
-        return parseSnodePoolFromJsonBytes(responseBytes)
+    @Serializable
+    private class SeedNodeSnodeFetchResult(
+        val result: ListSnodeApi.Response,
+    )
+
+    private suspend fun fetchSnodePoolFromSnode(snode: Snode): List<Snode> {
+        return snodeAPiExecutor.get()
+            .execute(SnodeApiRequest(snode, listSnodeApi.get()))
+            .toSnodeList()
     }
-
-    /**
-     * Reads the bundled local snode pool JSON.
-     * Throws if missing/unreadable.
-     */
-    private fun readLocalSnodePoolJsonBytes(): ByteArray {
-        return appContext.assets.open(LOCAL_SNODE_POOL_ASSET).use { it.readBytes() }
-    }
-
-    /**
-     * Parse the JSON-RPC response format into a Set<Snode>.
-     */
-    private fun parseSnodePoolFromJsonBytes(responseBytes: ByteArray): Set<Snode> {
-        val json = runCatching {
-            JsonUtil.fromJson(responseBytes, Map::class.java)
-        }.getOrNull() ?: buildMap<String, Any> {
-            this["result"] = responseBytes.toString(Charsets.UTF_8)
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        val intermediate = json["result"] as? Map<*, *>
-            ?: throw IllegalStateException("Failed to parse snode pool, 'result' was null.")
-                .also { Log.d("SnodeDirectory", "Failed to parse snode pool, intermediate was null.") }
-
-        @Suppress("UNCHECKED_CAST")
-        val rawSnodes = intermediate["service_node_states"] as? List<*>
-            ?: throw IllegalStateException("Failed to parse snode pool, 'service_node_states' was null.")
-                .also { Log.d("SnodeDirectory", "Failed to parse snode pool, rawSnodes was null.") }
-
-        return rawSnodes.asSequence()
-            .mapNotNull { it as? Map<*, *> }
-            .mapNotNull { raw ->
-                createSnode(
-                    address = raw[KEY_IP] as? String,
-                    port = raw[KEY_PORT] as? Int,
-                    ed25519Key = raw[KEY_ED25519] as? String,
-                    x25519Key = raw[KEY_X25519] as? String,
-                ).also {
-                    if (it == null) {
-                        Log.d("SnodeDirectory", "Failed to parse snode from: ${raw.prettifiedDescription()}.")
-                    }
-                }
-            }
-            .toSet()
-    }
-
-    private suspend fun fetchSnodePoolFromSnode(snode: Snode): Set<Snode> {
-        val target = "${snode.address}:${snode.port}"
-        Log.d("SnodeDirectory", "Fetching snode pool using snode: $target")
-        //todo ONION use fetchSnodePoolCompact when ready << Fanchao
-        return fetchSnodePool(target, fromSeed = false)
-    }
-
-    /**
-     * Calling the compact version of the snode pool api
-     */
-    private suspend fun fetchSnodePoolCompact(snode: Snode): Set<Snode>{
-        //todo ONION link up with new logic << Fanchao
-        return emptySet()
-    }
-
 
     /**
      * Returns a random snode from the generic snode pool.
@@ -276,21 +252,6 @@ class SnodeDirectory @Inject constructor(
         }
 
         return (existingGuards + newGuards).toSet()
-    }
-
-    /**
-     * Remove a snode from the pool by its ed25519 key.
-     */
-    fun dropSnodeFromPool(ed25519Key: String) {
-        val removed = storage.removeSnode(ed25519Key)
-        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): ${removed != null}")
-
-        // NOTE: do NOT touch lastRefreshElapsedMs here; dropping isn’t a “refresh”.
-    }
-
-    fun getSnodeByKey(ed25519Key: String?): Snode? {
-        if (ed25519Key == null) return null
-        return getSnodePool().firstOrNull { it.publicKeySet?.ed25519Key == ed25519Key }
     }
 
     // snode pool refresh logic
@@ -368,11 +329,13 @@ class SnodeDirectory @Inject constructor(
                 }
 
                 // Fetch pools from responders until we have totalSnodeQueries successful results
-                val results = mutableListOf<Set<Snode>>()
+                val results = mutableListOf<List<Snode>>()
 
                 for (snode in snodesToQuery) {
                     if (results.size >= totalSnodeQueries) break
-                    val fetched = runCatching { fetchSnodePoolFromSnode(snode) }.getOrNull()
+                    val fetched = runCatching { fetchSnodePoolFromSnode(snode) }
+                        .onFailure { Log.w("SnodeDirectory", "Error fetching snode pool", it) }
+                        .getOrNull()
                     if (!fetched.isNullOrEmpty()) results += fetched
                 }
 
@@ -405,30 +368,31 @@ class SnodeDirectory @Inject constructor(
     }
 
     private fun pickViableSnodesForPoolQuery(
-        pool: Set<Snode>,
+        pool: List<Snode>,
         count: Int,
         distinctSubnetPrefix: Int?
     ): List<Snode> {
         if (pool.isEmpty() || count <= 0) return emptyList()
 
-        val shuffled = pool.shuffled()
-
         // If subnet diversification disabled, just take first N
         if (distinctSubnetPrefix == null) {
-            return shuffled.take(count)
-        }
+            return pool
+                .shuffledSequence()
+                .take(count)
+                .toList()
+        } else {
+            // Enforce distinct subnet prefix where possible
+            val picked = ArrayList<Snode>(count)
+            val used = mutableSetOf<String>()
+            for (snode in pool.shuffledSequence()) {
+                if (picked.size >= count) break
+                val subnet = subnetPrefixOrNull(snode.ip, distinctSubnetPrefix) ?: continue
+                if (!used.add(subnet)) continue
+                picked += snode
+            }
 
-        // Enforce distinct subnet prefix where possible
-        val picked = ArrayList<Snode>(count)
-        val used = mutableSetOf<String>()
-        for (snode in shuffled) {
-            if (picked.size >= count) break
-            val subnet = subnetPrefixOrNull(snode.ip, distinctSubnetPrefix) ?: continue
-            if (!used.add(subnet)) continue
-            picked += snode
+            return picked
         }
-
-        return picked
     }
 
     /**
@@ -458,10 +422,10 @@ class SnodeDirectory @Inject constructor(
     }
 
     private fun quorumByEd25519(
-        pools: List<Set<Snode>>,
+        pools: List<List<Snode>>,
         minAppearance: Int
-    ): Set<Snode> {
-        if (pools.isEmpty()) return emptySet()
+    ): List<Snode> {
+        if (pools.isEmpty()) return emptyList()
 
         val voteCount = mutableMapOf<String, Int>()
         val bestByKey = mutableMapOf<String, Snode>()
@@ -487,6 +451,6 @@ class SnodeDirectory @Inject constructor(
         return voteCount.asSequence()
             .filter { (_, count) -> count >= minAppearance }
             .mapNotNull { (key, _) -> bestByKey[key] }
-            .toSet()
+            .toList()
     }
 }

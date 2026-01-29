@@ -3,8 +3,9 @@ package org.session.libsession.network.onion
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.network.model.Path
 import org.session.libsignal.utilities.Snode
+import javax.inject.Inject
 
-object OnionBuilder {
+open class OnionBuilder @Inject constructor(private val onionRequestEncryption: OnionRequestEncryption) {
 
     data class BuiltOnion(
         val guard: Snode,
@@ -17,17 +18,17 @@ object OnionBuilder {
         path: Path,
         destination: OnionDestination,
         payload: ByteArray,
-        version: Version
+        onionRequestVersion: OnionRequestVersion
     ): BuiltOnion {
         require(path.isNotEmpty()) { "Path must not be empty" }
 
         val destinationResult =
-            OnionRequestEncryption.encryptPayloadForDestination(payload, destination, version)
+            onionRequestEncryption.encryptPayloadForDestination(payload, destination, onionRequestVersion)
 
         val encryptionResult = path.foldRight(
             destination to destinationResult
         ) { hop, (previousDestination, previousEncryptionResult) ->
-            OnionDestination.SnodeDestination(hop) to OnionRequestEncryption.encryptHop(
+            OnionDestination.SnodeDestination(hop) to onionRequestEncryption.encryptHop(
                 lhs = OnionDestination.SnodeDestination(hop),
                 rhs = previousDestination,
                 previousEncryptionResult = previousEncryptionResult,

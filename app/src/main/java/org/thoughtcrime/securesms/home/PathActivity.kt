@@ -84,8 +84,6 @@ class PathActivity : ScreenLockActionBarActivity() {
             // Check if the
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 pathManager.paths
-                    .map { it.isEmpty() }
-                    .distinctUntilChanged()
                     .collectLatest {
                         update(true)
                     }
