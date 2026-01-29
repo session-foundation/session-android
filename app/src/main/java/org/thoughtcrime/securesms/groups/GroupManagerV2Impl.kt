@@ -1307,11 +1307,6 @@ class GroupManagerV2Impl @Inject constructor(
                 .map { (member, _) -> member }
         }
 
-    // returns null if the group is not found
-    override fun isCurrentUserGroupAdmin(groupId: AccountId): Boolean? {
-        return configFactory.withUserConfigs { it.userGroups.getClosedGroup(groupId.hexString) }?.hasAdminKey()
-    }
-
     override fun isCurrentUserLastAdmin(groupId: AccountId): Boolean {
         val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
 

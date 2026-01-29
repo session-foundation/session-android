@@ -14,6 +14,7 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
@@ -123,10 +124,13 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
         // leave group for admin
         binding.adminLeaveGroupTextView.apply {
             if (recipient.isGroupV2Recipient) {
-                setOnClickListener(this@ConversationOptionsBottomSheet)
                 val accountId = AccountId(recipient.address.toString())
+                val group = configFactory.getGroup(accountId) ?: return
+
+                setOnClickListener(this@ConversationOptionsBottomSheet)
+
                 // Only visible if admin is one of many group admins
-                this.isVisible = groupManager.isCurrentUserGroupAdmin(accountId) == true
+                this.isVisible = group.hasAdminKey()
                         && !groupManager.isCurrentUserLastAdmin(accountId)
             }
         }
