@@ -3,6 +3,10 @@ package org.thoughtcrime.securesms.api.batch
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 interface Batcher<Req, Res, T> {
+
+    /**
+     * Returns a key that identifies requests that can be batched together.
+     */
     fun batchKey(req: Req): Any?
 
     fun transformRequestForBatching(ctx: ApiExecutorContext, req: Req): T
