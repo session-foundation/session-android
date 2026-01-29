@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.network
 
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -12,9 +11,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.onion.PathManager
-import org.session.libsession.network.snode.SnodeDirectory
-import org.session.libsession.network.snode.SnodePathStorage
-import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.SnodeDatabase
 import org.thoughtcrime.securesms.database.SnodeDatabaseTest
@@ -60,7 +56,7 @@ class PathManagerTest {
             snodePoolStorage = snodeDb,
             prefs = mock(),
             snodeApiExecutor = { mock() },
-            getNetworkTimeApi = { mock() },
+            getInfoApi = { mock() },
         )
 
         val chosen = pm.getPath(exclude = b)
@@ -86,7 +82,7 @@ class PathManagerTest {
             snodePoolStorage = snodeDb,
             prefs = mock(),
             snodeApiExecutor = { mock() },
-            getNetworkTimeApi = { mock() },
+            getInfoApi = { mock() },
         )
 
         pm.handleBadSnode(snode = b, forceRemove = true)
@@ -118,7 +114,7 @@ class PathManagerTest {
             snodePoolStorage = snodeDb,
             prefs = mock(),
             snodeApiExecutor = { mock() },
-            getNetworkTimeApi = { mock() },
+            getInfoApi = { mock() },
         )
 
         pm.handleBadSnode(snode = b, forceRemove = true)

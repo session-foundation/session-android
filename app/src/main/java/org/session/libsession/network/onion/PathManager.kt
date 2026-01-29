@@ -28,7 +28,7 @@ import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.AutoRetryApiExecutor
 import org.thoughtcrime.securesms.api.onion.OnionSessionApiExecutor
-import org.thoughtcrime.securesms.api.snode.GetNetworkTimeApi
+import org.thoughtcrime.securesms.api.snode.GetInfoApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.execute
@@ -46,7 +46,7 @@ open class PathManager @Inject constructor(
     private val snodePoolStorage: SnodePoolStorage,
     private val prefs: TextSecurePreferences,
     private val snodeApiExecutor: Provider<SnodeApiExecutor>,
-    private val getNetworkTimeApi: Provider<GetNetworkTimeApi>,
+    private val getInfoApi: Provider<GetInfoApi>,
 ) {
     companion object {
         private const val STRIKE_THRESHOLD = 3
@@ -153,7 +153,7 @@ open class PathManager @Inject constructor(
                     .execute(
                         req = SnodeApiRequest(
                             snode = snodePoolStorage.getSnodePool().first { it !in pathCandidate },
-                            api = getNetworkTimeApi.get()
+                            api = getInfoApi.get()
                         ),
                         ctx = ApiExecutorContext()
                             .set(OnionSessionApiExecutor.OnionPathOverridesKey, pathCandidate)

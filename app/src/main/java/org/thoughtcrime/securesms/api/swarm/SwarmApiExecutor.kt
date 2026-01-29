@@ -10,12 +10,11 @@ import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
-import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.api.snode.SnodeApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.SnodeApiResponse
-import javax.inject.Inject
 
 class SwarmApiRequest<T : SnodeApiResponse>(
     val swarmPubKeyHex: String,
@@ -66,7 +65,7 @@ class SwarmApiExecutorImpl @AssistedInject constructor(
 
         try {
             return snodeApiExecutor.send(ctx, SnodeApiRequest(snode, req.api))
-        } catch (e: UnknownStatusCodeException) {
+        } catch (e: UnhandledStatusCodeException) {
             if (e.code == 421) {
                 Log.d(
                     TAG,

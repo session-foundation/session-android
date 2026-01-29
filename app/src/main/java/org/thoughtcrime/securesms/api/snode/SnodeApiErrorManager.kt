@@ -6,7 +6,7 @@ import org.session.libsession.network.onion.PathManager
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -62,7 +62,7 @@ class SnodeApiErrorManager @Inject constructor(
             return RuntimeException("Snode not ready") to FailureDecision.Retry
         }
 
-        return UnknownStatusCodeException(errorCode, "Snode ${snode.address}", bodyText) to null
+        return UnhandledStatusCodeException(errorCode, "Snode ${snode.address}", bodyText) to null
     }
 }
 

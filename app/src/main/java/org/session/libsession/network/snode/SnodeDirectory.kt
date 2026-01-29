@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -102,7 +103,6 @@ class SnodeDirectory @Inject constructor(
     fun getSnodePool(): List<Snode> = storage.getSnodePool()
 
     private fun persistSnodePool(newPool: List<Snode>) {
-        //todo ONION in the new db paradigm we will need to ensure our path doesn't have snode not in this pool << Fanchao
         storage.setSnodePool(newPool)
         prefs.setLastSnodePoolRefresh(System.currentTimeMillis())
     }
@@ -167,10 +167,8 @@ class SnodeDirectory @Inject constructor(
                 ).throwIfNotSuccessful()
                     .body
                     .asInputStream()
-                    .use {
-                        val result = checkNotNull(json.decodeFromStream<JsonObject>(it)["result"])
-                        json.decodeFromJsonElement<ListSnodeApi.Response>(result)
-                    }
+                    .use { json.decodeFromStream<SeedNodeSnodeFetchResult>(it) }
+                    .result
             }.onFailure { e ->
                 lastError = e
                 Log.w("SnodeDirectory", "Seed node failed: $target", e)
@@ -185,10 +183,10 @@ class SnodeDirectory @Inject constructor(
         Log.w("SnodeDirectory", "All seed nodes failed; falling back to local snode pool file.", lastError)
 
         @Suppress("OPT_IN_USAGE")
-        val parsed: ListSnodeApi.Response = appContext.assets.open(LOCAL_SNODE_POOL_ASSET)
+        val parsed: SeedNodeSnodeFetchResult = appContext.assets.open(LOCAL_SNODE_POOL_ASSET)
             .use(json::decodeFromStream)
 
-        val nodes = parsed.toSnodeList()
+        val nodes = parsed.result.toSnodeList()
 
         if (nodes.isEmpty()) {
             throw IllegalStateException("Local snode pool file parsed empty", lastError)
@@ -198,8 +196,12 @@ class SnodeDirectory @Inject constructor(
         return nodes
     }
 
+    @Serializable
+    private class SeedNodeSnodeFetchResult(
+        val result: ListSnodeApi.Response,
+    )
+
     private suspend fun fetchSnodePoolFromSnode(snode: Snode): List<Snode> {
-        //TODO: Onion should request over onion
         return snodeAPiExecutor.get()
             .execute(SnodeApiRequest(snode, listSnodeApi.get()))
             .toSnodeList()
@@ -250,21 +252,6 @@ class SnodeDirectory @Inject constructor(
         }
 
         return (existingGuards + newGuards).toSet()
-    }
-
-    /**
-     * Remove a snode from the pool by its ed25519 key.
-     */
-    fun dropSnodeFromPool(ed25519Key: String) {
-        val removed = storage.removeSnode(ed25519Key)
-        Log.w("SnodeDirectory", "Dropping snode from pool (ed25519=$ed25519Key): ${removed != null}")
-
-        // NOTE: do NOT touch lastRefreshElapsedMs here; dropping isn’t a “refresh”.
-    }
-
-    fun getSnodeByKey(ed25519Key: String?): Snode? {
-        if (ed25519Key == null) return null
-        return getSnodePool().firstOrNull { it.publicKeySet?.ed25519Key == ed25519Key }
     }
 
     // snode pool refresh logic

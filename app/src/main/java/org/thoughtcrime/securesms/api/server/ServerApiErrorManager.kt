@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.api.server
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,7 +39,7 @@ class ServerApiErrorManager @Inject constructor(
             }
         }
 
-        return UnknownStatusCodeException(
+        return UnhandledStatusCodeException(
             code = errorCode,
             origin = serverBaseUrl,
             bodyText = bodyAsText

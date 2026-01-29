@@ -17,7 +17,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.snode.GetNetworkTimeApi
+import org.thoughtcrime.securesms.api.snode.GetInfoApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.execute
@@ -38,7 +38,7 @@ class SnodeClock @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val snodeDirectory: SnodeDirectory,
     private val snodeApiExecutor: Lazy<SnodeApiExecutor>,
-    private val getNetworkTimeApi: Provider<GetNetworkTimeApi>,
+    private val getInfoApi: Provider<GetInfoApi>,
 ): OnAppStartupComponent {
 
     private val instantState = MutableStateFlow<Instant?>(null)
@@ -125,9 +125,9 @@ class SnodeClock @Inject constructor(
                                 var networkTime = snodeApiExecutor.get().execute(
                                     SnodeApiRequest(
                                         snode = snodeDirectory.getRandomSnode(),
-                                        api = getNetworkTimeApi.get(),
+                                        api = getInfoApi.get(),
                                     )
-                                ).toEpochMilli()
+                                ).timestamp.toEpochMilli()
                                 val requestEnded = SystemClock.elapsedRealtime()
 
                                 // Adjust for latency

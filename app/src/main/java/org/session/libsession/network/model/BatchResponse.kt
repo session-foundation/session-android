@@ -13,10 +13,5 @@ data class BatchResponse(val results: List<Item>) {
         val isSuccessful: Boolean
             get() = code in 200..299
 
-        val isServerError: Boolean
-            get() = code in 500..599
-
-        val isSnodeNoLongerPartOfSwarm: Boolean
-            get() = code == 421
     }
 }

@@ -14,7 +14,7 @@ import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
-import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.api.snode.SnodeApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
@@ -86,7 +86,7 @@ class SwarmApiExecutorImplTest {
         }
         coEvery { swarmDirectory.updateSwarmFromResponse(any(), any()) } returns false
 
-        coEvery { snodeApiExecutor.send(any(), any()) } throws UnknownStatusCodeException(code = 421, origin = "snode")
+        coEvery { snodeApiExecutor.send(any(), any()) } throws UnhandledStatusCodeException(code = 421, origin = "snode")
 
         val context = ApiExecutorContext()
 
