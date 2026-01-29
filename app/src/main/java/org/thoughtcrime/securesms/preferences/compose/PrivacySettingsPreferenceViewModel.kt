@@ -9,7 +9,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -17,11 +16,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DISABLE_PASSPHRASE_PREF
-import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsession.utilities.observeBooleanKey
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.NotificationPreferenceEvent
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
 import javax.inject.Inject
@@ -68,10 +65,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         }.launchIn(viewModelScope)
 
         combine(
-            prefs.observeBooleanKey(
-                TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED,
-                default = false
-            ),
+            prefs.observeBooleanKey(TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.READ_RECEIPTS_PREF, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.TYPING_INDICATORS, default = true),
             prefs.observeBooleanKey(TextSecurePreferences.LINK_PREVIEWS, default = false),
@@ -112,11 +106,10 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         if (!toggledEnable) typingStatusRepository.clear()
     }
 
-    fun onToggleCallNotifications() {
-        val toggledEnable = !uiState.value.callNotificationsEnabled
-        if (toggledEnable) {
-            // show warning dialog
-            _uiState.update { it.copy(showCallsWarningDialog = true) }
+    fun onToggleCallNotifications(isEnabled : Boolean) {
+        prefs.setCallNotificationsEnabled(isEnabled)
+        if(isEnabled && !areNotificationsEnabled(app)){
+            _uiState.update { it.copy(showCallsNotificationDialog = true) }
         }
     }
 
@@ -134,8 +127,8 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
 
     fun onCommand(command: Commands) {
         when (command) {
-            Commands.ToggleCallsNotification -> {
-                onToggleCallNotifications()
+            is Commands.ToggleCallsNotification -> {
+                onToggleCallNotifications(command.isEnabled)
             }
 
             Commands.ToggleLockApp -> {
@@ -162,10 +155,16 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
                 prefs.setIncognitoKeyboardEnabled(!uiState.value.incognitoKeyboardEnabled)
             }
 
-            Commands.EnableCalls -> {
+            Commands.AskMicPermission -> {
                 // Ask for permission
                 viewModelScope.launch {
                     mutableEvents.emit(PrivacySettingsPreferenceEvent.AskMicrophonePermission)
+                }
+            }
+
+            Commands.NavigateToAppNotificationsSettings -> {
+                viewModelScope.launch {
+                    mutableEvents.emit(PrivacySettingsPreferenceEvent.OpenAppNotificationSettings)
                 }
             }
 
@@ -204,7 +203,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     }
 
     sealed interface Commands {
-        data object ToggleCallsNotification : Commands // prefs?
+        data class ToggleCallsNotification(val isEnabled : Boolean) : Commands
         data object ToggleLockApp : Commands // prefs?
         data object ToggleCommunityRequests : Commands // config
         data object ToggleReadReceipts : Commands // prefs
@@ -212,11 +211,14 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         data object ToggleLinkPreviews : Commands // prefs
         data object ToggleIncognitoKeyboard : Commands // prefs
 
-        data object EnableCalls : Commands
+        data object AskMicPermission : Commands
+        data object NavigateToAppNotificationsSettings : Commands
 
+        // Dialog for Calls warning
         data object HideCallsWarningDialog : Commands
         data object ShowCallsWarningDialog : Commands
 
+        // show a dialog saying that calls won't work properly if you don't have notifications on at a system level
         data object HideCallsNotificationDialog : Commands
         data object ShowCallsNotificationDialog : Commands
     }

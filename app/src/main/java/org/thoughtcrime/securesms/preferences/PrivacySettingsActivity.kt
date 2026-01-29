@@ -7,6 +7,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceScreen
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel
 import kotlin.getValue
@@ -20,7 +21,10 @@ class PrivacySettingsActivity :
     @Composable
     override fun ComposeContent() {
         val viewModel: PrivacySettingsPreferenceViewModel by viewModels()
-        PrivacySettingsPreferenceScreen(viewModel = viewModel)
+        PrivacySettingsPreferenceScreen(
+            viewModel = viewModel,
+            onBackPressed = this::finish
+        )
     }
 
     companion object {
@@ -46,4 +50,9 @@ class PrivacySettingsActivity :
 //
 //        }
 //    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
+    }
 }

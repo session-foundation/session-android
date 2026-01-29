@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.compose
 
+import android.Manifest
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
@@ -7,13 +8,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.squareup.phrase.Phrase
@@ -22,43 +22,87 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_FOUNDATION
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SESSION_FOUNDATION_KEY
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.*
+import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.PrivacySettingsPreferenceEvent.*
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.findActivity
+import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.IntentUtils
 
 @Composable
 fun PrivacySettingsPreferenceScreen(
-    viewModel: PrivacySettingsPreferenceViewModel
+    viewModel: PrivacySettingsPreferenceViewModel,
+    onBackPressed: () -> Unit
 ) {
+
+    val context = LocalContext.current
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshKeyguardSecure()
+    }
+
+    LaunchedEffect (viewModel.events) {
+       viewModel.events.collect { event ->
+           when(event){
+                is OpenAppNotificationSettings -> {
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, BuildConfig.APPLICATION_ID)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .takeIf { IntentUtils.isResolvable(context, it) }
+                        ?.let { context.startActivity(it, null) }
+                }
+               AskMicrophonePermission -> {
+                   // Ask for permissions here
+                   Permissions.with(context.findActivity())
+                       .request(Manifest.permission.RECORD_AUDIO)
+                       .onAllGranted {
+                           viewModel.onCommand(ToggleCallsNotification(true))
+                       }
+                       .withPermanentDenialDialog(
+                           context.getSubbedString(
+                               R.string.permissionsMicrophoneAccessRequired,
+                               APP_NAME_KEY to context.applicationContext.getString(R.string.app_name)
+                           )
+                       )
+                       .onAnyDenied {
+                           viewModel.onCommand(ToggleCallsNotification(false))
+                       }
+                       .execute()
+               }
+               StartLockToggledService -> {
+
+               }
+           }
+       }
     }
 
     val uiState = viewModel.uiState.collectAsState().value
 
     PrivacySettingsPreference(
         uiState = uiState,
-        sendCommand = viewModel::onCommand
+        sendCommand = viewModel::onCommand,
+        onBackPressed = onBackPressed
     )
 }
 
 @Composable
 fun PrivacySettingsPreference(
     uiState: PrivacySettingsPreferenceViewModel.UIState,
-    sendCommand: (command: PrivacySettingsPreferenceViewModel.Commands) -> Unit
+    sendCommand: (command: PrivacySettingsPreferenceViewModel.Commands) -> Unit,
+    onBackPressed: () -> Unit
 ) {
 
     val context = LocalContext.current
 
     BasePreferenceScreens(
-        onBack = {},
+        onBack = { onBackPressed() },
         title = GetString(R.string.sessionPrivacy).string()
     ) {
         CategoryCell(
@@ -73,7 +117,13 @@ fun PrivacySettingsPreference(
                     subtitle = annotatedStringResource(R.string.callsVoiceAndVideoToggleDescription),
                     checked = uiState.callNotificationsEnabled,
                     qaTag = R.string.qa_preferences_voice_calls,
-                    onCheckedChange = { sendCommand(ToggleCallsNotification) }
+                    onCheckedChange = { isChecked ->
+                        if (isChecked) {
+                            sendCommand(ShowCallsWarningDialog)
+                        } else {
+                            sendCommand(ToggleCallsNotification(false))
+                        }
+                    }
                 )
             }
         }
@@ -212,7 +262,7 @@ fun PrivacySettingsPreference(
                     text = GetString(stringResource(R.string.enable)),
                     qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
                     onClick = {
-                        sendCommand(EnableCalls)
+                        sendCommand(AskMicPermission)
                     }
                 ),
                 DialogButtonData(
@@ -220,6 +270,7 @@ fun PrivacySettingsPreference(
                     qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
                     onClick = {
                         sendCommand(HideCallsWarningDialog)
+                        sendCommand(ToggleCallsNotification(false))
                     }
                 ),
             )
@@ -239,11 +290,7 @@ fun PrivacySettingsPreference(
                     text = GetString(stringResource(R.string.enable)),
                     qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
                     onClick = {
-//                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-//                            .putExtra(Settings.EXTRA_APP_PACKAGE, BuildConfig.APPLICATION_ID)
-//                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//                            .takeIf { IntentUtils.isResolvable(requireContext(), it) }
-//                            ?.let { startActivity(it) }
+                        sendCommand(NavigateToAppNotificationsSettings)
                     }
                 ),
                 DialogButtonData(
@@ -264,6 +311,7 @@ fun PrivacySettingsPreference(
 fun PreviewPrivacySettingsPreference() {
     PrivacySettingsPreference(
         uiState = PrivacySettingsPreferenceViewModel.UIState(),
-        sendCommand = {}
+        sendCommand = {},
+        onBackPressed = {}
     )
 }

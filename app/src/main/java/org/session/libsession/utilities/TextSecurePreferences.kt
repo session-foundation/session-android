@@ -203,6 +203,7 @@ interface TextSecurePreferences {
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
+    fun setCallNotificationsEnabled(enabled : Boolean)
     fun isCallNotificationsEnabled(): Boolean
     fun getLastVacuum(): Long
     fun setLastVacuumNow()
@@ -914,6 +915,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setTypingIndicatorsEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.TYPING_INDICATORS, enabled)
+        _events.tryEmit(TextSecurePreferences.TYPING_INDICATORS)
     }
 
     override fun isLinkPreviewsEnabled(): Boolean {
@@ -1226,6 +1228,11 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasSeenLinkPreviewSuggestionDialog() {
         setBooleanPreference("has_seen_link_preview_suggestion_dialog", true)
+    }
+
+    override fun setCallNotificationsEnabled(enabled: Boolean) {
+        setBooleanPreference(CALL_NOTIFICATIONS_ENABLED, enabled)
+        _events.tryEmit(CALL_NOTIFICATIONS_ENABLED)
     }
 
     override fun isCallNotificationsEnabled(): Boolean {
