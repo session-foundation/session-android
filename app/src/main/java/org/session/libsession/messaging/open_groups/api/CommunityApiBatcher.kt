@@ -45,6 +45,11 @@ class CommunityApiBatcher @Inject constructor(
             return null
         }
 
+        // Shouldn't batch APIs that return large amount of data
+        if (req.api is CommunityFileDownloadApi) {
+            return null
+        }
+
         // Only batch requests that require signing
         if (!req.api.requiresSigning) {
             return null

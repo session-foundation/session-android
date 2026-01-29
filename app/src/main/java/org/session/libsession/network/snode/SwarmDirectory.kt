@@ -32,7 +32,7 @@ class SwarmDirectory @Inject constructor(
     }
 
     suspend fun fetchSwarm(publicKey: String): List<Snode> {
-        val pool = snodeDirectory.getSnodePool()
+        val pool = snodeDirectory.ensurePoolPopulated()
         require(pool.isNotEmpty()) {
             "Snode pool is empty"
         }
