@@ -1042,6 +1042,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
         val isAdmin = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)
 
+        if (isAdmin == null) return
+
         if(isAdmin){
             confirmAdminLeaveGroup()
         }else{
@@ -1132,7 +1134,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     negativeText = context.getString(dialogData.negativeText),
                     positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
                     negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
-                    onPositive = { leaveGroup(deleteGroup = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)) },
+                    onPositive = { leaveGroup(deleteGroup = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id) == true) },
                     showXIcon = dialogData.showCloseButton
                 )
             )

@@ -130,7 +130,8 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
                 setOnClickListener(this@ConversationOptionsBottomSheet)
                 val accountId = AccountId(recipient.address.toString())
                 // Only visible if admin is one of many group admins
-                this.isVisible = !groupManager.isCurrentUserLastAdmin(accountId)
+                this.isVisible = groupManager.isCurrentUserGroupAdmin(accountId) == true
+                        && !groupManager.isCurrentUserLastAdmin(accountId)
             }
         }
         // delete

@@ -127,7 +127,7 @@ interface GroupManagerV2 {
 
     fun getDeleteGroupConfirmationDialogData(groupId : AccountId, name : String) : ConfirmDialogData?
 
-    fun isCurrentUserGroupAdmin(groupId : AccountId) : Boolean
+    fun isCurrentUserGroupAdmin(groupId : AccountId) : Boolean?
     fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean
 
     data class ConfirmDialogData(
