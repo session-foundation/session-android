@@ -22,7 +22,6 @@ import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Base64
-import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
@@ -94,7 +93,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
         val threadID = storage.getThreadIdForMms(mmsMessageId)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
-            if(exception is HTTP.HTTPRequestFailedException && exception.statusCode == 404){
+            if (exception.findCause<UnhandledStatusCodeException>()?.code == 404){
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")
                     messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, id, mmsMessageId)
