@@ -27,8 +27,8 @@ interface SnodePathStorage {
 }
 
 interface SwarmStorage {
-    fun getSwarm(publicKey: String): Set<Snode>
-    fun setSwarm(publicKey: String, swarm: Set<Snode>)
+    fun getSwarm(publicKey: String): List<Snode>
+    fun setSwarm(publicKey: String, swarm: Collection<Snode>)
     fun dropSnodeFromSwarm(publicKey: String, snodeEd25519PubKey: String)
 }
 

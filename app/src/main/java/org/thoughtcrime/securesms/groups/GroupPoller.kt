@@ -23,7 +23,6 @@ import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -36,14 +35,13 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.snode.AlterTtlApi
-import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
-import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
-import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
-import org.thoughtcrime.securesms.api.snode.SnodeNotPartOfSwarmException
-import org.thoughtcrime.securesms.api.snode.execute
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.SwarmSnodeSelector
+import org.thoughtcrime.securesms.api.swarm.execute
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import org.thoughtcrime.securesms.util.findCause
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.days
@@ -60,10 +58,10 @@ class GroupPoller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val messageParser: MessageParser,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
-    private val swarmDirectory: SwarmDirectory,
     private val retrieveMessageFactory: RetrieveMessageApi.Factory,
     private val alterTtlApiApiFactory: AlterTtlApi.Factory,
-    private val snodeApiExecutor: SnodeApiExecutor,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val swarmSnodeSelector: SwarmSnodeSelector,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -90,17 +88,6 @@ class GroupPoller @AssistedInject constructor(
         }
     }
 
-    private class InternalPollState(
-        // The nodes for current swarm
-        var swarmNodes: Set<Snode> = emptySet(),
-
-        // The pool of snodes that are currently being used for polling
-        val pollPool: MutableSet<Snode> = hashSetOf()
-    ) {
-        fun shouldFetchSwarmNodes(): Boolean {
-            return swarmNodes.isEmpty()
-        }
-    }
 
     // A channel to send tokens to trigger a poll
     private val pollOnceTokens = Channel<PollOnceToken>()
@@ -109,7 +96,6 @@ class GroupPoller @AssistedInject constructor(
     val state: StateFlow<State> = flow {
         var lastState = State()
         val pendingTokens = mutableListOf<PollOnceToken>()
-        val internalPollState = InternalPollState()
 
         while (true) {
             pendingTokens.add(pollOnceTokens.receive())
@@ -123,7 +109,7 @@ class GroupPoller @AssistedInject constructor(
             lastState = lastState.copy(inProgress = true).also { emit(it) }
 
             val pollResult = pollSemaphore.withPermit {
-                doPollOnce(internalPollState)
+                doPollOnce()
             }
 
             lastState = lastState.copy(
@@ -193,39 +179,13 @@ class GroupPoller @AssistedInject constructor(
         return resultChannel.receive()
     }
 
-    private suspend fun doPollOnce(pollState: InternalPollState): PollResult {
+    private suspend fun doPollOnce(): PollResult {
         val pollStartedAt = Instant.now()
         var groupExpired: Boolean? = null
 
-        var currentSnode: Snode? = null
-
         val result = runCatching {
             supervisorScope {
-                // Fetch snodes if we don't have any
-                val swarmNodes = if (pollState.shouldFetchSwarmNodes()) {
-                    Log.d(TAG, "Fetching swarm nodes for $groupId")
-                    val fetched = swarmDirectory.fetchSwarm(groupId.hexString).toSet()
-                    pollState.swarmNodes = fetched
-                    fetched
-                } else {
-                    pollState.swarmNodes
-                }
-
-                // Ensure we have at least one snode
-                check(swarmNodes.isNotEmpty()) {
-                    "No swarm nodes found for $groupId"
-                }
-
-                // Fill the pool if it's empty
-                if (pollState.pollPool.isEmpty()) {
-                    pollState.pollPool.addAll(swarmNodes)
-                }
-
-                // Take a random snode from the pool
-                val snode = pollState.pollPool.random().also {
-                    pollState.pollPool.remove(it)
-                    currentSnode = it
-                }
+                val snode = swarmSnodeSelector.selectSnode(groupId.hexString)
 
                 val groupAuth =
                     configFactoryProtocol.getGroupAuth(groupId) ?: return@supervisorScope
@@ -253,9 +213,10 @@ class GroupPoller @AssistedInject constructor(
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
                 val receiveRevokeMessage = async {
-                    snodeApiExecutor.execute(
-                        SnodeApiRequest(
-                            snode = snode,
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmNodeOverride = snode,
+                            swarmPubKeyHex = groupId.hexString,
                             api = retrieveMessageFactory.create(
                                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                                     snode,
@@ -272,9 +233,10 @@ class GroupPoller @AssistedInject constructor(
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
                     pollingTasks += "extending group config TTL" to async {
-                        snodeApiExecutor.execute(
-                            SnodeApiRequest(
-                                snode = snode,
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmNodeOverride = snode,
+                                swarmPubKeyHex = groupId.hexString,
                                 api = alterTtlApiApiFactory.create(
                                     messageHashes = configHashesToExtends,
                                     auth = groupAuth,
@@ -294,10 +256,11 @@ class GroupPoller @AssistedInject constructor(
                     ).orEmpty()
 
 
-                    snodeApiExecutor.execute(
-                        SnodeApiRequest(
-                            snode = snode,
-                            retrieveMessageFactory.create(
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmNodeOverride = snode,
+                            swarmPubKeyHex = groupId.hexString,
+                            api = retrieveMessageFactory.create(
                                 lastHash = lastHash,
                                 auth = groupAuth,
                                 namespace = Namespace.GROUP_MESSAGES(),
@@ -313,9 +276,10 @@ class GroupPoller @AssistedInject constructor(
                     Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
-                        snodeApiExecutor.execute(
-                            SnodeApiRequest(
-                                snode = snode,
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = groupId.hexString,
+                                swarmNodeOverride = snode,
                                 api = retrieveMessageFactory.create(
                                     lastHash = lokiApiDatabase.getLastMessageHashValue(
                                         snode,
@@ -392,31 +356,6 @@ class GroupPoller @AssistedInject constructor(
         if (result.isFailure) {
             val error = result.exceptionOrNull()
             Log.e(TAG, "Error polling group", error)
-
-            // Find if any exception throws in the process has a root cause of a node returning bad response,
-            // then we will remove this snode from our swarm nodes set
-            if (error != null && currentSnode != null) {
-                val badResponse = (sequenceOf(error) + error.suppressedExceptions.asSequence())
-                    .map { err ->
-                        err.findCause<SnodeNotPartOfSwarmException>()
-                    }
-                    .first()
-
-                if (badResponse != null) {
-                    Log.e(TAG, "Group polling failed due to a server error", badResponse)
-                    pollState.swarmNodes -= currentSnode
-                    if (!swarmDirectory.updateSwarmFromResponse(
-                            swarmPublicKey = groupId.hexString,
-                            errorResponseBody = badResponse.responseBodyText,
-                        )
-                    ) {
-                        swarmDirectory.dropSnodeFromSwarmIfNeeded(
-                            snode = badResponse.snode,
-                            swarmPublicKey = groupId.hexString
-                        )
-                    }
-                }
-            }
         }
 
         val pollResult = PollResult(

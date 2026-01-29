@@ -45,14 +45,13 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
-import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
-import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
-import org.thoughtcrime.securesms.api.snode.SnodeNotPartOfSwarmException
-import org.thoughtcrime.securesms.api.snode.execute
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.SwarmSnodeSelector
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
-import org.thoughtcrime.securesms.util.findCause
 import kotlin.time.Duration.Companion.days
 
 private const val TAG = "Poller"
@@ -70,10 +69,10 @@ class Poller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val processor: ReceivedMessageProcessor,
     private val messageParser: MessageParser,
-    private val swarmDirectory: SwarmDirectory,
     private val retrieveMessageFactory: RetrieveMessageApi.Factory,
     private val alterTtlApiFactory: AlterTtlApi.Factory,
-    private val snodeApiExecutor: SnodeApiExecutor,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val swarmSnodeSelector: SwarmSnodeSelector,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -140,7 +139,6 @@ class Poller @AssistedInject constructor(
             preferences.migratedToMultiPartConfig = true
         }
 
-        val pollPool = hashSetOf<Snode>() // pollPool is the list of snodes we can use while rotating snodes from our swarm
         var retryScalingFactor = 1.0f // We increment the retry interval by NEXT_RETRY_MULTIPLIER times this value, which we bump on each failure
 
         var scheduledNextPoll = 0L
@@ -182,17 +180,7 @@ class Poller @AssistedInject constructor(
             var pollDelay = RETRY_INTERVAL_MS
             collector.emit(PollState.Polling)
             try {
-                // check if the polling pool is empty
-                if (pollPool.isEmpty()) {
-                    // if it is empty, fill it with the snodes from our swarm
-                    pollPool.addAll(swarmDirectory.getSwarm(userPublicKey))
-                }
-
-                // randomly get a snode from the pool
-                val currentNode = pollPool.random()
-
-                // remove that snode from the pool
-                pollPool.remove(currentNode)
+                val currentNode = swarmSnodeSelector.selectSnode(userPublicKey)
 
                 poll(currentNode, pollOnlyUserProfileConfig)
                 retryScalingFactor = 1f
@@ -210,21 +198,6 @@ class Poller @AssistedInject constructor(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error while polling:", e)
-
-                e.findCause<SnodeNotPartOfSwarmException>()?.let { err ->
-                    if (!swarmDirectory.updateSwarmFromResponse(
-                        swarmPublicKey = userPublicKey,
-                        errorResponseBody = err.responseBodyText,
-                    )) {
-                        swarmDirectory.dropSnodeFromSwarmIfNeeded(
-                            snode = err.snode,
-                            swarmPublicKey = userPublicKey
-                        )
-                    }
-
-                    // Also remove from our memory pool
-                    pollPool.remove(err.snode)
-                }
 
                 pollDelay = minOf(
                     MAX_RETRY_INTERVAL_MS,
@@ -342,10 +315,11 @@ class Poller @AssistedInject constructor(
 
             this.async {
                 runCatching {
-                    snodeApiExecutor.execute(
-                        SnodeApiRequest(
-                            snode = snode,
-                            api = retrieveMessageApi
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = retrieveMessageApi,
+                            swarmNodeOverride = snode,
                         )
                     )
                 }
@@ -380,11 +354,12 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            snodeApiExecutor.execute(
-                                SnodeApiRequest(
-                                    snode = snode,
-                                    api = retrieveApi
-                                )
+                            swarmApiExecutor.execute(
+                                SwarmApiRequest(
+                                    swarmPubKeyHex = userAuth.accountId.hexString,
+                                    api = retrieveApi,
+                                    swarmNodeOverride = snode,
+                                ),
                             )
                         }
                     }
@@ -394,15 +369,16 @@ class Poller @AssistedInject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    snodeApiExecutor.execute(
-                        SnodeApiRequest(
-                            snode = snode,
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
                             api = alterTtlApiFactory.create(
                                 messageHashes = hashesToExtend,
                                 auth = userAuth,
                                 alterType = AlterTtlApi.AlterType.Extend,
                                 newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds
-                            )
+                            ),
+                            swarmNodeOverride = snode,
                         )
                     )
                 } catch (e: Exception) {

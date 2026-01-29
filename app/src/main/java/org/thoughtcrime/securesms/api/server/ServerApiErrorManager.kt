@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.api.server
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.error.ClockOutOfSyncException
 import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,7 +26,7 @@ class ServerApiErrorManager @Inject constructor(
         if (errorCode == 425) {
             // if this is the first time we got a COS, retry, since we should have resynced the clock
             Log.w("Onion Request", "Clock out of sync (code: $errorCode) for destination server ${serverBaseUrl} - Local Snode clock at ${snodeClock.currentTime()} - First time? ${ctx.previousErrorCode == null}")
-            return ClockOutOfSyncException() to if (ctx.previousErrorCode == 425) {
+            return RuntimeException("Clock out of sync received from $serverBaseUrl") to if (ctx.previousErrorCode == 425) {
                 FailureDecision.Fail
             } else {
                 // reset the clock
