@@ -5,7 +5,6 @@ import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsignal.utilities.Snode
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
-import javax.inject.Singleton
 
 private typealias SwarmPubKeyHex = String
 
@@ -13,7 +12,6 @@ private typealias SwarmPubKeyHex = String
  * An algorithm for selecting a snode from a swarm, ensuring that swarm snodes are used evenly and
  * randomly across multiple [selectSnode].
  */
-@Singleton
 class SwarmSnodeSelector @Inject constructor(
     private val swarmDirectory: SwarmDirectory,
 ) {
