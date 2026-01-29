@@ -39,33 +39,47 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UIState())
     val uiState: StateFlow<UIState> = _uiState
 
+    private val isCommunityMessageRequestsEnabled: Boolean
+           get() = configFactory.withMutableUserConfigs { it.userProfile.getCommunityMessageRequests() }
+
+
     init {
+        _uiState.update {
+            it.copy(
+                allowCommunityMessageRequests = isCommunityMessageRequestsEnabled
+            )
+        }
+
         combine(
             prefs.observeBooleanKey(TextSecurePreferences.SCREEN_LOCK, default = false),
             prefs.observeBooleanKey(DISABLE_PASSPHRASE_PREF, default = false),
             keyguardSecure
-        ) { screenLock, isPasswordDisabled, keyguardSecure ->
+        ) { screenLockPref, isPasswordDisabled, keyguardSecure ->
 
-            val isScreenLockEnabled = isPasswordDisabled && !keyguardSecure
+            val visible = isPasswordDisabled
+            val enabled = isPasswordDisabled && keyguardSecure
+            val checked = if (enabled) screenLockPref else false
+
             UIState(
-                screenLockVisible = !isPasswordDisabled,
-                screenLockEnabled = isScreenLockEnabled,
-                screenLockChecked = if (isScreenLockEnabled) false else screenLock
+                screenLockVisible = visible,
+                screenLockEnabled = enabled,
+                screenLockChecked = checked
             )
-            val passwordDisabled = TextSecurePreferences.isPasswordDisabled(app)
-
-        }.onEach { it ->
+        }.onEach { state ->
             _uiState.update {
                 it.copy(
-                    screenLockVisible = it.screenLockVisible,
-                    screenLockEnabled = it.screenLockEnabled,
-                    screenLockChecked = it.screenLockChecked
+                    screenLockVisible = state.screenLockVisible,
+                    screenLockEnabled = state.screenLockEnabled,
+                    screenLockChecked = state.screenLockChecked
                 )
             }
         }.launchIn(viewModelScope)
 
         combine(
-            prefs.observeBooleanKey(TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED, default = false),
+            prefs.observeBooleanKey(
+                TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED,
+                default = false
+            ),
             prefs.observeBooleanKey(TextSecurePreferences.READ_RECEIPTS_PREF, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.TYPING_INDICATORS, default = true),
             prefs.observeBooleanKey(TextSecurePreferences.LINK_PREVIEWS, default = false),
@@ -73,6 +87,10 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         ) { callsEnabled, isReadReceiptsEnabled, showTypingIndicator, linkPreviewEnabled, isIncognitoKeyboard
             ->
             UIState(
+                screenLockVisible = _uiState.value.screenLockVisible,
+                screenLockEnabled = _uiState.value.screenLockEnabled,
+                screenLockChecked = _uiState.value.screenLockChecked,
+
                 typingIndicators = showTypingIndicator,
                 callNotificationsEnabled = callsEnabled,
 
@@ -94,57 +112,40 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         keyguardSecure.value = km.isKeyguardSecure
     }
 
-    fun onToggleScreenLock(enabled: Boolean) {
-        // if UI disabled it, ignore
-        if (!uiState.value.screenLockEnabled) return
-        prefs.setScreenLockEnabled(enabled)
-    }
-
-    fun onToggleTypingIndicators() {
-        val toggledEnable = !uiState.value.typingIndicators
-        prefs.setTypingIndicatorsEnabled(toggledEnable)
-        if (!toggledEnable) typingStatusRepository.clear()
-    }
-
-    fun onToggleCallNotifications(isEnabled : Boolean) {
-        prefs.setCallNotificationsEnabled(isEnabled)
-        if(isEnabled && !areNotificationsEnabled(app)){
-            _uiState.update { it.copy(showCallsNotificationDialog = true) }
-        }
-    }
-
-    fun onSetAllowMessageRequests() {
-        val allowRequest = !readAllowMessageRequests()
-        configFactory.withMutableUserConfigs {
-            it.userProfile.setCommunityMessageRequests(allowRequest)
-        }
-        // update state
-        _uiState.update { it.copy(allowCommunityMessageRequests = allowRequest) }
-    }
-
-    private fun readAllowMessageRequests(): Boolean =
-        configFactory.withMutableUserConfigs { it.userProfile.getCommunityMessageRequests() }
-
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.ToggleCallsNotification -> {
-                onToggleCallNotifications(command.isEnabled)
+                prefs.setCallNotificationsEnabled(command.isEnabled)
+                if (command.isEnabled && !areNotificationsEnabled(app)) {
+                    _uiState.update { it.copy(showCallsNotificationDialog = true) }
+                }
             }
 
-            Commands.ToggleLockApp -> {
-                onToggleScreenLock(!uiState.value.screenLockChecked)
+            is Commands.ToggleLockApp -> {
+                // if UI disabled it, ignore
+                if (!uiState.value.screenLockEnabled) return
+                prefs.setScreenLockEnabled(command.isEnabled)
+                viewModelScope.launch {
+                    mutableEvents.emit(PrivacySettingsPreferenceEvent.StartLockToggledService)
+                }
             }
 
             is Commands.ToggleCommunityRequests -> {
-                onSetAllowMessageRequests()
+                val newValue = !isCommunityMessageRequestsEnabled
+                configFactory.withMutableUserConfigs {
+                    it.userProfile.setCommunityMessageRequests(newValue)
+                }
+                // update state
+                _uiState.update { it.copy(allowCommunityMessageRequests = newValue) }
             }
 
-            Commands.ToggleReadReceipts -> {
-                prefs.setReadReceiptsEnabled(!uiState.value.readReceiptsEnabled)
+            is Commands.ToggleReadReceipts -> {
+                prefs.setReadReceiptsEnabled(command.isEnabled)
             }
 
-            Commands.ToggleTypingIndicators -> {
-                onToggleTypingIndicators()
+            is Commands.ToggleTypingIndicators -> {
+                prefs.setTypingIndicatorsEnabled(command.isEnabled)
+                if (!command.isEnabled) typingStatusRepository.clear()
             }
 
             Commands.ToggleLinkPreviews -> {
@@ -203,13 +204,13 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     }
 
     sealed interface Commands {
-        data class ToggleCallsNotification(val isEnabled : Boolean) : Commands
-        data object ToggleLockApp : Commands // prefs?
-        data object ToggleCommunityRequests : Commands // config
-        data object ToggleReadReceipts : Commands // prefs
-        data object ToggleTypingIndicators : Commands // prefs
-        data object ToggleLinkPreviews : Commands // prefs
-        data object ToggleIncognitoKeyboard : Commands // prefs
+        data class ToggleCallsNotification(val isEnabled: Boolean) : Commands
+        data class ToggleLockApp(val isEnabled: Boolean) : Commands
+        data object ToggleCommunityRequests : Commands
+        data class ToggleReadReceipts(val isEnabled: Boolean)  : Commands
+        data class ToggleTypingIndicators(val isEnabled: Boolean) : Commands
+        data object ToggleLinkPreviews : Commands
+        data object ToggleIncognitoKeyboard : Commands
 
         data object AskMicPermission : Commands
         data object NavigateToAppNotificationsSettings : Commands

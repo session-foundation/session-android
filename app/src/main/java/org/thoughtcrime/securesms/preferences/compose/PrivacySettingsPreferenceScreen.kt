@@ -25,6 +25,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.SESSION_FOUN
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.PrivacySettingsPreferenceEvent.*
+import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -48,9 +49,9 @@ fun PrivacySettingsPreferenceScreen(
         viewModel.refreshKeyguardSecure()
     }
 
-    LaunchedEffect (viewModel.events) {
-       viewModel.events.collect { event ->
-           when(event){
+    LaunchedEffect(viewModel.events) {
+        viewModel.events.collect { event ->
+            when (event) {
                 is OpenAppNotificationSettings -> {
                     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(Settings.EXTRA_APP_PACKAGE, BuildConfig.APPLICATION_ID)
@@ -58,29 +59,33 @@ fun PrivacySettingsPreferenceScreen(
                         .takeIf { IntentUtils.isResolvable(context, it) }
                         ?.let { context.startActivity(it, null) }
                 }
-               AskMicrophonePermission -> {
-                   // Ask for permissions here
-                   Permissions.with(context.findActivity())
-                       .request(Manifest.permission.RECORD_AUDIO)
-                       .onAllGranted {
-                           viewModel.onCommand(ToggleCallsNotification(true))
-                       }
-                       .withPermanentDenialDialog(
-                           context.getSubbedString(
-                               R.string.permissionsMicrophoneAccessRequired,
-                               APP_NAME_KEY to context.applicationContext.getString(R.string.app_name)
-                           )
-                       )
-                       .onAnyDenied {
-                           viewModel.onCommand(ToggleCallsNotification(false))
-                       }
-                       .execute()
-               }
-               StartLockToggledService -> {
 
-               }
-           }
-       }
+                AskMicrophonePermission -> {
+                    // Ask for permissions here
+                    Permissions.with(context.findActivity())
+                        .request(Manifest.permission.RECORD_AUDIO)
+                        .onAllGranted {
+                            viewModel.onCommand(ToggleCallsNotification(true))
+                        }
+                        .withPermanentDenialDialog(
+                            context.getSubbedString(
+                                R.string.permissionsMicrophoneAccessRequired,
+                                APP_NAME_KEY to context.applicationContext.getString(R.string.app_name)
+                            )
+                        )
+                        .onAnyDenied {
+                            viewModel.onCommand(ToggleCallsNotification(false))
+                        }
+                        .execute()
+                }
+
+                StartLockToggledService -> {
+                    val intent = Intent(context, KeyCachingService::class.java)
+                    intent.action = KeyCachingService.LOCK_TOGGLED_EVENT
+                    context.startService(intent)
+                }
+            }
+        }
     }
 
     val uiState = viewModel.uiState.collectAsState().value
@@ -141,12 +146,12 @@ fun PrivacySettingsPreference(
                     title = annotatedStringResource(R.string.lockApp),
                     subtitle = annotatedStringResource(
                         Phrase.from(context, R.string.lockAppDescription)
-                            .put(APP_NAME_KEY, R.string.app_name)
-                            .format()
-                    ),
+                            .put(APP_NAME_KEY, stringResource( R.string.app_name))
+                            .format()),
+                    enabled = uiState.screenLockEnabled,
                     checked = uiState.screenLockChecked,
                     qaTag = R.string.qa_preferences_lock_app,
-                    onCheckedChange = { sendCommand(ToggleLockApp) }
+                    onCheckedChange = { isEnabled -> sendCommand(ToggleLockApp(isEnabled)) }
                 )
             }
         }
@@ -184,7 +189,7 @@ fun PrivacySettingsPreference(
                     subtitle = annotatedStringResource(R.string.readReceiptsDescription),
                     checked = uiState.readReceiptsEnabled,
                     qaTag = R.string.qa_preferences_read_receipt,
-                    onCheckedChange = { sendCommand(ToggleReadReceipts) }
+                    onCheckedChange = { isEnabled -> sendCommand(ToggleReadReceipts(isEnabled)) }
                 )
             }
         }
@@ -203,7 +208,7 @@ fun PrivacySettingsPreference(
                     subtitle = annotatedStringResource(R.string.typingIndicatorsDescription),
                     checked = uiState.typingIndicators,
                     qaTag = R.string.qa_preferences_typing_indicator,
-                    onCheckedChange = { sendCommand(ToggleTypingIndicators) }
+                    onCheckedChange = { isEnabled -> sendCommand(ToggleTypingIndicators(isEnabled)) }
                 )
             }
         }

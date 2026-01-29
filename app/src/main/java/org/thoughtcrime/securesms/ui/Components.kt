@@ -1527,6 +1527,7 @@ fun SwitchActionRowItem(
     subtitleStyle: TextStyle = LocalType.current.small,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    enabled : Boolean = true
 ) {
     ActionRowItem(
         modifier = modifier,
@@ -1540,10 +1541,12 @@ fun SwitchActionRowItem(
         subtitleStyle = subtitleStyle,
         paddingValues = paddingValues,
         minHeight = minHeight,
+        enabled = enabled,
         endContent = {
             SessionSwitch(
                 checked = checked,
-                onCheckedChange = onCheckedChange
+                onCheckedChange = onCheckedChange,
+                enabled = enabled
             )
         }
     )
