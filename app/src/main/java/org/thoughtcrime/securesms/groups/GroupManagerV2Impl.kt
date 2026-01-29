@@ -39,12 +39,9 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
@@ -66,13 +63,20 @@ import org.session.protos.SessionProtos.GroupUpdateInviteResponseMessage
 import org.session.protos.SessionProtos.GroupUpdateMemberChangeMessage
 import org.session.protos.SessionProtos.GroupUpdateMessage
 import org.session.protos.SessionProtos.GroupUpdatePromoteMessage
+import org.thoughtcrime.securesms.api.snode.BatchApi
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.snode.SnodeApi
+import org.thoughtcrime.securesms.api.snode.StoreMessageApi
+import org.thoughtcrime.securesms.api.snode.UnrevokeSubKeyApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
@@ -90,7 +94,6 @@ class GroupManagerV2Impl @Inject constructor(
     private val configFactory: ConfigFactory,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiDatabase: LokiMessageDatabase,
-    private val threadDatabase: ThreadDatabase,
     @param:ApplicationContext val application: Context,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
@@ -102,8 +105,11 @@ class GroupManagerV2Impl @Inject constructor(
     private val recipientRepository: RecipientRepository,
     private val messageSender: MessageSender,
     private val inviteContactJobFactory: InviteContactsJob.Factory,
-    private val snodeClient: SnodeClient,
-    private val swarmDirectory: SwarmDirectory
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory,
+    private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
+    private val unrevokeSubKeyApiFactory: UnrevokeSubKeyApi.Factory,
+    private val batchApiFactory: BatchApi.Factory,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -266,7 +272,7 @@ class GroupManagerV2Impl @Inject constructor(
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
 
-        val batchRequests = mutableListOf<SnodeClient.SnodeBatchRequestInfo>()
+        val batchApis = mutableListOf<SnodeApi<*>>()
 
         val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
             val shareHistoryHexes = mutableListOf<String>()
@@ -296,8 +302,8 @@ class GroupManagerV2Impl @Inject constructor(
 
             if (shareHistoryHexes.isNotEmpty()) {
                 val memberKey = configs.groupKeys.supplementFor(shareHistoryHexes)
-                batchRequests.add(
-                    snodeClient.buildAuthenticatedStoreBatchInfo(
+                batchApis.add(
+                    storeSnodeMessageApiFactory.create(
                         namespace = Namespace.GROUP_KEYS(),
                         message = SnodeMessage(
                             recipient = group.hexString,
@@ -315,15 +321,17 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Call un-revocate API on new members, in case they have been removed before
-        batchRequests += snodeClient.buildAuthenticatedUnrevokeSubKeyBatchRequest(
-            groupAdminAuth = groupAuth,
+        batchApis += unrevokeSubKeyApiFactory.create(
+            auth = groupAuth,
             subAccountTokens = subAccountTokens
         )
 
         // Call the API
         try {
-            val swarmNode = swarmDirectory.getSingleTargetSnode(group.hexString)
-            val response = snodeClient.getBatchResponse(swarmNode, group.hexString, batchRequests)
+            val response = swarmApiExecutor.execute(SwarmApiRequest(
+                swarmPubKeyHex = group.hexString,
+                api = batchApiFactory.createFromApis(batchApis)
+            ))
 
             // Make sure every request is successful
             response.requireAllRequestsSuccessful("Failed to invite members")
@@ -471,7 +479,15 @@ class GroupManagerV2Impl @Inject constructor(
             OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
         } ?: return@launchAndWait
 
-        snodeClient.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
+        swarmApiExecutor.execute(
+            SwarmApiRequest(
+                swarmPubKeyHex = groupAccountId.hexString,
+                api = deleteMessageApiFactory.create(
+                    messageHashes = messagesToDelete,
+                    swarmAuth = groupAdminAuth
+                )
+            )
+        )
     }
 
     override suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>) {
@@ -487,7 +503,17 @@ class GroupManagerV2Impl @Inject constructor(
 
         // remove messages from swarm sessionClient.deleteMessage
         val cleanedHashes: List<String> = deletedHashes.filter { !it.isNullOrEmpty() }.filterNotNull()
-        if(cleanedHashes.isNotEmpty()) snodeClient.deleteMessage(groupAccountId.hexString, groupAdminAuth, cleanedHashes)
+        if (cleanedHashes.isNotEmpty()) {
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = groupAccountId.hexString,
+                    api = deleteMessageApiFactory.create(
+                        messageHashes = cleanedHashes,
+                        swarmAuth = groupAdminAuth
+                    )
+                )
+            )
+        }
     }
 
     override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) = scope.launchAndWait(group, "Handle member left message") {
@@ -685,10 +711,15 @@ class GroupManagerV2Impl @Inject constructor(
 
                 if (groupInviteMessageHash != null) {
                     val auth = requireNotNull(storage.userAuth)
-                    snodeClient.deleteMessage(
-                        publicKey = auth.accountId.hexString,
-                        swarmAuth = auth,
-                        serverHashes = listOf(groupInviteMessageHash)
+
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = auth.accountId.hexString,
+                            api = deleteMessageApiFactory.create(
+                                messageHashes = listOf(groupInviteMessageHash),
+                                swarmAuth = auth
+                            )
+                        )
                     )
                 }
             }
@@ -758,10 +789,14 @@ class GroupManagerV2Impl @Inject constructor(
         // Delete the invite once we have approved
         if (inviteMessageHash != null) {
             val auth = requireNotNull(storage.userAuth)
-            snodeClient.deleteMessage(
-                publicKey = auth.accountId.hexString,
-                swarmAuth = auth,
-                serverHashes = listOf(inviteMessageHash)
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = auth.accountId.hexString,
+                    api = deleteMessageApiFactory.create(
+                        messageHashes = listOf(inviteMessageHash),
+                        swarmAuth = auth
+                    )
+                )
             )
         }
     }
@@ -838,10 +873,14 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Delete the promotion message remotely
-        snodeClient.deleteMessage(
-            userAuth.accountId.hexString,
-            userAuth,
-            listOf(promoteMessageHash)
+        swarmApiExecutor.execute(
+            SwarmApiRequest(
+                swarmPubKeyHex = userAuth.accountId.hexString,
+                api = deleteMessageApiFactory.create(
+                    messageHashes = listOf(promoteMessageHash),
+                    swarmAuth = userAuth
+                )
+            )
         )
     }
 
@@ -1045,10 +1084,14 @@ class GroupManagerV2Impl @Inject constructor(
 
         // If we are admin, we can delete the messages from the group swarm
         group.adminKey?.data?.let { adminKey ->
-            snodeClient.deleteMessage(
-                publicKey = groupId.hexString,
-                swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
-                serverHashes = messageHashes.toList()
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = groupId.hexString,
+                    api = deleteMessageApiFactory.create(
+                        messageHashes = messageHashes,
+                        swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
+                    )
+                )
             )
         }
 
@@ -1143,10 +1186,14 @@ class GroupManagerV2Impl @Inject constructor(
                             sender = sender.hexString,
                             closedGroupId = groupId.hexString))
             ) {
-                snodeClient.deleteMessage(
-                    groupId.hexString,
-                    OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
-                    hashes
+                swarmApiExecutor.execute(
+                    SwarmApiRequest(
+                        swarmPubKeyHex = groupId.hexString,
+                        api = deleteMessageApiFactory.create(
+                            messageHashes = hashes,
+                            swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
+                        )
+                    )
                 )
             }
 
@@ -1158,10 +1205,14 @@ class GroupManagerV2Impl @Inject constructor(
                 }
 
                 if (userMessageHashes.isNotEmpty()) {
-                    snodeClient.deleteMessage(
-                        groupId.hexString,
-                        OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
-                        userMessageHashes
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = groupId.hexString,
+                            api = deleteMessageApiFactory.create(
+                                messageHashes = userMessageHashes,
+                                swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
+                            )
+                        )
                     )
                 }
             }
@@ -1331,8 +1382,8 @@ class GroupManagerV2Impl @Inject constructor(
         return amAdmin && adminCount == 1
     }
 
-    private fun BatchResponse.requireAllRequestsSuccessful(errorMessage: String) {
-        val firstError = this.results.firstOrNull { it.code != 200 }
+    private fun BatchApi.Response.requireAllRequestsSuccessful(errorMessage: String) {
+        val firstError = this.responses.firstOrNull { it.code != 200 }
         require(firstError == null) { "$errorMessage: ${firstError!!.body}" }
     }
 }

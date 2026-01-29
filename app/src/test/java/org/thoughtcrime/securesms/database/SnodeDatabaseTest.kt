@@ -68,7 +68,7 @@ class SnodeDatabaseTest {
     @Test
     fun `should persist snode pool`() {
         assertEquals(0, db.getSnodePool().size)
-        val expected = snodes.toSet()
+        val expected = snodes
 
         db.setSnodePool(expected)
         assertEquals(expected, db.getSnodePool())
@@ -78,7 +78,7 @@ class SnodeDatabaseTest {
     fun `should persist paths`() {
         assertEquals(0, db.getOnionRequestPaths().size)
 
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         val paths = listOf(
             listOf(snodes[0], snodes[1], snodes[2]),
@@ -100,7 +100,7 @@ class SnodeDatabaseTest {
 
     @Test
     fun `should persist path while retaining strikes`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         val path1 = listOf(snodes[0], snodes[1], snodes[2])
 
@@ -129,7 +129,7 @@ class SnodeDatabaseTest {
 
     @Test
     fun `should not persist paths that overlap`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         val paths = listOf(
             listOf(snodes[0], snodes[1], snodes[2]),
@@ -143,9 +143,9 @@ class SnodeDatabaseTest {
 
     @Test
     fun `should persist swarm`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
-        val swarmNodes = setOf(snodes[0], snodes[1], snodes[2])
+        val swarmNodes = listOf(snodes[0], snodes[1], snodes[2])
 
         assertEquals(0, db.getSwarm("key1").size)
         db.setSwarm("key1", swarmNodes)
@@ -154,7 +154,7 @@ class SnodeDatabaseTest {
 
     @Test
     fun `increase path strike works`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         val path1 = listOf(snodes[0], snodes[1], snodes[2])
         val path2 = listOf(snodes[3], snodes[4])
@@ -167,7 +167,7 @@ class SnodeDatabaseTest {
 
     @Test
     fun `increase path strikes with snode works`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         val path1 = listOf(snodes[0], snodes[1], snodes[2])
         val path2 = listOf(snodes[3], snodes[4])
@@ -176,7 +176,7 @@ class SnodeDatabaseTest {
 
     @Test
     fun `increase snode strike works`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         assertEquals(1, db.increaseSnodeStrike(snodes[0], 1))
         assertEquals(1, db.increaseSnodeStrike(snodes[1], 1))
@@ -184,21 +184,21 @@ class SnodeDatabaseTest {
 
     @Test
     fun `drop snode works`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
-        db.setSwarm("swarm1", setOf(snodes[0], snodes[1]))
+        db.setSwarm("swarm1", listOf(snodes[0], snodes[1]))
         val paths = listOf(
             listOf(snodes[1], snodes[2]),
             listOf(snodes[3], snodes[4])
         )
         db.setOnionRequestPaths(paths)
 
-        val expectingRemaining = snodes.drop(1).toSet()
+        val expectingRemaining = snodes.drop(1)
         assertNotNull(db.removeSnode(snodes[0].publicKeySet!!.ed25519Key))
         assertEquals(expectingRemaining, db.getSnodePool())
 
         // Snode was in swarm, so it should be removed from there too
-        assertEquals(setOf(snodes[1]), db.getSwarm("swarm1"))
+        assertEquals(listOf(snodes[1]), db.getSwarm("swarm1"))
 
         // Since snode is not in any path, paths should remain unchanged
         assertEquals(paths, db.getOnionRequestPaths())
@@ -206,19 +206,19 @@ class SnodeDatabaseTest {
 
     @Test
     fun `drop snode with min strikes works`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         assertEquals(4, db.increaseSnodeStrike(snodes[0], 4))
         assertEquals(3, db.increaseSnodeStrike(snodes[1], 3))
 
         db.removeSnodesWithStrikesGreaterThan(2)
-        val expectingRemaining = snodes.drop(2).toSet()
+        val expectingRemaining = snodes.drop(2)
         assertEquals(expectingRemaining, db.getSnodePool())
     }
 
     @Test
     fun `should be able to find random unused snodes for path`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         val paths = listOf(
             listOf(snodes[0], snodes[1]),
@@ -234,7 +234,7 @@ class SnodeDatabaseTest {
 
     @Test
     fun `replace path works`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         val oldPath = listOf(snodes[0], snodes[1])
         val newPath = listOf(snodes[2], snodes[3])
@@ -248,7 +248,7 @@ class SnodeDatabaseTest {
 
     @Test
     fun `should not be able to remove snode used in paths`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         val paths = listOf(
             listOf(snodes[0], snodes[1]),
@@ -263,24 +263,38 @@ class SnodeDatabaseTest {
 
     @Test
     fun `replacing snode pool should reset their strikes`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         assertEquals(2, db.increaseSnodeStrike(snodes[0], 2))
         assertEquals(3, db.increaseSnodeStrike(snodes[1], 3))
 
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         assertEquals(0, db.increaseSnodeStrike(snodes[0], 0))
         assertEquals(0, db.increaseSnodeStrike(snodes[1], 0))
     }
 
     @Test
+    fun `replacing snode pool should remove path that contains non-exist snode`() {
+        db.setSnodePool(snodes)
+
+        val path1 = listOf(snodes[0], snodes[1])
+        val path2 = listOf(snodes[2], snodes[3])
+        db.setOnionRequestPaths(listOf(path1, path2))
+
+        val newPool = snodes.drop(1).toSet()
+        db.setSnodePool(newPool)
+
+        assertEquals(listOf(path2), db.getOnionRequestPaths())
+    }
+
+    @Test
     fun `drop snode from swarm works`() {
-        db.setSnodePool(snodes.toSet())
+        db.setSnodePool(snodes)
 
         db.setSwarm("swarm1", setOf(snodes[0], snodes[1], snodes[2]))
 
-        val expectingRemaining = setOf(snodes[1], snodes[2])
+        val expectingRemaining = listOf(snodes[1], snodes[2])
         db.dropSnodeFromSwarm("swarm1", snodes[0].publicKeySet!!.ed25519Key)
         assertEquals(expectingRemaining, db.getSwarm("swarm1"))
     }

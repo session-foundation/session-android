@@ -18,7 +18,6 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.network.SnodeClient
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.Address
@@ -37,6 +36,10 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.database.CommunityDatabase
@@ -88,7 +91,8 @@ class ConfigToDatabaseSync @Inject constructor(
     private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
-    private val snodeClient: SnodeClient,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
@@ -314,11 +318,16 @@ class ConfigToDatabaseSync @Inject constructor(
                 scope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
                         messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
-                    if (cleanedHashes.isNotEmpty()) snodeClient.deleteMessage(
-                        groupInfoConfig.id.hexString,
-                        groupAdminAuth,
-                        cleanedHashes
-                    )
+                    if (cleanedHashes.isNotEmpty()) {
+                        val deleteMessageApi = deleteMessageApiFactory.create(
+                            messageHashes = cleanedHashes,
+                            swarmAuth = groupAdminAuth
+                        )
+                        swarmApiExecutor.execute(SwarmApiRequest(
+                            swarmPubKeyHex = groupInfoConfig.id.hexString,
+                            api = deleteMessageApi
+                        ))
+                    }
                 }
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->

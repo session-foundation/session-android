@@ -8,9 +8,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.avatars.AvatarHelper
-import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.network.model.OnionError
+import org.session.libsession.messaging.file_server.FileDownloadApi
+import org.session.libsession.messaging.file_server.FileServerApis
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.CommunityFileDownloadApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -26,10 +29,14 @@ import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.util.DateUtils.Companion.millsToInstant
-import org.thoughtcrime.securesms.util.getRootCause
+import org.thoughtcrime.securesms.util.findCause
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
@@ -45,12 +52,14 @@ class AvatarDownloadManager @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
     private val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
-    private val prefs: TextSecurePreferences,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val configFactory: ConfigFactoryProtocol,
-    private val fileServerApi: FileServerApi,
     private val attachmentProcessor: AttachmentProcessor,
     private val loginStateRepository: LoginStateRepository,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val fileDownloadApiFactory: FileDownloadApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val communityFileDownloadApiFactory: CommunityFileDownloadApi.Factory,
 ) {
     /**
      * A map of mutexes to synchronize downloads for each remote file.
@@ -113,8 +122,8 @@ class AvatarDownloadManager @Inject constructor(
             val (bytes, meta) = try {
                 downloadAndDecryptFile(file)
             } catch (e: Exception) {
-                if (e.getRootCause<NonRetryableException>() != null ||
-                    e.getRootCause<OnionError.DestinationError>()?.status?.code == 404
+                if (e.findCause<NonRetryableException>() != null ||
+                    e.findCause<UnhandledStatusCodeException>()?.code == 404
                 ) {
                     Log.w(TAG, "Download failed permanently for file $file", e)
                     // Write an empty file with a permanent error metadata if the download failed permanently.
@@ -233,26 +242,31 @@ class AvatarDownloadManager @Inject constructor(
                     }
                 }
 
-                val result = fileServerApi.parseAttachmentUrl(file.url.toHttpUrl())
+                val result = FileServerApis.parseAttachmentUrl(file.url.toHttpUrl())
 
-                val response = fileServerApi.download(
-                    fileId = result.fileId,
-                    fileServer = result.fileServer,
+                val response = serverApiExecutor.execute(
+                    ServerApiRequest(
+                        fileServer = result.fileServer,
+                        api = fileDownloadApiFactory.create(
+                            fileId = result.fileId
+                        )
+                    )
                 )
 
+                val data = response.data.toByteArraySlice()
                 Log.d(TAG, "Downloaded file from file server: $file")
 
                 // Decrypt data
                 val decrypted = if (result.usesDeterministicEncryption) {
                     attachmentProcessor.decryptDeterministically(
-                        ciphertext = response.body,
+                        ciphertext = data,
                         key = file.key.data
                     )
                 } else {
                     AESGCM.decrypt(
-                        ivAndCiphertext = response.body.data,
-                        offset = response.body.offset,
-                        len = response.body.len,
+                        ivAndCiphertext = data.data,
+                        offset = data.offset,
+                        len = data.len,
                         symmetricKey = file.key.data
                     ).view()
                 }
@@ -262,11 +276,15 @@ class AvatarDownloadManager @Inject constructor(
             }
 
             is RemoteFile.Community -> {
-                val data = OpenGroupApi.download(
-                    fileId = file.fileId,
-                    room = file.roomId,
-                    server = file.communityServerBaseUrl
-                )
+                val data = communityApiExecutor.execute(
+                    CommunityApiRequest(
+                        serverBaseUrl = file.communityServerBaseUrl,
+                        api = communityFileDownloadApiFactory.create(
+                            room = file.roomId,
+                            fileId = file.fileId
+                        )
+                    )
+                ).toByteArraySlice()
 
                 data to FileMetadata()
             }

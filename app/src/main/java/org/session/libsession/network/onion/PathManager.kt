@@ -1,5 +1,6 @@
 package org.session.libsession.network.onion
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,27 +15,38 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SnodePoolStorage
-import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.AutoRetryApiExecutor
+import org.thoughtcrime.securesms.api.onion.OnionSessionApiExecutor
+import org.thoughtcrime.securesms.api.snode.GetInfoApi
+import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.execute
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 @Singleton
-class PathManager @Inject constructor(
+open class PathManager @Inject constructor(
     private val scope: CoroutineScope,
     private val directory: SnodeDirectory,
     private val storage: SnodePathStorage,
     private val snodePoolStorage: SnodePoolStorage,
     private val prefs: TextSecurePreferences,
+    private val snodeApiExecutor: Provider<SnodeApiExecutor>,
+    private val getInfoApi: Provider<GetInfoApi>,
 ) {
     companion object {
         private const val STRIKE_THRESHOLD = 3
@@ -133,11 +145,39 @@ class PathManager @Inject constructor(
         }
     }
 
+    private suspend fun testPath(pathCandidate: Path): Boolean {
+        try {
+            return withTimeout(5.seconds) {
+                // Run an snode API to test the path but disable path manipulation, retries, etc.
+                snodeApiExecutor.get()
+                    .execute(
+                        req = SnodeApiRequest(
+                            snode = snodePoolStorage.getSnodePool().first { it !in pathCandidate },
+                            api = getInfoApi.get()
+                        ),
+                        ctx = ApiExecutorContext()
+                            .set(OnionSessionApiExecutor.OnionPathOverridesKey, pathCandidate)
+                            .set(AutoRetryApiExecutor.DisableRetryKey, Unit)
+                    )
+
+                Log.d("Onion Request", "Path test succeeded for candidate path $pathCandidate")
+                true
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Log.w("Onion Request", "Path test failed for $pathCandidate", e)
+            return false
+        }
+    }
+
     /**
      * Rotates existing paths by keeping the guard node but replacing the rest.
      * Validates connectivity via /info before committing.
      */
     private suspend fun rotatePaths() {
+        Log.d("Onion Request", "Start rotating paths...")
+
         // Phase 1: decide + build candidates under lock
         val candidates: List<Path> = buildMutex.withLock {
             val now = System.currentTimeMillis()
@@ -186,8 +226,7 @@ class PathManager @Inject constructor(
         // Phase 2: test out our paths
         val working = ArrayList<Path>(targetPathCount)
         for (p in candidates) {
-            //todo ONION v Replace true v We need to test the path here - need a function with a custom path - Fanchao
-            if (true) {
+            if (testPath(p)) {
                 working += p
             }
             if (working.size >= targetPathCount) break
@@ -208,6 +247,8 @@ class PathManager @Inject constructor(
                 Log.i("Onion Request", "Rotation aborted: Guards changed during validation (likely due to concurrent repair).")
                 return@withLock
             }
+
+            Log.d("Onion Request", "New rotated paths validated, committing as: $working")
 
             val committed = sanitizePaths(working.take(targetPathCount))
             _paths.value = committed
@@ -271,6 +312,8 @@ class PathManager @Inject constructor(
      * - Third strike means drop snode immediately.
      * - Dropping a snode swaps it out in any path(s) that contain it (drops path only if unrepairable).
      * - Dropping a snode also removes it from pool and (if pubkey known) swarm.
+     *
+     * @return true if the snode was punished/removed, false if it was not found in pool.
      */
     suspend fun handleBadSnode(
         snode: Snode,
@@ -323,6 +366,7 @@ class PathManager @Inject constructor(
             }
 
             _paths.value = storage.getOnionRequestPaths()
+
         }
     }
 

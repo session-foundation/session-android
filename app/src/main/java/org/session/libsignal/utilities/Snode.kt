@@ -2,6 +2,8 @@ package org.session.libsignal.utilities
 
 import android.annotation.SuppressLint
 import android.util.LruCache
+import okhttp3.HttpUrl
+import org.thoughtcrime.securesms.api.batch.BatchApiExecutor
 
 /**
  * Create a Snode from a "-" delimited String if valid, null otherwise.
@@ -16,6 +18,8 @@ fun Snode(string: String): Snode? {
 }
 
 data class Snode(val address: String, val port: Int, val publicKeySet: KeySet?) {
+    constructor(url: HttpUrl, publicKeySet: KeySet?) : this("${url.scheme}://${url.host}", url.port, publicKeySet)
+
     val ip: String get() = address.removePrefix("https://")
     val ed25519Key: String get() = publicKeySet!!.ed25519Key
     val x25519Key: String get() = publicKeySet!!.x25519Key
