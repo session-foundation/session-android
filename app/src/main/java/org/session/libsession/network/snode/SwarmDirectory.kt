@@ -1,8 +1,6 @@
 package org.session.libsession.network.snode
 
-import androidx.collection.arraySetOf
 import org.session.libsignal.crypto.shuffledRandom
-import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.snode.GetSwarmApi
@@ -22,7 +20,7 @@ class SwarmDirectory @Inject constructor(
 ) {
     private val minimumSwarmSize: Int = 3
 
-    suspend fun getSwarm(publicKey: String): Set<Snode> {
+    suspend fun getSwarm(publicKey: String): List<Snode> {
         val cached = storage.getSwarm(publicKey)
         if (cached.size >= minimumSwarmSize) {
             return cached
@@ -33,7 +31,7 @@ class SwarmDirectory @Inject constructor(
         return fresh
     }
 
-    suspend fun fetchSwarm(publicKey: String): Set<Snode> {
+    suspend fun fetchSwarm(publicKey: String): List<Snode> {
         val pool = snodeDirectory.getSnodePool()
         require(pool.isNotEmpty()) {
             "Snode pool is empty"
@@ -47,7 +45,7 @@ class SwarmDirectory @Inject constructor(
         )
 
         return response.snodes
-            .mapNotNullTo(arraySetOf()) { it.toSnode() }
+            .mapNotNull { it.toSnode() }
     }
 
     /**

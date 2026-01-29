@@ -7,14 +7,14 @@ package org.thoughtcrime.securesms.api.error
  *
  * Normally this is up to the caller to handle.
  */
-class UnknownStatusCodeException(
+class UnhandledStatusCodeException(
     val code: Int,
     val origin: String,
     val bodyText: String? = null
-) : RuntimeException("Unknown HTTP status code $code from $origin: body=\"${bodyText.orEmpty()}\"") {
+) : RuntimeException("Unhandled HTTP status code $code from $origin: body=\"${bodyText.orEmpty()}\"") {
     init {
         check(code !in 200..299) {
-            "HTTP status code $code indicates success, cannot be used with UnknownHttpStatusCodeException"
+            "HTTP status code $code indicates success, cannot be used with ${this.javaClass.simpleName}"
         }
     }
 }

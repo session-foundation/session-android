@@ -23,11 +23,6 @@ import org.session.libsession.network.model.OnionResponse
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64.encodeBytes
 import org.session.libsignal.utilities.ByteArraySlice
-import org.session.libsignal.utilities.HTTP
-import org.session.libsignal.utilities.HTTP.Verb.DELETE
-import org.session.libsignal.utilities.HTTP.Verb.GET
-import org.session.libsignal.utilities.HTTP.Verb.POST
-import org.session.libsignal.utilities.HTTP.Verb.PUT
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.JsonUtil

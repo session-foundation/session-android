@@ -6,8 +6,7 @@ import org.session.libsession.network.onion.PathManager
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import org.thoughtcrime.securesms.api.error.ClockOutOfSyncException
-import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,7 +36,7 @@ class SnodeApiErrorManager @Inject constructor(
                 // handleBadSnode will handle removing the snode from the paths/pool/swarm and clean up the strikes
                 // if needed
                 pathManager.handleBadSnode(snode = snode, forceRemove = true)
-                return ClockOutOfSyncException() to FailureDecision.Retry
+                return RuntimeException("Clock out of sync received from $snode") to FailureDecision.Retry
             } else {
                 // reset the clock
                 val resync = runCatching {
@@ -45,13 +44,8 @@ class SnodeApiErrorManager @Inject constructor(
                 }.getOrDefault(false)
 
                 // only retry if we were able to resync the clock
-                return ClockOutOfSyncException() to (if (resync) FailureDecision.Retry else FailureDecision.Fail)
+                return RuntimeException("Clock out of sync received from $snode") to (if (resync) FailureDecision.Retry else FailureDecision.Fail)
             }
-        }
-
-        // 421: Snode not part of swarm
-        if (errorCode == 421) {
-            return SnodeNotPartOfSwarmException(bodyText.orEmpty(), snode) to null
         }
 
         // Unparseable data: 502 + "oxend returned unparsable data"
@@ -68,7 +62,7 @@ class SnodeApiErrorManager @Inject constructor(
             return RuntimeException("Snode not ready") to FailureDecision.Retry
         }
 
-        return UnknownStatusCodeException(errorCode, "Snode ${snode.address}", bodyText) to null
+        return UnhandledStatusCodeException(errorCode, "Snode ${snode.address}", bodyText) to null
     }
 }
 

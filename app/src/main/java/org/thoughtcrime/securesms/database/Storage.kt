@@ -66,7 +66,7 @@ import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.api.error.UnknownStatusCodeException
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -590,7 +590,7 @@ open class Storage @Inject constructor(
         }
         if (error.localizedMessage != null) {
             val message: String
-            if (error.findCause<UnknownStatusCodeException>()?.code == 429) {
+            if (error.findCause<UnhandledStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -606,7 +606,7 @@ open class Storage @Inject constructor(
 
         if (error.localizedMessage != null) {
             val message: String
-            if (error.findCause<UnknownStatusCodeException>()?.code == 429) {
+            if (error.findCause<UnhandledStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!

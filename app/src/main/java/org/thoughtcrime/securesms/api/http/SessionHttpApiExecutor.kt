@@ -6,7 +6,8 @@ import javax.inject.Provider
 
 /**
  * An [HttpApiExecutor] that choose a different underlying executor based on the url:
- * - For seed/official URLs, a certificate-pinned
+ * - For seed/official URLs, a certificate-pinned executor is used
+ * - For regular snode URLs, a standard executor is used
  */
 class SessionHttpApiExecutor(
     private val seedSnodeHttpApiExecutor: HttpApiExecutor,

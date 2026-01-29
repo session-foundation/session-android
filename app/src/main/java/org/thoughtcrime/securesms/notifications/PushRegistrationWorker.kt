@@ -30,6 +30,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.batch.BatchApiExecutor
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import org.thoughtcrime.securesms.api.server.execute
@@ -134,7 +135,8 @@ class PushRegistrationWorker @AssistedInject constructor(
 
                             result.isFailure -> {
                                 val exception = result.exceptionOrNull()!!
-                                if (exception.findCause<NonRetryableException>() != null) {
+                                if (exception.findCause<NonRetryableException>() != null ||
+                                    exception.findCause<UnhandledStatusCodeException>()?.code == 403) {
                                     Log.e(TAG, "Push registration failed permanently", exception)
                                     PushRegistrationDatabase.RegistrationState.PermanentError
                                 } else {

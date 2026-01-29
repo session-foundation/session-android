@@ -1,23 +1,31 @@
 package org.thoughtcrime.securesms.api.swarm
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import org.session.libsession.network.model.FailureDecision
 import org.session.libsession.network.snode.SwarmDirectory
-import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.api.snode.SnodeApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.SnodeApiResponse
-import org.thoughtcrime.securesms.api.snode.SnodeNotPartOfSwarmException
-import javax.inject.Inject
 
 class SwarmApiRequest<T : SnodeApiResponse>(
     val swarmPubKeyHex: String,
-    val api: SnodeApi<T>
+    val api: SnodeApi<T>,
+
+    /**
+     * When set, this snode will be used for the swarm request. If the snode is later found
+     * to be not part of the swarm, it will be removed from our swarm storage, and the executor
+     * will not try to pick a different one for retries unless this key is removed from the context.
+     */
+    val swarmNodeOverride: Snode? = null,
 )
 
 /**
@@ -36,57 +44,67 @@ suspend inline fun <reified Res, Req> SwarmApiExecutor.execute(
 /**
  * Default implementation of [SwarmApiExecutor].
  */
-class SwarmApiExecutorImpl @Inject constructor(
-    private val snodeApiExecutor: SnodeApiExecutor,
+class SwarmApiExecutorImpl @AssistedInject constructor(
+    @Assisted private val snodeApiExecutor: SnodeApiExecutor,
     private val swarmDirectory: SwarmDirectory,
+    private val swarmSnodeSelector: SwarmSnodeSelector,
 ) : SwarmApiExecutor {
     override suspend fun send(
         ctx: ApiExecutorContext,
         req: SwarmApiRequest<*>
     ): SnodeApiResponse {
-        val apiContext = ctx.getOrPut(SwarmApiContextKey) {
-            SwarmApiContext()
-        }
+        val lastUsedSnode = ctx.get(LastUsedSnodeKey)
 
         // Pick a snode from the swarm if we don't already have one cached (across retry)
-        val snode = apiContext.snode ?: run {
-            val targetSnode = swarmDirectory.getSingleTargetSnode(req.swarmPubKeyHex)
+        val snode = req.swarmNodeOverride ?: lastUsedSnode ?: run {
+            val targetSnode = swarmSnodeSelector.selectSnode(req.swarmPubKeyHex)
             Log.d(TAG, "Selected snode $targetSnode for publicKey=${req.swarmPubKeyHex}")
-            ctx.set(SwarmApiContextKey, SwarmApiContext(snode = targetSnode))
+            ctx.set(LastUsedSnodeKey, targetSnode)
             targetSnode
         }
 
         try {
             return snodeApiExecutor.send(ctx, SnodeApiRequest(snode, req.api))
-        } catch (e: SnodeNotPartOfSwarmException) {
-            Log.d(TAG, "Snode $snode is no longer part of swarm for publicKey=${req.swarmPubKeyHex}, updating swarm")
-            val updated = swarmDirectory.updateSwarmFromResponse(
-                swarmPublicKey = req.swarmPubKeyHex,
-                errorResponseBody = e.responseBodyText,
-            )
-
-            if (!updated) {
-                swarmDirectory.dropSnodeFromSwarmIfNeeded(
-                    snode = snode,
-                    swarmPublicKey = req.swarmPubKeyHex
+        } catch (e: UnhandledStatusCodeException) {
+            if (e.code == 421) {
+                Log.d(
+                    TAG,
+                    "Snode $snode is no longer part of swarm for publicKey=${req.swarmPubKeyHex}, updating swarm"
                 )
+                val updated = swarmDirectory.updateSwarmFromResponse(
+                    swarmPublicKey = req.swarmPubKeyHex,
+                    errorResponseBody = e.bodyText,
+                )
+
+                if (!updated) {
+                    swarmDirectory.dropSnodeFromSwarmIfNeeded(
+                        snode = snode,
+                        swarmPublicKey = req.swarmPubKeyHex
+                    )
+                }
+
+                // drop the cached snode so we pick a new one upon retry
+                ctx.remove(LastUsedSnodeKey)
+
+                throw ErrorWithFailureDecision(
+                    cause = RuntimeException("Snode $snode dropped from swarm"),
+                    failureDecision = if (req.swarmNodeOverride == null) FailureDecision.Retry else FailureDecision.Fail,
+                )
+            } else {
+                throw e
             }
-
-            // drop the cached snode so we pick a new one upon retry
-            ctx.remove(SwarmApiContextKey)
-
-            throw ErrorWithFailureDecision(
-                cause = e,
-                failureDecision = FailureDecision.Retry,
-            )
         }
     }
 
-    private class SwarmApiContext(
-        val snode: Snode? = null
-    )
+    /**
+     * Stores the last used snode for the swarm request, to be reused across retries.
+     */
+    private object LastUsedSnodeKey : ApiExecutorContext.Key<Snode>
 
-    private object SwarmApiContextKey : ApiExecutorContext.Key<SwarmApiContext>
+    @AssistedFactory
+    interface Factory {
+        fun create(snodeApiExecutor: SnodeApiExecutor): SwarmApiExecutorImpl
+    }
 
     companion object {
         private const val TAG = "SwarmApiExecutor"

@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.database
 
 import android.database.Cursor
-import androidx.collection.ArraySet
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.transaction
@@ -17,7 +16,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import kotlin.math.max
 import kotlin.math.min
 
 @Singleton
@@ -26,14 +24,14 @@ class SnodeDatabase @Inject constructor(
     private val json: Json,
 ) : SwarmStorage, SnodePathStorage, SnodePoolStorage {
 
-    private val swarmCache = ConcurrentHashMap<String, Set<Snode>>()
+    private val swarmCache = ConcurrentHashMap<String, List<Snode>>()
     private val onionPathsCache = AtomicReference<List<Path>>(null)
     private val poolCache = AtomicReference<List<Snode>>(null)
 
     private val readableDatabase: SupportSQLiteDatabase get() = helper.get().readableDatabase
     private val writableDatabase: SupportSQLiteDatabase get() = helper.get().writableDatabase
 
-    override fun getSwarm(publicKey: String): Set<Snode> {
+    override fun getSwarm(publicKey: String): List<Snode> {
         swarmCache.get(publicKey)?.let {
             return it
         }
@@ -53,7 +51,7 @@ class SnodeDatabase @Inject constructor(
             val indices = SnodeColumnIndices(cursor)
 
             cursor.asSequence()
-                .mapTo(ArraySet(cursor.count)) { it.toSnode(indices) }
+                .mapTo(arrayListOf()) { it.toSnode(indices) }
         }.also {
             swarmCache[publicKey] = it
         }
@@ -61,7 +59,7 @@ class SnodeDatabase @Inject constructor(
 
     override fun setSwarm(
         publicKey: String,
-        swarm: Set<Snode>
+        swarm: Collection<Snode>
     ) {
         writableDatabase.transaction {
             // First delete existing entries for this swarm

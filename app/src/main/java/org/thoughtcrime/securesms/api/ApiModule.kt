@@ -36,9 +36,6 @@ abstract class APIModuleBinding {
     abstract fun bindSessionAPIExecutor(executor: OnionSessionApiExecutor): SessionApiExecutor
 
     @Binds
-    abstract fun bindSwarmApiExecutor(executor: SwarmApiExecutorImpl): SwarmApiExecutor
-
-    @Binds
     abstract fun bindServerApiExecutor(executor: ServerApiExecutorImpl) : ServerApiExecutor
 }
 
@@ -46,20 +43,47 @@ abstract class APIModuleBinding {
 @InstallIn(SingletonComponent::class)
 class APIModule {
 
-
+    /**
+     * Provides a batched [SnodeApiExecutor] that groups requests together.
+     * This executor is not normally used directly, it's served as the base executor for
+     * different kind of snode API executors that depends on it.
+     */
     @Provides
+    @Named("batched_snode_api_executor")
     @Singleton
-    fun provideSnodeAPIExecutor(
+    fun provideBatchedSnodeApiExecutor(
         executor: SnodeApiExecutorImpl,
         batcher: SnodeApiBatcher,
         @ManagerScope scope: CoroutineScope,
     ): SnodeApiExecutor {
+        return BatchApiExecutor(
+            actualExecutor = executor,
+            batcher = batcher,
+            scope = scope,
+        )
+    }
+
+    /**
+     * Provides the default [SnodeApiExecutor] with auto-retry capabilities.
+     */
+    @Provides
+    @Singleton
+    fun provideSnodeApiExecutor(
+        @Named("batched_snode_api_executor") executor: SnodeApiExecutor
+    ): SnodeApiExecutor {
         return AutoRetryApiExecutor(
-            actualExecutor = BatchApiExecutor(
-                actualExecutor = executor,
-                batcher = batcher,
-                scope = scope,
-            )
+            actualExecutor = executor
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideSwarmApiExecutor(
+        @Named("batched_snode_api_executor") executor: SnodeApiExecutor,
+        swarmApiExecutorFactory: SwarmApiExecutorImpl.Factory
+    ): SwarmApiExecutor {
+        return AutoRetryApiExecutor(
+            actualExecutor = swarmApiExecutorFactory.create(executor)
         )
     }
 

@@ -145,7 +145,7 @@ class SnodeDatabaseTest {
     fun `should persist swarm`() {
         db.setSnodePool(snodes)
 
-        val swarmNodes = setOf(snodes[0], snodes[1], snodes[2])
+        val swarmNodes = listOf(snodes[0], snodes[1], snodes[2])
 
         assertEquals(0, db.getSwarm("key1").size)
         db.setSwarm("key1", swarmNodes)
@@ -186,7 +186,7 @@ class SnodeDatabaseTest {
     fun `drop snode works`() {
         db.setSnodePool(snodes)
 
-        db.setSwarm("swarm1", setOf(snodes[0], snodes[1]))
+        db.setSwarm("swarm1", listOf(snodes[0], snodes[1]))
         val paths = listOf(
             listOf(snodes[1], snodes[2]),
             listOf(snodes[3], snodes[4])
@@ -198,7 +198,7 @@ class SnodeDatabaseTest {
         assertEquals(expectingRemaining, db.getSnodePool())
 
         // Snode was in swarm, so it should be removed from there too
-        assertEquals(setOf(snodes[1]), db.getSwarm("swarm1"))
+        assertEquals(listOf(snodes[1]), db.getSwarm("swarm1"))
 
         // Since snode is not in any path, paths should remain unchanged
         assertEquals(paths, db.getOnionRequestPaths())
@@ -294,7 +294,7 @@ class SnodeDatabaseTest {
 
         db.setSwarm("swarm1", setOf(snodes[0], snodes[1], snodes[2]))
 
-        val expectingRemaining = setOf(snodes[1], snodes[2])
+        val expectingRemaining = listOf(snodes[1], snodes[2])
         db.dropSnodeFromSwarm("swarm1", snodes[0].publicKeySet!!.ed25519Key)
         assertEquals(expectingRemaining, db.getSwarm("swarm1"))
     }
