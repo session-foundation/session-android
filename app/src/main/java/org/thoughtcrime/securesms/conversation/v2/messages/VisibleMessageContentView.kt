@@ -223,7 +223,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     val playable = PlayableAudioMapper.fromAudioSlide(
                         slide = audioSlide,
                         messageId = message.messageId ,
-                        thread = thread.address as Address.Conversable, //todo AUDIO is it safe to force cast here?
+                        thread = thread.address as Address.Conversable,
                         senderName = message.recipient.displayName()
                     )
 

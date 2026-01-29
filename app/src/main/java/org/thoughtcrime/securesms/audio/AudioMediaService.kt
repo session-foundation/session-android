@@ -3,10 +3,12 @@ package org.thoughtcrime.securesms.audio
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Bundle
+import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaNotification
@@ -27,6 +29,7 @@ import org.thoughtcrime.securesms.audio.model.MediaItemFactory.EXTRA_THREAD_ADDR
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.util.getParcelableCompat
 
 @AndroidEntryPoint
 class AudioMediaService : MediaSessionService() {
@@ -34,13 +37,13 @@ class AudioMediaService : MediaSessionService() {
     //todo AUDIO notification: Noice notes: Title: Sender name Subtitle: "Voice note/message" --- Audio Title: [track name] Subtitle: [track artist]
     //todo AUDIO notification: open convo on tap (scroll to message?)
     //todo AUDIO notification: If I kill the app and swipe away the notification the audio continues - should maybe at least stop on app kill
-    //todo AUDIO looks like the spinning icon is always on in the audio  message bubble
 
     private val TAG = "AudioMediaService"
 
     private lateinit var player: ExoPlayer
     private var session: MediaSession? = null
 
+    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
 
@@ -72,11 +75,10 @@ class AudioMediaService : MediaSessionService() {
         val item = player.currentMediaItem ?: return
         val extras = item.mediaMetadata.extras ?: return
 
-        val thread = extras.getParcelable(EXTRA_THREAD_ADDRESS, Address.Conversable::class.java) ?: return
+        val thread = extras.getParcelableCompat<Address.Conversable>(EXTRA_THREAD_ADDRESS) ?: return
 
-        val messageId = extras.getParcelable(
-            EXTRA_MESSAGE_ID,
-            MessageId::class.java
+        val messageId = extras.getParcelableCompat<MessageId>(
+            EXTRA_MESSAGE_ID
         ) ?: return
 
         val intent = ConversationActivityV2.createIntent(

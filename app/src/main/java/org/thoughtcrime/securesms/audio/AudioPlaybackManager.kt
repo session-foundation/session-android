@@ -29,6 +29,7 @@ import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.model.MediaItemFactory
 import org.thoughtcrime.securesms.audio.model.PlayableAudio
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.util.getParcelableCompat
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -115,8 +116,6 @@ class AudioPlaybackManager @Inject constructor(
     fun isActive(messageId: MessageId): Boolean =
         controller?.currentMediaItem?.mediaId == messageId.serialize()
 
-    // --- Scrubbing (live seeking) ---
-
     fun beginScrub() {
         isScrubbing = true
         lastScrubSeekMs = 0L
@@ -192,6 +191,10 @@ class AudioPlaybackManager @Inject constructor(
             }
             if (!isScrubbing) updateFromController()
         }
+
+        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            Log.w(TAG, "ExoPlayer Error: ${error.errorCodeName}", error)
+        }
     }
 
     // --- State mapping ---
@@ -230,8 +233,12 @@ class AudioPlaybackManager @Inject constructor(
         val speed = c.playbackParameters.speed
         val buffering = c.playbackState == Player.STATE_BUFFERING
 
-        _playbackState.value =
-            if (c.isPlaying) {
+        // Fix: Detect IDLE state to avoid "Loading" trap
+        val isIdle = c.playbackState == Player.STATE_IDLE
+
+        _playbackState.value = when {
+            // Case 1: Actually Playing
+            c.isPlaying ->
                 AudioPlaybackState.Playing(
                     playable = playable,
                     positionMs = position,
@@ -240,18 +247,45 @@ class AudioPlaybackManager @Inject constructor(
                     playbackSpeed = speed,
                     isBuffering = buffering
                 )
-            } else if (c.playbackState == Player.STATE_READY || forceEnded) {
+
+            // Case 2: Buffering and playing, or explicitly commanded to play but not ready
+            buffering && c.playWhenReady -> AudioPlaybackState.Playing(
+                playable = playable,
+                positionMs = position,
+                durationMs = duration,
+                bufferedPositionMs = buffered,
+                playbackSpeed = speed,
+                isBuffering = true
+            )
+
+            // Case 3: Paused / Ready / Ended
+            c.playbackState == Player.STATE_READY || forceEnded ->
+            AudioPlaybackState.Paused(
+                playable = playable,
+                positionMs = position,
+                durationMs = duration,
+                bufferedPositionMs = buffered,
+                playbackSpeed = speed,
+                isBuffering = buffering
+            )
+
+            // Case 4: Idle (Error or Stopped) -> Reset to Idle or Paused
+            isIdle -> {
+                // If we have a playable but we are IDLE, we probably failed or stopped.
+                // Treat as Paused (start over) or Idle.
                 AudioPlaybackState.Paused(
                     playable = playable,
-                    positionMs = position,
+                    positionMs = 0,
                     durationMs = duration,
-                    bufferedPositionMs = buffered,
-                    playbackSpeed = speed,
-                    isBuffering = buffering
+                    bufferedPositionMs = 0,
+                    playbackSpeed = 1f,
+                    isBuffering = false
                 )
-            } else {
-                AudioPlaybackState.Loading(playable)
             }
+
+            // Case 5: Actual Loading
+            else -> AudioPlaybackState.Loading(playable)
+        }
     }
 
     // --- Restoration helpers (no extra “contract” beyond MediaId + MediaMetadata) ---
@@ -261,14 +295,12 @@ class AudioPlaybackManager @Inject constructor(
 
         val extras = item.mediaMetadata.extras ?: return null
 
-        val thread: Address.Conversable = extras.getParcelable(
-            MediaItemFactory.EXTRA_THREAD_ADDRESS,
-            Address.Conversable::class.java
+        val thread: Address.Conversable = extras.getParcelableCompat<Address.Conversable>(
+            MediaItemFactory.EXTRA_THREAD_ADDRESS
         ) ?: return null
 
-        val messageId: MessageId = extras.getParcelable(
-            MediaItemFactory.EXTRA_MESSAGE_ID,
-            MessageId::class.java
+        val messageId: MessageId = extras.getParcelableCompat<MessageId>(
+            MediaItemFactory.EXTRA_MESSAGE_ID
         ) ?: return null
 
         val uri: Uri = item.localConfiguration?.uri

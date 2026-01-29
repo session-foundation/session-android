@@ -58,8 +58,6 @@ class VoiceMessageView @JvmOverloads constructor(
         this.playable = playable
 
         // existing corner mask logic unchanged
-        val audioSlide = message.slideDeck.audioSlide!!
-        binding.voiceMessageViewLoader.isVisible = audioSlide.isInProgress
         val radii = MessageBubbleUtilities.calculateRadii(context, isStartOfMessageCluster, isEndOfMessageCluster, message.isOutgoing)
         cornerMask.setTopLeftRadius(radii[0])
         cornerMask.setTopRightRadius(radii[1])
@@ -126,6 +124,7 @@ class VoiceMessageView @JvmOverloads constructor(
         if (!isActive) {
             // Not this row → reset to initial appearance
             isPlaying = false
+            binding.voiceMessageViewLoader.isVisible = false
             progress = 0f
             renderIcon()
             renderProgress(0f)
