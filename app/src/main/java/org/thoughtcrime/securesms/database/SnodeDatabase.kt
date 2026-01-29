@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.database
 
 import android.database.Cursor
-import androidx.collection.ArraySet
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.transaction
@@ -17,7 +16,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import kotlin.math.max
 import kotlin.math.min
 
 @Singleton
@@ -26,14 +24,14 @@ class SnodeDatabase @Inject constructor(
     private val json: Json,
 ) : SwarmStorage, SnodePathStorage, SnodePoolStorage {
 
-    private val swarmCache = ConcurrentHashMap<String, Set<Snode>>()
+    private val swarmCache = ConcurrentHashMap<String, List<Snode>>()
     private val onionPathsCache = AtomicReference<List<Path>>(null)
-    private val poolCache = AtomicReference<Set<Snode>>(null)
+    private val poolCache = AtomicReference<List<Snode>>(null)
 
     private val readableDatabase: SupportSQLiteDatabase get() = helper.get().readableDatabase
     private val writableDatabase: SupportSQLiteDatabase get() = helper.get().writableDatabase
 
-    override fun getSwarm(publicKey: String): Set<Snode> {
+    override fun getSwarm(publicKey: String): List<Snode> {
         swarmCache.get(publicKey)?.let {
             return it
         }
@@ -53,7 +51,7 @@ class SnodeDatabase @Inject constructor(
             val indices = SnodeColumnIndices(cursor)
 
             cursor.asSequence()
-                .mapTo(ArraySet(cursor.count)) { it.toSnode(indices) }
+                .mapTo(arrayListOf()) { it.toSnode(indices) }
         }.also {
             swarmCache[publicKey] = it
         }
@@ -61,7 +59,7 @@ class SnodeDatabase @Inject constructor(
 
     override fun setSwarm(
         publicKey: String,
-        swarm: Set<Snode>
+        swarm: Collection<Snode>
     ) {
         writableDatabase.transaction {
             // First delete existing entries for this swarm
@@ -362,11 +360,11 @@ class SnodeDatabase @Inject constructor(
         }
     }
 
-    override fun getSnodePool(): Set<Snode> {
+    override fun getSnodePool(): List<Snode> {
         poolCache.get()?.let { return it }
 
         return readableDatabase.query("SELECT * FROM snodes").use { cursor ->
-            cursor.toSnodeList().toSet()
+            cursor.toSnodeList()
         }.also(poolCache::set)
     }
 
@@ -389,8 +387,10 @@ class SnodeDatabase @Inject constructor(
         }
     }
 
-    override fun setSnodePool(newValue: Set<Snode>) {
+    override fun setSnodePool(newValue: Collection<Snode>) {
         poolCache.set(null)
+        onionPathsCache.set(null)
+        swarmCache.clear()
 
         writableDatabase.transaction {
             // Create temp table to hold the new snode pub keys, as the amount of data may be large
@@ -406,6 +406,18 @@ class SnodeDatabase @Inject constructor(
                     stmt.execute()
                 }
             }
+
+            // Delete paths that reference snodes not in the new pool
+            //language=roomsql
+            execSQL("""
+               DELETE FROM onion_paths 
+               WHERE id IN (
+                   SELECT ops.path_id
+                   FROM onion_path_snodes AS ops
+                   INNER JOIN snodes ON ops.snode_id = snodes.id
+                   WHERE snodes.ed25519_pub_key NOT IN (SELECT ed25519_pub_key FROM temp_snode_keys)
+               )
+            """)
 
             // Remove non-existing snodes
             //language=roomsql

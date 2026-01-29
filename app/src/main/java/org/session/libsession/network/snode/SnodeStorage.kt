@@ -27,15 +27,15 @@ interface SnodePathStorage {
 }
 
 interface SwarmStorage {
-    fun getSwarm(publicKey: String): Set<Snode>
-    fun setSwarm(publicKey: String, swarm: Set<Snode>)
+    fun getSwarm(publicKey: String): List<Snode>
+    fun setSwarm(publicKey: String, swarm: Collection<Snode>)
     fun dropSnodeFromSwarm(publicKey: String, snodeEd25519PubKey: String)
 }
 
 interface SnodePoolStorage {
-    fun getSnodePool(): Set<Snode>
+    fun getSnodePool(): List<Snode>
     fun removeSnode(ed25519PubKey: String): Snode?
-    fun setSnodePool(newValue: Set<Snode>)
+    fun setSnodePool(newValue: Collection<Snode>)
 
     fun removeSnodesWithStrikesGreaterThan(n: Int): Int
 

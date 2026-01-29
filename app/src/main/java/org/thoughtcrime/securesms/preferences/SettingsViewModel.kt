@@ -33,8 +33,10 @@ import okio.buffer
 import okio.source
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.network.SnodeClient
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteAllInboxMessagesApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
@@ -46,6 +48,10 @@ import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
+import org.thoughtcrime.securesms.api.snode.DeleteAllMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
@@ -70,6 +76,7 @@ import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Provider
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -89,7 +96,10 @@ class SettingsViewModel @Inject constructor(
     private val proDetailsRepository: ProDetailsRepository,
     private val donationManager: DonationManager,
     private val pathManager: PathManager,
-    private val snodeClient: SnodeClient
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val deleteAllMessageApiFactory: DeleteAllMessageApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val deleteAllInboxMessagesApi: Provider<DeleteAllInboxMessagesApi>,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -475,13 +485,26 @@ class SettingsViewModel @Inject constructor(
             coroutineScope {
                 allCommunityServers.map { server ->
                     launch {
-                        runCatching { OpenGroupApi.deleteAllInboxMessages(server) }
-                            .onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
+                        runCatching {
+                            communityApiExecutor.execute(
+                                CommunityApiRequest(
+                                    serverBaseUrl = server,
+                                    api = deleteAllInboxMessagesApi.get()
+                                )
+                            )
+                        }.onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
                     }
                 }.joinAll()
             }
 
-            snodeClient.deleteAllMessages(checkNotNull(storage.userAuth))
+            val userAuth = checkNotNull(storage.userAuth)
+
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = userAuth.accountId.hexString,
+                    api = deleteAllMessageApiFactory.create(userAuth)
+                )
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete network messages - offering user option to delete local data only.", e)
             null

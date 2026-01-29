@@ -36,9 +36,8 @@ sealed class OnionError(
      * failedPublicKey is the ed25519 key of the missing snode if known.
      */
     class IntermediateNodeUnreachable(
-        val reportingNode: Snode?,
+        val offendingSnode: Snode?,
         status: ErrorStatus,
-        val failedPublicKey: String?,
         destination: OnionDestination,
     ) : OnionError(destination = destination, status = status)
 
@@ -46,8 +45,8 @@ sealed class OnionError(
      * The snode reported not being ready
      */
     class SnodeNotReady(
+        val offendingSnode: Snode?,
         status: ErrorStatus,
-        val failedPublicKey: String?,
         destination: OnionDestination,
     ) : OnionError(destination = destination, status = status)
 
@@ -68,33 +67,24 @@ sealed class OnionError(
     /**
      * The error happened, as far as we can tell, along the path on the way to the destination
      */
-    class PathError(val node: Snode?, status: ErrorStatus, destination: OnionDestination,)
+    class PathError(val guardNode: Snode, status: ErrorStatus, destination: OnionDestination,)
         : OnionError(status = status, destination = destination)
 
     /**
      * If we get an invalid response along the path (differs from the InvalidResponse which comes from a 200 payload)
      */
-    class InvalidHopResponse(val node: Snode?, status: ErrorStatus, destination: OnionDestination,)
+    class InvalidHopResponse(val node: Snode, status: ErrorStatus, destination: OnionDestination,)
         : OnionError(status = status, destination = destination)
-
-    /**
-     * The error happened after decrypting a payload form the destination
-     */
-    open class DestinationError(destination: OnionDestination, status: ErrorStatus)
-        : OnionError(
-        status = status,
-        destination = destination
-        )
 
     /**
      * The onion payload returned something that we couldn't decode as a valid onion response.
      */
-    class InvalidResponse(destination: OnionDestination, cause: Throwable? = null)
+    class InvalidResponse(destination: OnionDestination, cause: Throwable)
         : OnionError(cause = cause, destination = destination)
 
     /**
      * Fallback for anything we haven't classified yet.
      */
-    class Unknown(destination: OnionDestination?, cause: Throwable)
+    class Unknown(destination: OnionDestination, cause: Throwable)
         : OnionError(cause = cause, destination = destination)
 }

@@ -1,23 +1,26 @@
 package org.session.libsession.network.snode
 
-import dagger.Lazy
-import org.session.libsession.network.SnodeClient
 import org.session.libsignal.crypto.shuffledRandom
-import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.snode.GetSwarmApi
+import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.execute
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
 class SwarmDirectory @Inject constructor(
     private val storage: SwarmStorage,
     private val snodeDirectory: SnodeDirectory,
-    private val snodeClient: Lazy<SnodeClient>,
+    private val snodeApiExecutor: Provider<SnodeApiExecutor>,
+    private val getSwarmFactory: GetSwarmApi.Factory,
 ) {
     private val minimumSwarmSize: Int = 3
 
-    suspend fun getSwarm(publicKey: String): Set<Snode> {
+    suspend fun getSwarm(publicKey: String): List<Snode> {
         val cached = storage.getSwarm(publicKey)
         if (cached.size >= minimumSwarmSize) {
             return cached
@@ -28,15 +31,21 @@ class SwarmDirectory @Inject constructor(
         return fresh
     }
 
-    suspend fun fetchSwarm(publicKey: String): Set<Snode> {
+    suspend fun fetchSwarm(publicKey: String): List<Snode> {
         val pool = snodeDirectory.getSnodePool()
         require(pool.isNotEmpty()) {
             "Snode pool is empty"
         }
 
-        val response = snodeClient.get().fetchSwarm(publicKey)
+        val response = snodeApiExecutor.get().execute(
+            SnodeApiRequest(
+                snode = pool.random(),
+                api = getSwarmFactory.create(publicKey)
+            )
+        )
 
-        return parseSnodes(response).toSet()
+        return response.snodes
+            .mapNotNull { it.toSnode() }
     }
 
     /**
@@ -49,12 +58,12 @@ class SwarmDirectory @Inject constructor(
         return swarm.shuffledRandom().random()
     }
 
-    fun dropSnodeFromSwarmIfNeeded(snode: Snode, publicKey: String) {
-        val current = storage.getSwarm(publicKey)
+    fun dropSnodeFromSwarmIfNeeded(snode: Snode, swarmPublicKey: String) {
+        val current = storage.getSwarm(swarmPublicKey)
         if (snode !in current) return
 
         val updated = current - snode
-        storage.setSwarm(publicKey, updated)
+        storage.setSwarm(swarmPublicKey, updated)
     }
 
     /**
@@ -85,11 +94,11 @@ class SwarmDirectory @Inject constructor(
      *
      * @return true if swarm was updated from body JSON, false otherwise.
      */
-    fun updateSwarmFromResponse(publicKey: String, body: ByteArraySlice?): Boolean {
-        if (body == null || body.isEmpty()) return false
+    fun updateSwarmFromResponse(swarmPublicKey: String, errorResponseBody: String?): Boolean {
+        if (errorResponseBody == null || errorResponseBody.isEmpty()) return false
 
         val json: Map<*, *> = try {
-            JsonUtil.fromJson(body, Map::class.java) as Map<*, *>
+            JsonUtil.fromJson(errorResponseBody, Map::class.java) as Map<*, *>
         } catch (_: Throwable) {
             return false
         }
@@ -97,7 +106,7 @@ class SwarmDirectory @Inject constructor(
         val snodes = parseSnodes(json).toSet()
         if (snodes.isEmpty()) return false
 
-        storage.setSwarm(publicKey, snodes)
+        storage.setSwarm(swarmPublicKey, snodes)
         return true
     }
 }

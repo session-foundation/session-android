@@ -5,11 +5,16 @@ import android.os.Looper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
+import org.session.libsession.messaging.file_server.GetClientVersionApi
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.time.Duration.Companion.hours
 
@@ -19,14 +24,20 @@ private val REFRESH_TIME_MS = 4.hours.inWholeMilliseconds
 @Singleton
 class VersionDataFetcher @Inject constructor(
     private val prefs: TextSecurePreferences,
-    private val fileServerApi: FileServerApi,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val getClientVersionApi: Provider<GetClientVersionApi>,
 ) : OnAppStartupComponent {
     private val handler = Handler(Looper.getMainLooper())
     private val fetchVersionData = Runnable {
         scope.launch {
             try {
                 // Perform the version check
-                val clientVersion = fileServerApi.getClientVersion()
+                val clientVersion = serverApiExecutor.execute(
+                    ServerApiRequest(
+                        fileServer = FileServerApis.DEFAULT_FILE_SERVER,
+                        api = getClientVersionApi.get()
+                    )
+                )
                 Log.i(TAG, "Fetched version data: $clientVersion")
                 prefs.setLastVersionCheck()
                 startTimedVersionCheck()

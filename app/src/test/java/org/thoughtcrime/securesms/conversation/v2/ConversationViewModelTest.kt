@@ -111,7 +111,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
             },
             expiredGroupManager = mock(),
             avatarUtils = avatarUtils,
-            lokiAPIDb = mock(),
             dateUtils = mock(),
             proStatusManager = mock(),
             upmFactory = mock(),
@@ -131,7 +130,9 @@ class ConversationViewModelTest : BaseViewModelTest() {
                 on { changesNotification } doReturn MutableSharedFlow()
             },
             openGroupManager = mock(),
-            attachmentDownloadJobFactory = mock()
+            attachmentDownloadJobFactory = mock(),
+            communityApiExecutor = mock(),
+            deleteAllReactionsApiFactory = mock(),
         )
     }
 
