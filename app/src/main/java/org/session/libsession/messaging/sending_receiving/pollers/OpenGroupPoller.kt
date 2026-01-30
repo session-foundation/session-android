@@ -208,7 +208,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             serverPubKey = serverKey,
                             api = getRoomMessagesFactory.create(
                                 room = room,
-                                sinceLastId = lastMessageServerId,
+                                sinceSeqNo = lastMessageServerId,
                             )
                         )
                     )

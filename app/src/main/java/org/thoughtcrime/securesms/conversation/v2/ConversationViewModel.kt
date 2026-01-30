@@ -48,7 +48,6 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BitSet
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.BlindedContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
@@ -91,15 +90,14 @@ import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -167,6 +165,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
     private val communityApiExecutor: CommunityApiExecutor,
     private val deleteAllReactionsApiFactory: DeleteAllReactionsApi.Factory,
+    private val loginStateRepository: LoginStateRepository,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -297,10 +296,12 @@ class ConversationViewModel @AssistedInject constructor(
 
     val blindedPublicKey: String?
         get() = if (recipient.data !is RecipientData.Community || edKeyPair == null || !serverCapabilities.contains(OpenGroupApi.Capability.BLIND.name.lowercase())) null else {
-            BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = edKeyPair!!.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed((recipient.data as RecipientData.Community).serverPubKey),
-            )?.pubKey?.data
+            loginStateRepository.peekLoginState()
+                ?.getBlindedKeyPair(
+                    serverUrl = (recipient.data as RecipientData.Community).serverUrl,
+                    serverPubKeyHex = (recipient.data as RecipientData.Community).serverPubKey
+                )
+                ?.pubKey?.data
                 ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
         }
 

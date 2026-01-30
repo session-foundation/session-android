@@ -10,7 +10,6 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
@@ -50,11 +49,11 @@ import org.thoughtcrime.securesms.api.snode.StoreMessageApi
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.copyFromLibSession
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
@@ -76,6 +75,7 @@ class MessageSender @Inject constructor(
     private val swarmApiExecutor: SwarmApiExecutor,
     private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
+    private val loginStateRepository: LoginStateRepository,
 ) {
 
     // Error
@@ -340,25 +340,24 @@ class MessageSender @Inject constructor(
                 message.blocksMessageRequests = !configs.userProfile.getCommunityMessageRequests()
             }
         }
-        val userEdKeyPair = storage.getUserED25519KeyPair()!!
         var serverCapabilities: List<String>
         var blindedPublicKey: ByteArray? = null
+        val loggedInState = loginStateRepository.requireLoggedInState()
         when (destination) {
             is Destination.OpenGroup -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 storage.getOpenGroupPublicKey(destination.server)?.let {
-                    blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
-                        ed25519SecretKey = userEdKeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(it),
-                    )?.pubKey?.data
+                    blindedPublicKey = loggedInState
+                        .getBlindedKeyPair(serverUrl = destination.server, serverPubKeyHex = it)
+                        .pubKey.data
                 }
             }
             is Destination.OpenGroupInbox -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
-                blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
-                    ed25519SecretKey = userEdKeyPair.secretKey.data,
-                    serverPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
-                )?.pubKey?.data
+                blindedPublicKey = loggedInState
+                    .getBlindedKeyPair(serverUrl = destination.server,
+                        serverPubKeyHex = destination.serverPublicKey)
+                    .pubKey.data
             }
 
             is Destination.ClosedGroup,
@@ -367,7 +366,7 @@ class MessageSender @Inject constructor(
         val messageSender = if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && blindedPublicKey != null) {
             AccountId(IdPrefix.BLINDED, blindedPublicKey).hexString
         } else {
-            AccountId(IdPrefix.UN_BLINDED, userEdKeyPair.pubKey.data).hexString
+            AccountId(IdPrefix.UN_BLINDED, loggedInState.accountEd25519KeyPair.pubKey.data).hexString
         }
         message.sender = messageSender
 
@@ -418,7 +417,7 @@ class MessageSender @Inject constructor(
                     }
                     val ciphertext = SessionProtocol.encodeForCommunityInbox(
                         plaintext = content.toByteArray(),
-                        myEd25519PrivKey = userEdKeyPair.secretKey.data,
+                        myEd25519PrivKey = loggedInState.accountEd25519KeyPair.secretKey.data,
                         timestampMs = message.sentTimestamp!!,
                         recipientPubKey = Hex.fromStringCondensed(destination.blindedPublicKey),
                         communityServerPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
@@ -434,7 +433,8 @@ class MessageSender @Inject constructor(
                     ))
 
                     message.openGroupServerMessageID = response.id
-                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = TimeUnit.SECONDS.toMillis(response.postedAt))
+                    handleSuccessfulMessageSend(message, destination,
+                        openGroupSentTimestamp = response.postedAt?.toEpochMilli() ?: 0L)
                     return
                 }
                 else -> throw IllegalStateException("Invalid destination.")

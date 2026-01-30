@@ -1,47 +1,15 @@
 package org.session.libsession.messaging.open_groups
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.decodeFromStream
-import network.loki.messenger.libsession_util.ED25519
-import network.loki.messenger.libsession_util.Hash
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import okhttp3.Headers.Companion.toHeaders
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.network.model.OnionError
-import org.session.libsession.network.model.OnionResponse
-import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Base64.encodeBytes
+import org.session.libsession.utilities.serializable.InstantAsSecondDoubleSerializer
 import org.session.libsignal.utilities.ByteArraySlice
-import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.JsonUtil
-import org.session.libsignal.utilities.Log
-import java.security.SecureRandom
-import java.util.concurrent.TimeUnit
+import java.time.Instant
 
 object OpenGroupApi {
     const val legacyServerIP = "116.203.70.33"
-
-    sealed class Error(message: String) : Exception(message) {
-        object Generic : Error("An error occurred.")
-        object ParsingFailed : Error("Invalid response.")
-        object DecryptionFailed : Error("Couldn't decrypt response.")
-        object SigningFailed : Error("Couldn't sign message.")
-        object InvalidURL : Error("Invalid URL.")
-        object NoPublicKey : Error("Couldn't find server public key.")
-        object NoEd25519KeyPair : Error("Couldn't find ed25519 key pair.")
-    }
 
     data class DefaultGroup(val serverUrl: String, val publicKey: String, val id: String, val name: String, val image: ByteArraySlice?) {
 
@@ -57,7 +25,8 @@ object OpenGroupApi {
         val infoUpdates: Int = 0,
         @SerialName("message_sequence")
         val messageSequence: Long = 0,
-        val created: Double = 0.0,
+        @Serializable(with = InstantAsSecondDoubleSerializer::class)
+        val created: Instant? = null,
         @SerialName("active_users")
         val activeUsers: Int = 0,
         @SerialName("active_users_cutoff")
@@ -142,9 +111,11 @@ object OpenGroupApi {
         val sender: String = "",
         val recipient: String = "",
         @SerialName("posted_at")
-        val postedAt: Long = 0,
+        @Serializable(with = InstantAsSecondDoubleSerializer::class)
+        val postedAt: Instant? = null,
         @SerialName("expires_at")
-        val expiresAt: Long = 0,
+        @Serializable(with = InstantAsSecondDoubleSerializer::class)
+        val expiresAt: Instant? = null,
         val message: String = "",
     )
 
@@ -154,8 +125,10 @@ object OpenGroupApi {
         val id : Long = 0,
         @SerialName("session_id")
         val sessionId: String = "",
-        val posted: Double = 0.0,
-        val edited: Double = 0.0,
+        @Serializable(with = InstantAsSecondDoubleSerializer::class)
+        val posted: Instant? = null,
+        @Serializable(with = InstantAsSecondDoubleSerializer::class)
+        val edited: Instant? = null,
         val seqno: Long = 0,
         val deleted: Boolean = false,
         val whisper: Boolean = false,
@@ -184,36 +157,4 @@ object OpenGroupApi {
         val added: Boolean
     )
 
-    @Serializable
-    data class DeleteReactionResponse(
-        @SerialName("seqno")
-        val seqNo: Long,
-        val removed: Boolean
-    )
-
-    data class DeleteAllReactionsResponse(
-        val seqNo: Long,
-        val removed: Boolean
-    )
-
-    data class PendingReaction(
-        val server: String,
-        val room: String,
-        val messageId: Long,
-        val emoji: String,
-        val add: Boolean,
-        var seqNo: Long? = null
-    )
-
-    data class MessageDeletion(
-        @JsonProperty("id")
-        val id: Long = 0,
-        @JsonProperty("deleted_message_id")
-        val deletedMessageServerID: Long = 0
-    ) {
-
-        companion object {
-            val empty = MessageDeletion()
-        }
-    }
 }

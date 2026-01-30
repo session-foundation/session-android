@@ -441,14 +441,18 @@ class ProStatusManager @Inject constructor(
     /**
      * Adds Pro features, if any, to an outgoing visible message
      */
-    fun addProFeatures(visibleMessage: VisibleMessage){
+    fun addProFeatures(visibleMessage: VisibleMessage) {
+        if (proDataState.value.type !is ProStatus.Active) {
+            return
+        }
+
         val proFeatures = ArraySet<ProFeature>()
 
         configFactory.get().withUserConfigs { configs ->
             proFeatures += configs.userProfile.getProFeatures().asSequence()
         }
 
-        if(Util.countCodepoints(visibleMessage.text.orEmpty()) > MAX_CHARACTER_REGULAR){
+        if (Util.countCodepoints(visibleMessage.text.orEmpty()) > MAX_CHARACTER_REGULAR){
             proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
         }
 

@@ -10,7 +10,7 @@ abstract class ServerApi<ResponseType>(
 ) {
     abstract fun buildRequest(baseUrl: String, x25519PubKeyHex: String): HttpRequest
 
-    suspend fun processResponse(
+    open suspend fun processResponse(
         executorContext: ApiExecutorContext,
         baseUrl: String,
         response: HttpResponse
