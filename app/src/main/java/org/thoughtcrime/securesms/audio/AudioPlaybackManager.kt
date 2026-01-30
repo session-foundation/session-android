@@ -42,6 +42,7 @@ import org.thoughtcrime.securesms.audio.model.PlayableAudio
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.util.getParcelableCompat
 import java.io.ByteArrayOutputStream
+import java.util.Arrays
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -86,8 +87,8 @@ class AudioPlaybackManager @Inject constructor(
 
             // Background: Resolve Metadata
             scope.launch(Dispatchers.IO) {
-                // Check if we can improve the metadata (ID3 or Avatar)
-                val betterMetadata = resolveMetadata(playable)
+                // Pass the current metadata so we can compare and build upon it
+                val betterMetadata = resolveMetadata(playable, item.mediaMetadata)
 
                 if (betterMetadata != null) {
                     val newItem = MediaItemFactory.withMetadata(item, betterMetadata)
@@ -102,15 +103,22 @@ class AudioPlaybackManager @Inject constructor(
     }
 
     /**
-     * Checks the File first. If data exists, use it. If not, use Fallback.
+     * Resolves metadata by checking the file first.
+     * Returns NULL if no changes are needed to avoid unnecessary updates.
      */
-    private suspend fun resolveMetadata(playable: PlayableAudio): MediaMetadata? {
-        // Gather File Metadata (ID3)
-        var fileTitle: String? = null
-        var fileArtist: String? = null
-        var hasFileArt = false
+    private suspend fun resolveMetadata(
+        playable: PlayableAudio,
+        currentMetadata: MediaMetadata
+    ): MediaMetadata? {
+        val finalTitle: String
+        val finalArtist: String
+        var artworkBytes: ByteArray? = null
 
         if (!playable.isVoiceNote) {
+            var fileTitle: String? = null
+            var fileArtist: String? = null
+            var hasFileArt = false
+
             val retriever = MediaMetadataRetriever()
             try {
                 retriever.setDataSource(context, playable.uri)
@@ -122,55 +130,70 @@ class AudioPlaybackManager @Inject constructor(
             } finally {
                 try { retriever.release() } catch (e: Exception) {}
             }
+
+            // Title: ID3 -> Filename
+            finalTitle = fileTitle?.takeIf { it.isNotBlank() } ?: playable.filename
+
+            // Artist: ID3 -> Sender -> "Unknown"
+            finalArtist = fileArtist?.takeIf { it.isNotBlank() }
+                ?: playable.senderName
+                        ?: context.getString(R.string.unknown)
+
+            // Only load custom artwork if file has no embedded art
+            if (!hasFileArt) {
+                artworkBytes = loadAvatarOrLogo(playable, isVoiceNote = false)
+            }
+
+        } else {
+            // Voice Note
+            // Title: Sender -> Filename
+            finalTitle = playable.senderName ?: playable.filename
+
+            // Artist: "Voice Message"
+            finalArtist = context.getString(R.string.messageVoice)
+
+            // Always load artwork for voice notes
+            artworkBytes = loadAvatarOrLogo(playable, isVoiceNote = true)
         }
 
-        // Determine Final Values (File > Fallback)
+        // Check for changes
+        val changed = finalTitle != currentMetadata.title?.toString() ||
+                finalArtist != currentMetadata.artist?.toString() ||
+                !artworkBytes.contentEquals(currentMetadata.artworkData)
 
-        // Title: Use ID3 Title if found, otherwise Filename for songs and sender name for notes
-        val finalTitle = if (!fileTitle.isNullOrBlank()) fileTitle
-        else if (playable.isVoiceNote) playable.senderName ?: playable.filename
-        else (playable.filename)
+        if (!changed) return null
 
-        // Artist: Use ID3 Artist if found, otherwise Sender Name
-        val finalArtist = if (!fileArtist.isNullOrBlank()) fileArtist
-        else if (playable.isVoiceNote) context.getString(R.string.messageVoice)
-        else (playable.senderName ?: context.getString(R.string.unknown))
-
-        // Artwork: If file has art, do nothing because the media notification will auto load it.
-        // If not, load Avatar/Logo.
-        var artworkBytes: ByteArray? = null
-        if (!hasFileArt) {
-            var bitmap: Bitmap? = null
-
-            // Try Avatar
-            if (playable.avatar != null) {
-                bitmap = loadBitmapFromModel(playable.avatar, forceBitmapDecoder = true)
-            }
-            // Try Logo
-            if (bitmap == null && playable.isVoiceNote) {
-                bitmap = loadBitmapFromModel(R.drawable.session_logo, forceBitmapDecoder = false)
-            }
-
-            // Compress
-            if (bitmap != null) {
-                val stream = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-                val byteArray = stream.toByteArray()
-                if (byteArray.size <= 500_000) artworkBytes = byteArray
-            }
-        }
-
-        // Build Result
-        val builder = MediaMetadata.Builder()
+        // Build result
+        return currentMetadata.buildUpon()
             .setTitle(finalTitle)
             .setDisplayTitle(finalTitle)
             .setArtist(finalArtist)
+            .apply {
+                if (artworkBytes != null) {
+                    setArtworkData(artworkBytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                }
+            }
+            .build()
+    }
 
-        if (artworkBytes != null) {
-            builder.setArtworkData(artworkBytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+    private suspend fun loadAvatarOrLogo(playable: PlayableAudio, isVoiceNote: Boolean): ByteArray? {
+        var bitmap: Bitmap? = null
+
+        // Try avatar
+        if (playable.avatar != null) {
+            bitmap = loadBitmapFromModel(playable.avatar, forceBitmapDecoder = true)
         }
 
-        return builder.build()
+        // Fallback to logo for voice notes only
+        if (bitmap == null && isVoiceNote) {
+            bitmap = loadBitmapFromModel(R.drawable.session_logo, forceBitmapDecoder = false)
+        }
+
+        return bitmap?.let {
+            val stream = ByteArrayOutputStream()
+            it.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            stream.toByteArray().takeIf { bytes -> bytes.size <= 500_000 }
+        }
     }
 
     private suspend fun loadBitmapFromModel(model: Any, forceBitmapDecoder: Boolean): Bitmap? {
@@ -373,14 +396,14 @@ class AudioPlaybackManager @Inject constructor(
 
             // Case 3: Paused / Ready / Ended
             c.playbackState == Player.STATE_READY || forceEnded ->
-            AudioPlaybackState.Paused(
-                playable = playable,
-                positionMs = position,
-                durationMs = duration,
-                bufferedPositionMs = buffered,
-                playbackSpeed = speed,
-                isBuffering = buffering
-            )
+                AudioPlaybackState.Paused(
+                    playable = playable,
+                    positionMs = position,
+                    durationMs = duration,
+                    bufferedPositionMs = buffered,
+                    playbackSpeed = speed,
+                    isBuffering = buffering
+                )
 
             // Case 4: Idle (Error or Stopped) -> Reset to Idle or Paused
             isIdle -> {
