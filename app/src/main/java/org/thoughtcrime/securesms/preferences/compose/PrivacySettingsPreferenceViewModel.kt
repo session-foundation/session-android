@@ -6,6 +6,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,10 +16,12 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DISABLE_PASSPHRASE_PREF
 import org.session.libsession.utilities.observeBooleanKey
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.ShowCallsWarningDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
 import javax.inject.Inject
@@ -33,15 +36,32 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
 
     private val keyguardSecure = MutableStateFlow(true)
 
-    private val mutableEvents = MutableSharedFlow<PrivacySettingsPreferenceEvent>()
+    private val mutableEvents = MutableSharedFlow<PrivacySettingsPreferenceEvent>(
+        replay = 1,
+        extraBufferCapacity = 1
+    )
     val events get() = mutableEvents
 
     private val _uiState = MutableStateFlow(UIState())
     val uiState: StateFlow<UIState> = _uiState
 
     private val isCommunityMessageRequestsEnabled: Boolean
-           get() = configFactory.withMutableUserConfigs { it.userProfile.getCommunityMessageRequests() }
+        get() = configFactory.withMutableUserConfigs { it.userProfile.getCommunityMessageRequests() }
 
+    private val _scrollAction = MutableStateFlow(ScrollAction())
+    val scrollAction: StateFlow<ScrollAction> = _scrollAction
+
+    // Use this to get index for UI item. We need the index to tell the listState where to scroll
+    // list things ordered by how they appear on the list
+    private var prefItemsOrder = listOf<String>(
+        TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED,
+        TextSecurePreferences.SCREEN_LOCK,
+        "community_message_requests",
+        TextSecurePreferences.READ_RECEIPTS_PREF,
+        TextSecurePreferences.TYPING_INDICATORS,
+        TextSecurePreferences.LINK_PREVIEWS,
+        TextSecurePreferences.INCOGNITO_KEYBOARD_PREF
+    )
 
     init {
         _uiState.update {
@@ -81,7 +101,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
                 default = false
             ),
             prefs.observeBooleanKey(TextSecurePreferences.READ_RECEIPTS_PREF, default = false),
-            prefs.observeBooleanKey(TextSecurePreferences.TYPING_INDICATORS, default = true),
+            prefs.observeBooleanKey(TextSecurePreferences.TYPING_INDICATORS, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.LINK_PREVIEWS, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, default = false)
         ) { callsEnabled, isReadReceiptsEnabled, showTypingIndicator, linkPreviewEnabled, isIncognitoKeyboard
@@ -110,6 +130,49 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     fun refreshKeyguardSecure() {
         val km = app.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         keyguardSecure.value = km.isKeyguardSecure
+    }
+
+    fun setScrollActions (scrollToKey : String? , scrollAndToggleKey : String? ) {
+        _scrollAction.update { it.copy(
+            scrollToKey = scrollToKey,
+            scrollAndToggleKey = scrollAndToggleKey
+        ) }
+    }
+
+    // Check scroll actions
+    fun checkScrollActions() {
+        viewModelScope.launch {
+            val action = scrollAction.value
+
+            val keyToScroll = action.scrollAndToggleKey ?: action.scrollToKey
+            ?: return@launch  // nothing to do
+
+            val index = prefItemsOrder.indexOf(keyToScroll)
+            if (index >= 0) {
+                delay(500L) // slight delay to make the transition less jarring
+                mutableEvents.tryEmit(
+                    PrivacySettingsPreferenceEvent.ScrollToIndex(index)
+                )
+            }
+
+            action.scrollAndToggleKey?.let { key ->
+                when (key) {
+                    CALL_NOTIFICATIONS_ENABLED -> {
+                        // need to do some checks before toggling
+                        onCommand(ShowCallsWarningDialog)
+                    }
+
+                    else -> prefs.updateBooleanFromKey(key, true)
+                }
+            }
+
+            clearScrollActions()
+        }
+    }
+
+    // Scrolling and toggle is complete
+    private fun clearScrollActions() {
+        _scrollAction.value = ScrollAction()
     }
 
     fun onCommand(command: Commands) {
@@ -207,7 +270,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         data class ToggleCallsNotification(val isEnabled: Boolean) : Commands
         data class ToggleLockApp(val isEnabled: Boolean) : Commands
         data object ToggleCommunityRequests : Commands
-        data class ToggleReadReceipts(val isEnabled: Boolean)  : Commands
+        data class ToggleReadReceipts(val isEnabled: Boolean) : Commands
         data class ToggleTypingIndicators(val isEnabled: Boolean) : Commands
         data object ToggleLinkPreviews : Commands
         data object ToggleIncognitoKeyboard : Commands
@@ -228,6 +291,8 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         data object StartLockToggledService : PrivacySettingsPreferenceEvent
         data object OpenAppNotificationSettings : PrivacySettingsPreferenceEvent
         data object AskMicrophonePermission : PrivacySettingsPreferenceEvent
+
+        data class ScrollToIndex(val index: Int) : PrivacySettingsPreferenceEvent
     }
 
     data class UIState(
@@ -245,5 +310,10 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
 
         val showCallsWarningDialog: Boolean = false,
         val showCallsNotificationDialog: Boolean = false
+    )
+
+    data class ScrollAction(
+        val scrollToKey: String? = null,
+        val scrollAndToggleKey: String? = null
     )
 }

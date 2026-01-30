@@ -275,6 +275,8 @@ interface TextSecurePreferences {
 
     fun isSendWithEnterEnabled() : Boolean
 
+    fun updateBooleanFromKey(key : String, value : Boolean)
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
@@ -1686,6 +1688,11 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isSendWithEnterEnabled(): Boolean {
         return getBooleanPreference(SEND_WITH_ENTER, false)
+    }
+
+    override fun updateBooleanFromKey(key: String, value: Boolean) {
+        setBooleanPreference(key, value)
+        _events.tryEmit(key)
     }
 }
 

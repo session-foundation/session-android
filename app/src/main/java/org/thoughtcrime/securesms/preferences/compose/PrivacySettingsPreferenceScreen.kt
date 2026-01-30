@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,12 +46,14 @@ fun PrivacySettingsPreferenceScreen(
 ) {
 
     val context = LocalContext.current
+    val listState = rememberLazyListState()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshKeyguardSecure()
+        viewModel.checkScrollActions()
     }
 
-    LaunchedEffect(viewModel.events) {
+    LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 is OpenAppNotificationSettings -> {
@@ -84,6 +88,10 @@ fun PrivacySettingsPreferenceScreen(
                     intent.action = KeyCachingService.LOCK_TOGGLED_EVENT
                     context.startService(intent)
                 }
+
+                is ScrollToIndex ->  {
+                    listState.animateScrollToItem(event.index)
+                }
             }
         }
     }
@@ -93,13 +101,15 @@ fun PrivacySettingsPreferenceScreen(
     PrivacySettingsPreference(
         uiState = uiState,
         sendCommand = viewModel::onCommand,
-        onBackPressed = onBackPressed
+        onBackPressed = onBackPressed,
+        listState = listState
     )
 }
 
 @Composable
 fun PrivacySettingsPreference(
     uiState: PrivacySettingsPreferenceViewModel.UIState,
+    listState: LazyListState,
     sendCommand: (command: PrivacySettingsPreferenceViewModel.Commands) -> Unit,
     onBackPressed: () -> Unit
 ) {
@@ -108,7 +118,8 @@ fun PrivacySettingsPreference(
 
     BasePreferenceScreens(
         onBack = { onBackPressed() },
-        title = GetString(R.string.sessionPrivacy).string()
+        title = GetString(R.string.sessionPrivacy).string(),
+        listState = listState
     ) {
         item {
             CategoryCell(
@@ -336,6 +347,7 @@ fun PreviewPrivacySettingsPreference() {
     PrivacySettingsPreference(
         uiState = PrivacySettingsPreferenceViewModel.UIState(),
         sendCommand = {},
-        onBackPressed = {}
+        onBackPressed = {},
+        listState = LazyListState()
     )
 }
