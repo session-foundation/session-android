@@ -794,7 +794,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     private fun getSelectedPlan(): ProPlan? {
-        return (_choosePlanState.value as? State.Success)?.value?.plans?.first { it.selected }
+        return (_choosePlanState.value as? State.Success)?.value?.plans?.firstOrNull { it.selected }
     }
 
     private fun goToChoosePlan(){
