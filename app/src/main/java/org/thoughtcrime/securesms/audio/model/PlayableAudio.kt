@@ -15,7 +15,7 @@ data class PlayableAudio(
     val thread: Address.Conversable,
     val isVoiceNote: Boolean,
     val durationMs: Long, // from Attachment.audioDurationMs, may be -1
-    val title: String?,
-    val artist: String?, // e.g. sender name for voice notes
+    val senderName: String?,
+    val filename: String,
     val avatar: RemoteFile? = null // custom avatar of the sender, if any
 )

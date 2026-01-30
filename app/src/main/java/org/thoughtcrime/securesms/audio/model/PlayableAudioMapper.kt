@@ -23,7 +23,6 @@ object PlayableAudioMapper {
         thread: Address.Conversable,
         senderName: String? = null,
         senderAvatar: RemoteFile? = null,
-        titleOverride: String? = null
     ): PlayableAudio? {
         val attachment: Attachment = slide.asAttachment()
         val uri = attachment.dataUri ?: return null
@@ -31,19 +30,14 @@ object PlayableAudioMapper {
         val isVoice = attachment.isVoiceNote
         val durationHint = attachment.audioDurationMs
 
-        val title = titleOverride
-            ?: slide.filename
-
-        val artist = senderName //todo AUDIO can we get the artist is not a voice note?
-
         return PlayableAudio(
             messageId = messageId,
             uri = uri,
             thread = thread,
             isVoiceNote = isVoice,
             durationMs = durationHint,
-            title = title,
-            artist = artist,
+            senderName = senderName,
+            filename = slide.filename,
             avatar = senderAvatar
         )
     }

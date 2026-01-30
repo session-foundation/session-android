@@ -7,6 +7,7 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Bundle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -83,21 +84,107 @@ class AudioPlaybackManager @Inject constructor(
             startProgressTracking()
             updateFromController()
 
-            // Determine if we need to manually update the artwork
+            // Background: Resolve Metadata
             scope.launch(Dispatchers.IO) {
-                val artworkData = resolveArtwork(playable)
+                // Check if we can improve the metadata (ID3 or Avatar)
+                val betterMetadata = resolveMetadata(playable)
 
-                // Only update if we actually found something to override with
-                if (artworkData != null) {
-                    val itemWithArt = MediaItemFactory.withArtwork(item, artworkData)
+                if (betterMetadata != null) {
+                    val newItem = MediaItemFactory.withMetadata(item, betterMetadata)
                     withContext(Dispatchers.Main) {
                         if (c.currentMediaItem?.mediaId == playable.messageId.serialize()) {
-                            c.replaceMediaItem(c.currentMediaItemIndex, itemWithArt)
+                            c.replaceMediaItem(c.currentMediaItemIndex, newItem)
                         }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Checks the File first. If data exists, use it. If not, use Fallback.
+     */
+    private suspend fun resolveMetadata(playable: PlayableAudio): MediaMetadata? {
+        // Gather File Metadata (ID3)
+        var fileTitle: String? = null
+        var fileArtist: String? = null
+        var hasFileArt = false
+
+        if (!playable.isVoiceNote) {
+            val retriever = MediaMetadataRetriever()
+            try {
+                retriever.setDataSource(context, playable.uri)
+                fileTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+                fileArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                hasFileArt = retriever.embeddedPicture != null
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to extract ID3 tags", e)
+            } finally {
+                try { retriever.release() } catch (e: Exception) {}
+            }
+        }
+
+        // Determine Final Values (File > Fallback)
+
+        // Title: Use ID3 Title if found, otherwise Filename for songs and sender name for notes
+        val finalTitle = if (!fileTitle.isNullOrBlank()) fileTitle
+        else if (playable.isVoiceNote) playable.senderName ?: playable.filename
+        else (playable.filename)
+
+        // Artist: Use ID3 Artist if found, otherwise Sender Name
+        val finalArtist = if (!fileArtist.isNullOrBlank()) fileArtist
+        else if (playable.isVoiceNote) context.getString(R.string.messageVoice)
+        else (playable.senderName ?: context.getString(R.string.unknown))
+
+        // Artwork: If file has art, do nothing because the media notification will auto load it.
+        // If not, load Avatar/Logo.
+        var artworkBytes: ByteArray? = null
+        if (!hasFileArt) {
+            var bitmap: Bitmap? = null
+
+            // Try Avatar
+            if (playable.avatar != null) {
+                bitmap = loadBitmapFromModel(playable.avatar, forceBitmapDecoder = true)
+            }
+            // Try Logo
+            if (bitmap == null && playable.isVoiceNote) {
+                bitmap = loadBitmapFromModel(R.drawable.session_logo, forceBitmapDecoder = false)
+            }
+
+            // Compress
+            if (bitmap != null) {
+                val stream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                val byteArray = stream.toByteArray()
+                if (byteArray.size <= 500_000) artworkBytes = byteArray
+            }
+        }
+
+        // Build Result
+        val builder = MediaMetadata.Builder()
+            .setTitle(finalTitle)
+            .setDisplayTitle(finalTitle)
+            .setArtist(finalArtist)
+
+        if (artworkBytes != null) {
+            builder.setArtworkData(artworkBytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+        }
+
+        return builder.build()
+    }
+
+    private suspend fun loadBitmapFromModel(model: Any, forceBitmapDecoder: Boolean): Bitmap? {
+        val builder = ImageRequest.Builder(context)
+            .data(model)
+            .size(512, 512)
+            .allowHardware(false)
+
+        if (forceBitmapDecoder) {
+            builder.decoderFactory(BitmapFactoryDecoder.Factory())
+        }
+
+        val result = context.imageLoader.execute(builder.build())
+        return (result as? SuccessResult)?.image?.toBitmap()
     }
 
     fun togglePlayPause() {
@@ -332,104 +419,14 @@ class AudioPlaybackManager @Inject constructor(
         val uri: Uri = item.localConfiguration?.uri
             ?: return null
 
-        val isVoice = extras.getBoolean(MediaItemFactory.EXTRA_IS_VOICE, false)
-        val durationHint = extras.getLong(MediaItemFactory.EXTRA_DURATION_HINT, -1L)
-
         return PlayableAudio(
             messageId = messageId,
             uri = uri,
             thread = thread,
-            isVoiceNote = isVoice,
-            durationMs = durationHint,
-            title = item.mediaMetadata.title?.toString(),
-            artist = item.mediaMetadata.artist?.toString()
+            isVoiceNote = extras.getBoolean(MediaItemFactory.EXTRA_IS_VOICE, false),
+            durationMs = extras.getLong(MediaItemFactory.EXTRA_DURATION_HINT, -1L),
+            senderName = extras.getString(MediaItemFactory.EXTRA_SENDER_NAME),
+            filename = extras.getString(MediaItemFactory.EXTRA_FILENAME, "")
         )
-    }
-
-    // Artwork handling
-    /**
-     * If a non voice note has an embedded artwork, let exoplayer automatically use that
-     * For the rest, use the sender's avatar if available
-     * Or else fallback to a logo
-     */
-    private suspend fun resolveArtwork(playable: PlayableAudio): ByteArray? {
-        return try {
-            // If it's an MP3 (Audio File), check for embedded artwork first.
-            if (!playable.isVoiceNote) {
-                if (hasEmbeddedArtwork(playable.uri)) {
-                    // there is an embedded artwork
-                    // Return null so we don't overwrite it with the sender's avatar.
-                    // ExoPlayer will extract and show this automatically.
-                    return null
-                }
-            }
-
-            var bitmap: Bitmap? = null
-
-            if (playable.avatar != null) {
-                bitmap = loadBitmapFromModel(
-                    model = playable.avatar,
-                    forceBitmapDecoder = true
-                )
-            }
-
-            // Fallback Logo
-            if (bitmap == null && playable.isVoiceNote) {
-                bitmap = loadBitmapFromModel(
-                    model = R.drawable.session_logo,
-                    forceBitmapDecoder = false
-                )
-            }
-
-            // Compression
-            if (bitmap != null) {
-                val stream = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-                val byteArray = stream.toByteArray()
-                if (byteArray.size <= 500_000) byteArray else null
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Error resolving artwork", e)
-            null
-        }
-    }
-
-    /**
-     * Checks if the audio file has embedded pictures (APIC/ID3).
-     * Uses MediaMetadataRetriever which is robust and native.
-     */
-    private fun hasEmbeddedArtwork(uri: Uri): Boolean {
-        val retriever = MediaMetadataRetriever()
-        return try {
-            retriever.setDataSource(context, uri)
-            // We don't need to decode the bitmap, just check if the byte array exists.
-            val hasImage = retriever.embeddedPicture != null
-            hasImage
-        } catch (e: Exception) {
-            false
-        } finally {
-            try {
-                retriever.release()
-            } catch (e: Exception) {}
-        }
-    }
-
-    /**
-     * Coil Loader
-     */
-    private suspend fun loadBitmapFromModel(model: Any, forceBitmapDecoder: Boolean): Bitmap? {
-        val builder = ImageRequest.Builder(context)
-            .data(model)
-            .size(512, 512)
-            .allowHardware(false)
-
-        if (forceBitmapDecoder) {
-            builder.decoderFactory(BitmapFactoryDecoder.Factory())
-        }
-
-        val result = context.imageLoader.execute(builder.build())
-        return (result as? SuccessResult)?.image?.toBitmap()
     }
 }
