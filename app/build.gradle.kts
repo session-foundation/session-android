@@ -86,6 +86,8 @@ kotlin {
     }
 }
 
+val testJvmAgent = configurations.create("mockitoAgent")
+
 android {
     namespace = "network.loki.messenger"
 
@@ -293,6 +295,9 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.jvmArgs("-javaagent:${testJvmAgent.asPath}")
+        }
     }
 
     lint {
@@ -321,6 +326,8 @@ android {
 
     testNamespace = "network.loki.messenger.test"
 }
+
+
 
 dependencies {
     implementation(project(":content-descriptions"))
@@ -418,6 +425,11 @@ dependencies {
     testImplementation(libs.androidx.sqlite.framework)
     androidTestImplementation(libs.truth)
     testRuntimeOnly(libs.mockito.core)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlin.test)
+
+    // Pull in appropriate JVM agents for unit test
+    testJvmAgent(libs.mockito.core) { isTransitive = false }
 
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.contrib)

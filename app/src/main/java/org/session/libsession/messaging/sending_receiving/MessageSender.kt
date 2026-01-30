@@ -10,7 +10,6 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.protocol.SessionProtocol
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
@@ -25,13 +24,17 @@ import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.Quote
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
-import org.session.libsession.network.SnodeClient
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.SendDirectMessageApi
+import org.session.libsession.messaging.open_groups.api.SendMessageApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsession.utilities.withMutableUserConfigs
@@ -42,11 +45,15 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos
+import org.thoughtcrime.securesms.api.snode.StoreMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.copyFromLibSession
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
@@ -62,8 +69,13 @@ class MessageSender @Inject constructor(
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val messageExpirationManager: ExpiringMessageManager,
     private val snodeClock: SnodeClock,
-    private val snodeClient: SnodeClient,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val sendCommunityMessageApiFactory: SendMessageApi.Factory,
+    private val sendCommunityDirectMessageApiFactory: SendDirectMessageApi.Factory,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
+    private val loginStateRepository: LoginStateRepository,
 ) {
 
     // Error
@@ -247,14 +259,28 @@ class MessageSender @Inject constructor(
                             "Unable to authorize group message send"
                         }
 
-                        snodeClient.sendMessage(
-                            auth = groupAuth,
-                            message = snodeMessage,
-                            namespace = Namespace.GROUP_MESSAGES(),
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = destination.publicKey,
+                                api = storeSnodeMessageApiFactory.create(
+                                    message = snodeMessage,
+                                    auth = groupAuth,
+                                    namespace = Namespace.GROUP_MESSAGES(),
+                                )
+                            )
                         )
                     }
                     is Destination.Contact -> {
-                        snodeClient.sendMessage(snodeMessage, auth = null, namespace = Namespace.DEFAULT())
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = destination.publicKey,
+                                api = storeSnodeMessageApiFactory.create(
+                                    message = snodeMessage,
+                                    auth = null,
+                                    namespace = Namespace.DEFAULT()
+                                )
+                            )
+                        )
                     }
                     is Destination.OpenGroup,
                     is Destination.OpenGroupInbox -> throw IllegalStateException("Destination should not be an open group.")
@@ -314,25 +340,24 @@ class MessageSender @Inject constructor(
                 message.blocksMessageRequests = !configs.userProfile.getCommunityMessageRequests()
             }
         }
-        val userEdKeyPair = storage.getUserED25519KeyPair()!!
         var serverCapabilities: List<String>
         var blindedPublicKey: ByteArray? = null
+        val loggedInState = loginStateRepository.requireLoggedInState()
         when (destination) {
             is Destination.OpenGroup -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
                 storage.getOpenGroupPublicKey(destination.server)?.let {
-                    blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
-                        ed25519SecretKey = userEdKeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(it),
-                    )?.pubKey?.data
+                    blindedPublicKey = loggedInState
+                        .getBlindedKeyPair(serverUrl = destination.server, serverPubKeyHex = it)
+                        .pubKey.data
                 }
             }
             is Destination.OpenGroupInbox -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server).orEmpty()
-                blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
-                    ed25519SecretKey = userEdKeyPair.secretKey.data,
-                    serverPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
-                )?.pubKey?.data
+                blindedPublicKey = loggedInState
+                    .getBlindedKeyPair(serverUrl = destination.server,
+                        serverPubKeyHex = destination.serverPublicKey)
+                    .pubKey.data
             }
 
             is Destination.ClosedGroup,
@@ -341,7 +366,7 @@ class MessageSender @Inject constructor(
         val messageSender = if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && blindedPublicKey != null) {
             AccountId(IdPrefix.BLINDED, blindedPublicKey).hexString
         } else {
-            AccountId(IdPrefix.UN_BLINDED, userEdKeyPair.pubKey.data).hexString
+            AccountId(IdPrefix.UN_BLINDED, loggedInState.accountEd25519KeyPair.pubKey.data).hexString
         }
         message.sender = messageSender
 
@@ -369,17 +394,19 @@ class MessageSender @Inject constructor(
                         base64EncodedData = Base64.encodeBytes(plaintext),
                     )
 
-                    val response = OpenGroupApi.sendMessage(
-                        openGroupMessage,
-                        destination.roomToken,
-                        destination.server,
-                        destination.whisperTo,
-                        destination.whisperMods,
-                        destination.fileIds
+                    val response = communityApiExecutor.execute(
+                        CommunityApiRequest(
+                            serverBaseUrl = destination.server,
+                            api = sendCommunityMessageApiFactory.create(
+                                room = destination.roomToken,
+                                message = openGroupMessage,
+                                fileIds = destination.fileIds
+                            )
+                        ),
                     )
 
-                    message.openGroupServerMessageID = response.serverID
-                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.sentTimestamp)
+                    message.openGroupServerMessageID = response.id
+                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.postedMills)
                     return
                 }
                 is Destination.OpenGroupInbox -> {
@@ -390,22 +417,24 @@ class MessageSender @Inject constructor(
                     }
                     val ciphertext = SessionProtocol.encodeForCommunityInbox(
                         plaintext = content.toByteArray(),
-                        myEd25519PrivKey = userEdKeyPair.secretKey.data,
+                        myEd25519PrivKey = loggedInState.accountEd25519KeyPair.secretKey.data,
                         timestampMs = message.sentTimestamp!!,
                         recipientPubKey = Hex.fromStringCondensed(destination.blindedPublicKey),
                         communityServerPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
                         proRotatingEd25519PrivKey = null,
                     )
 
-                    val base64EncodedData = Base64.encodeBytes(ciphertext)
-                    val response = OpenGroupApi.sendDirectMessage(
-                        base64EncodedData,
-                        destination.blindedPublicKey,
-                        destination.server
-                    )
+                    val response = communityApiExecutor.execute(CommunityApiRequest(
+                        serverBaseUrl = destination.server,
+                        api = sendCommunityDirectMessageApiFactory.create(
+                            recipient = destination.blindedPublicKey.toAddress() as Address.Blinded,
+                            messageContent = Base64.encodeBytes(ciphertext)
+                        )
+                    ))
 
                     message.openGroupServerMessageID = response.id
-                    handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = TimeUnit.SECONDS.toMillis(response.postedAt))
+                    handleSuccessfulMessageSend(message, destination,
+                        openGroupSentTimestamp = response.postedAt?.toEpochMilli() ?: 0L)
                     return
                 }
                 else -> throw IllegalStateException("Invalid destination.")

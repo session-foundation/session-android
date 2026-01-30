@@ -44,7 +44,6 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -67,6 +66,7 @@ import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -77,6 +77,7 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.findCause
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
@@ -589,7 +590,7 @@ open class Storage @Inject constructor(
         }
         if (error.localizedMessage != null) {
             val message: String
-            if (error is OnionError.DestinationError && error.status?.code == 429) {
+            if (error.findCause<UnhandledStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -605,7 +606,7 @@ open class Storage @Inject constructor(
 
         if (error.localizedMessage != null) {
             val message: String
-            if (error is OnionError.DestinationError && error.status?.code == 429) {
+            if (error.findCause<UnhandledStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -797,12 +798,11 @@ open class Storage @Inject constructor(
         val address = Address.Group(closedGroup)
         val recipient = recipientRepository.getRecipientSync(address)
         val threadDb = threadDatabase
-        val threadID = threadDb.getThreadIdIfExistsFor(address)
+        val threadID = threadDb.getOrCreateThreadIdFor(address)
         val expiryMode = recipient.expiryMode
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val inviteJson = updateData.toJSON()
-
 
         if (senderPublicKey == null || senderPublicKey == userPublicKey) {
             val infoMessage = OutgoingMediaMessage(
@@ -881,7 +881,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadId(address: Address): Long? {
-        val threadID = threadDatabase.getThreadIdIfExistsFor(address)
+        val threadID = threadDatabase.getThreadIdIfExistsFor(address.address)
         return if (threadID < 0) null else threadID
     }
 

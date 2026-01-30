@@ -24,8 +24,8 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 
 class MessageSendJob @AssistedInject constructor(
     @Assisted val message: Message,
@@ -103,8 +103,8 @@ class MessageSendJob @AssistedInject constructor(
 
             this.handleSuccess(dispatcherName)
             statusCallback?.trySend(Result.success(Unit))
-        } catch (e: HTTP.HTTPRequestFailedException) {
-            if (e.statusCode == 429) { this.handlePermanentFailure(dispatcherName, e) }
+        } catch (e: UnhandledStatusCodeException) {
+            if (e.code == 429) { this.handlePermanentFailure(dispatcherName, e) }
             else { this.handleFailure(dispatcherName, e) }
 
             statusCallback?.trySend(Result.failure(e))

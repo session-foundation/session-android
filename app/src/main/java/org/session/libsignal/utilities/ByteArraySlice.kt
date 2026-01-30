@@ -1,5 +1,11 @@
 package org.session.libsignal.utilities
 
+import okhttp3.MediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody
+import okio.BufferedSource
+import okio.buffer
+import okio.source
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -51,8 +57,12 @@ class ByteArraySlice private constructor(
         }
     }
 
-    fun decodeToString(): String {
-        return data.decodeToString(offset, offset + len)
+    fun decodeToString(throwOnInvalidSequence: Boolean = false): String {
+        return data.decodeToString(
+            startIndex = offset,
+            endIndex = offset + len,
+            throwOnInvalidSequence = throwOnInvalidSequence
+        )
     }
 
     fun inputStream(): InputStream {
@@ -96,6 +106,24 @@ class ByteArraySlice private constructor(
 
         fun OutputStream.write(view: ByteArraySlice) {
             write(view.data, view.offset, view.len)
+        }
+
+        fun ByteArraySlice.toResponseBody(
+            contentType: MediaType? = null
+        ): ResponseBody {
+            return object : ResponseBody() {
+                override fun contentLength(): Long = len.toLong()
+                override fun contentType() = contentType
+                override fun source(): BufferedSource {
+                    return inputStream().source().buffer()
+                }
+            }
+        }
+
+        fun ByteArraySlice.toRequestBody(
+            contentType: MediaType? = null
+        ): okhttp3.RequestBody {
+            return data.toRequestBody(contentType, offset, len)
         }
     }
 }

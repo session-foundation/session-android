@@ -4,6 +4,7 @@ import android.util.Base64
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
+import org.thoughtcrime.securesms.api.snode.SnodeApiResponse
 import java.time.Instant
 
 @Serializable

@@ -16,11 +16,11 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 @WorkerThread
-internal object AESGCM {
+object AESGCM {
     internal val gcmTagSize = 128
     internal val ivSize = 12
 
-    internal data class EncryptionResult(
+    data class EncryptionResult(
         internal val ciphertext: ByteArray,
         internal val symmetricKey: ByteArray,
         internal val ephemeralPublicKey: ByteArray

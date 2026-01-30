@@ -2,9 +2,9 @@ package org.session.libsession.messaging.file_server
 
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.mockito.kotlin.mock
 
 class FileServerApiTest {
 
@@ -12,18 +12,16 @@ class FileServerApiTest {
     private data class Case(
         val name: String,
         val url: HttpUrl,
-        val successfulParseResult: FileServerApi.URLParseResult?,
+        val successfulParseResult: FileServerApis.URLParseResult?,
     )
 
     @Test
     fun `can build and parse attachment url`() {
-        val api = FileServerApi(storage = mock(), serverClient = mock(), snodeClock = mock())
-
         val testCases = listOf(
             Case(
                 name = "With deterministic flag",
                 url = "http://fileserver/file/id1#d&p=1234".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = true,
                     fileServer = FileServer(
@@ -35,7 +33,7 @@ class FileServerApiTest {
             Case(
                 name = "With deterministic flag variant1",
                 url = "http://fileserver/file/id1#d=&p=1234".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = true,
                     fileServer = FileServer(
@@ -47,7 +45,7 @@ class FileServerApiTest {
             Case(
                 name = "Without deterministic flag",
                 url = "http://fileserver/file/id1#p=1234".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = false,
                     fileServer = FileServer(
@@ -58,22 +56,22 @@ class FileServerApiTest {
             ),
             Case(
                 name = "Official server without public key",
-                url = "http://${FileServerApi.DEFAULT_FILE_SERVER.url.host}/file/id1".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                url = "http://${FileServerApis.DEFAULT_FILE_SERVER.url.host}/file/id1".toHttpUrl(),
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = false,
-                    fileServer = FileServerApi.DEFAULT_FILE_SERVER
+                    fileServer = FileServerApis.DEFAULT_FILE_SERVER
                 ),
             ),
             Case(
                 name = "Alt official server without public key",
                 url = "http://fileabc.getsession.org/file/id1".toHttpUrl(),
-                successfulParseResult = FileServerApi.URLParseResult(
+                successfulParseResult = FileServerApis.URLParseResult(
                     fileId = "id1",
                     usesDeterministicEncryption = false,
                     fileServer = FileServer(
                         "http://fileabc.getsession.org",
-                        FileServerApi.DEFAULT_FILE_SERVER.ed25519PublicKeyHex
+                        FileServerApis.DEFAULT_FILE_SERVER.ed25519PublicKeyHex
                     )
                 ),
             ),
@@ -93,13 +91,13 @@ class FileServerApiTest {
 
         for (case in testCases) {
             try {
-                val result = runCatching { api.parseAttachmentUrl(case.url) }
+                val result = runCatching { FileServerApis.parseAttachmentUrl(case.url) }
                 if (case.successfulParseResult != null) {
                     val actual = result.getOrThrow()
                     assertEquals("Parse result differs!",case.successfulParseResult, actual)
 
-                    val url = api.buildAttachmentUrl(actual.fileId, actual.fileServer, actual.usesDeterministicEncryption)
-                    val reversed = api.parseAttachmentUrl(url)
+                    val url = FileServerApis.buildAttachmentUrl(actual.fileId, actual.fileServer, actual.usesDeterministicEncryption)
+                    val reversed = FileServerApis.parseAttachmentUrl(url)
                     assertEquals("Build URL differs!", actual, reversed)
 
                 } else {

@@ -7,22 +7,29 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.file_server.FileDownloadApi
+import org.session.libsession.messaging.file_server.FileServerApis
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.CommunityFileDownloadApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.network.model.OnionError
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Base64
-import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.util.findCause
 
 class AttachmentDownloadJob @AssistedInject constructor(
     @Assisted("attachmentID") val attachmentID: Long,
@@ -30,7 +37,10 @@ class AttachmentDownloadJob @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
     private val attachmentProcessor: AttachmentProcessor,
-    private val fileServerApi: FileServerApi,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val fileDownloadApiFactory: FileDownloadApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val communityFileDownloadApiFactory: CommunityFileDownloadApi.Factory,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -83,7 +93,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
         val threadID = storage.getThreadIdForMms(mmsMessageId)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
-            if(exception is HTTP.HTTPRequestFailedException && exception.statusCode == 404){
+            if (exception.findCause<UnhandledStatusCodeException>()?.code == 404){
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")
                     messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, id, mmsMessageId)
@@ -94,7 +104,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
             } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
-                    || (exception is OnionError.DestinationError && exception.status?.code == 400)
+                    || (exception.findCause<UnhandledStatusCodeException>()?.code  == 400)
                     || exception is NonRetryableException) {
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")
@@ -157,7 +167,7 @@ class AttachmentDownloadJob @AssistedInject constructor(
 
             val decrypted = if (threadRecipient?.address !is Address.Community) {
                 Log.d("AttachmentDownloadJob", "downloading normal attachment")
-                val r = runCatching { fileServerApi.parseAttachmentUrl(attachment.url.toHttpUrl()) }
+                val r = runCatching { FileServerApis.parseAttachmentUrl(attachment.url.toHttpUrl()) }
                     .recover { throw NonRetryableException("Invalid file server URL", it) }
                     .getOrThrow()
 
@@ -165,10 +175,12 @@ class AttachmentDownloadJob @AssistedInject constructor(
                     throw NonRetryableException("Missing attachment key")
                 }.let(Base64::decode)
 
-                val cipherText = fileServerApi.download(
-                    fileId = r.fileId,
-                    fileServer = r.fileServer
-                ).body
+                val cipherText = serverApiExecutor.execute(
+                    ServerApiRequest(
+                        fileServer = r.fileServer,
+                        api = fileDownloadApiFactory.create(r.fileId)
+                    )
+                ).data.toByteArraySlice()
 
                 runCatching {
                     if (r.usesDeterministicEncryption) {
@@ -189,7 +201,17 @@ class AttachmentDownloadJob @AssistedInject constructor(
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, room = threadRecipient.address.room, server = threadRecipient.address.serverUrl)
+
+                communityApiExecutor.execute(
+                    CommunityApiRequest(
+                        serverBaseUrl = threadRecipient.address.serverUrl,
+                        api = communityFileDownloadApiFactory.create(
+                            room = threadRecipient.address.room,
+                            fileId = fileID,
+                            requiresSigning = true,
+                        )
+                    )
+                ).toByteArraySlice()
             }
 
             Log.d("AttachmentDownloadJob", "getting input stream")
