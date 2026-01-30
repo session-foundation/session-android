@@ -56,7 +56,14 @@ class BatchApi @AssistedInject constructor(
 
         constructor(httpRequest: HttpRequest, json: Json) : this(
             method = httpRequest.method,
-            path = httpRequest.url.encodedPath,
+            // Path includes query parameters
+            path = buildString {
+                append(httpRequest.url.encodedPath)
+                if (httpRequest.url.encodedQuery != null) {
+                    append("?")
+                    append(httpRequest.url.encodedQuery)
+                }
+            },
             headers = httpRequest.headers.toMap(),
             json = if (httpRequest.isJsonBody) {
                 @Suppress("OPT_IN_USAGE")
