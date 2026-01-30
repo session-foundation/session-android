@@ -1,9 +1,12 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.util.AttributeSet
+import android.widget.FrameLayout
 import android.widget.RelativeLayout
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +37,6 @@ class VoiceMessageView @JvmOverloads constructor(
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
 
     private val binding by lazy { ViewVoiceMessageBinding.bind(this) }
-    private val cornerMask by lazy { CornerMask(this) }
 
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter = -1
@@ -50,19 +52,19 @@ class VoiceMessageView @JvmOverloads constructor(
     private var isPlaying: Boolean = false
 
     fun bind(
-        message: MmsMessageRecord,
         playable: PlayableAudio?,
-        isStartOfMessageCluster: Boolean,
-        isEndOfMessageCluster: Boolean
+        textColor: Int
     ) {
         this.playable = playable
 
-        // existing corner mask logic unchanged
-        val radii = MessageBubbleUtilities.calculateRadii(context, isStartOfMessageCluster, isEndOfMessageCluster, message.isOutgoing)
-        cornerMask.setTopLeftRadius(radii[0])
-        cornerMask.setTopRightRadius(radii[1])
-        cornerMask.setBottomRightRadius(radii[2])
-        cornerMask.setBottomLeftRadius(radii[3])
+        binding.voiceMessageViewDurationTextView.setTextColor(textColor)
+        binding.voiceMessageSpeedButton.setTextColor(textColor)
+        binding.voiceMessageSpeedButton.backgroundTintList =
+            ColorStateList.valueOf(ColorUtils.setAlphaComponent(textColor, 30))
+        /*binding.playBg.backgroundTintList = ColorStateList.valueOf(textColor)
+        binding.voiceMessageSeekBar.backgroundTintList = ColorStateList.valueOf(textColor)
+        binding.voiceMessageSeekBar.thumbTintList = ColorStateList.valueOf(textColor)
+        binding.voiceMessageSeekBar.progressTintList = ColorStateList.valueOf(textColor)*/
 
         // initial duration display
         durationMs = playable?.durationMs?.takeIf { it > 0 } ?: 0L
@@ -166,18 +168,13 @@ class VoiceMessageView @JvmOverloads constructor(
     }
 
     private fun renderProgress(p: Float) {
-        val layoutParams = binding.progressView.layoutParams as RelativeLayout.LayoutParams
+        val layoutParams = binding.voiceMessageViewLoader.layoutParams as FrameLayout.LayoutParams
         layoutParams.width = (width.toFloat() * p).roundToInt()
-        binding.progressView.layoutParams = layoutParams
+        binding.voiceMessageViewLoader.layoutParams = layoutParams
     }
 
     private fun renderIcon() {
         val iconID = if (isPlaying) R.drawable.exo_icon_pause else R.drawable.exo_icon_play
         binding.voiceMessagePlaybackImageView.setImageResource(iconID)
-    }
-
-    override fun dispatchDraw(canvas: Canvas) {
-        super.dispatchDraw(canvas)
-        cornerMask.mask(canvas)
     }
 }

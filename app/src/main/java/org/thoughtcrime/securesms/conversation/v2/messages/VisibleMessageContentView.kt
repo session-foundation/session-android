@@ -233,10 +233,8 @@ class VisibleMessageContentView : ConstraintLayout {
                     )
 
                     binding.voiceMessageView.root.bind(
-                        message = message,
                         playable = playable,
-                        isStartOfMessageCluster = isStartOfMessageCluster,
-                        isEndOfMessageCluster = isEndOfMessageCluster
+                        textColor = getTextColor(context, message)
                     )
 
                     // We have to use onContentClick (rather than a click listener directly on the voice
