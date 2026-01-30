@@ -133,6 +133,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
             attachmentDownloadJobFactory = mock(),
             communityApiExecutor = mock(),
             deleteAllReactionsApiFactory = mock(),
+            loginStateRepository = mock(),
         )
     }
 
