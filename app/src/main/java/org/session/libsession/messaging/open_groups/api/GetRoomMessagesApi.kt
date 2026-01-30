@@ -5,15 +5,14 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.serialization.json.decodeFromStream
-import okhttp3.MediaType
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import org.thoughtcrime.securesms.api.http.HttpBody
+import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 
 class GetRoomMessagesApi @AssistedInject constructor(
     @Assisted override val room: String,
-    @Assisted sinceMessageId: Long?,
+    @Assisted sinceSeqNo: Long?,
     @Assisted reactors: Int?,
     deps: CommunityApiDependencies,
 ) : CommunityApi<List<OpenGroupApi.Message>>(deps) {
@@ -24,9 +23,9 @@ class GetRoomMessagesApi @AssistedInject constructor(
         append(Uri.encode(room))
         append("/messages")
 
-        if (sinceMessageId != null) {
+        if (sinceSeqNo != null) {
             append("/since/")
-            append(sinceMessageId)
+            append(sinceSeqNo)
         } else {
             append("/recent")
         }
@@ -36,6 +35,11 @@ class GetRoomMessagesApi @AssistedInject constructor(
             append("&reactors=")
             append(reactors)
         }
+    }
+
+    override fun buildRequest(baseUrl: String, x25519PubKeyHex: String): HttpRequest {
+        val request = super.buildRequest(baseUrl, x25519PubKeyHex)
+        return request
     }
 
     override suspend fun handleSuccessResponse(
@@ -51,7 +55,7 @@ class GetRoomMessagesApi @AssistedInject constructor(
     interface Factory {
         fun create(
             room: String,
-            sinceLastId: Long?,
+            sinceSeqNo: Long?,
             reactors: Int? = 5
         ): GetRoomMessagesApi
     }

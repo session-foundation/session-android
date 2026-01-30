@@ -1908,6 +1908,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                                 )
                             )
                         )
+                    }.onFailure {
+                        Log.e(TAG, "Failed to send emoji reaction to community message", it)
                     }
                 }
             } else {
