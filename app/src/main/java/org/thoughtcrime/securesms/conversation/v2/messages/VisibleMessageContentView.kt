@@ -31,6 +31,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.applyCollapsedEllipsisMinWidth
 import org.session.libsession.utilities.clearCollapsedMinWidth
@@ -218,13 +219,17 @@ class VisibleMessageContentView : ConstraintLayout {
                     binding.voiceMessageView.root.isVisible = true
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
                     binding.voiceMessageView.root.delegate = context as? ConversationActivityV2
+                    val sender = if(message.isOutgoing){
+                        recipientRepository.getSelf()
+                    } else message.individualRecipient
 
                     val audioSlide = message.slideDeck.audioSlide!!
                     val playable = PlayableAudioMapper.fromAudioSlide(
                         slide = audioSlide,
                         messageId = message.messageId ,
                         thread = thread.address as Address.Conversable,
-                        senderName = message.recipient.displayName()
+                        senderName = sender.displayName(),
+                        senderAvatar = sender.avatar
                     )
 
                     binding.voiceMessageView.root.bind(

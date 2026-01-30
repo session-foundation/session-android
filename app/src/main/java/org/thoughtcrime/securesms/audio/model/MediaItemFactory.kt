@@ -34,4 +34,14 @@ object MediaItemFactory {
 
     fun isVoice(mediaItem: MediaItem?): Boolean =
         mediaItem?.mediaMetadata?.extras?.getBoolean(EXTRA_IS_VOICE, false) ?: false
+
+    fun withArtwork(item: MediaItem, artworkData: ByteArray): MediaItem {
+        val newMetadata = item.mediaMetadata.buildUpon() // buildUpon preserves existing extras
+            .setArtworkData(artworkData, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+            .build()
+
+        return item.buildUpon()
+            .setMediaMetadata(newMetadata)
+            .build()
+    }
 }

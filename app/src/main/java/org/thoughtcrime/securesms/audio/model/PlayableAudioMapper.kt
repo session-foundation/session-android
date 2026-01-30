@@ -4,6 +4,7 @@ package org.thoughtcrime.securesms.audio.model
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.RemoteFile
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.AudioSlide
 
@@ -21,14 +22,11 @@ object PlayableAudioMapper {
         messageId: MessageId,
         thread: Address.Conversable,
         senderName: String? = null,
+        senderAvatar: RemoteFile? = null,
         titleOverride: String? = null
     ): PlayableAudio? {
         val attachment: Attachment = slide.asAttachment()
         val uri = attachment.dataUri ?: return null
-
-        val attachmentId: String? = (attachment as? DatabaseAttachment)
-            ?.attachmentId
-            ?.toString()
 
         val isVoice = attachment.isVoiceNote
         val durationHint = attachment.audioDurationMs
@@ -45,7 +43,8 @@ object PlayableAudioMapper {
             isVoiceNote = isVoice,
             durationMs = durationHint,
             title = title,
-            artist = artist
+            artist = artist,
+            avatar = senderAvatar
         )
     }
 }

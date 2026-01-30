@@ -34,8 +34,7 @@ import org.thoughtcrime.securesms.util.getParcelableCompat
 
 @AndroidEntryPoint
 class AudioMediaService : MediaSessionService() {
-    //todo AUDIO notification: add sender image in bg or track image if possible?
-    //todo AUDIO notification: Noice notes: Title: Sender name Subtitle: "Voice note/message" --- Audio Title: [track name] Subtitle: [track artist]
+    //todo AUDIO notification: voice notes: Title: Sender name Subtitle: "Voice note/message" --- Audio Title: [track name] Subtitle: [track artist]
     //todo AUDIO add scrubber in audio message
     //todo AUDIO add bar on top of convo to scroll back to playing audio message
     //todo AUDIO add bar on top of home to open convo scrolled to playing audio message

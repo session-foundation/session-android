@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.audio.model
 
 import android.net.Uri
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.RemoteFile
 import org.thoughtcrime.securesms.database.model.MessageId
 
 /**
@@ -16,4 +17,5 @@ data class PlayableAudio(
     val durationMs: Long, // from Attachment.audioDurationMs, may be -1
     val title: String?,
     val artist: String?, // e.g. sender name for voice notes
+    val avatar: RemoteFile? = null // custom avatar of the sender, if any
 )
