@@ -213,7 +213,7 @@ class ConversationViewModel @AssistedInject constructor(
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
     ).debounce(200L) // debounce to avoid too many reloads
-        .shareIn(viewModelScope, SharingStarted.Eagerly)
+        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->
