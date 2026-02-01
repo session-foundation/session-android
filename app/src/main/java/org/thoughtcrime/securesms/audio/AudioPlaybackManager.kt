@@ -243,10 +243,11 @@ class AudioPlaybackManager @Inject constructor(
         val next = when (current) {
             1f -> 1.5f
             1.5f -> 2f
+            2f -> 0.5f
             else -> 1f
         }
-        c.setPlaybackSpeed(next)
-        updateFromController()
+
+        setPlaybackSpeed(next)
     }
 
     fun isActive(messageId: MessageId): Boolean =
@@ -256,19 +257,6 @@ class AudioPlaybackManager @Inject constructor(
         isScrubbing = true
         lastScrubSeekMs = 0L
         controller?.sendCustomCommand(AudioCommands.ScrubStart, Bundle.EMPTY)
-    }
-
-    fun scrubTo(positionMs: Long) {
-        val c = controller ?: return
-
-        // Throttle to ~80ms to reduce seek spam while still feeling live.
-        val now = android.os.SystemClock.uptimeMillis()
-        if (now - lastScrubSeekMs < 80) return
-        lastScrubSeekMs = now
-
-        c.seekTo(positionMs)
-        // reflect UI immediately while finger is down
-        updateFromController(scrubOverridePositionMs = positionMs)
     }
 
     fun endScrub(finalPositionMs: Long? = null) {

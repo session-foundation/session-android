@@ -234,13 +234,9 @@ class VisibleMessageContentView : ConstraintLayout {
 
                     binding.voiceMessageView.root.bind(
                         playable = playable,
-                        textColor = getTextColor(context, message)
+                        message = message
                     )
 
-                    // We have to use onContentClick (rather than a click listener directly on the voice
-                    // message view) so as to not interfere with all the other gestures.
-                    onContentClick.add { binding.voiceMessageView.root.onPlayPauseClicked() }
-                    onContentDoubleTap = { binding.voiceMessageView.root.onSpeedToggleClicked() }
                     binding.attachmentControlView.root.isVisible = false
                 } else {
                     val attachment = message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment

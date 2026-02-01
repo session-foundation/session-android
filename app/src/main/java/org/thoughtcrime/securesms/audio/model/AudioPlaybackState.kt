@@ -14,7 +14,17 @@ sealed class AudioPlaybackState {
         val bufferedPositionMs: Long,
         val playbackSpeed: Float,
         val isBuffering: Boolean
-    ) : AudioPlaybackState()
+    ) : AudioPlaybackState(){
+        override fun playbackSpeedFormatted(): String {
+            return when (playbackSpeed) {
+                1f -> "1x"
+                1.5f -> "1.5x"
+                2f -> "2x"
+                0.5f -> ".5x"
+                else -> "-"
+            }
+        }
+    }
 
     data class Paused(
         val playable: PlayableAudio,
@@ -26,4 +36,12 @@ sealed class AudioPlaybackState {
     ) : AudioPlaybackState()
 
     data class Error(val playable: PlayableAudio, val message: String) : AudioPlaybackState()
+
+    open fun playbackSpeedFormatted(): String {
+        return DEFAULT_PLAYBACK_SPEED_DISPLAY
+    }
+
+    companion object {
+        const val DEFAULT_PLAYBACK_SPEED_DISPLAY = "1x"
+    }
 }
