@@ -28,7 +28,7 @@ import javax.inject.Singleton
 class OfficialCommunityRepository @Inject constructor(
     storage: StorageProtocol,
     communityApiExecutor: CommunityApiExecutor,
-    getRoomsApi: Provider<GetRoomsApi>,
+    getRoomsApiFactory: GetRoomsApi.Factory,
     getCapsApi: Provider<GetCapsApi>,
     communityFileDownloadApiFactory: CommunityFileDownloadApi.Factory,
     @ManagerScope scope: CoroutineScope,
@@ -48,7 +48,7 @@ class OfficialCommunityRepository @Inject constructor(
                                     CommunityApiRequest(
                                         serverBaseUrl = OFFICIAL_COMMUNITY_URL,
                                         serverPubKey = OFFICIAL_COMMUNITY_X25519_PUB_KEY_HEX,
-                                        api = getRoomsApi.get()
+                                        api = getRoomsApiFactory.create(requiresSigning = false)
                                     )
                                 )
                             }
@@ -75,6 +75,7 @@ class OfficialCommunityRepository @Inject constructor(
                                                 api = communityFileDownloadApiFactory.create(
                                                     room = room.token,
                                                     fileId = fileId,
+                                                    requiresSigning = false,
                                                 )
                                             )
                                         ).toByteArraySlice()

@@ -27,7 +27,6 @@ import coil3.ImageLoader
 import com.squareup.phrase.Phrase
 import dagger.Lazy
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
@@ -37,7 +36,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotifi
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -807,16 +805,16 @@ class DefaultMessageNotifier @Inject constructor(
 
     private fun generateBlindedId(threadId: Long, context: Context): String? {
         val threadRecipient = recipientRepository.getRecipientSync(threadDatabase.getRecipientForThreadId(threadId) ?: return null)
-        val serverPubKey = (threadRecipient.data as? RecipientData.Community)?.serverPubKey
-        val edKeyPair = loginStateRepository.peekLoginState()?.accountEd25519KeyPair
-        if (serverPubKey != null && edKeyPair != null) {
-            val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = edKeyPair.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed(serverPubKey),
+        val recipientData = threadRecipient.data
+        val serverPubKey = (recipientData as? RecipientData.Community)?.serverPubKey
+        val loginState = loginStateRepository.peekLoginState()
+        if (serverPubKey != null && loginState != null) {
+            val blindedKeyPair = loginState.getBlindedKeyPair(
+                serverUrl = recipientData.serverUrl,
+                serverPubKeyHex = serverPubKey
             )
-            if (blindedKeyPair != null) {
-                return AccountId(IdPrefix.BLINDED, blindedKeyPair.pubKey.data).hexString
-            }
+
+            return AccountId(IdPrefix.BLINDED, blindedKeyPair.pubKey.data).hexString
         }
         return null
     }

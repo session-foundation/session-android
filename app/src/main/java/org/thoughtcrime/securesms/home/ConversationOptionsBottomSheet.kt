@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,14 +10,12 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
-import network.loki.messenger.libsession_util.allWithStatus
-import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -127,10 +124,14 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
         // leave group for admin
         binding.adminLeaveGroupTextView.apply {
             if (recipient.isGroupV2Recipient) {
-                setOnClickListener(this@ConversationOptionsBottomSheet)
                 val accountId = AccountId(recipient.address.toString())
+                val group = configFactory.getGroup(accountId) ?: return
+
+                setOnClickListener(this@ConversationOptionsBottomSheet)
+
                 // Only visible if admin is one of many group admins
-                this.isVisible = !groupManager.isCurrentUserLastAdmin(accountId)
+                this.isVisible = group.hasAdminKey()
+                        && !groupManager.isCurrentUserLastAdmin(accountId)
             }
         }
         // delete

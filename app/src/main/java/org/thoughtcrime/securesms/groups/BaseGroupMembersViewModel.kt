@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
@@ -251,6 +252,9 @@ abstract class BaseGroupMembersViewModel(
 
             try {
                 task.await()
+            }catch (e: CancellationException) {
+                // Normal lifecycle cancellation - do not show toast but rethrow the exception
+                throw e
             } catch (e: Throwable) {
                 val msg = errorMessage?.invoke(e) ?: context.getString(R.string.errorUnknown)
                 showToast(msg)

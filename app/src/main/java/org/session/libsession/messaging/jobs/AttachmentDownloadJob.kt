@@ -207,7 +207,8 @@ class AttachmentDownloadJob @AssistedInject constructor(
                         serverBaseUrl = threadRecipient.address.serverUrl,
                         api = communityFileDownloadApiFactory.create(
                             room = threadRecipient.address.room,
-                            fileId = fileID
+                            fileId = fileID,
+                            requiresSigning = true,
                         )
                     )
                 ).toByteArraySlice()

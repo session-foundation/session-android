@@ -108,10 +108,7 @@ abstract class CommunityApi<ResponseType: Any>(
                 ?.contains(OpenGroupApi.Capability.BLIND.name.lowercase()) == true) {
                 pubKeyHexUsedToSign = AccountId(
                     IdPrefix.BLINDED,
-                    BlindKeyAPI.blind15KeyPair(
-                        ed25519SecretKey = loggedInState.accountEd25519KeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(x25519PubKeyHex)
-                    ).pubKey.data
+                    loggedInState.getBlindedKeyPair(baseUrl, x25519PubKeyHex).pubKey.data
                  ).hexString
 
                 signature = BlindKeyAPI.blind15Sign(

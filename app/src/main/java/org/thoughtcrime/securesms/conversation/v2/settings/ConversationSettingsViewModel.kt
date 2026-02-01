@@ -41,6 +41,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NA
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -1040,9 +1041,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
      */
     private fun handleLeaveOptionClick(){
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
-        val isAdmin = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)
+        val groupInfo = configFactory.getGroup(groupV2Id)?: return
 
-        if(isAdmin){
+        if(groupInfo.hasAdminKey()){
             confirmAdminLeaveGroup()
         }else{
             confirmLeaveGroup()
@@ -1118,6 +1119,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun confirmDeleteGroup() {
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
+        val groupInfo = configFactory.getGroup(groupV2Id) ?: return
         _dialogState.update { state ->
             val dialogData = groupManager.getDeleteGroupConfirmationDialogData(
                 groupV2Id,
@@ -1132,7 +1134,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     negativeText = context.getString(dialogData.negativeText),
                     positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
                     negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
-                    onPositive = { leaveGroup(deleteGroup = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)) },
+                    onPositive = { leaveGroup(deleteGroup = groupInfo.hasAdminKey()) },
                     showXIcon = dialogData.showCloseButton
                 )
             )
