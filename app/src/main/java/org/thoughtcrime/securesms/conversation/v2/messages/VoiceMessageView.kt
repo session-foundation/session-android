@@ -130,22 +130,8 @@ class VoiceMessageView @JvmOverloads constructor(
         binding.playBg.backgroundTintList = ColorStateList.valueOf(buttonBgColor)
         binding.voiceMessagePlaybackImageView.imageTintList = ColorStateList.valueOf(buttonActionColor)
 
-        // Initial duration display
-        durationMs = playable?.durationMs?.takeIf { it > 0 } ?: 0L
-
-        // Initialize SeekBar max
-        binding.voiceMessageSeekBar.max = durationMs.toInt()
-        binding.voiceMessageSeekBar.progress = 0
-
-        binding.voiceMessageViewDurationTextView.text =
-            if (durationMs > 0) MediaUtil.getFormattedVoiceMessageDuration(durationMs)
-            else "--:--"
-
-        // Start observing global playback state
+        // Observe state from audio manager
         startCollectingPlaybackState()
-
-        // Render immediately (in case already playing when view binds)
-        renderFrom(audioPlaybackManager.playbackState.value)
     }
 
     fun recycle() {
@@ -176,80 +162,65 @@ class VoiceMessageView @JvmOverloads constructor(
     }
 
     private fun startCollectingPlaybackState() {
+        val p = playable ?: return
         collectJob?.cancel()
+
         collectJob = scope.launch {
-            audioPlaybackManager.playbackState.collect { state ->
-                renderFrom(state)
+            // observe data for THIS audio/message
+            audioPlaybackManager.observeMessageState(p).collect { state ->
+                render(state)
             }
         }
     }
 
-    private fun renderFrom(state: AudioPlaybackState) {
-        val p = playable ?: return
-
-        val isActive = when (state) {
-            is AudioPlaybackState.Loading -> state.playable.messageId == p.messageId
-            is AudioPlaybackState.Playing -> state.playable.messageId == p.messageId
-            is AudioPlaybackState.Paused  -> state.playable.messageId == p.messageId
-            else -> false
-        }
-
-        // Update Speed Text
+    private fun render(state: AudioPlaybackState) {
         binding.voiceMessageSpeedButton.text = state.playbackSpeedFormatted()
 
-        // Handle Inactive State
-        if (!isActive) {
-            isPlaying = false
-            binding.voiceMessageViewLoader.isVisible = false
-            binding.voiceMessageSeekBar.progress = 0
-            renderIcon()
-
-            val dur = p.durationMs.takeIf { it > 0 } ?: durationMs
-            binding.voiceMessageViewDurationTextView.text =
-                if (dur > 0) MediaUtil.getFormattedVoiceMessageDuration(dur) else "--:--"
-            return
-        }
-
-        // Handle Active State
         when (state) {
-            is AudioPlaybackState.Loading -> {
-                binding.voiceMessageViewLoader.isVisible = true
+            is AudioPlaybackState.Idle -> {
                 isPlaying = false
+                binding.voiceMessageViewLoader.isVisible = false
+                updateSeekBar(0, 0) // Reset
+                renderIcon()
+            }
+            is AudioPlaybackState.Loading -> {
+                isPlaying = false
+                binding.voiceMessageViewLoader.isVisible = true
                 renderIcon()
             }
             is AudioPlaybackState.Playing -> {
-                binding.voiceMessageViewLoader.isVisible = state.isBuffering
                 isPlaying = true
-                durationMs = state.durationMs
-
+                binding.voiceMessageViewLoader.isVisible = state.isBuffering
                 updateSeekBar(state.positionMs, state.durationMs)
                 renderIcon()
             }
             is AudioPlaybackState.Paused -> {
-                binding.voiceMessageViewLoader.isVisible = state.isBuffering
                 isPlaying = false
-                durationMs = state.durationMs
-
+                binding.voiceMessageViewLoader.isVisible = state.isBuffering
                 updateSeekBar(state.positionMs, state.durationMs)
                 renderIcon()
             }
-            else -> Unit
+            is AudioPlaybackState.Error -> {
+                isPlaying = false
+                binding.voiceMessageViewLoader.isVisible = false
+                renderIcon()
+            }
         }
     }
 
     private fun updateSeekBar(positionMs: Long, durationMs: Long) {
-        // Ensure max is correct
-        if (binding.voiceMessageSeekBar.max != durationMs.toInt()) {
-            binding.voiceMessageSeekBar.max = durationMs.toInt()
+        // Handle Unknown/Zero duration gracefully
+        val safeDuration = if (durationMs > 0) durationMs else this.durationMs
+
+        if (binding.voiceMessageSeekBar.max != safeDuration.toInt()) {
+            binding.voiceMessageSeekBar.max = safeDuration.toInt()
         }
 
-        // Only update progress if the user is not dragging it
         if (!isUserScrubbing) {
             binding.voiceMessageSeekBar.progress = positionMs.toInt()
-
-            // Show remaining time
-            val remaining = (durationMs - positionMs).coerceAtLeast(0L)
-            binding.voiceMessageViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(remaining)
+            val remaining = (safeDuration - positionMs).coerceAtLeast(0L)
+            binding.voiceMessageViewDurationTextView.text =
+                MediaUtil.getFormattedVoiceMessageDuration(remaining)
         }
     }
 

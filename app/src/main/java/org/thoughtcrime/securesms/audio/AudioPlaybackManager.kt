@@ -26,9 +26,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,6 +46,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.util.getParcelableCompat
 import java.io.ByteArrayOutputStream
 import java.util.Arrays
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -65,6 +69,17 @@ class AudioPlaybackManager @Inject constructor(
     private var isScrubbing: Boolean = false
     private var lastScrubSeekMs: Long = 0L
 
+    // Cache to remember each audio's basic state
+    data class SavedAudioState(
+        val positionMs: Long = 0L,
+        val playbackSpeed: Float = 1f
+    )
+
+    private val playbackCache = ConcurrentHashMap<String, SavedAudioState>()
+
+    fun getSavedState(messageId: MessageId): SavedAudioState {
+        return playbackCache[messageId.serialize()] ?: SavedAudioState()
+    }
 
     fun play(playable: PlayableAudio, startPositionMs: Long = 0L) {
         ensureController { c ->
@@ -74,11 +89,22 @@ class AudioPlaybackManager @Inject constructor(
                 return@ensureController
             }
 
+            val savedState = getSavedState(playable.messageId)
+
+            // If startPositionMs is -1 (default), use the saved position
+            val finalPosition = if (startPositionMs >= 0) startPositionMs else savedState.positionMs
+
             currentPlayable = playable
             _playbackState.value = AudioPlaybackState.Loading(playable)
 
             val item = MediaItemFactory.fromPlayable(playable)
-            c.setMediaItem(item, startPositionMs)
+            c.setMediaItem(item, finalPosition)
+
+            // Restore speed
+            if (savedState.playbackSpeed != c.playbackParameters.speed) {
+                c.setPlaybackSpeed(savedState.playbackSpeed)
+            }
+
             c.prepare()
             c.play()
 
@@ -208,6 +234,47 @@ class AudioPlaybackManager @Inject constructor(
 
         val result = context.imageLoader.execute(builder.build())
         return (result as? SuccessResult)?.image?.toBitmap()
+    }
+
+    /**
+     * Returns a Flow specific to this audio (message).
+     * This handles merging the cached data with the live audio state
+     */
+    fun observeMessageState(playable: PlayableAudio): Flow<AudioPlaybackState> {
+        return _playbackState
+            .map { globalState ->
+                // Check if the global player is currently handling THIS message
+                val isGlobalActive = when (globalState) {
+                    is AudioPlaybackState.Playing -> globalState.playable.messageId == playable.messageId
+                    is AudioPlaybackState.Paused  -> globalState.playable.messageId == playable.messageId
+                    is AudioPlaybackState.Loading -> globalState.playable.messageId == playable.messageId
+                    else -> false
+                }
+
+                if (isGlobalActive) {
+                    // We are the active message: Pass the live state through.
+                    globalState
+                } else {
+                    // We are not active: Construct a static state from cache.
+                    val saved = getSavedState(playable.messageId)
+
+                    if (saved.positionMs > 0) {
+                        // We have cached data: Return 'Paused' so UI shows progress bar at X%
+                        AudioPlaybackState.Paused(
+                            playable = playable,
+                            positionMs = saved.positionMs,
+                            durationMs = playable.durationMs,
+                            bufferedPositionMs = 0,
+                            playbackSpeed = saved.playbackSpeed,
+                            isBuffering = false
+                        )
+                    } else {
+                        // No history: Return 'Idle'
+                        AudioPlaybackState.Idle
+                    }
+                }
+            }
+            .distinctUntilChanged()
     }
 
     fun togglePlayPause() {
@@ -357,8 +424,12 @@ class AudioPlaybackManager @Inject constructor(
         val speed = c.playbackParameters.speed
         val buffering = c.playbackState == Player.STATE_BUFFERING
 
-        // Fix: Detect IDLE state to avoid "Loading" trap
         val isIdle = c.playbackState == Player.STATE_IDLE
+
+        // save cache data
+        val stateToSave = if (forceEnded) SavedAudioState(0L, speed)
+        else SavedAudioState(position, speed)
+        playbackCache[playable.messageId.serialize()] = stateToSave
 
         _playbackState.value = when {
             // Case 1: Actually Playing
