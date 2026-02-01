@@ -89,7 +89,7 @@ fun PrivacySettingsPreferenceScreen(
                     context.startService(intent)
                 }
 
-                is ScrollToIndex ->  {
+                is ScrollToIndex -> {
                     listState.animateScrollToItem(event.index)
                 }
             }
@@ -255,7 +255,7 @@ fun PrivacySettingsPreference(
                         subtitle = annotatedStringResource(R.string.linkPreviewsDescription),
                         checked = uiState.linkPreviewEnabled,
                         qaTag = R.string.qa_preferences_link_previews,
-                        onCheckedChange = { sendCommand(ToggleLinkPreviews) }
+                        onCheckedChange = { isEnabled -> sendCommand(ToggleLinkPreviews(isEnabled)) }
                     )
                 }
             }
@@ -276,7 +276,13 @@ fun PrivacySettingsPreference(
                         subtitle = annotatedStringResource(R.string.incognitoKeyboardDescription),
                         checked = uiState.incognitoKeyboardEnabled,
                         qaTag = R.string.qa_preferences_incognito_keyboard,
-                        onCheckedChange = { sendCommand(ToggleIncognitoKeyboard) }
+                        onCheckedChange = { isEnabled ->
+                            sendCommand(
+                                ToggleIncognitoKeyboard(
+                                    isEnabled
+                                )
+                            )
+                        }
                     )
                 }
             }

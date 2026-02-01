@@ -9,15 +9,22 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DISABLE_PASSPHRASE_PREF
+import org.session.libsession.utilities.TextSecurePreferences.Companion.INCOGNITO_KEYBOARD_PREF
+import org.session.libsession.utilities.TextSecurePreferences.Companion.READ_RECEIPTS_PREF
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SCREEN_LOCK
+import org.session.libsession.utilities.TextSecurePreferences.Companion.TYPING_INDICATORS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LINK_PREVIEWS
 import org.session.libsession.utilities.observeBooleanKey
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -53,78 +60,81 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
 
     // Use this to get index for UI item. We need the index to tell the listState where to scroll
     // list things ordered by how they appear on the list
-    private var prefItemsOrder = listOf<String>(
-        TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED,
-        TextSecurePreferences.SCREEN_LOCK,
+    private var prefItemsOrder = listOf(
+        CALL_NOTIFICATIONS_ENABLED,
+        SCREEN_LOCK,
         "community_message_requests",
-        TextSecurePreferences.READ_RECEIPTS_PREF,
-        TextSecurePreferences.TYPING_INDICATORS,
-        TextSecurePreferences.LINK_PREVIEWS,
-        TextSecurePreferences.INCOGNITO_KEYBOARD_PREF
+        READ_RECEIPTS_PREF,
+        TYPING_INDICATORS,
+        LINK_PREVIEWS,
+        INCOGNITO_KEYBOARD_PREF
     )
 
-    init {
-        _uiState.update {
-            it.copy(
-                allowCommunityMessageRequests = isCommunityMessageRequestsEnabled
-            )
-        }
-
+    private val screenLockFlow =
         combine(
-            prefs.observeBooleanKey(TextSecurePreferences.SCREEN_LOCK, default = false),
+            prefs.observeBooleanKey(SCREEN_LOCK, default = false),
             prefs.observeBooleanKey(DISABLE_PASSPHRASE_PREF, default = false),
             keyguardSecure
-        ) { screenLockPref, isPasswordDisabled, keyguardSecure ->
+        ) { screenLockPref, isPasswordDisabled, keyguard ->
 
             val visible = isPasswordDisabled
-            val enabled = isPasswordDisabled && keyguardSecure
+            val enabled = isPasswordDisabled && keyguard
             val checked = if (enabled) screenLockPref else false
 
-            UIState(
-                screenLockVisible = visible,
-                screenLockEnabled = enabled,
-                screenLockChecked = checked
-            )
-        }.onEach { state ->
-            _uiState.update {
-                it.copy(
-                    screenLockVisible = state.screenLockVisible,
-                    screenLockEnabled = state.screenLockEnabled,
-                    screenLockChecked = state.screenLockChecked
-                )
-            }
-        }.launchIn(viewModelScope)
+            ScreenLockPrefsData(visible, enabled, checked)
+        }
 
+    private val togglesFlow =
         combine(
-            prefs.observeBooleanKey(
-                TextSecurePreferences.CALL_NOTIFICATIONS_ENABLED,
-                default = false
-            ),
-            prefs.observeBooleanKey(TextSecurePreferences.READ_RECEIPTS_PREF, default = false),
-            prefs.observeBooleanKey(TextSecurePreferences.TYPING_INDICATORS, default = false),
-            prefs.observeBooleanKey(TextSecurePreferences.LINK_PREVIEWS, default = false),
-            prefs.observeBooleanKey(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, default = false)
-        ) { callsEnabled, isReadReceiptsEnabled, showTypingIndicator, linkPreviewEnabled, isIncognitoKeyboard
-            ->
+            prefs.observeBooleanKey(CALL_NOTIFICATIONS_ENABLED, default = false),
+            prefs.observeBooleanKey(READ_RECEIPTS_PREF, default = false),
+            prefs.observeBooleanKey(TYPING_INDICATORS, default = false),
+            prefs.observeBooleanKey(LINK_PREVIEWS, default = false),
+            prefs.observeBooleanKey(INCOGNITO_KEYBOARD_PREF, default = false),
+        ) { callsEnabled, readReceipts, typing, linkPreviews, incognito ->
+            TogglePrefsData(callsEnabled, readReceipts, typing, linkPreviews, incognito)
+        }
+
+    private val prefsUiState =
+        combine(screenLockFlow, togglesFlow) { lock, toggles ->
             UIState(
-                screenLockVisible = _uiState.value.screenLockVisible,
-                screenLockEnabled = _uiState.value.screenLockEnabled,
-                screenLockChecked = _uiState.value.screenLockChecked,
+                screenLockVisible = lock.visible,
+                screenLockEnabled = lock.enabled,
+                screenLockChecked = lock.checked,
 
-                typingIndicators = showTypingIndicator,
-                callNotificationsEnabled = callsEnabled,
-
-                readReceiptsEnabled = isReadReceiptsEnabled,
-                linkPreviewEnabled = linkPreviewEnabled,
-                incognitoKeyboardEnabled = isIncognitoKeyboard,
-                allowCommunityMessageRequests = _uiState.value.allowCommunityMessageRequests,
-
-                showCallsWarningDialog = _uiState.value.showCallsWarningDialog,
-                showCallsNotificationDialog = _uiState.value.showCallsNotificationDialog
+                callNotificationsEnabled = toggles.callsEnabled,
+                readReceiptsEnabled = toggles.readReceipts,
+                typingIndicators = toggles.typing,
+                linkPreviewEnabled = toggles.linkPreviews,
+                incognitoKeyboardEnabled = toggles.incognito,
             )
-        }.onEach { it ->
-            _uiState.value = it
-        }.launchIn(viewModelScope)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, UIState())
+
+    init {
+        _uiState.update { it.copy(allowCommunityMessageRequests = isCommunityMessageRequestsEnabled) }
+
+        prefsUiState
+            .onEach { prefState ->
+                _uiState.update { current ->
+                    current.copy(
+                        // from prefs/keyguard
+                        screenLockVisible = prefState.screenLockVisible,
+                        screenLockEnabled = prefState.screenLockEnabled,
+                        screenLockChecked = prefState.screenLockChecked,
+                        callNotificationsEnabled = prefState.callNotificationsEnabled,
+                        readReceiptsEnabled = prefState.readReceiptsEnabled,
+                        typingIndicators = prefState.typingIndicators,
+                        linkPreviewEnabled = prefState.linkPreviewEnabled,
+                        incognitoKeyboardEnabled = prefState.incognitoKeyboardEnabled,
+
+                        // keep these as-is (not derived from prefs flow)
+                        allowCommunityMessageRequests = current.allowCommunityMessageRequests,
+                        showCallsWarningDialog = current.showCallsWarningDialog,
+                        showCallsNotificationDialog = current.showCallsNotificationDialog,
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun refreshKeyguardSecure() {
@@ -132,11 +142,13 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         keyguardSecure.value = km.isKeyguardSecure
     }
 
-    fun setScrollActions (scrollToKey : String? , scrollAndToggleKey : String? ) {
-        _scrollAction.update { it.copy(
-            scrollToKey = scrollToKey,
-            scrollAndToggleKey = scrollAndToggleKey
-        ) }
+    fun setScrollActions(scrollToKey: String?, scrollAndToggleKey: String?) {
+        _scrollAction.update {
+            it.copy(
+                scrollToKey = scrollToKey,
+                scrollAndToggleKey = scrollAndToggleKey
+            )
+        }
     }
 
     // Check scroll actions
@@ -211,12 +223,12 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
                 if (!command.isEnabled) typingStatusRepository.clear()
             }
 
-            Commands.ToggleLinkPreviews -> {
-                prefs.setLinkPreviewsEnabled(!uiState.value.linkPreviewEnabled)
+            is Commands.ToggleLinkPreviews -> {
+                prefs.setLinkPreviewsEnabled(command.isEnabled)
             }
 
-            Commands.ToggleIncognitoKeyboard -> {
-                prefs.setIncognitoKeyboardEnabled(!uiState.value.incognitoKeyboardEnabled)
+            is Commands.ToggleIncognitoKeyboard -> {
+                prefs.setIncognitoKeyboardEnabled(command.isEnabled)
             }
 
             Commands.AskMicPermission -> {
@@ -240,7 +252,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
                 }
             }
 
-            Commands.ShowCallsWarningDialog -> {
+            ShowCallsWarningDialog -> {
                 _uiState.update {
                     it.copy(
                         showCallsWarningDialog = true
@@ -272,8 +284,8 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         data object ToggleCommunityRequests : Commands
         data class ToggleReadReceipts(val isEnabled: Boolean) : Commands
         data class ToggleTypingIndicators(val isEnabled: Boolean) : Commands
-        data object ToggleLinkPreviews : Commands
-        data object ToggleIncognitoKeyboard : Commands
+        data class ToggleLinkPreviews(val isEnabled : Boolean) : Commands
+        data class ToggleIncognitoKeyboard(val isEnabled : Boolean) : Commands
 
         data object AskMicPermission : Commands
         data object NavigateToAppNotificationsSettings : Commands
@@ -315,5 +327,20 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     data class ScrollAction(
         val scrollToKey: String? = null,
         val scrollAndToggleKey: String? = null
+    )
+
+
+    private data class ScreenLockPrefsData(
+        val visible: Boolean,
+        val enabled: Boolean,
+        val checked: Boolean,
+    )
+
+    private data class TogglePrefsData(
+        val callsEnabled: Boolean,
+        val readReceipts: Boolean,
+        val typing: Boolean,
+        val linkPreviews: Boolean,
+        val incognito: Boolean,
     )
 }

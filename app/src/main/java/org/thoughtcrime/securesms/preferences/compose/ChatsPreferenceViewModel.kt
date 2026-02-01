@@ -38,18 +38,17 @@ class ChatsPreferenceViewModel @Inject constructor(
         )
 
     fun onCommand(command: Commands) {
-        val currentValue = uiState.value
         when (command) {
-            Commands.ToggleTrimThreads -> prefs.setThreadLengthTrimmingEnabled(!currentValue.trimThreads)
-            Commands.ToggleSendWithEnter -> prefs.setSendWithEnterEnabled(!currentValue.sendWithEnter)
-            Commands.ToggleAutoplayAudioMessages -> prefs.setAutoplayAudioMessages(!currentValue.autoplayAudioMessage)
+            is Commands.ToggleTrimThreads -> prefs.setThreadLengthTrimmingEnabled(command.isEnabled)
+            is Commands.ToggleSendWithEnter -> prefs.setSendWithEnterEnabled(command.isEnabled)
+            is Commands.ToggleAutoplayAudioMessages -> prefs.setAutoplayAudioMessages(command.isEnabled)
         }
     }
 
     sealed interface Commands {
-        data object ToggleTrimThreads : Commands
-        data object ToggleSendWithEnter : Commands
-        data object ToggleAutoplayAudioMessages : Commands
+        data class ToggleTrimThreads(val isEnabled: Boolean) : Commands
+        data class ToggleSendWithEnter(val isEnabled: Boolean) : Commands
+        data class ToggleAutoplayAudioMessages(val isEnabled: Boolean) : Commands
     }
 
     data class UIState(

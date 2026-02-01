@@ -46,47 +46,51 @@ class NotificationsPreferenceViewModel @Inject constructor(
         values.zip(labels).map { (value, label) -> NotificationPrivacyOption(value, label) }
     }
 
-    private val notificationBehavior: StateFlow<UIState> =
+    private val notifPrefsFlow =
         combine(
-            prefs.observeBooleanKey(
-                TextSecurePreferences.HAS_CHECKED_DOZE_WHITELIST,
-                default = false
-            ),
+            prefs.observeBooleanKey(TextSecurePreferences.HAS_CHECKED_DOZE_WHITELIST, default = false),
             prefs.observeStringKey(TextSecurePreferences.RINGTONE_PREF, default = null),
             prefs.observeBooleanKey(TextSecurePreferences.SOUND_WHEN_OPEN, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.VIBRATE_PREF, default = true),
-            prefs.observeStringKey(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, default = "all")
-        ) { checkedDozeWhitelist, ringtone, soundWhenOpen, vibrate, notificationPrivacy ->
-            UIState(
+            prefs.observeStringKey(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, default = "all"),
+        ) { checkedDozeWhitelist, ringtonePrefString, soundWhenOpen, vibrate, notificationPrivacy ->
+            NotifPrefsData(
                 checkedDozeWhitelist = checkedDozeWhitelist,
-                ringtone = prefs.getNotificationRingtone().toString(),
-                soundWhenAppIsOpen = soundWhenOpen,
+                ringtoneUriString = ringtonePrefString,
+                soundWhenOpen = soundWhenOpen,
                 vibrate = vibrate,
-                notificationPrivacy = notificationPrivacy
+                notificationPrivacyValue = notificationPrivacy ?: "all"
             )
-        }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, UIState())
+        }
 
     init {
-        combine(
-            prefs.pushEnabled,
-            notificationBehavior,
-        ) { isPushEnabled, notifPrefs ->
-            UIState(
-                isPushEnabled = isPushEnabled,
-                checkedDozeWhitelist = notifPrefs.checkedDozeWhitelist,
-                isWhitelistedFromDoze = _uiState.value.isWhitelistedFromDoze,
+        combine(prefs.pushEnabled, notifPrefsFlow) { strategy, notif ->
+            strategy to notif
+        }.onEach { (isPushEnabled, notif) ->
+            _uiState.update { old ->
+                old.copy(
+                    // strategy
+                    isPushEnabled = isPushEnabled,
+                    checkedDozeWhitelist = notif.checkedDozeWhitelist,
 
-                ringtone = getRingtoneName(notifPrefs.ringtone),
-                soundWhenAppIsOpen = notifPrefs.soundWhenAppIsOpen,
-                vibrate = notifPrefs.vibrate,
-                notificationPrivacy = privacyOptions.firstOrNull { it.value == notifPrefs.notificationPrivacy }?.label
-                    ?: "",
-                showWhitelistEnableDialog = _uiState.value.showWhitelistEnableDialog,
-                showWhitelistDisableDialog = _uiState.value.showWhitelistEnableDialog,
-                showNotificationPrivacyDialog = _uiState.value.showNotificationPrivacyDialog
-            )
-        }.onEach { it ->
-            _uiState.value = it
+                    // keep the current doze whitelist status; you refresh it separately
+                    isWhitelistedFromDoze = old.isWhitelistedFromDoze,
+
+                    // style/behavior
+                    ringtone = getRingtoneName(notif.ringtoneUriString),
+                    soundWhenAppIsOpen = notif.soundWhenOpen,
+                    vibrate = notif.vibrate,
+                    notificationPrivacy = privacyOptions
+                        .firstOrNull { it.value == notif.notificationPrivacyValue }
+                        ?.label
+                        ?: "",
+
+                    // dialogs: preserve whatever the UI is currently showing
+                    showWhitelistEnableDialog = old.showWhitelistEnableDialog,
+                    showWhitelistDisableDialog = old.showWhitelistDisableDialog,
+                    showNotificationPrivacyDialog = old.showNotificationPrivacyDialog,
+                )
+            }
         }.launchIn(viewModelScope)
     }
 
@@ -116,13 +120,13 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 hideNotificationPrivacyDialog()
             }
 
-            Commands.TogglePushEnabled -> {
+            is Commands.TogglePushEnabled -> {
                 val currentState = uiState.value
-                val newValue = !uiState.value.isPushEnabled
+                val isEnabled = command.isEnabled
 
-                prefs.setPushEnabled(newValue)
+                prefs.setPushEnabled(isEnabled)
 
-                if (!newValue && !currentState.checkedDozeWhitelist) {
+                if (!isEnabled && !currentState.checkedDozeWhitelist) {
                     _uiState.update { it.copy(showWhitelistEnableDialog = true) }
                     prefs.setHasCheckedDozeWhitelist(true)
                 }
@@ -177,12 +181,12 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 }
             }
 
-            Commands.ToggleSoundWhenOpen -> {
-                prefs.setSoundWhenAppIsOpenEnabled(!uiState.value.soundWhenAppIsOpen)
+            is Commands.ToggleSoundWhenOpen -> {
+                prefs.setSoundWhenAppIsOpenEnabled(command.isEnabled)
             }
 
-            Commands.ToggleVibrate -> {
-                prefs.setNotificationVibrateEnabled(!uiState.value.vibrate)
+            is Commands.ToggleVibrate -> {
+                prefs.setNotificationVibrateEnabled(command.isEnabled)
             }
 
             Commands.OpenSystemBgWhitelist -> {
@@ -226,13 +230,13 @@ class NotificationsPreferenceViewModel @Inject constructor(
     }
 
     sealed interface Commands {
-        data object TogglePushEnabled : Commands
+        data class TogglePushEnabled(val isEnabled: Boolean) : Commands
         data object WhiteListClicked : Commands
 
         data object RingtoneClicked : Commands
         data class SetRingtone(val uri: Uri?) : Commands
-        data object ToggleSoundWhenOpen : Commands
-        data object ToggleVibrate : Commands
+        data class ToggleSoundWhenOpen(val isEnabled : Boolean) : Commands
+        data class ToggleVibrate(val isEnabled : Boolean) : Commands
 
         data object ShowWhitelistEnableDialog : Commands
         data object HideWhitelistEnableDialog : Commands
@@ -294,4 +298,12 @@ class NotificationsPreferenceViewModel @Inject constructor(
             RingtoneManager.getRingtone(application, ringtoneUri)?.getTitle(application)
         }.getOrNull() ?: application.getString(R.string.unknown)
     }
+
+    private data class NotifPrefsData(
+        val checkedDozeWhitelist: Boolean,
+        val ringtoneUriString: String?, // raw pref string (can be null)
+        val soundWhenOpen: Boolean,
+        val vibrate: Boolean,
+        val notificationPrivacyValue: String,
+    )
 }

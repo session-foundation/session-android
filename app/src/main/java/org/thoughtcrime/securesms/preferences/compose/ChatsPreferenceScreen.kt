@@ -59,7 +59,13 @@ private fun ConversationsPreference(
                         subtitle = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunitiesDescription),
                         checked = uiState.trimThreads,
                         qaTag = R.string.qa_preferences_trim_threads,
-                        onCheckedChange = { sendCommand(ChatsPreferenceViewModel.Commands.ToggleTrimThreads) }
+                        onCheckedChange = { isEnabled ->
+                            sendCommand(
+                                ChatsPreferenceViewModel.Commands.ToggleTrimThreads(
+                                    isEnabled
+                                )
+                            )
+                        }
                     )
                 }
             }
@@ -80,7 +86,13 @@ private fun ConversationsPreference(
                         subtitle = annotatedStringResource(R.string.conversationsSendWithEnterKeyDescription),
                         checked = uiState.sendWithEnter,
                         qaTag = R.string.qa_preferences_send_with_enter,
-                        onCheckedChange = { sendCommand(ChatsPreferenceViewModel.Commands.ToggleSendWithEnter) }
+                        onCheckedChange = { isEnabled ->
+                            sendCommand(
+                                ChatsPreferenceViewModel.Commands.ToggleSendWithEnter(
+                                    isEnabled
+                                )
+                            )
+                        }
                     )
                 }
             }
@@ -101,7 +113,13 @@ private fun ConversationsPreference(
                         subtitle = annotatedStringResource(R.string.conversationsAutoplayAudioMessageDescription),
                         checked = uiState.autoplayAudioMessage,
                         qaTag = R.string.qa_preferences_autoplay_audio,
-                        onCheckedChange = { sendCommand(ChatsPreferenceViewModel.Commands.ToggleAutoplayAudioMessages) }
+                        onCheckedChange = { isEnabled ->
+                            sendCommand(
+                                ChatsPreferenceViewModel.Commands.ToggleAutoplayAudioMessages(
+                                    isEnabled
+                                )
+                            )
+                        }
                     )
                 }
             }

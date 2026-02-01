@@ -135,7 +135,7 @@ fun NotificationsPreference(
                         subtitle = annotatedStringResource(fastModeDescription),
                         checked = uiState.isPushEnabled,
                         qaTag = R.string.qa_preferences_enable_push,
-                        onCheckedChange = { sendCommand(TogglePushEnabled) }
+                        onCheckedChange = {isEnabled -> sendCommand(TogglePushEnabled(isEnabled)) }
                     )
 
                     Divider()
@@ -182,7 +182,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.notificationsSoundDescription),
                         checked = uiState.soundWhenAppIsOpen,
                         qaTag = R.string.qa_preferences_sound_when_app_is_open,
-                        onCheckedChange = { sendCommand(ToggleSoundWhenOpen) }
+                        onCheckedChange = {isEnabled -> sendCommand(ToggleSoundWhenOpen(isEnabled)) }
                     )
 
                     Divider()
@@ -191,7 +191,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.notificationsVibrate),
                         checked = uiState.vibrate,
                         qaTag = R.string.qa_preferences_vibrate,
-                        onCheckedChange = { sendCommand(ToggleVibrate) }
+                        onCheckedChange = {isEnabled -> sendCommand(ToggleVibrate(isEnabled)) }
                     )
                 }
             }
