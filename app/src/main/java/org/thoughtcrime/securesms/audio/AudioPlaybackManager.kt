@@ -81,50 +81,62 @@ class AudioPlaybackManager @Inject constructor(
         return playbackCache[messageId.serialize()] ?: SavedAudioState()
     }
 
-    fun play(playable: PlayableAudio, startPositionMs: Long = 0L) {
+    fun play(playable: PlayableAudio, startPositionMs: Long = -1L) {
         ensureController { c ->
             val currentId = c.currentMediaItem?.mediaId
-            if (currentId == playable.messageId.serialize()) {
-                if (!c.isPlaying) c.play()
-                return@ensureController
-            }
 
-            val savedState = getSavedState(playable.messageId)
+            // Changing tracks
+            if (currentId != playable.messageId.serialize()) {
 
-            // If startPositionMs is -1 (default), use the saved position
-            val finalPosition = if (startPositionMs >= 0) startPositionMs else savedState.positionMs
+                // Save the state of the previous track before swapping currentPlayable
+                // If we don't do this here, the next updateFromController will attribute
+                // the old track's position to the new track's ID, or reset the old one.
+                saveCurrentStateToCache()
 
-            currentPlayable = playable
-            _playbackState.value = AudioPlaybackState.Loading(playable)
+                // Determine start position for new track
+                val savedState = getSavedState(playable.messageId)
+                val finalPosition = if (startPositionMs >= 0) startPositionMs else savedState.positionMs
 
-            val item = MediaItemFactory.fromPlayable(playable)
-            c.setMediaItem(item, finalPosition)
+                currentPlayable = playable
+                _playbackState.value = AudioPlaybackState.Loading(playable)
 
-            // Restore speed
-            if (savedState.playbackSpeed != c.playbackParameters.speed) {
-                c.setPlaybackSpeed(savedState.playbackSpeed)
-            }
+                val item = MediaItemFactory.fromPlayable(playable)
+                c.setMediaItem(item, finalPosition)
 
-            c.prepare()
-            c.play()
+                if (savedState.playbackSpeed != c.playbackParameters.speed) {
+                    c.setPlaybackSpeed(savedState.playbackSpeed)
+                }
 
-            startProgressTracking()
-            updateFromController()
+                c.prepare()
 
-            // Background: Resolve Metadata
-            scope.launch(Dispatchers.IO) {
-                // Pass the current metadata so we can compare and build upon it
-                val betterMetadata = resolveMetadata(playable, item.mediaMetadata)
+                // bg metadata resolution
+                scope.launch(Dispatchers.IO) {
+                    val betterMetadata = resolveMetadata(playable, item.mediaMetadata)
 
-                if (betterMetadata != null) {
-                    val newItem = MediaItemFactory.withMetadata(item, betterMetadata)
-                    withContext(Dispatchers.Main) {
-                        if (c.currentMediaItem?.mediaId == playable.messageId.serialize()) {
-                            c.replaceMediaItem(c.currentMediaItemIndex, newItem)
+                    if (betterMetadata != null) {
+                        val newItem = MediaItemFactory.withMetadata(item, betterMetadata)
+
+                        // Switch back to Main Thread to update the Controller
+                        withContext(Dispatchers.Main) {
+                            // NOW it is safe to touch 'c'
+                            if (c.currentMediaItem?.mediaId == playable.messageId.serialize()) {
+                                c.replaceMediaItem(c.currentMediaItemIndex, newItem)
+                            }
                         }
                     }
                 }
+            } else {
+                // Same track, but maybe we want to seek
+                if (startPositionMs >= 0) {
+                    c.seekTo(startPositionMs)
+                }
             }
+
+            if (!c.isPlaying) {
+                c.play()
+            }
+
+            startProgressTracking()
         }
     }
 
@@ -237,13 +249,60 @@ class AudioPlaybackManager @Inject constructor(
     }
 
     /**
+     * Helper to snapshot the current player state into the cache.
+     * Safe to call at any time.
+     */
+    private fun saveCurrentStateToCache() {
+        val c = controller ?: return
+        val p = currentPlayable ?: return
+
+        val position = c.currentPosition.coerceAtLeast(0L)
+        val speed = c.playbackParameters.speed
+
+        playbackCache[p.messageId.serialize()] = SavedAudioState(position, speed)
+    }
+
+    private fun updateFromController(
+        forceEnded: Boolean = false,
+        scrubOverridePositionMs: Long? = null
+    ) {
+        val c = controller ?: return
+        val playable = currentPlayable ?: return
+
+        val duration = c.duration.coerceAtLeast(0L).let { d ->
+            if (d <= 0 && playable.durationMs > 0) playable.durationMs else d
+        }
+
+        val position = scrubOverridePositionMs
+            ?: if (forceEnded) 0L else c.currentPosition.coerceAtLeast(0L)
+
+        val speed = c.playbackParameters.speed
+
+        // Save to cache on every update
+        val stateToSave = if (forceEnded) SavedAudioState(0L, speed)
+        else SavedAudioState(position, speed)
+
+        playbackCache[playable.messageId.serialize()] = stateToSave
+
+        val buffered = c.bufferedPosition.coerceAtLeast(0L)
+        val buffering = c.playbackState == Player.STATE_BUFFERING
+        val isIdle = c.playbackState == Player.STATE_IDLE
+
+        _playbackState.value = when {
+            c.isPlaying -> AudioPlaybackState.Playing(playable, position, duration, buffered, speed, buffering)
+            buffering && c.playWhenReady -> AudioPlaybackState.Playing(playable, position, duration, buffered, speed, true)
+            c.playbackState == Player.STATE_READY || forceEnded -> AudioPlaybackState.Paused(playable, position, duration, buffered, speed, buffering)
+            isIdle -> AudioPlaybackState.Paused(playable, 0, duration, 0, 1f, false)
+            else -> AudioPlaybackState.Loading(playable)
+        }
+    }
+
+    /**
      * Returns a Flow specific to this audio (message).
-     * This handles merging the cached data with the live audio state
      */
     fun observeMessageState(playable: PlayableAudio): Flow<AudioPlaybackState> {
         return _playbackState
             .map { globalState ->
-                // Check if the global player is currently handling THIS message
                 val isGlobalActive = when (globalState) {
                     is AudioPlaybackState.Playing -> globalState.playable.messageId == playable.messageId
                     is AudioPlaybackState.Paused  -> globalState.playable.messageId == playable.messageId
@@ -252,14 +311,10 @@ class AudioPlaybackManager @Inject constructor(
                 }
 
                 if (isGlobalActive) {
-                    // We are the active message: Pass the live state through.
                     globalState
                 } else {
-                    // We are not active: Construct a static state from cache.
                     val saved = getSavedState(playable.messageId)
-
                     if (saved.positionMs > 0) {
-                        // We have cached data: Return 'Paused' so UI shows progress bar at X%
                         AudioPlaybackState.Paused(
                             playable = playable,
                             positionMs = saved.positionMs,
@@ -269,7 +324,6 @@ class AudioPlaybackManager @Inject constructor(
                             isBuffering = false
                         )
                     } else {
-                        // No history: Return 'Idle'
                         AudioPlaybackState.Idle
                     }
                 }
@@ -404,86 +458,6 @@ class AudioPlaybackManager @Inject constructor(
         progressJob?.cancel()
         progressJob = null
     }
-
-    private fun updateFromController(
-        forceEnded: Boolean = false,
-        scrubOverridePositionMs: Long? = null
-    ) {
-        val c = controller ?: return
-        val playable = currentPlayable ?: return
-
-        val duration = c.duration.coerceAtLeast(0L).let { d ->
-            // Use model duration if controller duration isn't known yet
-            if (d <= 0 && playable.durationMs > 0) playable.durationMs else d
-        }
-
-        val position = scrubOverridePositionMs
-            ?: if (forceEnded && duration > 0) duration else c.currentPosition.coerceAtLeast(0L)
-
-        val buffered = c.bufferedPosition.coerceAtLeast(0L)
-        val speed = c.playbackParameters.speed
-        val buffering = c.playbackState == Player.STATE_BUFFERING
-
-        val isIdle = c.playbackState == Player.STATE_IDLE
-
-        // save cache data
-        val stateToSave = if (forceEnded) SavedAudioState(0L, speed)
-        else SavedAudioState(position, speed)
-        playbackCache[playable.messageId.serialize()] = stateToSave
-
-        _playbackState.value = when {
-            // Case 1: Actually Playing
-            c.isPlaying ->
-                AudioPlaybackState.Playing(
-                    playable = playable,
-                    positionMs = position,
-                    durationMs = duration,
-                    bufferedPositionMs = buffered,
-                    playbackSpeed = speed,
-                    isBuffering = buffering
-                )
-
-            // Case 2: Buffering and playing, or explicitly commanded to play but not ready
-            buffering && c.playWhenReady -> AudioPlaybackState.Playing(
-                playable = playable,
-                positionMs = position,
-                durationMs = duration,
-                bufferedPositionMs = buffered,
-                playbackSpeed = speed,
-                isBuffering = true
-            )
-
-            // Case 3: Paused / Ready / Ended
-            c.playbackState == Player.STATE_READY || forceEnded ->
-                AudioPlaybackState.Paused(
-                    playable = playable,
-                    positionMs = position,
-                    durationMs = duration,
-                    bufferedPositionMs = buffered,
-                    playbackSpeed = speed,
-                    isBuffering = buffering
-                )
-
-            // Case 4: Idle (Error or Stopped) -> Reset to Idle or Paused
-            isIdle -> {
-                // If we have a playable but we are IDLE, we probably failed or stopped.
-                // Treat as Paused (start over) or Idle.
-                AudioPlaybackState.Paused(
-                    playable = playable,
-                    positionMs = 0,
-                    durationMs = duration,
-                    bufferedPositionMs = 0,
-                    playbackSpeed = 1f,
-                    isBuffering = false
-                )
-            }
-
-            // Case 5: Actual Loading
-            else -> AudioPlaybackState.Loading(playable)
-        }
-    }
-
-    // Restoration helpers (no extra “contract” beyond MediaId + MediaMetadata)
 
     private fun playableFromMediaItem(item: MediaItem?): PlayableAudio? {
         if (item == null) return null
