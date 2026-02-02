@@ -18,8 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,10 +40,10 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.AccentFillButton
 import org.thoughtcrime.securesms.ui.components.ExportLogsDialog
 import org.thoughtcrime.securesms.ui.components.LogExporter
+import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -59,7 +59,7 @@ fun DatabaseMigrationScreen(
     fm: FragmentManager,
 ) {
     val scope = rememberCoroutineScope()
-    var showExportLogDialog by remember { mutableStateOf(false) }
+    var showExportLogDialog by retain { mutableStateOf(false) }
 
     DatabaseMigration(
         state = migrationManager.migrationState.collectAsState().value,
@@ -101,8 +101,8 @@ private fun DatabaseMigration(
     onClearData: () -> Unit = {},
     onClearDataWithoutLoggingOut: () -> Unit = {},
 ) {
-    var showingClearDeviceRestoreWarning by remember { mutableStateOf(false) }
-    var showingClearDeviceRestartWarning by remember { mutableStateOf(false) }
+    var showingClearDeviceRestoreWarning by retain { mutableStateOf(false) }
+    var showingClearDeviceRestartWarning by retain { mutableStateOf(false) }
 
     Surface(
         color = LocalColors.current.background,
