@@ -10,10 +10,15 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
@@ -54,6 +59,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LI
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SEEN_DONATION_CTA_AMOUNT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SEND_WITH_ENTER
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO
@@ -68,6 +74,7 @@ import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -103,6 +110,7 @@ interface TextSecurePreferences {
     fun getDatabaseUnencryptedSecret(): String?
     fun getDatabaseEncryptedSecret(): String?
     fun isIncognitoKeyboardEnabled(): Boolean
+    fun setIncognitoKeyboardEnabled(enabled : Boolean)
     fun isReadReceiptsEnabled(): Boolean
     fun setReadReceiptsEnabled(enabled: Boolean)
     fun isTypingIndicatorsEnabled(): Boolean
@@ -116,6 +124,7 @@ interface TextSecurePreferences {
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
+    fun setNotificationPrivacy(string : String)
     fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
     fun isInThreadNotifications(): Boolean
@@ -141,7 +150,10 @@ interface TextSecurePreferences {
     fun setNotificationRingtone(ringtone: String?)
     fun setNotificationVibrateEnabled(enabled: Boolean)
     fun isNotificationVibrateEnabled(): Boolean
+    fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
+    fun isSoundWhenAppIsOpenEnabled(): Boolean
     fun getNotificationLedColor(): Int
+    fun setThreadLengthTrimmingEnabled(enabled : Boolean)
     fun isThreadLengthTrimmingEnabled(): Boolean
     fun getLogEncryptedSecret(): String?
     fun setLogEncryptedSecret(base64Secret: String?)
@@ -186,6 +198,7 @@ interface TextSecurePreferences {
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
+    fun setCallNotificationsEnabled(enabled : Boolean)
     fun isCallNotificationsEnabled(): Boolean
     fun getLastVacuum(): Long
     fun setLastVacuumNow()
@@ -198,7 +211,8 @@ interface TextSecurePreferences {
     fun getFollowSystemSettings(): Boolean
     fun setThemeStyle(themeStyle: String)
     fun setFollowSystemSettings(followSystemSettings: Boolean)
-    fun autoplayAudioMessages(): Boolean
+    fun setAutoplayAudioMessages(enabled : Boolean)
+    fun isAutoplayAudioMessagesEnabled(): Boolean
     fun hasForcedNewConfig(): Boolean
     fun hasPreference(key: String): Boolean
     fun clearAll()
@@ -256,6 +270,10 @@ interface TextSecurePreferences {
     fun getLastPathRotation(): Long
     fun setLastPathRotation(epochMs: Long)
 
+    fun setSendWithEnterEnabled(enabled: Boolean)
+    fun isSendWithEnterEnabled() : Boolean
+    fun updateBooleanFromKey(key : String, value : Boolean)
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
@@ -292,6 +310,7 @@ interface TextSecurePreferences {
         const val LAST_VERSION_CODE_PREF = "last_version_code"
         const val RINGTONE_PREF = "pref_key_ringtone"
         const val VIBRATE_PREF = "pref_key_vibrate"
+        const val SOUND_WHEN_OPEN = "pref_sound_when_app_open"
         const val NOTIFICATION_PREF = "pref_key_enable_notifications"
         const val LED_COLOR_PREF_PRIMARY = "pref_led_color_primary"
         const val PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval"
@@ -307,7 +326,7 @@ interface TextSecurePreferences {
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
         const val READ_RECEIPTS_PREF = "pref_read_receipts"
-        const val INCOGNITO_KEYBORAD_PREF = "pref_incognito_keyboard"
+        const val INCOGNITO_KEYBOARD_PREF = "pref_incognito_keyboard"
         const val DATABASE_ENCRYPTED_SECRET = "pref_database_encrypted_secret"
         const val DATABASE_UNENCRYPTED_SECRET = "pref_database_unencrypted_secret"
         const val ATTACHMENT_ENCRYPTED_SECRET = "pref_attachment_encrypted_secret"
@@ -345,6 +364,7 @@ interface TextSecurePreferences {
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
         const val LAST_VACUUM_TIME = "pref_last_vacuum_time"
         const val AUTOPLAY_AUDIO_MESSAGES = "pref_autoplay_audio"
+        const val SEND_WITH_ENTER = "pref_enter_sends"
         const val FINGERPRINT_KEY_GENERATED = "fingerprint_key_generated"
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
         const val LAST_VERSION_CHECK = "pref_last_version_check"
@@ -495,7 +515,7 @@ interface TextSecurePreferences {
 
         @JvmStatic
         fun isIncognitoKeyboardEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, INCOGNITO_KEYBORAD_PREF, true)
+            return getBooleanPreference(context, INCOGNITO_KEYBOARD_PREF, true)
         }
 
         @JvmStatic
@@ -525,6 +545,7 @@ interface TextSecurePreferences {
 
         fun setPasswordDisabled(context: Context, disabled: Boolean) {
             setBooleanPreference(context, DISABLE_PASSPHRASE_PREF, disabled)
+            _events.tryEmit(DISABLE_PASSPHRASE_PREF)
         }
 
         fun getLastVersionCode(context: Context): Int {
@@ -776,6 +797,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setScreenLockEnabled(value: Boolean) {
         setBooleanPreference(TextSecurePreferences.SCREEN_LOCK, value)
+        _events.tryEmit(TextSecurePreferences.SCREEN_LOCK,)
     }
 
     override fun getScreenLockTimeout(): Long {
@@ -863,7 +885,12 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun isIncognitoKeyboardEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBORAD_PREF, true)
+        return getBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, true)
+    }
+
+    override fun setIncognitoKeyboardEnabled(enabled: Boolean) {
+        setBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, enabled)
+        _events.tryEmit(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF)
     }
 
     override fun isReadReceiptsEnabled(): Boolean {
@@ -872,6 +899,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setReadReceiptsEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.READ_RECEIPTS_PREF, enabled)
+        _events.tryEmit(TextSecurePreferences.READ_RECEIPTS_PREF)
     }
 
     override fun isTypingIndicatorsEnabled(): Boolean {
@@ -880,6 +908,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setTypingIndicatorsEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.TYPING_INDICATORS, enabled)
+        _events.tryEmit(TextSecurePreferences.TYPING_INDICATORS)
     }
 
     override fun isLinkPreviewsEnabled(): Boolean {
@@ -888,6 +917,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setLinkPreviewsEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.LINK_PREVIEWS, enabled)
+        _events.tryEmit(TextSecurePreferences.LINK_PREVIEWS)
     }
 
     override fun hasSeenGIFMetaDataWarning(): Boolean {
@@ -923,6 +953,11 @@ class AppTextSecurePreferences @Inject constructor(
             Camera.CameraInfo.CAMERA_FACING_FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
             else -> CameraSelector.DEFAULT_BACK_CAMERA
         }
+    }
+
+    override fun setNotificationPrivacy(string: String) {
+        setStringPreference(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, string)
+        _events.tryEmit(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF)
     }
 
     override fun getNotificationPrivacy(): NotificationPrivacyPreference {
@@ -1025,22 +1060,39 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun removeNotificationRingtone() {
         removePreference(TextSecurePreferences.RINGTONE_PREF)
+        _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
     }
 
     override fun setNotificationRingtone(ringtone: String?) {
         setStringPreference(TextSecurePreferences.RINGTONE_PREF, ringtone)
+        _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
     }
 
     override fun setNotificationVibrateEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.VIBRATE_PREF, enabled)
+        _events.tryEmit(TextSecurePreferences.VIBRATE_PREF)
     }
 
     override fun isNotificationVibrateEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.VIBRATE_PREF, true)
     }
 
+    override fun setSoundWhenAppIsOpenEnabled(enabled: Boolean) {
+        setBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, enabled)
+        _events.tryEmit(TextSecurePreferences.SOUND_WHEN_OPEN)
+    }
+
+    override fun isSoundWhenAppIsOpenEnabled(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, false)
+    }
+
     override fun getNotificationLedColor(): Int {
         return getIntegerPreference(TextSecurePreferences.LED_COLOR_PREF_PRIMARY, context.getColor(R.color.accent_green))
+    }
+
+    override fun setThreadLengthTrimmingEnabled(enabled: Boolean) {
+        setBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, enabled)
+        _events.tryEmit(TextSecurePreferences.THREAD_TRIM_ENABLED)
     }
 
     override fun isThreadLengthTrimmingEnabled(): Boolean {
@@ -1177,6 +1229,11 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasSeenLinkPreviewSuggestionDialog() {
         setBooleanPreference("has_seen_link_preview_suggestion_dialog", true)
+    }
+
+    override fun setCallNotificationsEnabled(enabled: Boolean) {
+        setBooleanPreference(CALL_NOTIFICATIONS_ENABLED, enabled)
+        _events.tryEmit(CALL_NOTIFICATIONS_ENABLED)
     }
 
     override fun isCallNotificationsEnabled(): Boolean {
@@ -1387,7 +1444,12 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(FOLLOW_SYSTEM_SETTINGS, followSystemSettings)
     }
 
-    override fun autoplayAudioMessages(): Boolean {
+    override fun setAutoplayAudioMessages(enabled: Boolean) {
+        setBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, enabled)
+        _events.tryEmit(AUTOPLAY_AUDIO_MESSAGES)
+    }
+
+    override fun isAutoplayAudioMessagesEnabled(): Boolean {
         return getBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, false)
     }
 
@@ -1552,6 +1614,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
         setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
+        _events.tryEmit(HAS_CHECKED_DOZE_WHITELIST)
     }
 
     override fun hasDonated(): Boolean {
@@ -1616,4 +1679,38 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setShowDonationCTAFromPositiveReviewDebug(show: String?) {
         setStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
     }
+
+    override fun setSendWithEnterEnabled(enabled: Boolean) {
+        setBooleanPreference(SEND_WITH_ENTER, enabled)
+        _events.tryEmit(SEND_WITH_ENTER)
+    }
+
+    override fun isSendWithEnterEnabled(): Boolean {
+        return getBooleanPreference(SEND_WITH_ENTER, false)
+    }
+
+    override fun updateBooleanFromKey(key: String, value: Boolean) {
+        setBooleanPreference(key, value)
+        _events.tryEmit(key)
+    }
 }
+
+fun TextSecurePreferences.observeBooleanKey(
+    key: String,
+    default: Boolean
+): Flow<Boolean> =
+    TextSecurePreferences.events
+        .filter { it == key }
+        .onStart { emit(key) } // trigger initial read
+        .map { getBooleanPreference(key, default) }
+        .distinctUntilChanged()
+
+fun TextSecurePreferences.observeStringKey(
+    key: String,
+    default: String?
+): Flow<String?> =
+    TextSecurePreferences.events
+        .filter { it == key }
+        .onStart { emit(key) }
+        .map { getStringPreference(key, default) }
+        .distinctUntilChanged()
