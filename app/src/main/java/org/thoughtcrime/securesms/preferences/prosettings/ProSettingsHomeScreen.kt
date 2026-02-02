@@ -276,6 +276,7 @@ fun ProSettingsHome(
                 proStatus = data.proDataState.type,
                 subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
+                inGracePeriod = data.inGracePeriod,
                 expiry = data.subscriptionExpiryLabel,
                 sendCommand = sendCommand,
             )
@@ -524,6 +525,7 @@ fun ProSettings(
     subscriptionRefreshState: State<Unit>,
     inSheet: Boolean,
     expiry: CharSequence,
+    inGracePeriod: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -572,7 +574,8 @@ fun ProSettings(
                             .put(PLATFORM_KEY, proStatus.providerData.platform)
                             .format().toString()
                         else expiry,
-                        LocalColors.current.text,
+                        if(inGracePeriod) LocalColors.current.warning
+                                else LocalColors.current.text,
                         if(refunding){{
                             Icon(
                                 modifier = Modifier.align(Alignment.Center)
@@ -804,6 +807,7 @@ fun ProManage(
         title = Phrase.from(LocalContext.current, R.string.managePro)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
+        dropShadow = LocalColors.current.isLight && data is ProStatus.Expired
     ) {
         // Cell content
         Column(
@@ -832,7 +836,7 @@ fun ProManage(
                     icon = R.drawable.ic_refresh_cw,
                     qaTag = R.string.qa_pro_settings_action_recover_plan,
                     onClick = {
-                        sendCommand(RefeshProDetails)
+                        sendCommand(RecoverAccount)
                     }
                 )
             }
@@ -896,7 +900,7 @@ fun ProManage(
 
                         is State.Success<*> -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             null,
-                            LocalColors.current.text, renewIcon(LocalColors.current.accent)
+                            LocalColors.current.text, renewIcon(LocalColors.current.accentText)
                         )
                     }
 
@@ -906,7 +910,7 @@ fun ProManage(
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
-                        titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accent
+                        titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accentText
                         else LocalColors.current.text,
                         subtitle = if(subtitle == null) null else annotatedStringResource(subtitle),
                         subtitleColor = subColor,

@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.dependencies
 
+import androidx.collection.arrayMapOf
 import androidx.collection.arraySetOf
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
@@ -17,7 +18,7 @@ import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.MultiEncrypt
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -141,6 +142,7 @@ class ConfigFactory @Inject constructor(
         lock.writeLock().lock()
         return configs to {
             val changed = arraySetOf<UserConfigType>()
+            var dumped: MutableMap<UserConfigType, ByteArray>? = null
 
             for (type in UserConfigType.entries) {
                 val config = configs.getConfig(type)
@@ -149,16 +151,32 @@ class ConfigFactory @Inject constructor(
                 }
 
                 if (config.needsDump()) {
-                    configDatabase.storeConfig(
-                        variant = type.configVariant,
-                        publicKey = requiresCurrentUserAccountId().hexString,
-                        data = config.dump(),
-                        timestamp = clock.currentTimeMills()
-                    )
+                    if (dumped == null) {
+                        dumped = arrayMapOf()
+                    }
+
+                    dumped[type] = config.dump()
                 }
             }
 
             lock.writeLock().unlock()
+
+            // Persist dumped configs
+            if (dumped != null) {
+                coroutineScope.launch {
+                    val userAccountId = requiresCurrentUserAccountId()
+                    val currentTimeMs = clock.currentTimeMillis()
+
+                    for ((type, data) in dumped) {
+                        configDatabase.storeConfig(
+                            variant = type.configVariant,
+                            publicKey = userAccountId.hexString,
+                            data = data,
+                            timestamp = currentTimeMs
+                        )
+                    }
+                }
+            }
 
             // Notify changes on a coroutine
             if (changed.isNotEmpty()) {
@@ -180,18 +198,30 @@ class ConfigFactory @Inject constructor(
                     configs.groupKeys.needsDump() ||
                     configs.groupKeys.needsRekey()
 
-            if (configs.groupInfo.needsDump() || configs.groupMembers.needsDump() ||
+            val dumped = if (configs.groupInfo.needsDump() || configs.groupMembers.needsDump() ||
                 configs.groupKeys.needsDump()) {
-                configDatabase.storeGroupConfigs(
-                    publicKey = groupId.hexString,
-                    keysConfig = configs.groupKeys.dump(),
-                    infoConfig = configs.groupInfo.dump(),
-                    memberConfig = configs.groupMembers.dump(),
-                    timestamp = clock.currentTimeMills()
+                Triple(
+                    configs.groupKeys.dump(),
+                    configs.groupInfo.dump(),
+                    configs.groupMembers.dump()
                 )
+            } else {
+                null
             }
 
             lock.writeLock().unlock()
+
+            if (dumped != null) {
+                coroutineScope.launch {
+                    configDatabase.storeGroupConfigs(
+                        publicKey = groupId.hexString,
+                        keysConfig = dumped.first,
+                        infoConfig = dumped.second,
+                        memberConfig = dumped.third,
+                        timestamp = clock.currentTimeMillis()
+                    )
+                }
+            }
 
             // Notify changes on a coroutine
             if (changed) {
@@ -619,7 +649,7 @@ private class GroupConfigsImpl(
                 keysConfig = groupKeys.dump(),
                 infoConfig = groupInfo.dump(),
                 memberConfig = groupMembers.dump(),
-                timestamp = clock.currentTimeMills()
+                timestamp = clock.currentTimeMillis()
             )
             return true
         }

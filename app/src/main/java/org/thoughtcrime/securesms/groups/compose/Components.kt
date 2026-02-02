@@ -212,7 +212,7 @@ fun InviteMembersDialog(
     onInviteClicked: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var shareHistory by retain { mutableStateOf(false) }
+    var shareHistory by retain { mutableStateOf(true) }
 
     AlertDialog(
         modifier = modifier,
@@ -227,20 +227,22 @@ fun InviteMembersDialog(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(LocalResources.current.getString(R.string.membersInviteShareMessageHistoryDays)),
-                    selected = !shareHistory
+                    selected = shareHistory,
+                    qaTag = GetString(R.string.qa_manage_members_dialog_share_message_history)
                 )
             ) {
-                shareHistory = false
+                shareHistory = true
             }
 
             DialogTitledRadioButton(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(LocalResources.current.getString(R.string.membersInviteShareNewMessagesOnly)),
-                    selected = shareHistory,
+                    selected = !shareHistory,
+                    qaTag = GetString(R.string.qa_manage_members_dialog_share_new_messages)
                 )
             ) {
-                shareHistory = true
+                shareHistory = false
             }
         },
         buttons = listOf(

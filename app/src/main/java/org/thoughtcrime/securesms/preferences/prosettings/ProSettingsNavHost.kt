@@ -99,7 +99,7 @@ fun ProSettingsNavHost(
                     // handle the custom case of dealing with the post "choose plan confirmation"screen
                     ProNavHostCustomActions.ON_POST_PLAN_CONFIRMATION,
                     ProNavHostCustomActions.ON_POST_CANCELLATION -> {
-                        // we get here where we either hit back or hit the "ok" button on the plan confirmation screen
+                        // we get here when we either hit back or hit the "ok" button on the plan confirmation screen
                         // if we are in a sheet we need to close it
                         if (inSheet) {
                             onBack()

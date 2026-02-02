@@ -5,12 +5,13 @@ import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
@@ -37,12 +38,9 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.UpdateMessageData
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.model.BatchResponse
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.getGroup
@@ -63,18 +61,26 @@ import org.session.protos.SessionProtos.GroupUpdateInviteResponseMessage
 import org.session.protos.SessionProtos.GroupUpdateMemberChangeMessage
 import org.session.protos.SessionProtos.GroupUpdateMessage
 import org.session.protos.SessionProtos.GroupUpdatePromoteMessage
+import org.thoughtcrime.securesms.api.snode.BatchApi
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.snode.SnodeApi
+import org.thoughtcrime.securesms.api.snode.StoreMessageApi
+import org.thoughtcrime.securesms.api.snode.UnrevokeSubKeyApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "GroupManagerV2Impl"
 
@@ -86,7 +92,6 @@ class GroupManagerV2Impl @Inject constructor(
     private val configFactory: ConfigFactory,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiDatabase: LokiMessageDatabase,
-    private val threadDatabase: ThreadDatabase,
     @param:ApplicationContext val application: Context,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
@@ -98,6 +103,11 @@ class GroupManagerV2Impl @Inject constructor(
     private val recipientRepository: RecipientRepository,
     private val messageSender: MessageSender,
     private val inviteContactJobFactory: InviteContactsJob.Factory,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory,
+    private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
+    private val unrevokeSubKeyApiFactory: UnrevokeSubKeyApi.Factory,
+    private val batchApiFactory: BatchApi.Factory,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -128,7 +138,7 @@ class GroupManagerV2Impl @Inject constructor(
         val ourAccountId =
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
 
-        val groupCreationTimestamp = clock.currentTimeMills()
+        val groupCreationTimestamp = clock.currentTimeMillis()
 
         // Create a group in the user groups config
         val group = configFactory.withUserConfigs { configs ->
@@ -260,7 +270,7 @@ class GroupManagerV2Impl @Inject constructor(
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
 
-        val batchRequests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
+        val batchApis = mutableListOf<SnodeApi<*>>()
 
         val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
             val shareHistoryHexes = mutableListOf<String>()
@@ -290,14 +300,14 @@ class GroupManagerV2Impl @Inject constructor(
 
             if (shareHistoryHexes.isNotEmpty()) {
                 val memberKey = configs.groupKeys.supplementFor(shareHistoryHexes)
-                batchRequests.add(
-                    SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                batchApis.add(
+                    storeSnodeMessageApiFactory.create(
                         namespace = Namespace.GROUP_KEYS(),
                         message = SnodeMessage(
                             recipient = group.hexString,
                             data = Base64.encodeBytes(memberKey),
                             ttl = SnodeMessage.CONFIG_TTL,
-                            timestamp = clock.currentTimeMills(),
+                            timestamp = clock.currentTimeMillis(),
                         ),
                         auth = groupAuth,
                     )
@@ -309,15 +319,17 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Call un-revocate API on new members, in case they have been removed before
-        batchRequests += SnodeAPI.buildAuthenticatedUnrevokeSubKeyBatchRequest(
-            groupAdminAuth = groupAuth,
+        batchApis += unrevokeSubKeyApiFactory.create(
+            auth = groupAuth,
             subAccountTokens = subAccountTokens
         )
 
         // Call the API
         try {
-            val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
-            val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
+            val response = swarmApiExecutor.execute(SwarmApiRequest(
+                swarmPubKeyHex = group.hexString,
+                api = batchApiFactory.createFromApis(batchApis)
+            ))
 
             // Make sure every request is successful
             response.requireAllRequestsSuccessful("Failed to invite members")
@@ -348,7 +360,11 @@ class GroupManagerV2Impl @Inject constructor(
         } finally {
             // Send a group update message to the group telling members someone has been invited
             if (!isReinvite) {
-                sendGroupUpdateForAddingMembers(group, adminKey, memberInvites.map { it.id })
+                sendGroupUpdateForAddingMembers(
+                    group,
+                    adminKey,
+                    memberInvites.map { it.id },
+                    shareHistory = memberInvites.any { it.shareHistory }) // This is the same for all members/contact invited
             }
         }
 
@@ -369,8 +385,9 @@ class GroupManagerV2Impl @Inject constructor(
         group: AccountId,
         adminKey: ByteArray,
         newMembers: Collection<AccountId>,
+        shareHistory : Boolean = false
     ) {
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
         val signature = ED25519.sign(
             message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
             ed25519PrivateKey = adminKey
@@ -383,13 +400,13 @@ class GroupManagerV2Impl @Inject constructor(
                         .addAllMemberSessionIds(newMembers.sortedWith(groupMemberComparator).map { it.hexString })
                         .setType(GroupUpdateMemberChangeMessage.Type.ADDED)
                         .setAdminSignature(ByteString.copyFrom(signature))
+                        .setHistoryShared(shareHistory)
                 )
                 .build()
         ).apply { this.sentTimestamp = timestamp }
 
-        storage.insertGroupInfoChange(updatedMessage, group)
-
         messageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
+        storage.insertGroupInfoChange(updatedMessage, group)
     }
 
     override suspend fun removeMembers(
@@ -407,7 +424,7 @@ class GroupManagerV2Impl @Inject constructor(
             alsoRemoveMembersMessage = removeMessages,
         )
 
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
         val signature = ED25519.sign(
             message = buildMemberChangeSignature(
                 GroupUpdateMemberChangeMessage.Type.REMOVED,
@@ -460,7 +477,15 @@ class GroupManagerV2Impl @Inject constructor(
             OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
         } ?: return@launchAndWait
 
-        SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
+        swarmApiExecutor.execute(
+            SwarmApiRequest(
+                swarmPubKeyHex = groupAccountId.hexString,
+                api = deleteMessageApiFactory.create(
+                    messageHashes = messagesToDelete,
+                    swarmAuth = groupAdminAuth
+                )
+            )
+        )
     }
 
     override suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>) {
@@ -474,9 +499,19 @@ class GroupManagerV2Impl @Inject constructor(
             configs.groupInfo.setDeleteBefore(clock.currentTimeSeconds())
         }
 
-        // remove messages from swarm SnodeAPI.deleteMessage
+        // remove messages from swarm sessionClient.deleteMessage
         val cleanedHashes: List<String> = deletedHashes.filter { !it.isNullOrEmpty() }.filterNotNull()
-        if(cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, cleanedHashes)
+        if (cleanedHashes.isNotEmpty()) {
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = groupAccountId.hexString,
+                    api = deleteMessageApiFactory.create(
+                        messageHashes = cleanedHashes,
+                        swarmAuth = groupAdminAuth
+                    )
+                )
+            )
+        }
     }
 
     override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) = scope.launchAndWait(group, "Handle member left message") {
@@ -506,22 +541,30 @@ class GroupManagerV2Impl @Inject constructor(
         members: List<AccountId>,
         isRepromote: Boolean
     ): Unit = scope.launchAndWait(group, "Promote member") {
-        withContext(SupervisorJob()) {
+        supervisorScope {
             val adminKey = requireAdminAccess(group)
             val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
                 // Update the group member's promotion status
                 members.asSequence()
                     .mapNotNull { configs.groupMembers.get(it.hexString) }
-                    .onEach(GroupMember::setPromoted)
+                    .onEach(GroupMember::setPromotionSent)
                     .forEach(configs.groupMembers::set)
 
                 configs.groupInfo.getName()
             }
 
+            // Ensure this push is complete before promotion messages go out
+            withTimeoutOrNull(10.seconds) {
+                configFactory.waitUntilGroupConfigsPushed(group)
+            }
+
             // Build a group update message to the group telling members someone has been promoted
-            val timestamp = clock.currentTimeMills()
+            val timestamp = clock.currentTimeMillis()
             val signature = ED25519.sign(
-                message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                message = buildMemberChangeSignature(
+                    GroupUpdateMemberChangeMessage.Type.PROMOTED,
+                    timestamp
+                ),
                 ed25519PrivateKey = adminKey
             )
 
@@ -529,7 +572,8 @@ class GroupManagerV2Impl @Inject constructor(
                 GroupUpdateMessage.newBuilder()
                     .setMemberChangeMessage(
                         GroupUpdateMemberChangeMessage.newBuilder()
-                            .addAllMemberSessionIds(members.sortedWith(groupMemberComparator).map { it.hexString })
+                            .addAllMemberSessionIds(
+                                members.sortedWith(groupMemberComparator).map { it.hexString })
                             .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
                             .setAdminSignature(ByteString.copyFrom(signature))
                     )
@@ -577,10 +621,11 @@ class GroupManagerV2Impl @Inject constructor(
                 promotedByMemberIDs.asSequence()
                     .mapNotNull { (member, result) ->
                         configs.groupMembers.get(member.hexString)?.apply {
-                            if (result.isSuccess) {
-                                setPromotionSent()
-                            } else {
-                                setPromotionFailed()
+                            if (result.isFailure) {
+                                configs.groupMembers.get(member.hexString)?.let { member ->
+                                    member.setPromotionFailed()
+                                    configs.groupMembers.set(member)
+                                }
                             }
                         }
                     }
@@ -612,6 +657,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
         }
     }
+
     /**
      * Mark this member as "removed" in the group config.
      *
@@ -663,10 +709,15 @@ class GroupManagerV2Impl @Inject constructor(
 
                 if (groupInviteMessageHash != null) {
                     val auth = requireNotNull(storage.userAuth)
-                    SnodeAPI.deleteMessage(
-                        publicKey = auth.accountId.hexString,
-                        swarmAuth = auth,
-                        serverHashes = listOf(groupInviteMessageHash)
+
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = auth.accountId.hexString,
+                            api = deleteMessageApiFactory.create(
+                                messageHashes = listOf(groupInviteMessageHash),
+                                swarmAuth = auth
+                            )
+                        )
                     )
                 }
             }
@@ -684,7 +735,7 @@ class GroupManagerV2Impl @Inject constructor(
         configFactory.withMutableUserConfigs { configs ->
             configs.userGroups.set(group.copy(
                 invited = false,
-                joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
+                joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMillis())
             ))
         }
 
@@ -736,10 +787,14 @@ class GroupManagerV2Impl @Inject constructor(
         // Delete the invite once we have approved
         if (inviteMessageHash != null) {
             val auth = requireNotNull(storage.userAuth)
-            SnodeAPI.deleteMessage(
-                publicKey = auth.accountId.hexString,
-                swarmAuth = auth,
-                serverHashes = listOf(inviteMessageHash)
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = auth.accountId.hexString,
+                    api = deleteMessageApiFactory.create(
+                        messageHashes = listOf(inviteMessageHash),
+                        swarmAuth = auth
+                    )
+                )
             )
         }
     }
@@ -816,10 +871,14 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Delete the promotion message remotely
-        SnodeAPI.deleteMessage(
-            userAuth.accountId.hexString,
-            userAuth,
-            listOf(promoteMessageHash)
+        swarmApiExecutor.execute(
+            SwarmApiRequest(
+                swarmPubKeyHex = userAuth.accountId.hexString,
+                api = deleteMessageApiFactory.create(
+                    messageHashes = listOf(promoteMessageHash),
+                    swarmAuth = userAuth
+                )
+            )
         )
     }
 
@@ -959,7 +1018,7 @@ class GroupManagerV2Impl @Inject constructor(
                 return@launchAndWait
             }
 
-            val timestamp = clock.currentTimeMills()
+            val timestamp = clock.currentTimeMillis()
             val signature = ED25519.sign(
                 message = buildInfoChangeSignature(Type.NAME, timestamp),
                 ed25519PrivateKey = adminKey
@@ -1023,15 +1082,19 @@ class GroupManagerV2Impl @Inject constructor(
 
         // If we are admin, we can delete the messages from the group swarm
         group.adminKey?.data?.let { adminKey ->
-            SnodeAPI.deleteMessage(
-                publicKey = groupId.hexString,
-                swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
-                serverHashes = messageHashes.toList()
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = groupId.hexString,
+                    api = deleteMessageApiFactory.create(
+                        messageHashes = messageHashes,
+                        swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
+                    )
+                )
             )
         }
 
         // Construct a message to ask members to delete the messages, sign if we are admin, then send
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
         val signature = group.adminKey?.data?.let { key ->
             ED25519.sign(
                 message = buildDeleteMemberContentSignature(
@@ -1121,10 +1184,14 @@ class GroupManagerV2Impl @Inject constructor(
                             sender = sender.hexString,
                             closedGroupId = groupId.hexString))
             ) {
-                SnodeAPI.deleteMessage(
-                    groupId.hexString,
-                    OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
-                    hashes
+                swarmApiExecutor.execute(
+                    SwarmApiRequest(
+                        swarmPubKeyHex = groupId.hexString,
+                        api = deleteMessageApiFactory.create(
+                            messageHashes = hashes,
+                            swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
+                        )
+                    )
                 )
             }
 
@@ -1136,10 +1203,14 @@ class GroupManagerV2Impl @Inject constructor(
                 }
 
                 if (userMessageHashes.isNotEmpty()) {
-                    SnodeAPI.deleteMessage(
-                        groupId.hexString,
-                        OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
-                        userMessageHashes
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = groupId.hexString,
+                            api = deleteMessageApiFactory.create(
+                                messageHashes = userMessageHashes,
+                                swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
+                            )
+                        )
                     )
                 }
             }
@@ -1174,7 +1245,7 @@ class GroupManagerV2Impl @Inject constructor(
         val adminKey = requireAdminAccess(groupId)
 
         // Construct a message to notify the group members about the expiration timer change
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
         val signature = ED25519.sign(
             message = buildInfoChangeSignature(Type.DISAPPEARING_MESSAGES, timestamp),
             ed25519PrivateKey = adminKey
@@ -1218,7 +1289,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
         // if an admin tries to leave while being the only admin in the group
         if (isCurrentUserLastAdmin(groupId)) {
-            message = Phrase.from(application, R.string.groupOnlyAdmin)
+            message = Phrase.from(application, R.string.groupOnlyAdminLeave)
                 .put(GROUP_NAME_KEY, name)
                 .format()
 
@@ -1286,12 +1357,6 @@ class GroupManagerV2Impl @Inject constructor(
                 .map { (member, _) -> member }
         }
 
-
-    override fun isCurrentUserGroupAdmin(groupId: AccountId): Boolean {
-        val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
-        return adminMembers(groupId).any { it.accountId() == currentUserId }
-    }
-
     override fun isCurrentUserLastAdmin(groupId: AccountId): Boolean {
         val currentUserId = checkNotNull(storage.getUserPublicKey()) { "User public key is null" }
 
@@ -1309,8 +1374,8 @@ class GroupManagerV2Impl @Inject constructor(
         return amAdmin && adminCount == 1
     }
 
-    private fun BatchResponse.requireAllRequestsSuccessful(errorMessage: String) {
-        val firstError = this.results.firstOrNull { it.code != 200 }
+    private fun BatchApi.Response.requireAllRequestsSuccessful(errorMessage: String) {
+        val firstError = this.responses.firstOrNull { it.code != 200 }
         require(firstError == null) { "$errorMessage: ${firstError!!.body}" }
     }
 }

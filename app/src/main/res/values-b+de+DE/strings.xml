@@ -216,7 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} benötigt Kamera-Zugriff um QR-Codes zu scannen</string>
     <string name="cancel">Abbrechen</string>
     <string name="cancelAccess">{pro} kündigen</string>
-    <string name="cancelProPlan">{pro}-Plan kündigen</string>
     <string name="cancelProPlatform">Kündigen Sie auf der {platform}-Website, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="cancelProPlatformStore">Kündigen Sie auf der {platform_store}-Website, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="change">Ändern</string>
@@ -1112,7 +1111,6 @@
     <string name="proRenewPinFiveConversations">Möchtest du wieder mehr als {limit} Unterhaltungen anpinnen?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
     <string name="proRenewPinMoreConversations">Möchtest du wieder mehr Unterhaltungen anpinnen?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
     <string name="proRenewTosPrivacy">Durch die Verlängerung stimmst du den <b>Nutzungsbedingungen</b> {icon} und der <b>Datenschutzerklärung</b> {icon} von {app_pro} zu</string>
-    <string name="proRenewalUnsuccessful">Verlängerung von Pro fehlgeschlagen, neuer Versuch in Kürze</string>
     <string name="proRenewingAction">verlängern</string>
     <string name="proRenewingNoAccessBilling">Derzeit kann der {pro}-Zugriff nur über den {platform_store} oder {platform_store_other} gekauft und verlängert werden. Da Sie {app_name} mit dem Build {build_variant} installiert haben, können Sie hier nicht verlängern.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmethoden, um es Nutzern zu ermöglichen, den {pro}-Zugriff außerhalb des {platform_store} und {platform_store_other} zu erwerben.<b> {pro}-Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Rückerstattung beantragt</string>
@@ -1403,7 +1401,6 @@
     <string name="useFastMode">Schnellen Modus verwenden</string>
     <string name="viaPlatformWebsiteDescription">Ändern Sie Ihren Plan mit dem {platform_account}, mit dem Sie sich registriert haben, über die <b><font color="0">{platform}-Website</font></b>.</string>
     <string name="viaStoreWebsite">Über die {platform}-Website</string>
-    <string name="viaStoreWebsiteDescription">Aktualisiere deinen {pro}-Zugang mithilfe des {platform_account}, mit dem du dich registriert hast, über die Website von <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videowiedergabe fehlgeschlagen.</string>
     <string name="view">Anzeigen</string>

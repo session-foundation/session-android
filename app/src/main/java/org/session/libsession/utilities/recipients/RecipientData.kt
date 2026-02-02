@@ -176,7 +176,6 @@ sealed interface RecipientData {
         val expiryMode: ExpiryMode,
         val members: List<GroupMemberInfo>,
         val description: String?,
-        override val proData: ProData?,
         override val firstMember: Recipient?, // Used primarily to assemble the profile picture for the group.
         override val secondMember: Recipient?, // Used primarily to assemble the profile picture for the group.
     ) : RecipientData, GroupLike {
@@ -186,6 +185,7 @@ sealed interface RecipientData {
         val kicked: Boolean get() = groupInfo.kicked
         val destroyed: Boolean get() = groupInfo.destroyed
         val shouldPoll: Boolean get() = groupInfo.shouldPoll
+        override val proData: ProData? get() = null //todo LARGE GROUP hiding group pro status until we enable large groups
 
         override val profileUpdatedAt: Instant?
             get() = null
@@ -198,7 +198,8 @@ sealed interface RecipientData {
             return hasAdmin(user)
         }
 
-        override fun setProData(proData: ProData): Group = copy(proData = proData)
+        //todo LARGE GROUP hiding group pro status until we enable large groups
+        override fun setProData(proData: ProData): Group = this //copy(proData = proData)
     }
 
     data class LegacyGroup(

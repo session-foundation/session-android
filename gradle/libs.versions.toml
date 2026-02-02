@@ -8,52 +8,51 @@ androidImageCropperVersion = "4.7.0"
 androidVersion = "137.7151.04"
 assertjCoreVersion = "3.27.6"
 biometricVersion = "1.1.0"
-cameraCamera2Version = "1.5.1"
+cameraCamera2Version = "1.5.2"
 cardviewVersion = "1.0.0"
-composeBomVersion = "2025.12.00"
+composeBomVersion = "2026.01.00"
 conscryptAndroidVersion = "2.5.3"
 conscryptJavaVersion = "2.5.2"
 constraintlayoutVersion = "2.2.1"
 copperFlowVersion = "1.0.0"
 coreTestingVersion = "2.2.0"
 espressoCoreVersion = "3.7.0"
-exifinterfaceVersion = "1.4.1"
+exifinterfaceVersion = "1.4.2"
 firebaseMessagingVersion = "25.0.1"
 flexboxVersion = "3.0.0"
 fragmentKtxVersion = "1.8.9"
-gradlePluginVersion = "8.13.1"
+gradlePluginVersion = "8.13.2"
 dependenciesAnalysisVersion = "3.1.0"
 googleServicesVersion = "4.4.4"
 junit = "1.3.0"
-kotlinVersion = "2.2.21"
+kotlinVersion = "2.3.0"
 kryoVersion = "5.6.2"
 kspVersion = "2.3.3"
 legacySupportV13Version = "1.0.0"
-libsessionUtilAndroidVersion = "1.0.9-11-g1b8d453"
+libsessionUtilAndroidVersion = "1.1.0"
 media3ExoplayerVersion = "1.8.0"
-mockitoCoreVersion = "5.20.0"
-navVersion = "2.9.5"
+mockitoCoreVersion = "5.21.0"
+navVersion = "2.9.6"
 appcompatVersion = "1.7.1"
 coreVersion = "1.16.0"
 coroutinesVersion = "1.10.2"
-daggerHiltVersion = "2.57.2"
+daggerHiltVersion = "2.58"
 androidxHiltVersion  = "1.3.0"
 glideVersion = "5.0.5"
 jacksonDatabindVersion = "2.9.8"
 junitVersion = "4.13.2"
 kotlinxJsonVersion = "1.9.0"
-kovenantVersion = "3.3.0"
 opencsvVersion = "5.12.0"
 orchestratorVersion = "1.6.1"
 photoviewVersion = "2.3.0"
 phraseVersion = "1.2.0"
-lifecycleVersion = "2.9.4"
+lifecycleVersion = "2.10.0"
 materialVersion = "1.13.0"
 mockitoKotlinVersion = "6.1.0"
 okhttpVersion = "5.3.2"
 preferenceVersion = "1.2.1"
 recyclerviewVersion = "1.4.0"
-robolectricVersion = "4.14.1"
+robolectricVersion = "4.16"
 roundedimageviewVersion = "2.1.0"
 runnerVersion = "1.7.0"
 rxbindingVersion = "3.1.0"
@@ -64,13 +63,13 @@ subsamplingScaleImageViewVersion = "3.10.0"
 testCoreVersion = "1.7.0"
 truthVersion = "1.4.5"
 turbineVersion = "1.2.1"
-uiTestJunit4Version = "1.9.4"
+uiTestJunit4Version = "1.10.1"
 workRuntimeKtxVersion = "2.11.0"
 zxingVersion = "3.5.4"
 huaweiPushVersion = "6.13.0.300"
 googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.3.0"
-billingVersion = "8.1.0"
+billingVersion = "8.3.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
@@ -99,6 +98,7 @@ androidx-orchestrator = { module = "androidx.test:orchestrator", version.ref = "
 androidx-rules = { module = "androidx.test:rules", version.ref = "testCoreVersion" }
 androidx-runner = { module = "androidx.test:runner", version.ref = "runnerVersion" }
 androidx-sqlite-ktx = { module = "androidx.sqlite:sqlite-ktx", version.ref = "sqliteKtxVersion" }
+androidx-sqlite-framework = { module = "androidx.sqlite:sqlite-framework", version.ref = "sqliteKtxVersion" }
 androidx-truth = { module = "androidx.test.ext:truth", version.ref = "testCoreVersion" }
 androidx-compose-ui = { module = "androidx.compose.ui:ui" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "uiTestJunit4Version" }
@@ -109,7 +109,6 @@ agpApi = { module = "com.android.tools.build:gradle-api", version.ref = "gradleP
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertjCoreVersion" }
 conscrypt-openjdk-uber = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "conscryptJavaVersion" }
 copper-flow = { module = "app.cash.copper:copper-flow", version.ref = "copperFlowVersion" }
-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinVersion" }
 kryo = { module = "com.esotericsoftware:kryo", version.ref = "kryoVersion" }
 libsession-util-android = { module = "org.sessionfoundation:libsession-util-android", version.ref = "libsessionUtilAndroidVersion" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxingVersion" }
@@ -146,8 +145,6 @@ kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutinesVersion" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxJsonVersion" }
 kotlinx-coroutines-testing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesVersion" }
-kovenant-android = { module = "nl.komponents.kovenant:kovenant-android", version.ref = "kovenantVersion" }
-kovenant = { module = "nl.komponents.kovenant:kovenant", version.ref = "kovenantVersion" }
 material = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCoreVersion" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlinVersion" }
@@ -158,7 +155,6 @@ phrase = { module = "com.squareup.phrase:phrase", version.ref = "phraseVersion" 
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectricVersion" }
 roundedimageview = { module = "com.makeramen:roundedimageview", version.ref = "roundedimageviewVersion" }
 rxbinding = { module = "com.jakewharton.rxbinding3:rxbinding", version.ref = "rxbindingVersion" }
-robolectric-shadows-multidex = { module = "org.robolectric:shadows-multidex", version.ref = "robolectricVersion" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipherAndroidVersion" }
 stream = { module = "com.annimon:stream", version.ref = "streamVersion" }
 subsampling-scale-image-view = { module = "com.davemorrissey.labs:subsampling-scale-image-view", version.ref = "subsamplingScaleImageViewVersion" }
@@ -172,6 +168,8 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVe
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilVersion" }
 android-billing = { module = "com.android.billingclient:billing", version.ref = "billingVersion" }
 android-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingVersion" }
+mockk = { module = "io.mockk:mockk", version = "1.14.9" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlinVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

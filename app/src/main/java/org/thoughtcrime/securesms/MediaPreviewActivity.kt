@@ -74,7 +74,7 @@ import org.session.libsession.messaging.messages.control.DataExtractionNotificat
 import org.session.libsession.messaging.messages.control.DataExtractionNotification.Kind.MediaSaved
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
@@ -140,6 +140,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
     @Inject
     lateinit var messageSender: MessageSender
+
+    @Inject
+    lateinit var snodeClock: SnodeClock
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -522,7 +525,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                 }
                 .onAllGranted {
                     val saveTask = SaveAttachmentTask(this@MediaPreviewActivity)
-                    val saveDate = if (mediaItem.date > 0) mediaItem.date else nowWithOffset
+                    val saveDate = if (mediaItem.date > 0) mediaItem.date else snodeClock.currentTimeMillis()
                     saveTask.executeOnExecutor(
                         AsyncTask.THREAD_POOL_EXECUTOR,
                         SaveAttachmentTask.Attachment(
@@ -553,7 +556,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         if (conversationAddress == null || conversationAddress?.isGroupOrCommunity == true) return
         val message = DataExtractionNotification(
             MediaSaved(
-                nowWithOffset
+                snodeClock.currentTimeMillis()
             )
         )
         messageSender.send(message, conversationAddress!!)

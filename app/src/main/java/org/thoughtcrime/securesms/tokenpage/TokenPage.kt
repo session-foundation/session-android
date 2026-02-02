@@ -241,7 +241,6 @@ fun SessionNetworkInfoSection(modifier: Modifier = Modifier) {
 
         // 2.) Session network description
         val sessionNetworkDetailsAnnotatedString = annotatedStringResource(
-            highlightColor = LocalColors.current.accentText,
             text = Phrase.from(context.getText(R.string.sessionNetworkDescription))
                 .put(NETWORK_NAME_KEY, NETWORK_NAME)
                 .put(TOKEN_NAME_LONG_KEY, TOKEN_NAME_LONG)
@@ -345,14 +344,12 @@ fun NodeDetailsBox(
     val appName = context.getString(R.string.app_name)
 
     val nodesInSwarmAS = annotatedStringResource(
-        highlightColor = LocalColors.current.accentText,
         text = Phrase.from(context, R.string.sessionNetworkNodesSwarm)
             .put(APP_NAME_KEY, appName)
             .format()
     )
 
     val nodesSecuringMessagesAS = annotatedStringResource(
-        highlightColor = LocalColors.current.accentText,
         text = Phrase.from(context, R.string.sessionNetworkNodesSecuring)
             .put(APP_NAME_KEY, appName)
             .format()

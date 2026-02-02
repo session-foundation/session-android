@@ -20,11 +20,9 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageAuthentication
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
@@ -36,6 +34,13 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos
+import org.thoughtcrime.securesms.api.snode.BatchApi
+import org.thoughtcrime.securesms.api.snode.RevokeSubKeyApi
+import org.thoughtcrime.securesms.api.snode.SnodeApi
+import org.thoughtcrime.securesms.api.snode.StoreMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import javax.inject.Inject
@@ -58,6 +63,10 @@ class RemoveGroupMemberHandler @Inject constructor(
     private val storage: StorageProtocol,
     private val groupScope: GroupScope,
     private val messageSender: MessageSender,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
+    private val revokeSubKeyApiFactory: RevokeSubKeyApi.Factory,
+    private val batchApiFactory: BatchApi.Factory,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
         configFactory.configUpdateNotifications
@@ -87,7 +96,7 @@ class RemoveGroupMemberHandler @Inject constructor(
 
             if (pendingRemovals.isEmpty()) {
                 // Skip if there are no pending removals
-                return@withGroupConfigs pendingRemovals to emptyList()
+                return@withGroupConfigs pendingRemovals to emptyList<SnodeApi<*>>()
             }
 
             Log.d(TAG, "Processing ${pendingRemovals.size} pending removals for group")
@@ -97,22 +106,20 @@ class RemoveGroupMemberHandler @Inject constructor(
             // 2. Send a message to a special namespace on the group to inform the removed members they have been removed
             // 3. Conditionally, send a `GroupUpdateDeleteMemberContent` to the group so the message deletion
             //    can be performed by everyone in the group.
-            val calls = ArrayList<SnodeAPI.SnodeBatchRequestInfo>(3)
+            val apis = ArrayList<SnodeApi<*>>(3)
 
             val groupAuth = OwnedSwarmAuth.ofClosedGroup(groupAccountId, adminKey)
 
             // Call No 1. Revoke sub-key. This call is crucial and must not fail for the rest of the operation to be successful.
-            calls += checkNotNull(
-                SnodeAPI.buildAuthenticatedRevokeSubKeyBatchRequest(
-                    groupAdminAuth = groupAuth,
-                    subAccountTokens = pendingRemovals.map { (member, _) ->
-                        configs.groupKeys.getSubAccountToken(member.accountId())
-                    }
-                )
-            ) { "Fail to create a revoke request" }
+            apis += revokeSubKeyApiFactory.create(
+                auth = groupAuth,
+                subAccountTokens = pendingRemovals.map { (member, _) ->
+                    configs.groupKeys.getSubAccountToken(member.accountId())
+                }
+            )
 
             // Call No 2. Send a "kicked" message to the revoked namespace
-            calls += SnodeAPI.buildAuthenticatedStoreBatchInfo(
+            apis += storeSnodeMessageApiFactory.create(
                 namespace = Namespace.REVOKED_GROUP_MESSAGES(),
                 message = buildGroupKickMessage(
                     groupAccountId.hexString,
@@ -125,7 +132,7 @@ class RemoveGroupMemberHandler @Inject constructor(
 
             // Call No 3. Conditionally send the `GroupUpdateDeleteMemberContent`
             if (pendingRemovals.any { (member, status) -> member.shouldRemoveMessages(status) }) {
-                calls += SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                apis += storeSnodeMessageApiFactory.create(
                     namespace = Namespace.GROUP_MESSAGES(),
                     message = buildDeleteGroupMemberContentMessage(
                         adminKey = adminKey,
@@ -139,23 +146,21 @@ class RemoveGroupMemberHandler @Inject constructor(
                 )
             }
 
-            pendingRemovals to (calls as List<SnodeAPI.SnodeBatchRequestInfo>)
+            pendingRemovals to apis
         }
 
         if (pendingRemovals.isEmpty() || batchCalls.isEmpty()) {
             return
         }
 
-        val node = SnodeAPI.getSingleTargetSnode(groupAccountId.hexString).await()
-        val response =
-            SnodeAPI.getBatchResponse(
-                node,
-                groupAccountId.hexString,
-                batchCalls,
-                sequence = true
+        val response = swarmApiExecutor.execute(
+            SwarmApiRequest(
+                swarmPubKeyHex = groupAccountId.hexString,
+                api = batchApiFactory.createFromApis(batchCalls)
             )
+        )
 
-        val firstError = response.results.firstOrNull { !it.isSuccessful }
+        val firstError = response.responses.firstOrNull { !it.isSuccessful }
         check(firstError == null) {
             "Error processing pending removals for group: code = ${firstError?.code}, body = ${firstError?.body}"
         }
@@ -182,7 +187,7 @@ class RemoveGroupMemberHandler @Inject constructor(
         if (deletingMessagesForMembers.isNotEmpty()) {
             val threadId = storage.getThreadId(Address.fromSerialized(groupAccountId.hexString))
             if (threadId != null) {
-                val until = clock.currentTimeMills()
+                val until = clock.currentTimeMillis()
                 for ((member, _) in deletingMessagesForMembers) {
                     try {
                         messageDataProvider.markUserMessagesAsDeleted(
@@ -204,7 +209,7 @@ class RemoveGroupMemberHandler @Inject constructor(
         groupAccountId: String,
         memberSessionIDs: Sequence<String>
     ): SnodeMessage {
-        val timestamp = clock.currentTimeMills()
+        val timestamp = clock.currentTimeMillis()
 
         return messageSender.buildWrappedMessageToSnode(
             destination = Destination.ClosedGroup(groupAccountId),
@@ -258,6 +263,6 @@ class RemoveGroupMemberHandler @Inject constructor(
             )
         ),
         ttl = SnodeMessage.DEFAULT_TTL,
-        timestamp = clock.currentTimeMills()
+        timestamp = clock.currentTimeMillis()
     )
 }

@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -54,6 +55,7 @@ import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
+import org.thoughtcrime.securesms.ui.sessionDropShadow
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -317,9 +319,19 @@ fun NonOriginatingLinkCell(
         ) {
             // icon
             Box(modifier = Modifier
-                .background(
-                    color = LocalColors.current.accent.copy(alpha = 0.2f),
-                    shape = MaterialTheme.shapes.small
+                .then(
+                    if (LocalColors.current.isLight)
+                        Modifier.sessionDropShadow()
+                    else Modifier
+                )
+                .clip(MaterialTheme.shapes.small)
+                .background(color = LocalColors.current.backgroundSecondary)
+                .then(
+                    if (!LocalColors.current.isLight)
+                        Modifier.background(
+                            color = LocalColors.current.accent.copy(alpha = 0.2f),
+                        )
+                    else Modifier
                 )
                 .padding(10.dp)
             ){
@@ -327,7 +339,7 @@ fun NonOriginatingLinkCell(
                     modifier = Modifier.align(Center)
                         .size(LocalDimensions.current.iconMedium),
                     painter = painterResource(id = data.iconRes),
-                    tint = LocalColors.current.accent,
+                    tint = LocalColors.current.accentText,
                     contentDescription = null
                 )
             }

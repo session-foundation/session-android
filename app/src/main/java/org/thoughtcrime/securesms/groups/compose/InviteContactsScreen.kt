@@ -30,6 +30,8 @@ import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchF
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchQueryChange
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ShowSendInviteDialog
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ToggleFooter
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.DismissSendInviteDialog
+import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
@@ -54,6 +56,7 @@ fun InviteContactsScreen(
         contacts = viewModel.contacts.collectAsState().value,
         uiState = viewModel.uiState.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
+        hasContacts = viewModel.hasContacts.collectAsState().value,
         onDoneClicked = onDoneClicked,
         onBack = onBack,
         banner = banner,
@@ -68,6 +71,7 @@ fun InviteContacts(
     contacts: List<ContactItem>,
     uiState: InviteMembersViewModel.UiState,
     searchQuery: String,
+    hasContacts: Boolean,
     onDoneClicked: (shareHistory: Boolean) -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {},
@@ -137,7 +141,7 @@ fun InviteContacts(
                 .consumeWindowInsets(paddingValues),
         ) {
 
-            if (!isLandscape) {
+            if (!isLandscape && hasContacts) {
                 header(Modifier)
             }
 
@@ -148,7 +152,7 @@ fun InviteContacts(
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                if (contacts.isEmpty() && searchQuery.isEmpty()) {
+                if (!hasContacts && searchQuery.isEmpty()) {
                     Text(
                         text = stringResource(id = R.string.membersInviteNoContacts),
                         modifier = Modifier
@@ -161,7 +165,7 @@ fun InviteContacts(
                         state = scrollState,
                         contentPadding = PaddingValues(bottom = LocalDimensions.current.spacing),
                     ) {
-                        if (isLandscape) {
+                        if (isLandscape && hasContacts) {
                             stickyHeader { header(Modifier) }
                         }
 
@@ -179,7 +183,7 @@ fun InviteContacts(
         InviteMembersDialog(
             state = uiState.inviteContactsDialog,
             onInviteClicked = onDoneClicked,
-            onDismiss = { }
+            onDismiss = {sendCommand(DismissSendInviteDialog) }
         )
     }
 }
@@ -220,6 +224,7 @@ private fun PreviewSelectContacts() {
                 )
             ),
             searchQuery = "",
+            hasContacts = true
         )
     }
 }
@@ -243,7 +248,8 @@ private fun PreviewSelectEmptyContacts() {
                     footerActionTitle = GetString("")
                 )
             ),
-            searchQuery = "Test"
+            searchQuery = "Test",
+            hasContacts = false
         )
     }
 }
@@ -267,7 +273,8 @@ private fun PreviewSelectEmptyContactsWithSearch() {
                     footerActionTitle = GetString("")
                 )
             ),
-            searchQuery = ""
+            searchQuery = "",
+            hasContacts = false
         )
     }
 }

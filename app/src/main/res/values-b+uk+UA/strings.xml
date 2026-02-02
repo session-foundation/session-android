@@ -222,7 +222,6 @@
     <string name="cameraGrantAccessQr">{app_name} потрібен дозвіл до камери для сканування QR-кодів</string>
     <string name="cancel">Скасувати</string>
     <string name="cancelAccess">Скасувати {pro}</string>
-    <string name="cancelProPlan">Скасувати план {pro}</string>
     <string name="cancelProPlatform">Скасуйте підписку на вебсайті {platform}, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
     <string name="cancelProPlatformStore">Скасуйте підписку на вебсайті {platform_store}, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
     <string name="change">Змінити</string>
@@ -1134,7 +1133,7 @@
         <item quantity="many">%1$s довгих повідомлень надіслано</item>
         <item quantity="other">%1$s довгих повідомлень надіслано</item>
     </plurals>
-    <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції Session Pro:</string>
+    <string name="proMessageInfoFeatures">У цьому повідомленні наявні наступні функції {app_pro}:</string>
     <string name="proNewInstallation">За допомогою нової інсталяції</string>
     <string name="proNewInstallationDescription">Переінсталюйте {app_name} на цьому пристрої через {platform_store}, відновіть свій обліковий запис за допомогою пароля відновлення і поновіть {pro} через налаштування {app_pro}.</string>
     <string name="proNewInstallationUpgrade">Перевстановіть {app_name} на цьому пристрої через {platform_store}, відновіть свій обліковий запис за допомогою Пароля відновлення доступу та оновіть до {pro} із налаштувань {app_pro}.</string>
@@ -1170,7 +1169,6 @@
     <string name="proRenewPinFiveConversations">Бажаєте знову закріпити більше ніж {limit} розмов?\nПоновіть свій доступ до {pro}, щоб отримати функції, яких вам бракувало.</string>
     <string name="proRenewPinMoreConversations">Хочете знову закріпити більше розмов?\nПоновіть свій доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
     <string name="proRenewTosPrivacy">Поновлюючи, ви погоджуєтеся з <b>Умовами надання послуг</b> {icon} та <b>Політикою конфіденційності</b> {icon} сервісу {app_pro}.</string>
-    <string name="proRenewalUnsuccessful">Помилка поновлення Pro, повторна спроба незабаром</string>
     <string name="proRenewingAction">поновлення</string>
     <string name="proRenewingNoAccessBilling">На даний момент доступ {pro} можна придбати та оновити лише через {platform_store} або {platform_store_other}. Оскільки ви встановили {app_name}, використовуючи {build_variant}, ви не можете поновити доступ тут.\n\nРозробники {app_name} активно працюють над альтернативними способами оплати, щоб надати змогу користувачам купувати доступ {pro} поза межами {platform_store} та {platform_store_other}.<b> Дорожня карта {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Вимогу повернення грошей надіслано</string>
@@ -1485,7 +1483,6 @@
     <string name="useFastMode">Використовувати швидкий режим</string>
     <string name="viaPlatformWebsiteDescription">Змініть тариф, використовуючи обліковий запис {platform_account}, з яким ви зареєструвалися, через <b><font color="0">вебсайт {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Через вебсайт {platform}</string>
-    <string name="viaStoreWebsiteDescription">Оновіть свій доступ до {pro}, використовуючи {platform_account}, з яким ви зареєструвалися, через вебсайт <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Відео</string>
     <string name="videoErrorPlay">Не вдається відтворити відео.</string>
     <string name="view">Вигляд</string>

@@ -641,10 +641,9 @@ fun LongMessageProCTA(
 // Reusable animated profile pic Pro CTA
 @Composable
 fun AnimatedProfilePicProCTA(
-    proSubscription: ProStatus,
+    expired: Boolean,
     onDismissRequest: () -> Unit,
 ){
-    val expired = proSubscription is ProStatus.Expired
     val context = LocalContext.current
 
     AnimatedSessionProCTA(

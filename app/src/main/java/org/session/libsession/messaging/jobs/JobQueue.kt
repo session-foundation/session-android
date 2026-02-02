@@ -120,7 +120,6 @@ class JobQueue : JobDelegate {
             while (isActive) {
                 when (val job = queue.receive()) {
                     is InviteContactsJob,
-                    is NotifyPNServerJob,
                     is AttachmentUploadJob,
                     is MessageSendJob -> {
                         txQueue.send(job)
@@ -219,7 +218,6 @@ class JobQueue : JobDelegate {
             AttachmentUploadJob.KEY,
             AttachmentDownloadJob.KEY,
             MessageSendJob.KEY,
-            NotifyPNServerJob.KEY,
             OpenGroupDeleteJob.KEY,
             InviteContactsJob.KEY,
         )

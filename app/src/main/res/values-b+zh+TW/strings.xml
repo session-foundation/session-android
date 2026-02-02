@@ -801,7 +801,7 @@
     <string name="proAnimatedDisplayPicture">您可以為您的顯示圖片上傳 GIF 或動畫 WebP 圖片了！</string>
     <string name="proAnimatedDisplayPictureFeature">動畫顯示圖片</string>
     <string name="proAnimatedDisplayPictureModalDescription">用戶可以上傳 GIF</string>
-    <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 {app_pro} 上傳 GIF 圖片</string>
+    <string name="proAnimatedDisplayPicturesNonProModalDescription">上傳 GIF</string>
     <string name="proFeatureListAnimatedDisplayPicture">上傳 GIF 和 WebP 顯示圖片</string>
     <string name="proFeatureListLargerGroups">最大支援 300 位成員的大型群組聊天室</string>
     <string name="proFeatureListLoadsMore">以及更多獨家功能</string>
