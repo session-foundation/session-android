@@ -619,9 +619,9 @@ class GroupManagerV2Impl @Inject constructor(
             // Update each member's status
             configFactory.withMutableGroupConfigs(group) { configs ->
                 promotedByMemberIDs.asSequence()
-                    .mapNotNull { (member, status) ->
+                    .mapNotNull { (member, result) ->
                         configs.groupMembers.get(member.hexString)?.apply {
-                            if (status.isFailure) {
+                            if (result.isFailure) {
                                 setPromotionFailed()
                             }
                         }
