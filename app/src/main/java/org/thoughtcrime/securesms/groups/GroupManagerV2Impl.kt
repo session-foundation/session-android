@@ -582,11 +582,11 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            if(!isRepromote){
-            // Insert the message locally immediately so we can see the incoming change
-            // The same message will be sent later to the group
-            storage.insertGroupInfoChange(message, group)
-        }
+            if (!isRepromote) {
+                // Insert the message locally immediately so we can see the incoming change
+                // The same message will be sent later to the group
+                storage.insertGroupInfoChange(message, group)
+            }
 
             // Send out the promote message to the members concurrently
             val promoteMessage = GroupUpdated(
