@@ -557,7 +557,11 @@ class DefaultConversationRepository @Inject constructor(
                 }
 
                 withContext(Dispatchers.Default) {
-                    messageSender.send(message = MessageRequestResponse(true), address = recipient)
+                    messageSender.send(
+                        message = MessageRequestResponse(true)
+                            .also(proStatusManager::addProFeatures),
+                        address = recipient
+                    )
 
                     // add a control message for our user
                     storage.insertMessageRequestResponseFromYou(
