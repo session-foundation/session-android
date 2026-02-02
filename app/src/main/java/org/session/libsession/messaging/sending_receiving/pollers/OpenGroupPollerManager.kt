@@ -17,6 +17,7 @@ import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope

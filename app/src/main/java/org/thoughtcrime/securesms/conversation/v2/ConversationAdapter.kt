@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.RequestManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
@@ -18,11 +19,12 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
 class ConversationAdapter(
     context: Context,
-    originalLastSeen: Long,
+    originalLastSeen: Long?,
     private val isReversed: Boolean,
     private val onItemPress: (MessageRecord, Int, VisibleMessageView, MotionEvent) -> Unit,
     private val onItemSwipeToReply: (MessageRecord, Int) -> Unit,
@@ -30,6 +32,8 @@ class ConversationAdapter(
     private val onDeselect: (MessageRecord) -> Unit,
     private val downloadPendingAttachment: (DatabaseAttachment) -> Unit,
     private val retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+    private val confirmCommunityJoin: (url: String, name: String) -> Unit,
+    private val confirmAttachmentDownload: (DatabaseAttachment)->Unit,
     private val glide: RequestManager,
     private val threadRecipientProvider: () -> Recipient,
     val messageDB: MmsSmsDatabase,
@@ -39,7 +43,7 @@ class ConversationAdapter(
     private var searchQuery: String? = null
     var visibleMessageViewDelegate: VisibleMessageViewDelegate? = null
 
-    private val lastSeen = AtomicLong(originalLastSeen)
+    private val lastSeen :  AtomicReference<Long?> = AtomicReference(originalLastSeen)
 
     var lastSentMessageId: MessageId? = null
         set(value) {
@@ -106,6 +110,8 @@ class ConversationAdapter(
                     delegate = visibleMessageViewDelegate,
                     downloadPendingAttachment = downloadPendingAttachment,
                     retryFailedAttachments = retryFailedAttachments,
+                    confirmCommunityJoin = confirmCommunityJoin,
+                    confirmAttachmentDownload = confirmAttachmentDownload,
                     isTextExpanded = isExpanded,
                     onTextExpanded = { messageId ->
                         expandedMessageIds.add(messageId)
@@ -138,6 +144,7 @@ class ConversationAdapter(
                 viewHolder.view.bind(
                     message = message,
                     previous = messageBefore,
+                    threadRecipient = threadRecipientProvider(),
                     longPress = { onItemLongPress(message, viewHolder.adapterPosition, viewHolder.view) }
                 )
             }

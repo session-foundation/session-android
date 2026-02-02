@@ -5,6 +5,7 @@ import android.os.Parcelable
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -40,7 +41,7 @@ fun DebugMenuNavHost(
     onBack: () -> Unit
 ){
     val navController = rememberNavController()
-    val navigator: UINavigator<DebugMenuDestination> = remember {
+    val navigator: UINavigator<DebugMenuDestination> = retain {
         UINavigator<DebugMenuDestination>()
     }
 

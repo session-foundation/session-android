@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.ThemeUtil
@@ -53,7 +53,6 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
@@ -106,6 +105,7 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var snodeClock: SnodeClock
 
     private var job: Job? = null
 
@@ -140,7 +140,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Use your existing utility to handle insets
         applySafeInsetsPaddings(
-            typeMask = WindowInsetsCompat.Type.systemBars(),
+            typeMask = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout(),
             consumeInsets = false, // Don't consume so children can also access them
             applyTop = false,      // Don't apply as padding, just capture the values
             applyBottom = false
@@ -211,7 +211,17 @@ class ConversationReactionOverlay : FrameLayout {
         val contextMenu = ConversationContextMenu(dropdownAnchor, recipient?.let { getMenuActionItems(messageRecord, it) }.orEmpty())
         this.contextMenu = contextMenu
 
-        var endX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX - conversationItem.width + selectedConversationModel.bubbleWidth
+        // Visual left/right edges that account for system insets and configured margin.
+        val leftEdge = (systemInsets.left + scrubberHorizontalMargin).toFloat()
+        val rightEdge = (width - systemInsets.right - scrubberHorizontalMargin).toFloat()
+
+        // Start the bubble aligned to the same visual edge as the scrubber.
+        var endX = if (isMessageOnLeft) {
+            leftEdge
+        } else {
+            rightEdge - conversationItem.width
+        }
+
         var endY = selectedConversationModel.bubbleY - statusBarHeight
         conversationItem.x = endX
         conversationItem.y = endY
@@ -312,13 +322,23 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Adjust for system insets
         reactionBarBackgroundY = maxOf(reactionBarBackgroundY, systemInsets.top.toFloat() - statusBarHeight)
+
+        // Now that endScale is final, clamp the bubble X so it stays fully within the visual edges.
+        val minBubbleX = leftEdge
+        val maxBubbleX = rightEdge
+        endX = endX.coerceIn(minBubbleX, maxBubbleX)
+        // Ensure initial position is corrected before making the overlay visible.
+        conversationItem.x = endX
+        conversationItem.y = endY
+
         hideAnimatorSet.end()
         visibility = VISIBLE
 
+        // Place the scrubber on the same visual edges (accounting for its own width on the right).
         val scrubberX = if (isMessageOnLeft) {
-            scrubberHorizontalMargin.toFloat()
+            leftEdge
         } else {
-            (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
+            (rightEdge - scrubberWidth)
         }
 
         foregroundView.x = scrubberX
@@ -332,22 +352,37 @@ class ConversationReactionOverlay : FrameLayout {
         revealAnimatorSet.start()
 
         if (isWideLayout) {
-            val scrubberRight = scrubberX + scrubberWidth
-            val offsetX = when {
-                isMessageOnLeft -> scrubberRight + menuPadding
-                else -> scrubberX - contextMenu.getMaxWidth() - menuPadding
+            val menuXInOverlay = if (isMessageOnLeft) {
+                // Menu to the RIGHT of the scrubber
+                scrubberX + scrubberWidth + menuPadding
+            } else {
+                // Menu to the LEFT of the scrubber - use MENU width here, not scrubber width
+                scrubberX - contextMenu.getMaxWidth() - menuPadding
             }
-            // Adjust Y position to account for insets
-            val adjustedY = minOf(backgroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
-            contextMenu.show(offsetX.toInt(), adjustedY)
+
+            val maxMenuYInOverlay = (height - systemInsets.bottom - actualMenuHeight).toFloat()
+            val menuYInOverlay = minOf(backgroundView.y, maxMenuYInOverlay)
+
+            // Convert overlay-local to anchor relative as expected by ConversationContextMenu.show()
+            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
+            contextMenu.show(xOffset, yOffset)
+
         } else {
-            val contentX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX
-            val offsetX = when {
-                isMessageOnLeft -> contentX
-                else -> -contextMenu.getMaxWidth() + contentX + bubbleWidth
+            val menuXInOverlay = if (isMessageOnLeft) {
+                leftEdge
+            } else {
+                rightEdge - contextMenu.getMaxWidth()
             }
+
             val menuTop = endApparentTop + conversationItemSnapshot.height * endScale
-            contextMenu.show(offsetX.toInt(), (menuTop + menuPadding).toInt())
+            val menuYInOverlay = (menuTop + menuPadding)
+                .coerceIn(
+                    systemInsets.top.toFloat(),
+                    (height - systemInsets.bottom - actualMenuHeight).toFloat()
+                )
+
+            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
+            contextMenu.show(xOffset, yOffset)
         }
 
         val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
@@ -359,6 +394,12 @@ class ConversationReactionOverlay : FrameLayout {
             .x(endX)
             .y(endY)
             .setDuration(revealDuration.toLong())
+    }
+
+    private fun toAnchorOffsets(xInOverlay: Float, yInOverlay: Float): Pair<Int, Int> {
+        val xOffset = (xInOverlay - dropdownAnchor.x).toInt()
+        val yOffset = (yInOverlay - dropdownAnchor.y).toInt()
+        return xOffset to yOffset
     }
 
     private fun getReactionBarOffsetForTouch(itemY: Float,
@@ -624,7 +665,7 @@ class ConversationReactionOverlay : FrameLayout {
                 R.string.delete,
                 { handleActionItemClicked(Action.DELETE) },
                 R.string.AccessibilityId_deleteMessage,
-                message.subtitle,
+                message.subtitle(snodeClock.currentTimeMillis()),
                 ThemeUtil.getThemedColor(context, R.attr.danger)
             )
         }
@@ -801,11 +842,11 @@ class ConversationReactionOverlay : FrameLayout {
     }
 }
 
-private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
-    get() = if (expiresIn <= 0 || expireStarted <= 0) {
+private fun MessageRecord.subtitle(timeMilli: Long): ((Context) -> CharSequence?)? {
+    return if (expiresIn <= 0 || expireStarted <= 0) {
         null
     } else { context ->
-        (expiresIn - (SnodeAPI.nowWithOffset - expireStarted))
+        (expiresIn - (timeMilli - expireStarted))
             .coerceAtLeast(0L)
             .milliseconds
             .toShortTwoPartString()
@@ -815,3 +856,4 @@ private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
                     .format().toString()
             }
     }
+}

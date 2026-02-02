@@ -2,14 +2,15 @@ package org.thoughtcrime.securesms.util;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.database.Cursor;
+import android.database.ContentObserver;
+
 import androidx.loader.content.AsyncTaskLoader;
 
 /**
  * A Loader similar to CursorLoader that doesn't require queries to go through the ContentResolver
  * to get the benefits of reloading when content has changed.
  */
-public abstract class AbstractCursorLoader extends AsyncTaskLoader<Cursor> {
+public abstract class AbstractCursorLoader<T extends AbstractCursorLoader.CursorLike> extends AsyncTaskLoader<T> {
 
   @SuppressWarnings("unused")
   private static final String TAG = AbstractCursorLoader.class.getSimpleName();
@@ -17,7 +18,7 @@ public abstract class AbstractCursorLoader extends AsyncTaskLoader<Cursor> {
   @SuppressLint("StaticFieldLeak")
   protected final Context                  context;
   private   final ForceLoadContentObserver observer;
-  protected       Cursor                   cursor;
+  protected       T                   cursor;
 
   public AbstractCursorLoader(Context context) {
     super(context);
@@ -25,17 +26,17 @@ public abstract class AbstractCursorLoader extends AsyncTaskLoader<Cursor> {
     this.observer = new ForceLoadContentObserver();
   }
 
-  public abstract Cursor getCursor();
+  public abstract T getData();
 
   @Override
-  public void deliverResult(Cursor newCursor) {
+  public void deliverResult(T newCursor) {
     if (isReset()) {
       if (newCursor != null) {
         newCursor.close();
       }
       return;
     }
-    Cursor oldCursor = this.cursor;
+    T oldCursor = this.cursor;
 
     this.cursor = newCursor;
 
@@ -63,15 +64,15 @@ public abstract class AbstractCursorLoader extends AsyncTaskLoader<Cursor> {
   }
 
   @Override
-  public void onCanceled(Cursor cursor) {
+  public void onCanceled(T cursor) {
     if (cursor != null && !cursor.isClosed()) {
       cursor.close();
     }
   }
 
   @Override
-  public Cursor loadInBackground() {
-    Cursor newCursor = getCursor();
+  public T loadInBackground() {
+    T newCursor = getData();
     if (newCursor != null) {
       newCursor.getCount();
       newCursor.registerContentObserver(observer);
@@ -89,6 +90,13 @@ public abstract class AbstractCursorLoader extends AsyncTaskLoader<Cursor> {
       cursor.close();
     }
     cursor = null;
+  }
+
+  public interface CursorLike {
+      void close();
+      boolean isClosed();
+      int getCount();
+      void registerContentObserver(ContentObserver observer);
   }
 
 }

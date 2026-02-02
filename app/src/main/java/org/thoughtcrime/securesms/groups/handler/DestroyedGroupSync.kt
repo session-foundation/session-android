@@ -8,6 +8,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState

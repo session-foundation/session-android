@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -80,6 +81,8 @@ fun ConversationSettingsDialogs(
             buttons.add(
                 DialogButtonData(
                     text = GetString(dialogsState.showSimpleDialog.negativeText),
+                    color = if (dialogsState.showSimpleDialog.negativeStyleDanger) LocalColors.current.danger
+                    else LocalColors.current.text,
                     qaTag = dialogsState.showSimpleDialog.negativeQaTag,
                     onClick = dialogsState.showSimpleDialog.onNegative
                 )
@@ -285,7 +288,7 @@ fun GroupAdminClearMessagesDialog(
     groupName: String,
     sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
 ){
-    var deleteForEveryone by remember { mutableStateOf(false) }
+    var deleteForEveryone by retain { mutableStateOf(false) }
 
     val context = LocalContext.current
 

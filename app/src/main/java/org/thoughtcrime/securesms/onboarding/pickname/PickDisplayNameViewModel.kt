@@ -18,6 +18,7 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.withMutableUserConfigs
 
 @HiltViewModel(assistedFactory = PickDisplayNameViewModel.Factory::class)
 class PickDisplayNameViewModel @AssistedInject constructor(

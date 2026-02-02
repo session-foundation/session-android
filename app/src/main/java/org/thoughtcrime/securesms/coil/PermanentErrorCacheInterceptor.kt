@@ -7,7 +7,7 @@ import coil3.request.ImageResult
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.util.getRootCause
+import org.thoughtcrime.securesms.util.findCause
 import javax.inject.Inject
 
 /**
@@ -41,7 +41,7 @@ class PermanentErrorCacheInterceptor @Inject constructor() : Interceptor {
         val result = runCatching { chain.proceed() }
         val error = result.exceptionOrNull() ?: (result.getOrNull() as? ErrorResult)?.throwable
 
-        val rootCause = error?.getRootCause<NonRetryableException>()
+        val rootCause = error?.findCause<NonRetryableException>()
         if (rootCause != null) {
             // Cache the permanent error for this RemoteFile.
             permanentErrors.put(data, rootCause)

@@ -151,6 +151,7 @@
     <string name="qa_conversation_settings_dialog_delete_group_confirm">delete-group-confirm-button</string>
     <string name="qa_conversation_settings_dialog_delete_group_cancel">delete-group-cancel-button</string>
     <string name="qa_conversation_settings_dialog_leave_group_confirm">leave-group-confirm-button</string>
+    <string name="qa_conversation_settings_dialog_add_admin">add-admin-button</string>
     <string name="qa_conversation_settings_dialog_leave_group_cancel">leave-group-cancel-button</string>
     <string name="qa_conversation_settings_dialog_clear_messages_confirm">clear-all-messages-confirm-button</string>
     <string name="qa_conversation_settings_dialog_clear_messages_cancel">clear-all-messages-cancel-button</string>
@@ -272,6 +273,39 @@
     <string name="qa_pro_settings_action_recover_plan">pro-settings-recover-plan</string>
     <string name="qa_pro_settings_action_faq">pro-settings-faq</string>
     <string name="qa_pro_settings_action_support">pro-settings-support</string>
+
+    <!-- Manage members and admin -->
+    <string name="qa_manage_members_invite_contacts">invite-contacts-menu-option</string>
+    <string name="qa_manage_members_invite_account_id">invite-accountid-menu-option</string>
+    <string name="qa_manage_members_promote_members">promote-members-menu-option</string>
+
+    <!-- Manage members and admin dialogs -->
+    <string name="qa_manage_members_dialog_remove_member">remove-member-option</string>
+    <string name="qa_manage_members_dialog_remove_member_messages">remove-member-messages-option</string>
+    <string name="qa_manage_members_dialog_share_message_history">share-message-history-option</string>
+    <string name="qa_manage_members_dialog_share_new_messages">share-new-messages-option</string>
+
+    <!-- Preferences -->
+    <string name="qa_preferences_voice_calls">preferences-option-voice-call</string>
+    <string name="qa_preferences_lock_app">preferences-option-lock-app</string>
+    <string name="qa_preferences_message_requests">preferences-option-message-requests</string>
+    <string name="qa_preferences_read_receipt">preferences-option-read-receipt</string>
+    <string name="qa_preferences_typing_indicator">preferences-option-typing-indicators</string>
+    <string name="qa_preferences_link_previews">preferences-option-link-previews</string>
+    <string name="qa_preferences_incognito_keyboard">preferences-option-incognito-keyboard</string>
+    <string name="qa_preferences_trim_threads">preferences-option-trim-threads</string>
+    <string name="qa_preferences_send_with_enter">preferences-option-send-with-enter</string>
+    <string name="qa_preferences_autoplay_audio">preferences-option-autoplay-audio</string>
+    <string name="qa_preferences_option_blocked_contacts">preferences-option-blocked-contacts</string>
+    <string name="qa_preferences_option_notification_privacy">preferences-option-notification-privacy</string>
+    <string name="qa_preferences_ringtone">preferences-option-ringtone</string>
+    <string name="qa_preferences_navigate_device_settings">preferences-option-navigate-device-settings</string>
+    <string name="qa_preferences_vibrate">preferences-option-vibrate</string>
+    <string name="qa_preferences_sound_when_app_is_open">preferences-option-sound-when-app-is-open</string>
+    <string name="qa_preferences_whitelist">preferences-option-whitelist</string>
+    <string name="qa_preferences_enable_push">preferences-option-enable-push</string>
+    <string name="qa_preferences_dialog_enable">preferences-dialog-option-enable</string>
+    <string name="qa_preferences_dialog_cancel">preferences-dialog-option-cancel</string>
 
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>

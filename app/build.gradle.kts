@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.plugin.parcelize)
@@ -14,6 +13,7 @@ plugins {
     alias(libs.plugins.google.services)
 
     id("generate-ip-country-data")
+    id("local-snode-pool")
     id("rename-apk")
     id("witness")
 }
@@ -25,8 +25,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 434
-val canonicalVersionName = "1.30.1"
+val canonicalVersionCode = 436
+val canonicalVersionName = "1.30.3"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -85,6 +85,8 @@ kotlin {
     }
 }
 
+val testJvmAgent = configurations.create("mockitoAgent")
+
 android {
     namespace = "network.loki.messenger"
 
@@ -132,6 +134,13 @@ android {
         buildConfigField("int", "CONTENT_PROXY_PORT", "443")
         buildConfigField("String", "USER_AGENT", "\"OWA\"")
         buildConfigField("int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode")
+
+        buildConfigField("org.thoughtcrime.securesms.pro.ProBackendConfig", "PRO_BACKEND_DEV", """
+            new org.thoughtcrime.securesms.pro.ProBackendConfig(
+                "https://pro-backend-dev.getsession.org",
+                "fc947730f49eb01427a66e050733294d9e520e545c7a27125a780634e0860a27"
+            )
+        """.trimIndent())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
@@ -194,30 +203,32 @@ android {
         }
     }
 
+    testBuildType = "qa"
+
     sourceSets {
         getByName("test").apply {
-            java.srcDirs("$projectDir/src/sharedTest/java")
-            resources.srcDirs("$projectDir/src/main/assets")
+            kotlin.directories += "$projectDir/src/sharedTest/java"
+            resources.directories += "$projectDir/src/main/assets"
         }
 
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
-            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+            maybeCreate(variant).kotlin.directories += "$firebaseCommonDir/kotlin"
         }
 
         val nonPlayCommonDir = "src/nonPlayCommon"
         nonPlayVariants.forEach { variant ->
             maybeCreate(variant).apply {
-                java.srcDirs("$nonPlayCommonDir/kotlin")
-                resources.srcDirs("$nonPlayCommonDir/resources")
+                kotlin.directories += "$nonPlayCommonDir/kotlin"
+                resources.directories += "$nonPlayCommonDir/resources"
             }
         }
 
         val nonDebugDir = "src/nonDebug"
         nonDebugBuildTypes.forEach { buildType ->
             maybeCreate(buildType).apply {
-                java.srcDirs("$nonDebugDir/kotlin")
-                resources.srcDirs("$nonDebugDir/resources")
+                kotlin.directories += "$nonDebugDir/kotlin"
+                resources.directories += "$nonDebugDir/resources"
             }
         }
     }
@@ -288,6 +299,9 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.jvmArgs("-javaagent:${testJvmAgent.asPath}")
+        }
     }
 
     lint {
@@ -316,6 +330,8 @@ android {
 
     testNamespace = "network.loki.messenger.test"
 }
+
+
 
 dependencies {
     implementation(project(":content-descriptions"))
@@ -390,21 +406,13 @@ dependencies {
     implementation(libs.copper.flow)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.guava)
-    implementation(libs.kovenant)
-    implementation(libs.kovenant.android)
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
 
-    if (hasIncludedLibSessionUtilProject) {
-        implementation(
-            group = libs.libsession.util.android.get().group,
-            name = libs.libsession.util.android.get().name,
-            version = "dev-snapshot"
-        )
-    } else {
-        implementation(libs.libsession.util.android)
-    }
+    // If libsession_util project is included into the build, use that, otherwise use the published version
+    findProject(":libsession-util-android")?.let(::implementation)
+        ?: implementation(libs.libsession.util.android)
 
     implementation(libs.kryo)
     testImplementation(libs.junit)
@@ -423,8 +431,14 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.truth)
     testImplementation(libs.truth)
+    testImplementation(libs.androidx.sqlite.framework)
     androidTestImplementation(libs.truth)
     testRuntimeOnly(libs.mockito.core)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlin.test)
+
+    // Pull in appropriate JVM agents for unit test
+    testJvmAgent(libs.mockito.core) { isTransitive = false }
 
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.contrib)
@@ -438,7 +452,6 @@ dependencies {
     androidTestUtil(libs.androidx.orchestrator)
 
     testImplementation(libs.robolectric)
-    testImplementation(libs.robolectric.shadows.multidex)
     testImplementation(libs.conscrypt.openjdk.uber)
     testImplementation(libs.turbine)
 

@@ -1,44 +1,41 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.SelectContactsViewModel
-import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.CloseFooter
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ContactItemClick
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.RemoveSearchState
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchFocusChange
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchQueryChange
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ShowSendInviteDialog
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ToggleFooter
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.DismissSendInviteDialog
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.SearchBar
-import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -47,29 +44,24 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
-
 @Composable
 fun InviteContactsScreen(
-    viewModel: SelectContactsViewModel,
-    onDoneClicked: () -> Unit,
+    viewModel: InviteMembersViewModel,
+    onDoneClicked: (shareHistory: Boolean) -> Unit,
     onBack: () -> Unit,
-    banner: @Composable () -> Unit = {}
+    banner: @Composable () -> Unit = {},
+    forCommunity: Boolean = false,
 ) {
-    val footerData by viewModel.collapsibleFooterState.collectAsState()
-
     InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
-        onContactItemClicked = viewModel::onContactItemClicked,
+        uiState = viewModel.uiState.collectAsState().value,
         searchQuery = viewModel.searchQuery.collectAsState().value,
-        onSearchQueryChanged = viewModel::onSearchQueryChanged,
-        onSearchQueryClear = { viewModel.onSearchQueryChanged("") },
+        hasContacts = viewModel.hasContacts.collectAsState().value,
         onDoneClicked = onDoneClicked,
         onBack = onBack,
         banner = banner,
-        data = footerData,
-        onToggleFooter = viewModel::toggleFooter,
-        onCloseFooter = viewModel::clearSelection
-
+        sendCommand = viewModel::sendCommand,
+        forCommunity = forCommunity
     )
 }
 
@@ -77,86 +69,95 @@ fun InviteContactsScreen(
 @Composable
 fun InviteContacts(
     contacts: List<ContactItem>,
-    onContactItemClicked: (address: Address) -> Unit,
+    uiState: InviteMembersViewModel.UiState,
     searchQuery: String,
-    onSearchQueryChanged: (String) -> Unit,
-    onSearchQueryClear: () -> Unit,
-    onDoneClicked: () -> Unit,
+    hasContacts: Boolean,
+    onDoneClicked: (shareHistory: Boolean) -> Unit,
     onBack: () -> Unit,
     banner: @Composable () -> Unit = {},
-    data: SelectContactsViewModel.CollapsibleFooterState,
-    onToggleFooter: () -> Unit,
-    onCloseFooter: () -> Unit,
+    sendCommand: (command: InviteMembersViewModel.Commands) -> Unit,
+    forCommunity: Boolean = false
 ) {
+
+    val searchFocused = uiState.isSearchFocused
+    val isLandscape = getAdaptiveInfo().isLandscape
 
     val trayItems = listOf(
         CollapsibleFooterItemData(
             label = GetString(LocalResources.current.getString(R.string.membersInvite)),
             buttonLabel = GetString(LocalResources.current.getString(R.string.membersInviteTitle)),
             isDanger = false,
-            onClick = { onDoneClicked() }
+            onClick = {
+                if (forCommunity) onDoneClicked(false) // Community does not need the dialog
+                else sendCommand(ShowSendInviteDialog)
+            }
         )
     )
 
-    Scaffold(
-        contentWindowInsets = WindowInsets.safeDrawing,
-        topBar = {
-            BackAppBar(
-                title = stringResource(id = R.string.membersInvite),
-                onBack = onBack,
-            )
-        },
-        bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                    .imePadding()
-            ) {
-                CollapsibleFooterAction(
-                    data = CollapsibleFooterActionData(
-                        title = data.footerActionTitle,
-                        collapsed = data.collapsed,
-                        visible = data.visible,
-                        items = trayItems
-                    ),
-                    onCollapsedClicked = onToggleFooter,
-                    onClosedClicked = onCloseFooter
-                )
-            }
+    val handleBack: () -> Unit = {
+        when {
+            searchFocused -> sendCommand(RemoveSearchState(false))
+            else -> onBack()
         }
-    ) { paddings ->
+    }
+
+    val header: @Composable (Modifier) -> Unit = { modifier ->
+        MembersSearchHeader(
+            searchFocused = searchFocused,
+            searchQuery = searchQuery,
+            onQueryChange = { sendCommand(SearchQueryChange(it)) },
+            onClear = { sendCommand(SearchQueryChange("")) },
+            onFocusChanged = { sendCommand(SearchFocusChange(it)) },
+            modifier = modifier
+        )
+    }
+
+
+    // Intercept system back
+    BackHandler(enabled = true) { handleBack() }
+
+    BaseManageGroupScreen(
+        title = stringResource(id = R.string.membersInvite),
+        onBack = handleBack,
+        enableCollapsingTopBarInLandscape = true,
+        collapseTopBar = searchFocused,
+        bottomBar = {
+            CollapsibleFooterBottomBar(
+                footer = CollapsibleFooterActionData(
+                    title = uiState.footer.footerActionTitle,
+                    collapsed = uiState.footer.collapsed,
+                    visible = uiState.footer.visible,
+                    items = trayItems
+                ),
+                onToggle = { sendCommand(ToggleFooter) },
+                onClose = { sendCommand(CloseFooter) }
+            )
+        }
+    ) { paddingValues ->
+
         Column(
             modifier = Modifier
-                .padding(paddings)
-                .consumeWindowInsets(paddings),
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues),
         ) {
-            banner()
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-            SearchBar(
-                query = searchQuery,
-                onValueChanged = onSearchQueryChanged,
-                onClear = onSearchQueryClear,
-                placeholder = stringResource(R.string.searchContacts),
-                modifier = Modifier
-                    .padding(horizontal = LocalDimensions.current.smallSpacing)
-                    .qaTag(R.string.AccessibilityId_groupNameSearch),
-                backgroundColor = LocalColors.current.backgroundSecondary,
-            )
+            if (!isLandscape && hasContacts) {
+                header(Modifier)
+            }
 
             val scrollState = rememberLazyListState()
 
-            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-            Box(modifier = Modifier.weight(1f)) {
-                if (contacts.isEmpty() && searchQuery.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                if (!hasContacts && searchQuery.isEmpty()) {
                     Text(
-                        text = stringResource(id = R.string.contactNone),
+                        text = stringResource(id = R.string.membersInviteNoContacts),
                         modifier = Modifier
-                            .padding(top = LocalDimensions.current.spacing)
                             .align(Alignment.TopCenter),
+                        textAlign = TextAlign.Center,
                         style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
                     )
                 } else {
@@ -164,14 +165,26 @@ fun InviteContacts(
                         state = scrollState,
                         contentPadding = PaddingValues(bottom = LocalDimensions.current.spacing),
                     ) {
+                        if (isLandscape && hasContacts) {
+                            stickyHeader { header(Modifier) }
+                        }
+
                         multiSelectMemberList(
                             contacts = contacts,
-                            onContactItemClicked = onContactItemClicked,
+                            onContactItemClicked = { address -> sendCommand(ContactItemClick(address)) },
                         )
                     }
                 }
             }
         }
+    }
+
+    if (uiState.inviteContactsDialog.visible) {
+        InviteMembersDialog(
+            state = uiState.inviteContactsDialog,
+            onInviteClicked = onDoneClicked,
+            onDismiss = {sendCommand(DismissSendInviteDialog) }
+        )
     }
 }
 
@@ -199,19 +212,19 @@ private fun PreviewSelectContacts() {
     PreviewTheme {
         InviteContacts(
             contacts = contacts,
-            onContactItemClicked = {},
-            searchQuery = "",
-            onSearchQueryChanged = {},
-            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.CollapsibleFooterState(
-                collapsed = false,
-                visible = true,
-                footerActionTitle = GetString("1 Contact Selected")
+            banner = {},
+            sendCommand = {},
+            uiState = InviteMembersViewModel.UiState(
+                footer = InviteMembersViewModel.CollapsibleFooterState(
+                    collapsed = false,
+                    visible = true,
+                    footerActionTitle = GetString("1 Contact Selected")
+                )
             ),
-            onToggleFooter = { },
-            onCloseFooter = { },
+            searchQuery = "",
+            hasContacts = true
         )
     }
 }
@@ -224,19 +237,19 @@ private fun PreviewSelectEmptyContacts() {
     PreviewTheme {
         InviteContacts(
             contacts = contacts,
-            onContactItemClicked = {},
-            searchQuery = "",
-            onSearchQueryChanged = {},
-            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.CollapsibleFooterState(
-                collapsed = true,
-                visible = false,
-                footerActionTitle = GetString("")
+            banner = {},
+            sendCommand = {},
+            uiState = InviteMembersViewModel.UiState(
+                footer = InviteMembersViewModel.CollapsibleFooterState(
+                    collapsed = true,
+                    visible = false,
+                    footerActionTitle = GetString("")
+                )
             ),
-            onToggleFooter = { },
-            onCloseFooter = { }
+            searchQuery = "Test",
+            hasContacts = false
         )
     }
 }
@@ -249,19 +262,19 @@ private fun PreviewSelectEmptyContactsWithSearch() {
     PreviewTheme {
         InviteContacts(
             contacts = contacts,
-            onContactItemClicked = {},
-            searchQuery = "Test",
-            onSearchQueryChanged = {},
-            onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
-            data = SelectContactsViewModel.CollapsibleFooterState(
-                collapsed = true,
-                visible = false,
-                footerActionTitle = GetString("")
+            banner = {},
+            sendCommand = {},
+            uiState = InviteMembersViewModel.UiState(
+                footer = InviteMembersViewModel.CollapsibleFooterState(
+                    collapsed = true,
+                    visible = false,
+                    footerActionTitle = GetString("")
+                )
             ),
-            onToggleFooter = { },
-            onCloseFooter = { }
+            searchQuery = "",
+            hasContacts = false
         )
     }
 }

@@ -1,11 +1,15 @@
 package org.thoughtcrime.securesms.groups
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,6 +20,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
@@ -27,6 +32,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -39,7 +45,7 @@ abstract class BaseGroupMembersViewModel(
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUtils: AvatarUtils,
-    private val recipientRepository: RecipientRepository,
+    private val recipientRepository: RecipientRepository
 ) : ViewModel() {
     private val groupId = groupAddress.accountId
 
@@ -74,7 +80,12 @@ abstract class BaseGroupMembersViewModel(
 
                     displayInfo to sortMembers(memberState, currentUserId)
                 }
-          }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    // Current group name (for header / text, if needed)
+    val groupName: StateFlow<String> = groupInfo
+        .map { it?.first?.name.orEmpty() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     private val mutableSearchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
@@ -92,10 +103,32 @@ abstract class BaseGroupMembersViewModel(
         .map { list -> list.filter { !it.showAsAdmin } }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    // Output : List of active members that can be promoted
+    val activeMembers: StateFlow<List<GroupMemberState>> = members
+        .map { list -> list.filter { !it.showAsAdmin && it.status == GroupMember.Status.INVITE_ACCEPTED } }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val hasActiveMembers: StateFlow<Boolean> =
+        groupInfo
+            .map { pair -> pair?.second.orEmpty().any { !it.showAsAdmin && it.status == GroupMember.Status.INVITE_ACCEPTED  } }
+            .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
     val hasNonAdminMembers: StateFlow<Boolean> =
         groupInfo
             .map { pair -> pair?.second.orEmpty().any { !it.showAsAdmin } }
             .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    // Output: List of only ADMINS
+    val adminMembers: StateFlow<List<GroupMemberState>> = members
+        .map { list ->
+            list.filter { it.showAsAdmin }
+                .sortedWith(
+                    compareBy<GroupMemberState> { adminOrder(it) }
+                        .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+                        .thenBy { it.accountId }
+                )
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun onSearchQueryChanged(query: String) {
         mutableSearchQuery.value = query
@@ -148,7 +181,8 @@ abstract class BaseGroupMembersViewModel(
             showProBadge = shouldShowProBadge,
             avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
-            statusLabel = getMemberLabel(status, context, amIAdmin)
+            statusLabel = getMemberLabel(status, context, amIAdmin),
+            isSelf = isMyself
         )
     }
 
@@ -188,6 +222,47 @@ abstract class BaseGroupMembersViewModel(
                 .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
                 .thenBy { it.accountId }
         )
+
+    fun showToast(text: String) {
+        Toast.makeText(
+            context, text, Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    /**
+     * Perform a group operation, such as inviting a member, removing a member.
+     *
+     * This is a helper function that encapsulates the common error handling and progress tracking.
+     */
+    protected fun performGroupOperationCore(
+        showLoading: Boolean = false,
+        setLoading: (Boolean) -> Unit = {},
+        errorMessage: ((Throwable) -> String?)? = null,
+        operation: suspend () -> Unit
+    ) {
+        viewModelScope.launch {
+            if (showLoading) setLoading(true)
+
+            // We need to use GlobalScope here because we don't want
+            // any group operation to be cancelled when the view model is cleared.
+            @Suppress("OPT_IN_USAGE")
+            val task = GlobalScope.async {
+                operation()
+            }
+
+            try {
+                task.await()
+            }catch (e: CancellationException) {
+                // Normal lifecycle cancellation - do not show toast but rethrow the exception
+                throw e
+            } catch (e: Throwable) {
+                val msg = errorMessage?.invoke(e) ?: context.getString(R.string.errorUnknown)
+                showToast(msg)
+            } finally {
+                if (showLoading) setLoading(false)
+            }
+        }
+    }
 }
 
 private fun stateOrder(status: GroupMember.Status?): Int = when (status) {
@@ -209,6 +284,18 @@ private fun stateOrder(status: GroupMember.Status?): Int = when (status) {
     else -> 6
 }
 
+private fun adminOrder(state: GroupMemberState): Int {
+    if (state.isSelf) return 7 // "You" always last
+    return when (state.status) {
+        GroupMember.Status.PROMOTION_FAILED -> 1
+        GroupMember.Status.PROMOTION_NOT_SENT -> 2
+        GroupMember.Status.PROMOTION_UNKNOWN -> 3
+        GroupMember.Status.PROMOTION_SENDING -> 4
+        GroupMember.Status.PROMOTION_SENT -> 5
+        else -> 6
+    }
+}
+
 data class GroupMemberState(
     val accountId: AccountId,
     val avatarUIData: AvatarUIData,
@@ -222,7 +309,8 @@ data class GroupMemberState(
     val canRemove: Boolean,
     val canPromote: Boolean,
     val clickable: Boolean,
-    val statusLabel: String
+    val statusLabel: String,
+    val isSelf: Boolean
 ) {
     val canEdit: Boolean get() = canRemove || canPromote || canResendInvite || canResendPromotion
 }

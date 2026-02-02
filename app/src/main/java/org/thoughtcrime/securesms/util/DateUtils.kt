@@ -199,19 +199,18 @@ class DateUtils @Inject constructor(
                 date1.hour == date2.hour
     }
 
-    fun getExpiryString(instant: Instant?): String {
-        if (instant == null) return context.getString(R.string.proExpired)
-
-        val now = Instant.now()
-        val remaining = Duration.between(now, instant)
-
+    fun getExpiryString(remaining: Duration): String {
         // Already expired
-        if (remaining.isNegative || remaining.isZero) {
+        if (remaining.isNegative) {
             return context.getString(R.string.proExpired)
         }
 
         val locale = context.resources.configuration.locales[0]
         val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
+
+        if (remaining.isZero) {
+            return format.format(Measure(0, MeasureUnit.SECOND))
+        }
 
         // Round any fractional second up to the next whole second
         val totalSeconds = remaining.seconds + if (remaining.nano > 0) 1 else 0
@@ -238,6 +237,13 @@ class DateUtils @Inject constructor(
                 format.format(Measure(minutes, MeasureUnit.MINUTE))
             }
         }
+    }
+
+    fun getExpiryString(instant: Instant?, now: Instant = Instant.now()): String {
+        if (instant == null) return context.getString(R.string.proExpired)
+        return getExpiryString(
+            remaining = Duration.between(now, instant)
+        )
     }
 
     // Helper methods
@@ -291,7 +297,12 @@ class DateUtils @Inject constructor(
         fun getLocalisedTimeDuration(context: Context, amount: Int, unit: MeasureUnit): String {
             val locale = context.resources.configuration.locales[0]
             val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE)
-            return format.format(Measure(amount, unit))
+            val rawString = format.format(Measure(amount, unit))
+
+            // capitalise duration
+            return rawString.replace(Regex("""(\d+\p{Z}+)(\p{L})""")) {
+                it.groupValues[1] + it.groupValues[2].uppercase(locale)
+            }
         }
 
         // Format a given timestamp with a specific pattern

@@ -10,6 +10,8 @@ import org.session.libsignal.utilities.ByteUtil;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import kotlin.collections.ArraysKt;
+
 public class DjbECPublicKey implements ECPublicKey {
 
   private final byte[] publicKey;
@@ -21,7 +23,7 @@ public class DjbECPublicKey implements ECPublicKey {
   @Override
   public byte[] serialize() {
     byte[] type = {Curve.DJB_TYPE};
-    return ByteUtil.combine(type, publicKey);
+    return ArraysKt.plus(type, publicKey);
   }
 
   @Override

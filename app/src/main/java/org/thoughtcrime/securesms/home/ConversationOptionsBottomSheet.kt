@@ -1,31 +1,41 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.core.widget.TextViewCompat
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ConversationOptionsBottomSheet(private val parentContext: Context) : BottomSheetDialogFragment(), View.OnClickListener {
+class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnClickListener {
     private lateinit var binding: FragmentConversationBottomSheetBinding
     //FIXME AC: Supplying a threadRecord directly into the field from an activity
     // is not the best idea. It doesn't survive configuration change.
@@ -40,6 +50,9 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
     @Inject lateinit var groupDatabase: GroupDatabase
     @Inject lateinit var loginStateRepository: LoginStateRepository
+    @Inject lateinit var groupManager : GroupManagerV2
+
+    @Inject lateinit var threadDatabase: ThreadDatabase
 
     var onViewDetailsTapped: (() -> Unit?)? = null
     var onCopyConversationId: (() -> Unit?)? = null
@@ -48,13 +61,50 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var onBlockTapped: (() -> Unit)? = null
     var onUnblockTapped: (() -> Unit)? = null
     var onDeleteTapped: (() -> Unit)? = null
+
+    var onAdminLeaveTapped: (() -> Unit)? = null
     var onMarkAllAsReadTapped: (() -> Unit)? = null
     var onMarkAsUnreadTapped : (() -> Unit)? = null
     var onNotificationTapped: (() -> Unit)? = null
     var onDeleteContactTapped: (() -> Unit)? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        binding = FragmentConversationBottomSheetBinding.inflate(LayoutInflater.from(parentContext), container, false)
+
+    companion object {
+        const val FRAGMENT_TAG = "ConversationOptionsBottomSheet"
+        private const val ARG_PUBLIC_KEY = "arg_public_key"
+        const val ARG_THREAD_ID = "arg_thread_id"
+        const  val ARG_ADDRESS = "arg_address"
+
+        fun newInstance(publicKey: String, threadId: Long, address: String): ConversationOptionsBottomSheet {
+            return ConversationOptionsBottomSheet().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_PUBLIC_KEY, publicKey)
+                    putLong(ARG_THREAD_ID, threadId)
+                    putString(ARG_ADDRESS, address)
+                }
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val args = requireArguments()
+        publicKey = requireNotNull(args.getString(ARG_PUBLIC_KEY))
+        requireNotNull(args.getLong(ARG_THREAD_ID))
+        val addressString = requireNotNull(args.getString(ARG_ADDRESS))
+        val address = Address.fromSerialized(addressString)
+        thread = requireNotNull(
+            threadDatabase.getThreads(listOf(address)).firstOrNull()
+        ) { "Thread not found for address: $addressString" }
+        group = groupDatabase.getGroup(thread.recipient.address.toString()).orNull()
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentConversationBottomSheetBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -68,6 +118,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.blockTextView -> onBlockTapped?.invoke()
             binding.unblockTextView -> onUnblockTapped?.invoke()
             binding.deleteTextView -> onDeleteTapped?.invoke()
+            binding.adminLeaveGroupTextView ->onAdminLeaveTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
             binding.markAsUnreadTextView -> onMarkAsUnreadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
@@ -116,6 +167,19 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.notificationsTextView.isVisible = !recipient.isLocalNumber && !isDeprecatedLegacyGroup
         binding.notificationsTextView.setOnClickListener(this)
 
+        // leave group for admin
+        binding.adminLeaveGroupTextView.apply {
+            if (recipient.isGroupV2Recipient) {
+                val accountId = AccountId(recipient.address.toString())
+                val group = configFactory.getGroup(accountId) ?: return
+
+                setOnClickListener(this@ConversationOptionsBottomSheet)
+
+                // Only visible if admin is one of many group admins
+                this.isVisible = group.hasAdminKey()
+                        && !groupManager.isCurrentUserLastAdmin(accountId)
+            }
+        }
         // delete
         binding.deleteTextView.apply {
             setOnClickListener(this@ConversationOptionsBottomSheet)
@@ -144,11 +208,13 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                 // groups and communities
                 recipient.isGroupV2Recipient -> {
                     val accountId = AccountId(recipient.address.toString())
-                    val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
+                    val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) }
+                            ?: return
+
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
-                    // or if the user is an admin
+                    // or if the user is the only admin (multi-admin groups)
                     // the button should read 'Delete' instead of 'Leave'
-                    if (!group.shouldPoll || group.hasAdminKey()) {
+                    if (!group.shouldPoll ||  group.hasAdminKey()) {
                         text = context.getString(R.string.delete)
                         contentDescription = context.getString(R.string.AccessibilityId_delete)
                         drawableStartRes = R.drawable.ic_trash_2
@@ -219,5 +285,26 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         super.onStart()
         val window = dialog?.window ?: return
         window.setDimAmount(0.6f)
+
+        val dlg = dialog as? BottomSheetDialog ?: return
+        val sheet = dlg.findViewById<android.widget.FrameLayout>(R.id.design_bottom_sheet)
+            ?: return
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            val behavior = BottomSheetBehavior.from(sheet)
+            behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(sheet) { _, insets ->
+            val cut = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or
+                        WindowInsetsCompat.Type.displayCutout()
+            )
+
+            binding.root.updatePadding(left = cut.left, right = cut.right)
+            insets
+        }
+
+        ViewCompat.requestApplyInsets(sheet)
     }
 }

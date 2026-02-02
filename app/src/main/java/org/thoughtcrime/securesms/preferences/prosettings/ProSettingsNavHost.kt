@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -66,7 +67,7 @@ fun ProSettingsNavHost(
     onBack: () -> Unit
 ){
     val navController = rememberNavController()
-    val navigator: UINavigator<ProSettingsDestination> = remember {
+    val navigator: UINavigator<ProSettingsDestination> = retain {
         UINavigator<ProSettingsDestination>()
     }
 
@@ -98,7 +99,7 @@ fun ProSettingsNavHost(
                     // handle the custom case of dealing with the post "choose plan confirmation"screen
                     ProNavHostCustomActions.ON_POST_PLAN_CONFIRMATION,
                     ProNavHostCustomActions.ON_POST_CANCELLATION -> {
-                        // we get here where we either hit back or hit the "ok" button on the plan confirmation screen
+                        // we get here when we either hit back or hit the "ok" button on the plan confirmation screen
                         // if we are in a sheet we need to close it
                         if (inSheet) {
                             onBack()

@@ -4,27 +4,17 @@ import android.content.Context
 import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableString
-import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Range
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import nl.komponents.kovenant.combine.Tuple2
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.open_groups.OpenGroup
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionEditable
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.RoundedBackgroundSpan
 import org.thoughtcrime.securesms.util.getAccentColor
 import java.util.regex.Pattern
@@ -84,7 +74,7 @@ object MentionUtilities {
         @Suppress("NAME_SHADOWING") var text = text
 
         var matcher = pattern.matcher(text)
-        val mentions = mutableListOf<Tuple2<Range<Int>, String>>()
+        val mentions = mutableListOf<Pair<Range<Int>, String>>()
         var startIndex = 0
 
         // Format the mention text
@@ -103,7 +93,7 @@ object MentionUtilities {
                 text = text.subSequence(0, matcher.start()).toString() + mention + text.subSequence(matcher.end(), text.length)
                 val endIndex = matcher.start() + 1 + userDisplayName.length
                 startIndex = endIndex
-                mentions.add(Tuple2(Range.create(matcher.start(), endIndex), publicKey))
+                mentions.add(Pair(Range.create(matcher.start(), endIndex), publicKey))
 
                 matcher = pattern.matcher(text)
                 if (!matcher.find(startIndex)) { break }

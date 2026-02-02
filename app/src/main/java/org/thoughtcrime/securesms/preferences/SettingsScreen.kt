@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -42,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -65,6 +67,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import org.session.libsession.network.model.PathStatus
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -75,7 +78,26 @@ import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ClearData
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAnimatedProCTA
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideAvatarPickerOptions
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideClearDataDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideSimpleDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUrlDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.HideUsernameDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnAvatarDialogDismissed
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnDonateClicked
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnLinkCopied
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.OnLinkOpened
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.RemoveAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SaveAvatar
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.SetUsername
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAnimatedProCTA
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowAvatarDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowClearDataDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUrlDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.ShowUsernameDialog
+import org.thoughtcrime.securesms.preferences.SettingsViewModel.Commands.UpdateUsername
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProDataState
@@ -125,7 +147,6 @@ import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
-import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import org.thoughtcrime.securesms.util.State
@@ -193,7 +214,7 @@ fun Settings(
                 }
             )
         },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
         // MAIN SCREEN CONTENT
         Column(
@@ -297,7 +318,7 @@ fun Settings(
             // Buttons
             Buttons(
                 recoveryHidden = uiState.recoveryHidden,
-                hasPaths = uiState.hasPath,
+                pathStatus = uiState.pathStatus,
                 postPro = uiState.isPostPro,
                 proDataState = uiState.proDataState,
                 sendCommand = sendCommand
@@ -328,7 +349,7 @@ fun Settings(
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
 
         // DIALOGS AND SHEETS
@@ -389,11 +410,52 @@ fun Settings(
         }
 
         // Animated avatar CTA
-        if(uiState.showAnimatedProCTA){
-            AnimatedProCTA(
-                proSubscription = uiState.proDataState.type,
-                sendCommand = sendCommand
-            )
+        when(uiState.avatarCTAState){
+            is SettingsViewModel.AvatarCTAState.Pro -> {
+                SessionProCTA (
+                    title = stringResource(R.string.proActivated),
+                    badgeAtStart = true,
+                    textContent = {
+                        ProBadgeText(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.proAlreadyPurchased),
+                            textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                        )
+
+                        Spacer(Modifier.height(2.dp))
+
+                        // main message
+                        Text(
+                            modifier = Modifier
+                                .qaTag(R.string.qa_cta_body)
+                                .align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.proAnimatedDisplayPicture),
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+                    },
+                    content = {
+                        CTAAnimatedImages(
+                            heroImageBg = R.drawable.cta_hero_animated_bg,
+                            heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                        )
+                    },
+                    positiveButtonText = null,
+                    negativeButtonText = stringResource(R.string.close),
+                    onCancel = { sendCommand(HideAnimatedProCTA) }
+                )
+            }
+
+            is SettingsViewModel.AvatarCTAState.NonPro -> {
+                AnimatedProfilePicProCTA(
+                    expired = uiState.avatarCTAState.expired,
+                    onDismissRequest = { sendCommand(HideAnimatedProCTA) },
+                )
+            }
+
+            else -> {}
         }
 
         // donate confirmation
@@ -453,6 +515,7 @@ fun Settings(
                     DialogButtonData(
                         text = GetString(stringResource(id = R.string.save)),
                         enabled = uiState.usernameDialog.setEnabled,
+                        dismissOnClick = false,
                         onClick = { sendCommand(SetUsername) },
                         qaTag = stringResource(R.string.qa_settings_dialog_username_save),
                     ),
@@ -478,7 +541,7 @@ fun Settings(
 @Composable
 fun Buttons(
     recoveryHidden: Boolean,
-    hasPaths: Boolean,
+    pathStatus: PathStatus,
     postPro: Boolean,
     proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
@@ -589,7 +652,11 @@ fun Buttons(
                 }
                 Divider()
 
-                Crossfade(if (hasPaths) primaryGreen else primaryYellow, label = "path") {
+                Crossfade(when (pathStatus){
+                        PathStatus.BUILDING -> LocalColors.current.warning
+                        PathStatus.ERROR -> LocalColors.current.danger
+                        else -> primaryGreen
+                    }, label = "path") {
                     ItemButton(
                         modifier = Modifier.qaTag(R.string.qa_settings_item_path),
                         text = annotatedStringResource(R.string.onionRoutingPath),
@@ -675,7 +742,7 @@ fun ShowClearDataDialog(
     modifier: Modifier = Modifier,
     sendCommand: (SettingsViewModel.Commands) -> Unit
 ) {
-    var deleteOnNetwork by remember { mutableStateOf(false)}
+    var deleteOnNetwork by retain { mutableStateOf(false)}
     val context = LocalContext.current
 
     AlertDialog(
@@ -990,54 +1057,6 @@ fun AvatarDialog(
     )
 }
 
-@Composable
-fun AnimatedProCTA(
-    proSubscription: ProStatus,
-    sendCommand: (SettingsViewModel.Commands) -> Unit,
-){
-    if(proSubscription is ProStatus.Active) {
-        SessionProCTA (
-            title = stringResource(R.string.proActivated),
-            badgeAtStart = true,
-            textContent = {
-                ProBadgeText(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = stringResource(R.string.proAlreadyPurchased),
-                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                )
-
-                Spacer(Modifier.height(2.dp))
-
-                // main message
-                Text(
-                    modifier = Modifier
-                        .qaTag(R.string.qa_cta_body)
-                        .align(Alignment.CenterHorizontally),
-                    text = stringResource(R.string.proAnimatedDisplayPicture),
-                    textAlign = TextAlign.Center,
-                    style = LocalType.current.base.copy(
-                        color = LocalColors.current.textSecondary
-                    )
-                )
-            },
-            content = {
-                CTAAnimatedImages(
-                    heroImageBg = R.drawable.cta_hero_animated_bg,
-                    heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-                )
-            },
-            positiveButtonText = null,
-            negativeButtonText = stringResource(R.string.close),
-            onCancel = { sendCommand(HideAnimatedProCTA) }
-        )
-    } else {
-        AnimatedProfilePicProCTA(
-            proSubscription = proSubscription,
-            onDismissRequest = { sendCommand(HideAnimatedProCTA) },
-        )
-    }
-}
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @SuppressLint("UnusedContentLambdaTargetStateParameter")
 @Preview
@@ -1053,7 +1072,7 @@ private fun SettingsScreenPreview() {
                 showAvatarDialog = false,
                 showAvatarPickerOptionCamera = false,
                 showAvatarPickerOptions = false,
-                showAnimatedProCTA = false,
+                avatarCTAState = SettingsViewModel.AvatarCTAState.Hidden,
                 avatarData = AvatarUIData(
                     listOf(
                         AvatarUIElement(
@@ -1070,7 +1089,7 @@ private fun SettingsScreenPreview() {
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                hasPath = true,
+                pathStatus = PathStatus.READY,
                 version = "1.26.0",
             ),
             sendCommand = {},

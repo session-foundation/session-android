@@ -2,10 +2,12 @@ package org.thoughtcrime.securesms.pro
 
 import android.app.Application
 import androidx.collection.ArraySet
+import androidx.collection.arraySetOf
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -23,10 +26,10 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.time.delay
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.BackendRequests
@@ -35,48 +38,57 @@ import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVID
 import network.loki.messenger.libsession_util.pro.ProConfig
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.Util
 import network.loki.messenger.libsession_util.util.asSequence
+import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
-import org.thoughtcrime.securesms.pro.api.AddProPaymentRequest
-import org.thoughtcrime.securesms.pro.api.ProApiExecutor
+import org.thoughtcrime.securesms.pro.api.AddProPaymentApi
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
+import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.util.State
+import org.thoughtcrime.securesms.util.castAwayType
 import java.time.Duration
 import java.time.Instant
 import java.util.EnumSet
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class ProStatusManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
-    recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
-    private val apiExecutor: ProApiExecutor,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val addProPaymentApiFactory: AddProPaymentApi.Factory,
+    private val backendConfig: Provider<ProBackendConfig>,
     private val loginState: LoginStateRepository,
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
@@ -86,7 +98,15 @@ class ProStatusManager @Inject constructor(
 
     val proDataState: StateFlow<ProDataState> = loginState.flowWithLoggedInState {
         combine(
-            recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
+            configFactory.get().userConfigsChanged(onlyConfigTypes = arraySetOf(UserConfigType.USER_PROFILE))
+                .castAwayType()
+                .onStart { emit(Unit) }
+                .map {
+                    configFactory.get().withUserConfigs { configs ->
+                        configs.userProfile.getProFeatures().contains(ProProfileFeature.PRO_BADGE)
+                    }
+                }
+                .distinctUntilChanged(),
             proDetailsRepository.get().loadState,
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
                 .onStart { emit(Unit) }
@@ -97,14 +117,18 @@ class ProStatusManager @Inject constructor(
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
-        ){ shouldShowProBadge, proDetailsState, debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
+        ){ showProBadgePreference, proDetailsState,
+           debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
                 else -> {
                     // calculate the real refresh state here
                     when(proDetailsState){
-                        is ProDetailsRepository.LoadState.Loading -> State.Loading
+                        is ProDetailsRepository.LoadState.Loading -> {
+                            if(proDetailsState.waitingForNetwork) State.Error(Exception())
+                            else State.Loading
+                        }
                         is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
                         else -> State.Success(Unit)
                     }
@@ -113,10 +137,11 @@ class ProStatusManager @Inject constructor(
 
             if(!forceCurrentUserAsPro){
                 Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
+                val nowMs = snodeClock.currentTimeMillis()
 
                 ProDataState(
-                    type = proDetailsState.lastUpdated?.first?.toProStatus() ?: ProStatus.NeverSubscribed,
-                    showProBadge = shouldShowProBadge,
+                    type = proDetailsState.lastUpdated?.first?.toProStatus(nowMs) ?: ProStatus.NeverSubscribed,
+                    showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
             }// debug data
@@ -127,23 +152,25 @@ class ProStatusManager @Inject constructor(
                 ProDataState(
                     type = when(subscriptionState){
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
-                            validUntil = Instant.now() + Duration.ofDays(14),
+                            renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.THREE_MONTHS,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
-                            refundInProgress = false
+                            refundInProgress = false,
+                            inGracePeriod = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE_REFUNDING -> ProStatus.Active.AutoRenewing(
-                            validUntil = Instant.now() + Duration.ofDays(14),
+                            renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.THREE_MONTHS,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
-                            refundInProgress = true
+                            refundInProgress = true,
+                            inGracePeriod = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
-                            validUntil = Instant.now() + Duration.ofDays(2),
+                            renewingAt = Instant.now() + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
@@ -151,7 +178,7 @@ class ProStatusManager @Inject constructor(
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
-                            validUntil = Instant.now() + Duration.ofDays(40),
+                            renewingAt = Instant.now() + Duration.ofDays(40),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
@@ -159,15 +186,16 @@ class ProStatusManager @Inject constructor(
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
-                            validUntil = Instant.now() + Duration.ofDays(14),
+                            renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.ONE_MONTH,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
-                            refundInProgress = false
+                            refundInProgress = false,
+                            inGracePeriod = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
-                            validUntil = Instant.now() + Duration.ofDays(2),
+                            renewingAt = Instant.now() + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.ONE_MONTH,
                             providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
@@ -189,7 +217,7 @@ class ProStatusManager @Inject constructor(
                     },
 
                     refreshState = proDataRefreshState,
-                    showProBadge = shouldShowProBadge,
+                    showProBadge = showProBadgePreference,
                 )
             }
         }
@@ -282,6 +310,7 @@ class ProStatusManager @Inject constructor(
 
     }
 
+    @OptIn(FlowPreview::class)
     private suspend fun manageProDetailsRefreshScheduling() {
         postProLaunchStatus
             .collectLatest { postLaunch ->
@@ -300,52 +329,38 @@ class ProStatusManager @Inject constructor(
                         proDetailsRepository.get().loadState
                             .mapNotNull { it.lastUpdated?.first?.expiry }
                             .distinctUntilChanged()
-                            .mapLatest { expiry ->
-                                // Schedule a refresh 30seconds after access expiry
-                                val refreshTime = expiry.plusSeconds(30)
-
-                                val now = snodeClock.currentTime()
-                                if (now < refreshTime) {
-                                    val duration = Duration.between(now, refreshTime)
-                                    Log.d(
-                                        DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                        "Delaying ProDetails refresh until $refreshTime due to access expiry"
-                                    )
-                                    delay(duration)
+                            .transformLatest { expiry ->
+                                // Schedule a refresh for 30 seconds after access expiry
+                                if (snodeClock.delayUntil(expiry.plusSeconds(30))) {
+                                    emit("30 seconds after Access expiry reached")
                                 }
-
-                                "ProDetails expiry reached"
                             },
 
                         configFactory.get()
                             .watchUserProConfig()
                             .filterNotNull()
+                            .distinctUntilChanged()
                             .mapLatest { proConfig ->
                                 val expiry = Instant.ofEpochMilli(proConfig.proProof.expiryMs)
                                 // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
-                                val now = snodeClock.currentTime()
 
                                 val refreshTime =
                                     expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
 
-                                if (now < refreshTime) {
-                                    Log.d(
-                                        DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                        "Delaying ProDetails refresh until $refreshTime due to proof expiry"
-                                    )
-                                    delay(Duration.between(now, expiry))
-                                }
+                                snodeClock.delayUntil(refreshTime)
+                                "Pro proof expiry reached"
                             },
 
                         flowOf("App starting up")
-                    ).collect { refreshReason ->
-                        Log.d(
-                            DebugLogGroup.PRO_SUBSCRIPTION.label,
-                            "Scheduling ProDetails fetch due to: $refreshReason"
-                        )
+                    ).debounce(500.milliseconds)
+                        .collect { refreshReason ->
+                            Log.d(
+                                DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                "Scheduling ProDetails fetch due to: $refreshReason"
+                            )
 
-                        proDetailsRepository.get().requestRefresh()
-                    }
+                            proDetailsRepository.get().requestRefresh(force = true)
+                        }
                 } else {
                     FetchProDetailsWorker.cancel(application)
                 }
@@ -396,7 +411,8 @@ class ProStatusManager @Inject constructor(
      */
     fun getIncomingMessageMaxLength(message: VisibleMessage): Int {
         // if the debug is set, return that
-        if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
+        // of if we are in pre-pro world
+        if (prefs.forceIncomingMessagesAsPro() || !isPostPro()) return MAX_CHARACTER_PRO
 
         if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
             return MAX_CHARACTER_PRO
@@ -435,18 +451,23 @@ class ProStatusManager @Inject constructor(
     /**
      * Adds Pro features, if any, to an outgoing visible message
      */
-    fun addProFeatures(visibleMessage: VisibleMessage){
+    fun addProFeatures(message: Message) {
+        if (proDataState.value.type !is ProStatus.Active) {
+            return
+        }
+
         val proFeatures = ArraySet<ProFeature>()
 
         configFactory.get().withUserConfigs { configs ->
             proFeatures += configs.userProfile.getProFeatures().asSequence()
         }
 
-        if(Util.countCodepoints(visibleMessage.text.orEmpty()) > MAX_CHARACTER_REGULAR){
+        if (message is VisibleMessage &&
+                Util.countCodepoints(message.text.orEmpty()) > MAX_CHARACTER_REGULAR){
             proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
         }
 
-        visibleMessage.proFeatures = proFeatures
+        message.proFeatures = proFeatures
     }
 
     /**
@@ -466,14 +487,21 @@ class ProStatusManager @Inject constructor(
             try {
                 // 5s timeout as per PRD
                 val paymentResponse = withTimeout(5_000L) {
-                    apiExecutor.executeRequest(
-                        request = AddProPaymentRequest(
-                            googlePaymentToken = paymentId,
-                            googleOrderId = orderId,
-                            masterPrivateKey = keyData.seeded.proMasterPrivateKey,
-                            rotatingPrivateKey = rotatingKeyPair.secretKey.data
+                    runCatching {
+                        serverApiExecutor.execute(
+                            ServerApiRequest(
+                                proBackendConfig = backendConfig.get(),
+                                api = addProPaymentApiFactory.create(
+                                    googlePaymentToken = paymentId,
+                                    googleOrderId = orderId,
+                                    masterPrivateKey = keyData.seeded.proMasterPrivateKey,
+                                    rotatingPrivateKey = rotatingKeyPair.secretKey.data
+                                )
+                            )
                         )
-                    )
+                    }.getOrElse {
+                        ProApiResponse.Failure(AddPaymentErrorStatus.GenericError, emptyList())
+                    }
                 }
 
                 when (paymentResponse) {
@@ -491,7 +519,7 @@ class ProStatusManager @Inject constructor(
                             configs.userProfile.setProBadge(true)
                         }
                         // refresh the pro details
-                        proDetailsRepository.get().requestRefresh()
+                        proDetailsRepository.get().requestRefresh(force = true)
                     }
 
                     is ProApiResponse.Failure -> {

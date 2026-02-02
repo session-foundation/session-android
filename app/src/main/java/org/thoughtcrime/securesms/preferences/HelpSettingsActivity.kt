@@ -5,20 +5,39 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.stringResource
 import androidx.core.view.isInvisible
 import androidx.preference.Preference
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.components.ExportLogsDialog
+import org.thoughtcrime.securesms.ui.components.LogExporter
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.openUrl
+import org.thoughtcrime.securesms.ui.setThemedContent
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class HelpSettingsActivity: ScreenLockActionBarActivity() {
@@ -48,6 +67,70 @@ class HelpSettingsFragment: CorrectedPreferenceFragment() {
         private const val FEEDBACK_URL = "https://getsession.org/survey"
         private const val FAQ_URL      = "https://getsession.org/faq"
         private const val SUPPORT_URL  = "https://sessionapp.zendesk.com/hc/en-us"
+    }
+
+    private var composeView: ComposeView? = null
+
+    private var showExportLogDialog by mutableStateOf(false)
+
+    @Inject
+    lateinit var exporter: LogExporter
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        // We will wrap the existing screen in a framelayout in order to add custom compose content
+        val preferenceView = super.onCreateView(inflater, container, savedInstanceState)
+
+        val wrapper = FrameLayout(requireContext()).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        wrapper.addView(
+            preferenceView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+
+        composeView = ComposeView(requireContext())
+        wrapper.addView(
+            composeView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP
+            )
+        )
+
+        return wrapper
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        //set up compose content
+        composeView?.apply {
+            setViewCompositionStrategy(
+                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+            )
+            setThemedContent {
+                if(showExportLogDialog) {
+                    ExportLogsDialog(
+                        logExporter = exporter,
+                        onDismissRequest = {
+                            showExportLogDialog = false
+                        }
+                    )
+                }
+            }
+        }
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -112,7 +195,7 @@ class HelpSettingsFragment: CorrectedPreferenceFragment() {
                 Toast.makeText(c, txt, Toast.LENGTH_LONG).show()
             }
             .onAllGranted {
-                ShareLogsDialog(::updateExportButtonAndProgressBarUI).show(parentFragmentManager,"Share Logs Dialog")
+                showExportLogDialog = true
             }
             .execute()
     }

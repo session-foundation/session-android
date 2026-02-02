@@ -3,10 +3,10 @@ package org.session.libsession.messaging.sending_receiving
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.protocol.DecodedPro
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.KeyPair
@@ -28,7 +28,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.utilities.WebRtcUtils
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -39,9 +38,14 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
@@ -75,6 +79,8 @@ class ReceivedMessageProcessor @Inject constructor(
     private val visibleMessageHandler: Provider<VisibleMessageHandler>,
     private val blindMappingRepository: BlindMappingRepository,
     private val messageParser: MessageParser,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
@@ -130,6 +136,7 @@ class ReceivedMessageProcessor @Inject constructor(
         threadAddress: Address.Conversable,
         message: Message,
         proto: SessionProtos.Content,
+        pro: DecodedPro?,
     ) = withThreadLock(threadAddress) {
         // The logic to check if the message should be discarded due to being from a hidden contact.
         if (threadAddress is Address.Standard &&
@@ -149,9 +156,9 @@ class ReceivedMessageProcessor @Inject constructor(
             threadDatabase.getOrCreateThreadIdFor(threadAddress)
                 .also { context.threadIDs[threadAddress] = it }
         } else {
-            threadDatabase.getThreadIdIfExistsFor(threadAddress)
+            storage.getThreadId(threadAddress)
                 .also { id ->
-                    if (id == -1L) {
+                    if (id == null) {
                         log { "Dropping message for non-existing thread ${threadAddress.debugString}" }
                         return@withThreadLock
                     } else {
@@ -166,7 +173,8 @@ class ReceivedMessageProcessor @Inject constructor(
             is GroupUpdated -> groupMessageHandler.get().handleGroupUpdated(
                 message = message,
                 groupId = (threadAddress as? Address.Group)?.accountId,
-                proto = proto
+                proto = proto,
+                pro = pro,
             )
 
             is ExpirationTimerUpdate -> {
@@ -185,7 +193,7 @@ class ReceivedMessageProcessor @Inject constructor(
             is DataExtractionNotification -> handleDataExtractionNotification(message)
             is UnsendRequest -> handleUnsendRequest(message)
             is MessageRequestResponse -> messageRequestResponseHandler.get()
-                .handleExplicitRequestResponseMessage(context, message, proto)
+                .handleExplicitRequestResponseMessage(context, message, proto, pro)
 
             is VisibleMessage -> {
                 if (message.isSenderSelf &&
@@ -195,15 +203,18 @@ class ReceivedMessageProcessor @Inject constructor(
                     context.maxOutgoingMessageTimestamp = message.sentTimestamp!!
                 }
 
-                visibleMessageHandler.get().handleVisibleMessage(
-                    ctx = context,
-                    message = message,
-                    threadId = threadId,
-                    threadAddress = threadAddress,
-                    proto = proto,
-                    runThreadUpdate = false,
-                    runProfileUpdate = true,
-                )
+                threadId?.let {
+                    visibleMessageHandler.get().handleVisibleMessage(
+                        ctx = context,
+                        message = message,
+                        threadId = it,
+                        threadAddress = threadAddress,
+                        proto = proto,
+                        runThreadUpdate = false,
+                        runProfileUpdate = true,
+                        pro = pro,
+                    )
+                }
             }
 
             is CallMessage -> handleCallMessage(message)
@@ -217,7 +228,7 @@ class ReceivedMessageProcessor @Inject constructor(
         communityServerPubKeyHex: String,
         message: OpenGroupApi.DirectMessage
     ) {
-        val (message, proto) = messageParser.parseCommunityDirectMessage(
+        val parseResult = messageParser.parseCommunityDirectMessage(
             msg = message,
             currentUserId = context.currentUserId,
             currentUserEd25519PrivKey = context.currentUserEd25519KeyPair.secretKey.data,
@@ -225,14 +236,15 @@ class ReceivedMessageProcessor @Inject constructor(
             communityServerPubKeyHex = communityServerPubKeyHex,
         )
 
-        val threadAddress = message.senderOrSync.toAddress() as Address.Conversable
+        val threadAddress = parseResult.message.senderOrSync.toAddress() as Address.Conversable
 
         withThreadLock(threadAddress) {
             processSwarmMessage(
                 context = context,
                 threadAddress = threadAddress,
-                message = message,
-                proto = proto
+                message = parseResult.message,
+                proto = parseResult.proto,
+                pro = parseResult.pro
             )
         }
     }
@@ -243,7 +255,7 @@ class ReceivedMessageProcessor @Inject constructor(
         communityServerPubKeyHex: String,
         msg: OpenGroupApi.DirectMessage
     ) {
-        val (message, proto) = messageParser.parseCommunityDirectMessage(
+        val parseResult = messageParser.parseCommunityDirectMessage(
             msg = msg,
             currentUserId = context.currentUserId,
             currentUserEd25519PrivKey = context.currentUserEd25519KeyPair.secretKey.data,
@@ -260,8 +272,9 @@ class ReceivedMessageProcessor @Inject constructor(
             processSwarmMessage(
                 context = context,
                 threadAddress = threadAddress,
-                message = message,
-                proto = proto
+                message = parseResult.message,
+                proto = parseResult.proto,
+                pro = parseResult.pro
             )
         }
     }
@@ -275,15 +288,16 @@ class ReceivedMessageProcessor @Inject constructor(
             msg = message,
             currentUserId = context.currentUserId,
             currentUserBlindedIDs = context.getCurrentUserBlindedIDsByThread(threadAddress)
-        )?.let { (msg, proto) ->
+        )?.let { parseResult ->
             processSwarmMessage(
                 context = context,
                 threadAddress = threadAddress,
-                message = msg,
-                proto = proto
+                message = parseResult.message,
+                proto = parseResult.proto,
+                pro = parseResult.pro
             )
 
-            msg.id
+            parseResult.message.id
         }
 
         // For community, we have a different way of handling reaction, this is outside of
@@ -381,7 +395,7 @@ class ReceivedMessageProcessor @Inject constructor(
      * Return true if this message should result in the creation of a thread.
      */
     private fun shouldCreateThread(message: Message): Boolean {
-        return message is VisibleMessage
+        return message is VisibleMessage || message is GroupUpdated
     }
 
     private fun handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
@@ -443,9 +457,17 @@ class ReceivedMessageProcessor @Inject constructor(
         // send a /delete rquest for 1on1 messages
         if (messageType == MessageType.ONE_ON_ONE) {
             messageDataProvider.getServerHashForMessage(messageIdToDelete)?.let { serverHash ->
-                scope.launch(Dispatchers.IO) { // using scope as we are slowly migrating to coroutines but we can't migrate everything at once
+                scope.launch { // using scope as we are slowly migrating to coroutines but we can't migrate everything at once
                     try {
-                        SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = userAuth.accountId.hexString,
+                                api = deleteMessageApiFactory.create(
+                                    messageHashes = listOf(serverHash),
+                                    swarmAuth = userAuth
+                                )
+                            )
+                        )
                     } catch (e: Exception) {
                         Log.e("Loki", "Failed to delete message", e)
                     }
