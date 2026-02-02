@@ -137,7 +137,8 @@ class PromoteMembersViewModel @AssistedInject constructor(
         selected: Set<GroupMemberState>
     ): String {
         val count = selected.size
-        val firstMember = selected.firstOrNull()
+        val sortedMembers = selected.sortedBy { it.accountId }
+        val firstMember = sortedMembers.firstOrNull()
 
         val body: CharSequence = when (count) {
             1 -> {
@@ -147,7 +148,7 @@ class PromoteMembersViewModel @AssistedInject constructor(
             }
 
             2 -> {
-                val secondMember = selected.elementAtOrNull(1)?.name
+                val secondMember = sortedMembers.elementAtOrNull(1)?.name
                 Phrase.from(context, R.string.adminPromoteTwoDescription)
                     .put(NAME_KEY, firstMember?.name)
                     .put(OTHER_NAME_KEY, secondMember)
