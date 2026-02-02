@@ -10,7 +10,10 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.offset
@@ -61,6 +64,7 @@ import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
@@ -91,6 +95,7 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.ui.PathDot
+import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -325,6 +330,33 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up empty state view
         binding.emptyStateContainer.setThemedContent {
             EmptyView(isNewAccount)
+        }
+
+        // setup the compose content for the mini player
+        binding.miniPlayer.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setThemedContent {
+                val playbackState by homeViewModel.audioPlaybackState.collectAsStateWithLifecycle()
+                val active = playbackState as? AudioPlaybackState.Active
+
+                AnimatedVisibility(
+                    visible = active != null,
+                    enter = slideInVertically(initialOffsetY = { -it }),
+                    exit = slideOutVertically(targetOffsetY = { -it })
+                ) {
+                    active?.let {
+                        AudioMiniPlayer(
+                            audio = it,
+                            onPlayerTap = {
+                                //todo AUDIO scroll to message
+                            },
+                            onPlayPause = homeViewModel::togglePlayPause,
+                            onPlaybackSpeedToggle = homeViewModel::cyclePlaybackSpeed,
+                            onClose = homeViewModel::stopAudio
+                        )
+                    }
+                }
+            }
         }
 
         // set the compose dialog content
