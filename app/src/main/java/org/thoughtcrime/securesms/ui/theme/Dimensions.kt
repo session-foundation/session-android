@@ -46,4 +46,11 @@ data class Dimensions(
     val maxContentWidth: Dp = 410.dp,
     val maxDialogWidth: Dp = 560.dp,
     val maxTooltipWidth: Dp = 280.dp,
+
+    val minContentSizeSmall: Dp = 60.dp,
+    val maxContentSizeSmall: Dp = 420.dp,
+    val minContentSize: Dp = 80.dp,
+    val maxContentSize: Dp = 520.dp,
+    val minContentSizeMedium: Dp = 160.dp,
+    val maxContentSizeMedium: Dp = 620.dp
 )
