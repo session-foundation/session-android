@@ -379,7 +379,7 @@ fun BaseManageGroupScreen(
             )
         },
         bottomBar = bottomBar,
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
     ) { paddingValues ->
         content(paddingValues)
     }
