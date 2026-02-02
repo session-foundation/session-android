@@ -15,8 +15,4 @@ public class NotificationPrivacyPreference {
   public boolean isDisplayMessage() {
     return "all".equals(preference);
   }
-
-  public String getPreference() {
-    return this.preference;
-  }
 }
