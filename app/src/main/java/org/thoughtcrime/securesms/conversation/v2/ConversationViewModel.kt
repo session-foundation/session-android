@@ -182,6 +182,8 @@ class ConversationViewModel @AssistedInject constructor(
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
+    val audioPlaybackState = audioPlaybackManager.playbackState
+
     val threadIdFlow: StateFlow<Long?> =
         storage.getThreadId(address)
             ?.let { MutableStateFlow(it) }
@@ -1524,6 +1526,18 @@ class ConversationViewModel @AssistedInject constructor(
                 // being able to send messages in these conversations.
             }
         }
+    }
+
+    fun stopAudio(){
+        audioPlaybackManager.stop()
+    }
+
+    fun togglePlayPause(){
+        audioPlaybackManager.togglePlayPause()
+    }
+
+    fun cyclePlaybackSpeed(){
+        audioPlaybackManager.cyclePlaybackSpeed()
     }
 
     @AssistedFactory

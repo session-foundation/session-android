@@ -89,7 +89,7 @@ class AudioPlaybackManager @Inject constructor(
 
                 currentPlayable = playable
 
-                _playbackState.value = AudioPlaybackState.Loading(
+                _playbackState.value = AudioPlaybackState.Active.Loading(
                     playable = playable,
                     playbackSpeed = saved.playbackSpeed
                 )
@@ -327,7 +327,7 @@ class AudioPlaybackManager @Inject constructor(
         }
 
         _playbackState.value = when {
-            c.isPlaying -> AudioPlaybackState.Playing(
+            c.isPlaying -> AudioPlaybackState.Active.Playing(
                 playable,
                 position,
                 duration,
@@ -336,7 +336,7 @@ class AudioPlaybackManager @Inject constructor(
                 buffering
             )
 
-            c.playbackState == Player.STATE_READY || forceEnded -> AudioPlaybackState.Paused(
+            c.playbackState == Player.STATE_READY || forceEnded -> AudioPlaybackState.Active.Paused(
                 playable,
                 position,
                 duration,
@@ -345,7 +345,7 @@ class AudioPlaybackManager @Inject constructor(
                 buffering
             )
 
-            else -> AudioPlaybackState.Loading(
+            else -> AudioPlaybackState.Active.Loading(
                 playable,
                 cached.playbackSpeed
             )
@@ -356,9 +356,9 @@ class AudioPlaybackManager @Inject constructor(
         return playbackState
             .map { state ->
                 val isActive = when (state) {
-                    is AudioPlaybackState.Playing -> state.playable.messageId == playable.messageId
-                    is AudioPlaybackState.Paused -> state.playable.messageId == playable.messageId
-                    is AudioPlaybackState.Loading -> state.playable.messageId == playable.messageId
+                    is AudioPlaybackState.Active.Playing -> state.playable.messageId == playable.messageId
+                    is AudioPlaybackState.Active.Paused -> state.playable.messageId == playable.messageId
+                    is AudioPlaybackState.Active.Loading -> state.playable.messageId == playable.messageId
                     else -> false
                 }
 
@@ -367,7 +367,7 @@ class AudioPlaybackManager @Inject constructor(
                 } else {
                     val saved = getSavedState(playable.messageId)
                     if (saved.positionMs > 0) {
-                        AudioPlaybackState.Paused(
+                        AudioPlaybackState.Active.Paused(
                             playable,
                             saved.positionMs,
                             playable.durationMs,

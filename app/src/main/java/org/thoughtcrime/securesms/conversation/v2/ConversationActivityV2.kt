@@ -34,6 +34,9 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -48,6 +51,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -129,6 +133,7 @@ import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
+import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.recordAudio
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.components.TypingStatusSender
@@ -202,6 +207,7 @@ import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.ConversationAppBar
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -608,6 +614,33 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         dismissReactionsDialog()
                     }
                 )
+            }
+        }
+
+        // setup the compose content for the mini player
+        binding.miniPlayer.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setThemedContent {
+                val playbackState by viewModel.audioPlaybackState.collectAsStateWithLifecycle()
+                val active = playbackState as? AudioPlaybackState.Active
+
+                AnimatedVisibility(
+                    visible = active != null,
+                    enter = slideInVertically(initialOffsetY = { -it }),
+                    exit = slideOutVertically(targetOffsetY = { -it })
+                ) {
+                    active?.let {
+                        AudioMiniPlayer(
+                            audio = it,
+                            onPlayerTap = {
+                                //todo AUDIO scroll to message
+                            },
+                            onPlayPause = viewModel::togglePlayPause,
+                            onPlaybackSpeedToggle = viewModel::cyclePlaybackSpeed,
+                            onClose = viewModel::stopAudio
+                        )
+                    }
+                }
             }
         }
 

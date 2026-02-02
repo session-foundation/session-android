@@ -18,32 +18,41 @@ sealed class AudioPlaybackState(
 
     data object Idle : AudioPlaybackState(1f)
 
-    data class Loading(
-        val playable: PlayableAudio,
-        override val playbackSpeed: Float
-    ) : AudioPlaybackState(playbackSpeed)
+    sealed class Active(
+        open val playable: PlayableAudio,
+        playbackSpeed: Float
+    ) : AudioPlaybackState(playbackSpeed) {
 
-    data class Playing(
-        val playable: PlayableAudio,
-        val positionMs: Long,
-        val durationMs: Long,
-        val bufferedPositionMs: Long,
-        override val playbackSpeed: Float,
-        val isBuffering: Boolean
-    ) : AudioPlaybackState(playbackSpeed)
+        fun senderOrFile() = playable.senderName ?: playable.filename
 
-    data class Paused(
-        val playable: PlayableAudio,
-        val positionMs: Long,
-        val durationMs: Long,
-        val bufferedPositionMs: Long,
-        override val playbackSpeed: Float,
-        val isBuffering: Boolean
-    ) : AudioPlaybackState(playbackSpeed)
 
-    data class Error(
-        val playable: PlayableAudio,
-        val message: String,
-        override val playbackSpeed: Float
-    ) : AudioPlaybackState(playbackSpeed)
+        data class Loading(
+            override val playable: PlayableAudio,
+            override val playbackSpeed: Float
+        ) : Active(playable, playbackSpeed)
+
+        data class Playing(
+            override val playable: PlayableAudio,
+            val positionMs: Long,
+            val durationMs: Long,
+            val bufferedPositionMs: Long,
+            override val playbackSpeed: Float,
+            val isBuffering: Boolean
+        ) : Active(playable, playbackSpeed)
+
+        data class Paused(
+            override val playable: PlayableAudio,
+            val positionMs: Long,
+            val durationMs: Long,
+            val bufferedPositionMs: Long,
+            override val playbackSpeed: Float,
+            val isBuffering: Boolean
+        ) : Active(playable, playbackSpeed)
+
+        data class Error(
+            override val playable: PlayableAudio,
+            val message: String,
+            override val playbackSpeed: Float
+        ) : Active(playable, playbackSpeed)
+    }
 }

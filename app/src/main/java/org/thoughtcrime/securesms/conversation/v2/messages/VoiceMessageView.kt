@@ -33,6 +33,11 @@ class VoiceMessageView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : RelativeLayout(context, attrs, defStyleAttr) {
 
+    //todo AUDIO need to add the auto playback of consecutive audio messages
+    //todo AUDIO can I retain the UI as the mini player slides up?
+    //todo AUDIO need to counter the height of the mini player
+    //todo AUDIO add scroll to message on mini player click
+
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
 
     private val binding by lazy { ViewVoiceMessageBinding.bind(this) }
@@ -187,24 +192,24 @@ class VoiceMessageView @JvmOverloads constructor(
                 updateSeekBar(0, 0) // Reset
                 renderIcon()
             }
-            is AudioPlaybackState.Loading -> {
+            is AudioPlaybackState.Active.Loading -> {
                 isPlaying = false
                 binding.voiceMessageViewLoader.isVisible = true
                 renderIcon()
             }
-            is AudioPlaybackState.Playing -> {
+            is AudioPlaybackState.Active.Playing -> {
                 isPlaying = true
                 binding.voiceMessageViewLoader.isVisible = state.isBuffering
                 updateSeekBar(state.positionMs, state.durationMs)
                 renderIcon()
             }
-            is AudioPlaybackState.Paused -> {
+            is AudioPlaybackState.Active.Paused -> {
                 isPlaying = false
                 binding.voiceMessageViewLoader.isVisible = state.isBuffering
                 updateSeekBar(state.positionMs, state.durationMs)
                 renderIcon()
             }
-            is AudioPlaybackState.Error -> {
+            is AudioPlaybackState.Active.Error -> {
                 isPlaying = false
                 binding.voiceMessageViewLoader.isVisible = false
                 renderIcon()
@@ -229,7 +234,7 @@ class VoiceMessageView @JvmOverloads constructor(
     }
 
     private fun renderIcon() {
-        val iconID = if (isPlaying) R.drawable.exo_icon_pause else R.drawable.exo_icon_play
+        val iconID = if (isPlaying) R.drawable.media3_icon_pause else R.drawable.media3_icon_play
         binding.voiceMessagePlaybackImageView.setImageResource(iconID)
     }
 }
