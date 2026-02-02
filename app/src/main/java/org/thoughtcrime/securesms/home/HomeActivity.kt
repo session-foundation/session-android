@@ -12,6 +12,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
@@ -94,6 +97,7 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
+import org.thoughtcrime.securesms.ui.LatchedAnimatedVisibility
 import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -339,22 +343,23 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 val playbackState by homeViewModel.audioPlaybackState.collectAsStateWithLifecycle()
                 val active = playbackState as? AudioPlaybackState.Active
 
-                AnimatedVisibility(
-                    visible = active != null,
-                    enter = slideInVertically(initialOffsetY = { -it }),
-                    exit = slideOutVertically(targetOffsetY = { -it })
-                ) {
-                    active?.let {
-                        AudioMiniPlayer(
-                            audio = it,
-                            onPlayerTap = {
-                                //todo AUDIO scroll to message
-                            },
-                            onPlayPause = homeViewModel::togglePlayPause,
-                            onPlaybackSpeedToggle = homeViewModel::cyclePlaybackSpeed,
-                            onClose = homeViewModel::stopAudio
-                        )
-                    }
+                LatchedAnimatedVisibility(
+                    value = active,
+                    enter = EnterTransition.None,
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = tween(durationMillis = 200, easing = FastOutLinearInEasing)
+                    )
+                ) { audio ->
+                    AudioMiniPlayer(
+                        audio = audio,
+                        onPlayerTap = {
+                            //todo AUDIO scroll to message
+                        },
+                        onPlayPause = homeViewModel::togglePlayPause,
+                        onPlaybackSpeedToggle = homeViewModel::cyclePlaybackSpeed,
+                        onClose = homeViewModel::stopAudio
+                    )
                 }
             }
         }

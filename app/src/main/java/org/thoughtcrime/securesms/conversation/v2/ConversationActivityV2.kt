@@ -35,6 +35,8 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.collectAsState
@@ -207,6 +209,7 @@ import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.ui.LatchedAnimatedVisibility
 import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.ConversationAppBar
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -624,22 +627,23 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val playbackState by viewModel.audioPlaybackState.collectAsStateWithLifecycle()
                 val active = playbackState as? AudioPlaybackState.Active
 
-                AnimatedVisibility(
-                    visible = active != null,
-                    enter = slideInVertically(initialOffsetY = { -it }),
-                    exit = slideOutVertically(targetOffsetY = { -it })
-                ) {
-                    active?.let {
-                        AudioMiniPlayer(
-                            audio = it,
-                            onPlayerTap = {
-                                //todo AUDIO scroll to message
-                            },
-                            onPlayPause = viewModel::togglePlayPause,
-                            onPlaybackSpeedToggle = viewModel::cyclePlaybackSpeed,
-                            onClose = viewModel::stopAudio
-                        )
-                    }
+                LatchedAnimatedVisibility(
+                    value = active,
+                    enter = slideInVertically { -it },
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = tween(durationMillis = 100, easing = FastOutLinearInEasing)
+                    )
+                ) { audio ->
+                    AudioMiniPlayer(
+                        audio = audio,
+                        onPlayerTap = {
+                            //todo AUDIO scroll to message
+                        },
+                        onPlayPause = viewModel::togglePlayPause,
+                        onPlaybackSpeedToggle = viewModel::cyclePlaybackSpeed,
+                        onClose = viewModel::stopAudio
+                    )
                 }
             }
         }
