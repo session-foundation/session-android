@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.plugin.parcelize)
@@ -201,30 +200,32 @@ android {
         }
     }
 
+    testBuildType = "qa"
+
     sourceSets {
         getByName("test").apply {
-            java.srcDirs("$projectDir/src/sharedTest/java")
-            resources.srcDirs("$projectDir/src/main/assets")
+            kotlin.directories += "$projectDir/src/sharedTest/java"
+            resources.directories += "$projectDir/src/main/assets"
         }
 
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
-            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+            maybeCreate(variant).kotlin.directories += "$firebaseCommonDir/kotlin"
         }
 
         val nonPlayCommonDir = "src/nonPlayCommon"
         nonPlayVariants.forEach { variant ->
             maybeCreate(variant).apply {
-                java.srcDirs("$nonPlayCommonDir/kotlin")
-                resources.srcDirs("$nonPlayCommonDir/resources")
+                kotlin.directories += "$nonPlayCommonDir/kotlin"
+                resources.directories += "$nonPlayCommonDir/resources"
             }
         }
 
         val nonDebugDir = "src/nonDebug"
         nonDebugBuildTypes.forEach { buildType ->
             maybeCreate(buildType).apply {
-                java.srcDirs("$nonDebugDir/kotlin")
-                resources.srcDirs("$nonDebugDir/resources")
+                kotlin.directories += "$nonDebugDir/kotlin"
+                resources.directories += "$nonDebugDir/resources"
             }
         }
     }
