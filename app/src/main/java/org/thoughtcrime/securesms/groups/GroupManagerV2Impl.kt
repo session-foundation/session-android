@@ -637,17 +637,15 @@ class GroupManagerV2Impl @Inject constructor(
                 .filterValues { it.isFailure }
                 .keys
                 .map { it.hexString }
-                .toSet()
 
             if (failedMembers.isNotEmpty()) {
-
                 val cause = promotedByMemberIDs.values
                     .firstOrNull { it.isFailure }?.exceptionOrNull()
                     ?: RuntimeException("Failed to promote ${failedMembers.size} member(s)")
 
                 throw GroupInviteException(
                     isPromotion = true,
-                    inviteeAccountIds = failedMembers.map { it },
+                    inviteeAccountIds = failedMembers,
                     groupName = groupName ?: "",
                     isReinvite = isRepromote,
                     underlying = cause
