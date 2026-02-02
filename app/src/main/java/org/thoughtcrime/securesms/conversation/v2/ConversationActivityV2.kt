@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.database.Cursor
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
@@ -34,13 +33,18 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -48,6 +52,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
@@ -57,7 +62,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -82,9 +86,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -237,8 +239,6 @@ import java.io.File
 import java.util.LinkedList
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.min
@@ -627,19 +627,30 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val playbackState by viewModel.audioPlaybackState.collectAsStateWithLifecycle()
                 val active = playbackState as? AudioPlaybackState.Active
 
+                // We need to calculate the player's height to make up for it with padding
+                // in the conversation's content (so that nothing is hidden behind the player)
+                var miniPlayerHeightPx by remember { mutableIntStateOf(0) }
+                val baseTopPaddingPx = remember { binding.conversationRecyclerView.paddingTop }
+
+                LaunchedEffect(active != null, miniPlayerHeightPx) {
+                    val inset = if (active != null) miniPlayerHeightPx else 0
+                    val recycler = binding.conversationRecyclerView
+                    recycler.updatePadding(top = baseTopPaddingPx + inset)
+                }
+
                 LatchedAnimatedVisibility(
                     value = active,
                     enter = slideInVertically { -it },
                     exit = slideOutVertically(
                         targetOffsetY = { -it },
                         animationSpec = tween(durationMillis = 100, easing = FastOutLinearInEasing)
-                    )
+                    ),
+                    animateEnterOnFirstAttach = false
                 ) { audio ->
                     AudioMiniPlayer(
+                        modifier = Modifier.onSizeChanged { miniPlayerHeightPx = it.height },
                         audio = audio,
-                        onPlayerTap = {
-                            //todo AUDIO scroll to message
-                        },
+                        onPlayerTap = { /* todo */ },
                         onPlayPause = viewModel::togglePlayPause,
                         onPlaybackSpeedToggle = viewModel::cyclePlaybackSpeed,
                         onClose = viewModel::stopAudio
