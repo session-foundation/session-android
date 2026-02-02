@@ -4,9 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
-import android.net.Uri
 import android.os.Bundle
-import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -24,7 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,16 +33,13 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.model.AudioCommands
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.model.MediaItemFactory
 import org.thoughtcrime.securesms.audio.model.PlayableAudio
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.util.getParcelableCompat
 import java.io.ByteArrayOutputStream
-import java.util.Arrays
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -56,7 +50,8 @@ class AudioPlaybackManager @Inject constructor(
 ) {
     private val TAG = "AudioPlaybackManager"
 
-    private val _playbackState = MutableStateFlow<AudioPlaybackState>(AudioPlaybackState.Idle)
+    private val _playbackState =
+        MutableStateFlow<AudioPlaybackState>(AudioPlaybackState.Idle)
     val playbackState: StateFlow<AudioPlaybackState> = _playbackState.asStateFlow()
 
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
@@ -66,74 +61,61 @@ class AudioPlaybackManager @Inject constructor(
     private var controller: MediaController? = null
 
     private var currentPlayable: PlayableAudio? = null
-    private var isScrubbing: Boolean = false
+    private var isScrubbing = false
 
-    // Cache to remember each audio's basic state
+    // Per-message intent cache
     data class SavedAudioState(
         val positionMs: Long = 0L,
         val playbackSpeed: Float = 1f
     )
 
-    private var pendingMediaId: String? = null
-    private var pendingStartPositionMs: Long = 0L
-
     private val playbackCache = ConcurrentHashMap<String, SavedAudioState>()
 
-    fun getSavedState(messageId: MessageId): SavedAudioState {
-        return playbackCache[messageId.serialize()] ?: SavedAudioState()
-    }
+    fun getSavedState(messageId: MessageId): SavedAudioState =
+        playbackCache[messageId.serialize()] ?: SavedAudioState()
 
     fun play(playable: PlayableAudio, startPositionMs: Long = -1L) {
         ensureController { c ->
             val currentId = c.currentMediaItem?.mediaId
+            val newId = playable.messageId.serialize()
 
-            // Changing tracks
-            if (currentId != playable.messageId.serialize()) {
-
-                // Save the state of the previous track before swapping currentPlayable
-                // If we don't do this here, the next updateFromController will attribute
-                // the old track's position to the new track's ID, or reset the old one.
+            if (currentId != newId) {
                 saveCurrentStateToCache()
 
-                val savedState = getSavedState(playable.messageId)
-                val finalPosition = if (startPositionMs >= 0) startPositionMs else savedState.positionMs
+                val saved = getSavedState(playable.messageId)
+                val startPos =
+                    if (startPositionMs >= 0) startPositionMs else saved.positionMs
 
                 currentPlayable = playable
-                _playbackState.value = AudioPlaybackState.Loading(playable)
+
+                _playbackState.value = AudioPlaybackState.Loading(
+                    playable = playable,
+                    playbackSpeed = saved.playbackSpeed
+                )
 
                 val item = MediaItemFactory.fromPlayable(playable)
 
-                // Record transition expectation BEFORE setMediaItem
-                pendingMediaId = item.mediaId
-                pendingStartPositionMs = finalPosition
-
-                c.setMediaItem(item, finalPosition)
-
-                if (savedState.playbackSpeed != c.playbackParameters.speed) {
-                    c.setPlaybackSpeed(savedState.playbackSpeed)
-                }
-
+                c.setMediaItem(item, startPos)
+                c.setPlaybackSpeed(saved.playbackSpeed)
                 c.prepare()
 
-                // Resolve richer metadata in background
+                // Resolve metadata asynchronously
                 scope.launch(Dispatchers.IO) {
-                    val betterMetadata = resolveMetadata(playable, item.mediaMetadata)
-                    if (betterMetadata != null) {
-                        val newItem = MediaItemFactory.withMetadata(item, betterMetadata)
-
+                    val better = resolveMetadata(playable, item.mediaMetadata)
+                    if (better != null) {
+                        val updated = MediaItemFactory.withMetadata(item, better)
                         withContext(Dispatchers.Main) {
-                            // Only replace if this item is still current
                             if (controller?.currentMediaItem?.mediaId == item.mediaId) {
                                 controller?.replaceMediaItem(
                                     controller!!.currentMediaItemIndex,
-                                    newItem
+                                    updated
                                 )
                             }
                         }
                     }
                 }
-            } else {
-                if (startPositionMs >= 0) c.seekTo(startPositionMs)
+            } else if (startPositionMs >= 0) {
+                c.seekTo(startPositionMs)
             }
 
             if (!c.isPlaying) c.play()
@@ -141,89 +123,63 @@ class AudioPlaybackManager @Inject constructor(
         }
     }
 
-    private fun updateFromController(forceEnded: Boolean = false, scrubOverridePositionMs: Long? = null) {
+    fun togglePlayPause() {
         val c = controller ?: return
-        val playable = currentPlayable ?: return
+        if (c.isPlaying) c.pause() else c.play()
+    }
 
-        if (c.currentMediaItem?.mediaId != playable.messageId.serialize()) return
+    fun pause() {
+        controller?.pause()
+    }
 
-        val duration = c.duration.coerceAtLeast(0L).let { d ->
-            if (d <= 0 && playable.durationMs > 0) playable.durationMs else d
+    fun stop() {
+        stopProgressTracking()
+        controller?.stop()
+        controller?.clearMediaItems()
+        currentPlayable = null
+        _playbackState.value = AudioPlaybackState.Idle
+    }
+
+    fun seekTo(positionMs: Long) {
+        controller?.seekTo(positionMs)
+        if (!isScrubbing) updateFromController()
+    }
+
+    fun setPlaybackSpeed(speed: Float) {
+        val p = currentPlayable ?: return
+        controller?.setPlaybackSpeed(speed)
+
+        val pos = controller?.currentPosition ?: 0L
+        playbackCache[p.messageId.serialize()] =
+            SavedAudioState(pos, speed)
+
+        updateFromController()
+    }
+
+    fun cyclePlaybackSpeed() {
+        val current = controller?.playbackParameters?.speed ?: 1f
+        val next = when (current) {
+            1f -> 1.5f
+            1.5f -> 2f
+            2f -> 0.5f
+            else -> 1f
         }
+        setPlaybackSpeed(next)
+    }
 
-        val playbackState = c.playbackState
-        val rawPosition = c.currentPosition.coerceAtLeast(0L)
+    fun isActive(messageId: MessageId): Boolean =
+        controller?.currentMediaItem?.mediaId == messageId.serialize()
 
-        // If we're mid-transition onto this item, clamp/override position until READY.
-        val isPendingThisItem = pendingMediaId == playable.messageId.serialize()
-        val position = when {
-            scrubOverridePositionMs != null -> scrubOverridePositionMs
-            forceEnded -> 0L
-            isPendingThisItem && playbackState != Player.STATE_READY -> pendingStartPositionMs
-            else -> rawPosition
-        }
+    fun beginScrub() {
+        isScrubbing = true
+        controller?.sendCustomCommand(AudioCommands.ScrubStart, Bundle.EMPTY)
+    }
 
-        // Clear pending once we are READY for that item (first stable state)
-        if (isPendingThisItem && playbackState == Player.STATE_READY) {
-            pendingMediaId = null
-        }
-
-        val speed = c.playbackParameters.speed
-        val buffered = c.bufferedPosition.coerceAtLeast(0L)
-        val buffering = playbackState == Player.STATE_BUFFERING
-        val isIdle = playbackState == Player.STATE_IDLE
-
-        // Only cache when stable AND not pending
-        val isStable = (playbackState == Player.STATE_READY || playbackState == Player.STATE_ENDED) && !isPendingThisItem
-        if (isStable) {
-            playbackCache[playable.messageId.serialize()] =
-                if (forceEnded) SavedAudioState(0L, speed) else SavedAudioState(position, speed)
-        }
-
-        _playbackState.value = when {
-            c.isPlaying -> AudioPlaybackState.Playing(
-                playable,
-                position,
-                duration,
-                buffered,
-                speed,
-                buffering
-            )
-
-            buffering && c.playWhenReady -> AudioPlaybackState.Playing(
-                playable,
-                position,
-                duration,
-                buffered,
-                speed,
-                true
-            )
-
-            playbackState == Player.STATE_READY || forceEnded -> AudioPlaybackState.Paused(
-                playable,
-                position,
-                duration,
-                buffered,
-                speed,
-                buffering
-            )
-
-            isIdle -> {
-                // when going idle the player resets the speed to 1 so we need to use the cached value, if any
-                val cachedSpeed = playbackCache[playable.messageId.serialize()]?.playbackSpeed ?: speed
-
-                AudioPlaybackState.Paused(
-                    playable,
-                    position,
-                    duration,
-                    buffered,
-                    cachedSpeed,
-                    false
-                )
-            }
-
-            else -> AudioPlaybackState.Loading(playable)
-        }
+    fun endScrub(finalPositionMs: Long) {
+        controller?.seekTo(finalPositionMs)
+        isScrubbing = false
+        controller?.sendCustomCommand(AudioCommands.ScrubStop, Bundle.EMPTY)
+        updateFromController()
     }
 
     /**
@@ -342,45 +298,81 @@ class AudioPlaybackManager @Inject constructor(
         return (result as? SuccessResult)?.image?.toBitmap()
     }
 
-    /**
-     * Helper to snapshot the current player state into the cache.
-     * Safe to call at any time.
-     */
-    private fun saveCurrentStateToCache() {
+    private fun updateFromController(forceEnded: Boolean = false) {
         val c = controller ?: return
-        val p = currentPlayable ?: return
+        val playable = currentPlayable ?: return
+        if (c.currentMediaItem?.mediaId != playable.messageId.serialize()) return
 
-        val position = c.currentPosition.coerceAtLeast(0L)
-        val speed = c.playbackParameters.speed
+        val duration =
+            c.duration.takeIf { it > 0 } ?: playable.durationMs.coerceAtLeast(0)
 
-        playbackCache[p.messageId.serialize()] = SavedAudioState(position, speed)
+        val position =
+            if (forceEnded) 0L else c.currentPosition.coerceAtLeast(0L)
+
+        val buffered = c.bufferedPosition.coerceAtLeast(0L)
+        val buffering = c.playbackState == Player.STATE_BUFFERING
+
+        val cached =
+            playbackCache[playable.messageId.serialize()] ?: SavedAudioState()
+
+        // Persist resume intent when stable
+        if (c.playbackState == Player.STATE_READY || c.playbackState == Player.STATE_ENDED) {
+            playbackCache[playable.messageId.serialize()] =
+                if (forceEnded) {
+                    SavedAudioState(0L, cached.playbackSpeed)
+                } else {
+                    SavedAudioState(position, cached.playbackSpeed)
+                }
+        }
+
+        _playbackState.value = when {
+            c.isPlaying -> AudioPlaybackState.Playing(
+                playable,
+                position,
+                duration,
+                buffered,
+                cached.playbackSpeed,
+                buffering
+            )
+
+            c.playbackState == Player.STATE_READY || forceEnded -> AudioPlaybackState.Paused(
+                playable,
+                position,
+                duration,
+                buffered,
+                cached.playbackSpeed,
+                buffering
+            )
+
+            else -> AudioPlaybackState.Loading(
+                playable,
+                cached.playbackSpeed
+            )
+        }
     }
 
-    /**
-     * Returns a Flow specific to this audio (message).
-     */
     fun observeMessageState(playable: PlayableAudio): Flow<AudioPlaybackState> {
-        return _playbackState
-            .map { globalState ->
-                val isGlobalActive = when (globalState) {
-                    is AudioPlaybackState.Playing -> globalState.playable.messageId == playable.messageId
-                    is AudioPlaybackState.Paused  -> globalState.playable.messageId == playable.messageId
-                    is AudioPlaybackState.Loading -> globalState.playable.messageId == playable.messageId
+        return playbackState
+            .map { state ->
+                val isActive = when (state) {
+                    is AudioPlaybackState.Playing -> state.playable.messageId == playable.messageId
+                    is AudioPlaybackState.Paused -> state.playable.messageId == playable.messageId
+                    is AudioPlaybackState.Loading -> state.playable.messageId == playable.messageId
                     else -> false
                 }
 
-                if (isGlobalActive) {
-                    globalState
+                if (isActive) {
+                    state
                 } else {
                     val saved = getSavedState(playable.messageId)
                     if (saved.positionMs > 0) {
                         AudioPlaybackState.Paused(
-                            playable = playable,
-                            positionMs = saved.positionMs,
-                            durationMs = playable.durationMs,
-                            bufferedPositionMs = 0,
-                            playbackSpeed = saved.playbackSpeed,
-                            isBuffering = false
+                            playable,
+                            saved.positionMs,
+                            playable.durationMs,
+                            0,
+                            saved.playbackSpeed,
+                            false
                         )
                     } else {
                         AudioPlaybackState.Idle
@@ -390,89 +382,28 @@ class AudioPlaybackManager @Inject constructor(
             .distinctUntilChanged()
     }
 
-    fun togglePlayPause() {
-        val c = controller ?: return
-        if (c.isPlaying) c.pause() else c.play()
-    }
-
-    fun pause() {
-        controller?.pause()
-    }
-
-    fun stop() {
-        stopProgressTracking()
-        controller?.stop()
-        controller?.clearMediaItems()
-        currentPlayable = null
-        _playbackState.value = AudioPlaybackState.Idle
-    }
-
-    fun seekTo(positionMs: Long) {
-        controller?.seekTo(positionMs)
-        if (!isScrubbing) updateFromController()
-    }
-
-    fun setPlaybackSpeed(speed: Float) {
-        controller?.setPlaybackSpeed(speed)
-        updateFromController()
-    }
-
-    fun cyclePlaybackSpeed() {
-        val c = controller ?: return
-        val current = c.playbackParameters.speed
-        val next = when (current) {
-            1f -> 1.5f
-            1.5f -> 2f
-            2f -> 0.5f
-            else -> 1f
-        }
-
-        setPlaybackSpeed(next)
-    }
-
-    fun isActive(messageId: MessageId): Boolean =
-        controller?.currentMediaItem?.mediaId == messageId.serialize()
-
-    fun beginScrub() {
-        isScrubbing = true
-        controller?.sendCustomCommand(AudioCommands.ScrubStart, Bundle.EMPTY)
-    }
-
-    fun endScrub(finalPositionMs: Long? = null) {
-        val c = controller ?: return
-        if (finalPositionMs != null) c.seekTo(finalPositionMs)
-
-        isScrubbing = false
-        controller?.sendCustomCommand(AudioCommands.ScrubStop, Bundle.EMPTY)
-        updateFromController()
-    }
-
-    fun release() {
-        stopProgressTracking()
-        controller?.removeListener(controllerListener)
-        controller = null
-        controllerFuture?.let { MediaController.releaseFuture(it) }
-        controllerFuture = null
-        currentPlayable = null
-        scope.cancel()
-    }
-
-    // Controller setup
-
     private fun ensureController(onReady: (MediaController) -> Unit) {
         controller?.let { onReady(it); return }
 
-        val token = SessionToken(context, ComponentName(context, AudioMediaService::class.java))
-        controllerFuture = MediaController.Builder(context, token).buildAsync().also { future ->
-            future.addListener({
-                try {
-                    controller = future.get().also { it.addListener(controllerListener) }
-                    onReady(controller!!)
-                } catch (e: Exception) {
-                    Log.w(TAG, "Failed to connect MediaController", e)
-                }
-            }, MoreExecutors.directExecutor())
-        }
+        val token = SessionToken(
+            context,
+            ComponentName(context, AudioMediaService::class.java)
+        )
+
+        controllerFuture = MediaController.Builder(context, token)
+            .buildAsync()
+            .also { future ->
+                future.addListener({
+                    try {
+                        controller = future.get().also {
+                            it.addListener(controllerListener)
+                        }
+                        onReady(controller!!)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to connect MediaController", e)
+                    }
+                }, MoreExecutors.directExecutor())
+            }
     }
 
     private val controllerListener = object : Player.Listener {
@@ -481,26 +412,12 @@ class AudioPlaybackManager @Inject constructor(
             if (!isScrubbing) updateFromController()
         }
 
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            val ended = playbackState == Player.STATE_ENDED
+        override fun onPlaybackStateChanged(state: Int) {
+            val ended = state == Player.STATE_ENDED
             if (!isScrubbing) updateFromController(forceEnded = ended)
             if (ended) stopProgressTracking()
         }
-
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            // If process was recreated, rebuild a minimal playable from the running MediaItem.
-            if (currentPlayable == null) {
-                currentPlayable = playableFromMediaItem(mediaItem)
-            }
-            if (!isScrubbing) updateFromController()
-        }
-
-        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-            Log.w(TAG, "ExoPlayer Error: ${error.errorCodeName}", error)
-        }
     }
-
-    // State mapping
 
     private fun startProgressTracking() {
         if (progressJob?.isActive == true) return
@@ -517,30 +434,12 @@ class AudioPlaybackManager @Inject constructor(
         progressJob = null
     }
 
-    private fun playableFromMediaItem(item: MediaItem?): PlayableAudio? {
-        if (item == null) return null
+    private fun saveCurrentStateToCache() {
+        val c = controller ?: return
+        val p = currentPlayable ?: return
+        val cached = playbackCache[p.messageId.serialize()] ?: SavedAudioState()
 
-        val extras = item.mediaMetadata.extras ?: return null
-
-        val thread: Address.Conversable = extras.getParcelableCompat<Address.Conversable>(
-            MediaItemFactory.EXTRA_THREAD_ADDRESS
-        ) ?: return null
-
-        val messageId: MessageId = extras.getParcelableCompat<MessageId>(
-            MediaItemFactory.EXTRA_MESSAGE_ID
-        ) ?: return null
-
-        val uri: Uri = item.localConfiguration?.uri
-            ?: return null
-
-        return PlayableAudio(
-            messageId = messageId,
-            uri = uri,
-            thread = thread,
-            isVoiceNote = extras.getBoolean(MediaItemFactory.EXTRA_IS_VOICE, false),
-            durationMs = extras.getLong(MediaItemFactory.EXTRA_DURATION_HINT, -1L),
-            senderName = extras.getString(MediaItemFactory.EXTRA_SENDER_NAME),
-            filename = extras.getString(MediaItemFactory.EXTRA_FILENAME, "")
-        )
+        playbackCache[p.messageId.serialize()] =
+            SavedAudioState(c.currentPosition.coerceAtLeast(0L), cached.playbackSpeed)
     }
 }

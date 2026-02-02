@@ -33,12 +33,6 @@ class VoiceMessageView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : RelativeLayout(context, attrs, defStyleAttr) {
 
-    //todo AUDIO rework loader
-    //todo AUDIO clicking other message's progress bar while not playing changes its value but then when playing that message the cached value is used - maybe we should set that value and play that message form there
-    //todo AUDIO press ripple of thumb isn't great on outgoing
-    //todo AUDIO pausing seems to reset playback speed value
-    //todo AUDIO
-
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
 
     private val binding by lazy { ViewVoiceMessageBinding.bind(this) }
@@ -85,13 +79,14 @@ class VoiceMessageView @JvmOverloads constructor(
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 val p = playable ?: return
+                val pos = seekBar?.progress?.toLong() ?: return
                 isUserScrubbing = false
 
                 if (audioPlaybackManager.isActive(p.messageId)) {
-                    seekBar?.let {
-                        // Commit the seek
-                        audioPlaybackManager.endScrub(it.progress.toLong())
-                    }
+                    audioPlaybackManager.endScrub(pos)
+                } else {
+                    // Scrubbing = intent to play from here
+                    audioPlaybackManager.play(p, startPositionMs = pos)
                 }
             }
         })
@@ -124,6 +119,8 @@ class VoiceMessageView @JvmOverloads constructor(
         binding.voiceMessageSpeedButton.backgroundTintList =
             ColorStateList.valueOf(ColorUtils.setAlphaComponent(buttonBgColor, 30))
 
+        binding.voiceMessageViewLoader.backgroundTintList = ColorStateList.valueOf(buttonActionColor)
+
         // Tint the SeekBar
         val tintList = ColorStateList.valueOf(buttonBgColor)
         binding.voiceMessageSeekBar.thumbTintList = tintList
@@ -145,9 +142,6 @@ class VoiceMessageView @JvmOverloads constructor(
         collectJob = null
         playable = null
         scope.coroutineContext.cancelChildren()
-        // Reset UI
-        binding.voiceMessageSeekBar.progress = 0
-        binding.voiceMessageSpeedButton.text = AudioPlaybackState.DEFAULT_PLAYBACK_SPEED_DISPLAY
         isUserScrubbing = false
     }
 

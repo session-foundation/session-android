@@ -39,8 +39,8 @@
 
             <ProgressBar
                 android:id="@+id/voiceMessageViewLoader"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:indeterminate="true"
                 android:indeterminateTint="@color/black"
