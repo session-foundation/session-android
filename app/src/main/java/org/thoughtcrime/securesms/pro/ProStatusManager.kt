@@ -40,6 +40,7 @@ import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.Util
 import network.loki.messenger.libsession_util.util.asSequence
+import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -441,7 +442,7 @@ class ProStatusManager @Inject constructor(
     /**
      * Adds Pro features, if any, to an outgoing visible message
      */
-    fun addProFeatures(visibleMessage: VisibleMessage) {
+    fun addProFeatures(message: Message) {
         if (proDataState.value.type !is ProStatus.Active) {
             return
         }
@@ -452,11 +453,12 @@ class ProStatusManager @Inject constructor(
             proFeatures += configs.userProfile.getProFeatures().asSequence()
         }
 
-        if (Util.countCodepoints(visibleMessage.text.orEmpty()) > MAX_CHARACTER_REGULAR){
+        if (message is VisibleMessage &&
+                Util.countCodepoints(message.text.orEmpty()) > MAX_CHARACTER_REGULAR){
             proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
         }
 
-        visibleMessage.proFeatures = proFeatures
+        message.proFeatures = proFeatures
     }
 
     /**
