@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.preferences.compose
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -51,23 +50,20 @@ private fun ConversationsPreference(
                 modifier = Modifier,
                 title = GetString(R.string.conversationsMessageTrimming).string()
             ) {
-                Column(
+                SwitchActionRowItem(
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    SwitchActionRowItem(
-                        title = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunities),
-                        subtitle = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunitiesDescription),
-                        checked = uiState.trimThreads,
-                        qaTag = R.string.qa_preferences_trim_threads,
-                        onCheckedChange = { isEnabled ->
-                            sendCommand(
-                                ChatsPreferenceViewModel.Commands.ToggleTrimThreads(
-                                    isEnabled
-                                )
+                    title = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunities),
+                    subtitle = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunitiesDescription),
+                    checked = uiState.trimThreads,
+                    qaTag = R.string.qa_preferences_trim_threads,
+                    onCheckedChange = { isEnabled ->
+                        sendCommand(
+                            ChatsPreferenceViewModel.Commands.ToggleTrimThreads(
+                                isEnabled
                             )
-                        }
-                    )
-                }
+                        )
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -78,23 +74,20 @@ private fun ConversationsPreference(
                 modifier = Modifier,
                 title = GetString(R.string.conversationsSendWithEnterKey).string()
             ) {
-                Column(
+                SwitchActionRowItem(
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    SwitchActionRowItem(
-                        title = annotatedStringResource(R.string.conversationsSendWithEnterKey),
-                        subtitle = annotatedStringResource(R.string.conversationsSendWithEnterKeyDescription),
-                        checked = uiState.sendWithEnter,
-                        qaTag = R.string.qa_preferences_send_with_enter,
-                        onCheckedChange = { isEnabled ->
-                            sendCommand(
-                                ChatsPreferenceViewModel.Commands.ToggleSendWithEnter(
-                                    isEnabled
-                                )
+                    title = annotatedStringResource(R.string.conversationsSendWithEnterKey),
+                    subtitle = annotatedStringResource(R.string.conversationsSendWithEnterKeyDescription),
+                    checked = uiState.sendWithEnter,
+                    qaTag = R.string.qa_preferences_send_with_enter,
+                    onCheckedChange = { isEnabled ->
+                        sendCommand(
+                            ChatsPreferenceViewModel.Commands.ToggleSendWithEnter(
+                                isEnabled
                             )
-                        }
-                    )
-                }
+                        )
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -105,23 +98,20 @@ private fun ConversationsPreference(
                 modifier = Modifier,
                 title = GetString(R.string.conversationsAudioMessages).string()
             ) {
-                Column(
+                SwitchActionRowItem(
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    SwitchActionRowItem(
-                        title = annotatedStringResource(R.string.conversationsAutoplayAudioMessage),
-                        subtitle = annotatedStringResource(R.string.conversationsAutoplayAudioMessageDescription),
-                        checked = uiState.autoplayAudioMessage,
-                        qaTag = R.string.qa_preferences_autoplay_audio,
-                        onCheckedChange = { isEnabled ->
-                            sendCommand(
-                                ChatsPreferenceViewModel.Commands.ToggleAutoplayAudioMessages(
-                                    isEnabled
-                                )
+                    title = annotatedStringResource(R.string.conversationsAutoplayAudioMessage),
+                    subtitle = annotatedStringResource(R.string.conversationsAutoplayAudioMessageDescription),
+                    checked = uiState.autoplayAudioMessage,
+                    qaTag = R.string.qa_preferences_autoplay_audio,
+                    onCheckedChange = { isEnabled ->
+                        sendCommand(
+                            ChatsPreferenceViewModel.Commands.ToggleAutoplayAudioMessages(
+                                isEnabled
                             )
-                        }
-                    )
-                }
+                        )
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -132,18 +122,15 @@ private fun ConversationsPreference(
                 modifier = Modifier,
                 title = GetString(R.string.conversationsBlockedContacts).string()
             ) {
-                Column(
+                IconActionRowItem(
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    IconActionRowItem(
-                        title = annotatedStringResource(R.string.conversationsBlockedContacts),
-                        subtitle = annotatedStringResource(R.string.blockedContactsManageDescription),
-                        icon = R.drawable.ic_chevron_right,
-                        iconSize = LocalDimensions.current.iconSmall,
-                        qaTag = R.string.qa_preferences_option_blocked_contacts,
-                        onClick = onBlockedContactsClicked
-                    )
-                }
+                    title = annotatedStringResource(R.string.conversationsBlockedContacts),
+                    subtitle = annotatedStringResource(R.string.blockedContactsManageDescription),
+                    icon = R.drawable.ic_chevron_right,
+                    iconSize = LocalDimensions.current.iconSmall,
+                    qaTag = R.string.qa_preferences_option_blocked_contacts,
+                    onClick = onBlockedContactsClicked
+                )
             }
         }
     }
