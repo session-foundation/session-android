@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.pro
 
 import android.app.Application
 import androidx.collection.ArraySet
+import androidx.collection.arraySetOf
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -37,6 +39,7 @@ import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVID
 import network.loki.messenger.libsession_util.pro.ProConfig
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.Util
 import network.loki.messenger.libsession_util.util.asSequence
@@ -44,6 +47,7 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
@@ -70,6 +74,7 @@ import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.util.State
+import org.thoughtcrime.securesms.util.castAwayType
 import java.time.Duration
 import java.time.Instant
 import java.util.EnumSet
@@ -97,7 +102,15 @@ class ProStatusManager @Inject constructor(
 
     val proDataState: StateFlow<ProDataState> = loginState.flowWithLoggedInState {
         combine(
-            recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
+            configFactory.get().userConfigsChanged(onlyConfigTypes = arraySetOf(UserConfigType.USER_PROFILE))
+                .castAwayType()
+                .onStart { emit(Unit) }
+                .map {
+                    configFactory.get().withUserConfigs { configs ->
+                        configs.userProfile.getProFeatures().contains(ProProfileFeature.PRO_BADGE)
+                    }
+                }
+                .distinctUntilChanged(),
             proDetailsRepository.get().loadState,
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
                 .onStart { emit(Unit) }
@@ -108,7 +121,7 @@ class ProStatusManager @Inject constructor(
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
-        ){ shouldShowProBadge, proDetailsState,
+        ){ showProBadgePreference, proDetailsState,
            debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
@@ -132,7 +145,7 @@ class ProStatusManager @Inject constructor(
 
                 ProDataState(
                     type = proDetailsState.lastUpdated?.first?.toProStatus(nowMs) ?: ProStatus.NeverSubscribed,
-                    showProBadge = shouldShowProBadge,
+                    showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
             }// debug data
@@ -208,7 +221,7 @@ class ProStatusManager @Inject constructor(
                     },
 
                     refreshState = proDataRefreshState,
-                    showProBadge = shouldShowProBadge,
+                    showProBadge = showProBadgePreference,
                 )
             }
         }
