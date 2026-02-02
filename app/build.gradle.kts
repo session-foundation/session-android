@@ -200,6 +200,8 @@ android {
         }
     }
 
+    testBuildType = "qa"
+
     sourceSets {
         getByName("test").apply {
             kotlin.directories += "$projectDir/src/sharedTest/java"
