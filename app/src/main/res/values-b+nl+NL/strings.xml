@@ -216,7 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} heeft toegang tot de camera nodig om QR-codes te scannen</string>
     <string name="cancel">Annuleren</string>
     <string name="cancelAccess">{pro} annuleren</string>
-    <string name="cancelProPlan">{pro}-abonnement annuleren</string>
     <string name="cancelProPlatform">Annuleer op de {platform}-website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="cancelProPlatformStore">Annuleer op de {platform_store}-website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="change">Wijzigen</string>
@@ -258,7 +257,7 @@
     <string name="clearMessagesGroupDescription">Weet u zeker dat u alle <b>{group_name}</b> berichten van uw apparaat wilt wissen?</string>
     <string name="clearMessagesGroupDescriptionUpdated">Weet je zeker dat je alle berichten van <b>{group_name}</b> op dit apparaat wilt wissen?</string>
     <string name="clearMessagesNoteToSelfDescription">Weet u zeker dat u alle \"Notitie aan mijzelf\" berichten van uw apparaat wilt wissen?</string>
-    <string name="clearMessagesNoteToSelfDescriptionUpdated">Weet u zeker dat u alle <b>{Bericht aan Jezelf}</b> op dit apparaat wilt wissen?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Weet u zeker dat u alle <b>Bericht aan Jezelf</b> op dit apparaat wilt wissen?</string>
     <string name="clearOnThisDevice">Wissen op dit apparaat</string>
     <string name="close">Sluiten</string>
     <string name="closeApp">Applicatie sluiten</string>
@@ -1111,7 +1110,6 @@
     <string name="proRenewPinFiveConversations">Wil je opnieuw meer dan {limit} gesprekken vastmaken?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
     <string name="proRenewPinMoreConversations">Wil je opnieuw meer gesprekken vastmaken?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
     <string name="proRenewTosPrivacy">Door te verlengen gaat u akkoord met de {app_pro} <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon}</string>
-    <string name="proRenewalUnsuccessful">Pro-verlenging mislukt, binnenkort wordt opnieuw geprobeerd</string>
     <string name="proRenewingAction">verlengen</string>
     <string name="proRenewingNoAccessBilling">Momenteel kan {pro}-toegang alleen worden gekocht en verlengd via de {platform_store} of {platform_store_other}. Omdat je {app_name} hebt geïnstalleerd met de {build_variant}, kun je hier niet verlengen.\n\nDe ontwikkelaars van {app_name} werken hard aan alternatieve betaalopties zodat gebruikers {pro}-toegang kunnen aanschaffen buiten de {platform_store} en {platform_store_other}.<b> {pro} Routekaart</b> {icon}</string>
     <string name="proRequestedRefund">Terugbetaling aangevraagd</string>
@@ -1402,7 +1400,6 @@
     <string name="useFastMode">Gebruik Snelle Modus</string>
     <string name="viaPlatformWebsiteDescription">Wijzig je abonnement met het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform}-website</font></b>.</string>
     <string name="viaStoreWebsite">Via de {platform} website</string>
-    <string name="viaStoreWebsiteDescription">Werk je {pro}-toegang bij met behulp van het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform_store}</font></b>-website.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan video niet afspelen.</string>
     <string name="view">Bekijken</string>

@@ -9,17 +9,18 @@ import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.ByteUtil
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Util
+import java.nio.ByteBuffer
 import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 @WorkerThread
-internal object AESGCM {
+object AESGCM {
     internal val gcmTagSize = 128
     internal val ivSize = 12
 
-    internal data class EncryptionResult(
+    data class EncryptionResult(
         internal val ciphertext: ByteArray,
         internal val symmetricKey: ByteArray,
         internal val ephemeralPublicKey: ByteArray
@@ -57,10 +58,19 @@ internal object AESGCM {
      */
     fun encrypt(plaintext: ByteArraySlice, symmetricKey: ByteArray): ByteArray {
         val iv = Util.getSecretBytes(ivSize)
-        synchronized(CIPHER_LOCK) {
+
+        return synchronized(CIPHER_LOCK) {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(symmetricKey, "AES"), GCMParameterSpec(gcmTagSize, iv))
-            return ByteUtil.combine(iv, cipher.doFinal(plaintext.data, plaintext.offset, plaintext.len))
+
+            val output = ByteArray(ivSize + cipher.getOutputSize(plaintext.len))
+
+            ByteBuffer.wrap(output).also { buffer ->
+                buffer.put(iv)
+                cipher.doFinal(ByteBuffer.wrap(plaintext.data, plaintext.offset, plaintext.len), buffer)
+            }
+
+            output
         }
     }
 

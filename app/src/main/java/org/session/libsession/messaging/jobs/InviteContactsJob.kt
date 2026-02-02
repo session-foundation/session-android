@@ -18,13 +18,15 @@ import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.getGroup
-import org.session.protos.SessionProtos.GroupUpdateInviteMessage
-import org.session.protos.SessionProtos.GroupUpdateMessage
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos.GroupUpdateInviteMessage
+import org.session.protos.SessionProtos.GroupUpdateMessage
 
 class InviteContactsJob @AssistedInject constructor(
     @Assisted val groupSessionId: String,
@@ -32,6 +34,7 @@ class InviteContactsJob @AssistedInject constructor(
     @Assisted val isReinvite: Boolean,
     private val configFactory: ConfigFactoryProtocol,
     private val messageSender: MessageSender,
+    private val snodeClock: SnodeClock
 
 ) : Job {
 
@@ -69,7 +72,7 @@ class InviteContactsJob @AssistedInject constructor(
                             configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(memberSessionId)
                         }
 
-                        val timestamp = SnodeAPI.nowWithOffset
+                        val timestamp = snodeClock.currentTimeMillis()
                         val signature = ED25519.sign(
                             ed25519PrivateKey = adminKey.data,
                             message = buildGroupInviteSignature(memberId, timestamp),

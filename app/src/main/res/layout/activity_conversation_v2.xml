@@ -88,16 +88,16 @@
             tools:listitem="@layout/view_mention_candidate_v2"
             tools:visibility="gone" />
 
-        <LinearLayout
-            android:id="@+id/attachmentOptionsContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginBottom="8dp"
-            android:elevation="8dp"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/inputBar"
-            app:layout_constraintStart_toStartOf="parent">
+    <LinearLayout
+        android:id="@+id/attachmentOptionsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/normal_padding"
+        android:elevation="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/inputBar"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical">
 
             <FrameLayout
                 android:id="@+id/gifButtonContainer"

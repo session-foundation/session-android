@@ -63,11 +63,19 @@ class GlobalSearchInputLayout @JvmOverloads constructor(
     }
 
     override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
-        if (v === binding.searchInput && actionId == EditorInfo.IME_ACTION_SEARCH) {
-            binding.searchInput.clearFocus()
-            return true
+        if (v !== binding.searchInput) return false
+
+        return when (actionId) {
+            EditorInfo.IME_ACTION_SEARCH -> {
+                binding.searchInput.clearFocus()
+                true
+            }
+            EditorInfo.IME_ACTION_NEXT,
+            EditorInfo.IME_ACTION_DONE,
+            EditorInfo.IME_ACTION_GO,
+            EditorInfo.IME_ACTION_PREVIOUS -> true
+            else -> false
         }
-        return false
     }
 
     fun clearSearch() {

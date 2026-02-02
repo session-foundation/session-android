@@ -18,10 +18,12 @@ import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -137,7 +139,7 @@ class MessageParser @Inject constructor(
         message.sender = sender.hexString
         message.recipient = currentUserId.hexString
         message.sentTimestamp = messageTimestampMs
-        message.receivedTimestamp = snodeClock.currentTimeMills()
+        message.receivedTimestamp = snodeClock.currentTimeMillis()
         message.isSenderSelf = isSenderSelf
 
         // Only process pro features post pro launch
@@ -246,7 +248,7 @@ class MessageParser @Inject constructor(
 
         val decoded = SessionProtocol.decodeForCommunity(
             payload = Base64.decode(msg.data),
-            timestampMs = (msg.posted * 1000).toLong(),
+            timestampMs = msg.posted?.toEpochMilli() ?: 0L,
             proBackendPubKey = proBackendConfig.get().ed25519PubKey,
         )
 
@@ -260,7 +262,7 @@ class MessageParser @Inject constructor(
             isForGroup = false,
             currentUserId = currentUserId,
             sender = sender,
-            messageTimestampMs = (msg.posted * 1000).toLong(),
+            messageTimestampMs = msg.posted?.toEpochMilli() ?: 0L,
             currentUserBlindedIDs = currentUserBlindedIDs,
         ).also { result ->
             result.message.openGroupServerMessageID = msg.id
@@ -284,7 +286,7 @@ class MessageParser @Inject constructor(
 
         val decoded = SessionProtocol.decodeForCommunity(
             payload = plaintext.data,
-            timestampMs = msg.postedAt * 1000L,
+            timestampMs = msg.postedAt?.toEpochMilli() ?: 0L,
             proBackendPubKey = proBackendConfig.get().ed25519PubKey,
         )
 
@@ -298,7 +300,7 @@ class MessageParser @Inject constructor(
             isForGroup = false,
             currentUserId = currentUserId,
             sender = sender.accountId,
-            messageTimestampMs = (msg.postedAt * 1000),
+            messageTimestampMs = msg.postedAt?.toEpochMilli() ?: 0L,
             currentUserBlindedIDs = currentUserBlindedIDs,
         )
     }

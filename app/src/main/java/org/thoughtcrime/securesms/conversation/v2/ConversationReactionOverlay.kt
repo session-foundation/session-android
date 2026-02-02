@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.ThemeUtil
@@ -53,7 +53,6 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
@@ -106,6 +105,7 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var snodeClock: SnodeClock
 
     private var job: Job? = null
 
@@ -665,7 +665,7 @@ class ConversationReactionOverlay : FrameLayout {
                 R.string.delete,
                 { handleActionItemClicked(Action.DELETE) },
                 R.string.AccessibilityId_deleteMessage,
-                message.subtitle,
+                message.subtitle(snodeClock.currentTimeMillis()),
                 ThemeUtil.getThemedColor(context, R.attr.danger)
             )
         }
@@ -842,11 +842,11 @@ class ConversationReactionOverlay : FrameLayout {
     }
 }
 
-private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
-    get() = if (expiresIn <= 0 || expireStarted <= 0) {
+private fun MessageRecord.subtitle(timeMilli: Long): ((Context) -> CharSequence?)? {
+    return if (expiresIn <= 0 || expireStarted <= 0) {
         null
     } else { context ->
-        (expiresIn - (SnodeAPI.nowWithOffset - expireStarted))
+        (expiresIn - (timeMilli - expireStarted))
             .coerceAtLeast(0L)
             .milliseconds
             .toShortTwoPartString()
@@ -856,3 +856,4 @@ private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
                     .format().toString()
             }
     }
+}

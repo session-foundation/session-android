@@ -30,19 +30,25 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.model.RetrieveMessageResponse
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.snode.AlterTtlApi
+import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.SwarmSnodeSelector
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -63,6 +69,10 @@ class Poller @AssistedInject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val processor: ReceivedMessageProcessor,
     private val messageParser: MessageParser,
+    private val retrieveMessageFactory: RetrieveMessageApi.Factory,
+    private val alterTtlApiFactory: AlterTtlApi.Factory,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val swarmSnodeSelector: SwarmSnodeSelector,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -129,7 +139,6 @@ class Poller @AssistedInject constructor(
             preferences.migratedToMultiPartConfig = true
         }
 
-        val pollPool = hashSetOf<Snode>() // pollPool is the list of snodes we can use while rotating snodes from our swarm
         var retryScalingFactor = 1.0f // We increment the retry interval by NEXT_RETRY_MULTIPLIER times this value, which we bump on each failure
 
         var scheduledNextPoll = 0L
@@ -171,17 +180,7 @@ class Poller @AssistedInject constructor(
             var pollDelay = RETRY_INTERVAL_MS
             collector.emit(PollState.Polling)
             try {
-                // check if the polling pool is empty
-                if (pollPool.isEmpty()) {
-                    // if it is empty, fill it with the snodes from our swarm
-                    pollPool.addAll(SnodeAPI.getSwarm(userPublicKey).await())
-                }
-
-                // randomly get a snode from the pool
-                val currentNode = pollPool.random()
-
-                // remove that snode from the pool
-                pollPool.remove(currentNode)
+                val currentNode = swarmSnodeSelector.selectSnode(userPublicKey)
 
                 poll(currentNode, pollOnlyUserProfileConfig)
                 retryScalingFactor = 1f
@@ -199,6 +198,7 @@ class Poller @AssistedInject constructor(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error while polling:", e)
+
                 pollDelay = minOf(
                     MAX_RETRY_INTERVAL_MS,
                     (RETRY_INTERVAL_MS * (NEXT_RETRY_MULTIPLIER * retryScalingFactor)).toLong()
@@ -302,22 +302,25 @@ class Poller @AssistedInject constructor(
 
         // Get messages call wrapped in an async
         val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
-            val request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+            val retrieveMessageApi = retrieveMessageFactory.create(
+                namespace = Namespace.DEFAULT(),
                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                     snode = snode,
                     publicKey = userAuth.accountId.hexString,
                     namespace = Namespace.DEFAULT()
                 ),
                 auth = userAuth,
-                maxSize = -2)
+                maxSize = -2
+            )
 
             this.async {
                 runCatching {
-                    SnodeAPI.sendBatchRequest(
-                        snode = snode,
-                        publicKey = userPublicKey,
-                        request = request,
-                        responseType = RetrieveMessageResponse.serializer()
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = retrieveMessageApi,
+                            swarmNodeOverride = snode,
+                        )
                     )
                 }
             }
@@ -338,7 +341,7 @@ class Poller @AssistedInject constructor(
                 .map { type ->
                     val config = configs.getConfig(type)
                     hashesToExtend += config.activeHashes()
-                    val request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                    val retrieveApi = retrieveMessageFactory.create(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,
                             publicKey = userAuth.accountId.hexString,
@@ -351,11 +354,12 @@ class Poller @AssistedInject constructor(
 
                     this.async {
                         type to runCatching {
-                            SnodeAPI.sendBatchRequest(
-                                snode = snode,
-                                publicKey = userPublicKey,
-                                request = request,
-                                responseType = RetrieveMessageResponse.serializer()
+                            swarmApiExecutor.execute(
+                                SwarmApiRequest(
+                                    swarmPubKeyHex = userAuth.accountId.hexString,
+                                    api = retrieveApi,
+                                    swarmNodeOverride = snode,
+                                ),
                             )
                         }
                     }
@@ -365,14 +369,16 @@ class Poller @AssistedInject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    SnodeAPI.sendBatchRequest(
-                        snode,
-                        userPublicKey,
-                        SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
-                            messageHashes = hashesToExtend.toList(),
-                            auth = userAuth,
-                            newExpiry = snodeClock.currentTimeMills() + 14.days.inWholeMilliseconds,
-                            extend = true
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = alterTtlApiFactory.create(
+                                messageHashes = hashesToExtend,
+                                auth = userAuth,
+                                alterType = AlterTtlApi.AlterType.Extend,
+                                newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds
+                            ),
+                            swarmNodeOverride = snode,
                         )
                     )
                 } catch (e: Exception) {
@@ -386,11 +392,6 @@ class Poller @AssistedInject constructor(
         // Always process the configs before the messages
         for (task in configFetchTasks) {
             val (configType, result) = task.await()
-
-            if (result.isFailure) {
-                Log.e(TAG, "Error while fetching config for $configType", result.exceptionOrNull())
-                continue
-            }
 
             val messages = result.getOrThrow().messages
             processConfig(messages = messages, forConfig = configType)
@@ -408,21 +409,16 @@ class Poller @AssistedInject constructor(
 
         // Process the messages if we requested them
         if (fetchMessageTask != null) {
-            val result = fetchMessageTask.await()
-            if (result.isFailure) {
-                Log.e(TAG, "Error while fetching messages", result.exceptionOrNull())
-            } else {
-                val messages = result.getOrThrow().messages
-                processPersonalMessages(messages)
+            val messages = fetchMessageTask.await().getOrThrow().messages
+            processPersonalMessages(messages)
 
-                messages.maxByOrNull { it.timestamp }?.let { newest ->
-                    lokiApiDatabase.setLastMessageHashValue(
-                        snode = snode,
-                        publicKey = userPublicKey,
-                        newValue = newest.hash,
-                        namespace = Namespace.DEFAULT()
-                    )
-                }
+            messages.maxByOrNull { it.timestamp }?.let { newest ->
+                lokiApiDatabase.setLastMessageHashValue(
+                    snode = snode,
+                    publicKey = userPublicKey,
+                    newValue = newest.hash,
+                    namespace = Namespace.DEFAULT()
+                )
             }
         }
     }

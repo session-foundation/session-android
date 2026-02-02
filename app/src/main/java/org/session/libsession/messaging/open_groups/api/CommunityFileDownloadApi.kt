@@ -1,0 +1,54 @@
+package org.session.libsession.messaging.open_groups.api
+
+import android.net.Uri
+import android.util.Base64
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.http.HttpBody
+import org.thoughtcrime.securesms.api.http.HttpResponse
+
+class CommunityFileDownloadApi @AssistedInject constructor(
+    @Assisted override val requiresSigning: Boolean,
+    @Assisted("room") override val room: String?,
+    @Assisted val fileId: String,
+    deps: CommunityApiDependencies,
+) : CommunityApi<HttpBody>(deps) {
+    override val httpMethod: String get() = "GET"
+    override val httpEndpoint: String = if (room != null) {
+        "/room/${Uri.encode(room)}/file/${Uri.encode(fileId)}"
+    } else {
+        "/file/${Uri.encode(fileId)}"
+    }
+
+    override suspend fun handleSuccessResponse(
+        executorContext: ApiExecutorContext,
+        baseUrl: String,
+        response: HttpResponse
+    ): HttpBody {
+        // If the response body is text, it's very likely they were base64 encoded
+        // before being sent over the network. Try to decode it.
+        if (response.body is HttpBody.Text) {
+            val bytes = runCatching {
+                Base64.decode(response.body.text, Base64.DEFAULT)
+            }.getOrNull()
+
+            if (bytes != null) {
+                return HttpBody.Bytes(bytes)
+            }
+        }
+
+        return response.body
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            @Assisted("room")
+            room: String?,
+            fileId: String,
+            requiresSigning: Boolean,
+        ): CommunityFileDownloadApi
+    }
+}

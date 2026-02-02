@@ -36,6 +36,8 @@ fun ChoosePlanHomeScreen(
                 // there is an active subscription but from a different platform or from the
                 // same platform but a different account
                 // or we have no billing APIs
+                // This check is to cover the case where the back end tells us we have a subscription,
+                // but the local subscription store sees no subscription for the logged user (logged on the subscription store)
                 subscription.providerData.isFromAnotherPlatform()
                         || !planData.hasValidSubscription
                         || !planData.hasBillingCapacity ->

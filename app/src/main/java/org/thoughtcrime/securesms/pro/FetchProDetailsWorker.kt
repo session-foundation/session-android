@@ -18,17 +18,23 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.pro.api.GetProDetailsRequest
-import org.thoughtcrime.securesms.pro.api.ProApiExecutor
+import org.thoughtcrime.securesms.pro.api.GetProDetailsApi
 import org.thoughtcrime.securesms.pro.api.ProDetails
+import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import java.time.Duration
+import javax.inject.Provider
 
 /**
  * A worker that fetches the user's Pro details from the server and updates the local database.
@@ -42,14 +48,21 @@ import java.time.Duration
 class FetchProDetailsWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
-    private val apiExecutor: ProApiExecutor,
-    private val getProDetailsRequestFactory: GetProDetailsRequest.Factory,
+    private val proBackendConfig: Provider<ProBackendConfig>,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val getProDetailsApiFactory: GetProDetailsApi.Factory,
     private val proDatabase: ProDatabase,
     private val loginStateRepository: LoginStateRepository,
     private val snodeClock: SnodeClock,
     private val configFactory: ConfigFactoryProtocol,
+    private val prefs: TextSecurePreferences,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        if (!prefs.forcePostPro()) {
+            Log.d(TAG, "Pro details fetch skipped because pro is not enabled")
+            return Result.success()
+        }
+
         val proMasterKey =
             requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
                 "User must be logged in to fetch pro details"
@@ -57,8 +70,11 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
         return try {
             Log.d(TAG, "Fetching Pro details from server")
-            val details = apiExecutor.executeRequest(
-                request = getProDetailsRequestFactory.create(proMasterKey)
+            val details = serverApiExecutor.execute(
+                ServerApiRequest(
+                    proBackendConfig = proBackendConfig.get(),
+                    api = getProDetailsApiFactory.create(proMasterKey)
+                )
             ).successOrThrow()
 
             Log.d(
@@ -99,7 +115,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
 
     private suspend fun scheduleProofGenerationIfNeeded(details: ProDetails) {
-        val now = snodeClock.currentTimeMills()
+        val now = snodeClock.currentTimeMillis()
 
         if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
             Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")

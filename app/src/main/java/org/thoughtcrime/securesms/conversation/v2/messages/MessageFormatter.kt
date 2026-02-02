@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.content.Context
 import android.text.Spannable
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
@@ -32,6 +33,7 @@ import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
@@ -177,11 +179,32 @@ class MessageFormatter @Inject constructor(
             }
 
             else -> {
-                val text = formatMessageBody(
+                val bodyText = formatMessageBody(
                     context = context,
                     message = lastMessage,
                     threadRecipient = thread.recipient
                 )
+
+                // This is used to show a placeholder text for MMS messages in the snippet,
+                // for example, "<image> Attachment"
+                val mmsPlaceholderBody = (lastMessage as? MmsMessageRecord)?.slideDeck?.body
+
+                val text = when {
+                    // If both body and placeholder are blank, return empty string
+                    bodyText.isBlank() && mmsPlaceholderBody.isNullOrBlank() -> ""
+
+                    // If both body and placeholder are non-blank, combine them
+                    bodyText.isNotBlank() && !mmsPlaceholderBody.isNullOrBlank() ->
+                        SpannableStringBuilder(mmsPlaceholderBody)
+                            .append(": ")
+                            .append(bodyText)
+
+                    // If only placeholder is non-blank, use it
+                    !mmsPlaceholderBody.isNullOrBlank() -> mmsPlaceholderBody
+
+                    // Otherwise, use the body text
+                    else -> bodyText
+                }
 
                 when {
                     // There are certain messages that we want to keep their formatting
@@ -375,7 +398,7 @@ class MessageFormatter @Inject constructor(
                                 if (historyShared) R.string.groupInviteYouHistory else R.string.groupInviteYou)
                                 .format()
                             number == 1 -> Phrase.from(context,
-                                if (historyShared) R.string.groupMemberNewHistory else R.string.groupMemberNew)
+                                if (historyShared) R.string.groupMemberInvitedHistory else R.string.groupMemberNew)
                                 .put(NAME_KEY, getGroupMemberName(updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
@@ -383,7 +406,7 @@ class MessageFormatter @Inject constructor(
                                 .put(OTHER_NAME_KEY, getGroupMemberName(updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
-                                if (historyShared) R.string.groupMemberNewHistoryTwo else R.string.groupMemberNewTwo)
+                                if (historyShared) R.string.groupMemberInvitedHistoryTwo else R.string.groupMemberNewTwo)
                                 .put(NAME_KEY, getGroupMemberName(updateData.sessionIds.first()))
                                 .put(OTHER_NAME_KEY, getGroupMemberName(updateData.sessionIds.last()))
                                 .format()
@@ -392,7 +415,7 @@ class MessageFormatter @Inject constructor(
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                             number > 0 -> Phrase.from(context,
-                                if (historyShared) R.string.groupMemberNewHistoryMultiple else R.string.groupMemberNewMultiple)
+                                if (historyShared) R.string.groupMemberInvitedHistoryMultiple else R.string.groupMemberNewMultiple)
                                 .put(NAME_KEY, getGroupMemberName(updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()

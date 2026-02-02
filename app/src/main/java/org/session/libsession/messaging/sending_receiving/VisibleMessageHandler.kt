@@ -19,7 +19,7 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.SSKEnvironment
@@ -27,9 +27,11 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
-import org.session.protos.SessionProtos
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
+import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -209,7 +211,7 @@ class VisibleMessageHandler @Inject constructor(
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
                 val updates = ProfileUpdateHandler.Updates.create(
                     content = proto,
-                    nowMills = clock.currentTimeMills(),
+                    nowMills = clock.currentTimeMillis(),
                     pro = pro
                 )
 

@@ -18,27 +18,30 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.allConfigAddresses
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -53,7 +56,6 @@ import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import org.thoughtcrime.securesms.util.castAwayType
@@ -89,6 +91,8 @@ class ConfigToDatabaseSync @Inject constructor(
     private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
@@ -203,9 +207,7 @@ class ConfigToDatabaseSync @Inject constructor(
         storage.addClosedGroupPublicKey(group.accountId)
         // Store the encryption key pair
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
-        storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
-        // Notify the PN server
-        PushRegistryV1.subscribeGroup(group.accountId, publicKey = myAccountId.hexString)
+        storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMillis())
         threadDatabase.setCreationDate(threadId, formationTimestamp)
     }
 
@@ -255,8 +257,6 @@ class ConfigToDatabaseSync @Inject constructor(
         // Remove the key pairs
         storage.removeAllClosedGroupEncryptionKeyPairs(address.groupPublicKeyHex)
         storage.removeMember(address.address, myAccountId.toAddress())
-        // Notify the PN server
-        PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = address.groupPublicKeyHex, publicKey = myAccountId.hexString)
         messageNotifier.updateNotification(context)
     }
 
@@ -314,15 +314,20 @@ class ConfigToDatabaseSync @Inject constructor(
                     OwnedSwarmAuth.ofClosedGroup(groupInfoConfig.id, it)
                 } ?: return
 
-                // remove messages from swarm SnodeAPI.deleteMessage
+                // remove messages from swarm deleteMessage
                 scope.launch(Dispatchers.Default) {
                     val cleanedHashes: List<String> =
                         messages.asSequence().map { it.second }.filter { !it.isNullOrEmpty() }.filterNotNull().toList()
-                    if (cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(
-                        groupInfoConfig.id.hexString,
-                        groupAdminAuth,
-                        cleanedHashes
-                    )
+                    if (cleanedHashes.isNotEmpty()) {
+                        val deleteMessageApi = deleteMessageApiFactory.create(
+                            messageHashes = cleanedHashes,
+                            swarmAuth = groupAdminAuth
+                        )
+                        swarmApiExecutor.execute(SwarmApiRequest(
+                            swarmPubKeyHex = groupInfoConfig.id.hexString,
+                            api = deleteMessageApi
+                        ))
+                    }
                 }
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
@@ -351,9 +356,9 @@ class ConfigToDatabaseSync @Inject constructor(
                 }
             }
 
-            val threadId = threadDatabase.getThreadIdIfExistsFor(address)
+            val threadId = storage.getThreadId(address)
 
-            if (threadId != -1L) {
+            if (threadId != null) {
                 if (conversation.lastRead > storage.getLastSeen(threadId)) {
                     storage.markConversationAsRead(
                         threadId,

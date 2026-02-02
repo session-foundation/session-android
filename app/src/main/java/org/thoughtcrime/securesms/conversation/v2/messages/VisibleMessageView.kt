@@ -159,11 +159,13 @@ class VisibleMessageView : FrameLayout {
         next: MessageRecord? = null,
         glide: RequestManager = Glide.with(this),
         searchQuery: String? = null,
-        lastSeen: Long,
+        lastSeen: Long?,
         lastSentMessageId: MessageId?,
         delegate: VisibleMessageViewDelegate? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+        confirmCommunityJoin: (String, String) -> Unit,
+        confirmAttachmentDownload: (DatabaseAttachment)->Unit,
         isTextExpanded: Boolean = false,
         onTextExpanded: ((MessageId) -> Unit)? = null
     ) {
@@ -252,7 +254,7 @@ class VisibleMessageView : FrameLayout {
         }
 
         // Unread marker
-        val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
+        val shouldShowUnreadMarker = lastSeen != null && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
         if (shouldShowUnreadMarker) {
             markerContainerBinding.value.root.isVisible = true
         } else if (markerContainerBinding.isInitialized()) {
@@ -306,6 +308,8 @@ class VisibleMessageView : FrameLayout {
             searchQuery,
             downloadPendingAttachment = downloadPendingAttachment,
             retryFailedAttachments = retryFailedAttachments,
+            confirmCommunityJoin = confirmCommunityJoin,
+            confirmAttachmentDownload = confirmAttachmentDownload,
             isTextExpanded = isTextExpanded,
             onTextExpanded = onTextExpanded
         )

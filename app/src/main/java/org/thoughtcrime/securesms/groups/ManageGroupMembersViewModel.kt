@@ -11,16 +11,11 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -36,6 +31,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
+import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -77,12 +73,14 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
             OptionsItem(
                 name = context.getString(R.string.membersInvite),
                 icon = R.drawable.ic_user_round_plus,
-                onClick = ::navigateToInviteContacts
+                onClick = ::navigateToInviteContacts,
+                qaTag = R.string.qa_manage_members_invite_contacts
             ),
             OptionsItem(
                 name = context.getString(R.string.accountIdOrOnsInvite),
                 icon = R.drawable.ic_user_round_search,
-                onClick = ::navigateToInviteAccountId
+                onClick = ::navigateToInviteAccountId,
+                qaTag = R.string.qa_manage_members_invite_account_id
             )
         )
     }
@@ -331,7 +329,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
         }
 
         val removeMemberOnly =
-            context.resources.getQuantityString(R.plurals.removeMember, count, count)
+            context.resources.getQuantityString(R.plurals.removeMemberLowercase, count, count)
         val removeMessages =
             context.resources.getQuantityString(R.plurals.removeMemberMessages, count, count)
 

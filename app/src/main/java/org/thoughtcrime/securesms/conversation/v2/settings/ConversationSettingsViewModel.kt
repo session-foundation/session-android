@@ -20,6 +20,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -40,12 +41,15 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NA
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -1037,9 +1041,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
      */
     private fun handleLeaveOptionClick(){
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
-        val isAdmin = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)
+        val groupInfo = configFactory.getGroup(groupV2Id)?: return
 
-        if(isAdmin){
+        if(groupInfo.hasAdminKey()){
             confirmAdminLeaveGroup()
         }else{
             confirmLeaveGroup()
@@ -1097,7 +1101,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     onNegative = {
                         // Show confirmation dialog to delete or leave the group
                         // put True here since this option is to "Delete Group"
-                        if (isUserLastAdmin) confirmDeleteGroup()
+                        if (isUserLastAdmin){
+                            // with how we handle dialog dismissal on option click, showing the simpleDialog
+                            // from another simpleDialog without delay will cause it to become null and not display
+                            viewModelScope.launch {
+                                delay(200)
+                                confirmDeleteGroup()
+                            }
+                        }
                     },
                     showXIcon = dialogData.showCloseButton,
                     negativeStyleDanger = isUserLastAdmin // red color on the right
@@ -1108,6 +1119,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun confirmDeleteGroup() {
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
+        val groupInfo = configFactory.getGroup(groupV2Id) ?: return
         _dialogState.update { state ->
             val dialogData = groupManager.getDeleteGroupConfirmationDialogData(
                 groupV2Id,
@@ -1122,7 +1134,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     negativeText = context.getString(dialogData.negativeText),
                     positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
                     negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
-                    onPositive = { leaveGroup(deleteGroup = groupManagerV2.isCurrentUserGroupAdmin(groupV2Id)) },
+                    onPositive = { leaveGroup(deleteGroup = groupInfo.hasAdminKey()) },
                     showXIcon = dialogData.showCloseButton
                 )
             )

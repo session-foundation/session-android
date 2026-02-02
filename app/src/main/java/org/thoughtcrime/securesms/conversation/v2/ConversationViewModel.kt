@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
@@ -47,19 +48,28 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BitSet
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.BlindedContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteAllReactionsApi
+import org.session.libsession.messaging.open_groups.api.execute
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
+import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.UserConfigType
@@ -77,16 +87,17 @@ import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTy
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -99,9 +110,11 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -134,7 +147,6 @@ class ConversationViewModel @AssistedInject constructor(
     private val threadDb: ThreadDatabase,
     private val reactionDb: ReactionDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val lokiAPIDb: LokiAPIDatabase,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
     private val callManager: CallManager,
@@ -149,6 +161,11 @@ class ConversationViewModel @AssistedInject constructor(
     private val blindMappingRepository: BlindMappingRepository,
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
+    private val openGroupManager: OpenGroupManager,
+    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val deleteAllReactionsApiFactory: DeleteAllReactionsApi.Factory,
+    private val loginStateRepository: LoginStateRepository,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -165,29 +182,18 @@ class ConversationViewModel @AssistedInject constructor(
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
     val threadIdFlow: StateFlow<Long?> =
-        threadDb.getThreadIdIfExistsFor(address).takeIf { it != -1L }
+        storage.getThreadId(address)
             ?.let { MutableStateFlow(it) }
-            ?: threadDb
-                .updateNotifications
-                .map {
-                    withContext(Dispatchers.Default) {
-                        threadDb.getThreadIdIfExistsFor(address)
-                    }
-                }
-                .filter { it != -1L }
+            ?: threadDb.updateNotifications
+                .map { storage.getThreadId(address) }
+                .flowOn(Dispatchers.Default)
+                .filterNotNull()
                 .take(1)
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.Eagerly,
-                    initialValue = null
-                )
+                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /**
-     * Current thread ID, or -1 if it doesn't exist yet.
-     *
-     */
+     // Current thread ID, or null if it doesn't exist yet.
     @Deprecated("Use threadIdFlow instead")
-    val threadId: Long get() = threadIdFlow.value ?: -1L
+    val threadId: Long? get() = threadIdFlow.value
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
@@ -201,12 +207,12 @@ class ConversationViewModel @AssistedInject constructor(
     val conversationReloadNotification: SharedFlow<*> = merge(
         threadIdFlow
             .filterNotNull()
-            .flatMapLatest { id ->  threadDb.updateNotifications.filter { it == id } },
+            .flatMapLatest { id -> threadDb.updateNotifications.filter { it == id } },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
     ).debounce(200L) // debounce to avoid too many reloads
-        .shareIn(viewModelScope, SharingStarted.Eagerly)
+        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->
@@ -261,7 +267,8 @@ class ConversationViewModel @AssistedInject constructor(
         get() {
             if (!recipient.isGroupV2Recipient) return null
 
-            return repository.getInvitingAdmin(threadId)?.let(recipientRepository::getRecipientSync)
+            if (threadId == null) return null
+            return repository.getInvitingAdmin(threadId!!)?.let(recipientRepository::getRecipientSync)
         }
 
     val groupV2ThreadState: Flow<GroupThreadStatus> get() = when {
@@ -289,10 +296,12 @@ class ConversationViewModel @AssistedInject constructor(
 
     val blindedPublicKey: String?
         get() = if (recipient.data !is RecipientData.Community || edKeyPair == null || !serverCapabilities.contains(OpenGroupApi.Capability.BLIND.name.lowercase())) null else {
-            BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = edKeyPair!!.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed((recipient.data as RecipientData.Community).serverPubKey),
-            )?.pubKey?.data
+            loginStateRepository.peekLoginState()
+                ?.getBlindedKeyPair(
+                    serverUrl = (recipient.data as RecipientData.Community).serverUrl,
+                    serverPubKeyHex = (recipient.data as RecipientData.Community).serverPubKey
+                )
+                ?.pubKey?.data
                 ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
         }
 
@@ -676,16 +685,21 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun saveDraft(text: String) {
-        GlobalScope.launch(Dispatchers.IO) {
-            repository.saveDraft(threadId, text)
+        threadId?.let { threadID ->
+            GlobalScope.launch(Dispatchers.IO) {
+                repository.saveDraft(threadID, text)
+            }
         }
+
     }
 
     fun getDraft(): String? {
-        val draft: String? = repository.getDraft(threadId)
+        val threadID = threadId ?: return null
+
+        val draft = repository.getDraft(threadID)
 
         viewModelScope.launch(Dispatchers.IO) {
-            repository.clearDrafts(threadId)
+            repository.clearDrafts(threadID)
         }
 
         return draft
@@ -1161,6 +1175,48 @@ class ConversationViewModel @AssistedInject constructor(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
+    fun confirmAttachmentDownload(attachment: DatabaseAttachment){
+        _dialogsState.update {
+            it.copy(
+                attachmentDownload = ConfirmAttachmentDownloadDialogData(
+                    attachment = attachment,
+                    conversationName = recipient.displayName()
+                )
+            )
+        }
+    }
+
+    fun confirmCommunityJoin(communityName: String, communityUrl: String){
+        _dialogsState.update {
+            it.copy(
+                joinCommunity = JoinCommunityDialogData(
+                    communityName = communityName,
+                    communityUrl = communityUrl
+                )
+            )
+        }
+    }
+
+    private fun joinCommunity(url: String){
+        val openGroup = OpenGroupUrlParser.parseUrl(url)
+
+        viewModelScope.launch {
+            try {
+                openGroupManager.add(
+                    server = openGroup.server,
+                    room = openGroup.room,
+                    publicKey = openGroup.serverPublicKey,
+                )
+            } catch (e: Exception) {
+                Log.e("", "Error joining community", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(application, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
+    }
+
     /**
      * Implicitly approve the recipient.
      *
@@ -1253,6 +1309,71 @@ class ConversationViewModel @AssistedInject constructor(
             is Commands.HandleUserProfileCommand -> {
                 userProfileModalUtils?.onCommand(command.upmCommand)
             }
+
+            is Commands.JoinCommunity -> {
+                joinCommunity(command.url)
+            }
+
+            is Commands.HideJoinCommunityDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        joinCommunity = null
+                    )
+                }
+            }
+
+            is Commands.DownloadAttachments -> {
+                viewModelScope.launch {
+                    val databaseAttachment = command.attachment
+
+                    storage.setAutoDownloadAttachments(recipient.address, true)
+
+                    val attachmentId = databaseAttachment.attachmentId.rowId
+                    if (databaseAttachment.transferState == AttachmentState.PENDING.value
+                        && storage.getAttachmentUploadJob(attachmentId) == null
+                    ) {
+                        // start download
+                        JobQueue.shared.add(
+                            attachmentDownloadJobFactory.create(
+                                attachmentId,
+                                databaseAttachment.mmsId
+                            )
+                        )
+                    }
+                }
+            }
+
+            is Commands.HideAttachmentDownloadDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        attachmentDownload = null
+                    )
+                }
+            }
+
+            Commands.HideSimpleDialog -> {
+                _dialogsState.update {
+                    it.copy(showSimpleDialog = null)
+                }
+            }
+
+        }
+    }
+
+    fun showLinkDownloadDialog(confirmLinkDownload: ()->Unit){
+        _dialogsState.update {
+            it.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = application.getString(R.string.linkPreviewsEnable),
+                    message = Phrase.from(application, R.string.linkPreviewsFirstDescription)
+                        .put(APP_NAME_KEY, APP_NAME)
+                        .format(),
+                    positiveStyleDanger = true,
+                    positiveText = application.getString(R.string.enable),
+                    onPositive = confirmLinkDownload,
+                    negativeText = application.getString(R.string.cancel),
+                )
+            )
         }
     }
 
@@ -1262,11 +1383,15 @@ class ConversationViewModel @AssistedInject constructor(
             (address as? Address.Community)?.let { openGroup ->
                 lokiMessageDb.getServerID(messageId)?.let { serverId ->
                     runCatching {
-                        OpenGroupApi.deleteAllReactions(
-                            openGroup.room,
-                            openGroup.serverUrl,
-                            serverId,
-                            emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = openGroup.serverUrl,
+                                api = deleteAllReactionsApiFactory.create(
+                                    room = openGroup.room,
+                                    messageId = serverId,
+                                    emoji = emoji
+                                )
+                            )
                         )
                     }
                 }
@@ -1405,12 +1530,25 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     data class DialogsState(
+        val showSimpleDialog: SimpleDialogData? = null,
         val openLinkDialogUrl: String? = null,
         val clearAllEmoji: ClearAllEmoji? = null,
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
         val userProfileModal: UserProfileModalData? = null,
+        val joinCommunity: JoinCommunityDialogData? = null,
+        val attachmentDownload: ConfirmAttachmentDownloadDialogData? = null
+    )
+
+    data class JoinCommunityDialogData(
+        val communityName: String,
+        val communityUrl: String
+    )
+
+    data class ConfirmAttachmentDownloadDialogData(
+        val attachment: DatabaseAttachment,
+        val conversationName: String
     )
 
     data class RecreateGroupDialogData(
@@ -1452,6 +1590,14 @@ class ConversationViewModel @AssistedInject constructor(
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ): Commands
+
+        data class JoinCommunity(val url: String): Commands
+        data object HideJoinCommunityDialog: Commands
+
+        data class DownloadAttachments(val attachment: DatabaseAttachment): Commands
+        data object HideAttachmentDownloadDialog: Commands
+
+        data object HideSimpleDialog : Commands
     }
 }
 

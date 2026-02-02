@@ -21,7 +21,9 @@
         <item quantity="many">Добавить Админов</item>
         <item quantity="other">Добавить Админов</item>
     </plurals>
+    <string name="addAdminSingular">Добавить администратора</string>
     <string name="addAdminsDescription">Введите ID аккаунта пользователя, которого вы повышаете до администратора.\n\nЧтобы добавить нескольких пользователей, введите ID каждого аккаунта через запятую. Одновременно можно указать до 20 идентификаторов учётных записей.</string>
+    <string name="adminCannotBeDemoted">Администраторов нельзя понизить в должности или удалить из группы.</string>
     <string name="adminCannotBeRemoved">Администраторов нельзя удалить.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> и <b>{count} других пользователей</b> назначены администраторами.</string>
     <string name="adminPromote">Назначать администраторов</string>
@@ -59,7 +61,10 @@
         <item quantity="other">Отправление запросов в админы</item>
     </plurals>
     <string name="adminSettings">Настройки администратора</string>
+    <string name="adminStatusYou">Вы не можете изменить свой статус администратора. Чтобы покинуть группу, откройте настройки беседы и выберите «Покинуть группу».</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> и <b>{other_name}</b> назначены администраторами.</string>
+    <string name="admins">Администраторы</string>
+    <string name="allow">Разрешить</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Анонимно</string>
     <string name="appIcon">Иконка Приложения</string>
@@ -176,6 +181,7 @@
     <string name="blockUnblockNameTwo">Вы уверены, что хотите разблокировать <b>{name}</b> и ещё одного пользователя?</string>
     <string name="blockUnblockedUser">{name} разблокирован(а)</string>
     <string name="blockedContactsManageDescription">Просматривайте и управляйте списком заблокированных контактов.</string>
+    <string name="browserNotFound">Не найдено приложение браузера для открытия ссылки, попробуйте скопировать URL</string>
     <string name="call">Вызов</string>
     <string name="callsCalledYou">{name} звонил(а) вам</string>
     <string name="callsCannotStart">Вы не можете начать новый звонок. Сначала завершите текущий звонок.</string>
@@ -204,6 +210,10 @@
     <string name="callsVoiceAndVideoToggleDescription">Включает голосовые и видеозвонки для общения с другими пользователями.</string>
     <string name="callsYouCalled">Вы позвонили {name}</string>
     <string name="callsYouMissedCallPermissions">Вы пропустили звонок от <b>{name}</b>, потому что не включили <b>Голосовые и видеозвонки</b> в настройках конфиденциальности.</string>
+    <string name="cameraAccessDeniedMessage">{app_name} требуется доступ к вашей камере для включения видеозвонков, но разрешение было отклонено. Вы не можете изменить разрешения камеры во время звонка.\n\nХотите завершить звонок сейчас и включить доступ к камере или получить напоминание после звонка?</string>
+    <string name="cameraAccessInstructions">Чтобы разрешить доступ к камере, откройте настройки и включите разрешение Камера.</string>
+    <string name="cameraAccessReminderMessage">Во время вашего последнего звонка вы пытались использовать видео, но это не удалось, так как доступ к камере был ранее запрещён. Чтобы разрешить доступ к камере, откройте настройки и включите разрешение Камера.</string>
+    <string name="cameraAccessRequired">Требуется доступ к камере</string>
     <string name="cameraErrorNotFound">Камера не найдена</string>
     <string name="cameraErrorUnavailable">Камера недоступна.</string>
     <string name="cameraGrantAccess">Предоставить доступ к камере</string>
@@ -212,9 +222,18 @@
     <string name="cameraGrantAccessQr">{app_name} требуется доступ к камере для сканирования QR-кодов</string>
     <string name="cancel">Отмена</string>
     <string name="cancelAccess">Отменить {pro}</string>
+    <string name="cancelProPlatform">Отмените на сайте {platform}, используя учётную запись {platform_account}, с которой вы оформили подписку на {pro}.</string>
+    <string name="cancelProPlatformStore">Отмените на сайте {platform_store}, используя учётную запись {platform_account}, с которой вы оформили подписку на {pro}.</string>
     <string name="change">Изменить</string>
     <string name="changePasswordFail">Не удалось изменить пароль</string>
     <string name="changePasswordModalDescription">Измените пароль для {app_name}. Локально сохранённые данные будут повторно зашифрованы с использованием нового пароля.</string>
+    <string name="changeSetting">Изменить настройку</string>
+    <string name="checkingProStatus">Проверка статуса {pro}</string>
+    <string name="checkingProStatusContinue">Проверяется ваш статус {pro}. Вы сможете продолжить, как только проверка завершится.</string>
+    <string name="checkingProStatusDescription">Проверяются ваши данные {pro}. Некоторые действия на этой странице могут быть недоступны до завершения этой проверки.</string>
+    <string name="checkingProStatusEllipsis">Проверка статуса {pro}...</string>
+    <string name="checkingProStatusRenew">Проверяем данные {pro}. Вы не сможете продлить доступ, пока проверка не будет завершена.</string>
+    <string name="checkingProStatusUpgradeDescription">Проверяется ваш статус {pro}. Вы сможете перейти на {pro} после завершения проверки.</string>
     <string name="clear">Очистить</string>
     <string name="clearAll">Очистить все</string>
     <string name="clearDataAll">Очистить все данные</string>
@@ -275,6 +294,8 @@
     <string name="communityUrl">URL сообщества</string>
     <string name="communityUrlCopy">Копировать ссылку сообщества</string>
     <string name="confirm">Подтвердить</string>
+    <string name="confirmPromotion">Подтвердить назначение</string>
+    <string name="confirmPromotionDescription">Вы уверены? Администраторов нельзя понизить или удалить из группы.</string>
     <string name="contactContacts">Контакты</string>
     <string name="contactDelete">Удалить контакт</string>
     <string name="contactDeleteDescription">Вы уверены, что хотите удалить <b>{name}</b> из ваших контактов? Новые сообщения от <b>{name}</b> будут поступать как запросы сообщений.</string>
@@ -326,6 +347,7 @@
     <string name="copy">Скопировать</string>
     <string name="create">Создать</string>
     <string name="creatingCall">Создание вызова</string>
+    <string name="currentBilling">Текущая система оплаты</string>
     <string name="currentPassword">Текущий Пароль</string>
     <string name="cut">Вырезать</string>
     <string name="darkMode">Тёмный режим</string>
@@ -418,6 +440,7 @@
     <string name="deleteMessagesDescriptionEveryone">Вы уверены, что хотите удалить эти сообщения для всех?</string>
     <string name="deleting">Удаление</string>
     <string name="developerToolsToggle">Включить инструменты разработчика</string>
+    <string name="deviceNotificationSettings">Настройки уведомлений устройства</string>
     <string name="dictationStart">Начать диктовку...</string>
     <string name="disappearingMessages">Исчезающие сообщения</string>
     <string name="disappearingMessagesCountdownBig">Сообщение будет удалено через {time_large}</string>
@@ -465,6 +488,8 @@
     <string name="displayNameVisible">Ваше отображаемое имя видно пользователям, группам и сообществам, с которыми вы взаимодействуете.</string>
     <string name="document">Документ</string>
     <string name="donate">Донат</string>
+    <string name="donateSessionDescription">Могущественные силы пытаются ослабить конфиденциальность, но мы не можем продолжать эту борьбу в одиночку.\n\nВаши пожертвования помогают сохранять безопасность, независимость и доступность {app_name}.</string>
+    <string name="donateSessionHelp">{app_name} нуждается в вашей помощи</string>
     <string name="done">Готово</string>
     <string name="download">Скачать</string>
     <string name="downloading">Скачивание...</string>
@@ -496,17 +521,31 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Вы и {name} поставили {emoji_name}</string>
     <string name="emojiReactsNotification">Отреагировали на ваше сообщение {emoji}</string>
     <string name="enable">Включить</string>
+    <string name="enableCameraAccess">Включить доступ к камере?</string>
     <string name="enableNotifications">Показывать уведомления при получении новых сообщений.</string>
+    <string name="endCallToEnable">Завершить звонок для включения</string>
     <string name="enjoyingSession">Нравится {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Требуется доработка {emoji}</string>
     <string name="enjoyingSessionButtonPositive">Отлично {emoji}</string>
     <string name="enjoyingSessionDescription">Вы уже некоторое время пользуетесь {app_name}, как оно? Нам действительно интересно узнать ваше мнение.</string>
     <string name="enter">Войти</string>
+    <string name="enterPasswordDescription">Введите пароль, который вы задали для {app_name}</string>
+    <string name="enterPasswordTooltip">Введите пароль, который вы используете для разблокировки {app_name} при запуске, а не ваш пароль восстановления</string>
+    <string name="errorCheckingProStatus">Ошибка при проверке статуса {pro}</string>
     <string name="errorConnection">Пожалуйста, проверьте подключение к интернету и повторите попытку.</string>
     <string name="errorCopyAndQuit">Скопировать ошибку и выйти</string>
     <string name="errorDatabase">Ошибка базы данных</string>
     <string name="errorGeneric">Что-то пошло не так. Попробуйте ещё раз позже.</string>
+    <string name="errorLoadingProAccess">Ошибка при загрузке доступа к {pro}</string>
+    <string name="errorNoLookupOns">{app_name} не удалось выполнить поиск по этому ONS. Пожалуйста, проверьте сетевое подключение и попробуйте снова.</string>
     <string name="errorUnknown">Произошла неизвестная ошибка.</string>
+    <string name="errorUnregisteredOns">Этот ONS не зарегистрирован. Пожалуйста, проверьте правильность и попробуйте снова.</string>
+    <string name="failedResendInvite">Не удалось повторно отправить приглашение <b>{name}</b> в <b>{group_name}</b></string>
+    <string name="failedResendInviteMultiple">Не удалось повторно отправить приглашение <b>{name}</b> и <b>{count}</b> другим в <b>{group_name}</b></string>
+    <string name="failedResendInviteTwo">Не удалось повторно отправить приглашение <b>{name}</b> и <b>{other_name}</b> в <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Не удалось повторно отправить повышение для <b>{name}</b> в группе <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Не удалось повторно отправить повышение для <b>{name}</b> и ещё <b>{count}</b> в группе <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Не удалось повторно отправить повышение для <b>{name}</b> и <b>{other_name}</b> в группе <b>{group_name}</b></string>
     <string name="failedToDownload">Не удалось загрузить</string>
     <string name="failures">Сбои</string>
     <string name="feedback">Отзыв</string>
@@ -562,6 +601,9 @@
     <string name="groupLeaveDescription">Вы уверены, что хотите покинуть <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Вы уверены, что хотите покинуть <b>{group_name}</b>?\n\nЭто удалит всех участников и всё содержимое группы.</string>
     <string name="groupLeaveErrorFailed">Не удалось выйти из {group_name}</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> был(а) приглашён(а) в группу. История чата за последние 14 дней была передана.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> и ещё <b>{count}</b> были приглашены в группу. История чата за последние 14 дней была передана.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> и <b>{other_name}</b> были приглашены в группу. История чата за последние 14 дней была передана.</string>
     <string name="groupMemberLeft"><b>{name}</b> покинул(а) группу.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> и <b>{count} других человек</b> покинули группу.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> и <b>{other_name}</b> покинули группу.</string>
@@ -573,6 +615,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> и <b>{other_name}</b> были приглашены в группу.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Вы</b> и <b>{count} других пользователей</b> приглашены вступить в группу. История чата была передана.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Вы</b> и <b>{other_name}</b> были приглашены в группу. История чата была передана.</string>
+    <string name="groupMemberRemoveFailed">Не удалось удалить <b>{name}</b> из <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedMultiple">Не удалось удалить <b>{name}</b> и <b>{count} других</b> из <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedOther">Не удалось удалить <b>{name}</b> и <b>{other_name}</b> из <b>{group_name}</b></string>
     <string name="groupMemberYouLeft"><b>Вы</b> покинули группу.</string>
     <string name="groupMembers">Участники группы</string>
     <string name="groupMembersNone">В этой группе нет других участников.</string>
@@ -586,6 +631,7 @@
     <string name="groupNoMessages">У вас нет сообщений от <b>{group_name}</b>. Отправьте сообщение, чтобы начать беседу!</string>
     <string name="groupNotUpdatedWarning">Эта группа не обновлялась более 30 дней. У вас могут возникнуть проблемы с отправкой сообщений или просмотром информации о группе.</string>
     <string name="groupOnlyAdmin">Вы единственный администратор в <b>{group_name}</b>.\n\nУчастники группы и настройки не могут быть изменены без администратора.</string>
+    <string name="groupOnlyAdminLeave">Вы единственный администратор в <b>{group_name}</b>.\n\nУчастники группы и настройки не могут быть изменены без администратора. Чтобы покинуть группу без её удаления, сначала добавьте нового администратора.</string>
     <string name="groupPendingRemoval">Ожидание удаления</string>
     <string name="groupPromotedYou"><b>Вы</b> назначены администратором.</string>
     <string name="groupPromotedYouMultiple"><b>Вы</b> и <b>{count} других человек</b> назначены администраторами.</string>
@@ -663,8 +709,13 @@
         <item quantity="many">Пригласить Участников</item>
         <item quantity="other">Пригласить Участников</item>
     </plurals>
+    <string name="inviteNewMemberGroupLink">Пригласите нового участника в группу, введя Account ID, ONS друга или отсканировав их QR-код {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Пригласите нового участника в группу, введя ID аккаунта вашего друга, ONS, или отсканировав его QR-код</string>
     <string name="join">Присоединиться</string>
     <string name="later">Позже</string>
+    <string name="launchOnStartDescriptionDesktop">Автоматически запускать {app_name} при включении компьютера.</string>
+    <string name="launchOnStartDesktop">Запускать при старте системы</string>
+    <string name="launchOnStartupDisabledDesktop">Этот параметр управляется вашей системой в Linux. Чтобы включить автозапуск, добавьте {app_name} в приложения автозагрузки в системных настройках.</string>
     <string name="learnMore">Узнать больше</string>
     <string name="leave">Покинуть</string>
     <string name="leaving">Выход...</string>
@@ -679,6 +730,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>Вы</b> и пользователь <b>{other_name}</b> присоединились к группе.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> и <b>{other_name}</b> присоединились к группе.</string>
     <string name="legacyGroupMemberYouNew"><b>Вы</b> присоединились к группе.</string>
+    <string name="limitBackgroundActivity">Ограничить фоновую активность?</string>
+    <string name="limitBackgroundActivityDescription">В данный момент вы разрешили {app_name} работать в фоновом режиме для повышения надёжности уведомлений. Изменение этой настройки может снизить надёжность уведомлений.</string>
     <string name="linkPreviews">Предпросмотры ссылок</string>
     <string name="linkPreviewsDescription">Активировать предпросмотр ссылок для поддерживаемых URL.</string>
     <string name="linkPreviewsEnable">Включить Предпросмотр Ссылок</string>
@@ -703,8 +756,11 @@
     <string name="lockAppUnlock">Разблокировать</string>
     <string name="lockAppUnlocked">Приложение {app_name} разблокировано</string>
     <string name="logs">Отчёты</string>
+    <string name="manageAdmins">Управление администраторами</string>
     <string name="manageMembers">Управление участниками</string>
+    <string name="managePro">Управление {pro}</string>
     <string name="max">Максимальный</string>
+    <string name="maybeLater">Может быть, позже</string>
     <string name="media">Медиа</string>
     <plurals name="memberSelected">
         <item quantity="one">Выбран %1$d Участник</item>
@@ -725,7 +781,9 @@
         <item quantity="other">%1$d активных участников</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Добавить Account ID или ONS</string>
+    <string name="membersGroupPromotionAcceptInvite">Участников можно повысить только после принятия приглашения в группу.</string>
     <string name="membersInvite">Пригласить друзей в Session</string>
+    <string name="membersInviteNoContacts">У вас нет контактов для приглашения в эту группу.\nВернитесь назад и пригласите участников, используя их Account ID или ONS.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Отправить приглашение</item>
         <item quantity="few">Отправить приглашения</item>
@@ -736,8 +794,10 @@
     <string name="membersInviteShareDescriptionMultiple">Хотите поделиться историей сообщений группы с <b>{name}</b> и <b>{count} другими</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Хотите поделиться историей сообщений группы с <b>{name}</b> и <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Поделиться историей сообщений</string>
+    <string name="membersInviteShareMessageHistoryDays">Поделиться историей сообщений за последние 14 дней</string>
     <string name="membersInviteShareNewMessagesOnly">Поделиться только новыми сообщениями</string>
     <string name="membersInviteTitle">Пригласить</string>
+    <string name="membersNonAdmins">Участники (не администраторы)</string>
     <string name="menuBar">Панель меню</string>
     <string name="message">Сообщение</string>
     <string name="messageBubbleReadMore">Читать далее</string>
@@ -758,6 +818,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Начните новую беседу, введя ID аккаунта вашего друга или ONS.</string>
     <string name="messageNewDescriptionMobile">Начните новую беседу, введя ID аккаунта вашего друга, ONS или отсканировав их QR-код.</string>
+    <string name="messageNewDescriptionMobileLink">Начните новую беседу, введя идентификатор аккаунта друга, ONS или отсканировав его QR-код {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">У вас новое сообщение.</item>
         <item quantity="few">У вас %1$d новых сообщения.</item>
@@ -821,13 +882,17 @@
     <string name="nicknameRemove">Удалить имя пользователя</string>
     <string name="nicknameSet">Задать имя пользователя</string>
     <string name="no">Нет</string>
+    <string name="noNonAdminsInGroup">В этой группе нет участников, не являющихся администраторами.</string>
     <string name="noSuggestions">Нет предложений</string>
+    <string name="nonProLongerMessagesDescription">Отправляйте сообщения до 10 000 символов во всех беседах.</string>
+    <string name="nonProUnlimitedPinnedDescription">Организуйте чаты с неограниченным количеством закреплённых бесед.</string>
     <string name="none">Нет</string>
     <string name="notNow">Не сейчас</string>
     <string name="noteToSelf">Заметки для Себя</string>
     <string name="noteToSelfEmpty">У вас нет сообщений в Заметках для Себя.</string>
     <string name="noteToSelfHide">Скрыть Заметки для Себя</string>
     <string name="noteToSelfHideDescription">Вы уверены, что хотите скрыть Заметки для Себя?</string>
+    <string name="noteTosPrivacyPolicy"><b>ОБРАТИТЕ ВНИМАНИЕ</b>: Выполняя {action_type}, вы соглашаетесь с <b>Условиями обслуживания</b> {icon} и <b>Политикой конфиденциальности</b> {icon} {app_pro}</string>
     <string name="notificationDisplay">Отображение уведомлений</string>
     <string name="notificationSenderNameAndPreview">Показывать имя отправителя и предварительный просмотр содержимого сообщения.</string>
     <string name="notificationSenderNameOnly">Отображать только имя отправителя без содержимого сообщения.</string>
@@ -871,6 +936,12 @@
     <string name="off">Выключено</string>
     <string name="okay">ОК</string>
     <string name="on">Вкл</string>
+    <string name="onDevice">На вашем устройстве {device_type}</string>
+    <string name="onDeviceCancelDescription">Откройте эту учётную запись {app_name} на устройстве {device_type}, где выполнен вход в {platform_account}, с которым вы изначально зарегистрировались. Затем отмените {pro} через настройки {app_pro}.</string>
+    <string name="onDeviceDescription">Откройте этот аккаунт {app_name} на устройстве {device_type}, в котором выполнен вход в аккаунт {platform_account}, использованный при регистрации. Затем обновите доступ к {pro} через настройки {app_pro}.</string>
+    <string name="onLinkedDevice">На привязанном устройстве</string>
+    <string name="onPlatformStoreWebsite">На сайте {platform_store}</string>
+    <string name="onPlatformWebsite">На сайте {platform}</string>
     <string name="onboardingAccountCreate">Создать аккаунт</string>
     <string name="onboardingAccountCreated">Аккаунт создан</string>
     <string name="onboardingAccountExists">У меня есть аккаунт</string>
@@ -895,6 +966,9 @@
     <string name="onsErrorNotRecognized">Мы не смогли распознать этот ONS. Пожалуйста, проверьте его и попробуйте снова.</string>
     <string name="onsErrorUnableToSearch">Мы не смогли выполнить поиск по этому ONS. Пожалуйста, попробуйте снова позже.</string>
     <string name="open">Открыть</string>
+    <string name="openPlatformStoreWebsite">Открыть сайт {platform_store}</string>
+    <string name="openPlatformWebsite">Открыть сайт {platform}</string>
+    <string name="openSettings">Открыть настройки</string>
     <string name="openSurvey">Открытый опрос</string>
     <string name="other">Другое</string>
     <string name="password">Пароль</string>
@@ -922,11 +996,14 @@
     <string name="passwordStrengthCharLength">Длина больше 12 символов</string>
     <string name="passwordStrengthIncludeNumber">Содержит цифру</string>
     <string name="passwordStrengthIncludesLowercase">Содержит строчную букву</string>
+    <string name="passwordStrengthIncludesSymbol">Содержит символ</string>
     <string name="passwordStrengthIncludesUppercase">Содержит заглавную букву</string>
     <string name="passwordStrengthIndicator">Индикатор надёжности пароля</string>
     <string name="passwordStrengthIndicatorDescription">Надёжный пароль помогает защитить ваши сообщения и вложения в случае утери или кражи устройства.</string>
     <string name="passwords">Пароли</string>
     <string name="paste">Вставить</string>
+    <string name="paymentError">Ошибка платежа</string>
+    <string name="paymentProError">Ваш платёж был успешно обработан, но произошла ошибка при {action_type} статуса {pro}.\n\nПожалуйста, проверьте сетевое подключение и повторите попытку.</string>
     <string name="permissionChange">Изменение разрешений</string>
     <string name="permissionMusicAudioDenied">{app_name} требуется доступ для отправки музыки, аудио и файлов, но доступ был запрещен. Перейдите в Настройки → Разрешения, и включите \"Музыка и аудио\".</string>
     <string name="permissionsAppleMusic">{app_name} требуется доступ к Apple Music для воспроизведения медиафайлов.</string>
@@ -971,17 +1048,28 @@
     <string name="preview">Предварительный просмотр</string>
     <string name="previewNotification">Предпросмотр уведомления</string>
     <string name="proAccessActivatedAutoShort">Ваш доступ к {pro} активен!\n\n{pro} автоматически продлевается <b>{date}</b> на <b>{current_plan_length}</b>.</string>
-    <string name="proAccessActivatedNotAuto">Ваш {pro} истечёт <b>{date}</b>.\n\nПродлите {pro} сейчас, чтобы автоматически продлить его до окончания срока действия.</string>
+    <string name="proAccessActivatedNotAuto">Срок действия вашего доступа к {pro} истечет <b>{date}</b>.\n\nОбновите свой доступ к {pro} сейчас, чтобы гарантировать автоматическое продление до истечения срока действия вашего доступа к {pro}.</string>
     <string name="proAccessActivatesAuto">Ваш доступ к {pro} активен!\n\n{pro} будет автоматически продлён <b>{date}</b> ещё на\n<b>{current_plan_length}</b>. Все внесённые здесь изменения вступят в силу при следующем продлении.</string>
+    <string name="proAccessError">Ошибка доступа к {pro}</string>
     <string name="proAccessExpireDate">Ваш доступ {pro} истекает <b>{date}</b>.</string>
+    <string name="proAccessLoading">Загрузка доступа {pro}</string>
+    <string name="proAccessLoadingDescription">Информация о доступе к {pro} всё ещё загружается. Обновление будет доступно после завершения этого процесса.</string>
+    <string name="proAccessLoadingEllipsis">Загрузка доступа к {pro}...</string>
+    <string name="proAccessNetworkLoadError">Не удалось подключиться к сети для загрузки информации о доступе к {pro}. Обновление {pro} через {app_name} будет недоступно, пока соединение не будет восстановлено.\n\nПожалуйста, проверьте сетевое подключение и повторите попытку.</string>
     <string name="proAccessNotFound">Доступ к {pro} не найден</string>
     <string name="proAccessNotFoundDescription">{app_name} не обнаружил у вас доступа к {pro}. Если это ошибка, пожалуйста, обратитесь в службу поддержки {app_name} за помощью.</string>
     <string name="proAccessRecover">Восстановить доступ к {pro}</string>
     <string name="proAccessRenew">Возобновить доступ к {pro}</string>
+    <string name="proAccessRenewDesktop">В настоящее время доступ к {pro} можно приобрести и продлить только через {platform_store} или {platform_store_other}. Так как вы используете {app_name} для компьютеров, продление здесь невозможно.\n\nРазработчики {app_name} активно работают над альтернативными вариантами оплаты, чтобы пользователи могли приобретать доступ к {pro} вне {platform_store} и {platform_store_other}. <b>Дорожная карта {pro}</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Продлите свой доступ к {pro} на <b><font color="0">сайте {platform_store}</font></b>, используя {platform_account}, с которым вы оформили подписку на {pro}.</string>
+    <string name="proAccessRenewPlatformWebsite">Продлите на <b><font color="0">сайте {platform}</font></b>, используя учётную запись {platform_account}, с которой вы оформили подписку на {pro}.</string>
     <string name="proAccessRenewStart">Продлите доступ к {pro}, чтобы снова начать использовать мощные функции бета-версии {app_pro}.</string>
     <string name="proAccessRestored">Доступ к {pro} Восстановлен</string>
     <string name="proAccessRestoredDescription">{app_name} обнаружил и восстановил доступ вашего аккаунта к {pro}. Ваш статус {pro} был восстановлен!</string>
+    <string name="proAccessSignUp">Поскольку вы изначально оформили подписку на {app_pro} через <b>{platform_store}</b>, для обновления доступа к {pro} необходимо использовать учётную запись {platform_account}.</string>
+    <string name="proAccessUpgradeDesktop">В настоящее время доступ к {pro} можно приобрести только через {platform_store} или {platform_store_other}. Поскольку вы используете {app_name} Desktop, вы не можете выполнить обновление до {pro} здесь.\n\nРазработчики {app_name} активно работают над альтернативными способами оплаты, чтобы пользователи могли приобрести доступ к {pro} вне {platform_store} и {platform_store_other}. <b>Дорожная карта {pro}</b> {icon}</string>
     <string name="proActivated">Активирован</string>
+    <string name="proActivatingActivation">активация</string>
     <string name="proAllSet">Готово!</string>
     <string name="proAllSetDescription">Ваш доступ к {app_pro} возобновлён! Списание средств произойдёт автоматически при продлении {pro} <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">У вас уже есть</string>
@@ -993,6 +1081,7 @@
     <string name="proAnimatedDisplayPicturesDescription">Устанавливайте GIF и WebP картинки в свой профиль.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Загружайте GIF с</string>
     <string name="proAutoRenewTime">{pro} автопродление через <b>{time}</b></string>
+    <string name="proBadge">Значок {pro}</string>
     <string name="proBadgeVisible">Показывать значок {app_pro} другим пользователям</string>
     <string name="proBadges">Значки</string>
     <string name="proBadgesDescription">Покажите свою поддержку {app_name}, добавив эксклюзивный значок рядом с вашим именем.</string>
@@ -1009,11 +1098,21 @@
     <string name="proCallToActionLongerMessages">Хотите отправлять сообщения подлиннее?\nОтправляй больше текста и открой премиум функции с {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Хотите больше закреплений?\nОрганизовывайте свои чаты и получите доступ к премиум функциям с {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Нужно больше, чем {limit} закреплений?\nОрганизовывайте свои чаты и получите доступ к премиум функциям с {app_pro} Beta</string>
+    <string name="proCancelSorry">Жаль, что вы отменяете {pro}. Вот что нужно знать перед отменой доступа {pro}.</string>
+    <string name="proCancellation">Отмена</string>
+    <string name="proCancellationDescription">Отмена доступа к {pro} отключит автоматическое продление до истечения срока действия доступа к {pro}. Отмена {pro} <b>не</b> предусматривает возврат средств. Вы сможете продолжать использовать функции {app_pro} до истечения срока действия доступа к {pro}.\n\nТак как вы изначально оформили доступ к {app_pro}, используя <b>{platform_account}</b>, для отмены {pro} необходимо воспользоваться тем же аккаунтом {platform_account}.</string>
+    <string name="proCancellationOptions">Два способа отменить доступ к {pro}:</string>
+    <string name="proCancellationShortDescription">Отмена доступа {pro} предотвратит автоматическое продление до истечения срока действия {pro}.\n\nОтмена {pro} <b>не</b> означает возврат средств. Вы сможете продолжать использовать функции {app_pro} до окончания срока доступа {pro}.</string>
+    <string name="proChooseAccess">Выберите подходящий вариант доступа {pro}.\nЧем дольше срок — тем больше скидка.</string>
+    <string name="proClearAllDataDevice">Вы уверены, что хотите удалить свои данные с этого устройства?\n\n<b>{app_pro}</b> не может быть перенесён на другую учётную запись. Пожалуйста, сохраните ваш пароль восстановления, чтобы позже вы могли восстановить доступ к {pro}.</string>
+    <string name="proClearAllDataNetwork">Вы уверены, что хотите удалить свои данные из сети? После продолжения вы не сможете восстановить свои сообщения или контакты.\n\n<b>{app_pro}</b> не может быть перенесён на другой аккаунт. Обязательно сохраните ваш Пароль для восстановления, чтобы позже вы смогли восстановить доступ к {pro}.</string>
     <string name="proDiscountTooltip">Ваш доступ к {pro} уже со скидкой в {percent}% от полной стоимости {app_pro}.</string>
+    <string name="proErrorRefreshingStatus">Ошибка обновления статуса {pro}</string>
     <string name="proExpired">Срок действия истёк</string>
     <string name="proExpiredDescription">К сожалению, ваш доступ к {pro} истёк.\nПродлите его, чтобы снова получить эксклюзивные преимущества и функции {app_pro} Beta.</string>
     <string name="proExpiringSoon">Срок Действия Истекает</string>
     <string name="proExpiringSoonDescription">Ваш доступ {pro} истечёт через <b>{time}</b>.\nПродлите сейчас, чтобы сохранить доступ к эксклюзивным привилегиям и функциям {app_pro} Beta</string>
+    <string name="proExpiringTime">{pro} истекает через <b>{time}</b></string>
     <string name="proFaq">{pro} Вопросы</string>
     <string name="proFaqDescription">Найдите ответы на часто задаваемые вопросы в разделе справки {app_pro}.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Загрузка изображений в формате GIF и WebP</string>
@@ -1021,6 +1120,7 @@
     <string name="proFeatureListLoadsMore">+ множество эксклюзивных функций</string>
     <string name="proFeatureListLongerMessages">Сообщения до 10 тыс. символов</string>
     <string name="proFeatureListPinnedConversations">Закрепление неограниченного количества бесед</string>
+    <string name="proFullestPotential">Хотите использовать {app_name} на полную?\nПерейдите на {app_pro} Beta, чтобы получить доступ ко множеству эксклюзивных преимуществ и функций.</string>
     <string name="proGroupActivated">Группа активирована</string>
     <string name="proGroupActivatedDescription">У этой группы увеличена вместимость! Теперь она поддерживает до 300 участников, потому что администратор группы активировал</string>
     <plurals name="proGroupsUpgraded">
@@ -1029,11 +1129,12 @@
         <item quantity="many">%1$s Групп Улучшены</item>
         <item quantity="other">%1$s Групп Улучшены</item>
     </plurals>
-    <string name="proImportantDescription">Форма запроса на возврат средств готова. При одобрении, ваш доступ к {pro} будет отключён, и вы потеряете доступ ко всем его функциям.</string>
+    <string name="proImportantDescription">Запрос на возврат средств является окончательным. В случае одобрения ваш доступ к {pro} будет немедленно аннулирован, и вы потеряете доступ ко всем функциям {pro}.</string>
     <string name="proIncreasedAttachmentSizeFeature">Увеличенный размер вложений</string>
     <string name="proIncreasedMessageLengthFeature">Увеличенная длина сообщения</string>
     <string name="proLargerGroups">Большие Группы</string>
     <string name="proLargerGroupsDescription">Группы, в которых вы являетесь админом, автоматически поддерживают до 300 участников.</string>
+    <string name="proLargerGroupsTooltip">Скоро для всех пользователей Pro Beta станут доступны расширенные групповые чаты (до 300 участников)!</string>
     <string name="proLongerMessages">Большие Сообщения</string>
     <string name="proLongerMessagesDescription">Вы можете отправлять сообщения длиной до 10 000 символов во всех переписках.</string>
     <plurals name="proLongerMessagesSent">
@@ -1043,25 +1144,79 @@
         <item quantity="other">Отправлено %1$s Длинных Сообщений</item>
     </plurals>
     <string name="proMessageInfoFeatures">Это сообщение использовало следующие функции {app_pro}:</string>
+    <string name="proNewInstallation">С новой установкой</string>
+    <string name="proNewInstallationDescription">Переустановите {app_name} на этом устройстве через {platform_store}, восстановите свою учётную запись с помощью пароля восстановления и продлите {pro} через настройки {app_pro}.</string>
+    <string name="proNewInstallationUpgrade">Переустановите {app_name} на этом устройстве через {platform_store}, восстановите свою учетную запись с помощью пароля восстановления и обновите до {pro} в настройках {app_pro}.</string>
+    <string name="proOptionsRenewalSubtitle">На данный момент есть три способа продления:</string>
+    <string name="proOptionsTwoRenewalSubtitle">На данный момент есть два способа продления:</string>
+    <string name="proPercentOff">Скидка {percent}%</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s Закреплённый Чат</item>
         <item quantity="few">%1$s Закреплённых Чатов</item>
         <item quantity="many">%1$s Закреплённых Чатов</item>
         <item quantity="other">%1$s Закреплённых Чатов</item>
     </plurals>
+    <string name="proPlanPlatformRefund">Поскольку вы изначально оформили подписку на {app_pro} через <b><font color="0">{platform_store}</font></b>, чтобы запросить возврат средств, необходимо использовать учётную запись {platform_account}.</string>
+    <string name="proPlanPlatformRefundLong">Поскольку вы изначально оформили подписку на {app_pro} через <b><font color="0">{platform_store}</font></b>, запрос на возврат средств будет обрабатываться службой поддержки {app_name}.\n\nЗапросите возврат, нажав кнопку ниже и заполнив форму возврата.\n\nСлужба поддержки {app_name} стремится обрабатывать запросы на возврат в течение 24–72 часов, но в периоды высокой нагрузки обработка может занять больше времени.</string>
     <string name="proPlanRenewSupport">Ваш доступ к {app_pro} был продлен! Спасибо за поддержку {network_name}.</string>
+    <string name="proPriceOneMonth">1 месяц — {monthly_price} / месяц</string>
+    <string name="proPriceThreeMonths">3 месяца — {monthly_price} / месяц</string>
     <string name="proPriceTwelveMonths">12 месяцев - {monthly_price} / месяц</string>
+    <string name="proReactivatingActivation">повторная активация</string>
+    <string name="proRefundAccountDevice">Откройте этот аккаунт {app_name} на устройстве {device_type}, где выполнен вход в учётную запись {platform_account}, с которой вы изначально зарегистрировались. Затем запросите возврат средств через настройки {app_pro}.</string>
     <string name="proRefundDescription">Нам жаль, что вы уходите. Вот что необходимо знать перед запросом возврата средств.</string>
-    <string name="proRefunding">Возвращаем средства</string>
+    <string name="proRefundNextSteps">{platform} сейчас обрабатывает ваш запрос на возврат. Обычно это занимает 24–48 часов. В зависимости от принятого решения, статус {pro} может измениться в {app_name}.</string>
+    <string name="proRefundRequestSessionSupport">Ваш запрос на возврат средств будет рассмотрен службой поддержки {app_name}.\n\nОтправьте запрос, нажав на кнопку ниже и заполнив форму возврата.\n\nХотя служба поддержки {app_name} стремится обрабатывать запросы на возврат в течение 24–72 часов, время обработки может увеличиться при большом объёме обращений.</string>
+    <string name="proRefundRequestStorePolicies">Ваш запрос на возврат средств будет обрабатываться исключительно через <b>веб-сайт {platform}</b> самой платформой {platform}.\n\nВ соответствии с политикой возврата {platform}, разработчики {app_name} не могут повлиять на результат обработки запроса. Это касается как его одобрения или отклонения, так и вопроса о полном или частичном возврате.</string>
+    <string name="proRefundSupport">Пожалуйста, свяжитесь с {platform} для получения дополнительной информации о статусе вашего запроса на возврат. Из-за политики возвратов {platform} разработчики {app_name} не могут повлиять на результат рассмотрения запроса.\n\n<font color="0">Служба поддержки возвратов {platform}</font></string>
+    <string name="proRefunding">Возврат средств {pro}</string>
+    <string name="proRefundingDescription">Возвраты за {app_pro} обрабатываются исключительно {platform} через {platform_store}.\n\nИз-за политики возвратов {platform} разработчики {app_name} не могут повлиять на результат рассмотрения запроса на возврат. Это касается как одобрения или отклонения запроса, так и решения о полном или частичном возврате.</string>
+    <string name="proRenewAnimatedDisplayPicture">Хотите снова использовать анимированные изображения профиля?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
+    <string name="proRenewBeta">Продлить {pro} Beta</string>
+    <string name="proRenewDesktopLinked">Продлите доступ к {pro} через настройки {app_pro} на связанное устройство, на котором установлен {app_name} через {platform_store} или {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Хотите снова отправлять более длинные сообщения?\nПродлите доступ к {pro}, чтобы разблокировать функции, которые были недоступны.</string>
+    <string name="proRenewMaxPotential">Хотите снова использовать {app_name} на полную мощность?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
+    <string name="proRenewPinFiveConversations">Хотите снова закреплять более {limit} бесед?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
+    <string name="proRenewPinMoreConversations">Хотите снова закреплять больше бесед?\nПродлите {pro}, чтобы получить доступ к функциям, которые вы упустили.</string>
+    <string name="proRenewTosPrivacy">Продлевая подписку, вы соглашаетесь с <b>Условиями использования</b> {icon} и <b>Политикой конфиденциальности</b> {icon} {app_pro}</string>
+    <string name="proRenewingAction">продление</string>
+    <string name="proRenewingNoAccessBilling">В настоящее время доступ к {pro} можно приобрести и продлить только через {platform_store} или {platform_store_other}. Поскольку вы установили {app_name} с использованием сборки {build_variant}, продление здесь недоступно.\n\nРазработчики {app_name} активно работают над альтернативными способами оплаты, чтобы пользователи могли приобретать доступ к {pro} вне {platform_store} и {platform_store_other}.<b> Дорожная карта {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Возврат Средств Запрошен</string>
     <string name="proSendMore">Отправить еще с</string>
+    <string name="proSettings">Настройки {pro}</string>
+    <string name="proStartUsing">Начать использовать {pro}</string>
     <string name="proStats">Вашы {pro} Статы</string>
+    <string name="proStatsLoading">Загрузка статистики {pro}</string>
+    <string name="proStatsLoadingDescription">Загружается ваша статистика {pro}, пожалуйста, подождите.</string>
     <string name="proStatsTooltip">Статы {pro} отражают использование на этом устройстве и может отображаться иначе на подключённых устройствах</string>
+    <string name="proStatusError">Ошибка статуса {pro}</string>
+    <string name="proStatusInfoInaccurateNetworkError">Не удалось подключиться к сети для проверки вашего статуса {pro}. Информация, отображаемая на этой странице, может быть неточной, пока соединение не будет восстановлено.\n\nПожалуйста, проверьте сетевое подключение и повторите попытку.</string>
+    <string name="proStatusLoading">Загрузка статуса {pro}</string>
+    <string name="proStatusLoadingDescription">Информация о вашем статусе {pro} загружается. Некоторые действия на этой странице могут быть недоступны до завершения загрузки.</string>
+    <string name="proStatusLoadingSubtitle">Загрузка статуса {pro}</string>
+    <string name="proStatusNetworkErrorContinue">Не удалось подключиться к сети для проверки вашего статуса {pro}. Вы не можете продолжить, пока подключение не будет восстановлено.\n\nПожалуйста, проверьте сетевое подключение и повторите попытку.</string>
+    <string name="proStatusNetworkErrorDescription">Не удалось подключиться к сети для проверки вашего статуса {pro}. Обновление до {pro} невозможно, пока соединение не будет восстановлено.\n\nПожалуйста, проверьте сетевое подключение и повторите попытку.</string>
+    <string name="proStatusRefreshNetworkError">Не удалось подключиться к сети для обновления статуса {pro}. Некоторые действия на этой странице будут недоступны, пока соединение не будет восстановлено.\n\nПожалуйста, проверьте сетевое подключение и повторите попытку.</string>
+    <string name="proStatusRenewError">Не удалось подключиться к сети для загрузки текущего доступа {pro}. Продление {pro} через {app_name} будет недоступно до восстановления соединения.\n\nПожалуйста, проверьте сетевое подключение и попробуйте снова.</string>
     <string name="proSupportDescription">Нужна помощь с {pro}? Отправьте запрос в службу поддержки.</string>
+    <string name="proTosDescription">Выполняя {action_type}, вы {activation_type} {app_pro} через протокол {app_name}. {entity} обеспечивает активацию, но не является поставщиком {app_pro}. {entity} не несёт ответственности за производительность, доступность или функциональность {app_pro}.</string>
     <string name="proTosPrivacy">Подтверждая, вы соглашаетесь с <b>Условиями Использования</b> {icon} и <b>Политикой Конфиденциальности</b> {icon} от {app_pro}</string>
     <string name="proUnlimitedPins">Неограниченные Закрепления</string>
     <string name="proUnlimitedPinsDescription">Организовывайте все чаты с неограниченными закреплениями.</string>
+    <string name="proUpdateAccessDescription">Ваша текущая опция оплаты предусматривает <b>{current_plan_length}</b> доступа к {pro}. Вы уверены, что хотите переключиться на вариант оплаты <b>{selected_plan_length_singular}</b>?\n\nПосле обновления доступ к {pro} будет автоматически продлён <b>{date}</b> на ещё <b>{selected_plan_length}</b> доступа к {pro}.</string>
+    <string name="proUpdateAccessExpireDescription">Ваш доступ к {pro} истекает <b>{date}</b>.\n\nПосле обновления доступ к {pro} будет автоматически продлён <b>{date}</b> на ещё <b>{selected_plan_length}</b> доступа к {pro}.</string>
+    <string name="proUpdatingAction">обновление</string>
+    <string name="proUpgradeAccess">Обновитесь до {app_pro} Beta, чтобы получить доступ к множеству эксклюзивных преимуществ и функций.</string>
+    <string name="proUpgradeDesktopLinked">Обновите до {pro} в настройках {app_pro} на подключённом устройстве, где {app_name} установлен через {platform_store} или {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">В настоящее время доступ к {pro} можно приобрести только через {platform_store} или {platform_store_other}. Поскольку вы установили {app_name} с использованием {build_variant}, вы не можете выполнить обновление до {pro} здесь.\n\nРазработчики {app_name} активно работают над альтернативными способами оплаты, чтобы пользователи могли приобрести доступ к {pro} вне {platform_store} и {platform_store_other}.<b> Дорожная карта {pro}</b> {icon}</string>
+    <string name="proUpgradeOption">На данный момент есть только один способ обновления:</string>
+    <string name="proUpgradeOptionsTwo">На данный момент есть два способа обновления:</string>
+    <string name="proUpgraded">Вы перешли на {app_pro}!\nСпасибо за поддержку {network_name}.</string>
+    <string name="proUpgradingAction">обновление</string>
+    <string name="proUpgradingTo">Обновление до {pro}</string>
+    <string name="proUpgradingTosPrivacy">Обновляя, вы соглашаетесь с <b>Условиями обслуживания</b> {icon} и <b>Политикой конфиденциальности</b> {icon} от {app_pro}</string>
     <string name="proUserProfileModalCallToAction">Хотите больше от {app_name}?\nПереходите на {app_pro} Beta, чтобы получить улучшенный опыт обмена сообщениями.</string>
+    <string name="processingRefundRequest">{platform} обрабатывает ваш запрос на возврат средств</string>
     <string name="profile">Профиль</string>
     <string name="profileDisplayPicture">Изображение профиля</string>
     <string name="profileDisplayPictureRemoveError">Не удалось удалить изображение профиля.</string>
@@ -1069,6 +1224,7 @@
     <string name="profileDisplayPictureSizeError">Пожалуйста, выберите файл меньшего размера.</string>
     <string name="profileErrorUpdate">Ошибка обновления профиля.</string>
     <string name="promote">Повысить</string>
+    <string name="promoteAdminsWarning">Администраторы смогут просматривать историю сообщений за последние 14 дней и не могут быть понижены или удалены из группы.</string>
     <plurals name="promoteMember">
         <item quantity="one">Повысить Участника</item>
         <item quantity="few">Повысить Участников</item>
@@ -1127,6 +1283,8 @@
     <string name="recoveryPasswordWarningSendDescription">Это ваш Пароль Восстановления. Если вы отправите его кому-либо, у них будет полный доступ к вашей учетной записи.</string>
     <string name="recreateGroup">Пересоздать группу</string>
     <string name="redo">Вернуть</string>
+    <string name="refundNonOriginatorApple">Поскольку вы изначально оформили подписку на {app_pro} через другой аккаунт {platform_account}, вам необходимо использовать этот <b><font color="0">{platform_account}</font></b>, чтобы обновить доступ к {pro}.</string>
+    <string name="refundRequestOptions">Два способа запросить возврат средств:</string>
     <string name="remainingCharactersOverTooltip">Уменьшить длину на {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d символ остался</item>
@@ -1134,6 +1292,7 @@
         <item quantity="many">%1$d символов осталось</item>
         <item quantity="other">%1$d символов осталось</item>
     </plurals>
+    <string name="remindMeLater">Напомнить позже</string>
     <string name="remove">Удалить</string>
     <plurals name="removeMember">
         <item quantity="one">Удалить участника</item>
@@ -1156,8 +1315,10 @@
         <item quantity="other">Удаление участников</item>
     </plurals>
     <string name="renew">Обновить</string>
+    <string name="renewingPro">Продление {pro}</string>
     <string name="reply">Ответить</string>
     <string name="requestRefund">Запросить Возврат</string>
+    <string name="requestRefundPlatformWebsite">Запросите возврат на <b><font color="0">сайте {platform}</font></b>, используя учётную запись {platform_account}, с которой вы оформили подписку на {pro}.</string>
     <string name="resend">Отправить повторно</string>
     <plurals name="resendInvite">
         <item quantity="one">Повторно отправить приглашение</item>
@@ -1189,6 +1350,9 @@
     <string name="retry">Повторить попытку</string>
     <string name="reviewLimit">Ограничение на отзыв</string>
     <string name="reviewLimitDescription">Похоже, вы недавно уже оставляли отзыв о {app_name}, спасибо за ваш отзыв!</string>
+    <string name="runAppBackground">Запуск приложения в фоновом режиме</string>
+    <string name="runSessionBackground">Запустить {app_name} в фоновом режиме?</string>
+    <string name="runSessionBackgroundDescription">Вы используете замедленный режим, и мы рекомендуем разрешить {app_name} работу в фоновом режиме для улучшения уведомлений. Это может повысить стабильность уведомлений, хотя система всё равно может автоматически ограничивать фоновую активность.\n\nВы можете изменить это позже в настройках.</string>
     <string name="save">Сохранить</string>
     <string name="saved">Сохранено</string>
     <string name="savedMessages">Сохраненные сообщения</string>
@@ -1197,6 +1361,8 @@
     <string name="screenSecurity">Защита экрана</string>
     <string name="screenshotNotifications">Уведомления о скриншотах</string>
     <string name="screenshotNotificationsDescription">Получать уведомление, когда контакт делает скриншот личного чата.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Скрывать окно {app_name} на скриншотах, сделанных на этом устройстве.</string>
+    <string name="screenshotProtectionDesktop">Защита от скриншотов</string>
     <string name="screenshotTaken"><b>{name}</b> сделал(а) снимок экрана.</string>
     <string name="search">Поиск</string>
     <string name="searchContacts">Поиск контактов</string>
@@ -1219,6 +1385,12 @@
     <string name="sending">Отправка</string>
     <string name="sendingCallOffer">Отправка Предложения о Звонке</string>
     <string name="sendingConnectionCandidates">Отправка Кандидатов на Подключение</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Отправка повышения</item>
+        <item quantity="few">Отправка повышений</item>
+        <item quantity="many">Отправка повышений</item>
+        <item quantity="other">Отправка повышений</item>
+    </plurals>
     <string name="sent">Отправлено:</string>
     <string name="sessionAppearance">Внешний вид</string>
     <string name="sessionClearData">Очистить данные</string>
@@ -1245,15 +1417,20 @@
     <string name="set">Установить</string>
     <string name="setCommunityDisplayPicture">Установить картинку для сообщества</string>
     <string name="setPasswordModalDescription">Установите пароль для {app_name}. Локально сохранённые данные будут зашифрованы с использованием этого пароля. При каждом запуске {app_name} вам потребуется вводить этот пароль.</string>
+    <string name="settingsCannotChangeDesktop">Не удалось обновить настройку</string>
     <string name="settingsRestartDescription">Вы должны перезапустить {app_name}, чтобы применить новые настройки.</string>
     <string name="settingsScreenSecurityDesktop">Защита экрана</string>
+    <string name="settingsStartCategoryDesktop">Автозапуск</string>
     <string name="share">Поделиться</string>
     <string name="shareAccountIdDescription">Пригласите друга пообщаться с вами в {app_name}, поделившись с ним своим ID аккаунта.</string>
     <string name="shareAccountIdDescriptionCopied">Поделитесь с друзьями любым удобным способом — и продолжите беседу здесь.</string>
     <string name="shareExtensionDatabaseError">Возникла проблема с открытием базы данных. Пожалуйста, перезапустите приложение и попробуйте снова.</string>
     <string name="shareExtensionNoAccountError">Ой! Кажется у вас нет аккаунта {app_name}.\n
 \n Вам нужно создать новый в приложении {app_name}, чтобы поделиться.</string>
+    <string name="shareGroupMessageHistory">Вы хотите поделиться историей сообщений группы с этим пользователем?</string>
     <string name="shareToSession">Поделиться в {app_name}</string>
+    <string name="sharingSupportMultipleMedia">К сожалению, {app_name} поддерживает только одновременную отправку нескольких изображений и видео</string>
+    <string name="sharingSupportMultipleMediaExcluded">Отправка поддерживает только медиафайлы. Немедийные файлы были исключены</string>
     <string name="show">Показать</string>
     <string name="showAll">Показать все</string>
     <string name="showLess">Свернуть</string>
@@ -1281,6 +1458,8 @@
     <string name="unavailable">Недоступно</string>
     <string name="undo">Отменить</string>
     <string name="unknown">Неизвестно</string>
+    <string name="unsupportedCpu">Неподдерживаемый процессор</string>
+    <string name="update">Обновить</string>
     <string name="updateAccess">Обновить {pro} Привилегии</string>
     <string name="updateAccessTwo">Два способа обновить доступ к {pro}:</string>
     <string name="updateApp">Обновления приложения</string>
@@ -1305,6 +1484,8 @@
     <string name="updated">Последнее обновление {relative_time}</string>
     <string name="updates">Обновления</string>
     <string name="updating">Обновление...</string>
+    <string name="upgrade">Обновить</string>
+    <string name="upgradeSession">Обновить {app_name}</string>
     <string name="upgradeTo">Обновить до</string>
     <string name="uploading">Загрузка</string>
     <string name="urlCopy">Копировать ссылку</string>
@@ -1313,6 +1494,7 @@
     <string name="urlOpenDescription">Вы уверены, что хотите открыть эту ссылку в вашем браузере?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Ссылки откроются в вашем браузере.</string>
     <string name="useFastMode">Использовать быстрый режим</string>
+    <string name="viaPlatformWebsiteDescription">Измените свой план, используя {platform_account}, с которым вы зарегистрировались, через <b><font color="0">веб-сайт {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Через сайт {platform}</string>
     <string name="video">Видео</string>
     <string name="videoErrorPlay">Невозможно воспроизвести видео.</string>
@@ -1322,9 +1504,11 @@
     <string name="waitFewMinutes">Это может занять несколько минут.</string>
     <string name="waitOneMoment">Пожалуйста, подождите...</string>
     <string name="warning">Предупреждение</string>
+    <string name="warningIosVersionEndingSupport">Поддержка iOS 15 завершена. Обновитесь до iOS 16 или новее, чтобы продолжать получать обновления приложения.</string>
     <string name="window">Окно</string>
     <string name="yes">Да</string>
     <string name="you">Вы</string>
+    <string name="yourCpuIsUnsupportedSSE42">Ваш процессор не поддерживает инструкции SSE 4.2, необходимые для обработки изображений в {app_name} на операционных системах Linux x64. Пожалуйста, обновите процессор на совместимый или используйте другую операционную систему.</string>
     <string name="yourRecoveryPassword">Ваш Пароль Восстановления</string>
     <string name="zoomFactor">Масштабирование приложения</string>
     <string name="zoomFactorDescription">Настройте размер текста и визуальных элементов.</string>

@@ -48,8 +48,9 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.model.PathStatus
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
@@ -57,6 +58,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -143,6 +145,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var avatarUtils: AvatarUtils
     @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var messageFormatter: MessageFormatter
+    @Inject lateinit var pathManager: PathManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -231,7 +234,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             val recipient by recipientRepository.observeSelf()
                 .collectAsState(null)
 
-            val pathStatus by  OnionRequestAPI.pathStatus.collectAsState()
+            val pathStatus by pathManager.status.collectAsState()
 
             Avatar(
                 size = LocalDimensions.current.iconMediumAvatar,
@@ -246,8 +249,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         val glowSize = LocalDimensions.current.xxxsSpacing
                         Crossfade(
                             targetState = when (pathStatus){
-                            OnionRequestAPI.PathStatus.BUILDING -> LocalColors.current.warning
-                            OnionRequestAPI.PathStatus.ERROR -> LocalColors.current.danger
+                            PathStatus.BUILDING -> LocalColors.current.warning
+                            PathStatus.ERROR -> LocalColors.current.danger
                             else -> primaryGreen
                         }, label = "path") {
                             PathDot(
@@ -684,9 +687,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
             sheet.dismiss()
             if (threadRecipient.blocked) unblockConversation(thread)
         }
+        sheet.onAdminLeaveTapped = {
+            sheet.dismiss()
+            deleteConversation(thread, false)
+        }
         sheet.onDeleteTapped = {
             sheet.dismiss()
-            deleteConversation(thread)
+            deleteConversation(thread, true)
         }
         sheet.onNotificationTapped = {
             sheet.dismiss()
@@ -775,7 +782,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun markAllAsRead(thread: ThreadRecord) {
         lifecycleScope.launch(Dispatchers.Default) {
-            storage.markConversationAsRead(thread.threadId, clock.currentTimeMills())
+            storage.markConversationAsRead(thread.threadId, clock.currentTimeMillis())
         }
     }
 
@@ -785,14 +792,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    private fun deleteConversation(thread: ThreadRecord) {
+    /**
+     * @param isAdminDeleteGroup will determine if the group will be deleted by admin
+     * false : admin will only leave the group (group has > 1 admin)
+     * true : admin will delete the group (can delete even if > 1 admin)
+     */
+    private fun deleteConversation(thread: ThreadRecord, isAdminDeleteGroup : Boolean) {
         val recipient = thread.recipient
 
         if (recipient.address is Address.Group) {
             confirmAndLeaveGroup(
-                dialogData = groupManagerV2.getDeleteGroupConfirmationDialogData(recipient.address.accountId, recipient.displayName())
+                dialogData = homeViewModel.getLeaveGroupConfirmationDialog(thread, isAdminDeleteGroup)
             ) {
-                homeViewModel.leaveGroup(recipient.address.accountId)
+                homeViewModel.leaveGroup(recipient.address.accountId, isAdminDeleteGroup)
             }
 
             return

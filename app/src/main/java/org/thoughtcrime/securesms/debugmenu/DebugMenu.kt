@@ -45,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -103,11 +104,11 @@ fun DebugMenu(
     val datePickerState = rememberDatePickerState()
     val timePickerState = rememberTimePickerState()
 
-    var showingDeprecatedDatePicker by remember { mutableStateOf(false) }
-    var showingDeprecatedTimePicker by remember { mutableStateOf(false) }
+    var showingDeprecatedDatePicker by retain { mutableStateOf(false) }
+    var showingDeprecatedTimePicker by retain { mutableStateOf(false) }
 
-    var showingDeprecatingStartDatePicker by remember { mutableStateOf(false) }
-    var showingDeprecatingStartTimePicker by remember { mutableStateOf(false) }
+    var showingDeprecatingStartDatePicker by retain { mutableStateOf(false) }
+    var showingDeprecatingStartTimePicker by retain { mutableStateOf(false) }
 
     val getPickedTime = {
         val localDate = ZonedDateTime.ofInstant(

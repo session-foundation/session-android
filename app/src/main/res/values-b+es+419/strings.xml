@@ -51,7 +51,7 @@
         <item quantity="other">%1$d administradores seleccionados</item>
     </plurals>
     <plurals name="adminSendingPromotion">
-        <item quantity="one">Enviando promoción de administrador</item>
+        <item quantity="one">Enviando promoción a administrador</item>
         <item quantity="other">Enviando promociones de administrador</item>
     </plurals>
     <string name="adminSettings">Configuración del administrador</string>
@@ -65,7 +65,7 @@
     <string name="appIconAndNameChange">Cambiar icono y nombre de la aplicación</string>
     <string name="appIconAndNameChangeConfirmation">Cambiar el icono y el nombre de la aplicación requiere cerrar {app_name}. Las notificaciones seguirán utilizando el icono y nombre predeterminados de {app_name}.</string>
     <string name="appIconAndNameDescription">Ícono y nombre alternativos para la aplicación se muestran en la pantalla de inicio y en el menú de aplicaciones.</string>
-    <string name="appIconAndNameSelectionDescription">El icono y el nombre seleccionados de la aplicación se muestran en la pantalla de inicio y en el cajón de aplicaciones.</string>
+    <string name="appIconAndNameSelectionDescription">The selected app icon and name is displayed on the home screen and app drawer.</string>
     <string name="appIconAndNameSelectionTitle">Ícono y nombre</string>
     <string name="appIconDescription">El ícono alternativo para la aplicación se muestra en la pantalla de inicio y en el menú de aplicaciones. El nombre de la aplicación seguirá apareciendo como \'{app_name}\'.</string>
     <string name="appIconEnableIcon">Usar un ícono alternativo para la aplicación</string>
@@ -158,11 +158,11 @@
     <string name="banErrorFailed">Bloqueo fallido</string>
     <string name="banUnbanErrorFailed">¡Desbloqueo fallido!</string>
     <string name="banUnbanUser">Desbloquear usuario</string>
-    <string name="banUnbanUserDescription">Ingrese el Account ID del usuario al que va a quitar la prohibición.</string>
+    <string name="banUnbanUserDescription">Enter the Account ID of the user you are unbanning</string>
     <string name="banUnbanUserUnbanned">Usuario desbloqueado</string>
     <string name="banUser">Bloquear usuario</string>
     <string name="banUserBanned">Usuario reportado</string>
-    <string name="banUserDescription">Ingrese el Account ID del usuario al que va a prohibir.</string>
+    <string name="banUserDescription">Enter the Account ID of the user you are banning</string>
     <string name="blindedId">ID cegado</string>
     <string name="block">Bloquear</string>
     <string name="blockBlockedDescription">Desbloquea este contacto para enviarle mensajes</string>
@@ -193,7 +193,7 @@
     <string name="callsNotificationsRequired">Las llamadas de voz y video requieren que las notificaciones estén habilitadas en la configuración de su dispositivo.</string>
     <string name="callsPermissionsRequired">Se requieren permisos de llamada</string>
     <string name="callsPermissionsRequiredDescription">Puedes activar el permiso de \"Llamadas de voz y video\" en los ajustes de Privacidad.</string>
-    <string name="callsPermissionsRequiredDescription1">Puedes activar el permiso para \"Llamadas de voz y vídeo\" en los ajustes de Privacidad.</string>
+    <string name="callsPermissionsRequiredDescription1">Puedes activar el permiso para \"Llamadas de voz y vídeo\" en los ajustes de permisos.</string>
     <string name="callsReconnecting">Reconectando...</string>
     <string name="callsRinging">Llamando...</string>
     <string name="callsSessionCall">Llamada de {app_name}</string>
@@ -216,7 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} necesita acceso a la cámara para escanear códigos QR</string>
     <string name="cancel">Cancelar</string>
     <string name="cancelAccess">Cancelar {pro}</string>
-    <string name="cancelProPlan">Cancelar plan {pro}</string>
     <string name="cancelProPlatform">Cancela en el sitio web de {platform} utilizando la cuenta {platform_account} con la que te registraste en {pro}.</string>
     <string name="cancelProPlatformStore">Cancela en el sitio web de {platform_store} utilizando la cuenta {platform_account} con la que te registraste en {pro}.</string>
     <string name="change">Cambiar</string>
@@ -381,8 +380,8 @@
         <item quantity="other">Eliminar el mensaje</item>
     </plurals>
     <plurals name="deleteMessageConfirm">
-        <item quantity="one">¿Seguro que quieres eliminar este mensaje?</item>
-        <item quantity="other">¿Seguro que quieres eliminar estos mensajes?</item>
+        <item quantity="one">¿Estás seguro de que deseas eliminar este mensaje?</item>
+        <item quantity="other">¿Estás seguro de que deseas eliminar estos mensajes?</item>
     </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Mensaje eliminado</item>
@@ -391,8 +390,8 @@
     <string name="deleteMessageDeletedGlobally">Este mensaje ha sido eliminado</string>
     <string name="deleteMessageDeletedLocally">Este mensaje ha sido eliminado en este dispositivo</string>
     <plurals name="deleteMessageDescriptionDevice">
-        <item quantity="one">¿Seguro que quieres eliminar el mensaje únicamente de este dispositivo?</item>
-        <item quantity="other">¿Seguro que quieres eliminar los mensajes únicamente de este dispositivo?</item>
+        <item quantity="one">¿Estás seguro de que deseas eliminar este mensaje solo de este dispositivo?</item>
+        <item quantity="other">¿Estás seguro de que deseas eliminar estos mensajes solo de este dispositivo?</item>
     </plurals>
     <string name="deleteMessageDescriptionEveryone">¿Estás seguro de que deseas eliminar este mensaje para todos?</string>
     <string name="deleteMessageDeviceOnly">Eliminar solo en este dispositivo</string>
@@ -531,7 +530,7 @@
     <string name="giphyWarning">Giphy</string>
     <string name="giphyWarningDescription">{app_name} se conectará a Giphy para proporcionar los resultados de búsqueda. No tendrás protección completa de metadatos al enviar GIFs.</string>
     <string name="giveFeedback">¿Enviar comentarios?</string>
-    <string name="giveFeedbackDescription">Lamentamos saber que tu experiencia con {app_name} no ha sido ideal. Estaríamos agradecidos si pudieras tomarte un momento para compartir tus opiniones en una breve encuesta.</string>
+    <string name="giveFeedbackDescription">Sorry to hear your {app_name} experience hasn’t been ideal. We\'d be grateful if you could take a moment to share your thoughts in a brief survey</string>
     <string name="groupAddMemberMaximum">El grupo tiene un máximo de 100 miembros</string>
     <string name="groupCreate">Crear Grupo</string>
     <string name="groupCreateErrorNoMembers">Por favor, elige al menos un otro miembro del grupo.</string>
@@ -600,7 +599,7 @@
     <string name="groupNoMessages">No tienes mensajes de <b>{group_name}</b>. ¡Envía un mensaje para iniciar la conversación!</string>
     <string name="groupNotUpdatedWarning">Este grupo no ha sido actualizado en más de 30 días. Puede que experimentes problemas al enviar mensajes o ver la información del grupo.</string>
     <string name="groupOnlyAdmin">Eres el único administrador en <b>{group_name}</b>.\n\nLos miembros del grupo y la configuración no se pueden cambiar sin un administrador.</string>
-    <string name="groupOnlyAdminLeave">Eres el único administrador en <b>{group_name}</b>.\n\nNo se pueden cambiar los miembros ni la configuración del grupo sin un administrador. Para salir del grupo sin eliminarlo, añade primero un nuevo administrador.</string>
+    <string name="groupOnlyAdminLeave">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin. To leave the group without deleting it, please add a new admin first</string>
     <string name="groupPendingRemoval">Pendiente de eliminación</string>
     <string name="groupPromotedYou"><b>Tú</b> fuiste promovido a Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Tú</b> y <b>{count} más</b> fueron promovidos a Admin.</string>
@@ -630,7 +629,7 @@
     <string name="helpFAQ">Preguntas frecuentes</string>
     <string name="helpFAQDescription">Consulta las preguntas frecuentes de {app_name} para obtener respuestas a preguntas comunes.</string>
     <string name="helpHelpUsTranslateSession">Ayúdanos a traducir {app_name}</string>
-    <string name="helpReportABug">Reportar Error</string>
+    <string name="helpReportABug">Reportar un error</string>
     <string name="helpReportABugDescription">Comparte algunos detalles para ayudarnos a resolver tu problema. Exporta tus registros, luego sube el archivo a través del Help Desk de {app_name}.</string>
     <string name="helpReportABugExportLogs">Exportar registros</string>
     <string name="helpReportABugExportLogsDescription">Exporta tus registros, luego carga el archivo a través del Help Desk de {app_name}.</string>
@@ -640,7 +639,7 @@
     <string name="helpTranslateSessionDescription">¡Ayuda a traducir {app_name} a más de 80 idiomas!</string>
     <string name="helpWedLoveYourFeedback">Nos encantaría conocer tu opinión</string>
     <string name="hide">Ocultar</string>
-    <string name="hideMenuBarDescription">Cambiar visibilidad de la barra de menú del sistema.</string>
+    <string name="hideMenuBarDescription">Alterna la visibilidad de la barra de menú del sistema.</string>
     <string name="hideNoteToSelfDescription">¿Estás seguro de que quieres ocultar <b>Nota Personal</b> de tu lista de conversaciones?</string>
     <string name="hideOthers">Ocultar Otros</string>
     <string name="image">Imagen</string>
@@ -776,7 +775,7 @@
     </plurals>
     <string name="messageReplyingTo">Respondiendo a</string>
     <string name="messageRequestDisabledToastAttachments">No puedes enviar archivos adjuntos hasta que se acepte tu solicitud de mensaje</string>
-    <string name="messageRequestDisabledToastVoiceMessages">No puedes enviar mensajes de voz hasta que se acepte tu solicitud de mensaje</string>
+    <string name="messageRequestDisabledToastVoiceMessages">You cannot send voice messages until your Message Request is accepted</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> te invitó a unirte a <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">El envío de un mensaje a este grupo aceptará automáticamente la invitación al grupo.</string>
     <string name="messageRequestPending">Tu solicitud de mensaje está actualmente pendiente.</string>
@@ -914,8 +913,8 @@
     <string name="other">Otro</string>
     <string name="password">Contraseña</string>
     <string name="passwordChange">Cambiar Contraseña</string>
-    <string name="passwordChangeShortDescription">Cambiar la contraseña requerida para desbloquear {app_name}.</string>
-    <string name="passwordChangedDescriptionToast">Tu contraseña ha sido cambiada. Por favor, guárdala en un lugar seguro.</string>
+    <string name="passwordChangeShortDescription">Cambiar la contraseña necesaria para desbloquear {app_name}.</string>
+    <string name="passwordChangedDescriptionToast">Tu contraseña ha sido cambiada. Por favor, manténla segura.</string>
     <string name="passwordConfirm">Confirmar contraseña</string>
     <string name="passwordCreate">Crear contraseña</string>
     <string name="passwordCurrentIncorrect">Tu contraseña actual es incorrecta.</string>
@@ -932,7 +931,7 @@
     <string name="passwordRemoveShortDescription">Eliminar la contraseña requerida para desbloquear {app_name}</string>
     <string name="passwordRemovedDescriptionToast">Tu contraseña ha sido eliminada.</string>
     <string name="passwordSet">Establecer Contraseña</string>
-    <string name="passwordSetDescriptionToast">Tu contraseña ha sido establecida. Por favor, manténgala segura.</string>
+    <string name="passwordSetDescriptionToast">Tu contraseña ha sido establecida. Por favor, mantenla segura.</string>
     <string name="passwordSetShortDescription">Requerir contraseña para desbloquear {app_name} al iniciar.</string>
     <string name="passwordStrengthCharLength">Más de 12 caracteres</string>
     <string name="passwordStrengthIncludeNumber">Incluye un número</string>
@@ -1001,6 +1000,7 @@
     <string name="proAccessRecover">Recuperar acceso {pro}</string>
     <string name="proAccessRenew">Renovar acceso {pro}</string>
     <string name="proAccessRenewDesktop">Actualmente, el acceso a {pro} solo puede comprarse y renovarse a través de {platform_store} o {platform_store_other}. Como estás utilizando {app_name} Escritorio, no puedes renovar desde aquí.\n\nLos desarrolladores de {app_name} están trabajando arduamente en opciones de pago alternativas para permitir a los usuarios adquirir acceso a {pro} fuera de {platform_store} y {platform_store_other}. <b>Hoja de ruta de {pro}</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Renueva tu acceso {pro} en el <b><font color="0">sitio web de {platform_store}</font></b> utilizando la cuenta {platform_account} con la que te registraste para {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Renueva en el <b><font color="0">sitio web de {platform}</font></b> utilizando la cuenta {platform_account} con la que te registraste en {pro}.</string>
     <string name="proAccessRenewStart">Renueva tu acceso {pro} para volver a utilizar las potentes funciones beta de {app_pro}.</string>
     <string name="proAccessRestored">Acceso {pro} recuperado</string>
@@ -1017,7 +1017,7 @@
     <string name="proAnimatedDisplayPictureFeature">Imagen de perfil animada</string>
     <string name="proAnimatedDisplayPictureModalDescription">los usuarios pueden subir GIFs</string>
     <string name="proAnimatedDisplayPictures">Imágenes de perfil animadas</string>
-    <string name="proAnimatedDisplayPicturesDescription">Establece GIFs animados e imágenes WebP como tu foto de perfil.</string>
+    <string name="proAnimatedDisplayPicturesDescription">Establece GIF animados e imágenes WebP como tu foto de perfil.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Sube GIFs con</string>
     <string name="proAutoRenewTime">{pro} se renovará automáticamente en <b>{time}</b></string>
     <string name="proBadge">Insignia {pro}</string>
@@ -1039,6 +1039,7 @@
     <string name="proCancellation">Cancelación</string>
     <string name="proCancellationDescription">Cancelar el acceso a {pro} impedirá la renovación automática antes de que expire el acceso a {pro}. Cancelar {pro} <b>no</b> conlleva un reembolso. Podrás seguir usando las funciones de {app_pro} hasta que expire tu acceso a {pro}.\n\nComo te registraste originalmente en {app_pro} con tu cuenta de <b>{platform_account}</b>, deberás usar esa misma cuenta {platform_account} para cancelar {pro}.</string>
     <string name="proCancellationOptions">Dos formas de cancelar tu acceso a {pro}:</string>
+    <string name="proCancellationShortDescription">Cancelar el acceso a {pro} evitará la renovación automática antes de que expire {pro}.\n\nCancelar {pro} <b>no</b> genera un reembolso. Podrás seguir usando las funciones de {app_pro} hasta que expire tu acceso a {pro}.</string>
     <string name="proChooseAccess">Elige la opción de acceso a {pro} que más te convenga.\nMayor duración significa mayores descuentos.</string>
     <string name="proClearAllDataDevice">¿Estás seguro de que quieres eliminar tus datos de este dispositivo?\n\n<b>{app_pro}</b> no se puede transferir a otra cuenta. Guarda tu Contraseña de recuperación para asegurarte de que puedas restaurar tu acceso a {pro} más adelante.</string>
     <string name="proClearAllDataNetwork">¿Estás seguro de que quieres eliminar tus datos de la red? Si continúas, no podrás restaurar tus mensajes ni tus contactos.\n\n<b>{app_pro}</b> no se puede transferir a otra cuenta. Guarda tu Contraseña de recuperación para asegurarte de que puedas restaurar tu acceso a {pro} más adelante.</string>
@@ -1054,7 +1055,7 @@
     <string name="proFeatureListAnimatedDisplayPicture">Sube imágenes de perfil en formato GIF y WebP</string>
     <string name="proFeatureListLargerGroups">Chats grupales más grandes de hasta 300 miembros</string>
     <string name="proFeatureListLoadsMore">Y muchas funciones exclusivas más</string>
-    <string name="proFeatureListLongerMessages">Mensajes de hasta 10.000 caracteres</string>
+    <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
     <string name="proFeatureListPinnedConversations">Fija conversaciones sin límite</string>
     <string name="proFullestPotential">¿Quieres usar {app_name} al máximo?\nActualiza a {app_pro} Beta para acceder a muchas ventajas y funciones exclusivas.</string>
     <string name="proGroupActivated">Grupo activado</string>
@@ -1070,14 +1071,14 @@
     <string name="proLargerGroupsDescription">Los grupos en los que eres administrador se actualizan automáticamente para admitir hasta 300 miembros.</string>
     <string name="proLargerGroupsTooltip">¡Los chats grupales grandes (hasta 300 miembros) estarán disponibles pronto para todos los usuarios beta de Pro!</string>
     <string name="proLongerMessages">Mensajes más largos</string>
-    <string name="proLongerMessagesDescription">Puedes enviar mensajes de hasta 10.000 caracteres en todas las conversaciones.</string>
+    <string name="proLongerMessagesDescription">You can send messages up to 10,000 characters in all conversations.</string>
     <plurals name="proLongerMessagesSent">
         <item quantity="one">%1$s mensaje más largo enviado</item>
         <item quantity="other">%1$s mensajes más largos enviados</item>
     </plurals>
     <string name="proMessageInfoFeatures">Este mensaje utilizó las siguientes funciones de {app_pro}:</string>
     <string name="proNewInstallation">Con una nueva instalación</string>
-    <string name="proNewInstallationDescription">Reinstala {app_name} en este dispositivo a través de {platform_store}, restaura tu cuenta con tu Contraseña de recuperación y renueva {pro} desde la configuración de {app_pro}.</string>
+    <string name="proNewInstallationDescription">Reinstala {app_name} en este dispositivo a través de {platform_store}, restaura tu cuenta con tu Recovery password y renueva {pro} desde la configuración de {app_pro}.</string>
     <string name="proNewInstallationUpgrade">Reinstala {app_name} en este dispositivo mediante {platform_store}, restaura tu cuenta con tu Contraseña de recuperación y actualiza a {pro} desde la configuración de {app_pro}.</string>
     <string name="proOptionsRenewalSubtitle">Por ahora, existen tres formas de renovar:</string>
     <string name="proOptionsTwoRenewalSubtitle">Por ahora, hay dos formas de renovar:</string>
@@ -1093,14 +1094,14 @@
     <string name="proPriceThreeMonths">3 meses - {monthly_price} / mes</string>
     <string name="proPriceTwelveMonths">12 meses - {monthly_price} / mes</string>
     <string name="proReactivatingActivation">reactivando</string>
-    <string name="proRefundAccountDevice">Abre esta cuenta de {app_name} en un dispositivo {device_type} con sesión iniciada en la cuenta {platform_account} con la que te registraste originalmente. Luego, solicita un reembolso desde la configuración de {app_pro}.</string>
+    <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">Lamentamos que te vayas. Esto es lo que necesitas saber antes de solicitar un reembolso.</string>
-    <string name="proRefundNextSteps">{platform} está procesando tu solicitud de reembolso. Normalmente esto tarda entre 24 y 48 horas. Dependiendo de su decisión, puedes notar un cambio en tu estado {pro} en {app_name}.</string>
-    <string name="proRefundRequestSessionSupport">Tu solicitud de reembolso será gestionada por Soporte de {app_name}.\n\nSolicita un reembolso pulsando el botón de abajo y completando el formulario correspondiente.\n\nAunque el Soporte de {app_name} se esfuerza por procesar las solicitudes de reembolso dentro de 24 a 72 horas, el procesamiento podría demorar más durante períodos de alta demanda.</string>
-    <string name="proRefundRequestStorePolicies">Tu solicitud de reembolso será gestionada exclusivamente por {platform} a través del sitio web de <b>{platform}</b>.\n\nDebido a las políticas de reembolso de {platform}, los desarrolladores de {app_name} no tienen la capacidad de influir en el resultado de las solicitudes de reembolso. Esto incluye si la solicitud es aprobada o rechazada, así como si se otorga un reembolso total o parcial.</string>
+    <string name="proRefundNextSteps">{platform} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
+    <string name="proRefundRequestSessionSupport">Your refund request will be handled by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
+    <string name="proRefundRequestStorePolicies">Tu solicitud de reembolso será gestionada exclusivamente por {platform} a través del <b>sitio web de {platform}</b>.\n\nDebido a las políticas de reembolso de {platform}, los desarrolladores de {app_name} no tienen la capacidad de influir en el resultado de las solicitudes de reembolso. Esto incluye si la solicitud es aprobada o rechazada, así como si se otorga un reembolso total o parcial.</string>
     <string name="proRefundSupport">Ponte en contacto con {platform} para obtener actualizaciones sobre tu solicitud de reembolso. Debido a las políticas de reembolso de {platform}, los desarrolladores de {app_name} no tienen la posibilidad de influir en el resultado de las solicitudes de reembolso.\n\n<font color="0">Soporte de reembolso de {platform}</font></string>
     <string name="proRefunding">Reembolso de {pro}</string>
-    <string name="proRefundingDescription">Los reembolsos de {app_pro} son gestionados exclusivamente por {platform} a través de {platform_store}.\n\nDebido a las políticas de reembolso de {platform}, los desarrolladores de {app_name} no tienen la posibilidad de influir en el resultado de las solicitudes de reembolso. Esto incluye si la solicitud es aprobada o rechazada, así como si se otorga un reembolso total o parcial.</string>
+    <string name="proRefundingDescription">Los reembolsos de {app_pro} son gestionados exclusivamente por {platform} a través del {platform_store}.\n\nDebido a las políticas de reembolso de {platform}, los desarrolladores de {app_name} no tienen la posibilidad de influir en el resultado de las solicitudes de reembolso. Esto incluye si la solicitud es aprobada o rechazada, así como si se otorga un reembolso total o parcial.</string>
     <string name="proRenewAnimatedDisplayPicture">¿Quieres volver a usar fotos de perfil animadas?\nRenueva tu acceso a {pro} para desbloquear las funciones que te estás perdiendo.</string>
     <string name="proRenewBeta">Renovar {pro} Beta</string>
     <string name="proRenewDesktopLinked">Renueva tu acceso {pro} desde los ajustes de {app_pro} en un dispositivo vinculado con {app_name} instalado mediante {platform_store} o {platform_store_other}.</string>
@@ -1109,7 +1110,6 @@
     <string name="proRenewPinFiveConversations">¿Quieres volver a fijar más de {limit} conversaciones?\nRenueva tu acceso a {pro} para desbloquear las funciones que te estás perdiendo.</string>
     <string name="proRenewPinMoreConversations">¿Quieres volver a fijar más conversaciones?\nRenueva tu acceso a {pro} para desbloquear las funciones que te estás perdiendo.</string>
     <string name="proRenewTosPrivacy">Al renovar, aceptas los <b>Términos del servicio</b> {icon} y la <b>Política de privacidad</b> {icon} de {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Renovación de Pro fallida, reintentando pronto</string>
     <string name="proRenewingAction">renovando</string>
     <string name="proRenewingNoAccessBilling">Actualmente, el acceso a {pro} solo se puede comprar y renovar a través de {platform_store} o {platform_store_other}. Como instalaste {app_name} utilizando {build_variant}, no puedes renovar aquí.\n\nLos desarrolladores de {app_name} están trabajando arduamente en opciones de pago alternativas que permitan a los usuarios adquirir el acceso a {pro} fuera de {platform_store} y {platform_store_other}.<b> Hoja de ruta de {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Reembolso solicitado</string>
@@ -1119,7 +1119,7 @@
     <string name="proStats">Tus estadísticas de {pro}</string>
     <string name="proStatsLoading">Cargando estadísticas de {pro}</string>
     <string name="proStatsLoadingDescription">Tus estadísticas de {pro} se están cargando, por favor espera.</string>
-    <string name="proStatsTooltip">Las estadísticas de {pro} reflejan el uso en este dispositivo y pueden mostrarse de forma diferente en dispositivos vinculados</string>
+    <string name="proStatsTooltip">{pro} stats reflect usage on this device and may appear differently on linked devices</string>
     <string name="proStatusError">Error de estado de {pro}</string>
     <string name="proStatusInfoInaccurateNetworkError">No se puede conectar a la red para comprobar tu estado de {pro}. La información mostrada en esta página podría ser inexacta hasta que se restablezca la conectividad.\n\nPor favor, revisa tu conexión de red e inténtalo de nuevo.</string>
     <string name="proStatusLoading">Cargando estado de {pro}</string>
@@ -1178,7 +1178,7 @@
     <string name="quitButton">Salir</string>
     <string name="rateSession">¿Calificar {app_name}?</string>
     <string name="rateSessionApp">Calificar aplicación</string>
-    <string name="rateSessionModalDescription">Nos alegra que estés disfrutando de {app_name}. Si tienes un momento, calificarnos en {storevariant} ayuda a otros a descubrir la mensajería privada y segura.</string>
+    <string name="rateSessionModalDescription">We\'re glad you\'re enjoying {app_name}, if you have a moment, rating us in the {storevariant} helps others discover private, secure messaging!</string>
     <string name="read">Leído</string>
     <string name="readReceipts">Confirmaciones de lectura</string>
     <string name="readReceiptsDescription">Mostrar confirmaciones de lectura para todos los mensajes que envíes y recibas.</string>
@@ -1199,7 +1199,7 @@
     <string name="recoveryPasswordExplanation">Para cargar tu cuenta, ingresa tu recovery password.</string>
     <string name="recoveryPasswordHidePermanently">Ocultar Clave de Recuperación Permanentemente</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Sin su clave de recuperación no puede iniciar sesión en otros dispositivos.\n\nLe recomendamos que guarde su clave de recuperación en un lugar a salvo y seguro antes de seguir.</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">¿Está seguro que desea ocultar permanentemente su contraseña de recuperación en este dispositivo?\n\nEsto no se puede deshacer.</string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">¿Estás seguro de que deseas ocultar permanentemente tu contraseña de recuperación en este dispositivo?\n\nEsto no se puede deshacer.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Ocultar Clave de Recuperación</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Ocultar permanentemente tu clave de recuperación en este dispositivo.</string>
     <string name="recoveryPasswordRestoreDescription">Ingrese su clave de recuperación para cargar su cuenta. Si no la ha guardado, puede encontrarla en la configuración de su aplicación.</string>
@@ -1400,7 +1400,6 @@
     <string name="useFastMode">Usar modo rápido</string>
     <string name="viaPlatformWebsiteDescription">Cambia tu plan utilizando la cuenta {platform_account} con la que te registraste, a través del <b><font color="0">sitio web de {platform}</font></b>.</string>
     <string name="viaStoreWebsite">A través del sitio web de {platform}</string>
-    <string name="viaStoreWebsiteDescription">Actualiza tu acceso {pro} usando la cuenta {platform_account} con la que te registraste, a través del sitio web de <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">No se puede reproducir el video.</string>
     <string name="view">Ver</string>
@@ -1409,12 +1408,12 @@
     <string name="waitFewMinutes">Esto puede tomar unos minutos.</string>
     <string name="waitOneMoment">Un momento, por favor...</string>
     <string name="warning">Advertencia</string>
-    <string name="warningIosVersionEndingSupport">La compatibilidad con iOS 15 ha finalizado. Actualiza a iOS 16 o una versión posterior para continuar recibiendo actualizaciones de la aplicación.</string>
+    <string name="warningIosVersionEndingSupport">Support for iOS 15 has ended. Update to iOS 16 or later to continue receiving app updates.</string>
     <string name="window">Ventana</string>
     <string name="yes">Sí</string>
     <string name="you">Tú</string>
     <string name="yourCpuIsUnsupportedSSE42">Tu CPU no admite las instrucciones SSE 4.2, que son necesarias para que {app_name} procese imágenes en sistemas operativos Linux x64. Por favor, actualiza a una CPU compatible o utiliza un sistema operativo diferente.</string>
     <string name="yourRecoveryPassword">Tu contraseña de recuperación</string>
-    <string name="zoomFactor">Zoom general</string>
+    <string name="zoomFactor">Factor de Zoom</string>
     <string name="zoomFactorDescription">Ajusta el tamaño del texto y los elementos visuales.</string>
 </resources>

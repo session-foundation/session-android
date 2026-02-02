@@ -213,7 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name} tarvitsee kameran käyttöoikeuden skannatakseen QR- koodeja</string>
     <string name="cancel">Peruuta</string>
     <string name="cancelAccess">Peruuta {pro}</string>
-    <string name="cancelProPlan">Peruuta {pro}-tilaus</string>
     <string name="cancelProPlatform">Peru tilaamasi {pro}-palvelu {platform}-verkkosivustolla käyttämällä {platform_account}-tiliä, jolla rekisteröidyit.</string>
     <string name="cancelProPlatformStore">Peru tilaamasi {pro}-palvelu {platform_store}-verkkosivustolla käyttämällä {platform_account}-tiliä, jolla rekisteröidyit.</string>
     <string name="change">Vaihda</string>
@@ -983,7 +982,7 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="preview">Esikatselu</string>
     <string name="previewNotification">Ilmoituksen esikatselu</string>
     <string name="proAccessActivatedAutoShort">{pro}-oikeutesi on aktiivinen!\n\n{pro}-oikeutesi uusiutuu automaattisesti toiseksi <b>{current_plan_length}</b> <b>{date}</b>.</string>
-    <string name="proAccessActivatedNotAuto">{pro}-käyttöoikeutesi vanhenee <b>{date}</b>.\n\nPäivitä {pro}-käyttöoikeutesi nyt varmistaaksesi, että se uusitaan automaattisesti ennen vanhenemista.</string>
+    <string name="proAccessActivatedNotAuto">{pro}-käyttöoikeutesi vanhenee <b>{date}</b>.\n\nPäivitä {pro}-käyttöoikeutesi nyt varmistaaksesi, että se uusitaan automaattisesti ennen {pro}-käyttöoikeutesi vanhenemista.</string>
     <string name="proAccessActivatesAuto">{pro}-käyttöoikeutesi on aktiivinen!\n\n{pro}-käyttöoikeutesi uusiutuu automaattisesti uudelle \n<b>{current_plan_length}</b>-jaksolle <b>{date}</b>. Kaikki tässä tekemäsi muutokset astuvat voimaan seuraavan uusimisen yhteydessä.</string>
     <string name="proAccessError">{pro} Pääsyvirhe</string>
     <string name="proAccessExpireDate">{pro} käyttöoikeutesi vanhenee kohteessa <b>{date}</b>.</string>
@@ -1001,7 +1000,7 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proAccessRestored">{pro} Käyttöoikeus palautettu</string>
     <string name="proAccessRestoredDescription">{app_name} havaitsi ja palautti {pro}-käyttöoikeuden tilillesi. {pro}-tilasi on palautettu!</string>
     <string name="proAccessSignUp">Koska rekisteröidyit alun perin {app_pro}-palveluun <b>{platform_store}</b>-palvelun kautta, sinun on käytettävä {platform_account}-tiliäsi päivittääksesi {pro}-käyttöoikeutesi.</string>
-    <string name="proAccessUpgradeDesktop">Tällä hetkellä {pro}-käyttöoikeuden voi ostaa ja uusia vain {platform_store}:n tai {platform_store_other}:n kautta. Koska käytät {app_name} Desktop -sovellusta, et voi uusia tilausta täällä.\n\n{app_name}:n kehittäjät työskentelevät kovasti vaihtoehtoisten maksutapojen parissa, jotta {pro}-käyttöoikeuden voisi jatkossa ostaa myös ilman {platform_store}:a ja {platform_store_other}:a. <b>{pro}-suunnitelma</b> {icon}</string>
+    <string name="proAccessUpgradeDesktop">Tällä hetkellä {pro}-käyttöoikeuden voi ostaa ja uusia vain {platform_store}:n tai {platform_store_other}:n kautta. Koska käytät {app_name} Desktop -sovellusta, et voi uusia {pro} tilausta täällä.\n\n{app_name}:n kehittäjät työskentelevät kovasti vaihtoehtoisten maksutapojen parissa, jotta {pro}-käyttöoikeuden voisi jatkossa ostaa myös ilman {platform_store}:a ja {platform_store_other}:a. <b>{pro}-suunnitelma</b> {icon}</string>
     <string name="proActivated">Aktivoitu</string>
     <string name="proActivatingActivation">aktivointi</string>
     <string name="proAllSet">Kaikki on valmista!</string>
@@ -1038,12 +1037,12 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proChooseAccess">Valitse sinulle sopiva {pro}-käyttöoikeusvaihtoehto.\nPidempi käyttöoikeus tuo suuremmat alennukset.</string>
     <string name="proClearAllDataDevice">Haluatko varmasti poistaa tietosi tältä laitteelta?\n\n<b>{app_pro}</b> ei voida siirtää toiselle tilille. Tallenna <b>palautussalasana</b>, jotta voit palauttaa {pro}-käyttöoikeutesi myöhemmin.</string>
     <string name="proClearAllDataNetwork">Haluatko varmasti poistaa tietosi verkosta? Jos jatkat, et voi palauttaa viestejäsi tai yhteystietojasi.\n\n<b>{app_pro}</b> ei ole siirrettävissä toiselle tilille. Tallenna Palautussalasana varmistaaksesi, että voit palauttaa {pro}-käyttöoikeutesi myöhemmin.</string>
-    <string name="proDiscountTooltip">Pro-käyttöoikeutesi on jo alennettu {percent}% täydestä {app_pro}-hinnasta.</string>
+    <string name="proDiscountTooltip">{pro}-käyttöoikeutesi on jo alennettu {percent}% täydestä {app_pro}-hinnasta.</string>
     <string name="proErrorRefreshingStatus">Virhe päivitettäessä {pro}-tilaa</string>
     <string name="proExpired">Vanhentunut</string>
     <string name="proExpiredDescription">Valitettavasti {pro}-tilisi käyttöoikeus on vanhentunut.\nUusi tilaus aktivoidaksesi uudelleen {app_pro} Betan eksklusiiviset edut ja ominaisuudet.</string>
     <string name="proExpiringSoon">Vanhentuu Pian</string>
-    <string name="proExpiringSoonDescription">Pro-käyttöoikeutesi vanhenee <b>{time}</b> kuluttua.\nPäivitä nyt säilyttääksesi pääsyn {app_pro} Betan ainutlaatuisiin etuihin ja ominaisuuksiin.</string>
+    <string name="proExpiringSoonDescription">{pro}-käyttöoikeutesi vanhenee <b>{time}</b> kuluttua.\nPäivitä nyt säilyttääksesi pääsyn {app_pro} Betan ainutlaatuisiin etuihin ja ominaisuuksiin.</string>
     <string name="proExpiringTime">{pro} vanhenee <b>{time}</b></string>
     <string name="proFaq">{pro} UKK</string>
     <string name="proFaqDescription">Löydä vastauksia yleisiin kysymyksiin {app_pro}-osion usein kysytyistä kysymyksistä.</string>
@@ -1077,7 +1076,7 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proNewInstallationUpgrade">Asenna {app_name} uudelleen tälle laitteelle {platform_store}-palvelun kautta, palauta tilisi käyttämällä Palautussalasanaa ja päivitä versioon {pro} {app_pro}-asetuksista.</string>
     <string name="proOptionsRenewalSubtitle">Tällä hetkellä on kolme tapaa uusia tilaus.</string>
     <string name="proOptionsTwoRenewalSubtitle">Tällä hetkellä on kaksi tapaa uusia tilaus.</string>
-    <string name="proPercentOff">{percent}\% alennus</string>
+    <string name="proPercentOff">{percent}% alennus</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s Kiinnitetty keskustelu</item>
         <item quantity="other">%1$s Kiinnitettyä keskustelua</item>
@@ -1105,13 +1104,12 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proRenewPinFiveConversations">Haluatko kiinnittää enemmän kuin {limit} keskustelua uudelleen?\nUusi {pro}-käyttöoikeus avataksesi ne ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewPinMoreConversations">Haluatko kiinnittää enemmän keskusteluja uudelleen?\nUusi {pro}-käyttöoikeutesi avataksesi ne ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewTosPrivacy">Uusimalla hyväksyt {app_pro} <b>Käyttöehdot</b> {icon} ja <b>Tietosuojakäytännön</b> {icon}</string>
-    <string name="proRenewalUnsuccessful">Pro-uusinta epäonnistui, yritetään uudelleen pian.</string>
     <string name="proRenewingAction">uusiminen</string>
     <string name="proRenewingNoAccessBilling">Tällä hetkellä {pro}-käyttöoikeuden voi ostaa ja uusia vain {platform_store}:n tai {platform_store_other}:n kautta. Koska asensit {app_name}-sovelluksen käyttäen versiota {build_variant}, et voi uusia käyttöoikeutta tässä.\n\n{app_name}:n kehittäjät työskentelevät kovasti vaihtoehtoisten maksutapojen parissa, jotta käyttäjät voivat ostaa {pro}-käyttöoikeuden myös ilman {platform_store}:a ja {platform_store_other}:a. <b>{pro}-suunnitelma</b> {icon}</string>
     <string name="proRequestedRefund">Hyvitystä pyydetty</string>
     <string name="proSendMore">Lähetä enemmän Prolla</string>
     <string name="proSettings">{pro}-asetukset</string>
-    <string name="proStartUsing">Aloita Pro-version käyttö</string>
+    <string name="proStartUsing">Aloita {pro}-version käyttö</string>
     <string name="proStats">{pro} -tilastosi</string>
     <string name="proStatsLoading">{pro}-tilastot latautuvat</string>
     <string name="proStatsLoadingDescription">{pro}-tilastojasi ladataan, odota hetki.</string>
@@ -1131,7 +1129,7 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proUnlimitedPins">Rajattomasti kiinnityksiä</string>
     <string name="proUnlimitedPinsDescription">Järjestä kaikki keskustelusi rajattomien kiinnitettyjen keskustelujen avulla.</string>
     <string name="proUpdateAccessDescription">Nykyinen laskutusvaihtoehtosi sisältää <b>{current_plan_length}</b> {pro}-käyttöoikeutta. Haluatko varmasti vaihtaa <b>{selected_plan_length_singular}</b> laskutusvaihtoehtoon?\n\nPäivittämällä {pro}-käyttöoikeutesi uusiutuu automaattisesti <b>{date}</b> ja saat lisää <b>{selected_plan_length}</b> {pro}-käyttöoikeutta.</string>
-    <string name="proUpdateAccessExpireDescription">{pro}-käyttöoikeutesi vanhenee <b>{date}</b>.\n\nPäivittämällä {pro}-käyttöoikeutesi uusiutuu automaattisesti <b>{date}</b> ja jatkuu <b>{selected_plan_length}</b> ajan.</string>
+    <string name="proUpdateAccessExpireDescription">{pro}-käyttöoikeutesi vanhenee <b>{date}</b>.\n\nPäivittämällä {pro}-käyttöoikeutesi uusiutuu automaattisesti <b>{date}</b> ja jatkuu {pro} <b>{selected_plan_length}</b> ajan.</string>
     <string name="proUpdatingAction">päivitetään</string>
     <string name="proUpgradeAccess">Päivitä {app_pro} Betaan päästäksesi käsiksi latauksiin eksklusiivisista eduista ja ominaisuuksista.</string>
     <string name="proUpgradeDesktopLinked">Päivitä {pro}-versioon {app_pro}-asetuksista yhdistetyllä laitteella, johon on asennettu {app_name} joko {platform_store}- tai {platform_store_other}-kaupan kautta.</string>
@@ -1391,7 +1389,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="useFastMode">Käytä nopeaa tilaa</string>
     <string name="viaPlatformWebsiteDescription">Vaihda suunnitelmasi käyttämällä {platform_account}-tiliä, jolla rekisteröidyin, <b><font color="0">{platform}</font></b>-verkkosivuston kautta.</string>
     <string name="viaStoreWebsite">{platform}-sivuston kautta</string>
-    <string name="viaStoreWebsiteDescription">Päivitä {pro}-käyttöoikeutesi käyttämällä {platform_account}-tiliä, jolla rekisteröidyin, <b><font color="0">{platform_store}</font></b>-verkkosivuston kautta.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videon toisto epäonnistui.</string>
     <string name="view">Näytä</string>

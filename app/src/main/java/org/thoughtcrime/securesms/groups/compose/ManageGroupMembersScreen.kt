@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -8,38 +7,25 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -47,15 +33,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
-import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.CollapsibleFooterState
-import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.*
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.CloseFooter
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.DismissRemoveMembersDialog
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.MemberClick
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.RemoveMembers
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.RemoveSearchState
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.SearchFocusChange
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.SearchQueryChange
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.Commands.ToggleFooter
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel.OptionsItem
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -64,8 +56,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.SearchBarWithClose
-import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.getCellBottomShape
@@ -112,6 +103,7 @@ fun ManageMembers(
 ) {
 
     val searchFocused = uiState.isSearchFocused
+    val isLandscape = getAdaptiveInfo().isLandscape
 
     val handleBack: () -> Unit = {
         when {
@@ -120,114 +112,90 @@ fun ManageMembers(
         }
     }
 
+    val searchLabel: @Composable (Modifier) -> Unit = { modifier ->
+        if (!searchFocused) {
+            Text(
+                modifier = Modifier.padding(
+                    start = LocalDimensions.current.mediumSpacing
+                ),
+                text = LocalResources.current.getString(R.string.membersNonAdmins),
+                style = LocalType.current.base,
+                color = LocalColors.current.textSecondary
+            )
+        }
+    }
+
+    val header: @Composable (Modifier) -> Unit = { modifier ->
+        MembersSearchHeader(
+            searchFocused = searchFocused,
+            searchQuery = searchQuery,
+            onQueryChange = { sendCommand(SearchQueryChange(it)) },
+            onClear = { sendCommand(SearchQueryChange("")) },
+            onFocusChanged = { sendCommand(SearchFocusChange(it)) },
+            modifier = modifier
+        )
+    }
+
     // Intercept system back
     BackHandler(enabled = true) { handleBack() }
 
-    Scaffold(
-        topBar = {
-            BackAppBar(
-                title = stringResource(id = R.string.manageMembers),
-                onBack = handleBack,
-            )
-        },
+    BaseManageGroupScreen(
+        title = stringResource(id = R.string.manageMembers),
+        onBack = handleBack,
+        enableCollapsingTopBarInLandscape = true,
+        collapseTopBar = searchFocused,
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .imePadding()
-            ) {
-                CollapsibleFooterAction(
-                    data = CollapsibleFooterActionData(
-                        title = uiState.footer.footerActionTitle,
-                        collapsed = uiState.footer.collapsed,
-                        visible = uiState.footer.visible,
-                        items = uiState.footer.footerActionItems
-                    ),
-                    onCollapsedClicked = { sendCommand(ToggleFooter) },
-                    onClosedClicked = { sendCommand(CloseFooter) }
-                )
-            }
-        },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+            CollapsibleFooterBottomBar(
+                footer = CollapsibleFooterActionData(
+                    title = uiState.footer.footerActionTitle,
+                    collapsed = uiState.footer.collapsed,
+                    visible = uiState.footer.visible,
+                    items = uiState.footer.footerActionItems
+                ),
+                onToggle = { sendCommand(ToggleFooter) },
+                onClose = { sendCommand(CloseFooter) }
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
         ) {
-
-            AnimatedVisibility(
-                // show only when add-members is enabled AND search is not focused
-                visible = showAddMembers && !searchFocused,
-                enter = fadeIn(animationSpec = tween(150)) +
-                        expandVertically(
-                            animationSpec = tween(200),
-                            expandFrom = Alignment.Top
-                        ),
-                exit = fadeOut(animationSpec = tween(150)) +
-                        shrinkVertically(
-                            animationSpec = tween(180),
-                            shrinkTowards = Alignment.Top
-                        )
-            ) {
-                Cell(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(LocalDimensions.current.smallSpacing),
-                ) {
-                    Column {
-                        uiState.options.forEachIndexed { index, option ->
-                            ItemButton(
-                                modifier = Modifier.qaTag(option.qaTag),
-                                text = annotatedStringResource(option.name),
-                                iconRes = option.icon,
-                                shape = when (index) {
-                                    0 -> getCellTopShape()
-                                    uiState.options.lastIndex -> getCellBottomShape()
-                                    else -> RectangleShape
-                                },
-                                onClick = option.onClick,
-                            )
-
-                            if (index != uiState.options.lastIndex) Divider()
-                        }
-                    }
-                }
+            // PORTRAIT: options OUTSIDE scroll
+            if (!isLandscape) {
+                OptionsBlock(
+                    show = showAddMembers && !searchFocused,
+                    options = uiState.options
+                )
             }
 
             if (hasMembers) {
-                if (!searchFocused) {
-                    Text(
-                        modifier = Modifier.padding(
-                            start = LocalDimensions.current.mediumSpacing,
-                            bottom = LocalDimensions.current.smallSpacing
-                        ),
-                        text = LocalResources.current.getString(R.string.membersNonAdmins),
-                        style = LocalType.current.base,
-                        color = LocalColors.current.textSecondary
-                    )
+                if (!isLandscape) {
+                    searchLabel(Modifier)
+                    header(Modifier)
                 }
-
-                SearchBarWithClose(
-                    query = searchQuery,
-                    onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
-                    onClear = { sendCommand(SearchQueryChange("")) },
-                    placeholder = if (searchFocused) "" else LocalResources.current.getString(R.string.search),
-                    enabled = true,
-                    isFocused = searchFocused,
-                    modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
-                    onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) }
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
                 // List of members
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
-                        .imePadding()
                 ) {
+                    // LANDSCAPE: options INSIDE scroll
+                    if (isLandscape) {
+                        item(key = "options") {
+                            OptionsBlock(
+                                show = showAddMembers && !searchFocused,
+                                options = uiState.options
+                            )
+                        }
+
+                        item { searchLabel(Modifier) }
+                        stickyHeader {
+                            header(Modifier)
+                        }
+                    }
+
                     items(members) { member ->
                         // Each member's view
                         ManageMemberItem(
@@ -235,12 +203,6 @@ fun ManageMembers(
                             member = member,
                             onClick = { sendCommand(MemberClick(member)) },
                             selected = member in selectedMembers
-                        )
-                    }
-
-                    item {
-                        Spacer(
-                            modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars)
                         )
                     }
                 }
@@ -272,12 +234,49 @@ fun ManageMembers(
 }
 
 @Composable
+private fun OptionsBlock(
+    show: Boolean,
+    options: List<OptionsItem>, // use your actual type
+) {
+    AnimatedVisibility(
+        visible = show,
+        enter = fadeIn(animationSpec = tween(150)) +
+                expandVertically(animationSpec = tween(200), expandFrom = Alignment.Top),
+        exit = fadeOut(animationSpec = tween(150)) +
+                shrinkVertically(animationSpec = tween(180), shrinkTowards = Alignment.Top)
+    ) {
+        Cell(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(LocalDimensions.current.smallSpacing),
+        ) {
+            Column {
+                options.forEachIndexed { index, option ->
+                    ItemButton(
+                        modifier = Modifier.qaTag(option.qaTag),
+                        text = annotatedStringResource(option.name),
+                        iconRes = option.icon,
+                        shape = when (index) {
+                            0 -> getCellTopShape()
+                            options.lastIndex -> getCellBottomShape()
+                            else -> RectangleShape
+                        },
+                        onClick = option.onClick
+                    )
+                    if (index != options.lastIndex) Divider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun RemoveMembersDialog(
     state: ManageGroupMembersViewModel.RemoveMembersDialogState,
     modifier: Modifier = Modifier,
     sendCommand: (ManageGroupMembersViewModel.Commands) -> Unit
 ) {
-    var deleteMessages by remember { mutableStateOf(false) }
+    var deleteMessages by retain { mutableStateOf(false) }
 
     AlertDialog(
         modifier = modifier,
@@ -292,7 +291,8 @@ fun RemoveMembersDialog(
                 option = RadioOption(
                     value = Unit,
                     title = GetString(state.removeMemberText),
-                    selected = !deleteMessages
+                    selected = !deleteMessages,
+                    qaTag = GetString(R.string.qa_manage_members_dialog_remove_member)
                 )
             ) {
                 deleteMessages = false
@@ -303,6 +303,7 @@ fun RemoveMembersDialog(
                     value = Unit,
                     title = GetString(state.removeMessagesText),
                     selected = deleteMessages,
+                    qaTag = GetString(R.string.qa_manage_members_dialog_remove_member_messages)
                 )
             ) {
                 deleteMessages = true

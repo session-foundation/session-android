@@ -222,7 +222,6 @@
     <string name="cameraGrantAccessQr">Aby skanować kody QR, aplikacja {app_name} wymaga dostępu do aparatu</string>
     <string name="cancel">Anulowanie</string>
     <string name="cancelAccess">Anuluj {pro}</string>
-    <string name="cancelProPlan">Anuluj plan {pro}</string>
     <string name="cancelProPlatform">Anuluj na stronie {platform}, korzystając z konta {platform_account}, którego użyto do rejestracji w {pro}.</string>
     <string name="cancelProPlatformStore">Anuluj na stronie {platform_store}, korzystając z konta {platform_account}, którego użyto do rejestracji w {pro}.</string>
     <string name="change">Zmień</string>
@@ -1179,7 +1178,6 @@
     <string name="proRenewPinFiveConversations">Chcesz znowu przypiąć więcej niż {limit} konwersacji?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewPinMoreConversations">Chcesz ponownie przypinać więcej konwersacji?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewTosPrivacy">Odnawiając, wyrażasz zgodę na <b>Warunki świadczenia usług</b> {icon} oraz <b>Politykę prywatności</b> {icon} {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Nie udało się odnowić Pro, spróbujemy ponownie wkrótce</string>
     <string name="proRenewingAction">odnawianie</string>
     <string name="proRenewingNoAccessBilling">Obecnie dostęp do {pro} można kupić i odnowić wyłącznie przez {platform_store} lub {platform_store_other}. Ponieważ zainstalowałeś {app_name} za pomocą {build_variant}, nie możesz odnowić tutaj.\n\nDeweloperzy {app_name} intensywnie pracują nad alternatywnymi metodami płatności, które umożliwią zakup dostępu do {pro} poza {platform_store} i {platform_store_other}.<b> Plan rozwoju {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Wniosek o zwrot wysłany</string>
@@ -1494,7 +1492,6 @@
     <string name="useFastMode">Użyj trybu szybkiego</string>
     <string name="viaPlatformWebsiteDescription">Zmień swój plan, korzystając z konta {platform_account}, którego użyto do rejestracji, przez stronę <b><font color="0">{platform}</font></b>.</string>
     <string name="viaStoreWebsite">Przez stronę internetową {platform}</string>
-    <string name="viaStoreWebsiteDescription">Zaktualizuj dostęp {pro} za pomocą konta {platform_account}, z którego się rejestrowałeś(-aś), przez stronę <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Wideo</string>
     <string name="videoErrorPlay">Nie można odtworzyć wideo.</string>
     <string name="view">Zobacz</string>

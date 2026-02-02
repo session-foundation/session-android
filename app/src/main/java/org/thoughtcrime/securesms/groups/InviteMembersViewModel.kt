@@ -99,8 +99,7 @@ class InviteMembersViewModel @AssistedInject constructor(
                         .put(NAME_KEY, firstMember?.name)
                         .format()
                 } else {
-                    // TODO: Need to add String in Crowdin
-                    context.getString(R.string.membersInviteShareDescription)
+                    context.getString(R.string.shareGroupMessageHistory)
                 }
             }
             2 -> {
