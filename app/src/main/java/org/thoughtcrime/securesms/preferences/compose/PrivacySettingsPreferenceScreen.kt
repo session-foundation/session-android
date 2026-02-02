@@ -33,6 +33,7 @@ import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
+import org.thoughtcrime.securesms.ui.components.TypingIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -228,6 +229,9 @@ fun PrivacySettingsPreference(
                         subtitle = annotatedStringResource(R.string.typingIndicatorsDescription),
                         checked = uiState.typingIndicators,
                         qaTag = R.string.qa_preferences_typing_indicator,
+                        switchLeadingContent = {
+                            TypingIndicator(isTyping = true)
+                        },
                         onCheckedChange = { isEnabled ->
                             sendCommand(
                                 ToggleTypingIndicators(

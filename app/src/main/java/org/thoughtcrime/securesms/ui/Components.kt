@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -1527,7 +1528,8 @@ fun SwitchActionRowItem(
     subtitleStyle: TextStyle = LocalType.current.small,
     paddingValues: PaddingValues = PaddingValues(horizontal = LocalDimensions.current.smallSpacing),
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
-    enabled : Boolean = true
+    enabled: Boolean = true,
+    switchLeadingContent: (@Composable RowScope.() -> Unit)? = null, // Add content before the switch
 ) {
     ActionRowItem(
         modifier = modifier,
@@ -1543,11 +1545,21 @@ fun SwitchActionRowItem(
         minHeight = minHeight,
         enabled = enabled,
         endContent = {
-            SessionSwitch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                enabled = enabled
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                if (switchLeadingContent != null) {
+                    switchLeadingContent()
+                    Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
+                }
+
+                SessionSwitch(
+                    checked = checked,
+                    onCheckedChange = onCheckedChange,
+                    enabled = enabled
+                )
+            }
         }
     )
 }
