@@ -582,11 +582,11 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            if (!isRepromote) {
-                // Insert the message locally immediately so we can see the incoming change
-                // The same message will be sent later to the group
-                storage.insertGroupInfoChange(message, group)
-            }
+            if(!isRepromote){
+            // Insert the message locally immediately so we can see the incoming change
+            // The same message will be sent later to the group
+            storage.insertGroupInfoChange(message, group)
+        }
 
             // Send out the promote message to the members concurrently
             val promoteMessage = GroupUpdated(
@@ -619,41 +619,39 @@ class GroupManagerV2Impl @Inject constructor(
             // Update each member's status
             configFactory.withMutableGroupConfigs(group) { configs ->
                 promotedByMemberIDs.asSequence()
-                    .mapNotNull { (member, result) ->
+                    .mapNotNull { (member, status) ->
                         configs.groupMembers.get(member.hexString)?.apply {
-                            if (result.isFailure) {
-                                configs.groupMembers.get(member.hexString)?.let { member ->
-                                    member.setPromotionFailed()
-                                    configs.groupMembers.set(member)
-                                }
+                            if (status.isFailure) {
+                                setPromotionFailed()
                             }
                         }
                     }
                     .forEach(configs.groupMembers::set)
             }
 
+            if (!isRepromote) {
+                messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
+            }
+
             val failedMembers = promotedByMemberIDs
                 .filterValues { it.isFailure }
                 .keys
-                .toList()
+                .map { it.hexString }
+                .toSet()
 
             if (failedMembers.isNotEmpty()) {
+
                 val cause = promotedByMemberIDs.values
-                    .firstOrNull { it.isFailure }
-                    ?.exceptionOrNull()
+                    .firstOrNull { it.isFailure }?.exceptionOrNull()
                     ?: RuntimeException("Failed to promote ${failedMembers.size} member(s)")
 
                 throw GroupInviteException(
                     isPromotion = true,
-                    inviteeAccountIds = failedMembers.map { it.hexString },
+                    inviteeAccountIds = failedMembers.map { it },
                     groupName = groupName ?: "",
                     isReinvite = isRepromote,
                     underlying = cause
                 )
-            }
-
-            if (!isRepromote) {
-                messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
             }
         }
     }
