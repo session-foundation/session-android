@@ -12,16 +12,29 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="@dimen/message_spacing"
         android:paddingVertical="@dimen/small_spacing"
         >
+        <TextView android:id="@+id/audioTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/playPauseContainer"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="@dimen/message_spacing"
+            android:ellipsize="end"
+            tools:text="Voice Message"
+            android:textStyle="italic"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="@dimen/small_font_size"
+            />
 
         <FrameLayout
             android:id="@+id/playPauseContainer"
             android:layout_width="36dp"
             android:layout_height="36dp"
+            android:layout_marginStart="@dimen/message_spacing"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@+id/audioTitle">
 
             <View android:id="@+id/playBg"
                 android:layout_width="match_parent"
@@ -57,12 +70,14 @@
             android:progressDrawable="@drawable/voice_message_seekbar_progress"
             android:thumb="@drawable/voice_message_seekbar_thumb"
             android:splitTrack="false"
+            android:paddingStart="@dimen/message_spacing"
+            android:paddingEnd="@dimen/message_spacing"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/playPauseContainer"
             app:layout_constraintTop_toTopOf="@id/playPauseContainer"
             app:layout_constraintBottom_toBottomOf="@id/playPauseContainer"
             app:layout_constraintVertical_chainStyle="packed"
-            tools:progress="0" />
+            tools:progress="100" />
 
         <TextView
             android:id="@+id/voiceMessageSpeedButton"
@@ -78,6 +93,7 @@
             android:padding="@dimen/very_small_spacing"
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginTop="@dimen/very_small_spacing"
+            android:layout_marginStart="@dimen/message_spacing"
             app:layout_constraintStart_toStartOf="@+id/voiceMessageSeekBar"
             app:layout_constraintTop_toBottomOf="@+id/playPauseContainer" />
 
@@ -88,6 +104,7 @@
             android:gravity="end"
             android:textColor="?android:textColorPrimary"
             android:textSize="@dimen/very_small_font_size"
+            android:layout_marginEnd="@dimen/message_spacing"
             app:layout_constraintBaseline_toBaselineOf="@+id/voiceMessageSpeedButton"
             app:layout_constraintEnd_toEndOf="parent"
             tools:text="0:08" />

@@ -116,6 +116,7 @@ class VoiceMessageView @JvmOverloads constructor(
         // Apply Colors
         binding.voiceMessageViewDurationTextView.setTextColor(mainColor)
         binding.voiceMessageSpeedButton.setTextColor(mainColor)
+        binding.audioTitle.setTextColor(mainColor)
         binding.voiceMessageSpeedButton.backgroundTintList =
             ColorStateList.valueOf(ColorUtils.setAlphaComponent(buttonBgColor, 30))
 
@@ -132,6 +133,9 @@ class VoiceMessageView @JvmOverloads constructor(
         // Tint Play button background/icon
         binding.playBg.backgroundTintList = ColorStateList.valueOf(buttonBgColor)
         binding.voiceMessagePlaybackImageView.imageTintList = ColorStateList.valueOf(buttonActionColor)
+
+        binding.audioTitle.text = if(playable?.isVoiceNote == true) context.getString(R.string.messageVoice)
+        else playable?.filename ?: context.getString(R.string.unknown)
 
         // Observe state from audio manager
         startCollectingPlaybackState()

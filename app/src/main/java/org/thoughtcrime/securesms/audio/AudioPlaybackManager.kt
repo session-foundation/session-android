@@ -69,6 +69,7 @@ class AudioPlaybackManager @Inject constructor(
         val playbackSpeed: Float = 1f
     )
 
+    //todo AUDIO should we clear the cache when leaving a conversation?
     private val playbackCache = ConcurrentHashMap<String, SavedAudioState>()
 
     fun getSavedState(messageId: MessageId): SavedAudioState =
