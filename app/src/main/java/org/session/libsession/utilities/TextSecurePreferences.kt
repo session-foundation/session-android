@@ -48,7 +48,9 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_PATH_ROTATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SEEN_DONATION_CTA
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SNODE_POOL_REFRESH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LEGACY_PREF_KEY_SELECTED_UI_MODE
@@ -122,9 +124,7 @@ interface TextSecurePreferences {
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
-
     fun setNotificationPrivacy(string : String)
-
     fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
     fun isInThreadNotifications(): Boolean
@@ -150,12 +150,9 @@ interface TextSecurePreferences {
     fun setNotificationRingtone(ringtone: String?)
     fun setNotificationVibrateEnabled(enabled: Boolean)
     fun isNotificationVibrateEnabled(): Boolean
-
     fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
-
     fun isSoundWhenAppIsOpenEnabled(): Boolean
     fun getNotificationLedColor(): Int
-
     fun setThreadLengthTrimmingEnabled(enabled : Boolean)
     fun isThreadLengthTrimmingEnabled(): Boolean
     fun getLogEncryptedSecret(): String?
@@ -180,8 +177,6 @@ interface TextSecurePreferences {
     fun setStringSetPreference(key: String, value: Set<String>)
     fun getHasViewedSeed(): Boolean
     fun setHasViewedSeed(hasViewedSeed: Boolean)
-    fun getLastSnodePoolRefreshDate(): Long
-    fun setLastSnodePoolRefreshDate(date: Date)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -216,7 +211,6 @@ interface TextSecurePreferences {
     fun getFollowSystemSettings(): Boolean
     fun setThemeStyle(themeStyle: String)
     fun setFollowSystemSettings(followSystemSettings: Boolean)
-
     fun setAutoplayAudioMessages(enabled : Boolean)
     fun isAutoplayAudioMessagesEnabled(): Boolean
     fun hasForcedNewConfig(): Boolean
@@ -271,10 +265,13 @@ interface TextSecurePreferences {
     fun showDonationCTAFromPositiveReviewDebug(): String?
     fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
 
+    fun getLastSnodePoolRefresh(): Long
+    fun setLastSnodePoolRefresh(epochMs: Long)
+    fun getLastPathRotation(): Long
+    fun setLastPathRotation(epochMs: Long)
+
     fun setSendWithEnterEnabled(enabled: Boolean)
-
     fun isSendWithEnterEnabled() : Boolean
-
     fun updateBooleanFromKey(key : String, value : Boolean)
 
     var deprecationStateOverride: String?
@@ -367,7 +364,6 @@ interface TextSecurePreferences {
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
         const val LAST_VACUUM_TIME = "pref_last_vacuum_time"
         const val AUTOPLAY_AUDIO_MESSAGES = "pref_autoplay_audio"
-
         const val SEND_WITH_ENTER = "pref_enter_sends"
         const val FINGERPRINT_KEY_GENERATED = "fingerprint_key_generated"
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
@@ -447,6 +443,9 @@ interface TextSecurePreferences {
         const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
         const val DEBUG_SEEN_DONATION_CTA_AMOUNT = "debug_seen_donation_cta_amount"
         const val DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "debug_show_donation_cta_from_positive_review"
+
+        const val LAST_SNODE_POOL_REFRESH = "last_snode_pool_refresh"
+        const val LAST_PATH_ROTATION = "last_path_rotation"
 
         @JvmStatic
         fun isPushEnabled(context: Context): Boolean {
@@ -697,14 +696,6 @@ interface TextSecurePreferences {
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
         }
 
-        fun getLastSnodePoolRefreshDate(context: Context?): Long {
-            return getLongPreference(context!!, "last_snode_pool_refresh_date", 0)
-        }
-
-        fun setLastSnodePoolRefreshDate(context: Context?, date: Date) {
-            setLongPreference(context!!, "last_snode_pool_refresh_date", date.time)
-        }
-
         @JvmStatic
         fun removeHasHiddenMessageRequests(context: Context) {
             removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
@@ -755,7 +746,7 @@ class AppTextSecurePreferences @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val json: Json,
 ): TextSecurePreferences {
-    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
+    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, if (BuildConfig.BUILD_TYPE != "release") true else false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
     override var migratedToGroupV2Config: Boolean
@@ -1208,12 +1199,20 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference("has_viewed_seed", hasViewedSeed)
     }
 
-    override fun getLastSnodePoolRefreshDate(): Long {
-        return getLongPreference("last_snode_pool_refresh_date", 0)
+    override fun getLastSnodePoolRefresh(): Long {
+        return getLongPreference(LAST_SNODE_POOL_REFRESH, 0)
     }
 
-    override fun setLastSnodePoolRefreshDate(date: Date) {
-        setLongPreference("last_snode_pool_refresh_date", date.time)
+    override fun setLastSnodePoolRefresh(epochMs: Long) {
+        setLongPreference(LAST_SNODE_POOL_REFRESH, epochMs)
+    }
+
+    override fun getLastPathRotation(): Long {
+        return getLongPreference(LAST_PATH_ROTATION, 0)
+    }
+
+    override fun setLastPathRotation(epochMs: Long) {
+        setLongPreference(LAST_PATH_ROTATION, epochMs)
     }
 
     override fun getLastOpenTimeDate(): Long {

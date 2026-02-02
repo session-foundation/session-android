@@ -44,11 +44,13 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -75,6 +77,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -91,13 +94,17 @@ import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.AddReactionApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteReactionApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
@@ -264,6 +271,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var proStatusManager: ProStatusManager
+    @Inject lateinit var snodeClock: SnodeClock
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
 
@@ -272,6 +280,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     @Inject
     lateinit var conversationLoaderFactory: ConversationLoader.Factory
+
+    @Inject
+    lateinit var communityApiExecutor: CommunityApiExecutor
+
+    @Inject
+    lateinit var addReactionApiFactory: AddReactionApi.Factory
+
+    @Inject
+    lateinit var deleteReactionApiFactory: DeleteReactionApi.Factory
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -377,7 +394,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val adapter by lazy {
         val adapter = ConversationAdapter(
             this,
-            storage.getLastSeen(viewModel.threadId),
+            originalLastSeen = viewModel.threadId
+                ?.let { storage.getLastSeen(it) },
             false,
             onItemPress = { message, position, view, event ->
                 handlePress(message, position, view, event)
@@ -637,8 +655,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         try {
                             when (it) {
                                 is Long -> {
-                                    if (storage.getLastSeen(viewModel.threadId) < it) {
-                                        storage.markConversationAsRead(viewModel.threadId, it)
+                                    viewModel.threadId?.let { threadId ->
+                                        if (storage.getLastSeen(threadId) < it) {
+                                            storage.markConversationAsRead(threadId, it)
+                                        }
                                     }
                                 }
 
@@ -656,15 +676,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         lifecycleScope.launch {
-            viewModel.conversationReloadNotification
-                .collect {
-                    LoaderManager.getInstance(this@ConversationActivityV2)
-                        .restartLoader(0, null, this@ConversationActivityV2)
-                }
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.conversationReloadNotification
+                    .collect {
+                        if (!firstLoad.get()) {
+                            restartConversationLoader()
+                        }
+                    }
+            }
         }
 
         setupMentionView()
         setupUiEventsObserver()
+    }
+
+    private fun restartConversationLoader() {
+        LoaderManager.getInstance(this).restartLoader(0, null, this)
     }
 
     private fun startConversationLoaderWithDelay() {
@@ -777,7 +804,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onResume() {
         super.onResume()
-        messageNotifier.setVisibleThread(viewModel.threadId)
+        viewModel.threadId?.let { threadId ->
+            messageNotifier.setVisibleThread(threadId)
+        }
     }
 
     override fun onPause() {
@@ -839,11 +868,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                                 )
                             }
 
-                            if (isUnread) {
-                                storage.markConversationAsRead(
-                                    viewModel.threadId,
-                                    clock.currentTimeMills()
-                                )
+                            viewModel.threadId?.let { threadId ->
+                                if (isUnread) {
+                                    storage.markConversationAsRead(
+                                        threadId,
+                                        clock.currentTimeMillis()
+                                    )
+                                }
                             }
                         }
                     }
@@ -877,7 +908,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.conversationRecyclerView.layoutManager = layoutManager
         // Workaround for the fact that CursorRecyclerViewAdapter doesn't auto-update automatically (even though it says it will)
-        LoaderManager.getInstance(this).restartLoader(0, null, this)
+        restartConversationLoader()
         binding.conversationRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -1021,19 +1052,45 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     // called from onCreate
+    private var typistsLiveData: LiveData<TypingStatusRepository.TypingState>? = null
     private fun setUpTypingObserver() {
-        typingStatusRepository.getTypists(viewModel.threadId).observe(this) { state ->
-            val recipients = if (state != null) state.typists else listOf()
-            // FIXME: Also checking isScrolledToBottom is a quick fix for an issue where the
-            //        typing indicator overlays the recycler view when scrolled up
-            val viewContainer = binding.typingIndicatorViewContainer
-            viewContainer.isVisible = recipients.isNotEmpty() && isScrolledToBottom
-            viewContainer.setTypists(recipients)
+        // Observe typists only when we have a real threadId,
+        // and swap if it changes, example: message request was created then accepted
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.threadIdFlow
+                    .collect { threadId ->
+                        // Detach any previous observer
+                        typistsLiveData?.removeObservers(this@ConversationActivityV2)
+                        typistsLiveData = null
+
+                        if (threadId == null) {
+                            binding.typingIndicatorViewContainer.isVisible = false
+                            return@collect
+                        }
+
+                        // Attach observer for the real threadId
+                        typistsLiveData =
+                            typingStatusRepository.getTypists(threadId).also { liveData ->
+                                liveData.observe(this@ConversationActivityV2) { state ->
+                                    val recipients = state?.typists ?: emptyList()
+
+                                    // Quick-fix behavior kept as-is
+                                    val viewContainer = binding.typingIndicatorViewContainer
+                                    viewContainer.isVisible =
+                                        recipients.isNotEmpty() && isScrolledToBottom
+                                    viewContainer.setTypists(recipients)
+                                }
+                            }
+                    }
+            }
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
             binding.inputBar.addTextChangedListener {
-                if(it.isNotEmpty()) {
-                    typingStatusSender.onTypingStarted(viewModel.threadId)
+                if (it.isNotEmpty()) {
+                    viewModel.threadId?.let { threadId ->
+                        typingStatusSender.onTypingStarted(threadId)
+                    }
                 }
             }
         }
@@ -1172,17 +1229,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        // React to input bar state changes
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.inputBarState
-                    .map { it.charLimitState }
-                    .distinctUntilChanged()
-                    .collectLatest(binding.inputBar::setCharLimitState)
-            }
-        }
-
-
         // React to loader visibility changes
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -1247,7 +1293,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         }
 
-        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(viewModel.threadId).first()
+        val threadId = viewModel.threadId
+        if (threadId == null) return // Maybe don't scroll
+
+        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(threadId).first()
         val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return
 
         binding.conversationRecyclerView.runWhenLaidOut {
@@ -1256,7 +1305,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 ((layoutManager?.height ?: 0) / 2)
             )
         }
-
     }
 
     private fun highlightViewAtPosition(position: Int) {
@@ -1794,7 +1842,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Create the message
         val recipient = viewModel.recipient
         val reactionMessage = VisibleMessage()
-        val emojiTimestamp = SnodeAPI.nowWithOffset
+        val emojiTimestamp = snodeClock.currentTimeMillis()
         reactionMessage.sentTimestamp = emojiTimestamp
         val author = loginStateRepository.getLocalNumber()
 
@@ -1841,19 +1889,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 scope.launch {
                     runCatching {
-                        OpenGroupApi.addReaction(
-                            room = recipient.address.room,
-                            server = recipient.address.serverUrl,
-                            messageId = messageServerId,
-                            emoji = emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = recipient.address.serverUrl,
+                                api = addReactionApiFactory.create(
+                                    room = recipient.address.room,
+                                    messageId = messageServerId,
+                                    emoji = emoji
+                                )
+                            )
                         )
+                    }.onFailure {
+                        Log.e(TAG, "Failed to send emoji reaction to community message", it)
                     }
                 }
             } else {
                 messageSender.send(reactionMessage, recipient.address)
             }
 
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
+            restartConversationLoader()
         }
     }
 
@@ -1862,7 +1916,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendEmojiRemoval(emoji: String, originalMessage: MessageRecord) {
         val recipient = viewModel.recipient
         val message = VisibleMessage()
-        val emojiTimestamp = SnodeAPI.nowWithOffset
+        val emojiTimestamp = snodeClock.currentTimeMillis()
         message.sentTimestamp = emojiTimestamp
         val author = loginStateRepository.getLocalNumber()
 
@@ -1898,18 +1952,23 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 scope.launch {
                     runCatching {
-                        OpenGroupApi.deleteReaction(
-                            recipient.address.room,
-                            recipient.address.serverUrl,
-                            messageServerId,
-                            emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = recipient.address.serverUrl,
+                                api = deleteReactionApiFactory.create(
+                                    room = recipient.address.room,
+                                    messageId = messageServerId,
+                                    emoji = emoji
+                                )
+                            )
                         )
                     }
                 }
             } else {
                 messageSender.send(message, recipient.address)
             }
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
+
+            restartConversationLoader()
         }
     }
 
@@ -1924,7 +1983,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             ReactWithAnyEmojiDialogFragment
                 .createForMessageRecord(messageRecord, reactWithAnyEmojiStartPage)
-                .show(supportFragmentManager, "BOTTOM");
+                .show(supportFragmentManager, "BOTTOM")
         }
     }
 
@@ -2157,7 +2216,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): Pair<Address, Long>? {
         val recipient = viewModel.recipient
-        val sentTimestamp = SnodeAPI.nowWithOffset
+        val sentTimestamp = snodeClock.currentTimeMillis()
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
         val isNoteToSelf = recipient.isLocalNumber
@@ -2203,8 +2262,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             waitForApprovalJobToBeSubmitted()
             messageSender.send(message, recipient.address)
         }
-        // Send a typing stopped message
-        typingStatusSender.onTypingStopped(viewModel.threadId)
+
+        stopTyping()
         return Pair(recipient.address, sentTimestamp)
     }
 
@@ -2216,7 +2275,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         deleteAttachmentFilesAfterSave: Boolean = false,
     ): Pair<Address, Long>? {
         val recipient = viewModel.recipient
-        val sentTimestamp = SnodeAPI.nowWithOffset
+        val sentTimestamp = snodeClock.currentTimeMillis()
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
 
         // Create the message
@@ -2300,9 +2359,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        // Send a typing stopped message
-        typingStatusSender.onTypingStopped(viewModel.threadId)
+        stopTyping()
         return Pair(recipient.address, sentTimestamp)
+    }
+
+    private fun stopTyping(){
+        // Send a typing stopped message
+        viewModel.threadId?.let { threadId ->
+            typingStatusSender.onTypingStopped(threadId)
+        }
     }
 
     private fun showGIFPicker() {
@@ -2802,7 +2867,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendMediaSavedNotification() {
         val recipient = viewModel.recipient
         if (recipient.isGroupOrCommunityRecipient) { return }
-        val timestamp = SnodeAPI.nowWithOffset
+        val timestamp = snodeClock.currentTimeMillis()
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
         val message = DataExtractionNotification(kind)
         messageSender.send(message, recipient.address)
@@ -2855,9 +2920,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     fun onSearchQueryUpdated(query: String) {
-        binding.searchBottomBar.showLoading()
-        searchViewModel.onQueryUpdated(query, viewModel.threadId)
-        adapter.onSearchQueryUpdated(query.takeUnless { it.length < 2 })
+        viewModel.threadId?.let {  threadId ->
+            binding.searchBottomBar.showLoading()
+            searchViewModel.onQueryUpdated(query, threadId)
+            adapter.onSearchQueryUpdated(query.takeUnless { it.length < 2 })
+        }
     }
 
     override fun onSearchMoveUpPressed() {
@@ -2869,9 +2936,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {
-        SimpleTask.run(lifecycle, {
-            mmsSmsDb.getMessagePositionInConversation(viewModel.threadId, timestamp, author, false)
-        }) { p: Int -> moveToMessagePosition(p, highlight, onMessageNotFound) }
+        viewModel.threadId?.let { threadId ->
+            SimpleTask.run(lifecycle, {
+                mmsSmsDb.getMessagePositionInConversation(threadId, timestamp, author, false)
+            }) { p: Int -> moveToMessagePosition(p, highlight, onMessageNotFound) }
+        }
     }
 
     private fun moveToMessagePosition(position: Int, highlight: Boolean, onMessageNotFound: Runnable?) {

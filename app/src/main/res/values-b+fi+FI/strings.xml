@@ -213,7 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name} tarvitsee kameran käyttöoikeuden skannatakseen QR- koodeja</string>
     <string name="cancel">Peruuta</string>
     <string name="cancelAccess">Peruuta {pro}</string>
-    <string name="cancelProPlan">Peruuta {pro}-tilaus</string>
     <string name="cancelProPlatform">Peru tilaamasi {pro}-palvelu {platform}-verkkosivustolla käyttämällä {platform_account}-tiliä, jolla rekisteröidyit.</string>
     <string name="cancelProPlatformStore">Peru tilaamasi {pro}-palvelu {platform_store}-verkkosivustolla käyttämällä {platform_account}-tiliä, jolla rekisteröidyit.</string>
     <string name="change">Vaihda</string>
@@ -1105,7 +1104,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proRenewPinFiveConversations">Haluatko kiinnittää enemmän kuin {limit} keskustelua uudelleen?\nUusi {pro}-käyttöoikeus avataksesi ne ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewPinMoreConversations">Haluatko kiinnittää enemmän keskusteluja uudelleen?\nUusi {pro}-käyttöoikeutesi avataksesi ne ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewTosPrivacy">Uusimalla hyväksyt {app_pro} <b>Käyttöehdot</b> {icon} ja <b>Tietosuojakäytännön</b> {icon}</string>
-    <string name="proRenewalUnsuccessful">Pro-uusinta epäonnistui, yritetään uudelleen pian.</string>
     <string name="proRenewingAction">uusiminen</string>
     <string name="proRenewingNoAccessBilling">Tällä hetkellä {pro}-käyttöoikeuden voi ostaa ja uusia vain {platform_store}:n tai {platform_store_other}:n kautta. Koska asensit {app_name}-sovelluksen käyttäen versiota {build_variant}, et voi uusia käyttöoikeutta tässä.\n\n{app_name}:n kehittäjät työskentelevät kovasti vaihtoehtoisten maksutapojen parissa, jotta käyttäjät voivat ostaa {pro}-käyttöoikeuden myös ilman {platform_store}:a ja {platform_store_other}:a. <b>{pro}-suunnitelma</b> {icon}</string>
     <string name="proRequestedRefund">Hyvitystä pyydetty</string>
@@ -1391,7 +1389,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="useFastMode">Käytä nopeaa tilaa</string>
     <string name="viaPlatformWebsiteDescription">Vaihda suunnitelmasi käyttämällä {platform_account}-tiliä, jolla rekisteröidyin, <b><font color="0">{platform}</font></b>-verkkosivuston kautta.</string>
     <string name="viaStoreWebsite">{platform}-sivuston kautta</string>
-    <string name="viaStoreWebsiteDescription">Päivitä {pro}-käyttöoikeutesi käyttämällä {platform_account}-tiliä, jolla rekisteröidyin, <b><font color="0">{platform_store}</font></b>-verkkosivuston kautta.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videon toisto epäonnistui.</string>
     <string name="view">Näytä</string>

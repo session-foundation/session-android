@@ -9,35 +9,25 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.MediaPreviewActivity
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.MediaDatabase
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -49,6 +39,12 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.asSequence
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @HiltViewModel(assistedFactory = MediaOverviewViewModel.Factory::class)
 class MediaOverviewViewModel @AssistedInject constructor(
@@ -59,6 +55,7 @@ class MediaOverviewViewModel @AssistedInject constructor(
     private val dateUtils: DateUtils,
     recipientRepository: RecipientRepository,
     private val messageSender: MessageSender,
+    private val snodeClock: SnodeClock,
 ) : AndroidViewModel(application) {
 
     private val timeBuckets by lazy { FixedTimeBuckets() }
@@ -291,7 +288,7 @@ class MediaOverviewViewModel @AssistedInject constructor(
                 successCount > 0 &&
                 !address.isGroupOrCommunity) {
                 withContext(Dispatchers.Default) {
-                    val timestamp = SnodeAPI.nowWithOffset
+                    val timestamp = snodeClock.currentTimeMillis()
                     val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
                     val message = DataExtractionNotification(kind)
                     messageSender.send(message, address)

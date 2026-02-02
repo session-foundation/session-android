@@ -30,24 +30,11 @@ data class VisibleMessage(
     var reaction: Reaction? = null,
     var hasMention: Boolean = false,
     var blocksMessageRequests: Boolean = false,
-    /**
-     * The pro features enabled for this message.
-     *
-     * Note:
-     * * When this message is an incoming message, the pro features will only be populated
-     * if we can prove that the sender has an active pro subscription.
-     *
-     * * When this message represents an outgoing message, this property can be populated by
-     * application code at their wishes but the actual translating to protobuf onto the wired will
-     * be checked against the current user's pro proof, if no active pro subscription is found,
-     * the pro features will not be sent in the protobuf messages.
-     */
-    var proFeatures: Set<ProFeature> = emptySet()
 ) : Message()  {
 
     // This empty constructor is needed for kryo serialization
     @Keep
-    constructor(): this(proFeatures = emptySet())
+    constructor(): this(text = null)
 
     override val isSelfSendValid: Boolean = true
 
@@ -126,19 +113,6 @@ data class VisibleMessage(
         // Sync target
         if (syncTarget != null) {
             dataMessage.syncTarget = syncTarget
-        }
-
-        // Pro features
-        if (proFeatures.any { it is ProMessageFeature }) {
-            builder.proMessageBuilder.setMsgBitset(
-                proFeatures.toProMessageBitSetValue()
-            )
-        }
-
-        if (proFeatures.any { it is ProProfileFeature }) {
-            builder.proMessageBuilder.setProfileBitset(
-                proFeatures.toProProfileBitSetValue()
-            )
         }
     }
     // endregion

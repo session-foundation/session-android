@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,9 +10,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
@@ -40,6 +41,7 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
 
     @Inject lateinit var groupDatabase: GroupDatabase
     @Inject lateinit var loginStateRepository: LoginStateRepository
+    @Inject lateinit var groupManager : GroupManagerV2
 
     var onViewDetailsTapped: (() -> Unit?)? = null
     var onCopyConversationId: (() -> Unit?)? = null
@@ -48,6 +50,8 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
     var onBlockTapped: (() -> Unit)? = null
     var onUnblockTapped: (() -> Unit)? = null
     var onDeleteTapped: (() -> Unit)? = null
+
+    var onAdminLeaveTapped: (() -> Unit)? = null
     var onMarkAllAsReadTapped: (() -> Unit)? = null
     var onMarkAsUnreadTapped : (() -> Unit)? = null
     var onNotificationTapped: (() -> Unit)? = null
@@ -68,6 +72,7 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
             binding.blockTextView -> onBlockTapped?.invoke()
             binding.unblockTextView -> onUnblockTapped?.invoke()
             binding.deleteTextView -> onDeleteTapped?.invoke()
+            binding.adminLeaveGroupTextView ->onAdminLeaveTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
             binding.markAsUnreadTextView -> onMarkAsUnreadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
@@ -116,6 +121,19 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
         binding.notificationsTextView.isVisible = !recipient.isLocalNumber && !isDeprecatedLegacyGroup
         binding.notificationsTextView.setOnClickListener(this)
 
+        // leave group for admin
+        binding.adminLeaveGroupTextView.apply {
+            if (recipient.isGroupV2Recipient) {
+                val accountId = AccountId(recipient.address.toString())
+                val group = configFactory.getGroup(accountId) ?: return
+
+                setOnClickListener(this@ConversationOptionsBottomSheet)
+
+                // Only visible if admin is one of many group admins
+                this.isVisible = group.hasAdminKey()
+                        && !groupManager.isCurrentUserLastAdmin(accountId)
+            }
+        }
         // delete
         binding.deleteTextView.apply {
             setOnClickListener(this@ConversationOptionsBottomSheet)
@@ -144,11 +162,13 @@ class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClick
                 // groups and communities
                 recipient.isGroupV2Recipient -> {
                     val accountId = AccountId(recipient.address.toString())
-                    val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
+                    val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) }
+                            ?: return
+
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
-                    // or if the user is an admin
+                    // or if the user is the only admin (multi-admin groups)
                     // the button should read 'Delete' instead of 'Leave'
-                    if (!group.shouldPoll || group.hasAdminKey()) {
+                    if (!group.shouldPoll ||  group.hasAdminKey()) {
                         text = context.getString(R.string.delete)
                         contentDescription = context.getString(R.string.AccessibilityId_delete)
                         drawableStartRes = R.drawable.ic_trash_2

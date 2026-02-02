@@ -48,6 +48,7 @@ class OutgoingMediaMessage(
         linkPreviews = linkPreview?.let { listOf(it) } ?: emptyList(),
         group = null,
         isGroupUpdateMessage = false,
+        proFeatures = message.proFeatures
     )
 
     constructor(

@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.dependencies
 
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.thoughtcrime.securesms.auth.AuthAwareComponentsHandler
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
@@ -28,7 +28,6 @@ class OnAppStartupComponents private constructor(
     }
 
     @Inject constructor(
-        snodeClock: SnodeClock,
         appVisibilityManager: AppVisibilityManager,
         groupPollerManager: GroupPollerManager,
         expiredGroupManager: ExpiredGroupManager,
@@ -45,10 +44,10 @@ class OnAppStartupComponents private constructor(
         emojiIndexLoader: EmojiIndexLoader,
         subscriptionCoordinator: SubscriptionCoordinator,
         authAwareHandler: AuthAwareComponentsHandler,
+        snodeClock: SnodeClock,
         subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
     ): this(
         components = listOf(
-            snodeClock,
             appVisibilityManager,
             groupPollerManager,
             expiredGroupManager,
@@ -65,6 +64,7 @@ class OnAppStartupComponents private constructor(
             emojiIndexLoader,
             subscriptionCoordinator,
             authAwareHandler,
+            snodeClock
         ) + subscriptionManagers
     )
 }

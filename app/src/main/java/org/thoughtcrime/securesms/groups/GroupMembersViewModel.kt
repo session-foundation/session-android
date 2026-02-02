@@ -18,7 +18,6 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
@@ -29,7 +28,7 @@ class GroupMembersViewModel @AssistedInject constructor(
     storage: StorageProtocol,
     configFactory: ConfigFactoryProtocol,
     avatarUtils: AvatarUtils,
-    recipientRepository: RecipientRepository,
+    recipientRepository: RecipientRepository
 ) : BaseGroupMembersViewModel(address, context, storage, configFactory, avatarUtils, recipientRepository) {
 
     private val _navigationActions = Channel<Intent>()

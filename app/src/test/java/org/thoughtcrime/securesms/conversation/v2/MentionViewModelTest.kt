@@ -87,13 +87,13 @@ class MentionViewModelTest : BaseViewModelTest() {
         mentionViewModel = MentionViewModel(
             threadDatabase = mock {
                 on { getRecipientForThreadId(threadID) } doReturn communityRecipient.address
-                on { getThreadIdIfExistsFor(communityRecipient.address) } doReturn threadID
             },
             groupDatabase = mock {
             },
             storage = mock {
                 on { getUserBlindedAccountId(any()) } doReturn myId
                 on { getUserPublicKey() } doReturn myId.hexString
+                on { getThreadId(communityRecipient.address) } doReturn threadID
             },
             application = InstrumentationRegistry.getInstrumentation().context as android.app.Application,
             mmsSmsDatabase = mock {

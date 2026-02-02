@@ -9,8 +9,8 @@ data class ProBackendConfig(
     val ed25519PubKeyHex: String,
 ) {
     val ed25519PubKey: ByteArray = ed25519PubKeyHex.hexToByteArray()
-    val x25519PubKey: ByteArray = Curve25519.pubKeyFromED25519(ed25519PubKey)
-    val x25519PubKeyHex: String = x25519PubKey.toHexString()
+    val x25519PubKey: ByteArray by lazy { Curve25519.pubKeyFromED25519(ed25519PubKey) }
+    val x25519PubKeyHex: String by lazy { x25519PubKey.toHexString() }
 
     constructor(
         url: String,

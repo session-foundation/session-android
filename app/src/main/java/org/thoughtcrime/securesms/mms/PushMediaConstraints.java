@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.mms;
 
 import android.content.Context;
 
-import org.session.libsession.messaging.file_server.FileServerApi;
+import org.session.libsession.messaging.file_server.FileServerApis;
 
 public class PushMediaConstraints extends MediaConstraints {
 
@@ -21,26 +21,26 @@ public class PushMediaConstraints extends MediaConstraints {
 
   @Override
   public int getImageMaxSize(Context context) {
-    return FileServerApi.MAX_FILE_SIZE;
+    return FileServerApis.MAX_FILE_SIZE;
   }
 
   @Override
   public int getGifMaxSize(Context context) {
-    return FileServerApi.MAX_FILE_SIZE;
+    return FileServerApis.MAX_FILE_SIZE;
   }
 
   @Override
   public int getVideoMaxSize(Context context) {
-    return FileServerApi.MAX_FILE_SIZE;
+    return FileServerApis.MAX_FILE_SIZE;
   }
 
   @Override
   public int getAudioMaxSize(Context context) {
-    return FileServerApi.MAX_FILE_SIZE;
+    return FileServerApis.MAX_FILE_SIZE;
   }
 
   @Override
   public int getDocumentMaxSize(Context context) {
-    return FileServerApi.MAX_FILE_SIZE;
+    return FileServerApis.MAX_FILE_SIZE;
   }
 }

@@ -1,9 +1,9 @@
 package org.session.libsession.messaging.open_groups
 
 fun String.migrateLegacyServerUrl() = if (contains(OpenGroupApi.legacyServerIP)) {
-    OpenGroupApi.defaultServer
-} else if (contains(OpenGroupApi.httpDefaultServer)) {
-    OpenGroupApi.defaultServer
+    OfficialCommunityRepository.OFFICIAL_COMMUNITY_URL
+} else if (contains(OfficialCommunityRepository.OFFICIAL_COMMUNITY_URL_INSECURE)) {
+    OfficialCommunityRepository.OFFICIAL_COMMUNITY_URL
 } else {
     this
 }

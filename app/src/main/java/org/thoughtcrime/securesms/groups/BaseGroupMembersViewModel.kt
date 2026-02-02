@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
@@ -44,7 +45,7 @@ abstract class BaseGroupMembersViewModel(
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUtils: AvatarUtils,
-    private val recipientRepository: RecipientRepository,
+    private val recipientRepository: RecipientRepository
 ) : ViewModel() {
     private val groupId = groupAddress.accountId
 
@@ -79,7 +80,7 @@ abstract class BaseGroupMembersViewModel(
 
                     displayInfo to sortMembers(memberState, currentUserId)
                 }
-          }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Current group name (for header / text, if needed)
     val groupName: StateFlow<String> = groupInfo
@@ -251,6 +252,9 @@ abstract class BaseGroupMembersViewModel(
 
             try {
                 task.await()
+            }catch (e: CancellationException) {
+                // Normal lifecycle cancellation - do not show toast but rethrow the exception
+                throw e
             } catch (e: Throwable) {
                 val msg = errorMessage?.invoke(e) ?: context.getString(R.string.errorUnknown)
                 showToast(msg)

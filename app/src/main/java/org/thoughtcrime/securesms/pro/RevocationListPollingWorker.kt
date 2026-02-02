@@ -13,15 +13,18 @@ import androidx.work.WorkerParameters
 import androidx.work.await
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.pro.api.GetProRevocationRequest
-import org.thoughtcrime.securesms.pro.api.ProApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.execute
+import org.thoughtcrime.securesms.pro.api.GetProRevocationApi
+import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import java.time.Duration
 import java.util.concurrent.TimeUnit
+import javax.inject.Provider
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -32,14 +35,20 @@ class RevocationListPollingWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val proDatabase: ProDatabase,
-    private val getProRevocationRequestFactory: GetProRevocationRequest.Factory,
-    private val proApiExecutor: ProApiExecutor,
+    private val getProRevocationApiFactory: GetProRevocationApi.Factory,
+    private val proBackendConfig: Provider<ProBackendConfig>,
+    private val serverApiExecutor: ServerApiExecutor,
     private val snodeClock: SnodeClock,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         try {
             val lastTicket = proDatabase.getLastRevocationTicket()
-            val response = proApiExecutor.executeRequest(request = getProRevocationRequestFactory.create(lastTicket)).successOrThrow()
+            val response = serverApiExecutor.execute(
+                ServerApiRequest(
+                    proBackendConfig = proBackendConfig.get(),
+                    api = getProRevocationApiFactory.create(lastTicket)
+                )
+            ).successOrThrow()
             proDatabase.updateRevocations(
                 data = response.items,
                 newTicket = response.ticket

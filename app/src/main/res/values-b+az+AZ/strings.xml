@@ -1057,7 +1057,6 @@
     <string name="proRenewDesktopLinked">{pro} erişiminizi, {platform_store} və ya {platform_store_other} üzərindən {app_name} quraşdırılmış və əlaqələndirilmiş cihazın {app_pro} ayarlarında yeniləyin.</string>
     <string name="proRenewMaxPotential">{app_name} tətbiqini yenidən maksimum potensialda istifadə etmək istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
     <string name="proRenewPinMoreConversations">Daha çox danışığı təkrar sancmaq istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
-    <string name="proRenewalUnsuccessful">Pro yeniləməsi uğursuz oldu, tezliklə yenidən sınanacaq</string>
     <string name="proRequestedRefund">Geri ödəmə tələb edildi</string>
     <string name="proSendMore">Daha çoxunu göndərmək üçün</string>
     <string name="proSettings">{pro} ayarları</string>
@@ -1319,7 +1318,6 @@
     <string name="urlOpenDescriptionAlternative">Keçidlər, brauzerinizdə açılacaq.</string>
     <string name="useFastMode">Sürətli rejimi istifadə et</string>
     <string name="viaStoreWebsite">{platform} veb saytı vasitəsilə</string>
-    <string name="viaStoreWebsiteDescription">Qeydiyyatdan keçdiyiniz {platform_account} hesabını istifadə edərək {pro} erişiminizi <b><font color="0">{platform_store}</font></b> veb saytı üzərindən güncəlləyin.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Video oxudula bilmir.</string>
     <string name="view">Göstər</string>

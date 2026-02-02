@@ -86,7 +86,7 @@ class MentionViewModel @AssistedInject constructor(
         recipientRepository.observeRecipient(address)
             .mapLatest { recipient ->
                 val threadID = withContext(Dispatchers.Default) {
-                    threadDatabase.getThreadIdIfExistsFor(address)
+                    storage.getThreadId(address)
                 }
 
                 val memberIDs = when {
@@ -94,14 +94,18 @@ class MentionViewModel @AssistedInject constructor(
                         groupDatabase.getGroupMemberAddresses(address.toGroupString(), false)
                             .map { it.toString() }
                     }
+
                     address.isGroupV2 -> {
                         storage.getMembers(address.toString()).map { it.accountId() }
                     }
 
-                    address.isCommunity -> mmsSmsDatabase.getRecentChatMemberAddresses(
-                        threadID,
-                        300
-                    )
+                    address.isCommunity -> threadID?.let {
+                        mmsSmsDatabase.getRecentChatMemberAddresses(
+                            it,
+                            300
+                        )
+                    } ?: emptyList()
+
                     else -> listOf(address.address)
                 }
 
