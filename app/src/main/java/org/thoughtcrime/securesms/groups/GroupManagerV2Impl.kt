@@ -622,38 +622,34 @@ class GroupManagerV2Impl @Inject constructor(
                     .mapNotNull { (member, result) ->
                         configs.groupMembers.get(member.hexString)?.apply {
                             if (result.isFailure) {
-                                configs.groupMembers.get(member.hexString)?.let { member ->
-                                    member.setPromotionFailed()
-                                    configs.groupMembers.set(member)
-                                }
+                                setPromotionFailed()
                             }
                         }
                     }
                     .forEach(configs.groupMembers::set)
             }
 
+            if (!isRepromote) {
+                messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
+            }
+
             val failedMembers = promotedByMemberIDs
                 .filterValues { it.isFailure }
                 .keys
-                .toList()
+                .map { it.hexString }
 
             if (failedMembers.isNotEmpty()) {
                 val cause = promotedByMemberIDs.values
-                    .firstOrNull { it.isFailure }
-                    ?.exceptionOrNull()
+                    .firstOrNull { it.isFailure }?.exceptionOrNull()
                     ?: RuntimeException("Failed to promote ${failedMembers.size} member(s)")
 
                 throw GroupInviteException(
                     isPromotion = true,
-                    inviteeAccountIds = failedMembers.map { it.hexString },
+                    inviteeAccountIds = failedMembers,
                     groupName = groupName ?: "",
                     isReinvite = isRepromote,
                     underlying = cause
                 )
-            }
-
-            if (!isRepromote) {
-                messageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
             }
         }
     }
