@@ -34,10 +34,9 @@ class VoiceMessageView @JvmOverloads constructor(
 ) : RelativeLayout(context, attrs, defStyleAttr) {
 
     //todo AUDIO rework loader
-    //todo AUDIO clicking other message's scrubber messes with currently playing ( different) message
+    //todo AUDIO clicking other message's progress bar while not playing changes its value but then when playing that message the cached value is used - maybe we should set that value and play that message form there
     //todo AUDIO press ripple of thumb isn't great on outgoing
-    //todo AUDIO playback speed is shared by all views... Should we hide button when not playing?
-    //todo AUDIO state is shared across all audio view > shouldn't reflect one message's scrub and playback speed across all audio messages
+    //todo AUDIO pausing seems to reset playback speed value
     //todo AUDIO
 
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
@@ -76,16 +75,23 @@ class VoiceMessageView @JvmOverloads constructor(
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                val p = playable ?: return
                 isUserScrubbing = true
-                // Tell manager to stop auto-updates
-                audioPlaybackManager.beginScrub()
+
+                if (audioPlaybackManager.isActive(p.messageId)) {
+                    audioPlaybackManager.beginScrub()
+                }
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                val p = playable ?: return
                 isUserScrubbing = false
-                seekBar?.let {
-                    // Commit the seek
-                    audioPlaybackManager.endScrub(it.progress.toLong())
+
+                if (audioPlaybackManager.isActive(p.messageId)) {
+                    seekBar?.let {
+                        // Commit the seek
+                        audioPlaybackManager.endScrub(it.progress.toLong())
+                    }
                 }
             }
         })
