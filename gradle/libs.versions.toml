@@ -166,7 +166,7 @@ huawei-hianalytics = { module = "com.huawei.hms:hianalytics", version.ref = "hua
 huawei-availableupdate = { module = "com.huawei.hms:availableupdate", version.ref = "huaweiPushVersion" }
 google-play-review = { module = "com.google.android.play:review", version.ref = "googlePlayReviewVersion" }
 google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
-sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.3" }
+sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.2.0" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVersion" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilVersion" }
 android-billing = { module = "com.android.billingclient:billing", version.ref = "billingVersion" }
