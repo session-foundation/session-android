@@ -54,7 +54,12 @@ class GroupPoller @AssistedInject constructor(
     private val swarmApiExecutor: SwarmApiExecutor,
     private val swarmSnodeSelector: SwarmSnodeSelector,
     networkConnectivity: NetworkConnectivity,
-): BasePoller<GroupPoller.GroupPollResult>(networkConnectivity, scope) {
+    appVisibilityManager: AppVisibilityManager,
+): BasePoller<GroupPoller.GroupPollResult>(
+    networkConnectivity = networkConnectivity,
+    appVisibilityManager = appVisibilityManager,
+    scope = scope
+) {
     data class GroupPollResult(
         val groupExpired: Boolean?
     )

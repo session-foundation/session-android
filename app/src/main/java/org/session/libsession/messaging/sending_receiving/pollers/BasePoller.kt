@@ -1,9 +1,8 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -30,7 +30,8 @@ import kotlin.time.Instant
  */
 abstract class BasePoller<T>(
     private val networkConnectivity: NetworkConnectivity,
-    scope: CoroutineScope,
+    appVisibilityManager: AppVisibilityManager,
+    private val scope: CoroutineScope,
 ) {
     protected val logTag: String = this::class.java.simpleName
     private val pollMutex = Mutex()
@@ -44,14 +45,13 @@ abstract class BasePoller<T>(
 
     init {
         scope.launch {
-            val processLifecycleState = ProcessLifecycleOwner.get().lifecycle.currentStateFlow
             var numConsecutiveFailures = 0
 
             while (true) {
                 // Wait until the app is in the foreground and we have network connectivity
                 combine(
-                    processLifecycleState.filter { state ->
-                        if (state.isAtLeast(Lifecycle.State.RESUMED)) {
+                    appVisibilityManager.isAppVisible.filter { visible ->
+                        if (visible) {
                             true
                         } else {
                             Log.d(logTag, "Polling paused - app in background")
@@ -97,9 +97,10 @@ abstract class BasePoller<T>(
     private fun nextPollDelaySeconds(
         numConsecutiveFailures: Int,
     ): Int {
-        return successfulPollIntervalSeconds +
-                ((numConsecutiveFailures - 1).coerceAtLeast(0) * successfulPollIntervalSeconds)
-                    .coerceAtMost(maxRetryIntervalSeconds)
+        return (successfulPollIntervalSeconds +
+                ((numConsecutiveFailures - 1).coerceAtLeast(0) * successfulPollIntervalSeconds))
+            .coerceAtMost(maxRetryIntervalSeconds)
+
     }
 
     /**
@@ -144,7 +145,15 @@ abstract class BasePoller<T>(
      * * This method will throw if the polling operation fails.
      */
     suspend fun manualPollOnce(): T {
-        return pollOnce("manual")
+        val resultChannel = Channel<Result<T>>()
+
+        scope.launch {
+            resultChannel.trySend(runCatching {
+                pollOnce("manual")
+            })
+        }
+
+        return resultChannel.receive().getOrThrow()
     }
 
 

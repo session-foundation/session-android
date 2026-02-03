@@ -32,6 +32,7 @@ import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.SwarmSnodeSelector
 import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Duration.Companion.days
 
@@ -49,8 +50,13 @@ class Poller @AssistedInject constructor(
     private val alterTtlApiFactory: AlterTtlApi.Factory,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val swarmSnodeSelector: SwarmSnodeSelector,
+    appVisibilityManager: AppVisibilityManager,
     @Assisted scope: CoroutineScope
-) : BasePoller<Unit>(networkConnectivity = networkConnectivity, scope = scope) {
+) : BasePoller<Unit>(
+    networkConnectivity = networkConnectivity,
+    scope = scope,
+    appVisibilityManager = appVisibilityManager
+) {
     private val userPublicKey: String
         get() = storage.getUserPublicKey().orEmpty()
 

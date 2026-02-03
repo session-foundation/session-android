@@ -29,6 +29,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.CommunityDatabase
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Provider
 
@@ -53,11 +54,16 @@ class OpenGroupPoller @AssistedInject constructor(
     private val pollRoomInfoFactory: PollRoomApi.Factory,
     private val getCapsApi: Provider<GetCapsApi>,
     networkConnectivity: NetworkConnectivity,
+    appVisibilityManager: AppVisibilityManager,
     private val json: Json,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
     @Assisted private val pollerSemaphore: Semaphore,
-): BasePoller<Unit>(networkConnectivity = networkConnectivity, scope = scope) {
+): BasePoller<Unit>(
+    networkConnectivity = networkConnectivity,
+    scope = scope,
+    appVisibilityManager = appVisibilityManager
+) {
     override val successfulPollIntervalSeconds: Int
         get() = 4
 
