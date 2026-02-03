@@ -3,7 +3,7 @@ androidMinSdkVersion = "26"
 androidTargetSdkVersion = "36"
 androidCompileSdkVersion = "36"
 accompanistPermissionsVersion = "0.37.3"
-activityKtxVersion = "1.10.1"
+activityKtxVersion = "1.12.3"
 androidImageCropperVersion = "4.7.0"
 androidVersion = "137.7151.04"
 assertjCoreVersion = "3.27.6"
@@ -67,6 +67,7 @@ uiTestJunit4Version = "1.10.1"
 workRuntimeKtxVersion = "2.11.0"
 zxingVersion = "3.5.4"
 huaweiPushVersion = "6.13.0.300"
+huaweiAnalyticsVersion = "6.12.0.301"
 googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.3.0"
 billingVersion = "8.3.0"
@@ -161,6 +162,8 @@ subsampling-scale-image-view = { module = "com.davemorrissey.labs:subsampling-sc
 truth = { module = "com.google.truth:truth", version.ref = "truthVersion" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbineVersion" }
 huawei-push = { module = 'com.huawei.hms:push', version.ref = 'huaweiPushVersion' }
+huawei-hianalytics = { module = "com.huawei.hms:hianalytics", version.ref = "huaweiAnalyticsVersion" }
+huawei-availableupdate = { module = "com.huawei.hms:availableupdate", version.ref = "huaweiPushVersion" }
 google-play-review = { module = "com.google.android.play:review", version.ref = "googlePlayReviewVersion" }
 google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
 sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.3" }
