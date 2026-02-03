@@ -33,9 +33,9 @@ class LocalSnodePoolPlugin : Plugin<Project> {
                     outputDir.set(project.layout.buildDirectory.dir("generated/${variant.name}"))
                     seedUrls.set(
                         listOf(
-                            "https://seed1.getsession.org:4443/json_rpc",
-                            "https://seed2.getsession.org:4443/json_rpc",
-                            "https://seed3.getsession.org:4443/json_rpc",
+                            "https://seed1.getsession.org/json_rpc",
+                            "https://seed2.getsession.org/json_rpc",
+                            "https://seed3.getsession.org/json_rpc",
                         )
                     )
                 }
@@ -66,6 +66,10 @@ abstract class GenerateLocalSnodePoolTask : DefaultTask() {
 
     @get:Inject
     abstract val execOps: ExecOperations
+
+    init {
+        outputs.upToDateWhen { false } // Always run to get fresh snode pool
+    }
 
     @TaskAction
     fun generate() {
@@ -143,7 +147,6 @@ abstract class GenerateLocalSnodePoolTask : DefaultTask() {
                 "--fail",
                 "--silent",
                 "--show-error",
-                "-k",
                 "-X", "POST",
                 "-H", "Content-Type: application/json",
                 "--data", requestBody,
