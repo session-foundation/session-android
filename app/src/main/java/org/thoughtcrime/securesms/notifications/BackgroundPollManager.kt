@@ -30,8 +30,8 @@ class BackgroundPollManager @Inject constructor(
         appVisibilityManager.isAppVisible
             .debounce(1_000L)
             .distinctUntilChanged()
-            .collectLatest { shouldSchedule ->
-                if (shouldSchedule) {
+            .collectLatest { isAppVisible ->
+                if (!isAppVisible) {
                     Log.i(TAG, "Scheduling background polling work.")
                     BackgroundPollWorker.schedulePeriodic(application)
                 } else {
