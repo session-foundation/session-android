@@ -154,20 +154,25 @@ class SnodeDirectory @Inject constructor(
         for (target in seeds) {
             Log.d("SnodeDirectory", "Fetching snode pool using seed node: $target")
             @Suppress("OPT_IN_USAGE") val result = runCatching {
-                httpExecutor.get().send(
+                val body = httpExecutor.get().send(
                     ctx = ApiExecutorContext(),
                     req = HttpRequest.createFromJson(
                         url = target.resolve("/json_rpc")!!,
                         method = "POST",
-                        jsonText = json.encodeToString(SnodeJsonRequest(
-                            method = "get_n_service_nodes",
-                            params = ListSnodeApi.buildRequestJson()
-                        ))
+                        jsonText = json.encodeToString(
+                            SnodeJsonRequest(
+                                method = "get_n_service_nodes",
+                                params = ListSnodeApi.buildRequestJson()
+                            )
+                        )
                     )
-                ).throwIfNotSuccessful()
-                    .body
+                ).throwIfNotSuccessful().body
+
+                body
                     .asInputStream()
-                    .use { json.decodeFromStream<SeedNodeSnodeFetchResult>(it) }
+                    .use {
+                        json.decodeFromStream<SeedNodeSnodeFetchResult>(it)
+                    }
                     .result
             }.onFailure { e ->
                 lastError = e
