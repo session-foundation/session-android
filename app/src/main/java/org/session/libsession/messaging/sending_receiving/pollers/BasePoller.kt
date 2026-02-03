@@ -18,6 +18,16 @@ import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Clock
 import kotlin.time.Instant
 
+/**
+ * Base class for pollers that perform periodic polling operations. These poller will:
+ *
+ * 1. Run periodically when the app is in the foreground and there is network.
+ * 2. Adjust the polling interval based on success/failure of previous polls.
+ * 3. Expose the current polling state via [pollState]
+ * 4. Allow manual polling via [manualPollOnce]
+ *
+ * @param T The type of the result returned by the single polling.
+ */
 abstract class BasePoller<T>(
     private val networkConnectivity: NetworkConnectivity,
     scope: CoroutineScope,
@@ -27,6 +37,9 @@ abstract class BasePoller<T>(
 
     private val mutablePollState = MutableStateFlow<PollState<T>>(PollState.Idle)
 
+    /**
+     * The current state of the poller.
+     */
     val pollState: StateFlow<PollState<T>> get() = mutablePollState
 
     init {
@@ -75,6 +88,12 @@ abstract class BasePoller<T>(
                     .coerceAtMost(maxRetryIntervalSeconds)
     }
 
+    /**
+     * Performs a single polling operation. A failed poll should throw an exception.
+     *
+     * @param isFirstPollSinceApStarted True if this is the first poll since the app started.
+     * @return The result of the polling operation.
+     */
     protected abstract suspend fun doPollOnce(isFirstPollSinceApStarted: Boolean): T
 
     private suspend fun pollOnce(reason: String): T {
@@ -101,6 +120,14 @@ abstract class BasePoller<T>(
         }
     }
 
+    /**
+     * Manually triggers a single polling operation.
+     *
+     * Note:
+     * * If a polling operation is already in progress, this will wait for it to complete first.
+     * * This method does not check for app foreground/background state or network connectivity.
+     * * This method will throw if the polling operation fails.
+     */
     suspend fun manualPollOnce(): T {
         return pollOnce("manual")
     }
