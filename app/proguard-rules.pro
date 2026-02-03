@@ -1,3 +1,5 @@
+-dontobfuscate
+
 ########## BASELINE / ATTRIBUTES ##########
 # Core attrs (serialization/DI/reflective access often rely on these)
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,MethodParameters,Record
@@ -76,36 +78,8 @@
     void set*(***);
 }
 
-# Converters / Deserializers
--keep class org.session.libsession.snode.model.RetrieveMessageConverter { public <init>(); public *; }
-
 ########## JNI LOGGER / NATIVE ENTRYPOINTS ##########
-# Logging interface & implementations (JNI looks up log(String,String,int))
--keep interface network.loki.messenger.libsession_util.util.Logger { *; }
--keepnames class * implements network.loki.messenger.libsession_util.util.Logger
--keepclassmembers class * implements network.loki.messenger.libsession_util.util.Logger {
-    public void log(java.lang.String, java.lang.String, int);
-}
 
-# JNI: ConfigPush constructors (exact signatures preserved)
--keepnames class network.loki.messenger.libsession_util.util.ConfigPush
--keepclassmembers class network.loki.messenger.libsession_util.util.ConfigPush {
-    public <init>(java.util.List, long, java.util.List);
-    public <init>(java.util.List, long, java.util.List, int, kotlin.jvm.internal.DefaultConstructorMarker);
-}
-
-# JNI: specific getter used from native
--keepnames class network.loki.messenger.libsession_util.util.UserPic
--keepclassmembers class network.loki.messenger.libsession_util.util.UserPic {
-    public byte[] getKeyAsByteArray();
-}
-
--keep class network.loki.messenger.libsession_util.util.GroupInfo$ClosedGroupInfo { *; }
--keepnames class network.loki.messenger.libsession_util.util.GroupInfo$ClosedGroupInfo
--keepclassmembers class network.loki.messenger.libsession_util.util.GroupInfo$ClosedGroupInfo {
-    public byte[] getAdminKeyAsByteArray();
-    public byte[] getAuthDataAsByteArray();
-}
 
 ########## WEBRTC / CHROMIUM JNI ##########
 # WebRTC public Java APIs (kept for JNI_OnLoad registration)
@@ -125,36 +99,6 @@
 -keep class org.jni_zero.** { *; }
 -keepnames class org.jni_zero.**
 
-########## CONVERSATION / MODELS (JNI + REFLECTION) ##########
-# Conversation.* types constructed via JNI with (String,long,boolean)
--keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$* {
-    public <init>(java.lang.String, long, boolean);
-}
-
-# Keep names and members of Conversation/Community models (JNI searches by name)
--keep class network.loki.messenger.libsession_util.util.Conversation$Community { *; }
--keep class network.loki.messenger.libsession_util.util.Conversation$OneToOne { *; }
--keep class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup { *; }
--keep class network.loki.messenger.libsession_util.util.BaseCommunityInfo { *; }
-
--keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$Community { public <init>(...); }
--keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$OneToOne { public <init>(...); }
--keepclassmembers class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup { public <init>(...); }
-
--keepnames class network.loki.messenger.libsession_util.util.Conversation$Community
--keepnames class network.loki.messenger.libsession_util.util.Conversation$OneToOne
--keepnames class network.loki.messenger.libsession_util.util.Conversation$ClosedGroup
--keepnames class network.loki.messenger.libsession_util.util.BaseCommunityInfo
-
-# Group members (JNI constructor with long)
--keep class network.loki.messenger.libsession_util.GroupMembersConfig { *; }
--keep class network.loki.messenger.libsession_util.util.GroupMember { *; }
--keepclassmembers class network.loki.messenger.libsession_util.util.GroupMember { public <init>(long); }
--keepnames class network.loki.messenger.libsession_util.util.GroupMember
-
-# Broad safety net for long-arg ctors in util package
--keepclassmembers class network.loki.messenger.libsession_util.util.** { public <init>(long); }
-
 ########## EMOJI SEARCH (JACKSON / POLYMORPHIC) ##########
 # Keep names if @JsonTypeInfo uses CLASS/MINIMAL_CLASS
 -keepnames class org.thoughtcrime.securesms.database.model.**
@@ -166,8 +110,6 @@
 # No-arg contructors required at runtime for these sealed subclasses
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$ClosedGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$Contact { <init>(); }
--keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyClosedGroup { <init>(); }
--keepclassmembers class org.session.libsession.messaging.messages.Destination$LegacyOpenGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroup { <init>(); }
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$OpenGroupInbox { <init>(); }
 
