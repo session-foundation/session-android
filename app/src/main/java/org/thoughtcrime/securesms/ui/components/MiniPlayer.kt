@@ -4,14 +4,17 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,10 +50,10 @@ fun AudioMiniPlayer(
     onPlaybackSpeedToggle: () -> Unit = {},
     onClose: () -> Unit = {}
 ){
-    Row(
+    Column(
         modifier = modifier.fillMaxWidth()
             .padding(
-                horizontal = 2.dp,
+                horizontal = LocalDimensions.current.xxxsSpacing,
                 vertical = LocalDimensions.current.xxxsSpacing
             )
             .clip(MaterialTheme.shapes.small)
@@ -61,62 +64,78 @@ fun AudioMiniPlayer(
                 MaterialTheme.shapes.small
             )
             .clickable(onClick = onPlayerTap),
-        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
 
-    ){
-        IconButton(
-            onClick = onPlayPause,
-            modifier = Modifier
         ) {
-            Icon(
-                painter = painterResource(id = if (audio is AudioPlaybackState.Active.Playing)
-                    R.drawable.pause
-                    else R.drawable.play
-                ),
-                tint = LocalColors.current.text,
-                contentDescription = stringResource(if (audio is AudioPlaybackState.Active.Playing)
-                    R.string.playpause_button_pause
-                    else R.string.playpause_button_play)
+            IconButton(
+                onClick = onPlayPause,
+                modifier = Modifier
+            ) {
+                Icon(
+                    modifier = Modifier.size(LocalDimensions.current.iconSmall),
+                    painter = painterResource(
+                        id = if (audio is AudioPlaybackState.Active.Playing)
+                            R.drawable.pause
+                        else R.drawable.play
+                    ),
+                    tint = LocalColors.current.text,
+                    contentDescription = stringResource(
+                        if (audio is AudioPlaybackState.Active.Playing)
+                            R.string.playpause_button_pause
+                        else R.string.playpause_button_play
+                    )
+                )
+            }
+
+            Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
+
+            Text(
+                modifier = Modifier.weight(1f),
+                text = audio.senderOrFile(),
+                color = LocalColors.current.text,
+                style = LocalType.current.base
             )
+
+            Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
+
+            Text(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(color = LocalColors.current.backgroundTertiary)
+                    .clickable(onClick = onPlaybackSpeedToggle)
+                    .padding(LocalDimensions.current.xxsSpacing),
+                text = audio.playbackSpeedFormatted(),
+                color = LocalColors.current.text,
+                style = LocalType.current.base
+            )
+
+            Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
+
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_x),
+                    tint = LocalColors.current.text,
+                    contentDescription = stringResource(R.string.close)
+                )
+            }
         }
 
-        Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
-
-        Text(
-            modifier = Modifier.weight(1f),
-            text = audio.senderOrFile(),
-            color = LocalColors.current.text,
-            style = LocalType.current.base
+        // progress
+        LinearProgressIndicator(
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 2.dp),
+            color = LocalColors.current.accent,
+            trackColor = LocalColors.current.backgroundSecondary,
+            progress = { audio.positionMs.toFloat() / audio.durationMs }
         )
-
-        Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
-
-        Text(
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(color = LocalColors.current.backgroundTertiary)
-                .clickable(onClick = onPlaybackSpeedToggle)
-                .padding(LocalDimensions.current.xxsSpacing),
-            text = audio.playbackSpeedFormatted(),
-            color = LocalColors.current.text,
-            style = LocalType.current.base
-        )
-
-        Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
-
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_x),
-                tint = LocalColors.current.text,
-                contentDescription = stringResource(R.string.close)
-            )
-        }
     }
 }
-
+//todo AUDIO seeking shows a quick paused state
 
 @Preview
 @Composable
@@ -136,7 +155,7 @@ fun PreviewMiniPlayer(
                     filename = "audio.mp3",
                     avatar = null
                 ),
-                positionMs = 0,
+                positionMs = 3000,
                 durationMs = 6340,
                 bufferedPositionMs = 0,
                 playbackSpeed = 1f,
@@ -168,7 +187,7 @@ fun PreviewMiniPlayerPaused(
                     filename = "audio.mp3",
                     avatar = null
                 ),
-                positionMs = 0,
+                positionMs = 6340,
                 durationMs = 6340,
                 bufferedPositionMs = 0,
                 playbackSpeed = 1f,

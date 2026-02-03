@@ -20,6 +20,8 @@ sealed class AudioPlaybackState(
 
     sealed class Active(
         open val playable: PlayableAudio,
+        open val positionMs: Long,
+        open val durationMs: Long,
         playbackSpeed: Float
     ) : AudioPlaybackState(playbackSpeed) {
 
@@ -29,30 +31,30 @@ sealed class AudioPlaybackState(
         data class Loading(
             override val playable: PlayableAudio,
             override val playbackSpeed: Float
-        ) : Active(playable, playbackSpeed)
+        ) : Active(playable, 0, 0, playbackSpeed)
 
         data class Playing(
             override val playable: PlayableAudio,
-            val positionMs: Long,
-            val durationMs: Long,
+            override val positionMs: Long,
+            override val durationMs: Long,
             val bufferedPositionMs: Long,
             override val playbackSpeed: Float,
             val isBuffering: Boolean
-        ) : Active(playable, playbackSpeed)
+        ) : Active(playable, positionMs, durationMs, playbackSpeed)
 
         data class Paused(
             override val playable: PlayableAudio,
-            val positionMs: Long,
-            val durationMs: Long,
+            override val positionMs: Long,
+            override val durationMs: Long,
             val bufferedPositionMs: Long,
             override val playbackSpeed: Float,
             val isBuffering: Boolean
-        ) : Active(playable, playbackSpeed)
+        ) : Active(playable, positionMs, durationMs, playbackSpeed)
 
         data class Error(
             override val playable: PlayableAudio,
             val message: String,
             override val playbackSpeed: Float
-        ) : Active(playable, playbackSpeed)
+        ) : Active(playable, 0, 0, playbackSpeed)
     }
 }

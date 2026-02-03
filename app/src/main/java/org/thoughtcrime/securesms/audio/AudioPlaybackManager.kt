@@ -129,7 +129,6 @@ class AudioPlaybackManager @Inject constructor(
             }
 
             if (!c.isPlaying) c.play()
-            startProgressTracking()
         }
     }
 
@@ -152,7 +151,6 @@ class AudioPlaybackManager @Inject constructor(
 
     fun seekTo(positionMs: Long) {
         controller?.seekTo(positionMs)
-        if (!isScrubbing) updateFromController()
     }
 
     fun setPlaybackSpeed(speed: Float) {
@@ -325,6 +323,9 @@ class AudioPlaybackManager @Inject constructor(
         val cached =
             playbackCache[playable.messageId.serialize()] ?: SavedAudioState()
 
+        val wantsToPlay = c.playWhenReady && c.playbackState != Player.STATE_ENDED
+        val shouldShowPlaying = wantsToPlay && (c.isPlaying || buffering)
+
         // Persist resume intent when stable
         if (c.playbackState == Player.STATE_READY || c.playbackState == Player.STATE_ENDED) {
             playbackCache[playable.messageId.serialize()] =
@@ -336,28 +337,15 @@ class AudioPlaybackManager @Inject constructor(
         }
 
         _playbackState.value = when {
-            c.isPlaying -> AudioPlaybackState.Active.Playing(
-                playable,
-                position,
-                duration,
-                buffered,
-                cached.playbackSpeed,
-                buffering
+            shouldShowPlaying -> AudioPlaybackState.Active.Playing(
+                playable, position, duration, buffered, cached.playbackSpeed, buffering
             )
 
             c.playbackState == Player.STATE_READY || forceEnded -> AudioPlaybackState.Active.Paused(
-                playable,
-                position,
-                duration,
-                buffered,
-                cached.playbackSpeed,
-                buffering
+                playable, position, duration, buffered, cached.playbackSpeed, buffering
             )
 
-            else -> AudioPlaybackState.Active.Loading(
-                playable,
-                cached.playbackSpeed
-            )
+            else -> AudioPlaybackState.Active.Loading(playable, cached.playbackSpeed)
         }
     }
 
