@@ -745,7 +745,7 @@ class GroupManagerV2Impl @Inject constructor(
             groupPollerManager.pollOnce(groupId)
 
             groupPollerManager.watchGroupPollingState(groupId)
-                .filter { it.hadAtLeastOneSuccessfulPoll }
+                .filter { it.lastPolledResult?.isSuccess == true }
                 .first()
         }
 

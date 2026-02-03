@@ -28,7 +28,6 @@ class OnAppStartupComponents private constructor(
     }
 
     @Inject constructor(
-        appVisibilityManager: AppVisibilityManager,
         groupPollerManager: GroupPollerManager,
         expiredGroupManager: ExpiredGroupManager,
         openGroupPollerManager: OpenGroupPollerManager,
@@ -48,7 +47,6 @@ class OnAppStartupComponents private constructor(
         subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
     ): this(
         components = listOf(
-            appVisibilityManager,
             groupPollerManager,
             expiredGroupManager,
             openGroupPollerManager,

@@ -100,9 +100,9 @@ class ListSnodeApi @Inject constructor(
     @Serializable
     class SnodeInfo(
         @SerialName(KEY_IP)
-        val ip: String,
+        val ip: String? = null,
         @SerialName(KEY_PORT)
-        val port: Int,
+        val port: Int? = null,
         @SerialName(KEY_ED25519)
         val ed25519PubKey: String,
         @SerialName(KEY_X25519)
@@ -110,9 +110,9 @@ class ListSnodeApi @Inject constructor(
     ) {
         fun toSnode(): Snode? {
             return Snode(
-                ip.takeUnless { it == "0.0.0.0" || it == "255.255.255.255" }?.let { "https://$it" } ?: return null,
-                port,
-                Snode.KeySet(ed25519PubKey, x25519PubKey),
+                address = ip.takeUnless { it == "0.0.0.0" || it == "255.255.255.255" }?.let { "https://$it" } ?: return null,
+                port = port ?: return null,
+                publicKeySet = Snode.KeySet(ed25519PubKey, x25519PubKey),
             )
         }
     }

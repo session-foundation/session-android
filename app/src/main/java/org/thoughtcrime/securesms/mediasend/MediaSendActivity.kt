@@ -19,7 +19,9 @@ import androidx.activity.viewModels
 import androidx.core.view.ViewGroupCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -37,6 +39,8 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mediasend.CameraXActivity.Companion.KEY_MEDIA_SEND_COUNT
 import org.thoughtcrime.securesms.mediasend.MediaSendViewModel.CountButtonState
+import org.thoughtcrime.securesms.mediasend.compose.MediaPickerFolderComposeFragment
+import org.thoughtcrime.securesms.mediasend.compose.MediaPickerItemComposeFragment
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.FilenameUtils.constructPhotoFilename
@@ -51,8 +55,8 @@ import javax.inject.Inject
  * It will return the [Media] that the user decided to send.
  */
 @AndroidEntryPoint
-class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragment.Controller,
-    MediaPickerItemFragment.Controller, MediaSendFragment.Controller,
+class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderComposeFragment.Controller,
+    MediaPickerItemComposeFragment.Controller, MediaSendFragment.Controller,
     ImageEditorFragment.Controller {
 
     private var recipient: Recipient? = null
@@ -105,7 +109,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             if (isCamera) {
                 navigateToCamera()
             } else if (!isEmpty(media)) {
-                viewModel.onSelectedMediaChanged(this, media!!)
+                viewModel.onSelectedMediaChanged(media!!)
 
                 lastEntryFromCameraCapture = false
 
@@ -115,7 +119,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
                     .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
                     .commit()
             } else {
-                val fragment = MediaPickerFolderFragment.newInstance(
+                val fragment = MediaPickerFolderComposeFragment.newInstance(
                     recipient!!
                 )
                 supportFragmentManager.beginTransaction()
@@ -126,7 +130,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
         initializeCountButtonObserver()
         initializeCameraButtonObserver()
-        initializeErrorObserver()
+        collectEffects()
 
         binding.mediasendCameraButton.setOnClickListener { v: View? ->
             val maxSelection = MediaSendViewModel.MAX_SELECTED_FILES
@@ -147,7 +151,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         // and we're on the editor as the only fragment.
         if (lastEntryFromCameraCapture && isCameraFlow && fm.backStackEntryCount == 1) {
             fm.popBackStackImmediate() // remove the editor fragment
-            viewModel.onImageCaptureUndo(this@MediaSendActivity)
+            viewModel.onImageCaptureUndo()
             lastEntryFromCameraCapture = false
             navigateToCamera()
             return
@@ -177,10 +181,9 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     override fun onFolderSelected(folder: MediaFolder) {
         viewModel.onFolderSelected(folder.bucketId)
 
-        val fragment = MediaPickerItemFragment.newInstance(
+        val fragment = MediaPickerItemComposeFragment.newInstance(
             folder.bucketId,
-            folder.title,
-            MediaSendViewModel.MAX_SELECTED_FILES
+            folder.title
         )
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(
@@ -206,11 +209,11 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     override fun onAddMediaClicked(bucketId: String) {
-        val folderFragment = MediaPickerFolderFragment.newInstance(
+        val folderFragment = MediaPickerFolderComposeFragment.newInstance(
             recipient!!
         )
         val itemFragment =
-            MediaPickerItemFragment.newInstance(bucketId, "", MediaSendViewModel.MAX_SELECTED_FILES)
+            MediaPickerItemComposeFragment.newInstance(bucketId, "")
 
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(
@@ -300,41 +303,60 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         }
     }
 
-    private fun initializeErrorObserver() {
-        viewModel.getError().observe(
-            this
-        ) { error: MediaSendViewModel.Error? ->
-            if (error == null) return@observe
-            when (error) {
-                MediaSendViewModel.Error.INVALID_TYPE_ONLY -> Toast.makeText(
-                    this,
-                    Phrase.from(
-                        this,
-                        R.string.sharingSupportMultipleMedia
-                    ).put(APP_NAME_KEY, getString(R.string.app_name)).format().toString(),
-                    Toast.LENGTH_LONG
-                ).show()
 
-                MediaSendViewModel.Error.MIXED_TYPE -> Toast.makeText(
-                    this,
-                    R.string.sharingSupportMultipleMediaExcluded,
-                    Toast.LENGTH_LONG
-                ).show()
+    private fun collectEffects() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.effects.collect { effect ->
+                    when (effect) {
+                        is MediaSendViewModel.MediaSendEffect.ShowError -> showError(effect.error)
+                        is MediaSendViewModel.MediaSendEffect.Toast ->
+                            Toast.makeText(
+                                this@MediaSendActivity,
+                                effect.messageRes,
+                                Toast.LENGTH_LONG
+                            ).show()
 
-                MediaSendViewModel.Error.ITEM_TOO_LARGE -> Toast.makeText(
-                    this,
-                    R.string.attachmentsErrorSize,
-                    Toast.LENGTH_LONG
-                ).show()
-
-                MediaSendViewModel.Error.TOO_MANY_ITEMS ->                     // In modern session we'll say you can't sent more than 32 items, but if we ever want
-                    // the exact count of how many items the user attempted to send it's: viewModel.getMaxSelection()
-                    Toast.makeText(
-                        this,
-                        getString(R.string.attachmentsErrorNumber),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        is MediaSendViewModel.MediaSendEffect.ToastText ->
+                            Toast.makeText(
+                                this@MediaSendActivity,
+                                effect.message,
+                                Toast.LENGTH_LONG
+                            ).show()
+                    }
+                }
             }
+        }
+    }
+
+    private fun showError(error: MediaSendViewModel.Error) {
+        when (error) {
+            MediaSendViewModel.Error.INVALID_TYPE_ONLY -> Toast.makeText(
+                this,
+                Phrase.from(this, R.string.sharingSupportMultipleMedia)
+                    .put(APP_NAME_KEY, getString(R.string.app_name))
+                    .format()
+                    .toString(),
+                Toast.LENGTH_LONG
+            ).show()
+
+            MediaSendViewModel.Error.MIXED_TYPE -> Toast.makeText(
+                this,
+                R.string.sharingSupportMultipleMediaExcluded,
+                Toast.LENGTH_LONG
+            ).show()
+
+            MediaSendViewModel.Error.ITEM_TOO_LARGE -> Toast.makeText(
+                this,
+                R.string.attachmentsErrorSize,
+                Toast.LENGTH_LONG
+            ).show()
+
+            MediaSendViewModel.Error.TOO_MANY_ITEMS -> Toast.makeText(
+                this,
+                getString(R.string.attachmentsErrorNumber),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -372,7 +394,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             .request(Manifest.permission.CAMERA)
             .withPermanentDenialDialog(permanentDenialTxt)
             .onAllGranted {
-                val countNow = viewModel.getCountButtonState().value?.count ?: 0
+                val countNow = viewModel.uiState.value.count
                 val intent = Intent(this@MediaSendActivity, CameraXActivity::class.java)
                     .putExtra(KEY_MEDIA_SEND_COUNT, countNow)
                 cameraLauncher.launch(intent)

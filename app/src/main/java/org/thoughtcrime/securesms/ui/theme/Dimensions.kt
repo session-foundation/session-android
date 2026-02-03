@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.dp
 val LocalDimensions = staticCompositionLocalOf { Dimensions() }
 
 data class Dimensions(
+    val tinySpacing : Dp = 2.dp,
     val xxxsSpacing: Dp = 4.dp,
     val xxsSpacing: Dp = 8.dp,
     val xsSpacing: Dp = 12.dp,
@@ -52,5 +53,5 @@ data class Dimensions(
     val minContentSize: Dp = 80.dp,
     val maxContentSize: Dp = 520.dp,
     val minContentSizeMedium: Dp = 160.dp,
-    val maxContentSizeMedium: Dp = 620.dp
+    val maxContentSizeMedium: Dp = 620.dp,
 )
