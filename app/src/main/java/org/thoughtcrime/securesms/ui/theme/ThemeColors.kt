@@ -34,7 +34,7 @@ interface ThemeColors {
     val textBubbleReceived: Color
     val qrCodeContent: Color
     val qrCodeBackground: Color
-    val accentButtonFillText: Color
+    val textOnAccent: Color
     val accentText: Color
 }
 
@@ -127,7 +127,7 @@ data class ClassicDark(override val accent: Color = primaryGreen) : ThemeColors 
     override val textBubbleReceived = Color.White
     override val qrCodeContent = background
     override val qrCodeBackground = text
-    override val accentButtonFillText = Color.Black
+    override val textOnAccent = Color.Black
     override val accentText = accent
     override val textAlert: Color = classicDark0
 }
@@ -149,7 +149,7 @@ data class ClassicLight(override val accent: Color = primaryGreen) : ThemeColors
     override val textBubbleReceived = classicLight4
     override val qrCodeContent = text
     override val qrCodeBackground = backgroundSecondary
-    override val accentButtonFillText = Color.Black
+    override val textOnAccent = Color.Black
     override val accentText = text
     override val textAlert: Color = classicLight0
 }
@@ -171,7 +171,7 @@ data class OceanDark(override val accent: Color = primaryBlue) : ThemeColors {
     override val textBubbleReceived = oceanDark4
     override val qrCodeContent = background
     override val qrCodeBackground = text
-    override val accentButtonFillText = Color.Black
+    override val textOnAccent = Color.Black
     override val accentText = accent
     override val textAlert: Color = oceanDark0
 }
@@ -193,7 +193,7 @@ data class OceanLight(override val accent: Color = primaryBlue) : ThemeColors {
     override val textBubbleReceived = oceanLight1
     override val qrCodeContent = text
     override val qrCodeBackground = backgroundSecondary
-    override val accentButtonFillText = Color.Black
+    override val textOnAccent = Color.Black
     override val accentText = text
     override val textAlert: Color = oceanLight0
 }

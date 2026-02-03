@@ -24,7 +24,6 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -35,8 +34,6 @@ import android.util.Pair;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.RequestManager;
 import com.squareup.phrase.Phrase;
@@ -349,13 +346,13 @@ public class AttachmentManager {
                 .execute();
     }
 
-    public static boolean hasFullAccess(Activity activity) {
+    public static boolean hasFullAccess(Context c) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return Permissions.hasAll(activity,
+            return Permissions.hasAll(c,
                     Manifest.permission.READ_MEDIA_IMAGES,
                     Manifest.permission.READ_MEDIA_VIDEO);
         } else {
-            return Permissions.hasAll(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+            return Permissions.hasAll(c, android.Manifest.permission.READ_EXTERNAL_STORAGE);
         }
     }
 
@@ -386,9 +383,9 @@ public class AttachmentManager {
         }
     }
 
-    public static boolean shouldShowManagePhoto(@NonNull Activity activity){
+    public static boolean shouldShowManagePhoto(@NonNull Context c){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
-            return !hasFullAccess(activity) && hasPartialAccess(activity);
+            return !hasFullAccess(c) && hasPartialAccess(c);
         }else{
             // No partial access for <= API 33
             return false;

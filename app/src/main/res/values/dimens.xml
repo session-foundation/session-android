@@ -63,9 +63,6 @@
     <dimen name="media_bubble_default_dimens">210dp</dimen>
     <dimen name="media_bubble_min_width">150dp</dimen>
 
-    <dimen name="media_picker_folder_width">175dp</dimen>
-    <dimen name="media_picker_item_width">85dp</dimen>
-
     <integer name="media_overview_cols">4</integer>
 
     <dimen name="contact_selection_actions_tap_area">10dp</dimen>

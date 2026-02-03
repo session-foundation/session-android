@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.mediasend
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import com.annimon.stream.Stream
@@ -21,6 +22,8 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.InputbarViewModel
+import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager.hasFullAccess
+import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager.hasPartialAccess
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -32,7 +35,7 @@ import javax.inject.Inject
  * Manages the observable datasets available in [MediaSendActivity].
  */
 @HiltViewModel
-internal class MediaSendViewModel @Inject constructor(
+class MediaSendViewModel @Inject constructor(
     private val application: Application,
     proStatusManager: ProStatusManager,
     recipientRepository: RecipientRepository,
@@ -91,18 +94,42 @@ internal class MediaSendViewModel @Inject constructor(
         )
     }
 
+    fun onMediaSelected(media: Media) {
+        val updatedList = run {
+            val current = uiState.value.selectedMedia
+            val exists = current.any { it.uri == media.uri }
+
+            if (exists) {
+                current.filterNot { it.uri == media.uri }
+            } else {
+                if (current.size >= MAX_SELECTED_FILES) {
+                    _effects.tryEmit(MediaSendEffect.ShowError(Error.TOO_MANY_ITEMS))
+                    current
+                } else {
+                    current + media
+                }
+            }
+        }
+
+        onSelectedMediaChanged(updatedList)
+    }
+
     fun onSelectedMediaChanged(newMedia: List<Media?>) {
         repository.getPopulatedMedia(context, newMedia) { populatedMedia: List<Media> ->
             runOnMain {
                 // Use the new filter function that returns valid items AND errors
-                var (filteredMedia, errors) = getFilteredMedia(context, populatedMedia, mediaConstraints)
+                var (filteredMedia, errors) = getFilteredMedia(
+                    context,
+                    populatedMedia,
+                    mediaConstraints
+                )
 
                 // Report errors if they occurred
                 if (errors.contains(Error.ITEM_TOO_LARGE)) {
                     _effects.tryEmit(MediaSendEffect.ShowError(Error.ITEM_TOO_LARGE))
                 } else if (errors.contains(Error.INVALID_TYPE_ONLY)) {
                     _effects.tryEmit(MediaSendEffect.ShowError(Error.INVALID_TYPE_ONLY))
-                }else if (errors.contains(Error.MIXED_TYPE)) {
+                } else if (errors.contains(Error.MIXED_TYPE)) {
                     _effects.tryEmit(MediaSendEffect.ShowError(Error.MIXED_TYPE))
                 }
 
@@ -136,7 +163,7 @@ internal class MediaSendViewModel @Inject constructor(
                     it.copy(
                         selectedMedia = filteredMedia,
                         bucketId = computedId,
-                        countVisibility = newVisibility
+                        countVisibility = newVisibility,
                     )
                 }
             }
@@ -146,14 +173,18 @@ internal class MediaSendViewModel @Inject constructor(
     fun onSingleMediaSelected(context: Context, media: Media) {
         repository.getPopulatedMedia(context, listOf(media)) { populatedMedia: List<Media> ->
             runOnMain {
-                val (filteredMedia, errors) = getFilteredMedia(context, populatedMedia, mediaConstraints)
+                val (filteredMedia, errors) = getFilteredMedia(
+                    context,
+                    populatedMedia,
+                    mediaConstraints
+                )
 
                 if (filteredMedia.isEmpty()) {
                     if (errors.contains(Error.ITEM_TOO_LARGE)) {
                         _effects.tryEmit(MediaSendEffect.ShowError(Error.ITEM_TOO_LARGE))
                     } else if (errors.contains(Error.INVALID_TYPE_ONLY)) {
                         _effects.tryEmit(MediaSendEffect.ShowError(Error.INVALID_TYPE_ONLY))
-                    }else if (errors.contains(Error.MIXED_TYPE)) {
+                    } else if (errors.contains(Error.MIXED_TYPE)) {
                         _effects.tryEmit(MediaSendEffect.ShowError(Error.MIXED_TYPE))
                     }
                 }
@@ -166,7 +197,7 @@ internal class MediaSendViewModel @Inject constructor(
                     it.copy(
                         selectedMedia = filteredMedia,
                         bucketId = newBucketId,
-                        countVisibility = CountButtonState.Visibility.FORCED_OFF
+                        countVisibility = CountButtonState.Visibility.FORCED_OFF,
                     )
                 }
             }
@@ -174,7 +205,11 @@ internal class MediaSendViewModel @Inject constructor(
     }
 
     fun onMultiSelectStarted() {
-        _uiState.update { it.copy(countVisibility = CountButtonState.Visibility.FORCED_ON) }
+        _uiState.update {
+            it.copy(
+                countVisibility = CountButtonState.Visibility.FORCED_ON
+            )
+        }
     }
 
     fun onImageEditorStarted() {
@@ -223,7 +258,8 @@ internal class MediaSendViewModel @Inject constructor(
 
     fun onPageChanged(position: Int) {
         if (position !in selectedMedia.indices) {
-            Log.w(TAG,
+            Log.w(
+                TAG,
                 "Tried to move to an out-of-bounds item. Size: " + selectedMedia.size + ", position: " + position
             )
             return
@@ -304,6 +340,14 @@ internal class MediaSendViewModel @Inject constructor(
         lastImageCapture = Optional.absent()
     }
 
+    fun refreshPhotoAccessUi() {
+        val show = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+                !hasFullAccess(context) &&
+                hasPartialAccess(context)
+
+        _uiState.update { it.copy(showManagePhotoAccess = show) }
+    }
+
     fun saveDrawState(state: Map<Uri, Any>) {
         savedDrawState.clear()
         savedDrawState.putAll(state)
@@ -354,6 +398,12 @@ internal class MediaSendViewModel @Inject constructor(
     private val selectedMedia: List<Media>
         get() = _uiState.value.selectedMedia
 
+    // Same as getFolders but does not return LiveData
+    fun refreshFolders() {
+        repository.getFolders(context) { value ->
+            _uiState.update { it.copy(folders = value) }
+        }
+    }
 
     /**
      * Filters the input list of media.
@@ -366,6 +416,11 @@ internal class MediaSendViewModel @Inject constructor(
         media: List<Media>,
         mediaConstraints: MediaConstraints
     ): Pair<List<Media>, Set<Error>> {
+
+        if (media.isEmpty()) {
+            return Pair(emptyList(), emptySet())
+        }
+
         val validMedia = ArrayList<Media>()
         val errors = HashSet<Error>()
 
@@ -378,7 +433,7 @@ internal class MediaSendViewModel @Inject constructor(
         }
 
         // if there are no valid types at all, return early
-        if(validMultiMediaCount == 0){
+        if (validMultiMediaCount == 0) {
             errors.add(Error.INVALID_TYPE_ONLY)
             return Pair(validMedia, errors)
         }
@@ -427,11 +482,11 @@ internal class MediaSendViewModel @Inject constructor(
         }
     }
 
-    internal enum class Error {
+    enum class Error {
         ITEM_TOO_LARGE, TOO_MANY_ITEMS, INVALID_TYPE_ONLY, MIXED_TYPE
     }
 
-    internal class CountButtonState(val count: Int, private val visibility: Visibility) {
+    class CountButtonState(val count: Int, private val visibility: Visibility) {
         val isVisible: Boolean
             get() {
                 return when (visibility) {
@@ -441,7 +496,7 @@ internal class MediaSendViewModel @Inject constructor(
                 }
             }
 
-        internal enum class Visibility {
+        enum class Visibility {
             CONDITIONAL, FORCED_ON, FORCED_OFF
         }
     }
@@ -454,15 +509,23 @@ internal class MediaSendViewModel @Inject constructor(
         val selectedMedia: List<Media> = emptyList(),
         val position: Int = -1,
         val countVisibility: CountButtonState.Visibility = CountButtonState.Visibility.FORCED_OFF,
-        val showCameraButton: Boolean = false
+        val showCameraButton: Boolean = false,
+        val showManagePhotoAccess : Boolean = false
     ) {
         val count: Int get() = selectedMedia.size
-        val showCountButton: Boolean get() =
-            when (countVisibility) {
-                CountButtonState.Visibility.FORCED_ON -> true
-                CountButtonState.Visibility.FORCED_OFF -> false
-                CountButtonState.Visibility.CONDITIONAL -> count > 0
-            }
+
+        val isMultiSelect: Boolean
+            get() = selectedMedia.isNotEmpty() || countVisibility == CountButtonState.Visibility.FORCED_ON
+
+        val canLongPress: Boolean
+            get() = selectedMedia.isEmpty() && !isMultiSelect
+        val showCountButton: Boolean
+            get() =
+                when (countVisibility) {
+                    CountButtonState.Visibility.FORCED_ON -> true
+                    CountButtonState.Visibility.FORCED_OFF -> false
+                    CountButtonState.Visibility.CONDITIONAL -> count > 0
+                }
     }
 
     sealed interface MediaSendEffect {
