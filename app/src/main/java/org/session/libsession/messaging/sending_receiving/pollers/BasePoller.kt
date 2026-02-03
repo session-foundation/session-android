@@ -50,8 +50,22 @@ abstract class BasePoller<T>(
             while (true) {
                 // Wait until the app is in the foreground and we have network connectivity
                 combine(
-                    processLifecycleState.filter { it.isAtLeast(Lifecycle.State.RESUMED) },
-                    networkConnectivity.networkAvailable.filter { it },
+                    processLifecycleState.filter { state ->
+                        if (state.isAtLeast(Lifecycle.State.RESUMED)) {
+                            true
+                        } else {
+                            Log.d(logTag, "Polling paused - app in background")
+                            false
+                        }
+                    },
+                    networkConnectivity.networkAvailable.filter { hasNetwork ->
+                        if (hasNetwork) {
+                            true
+                        } else {
+                            Log.d(logTag, "Polling paused - no network connectivity")
+                            false
+                        }
+                    },
                     transform = { _, _ -> }
                 ).first()
 
@@ -99,7 +113,8 @@ abstract class BasePoller<T>(
     private suspend fun pollOnce(reason: String): T {
         pollMutex.withLock {
             val lastState = mutablePollState.value
-            mutablePollState.value = PollState.Polling(reason, lastPolledResult = lastState.lastPolledResult)
+            mutablePollState.value =
+                PollState.Polling(reason, lastPolledResult = lastState.lastPolledResult)
             Log.d(logTag, "Start $reason polling")
             val result = runCatching {
                 doPollOnce(isFirstPollSinceApStarted = lastState is PollState.Idle)
@@ -144,7 +159,7 @@ abstract class BasePoller<T>(
         data class Polled<T>(
             val at: Instant,
             val result: Result<T>,
-        ): PollState<T> {
+        ) : PollState<T> {
             override val lastPolledResult: Result<T>
                 get() = result
         }
