@@ -227,7 +227,7 @@ class VoiceMessageView @JvmOverloads constructor(
     }
 
     private fun renderIcon() {
-        val iconID = if (isPlaying) R.drawable.media3_icon_pause else R.drawable.media3_icon_play
+        val iconID = if (isPlaying) R.drawable.pause else R.drawable.play
         binding.voiceMessagePlaybackImageView.setImageResource(iconID)
     }
 }

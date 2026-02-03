@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.ui.components
 
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.audio.model.PlayableAudio
@@ -33,6 +35,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import androidx.core.net.toUri
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
+import org.thoughtcrime.securesms.ui.border
 import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
@@ -46,7 +49,17 @@ fun AudioMiniPlayer(
 ){
     Row(
         modifier = modifier.fillMaxWidth()
+            .padding(
+                horizontal = 2.dp,
+                vertical = LocalDimensions.current.xxxsSpacing
+            )
+            .clip(MaterialTheme.shapes.small)
             .background(LocalColors.current.backgroundSecondary)
+            .border(
+                LocalDimensions.current.borderStroke,
+                LocalColors.current.borders,
+                MaterialTheme.shapes.small
+            )
             .clickable(onClick = onPlayerTap),
         verticalAlignment = Alignment.CenterVertically
 
@@ -57,8 +70,8 @@ fun AudioMiniPlayer(
         ) {
             Icon(
                 painter = painterResource(id = if (audio is AudioPlaybackState.Active.Playing)
-                    R.drawable.media3_icon_pause
-                    else R.drawable.media3_icon_play
+                    R.drawable.pause
+                    else R.drawable.play
                 ),
                 tint = LocalColors.current.text,
                 contentDescription = stringResource(if (audio is AudioPlaybackState.Active.Playing)

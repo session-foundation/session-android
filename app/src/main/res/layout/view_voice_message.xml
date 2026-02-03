@@ -44,10 +44,10 @@
 
             <ImageView
                 android:id="@+id/voiceMessagePlaybackImageView"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:layout_gravity="center"
-                android:src="@drawable/exo_icon_play"
+                android:src="@drawable/play"
                 app:tint="@color/black" />
 
             <ProgressBar
@@ -58,7 +58,7 @@
                 android:indeterminate="true"
                 android:indeterminateTint="@color/black"
                 android:visibility="gone"
-                tools:visibility="visible" />
+                tools:visibility="gone" />
         </FrameLayout>
 
         <SeekBar
