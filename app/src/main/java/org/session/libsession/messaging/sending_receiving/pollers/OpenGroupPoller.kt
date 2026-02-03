@@ -77,7 +77,7 @@ class OpenGroupPoller @AssistedInject constructor(
      *
      * @return A list of rooms that were polled.
      */
-    override suspend fun doPollOnce(isFirstPollSinceApStarted: Boolean): Unit = pollerSemaphore.withPermit {
+    override suspend fun doPollOnce(isFirstPollSinceApoStarted: Boolean): Unit = pollerSemaphore.withPermit {
         val allCommunities = configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
 
         val rooms = allCommunities

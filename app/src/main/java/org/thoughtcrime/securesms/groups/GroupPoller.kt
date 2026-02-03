@@ -59,7 +59,7 @@ class GroupPoller @AssistedInject constructor(
         val groupExpired: Boolean?
     )
 
-    override suspend fun doPollOnce(isFirstPollSinceApStarted: Boolean): GroupPollResult = pollSemaphore.withPermit {
+    override suspend fun doPollOnce(isFirstPollSinceApoStarted: Boolean): GroupPollResult = pollSemaphore.withPermit {
         var groupExpired: Boolean? = null
 
         val result = runCatching {

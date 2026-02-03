@@ -105,10 +105,10 @@ abstract class BasePoller<T>(
     /**
      * Performs a single polling operation. A failed poll should throw an exception.
      *
-     * @param isFirstPollSinceApStarted True if this is the first poll since the app started.
+     * @param isFirstPollSinceApoStarted True if this is the first poll since the app started.
      * @return The result of the polling operation.
      */
-    protected abstract suspend fun doPollOnce(isFirstPollSinceApStarted: Boolean): T
+    protected abstract suspend fun doPollOnce(isFirstPollSinceApoStarted: Boolean): T
 
     private suspend fun pollOnce(reason: String): T {
         pollMutex.withLock {
@@ -117,7 +117,7 @@ abstract class BasePoller<T>(
                 PollState.Polling(reason, lastPolledResult = lastState.lastPolledResult)
             Log.d(logTag, "Start $reason polling")
             val result = runCatching {
-                doPollOnce(isFirstPollSinceApStarted = lastState is PollState.Idle)
+                doPollOnce(isFirstPollSinceApoStarted = lastState is PollState.Idle)
             }
 
             if (result.isSuccess) {
