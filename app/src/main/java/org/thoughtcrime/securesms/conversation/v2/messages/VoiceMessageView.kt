@@ -32,8 +32,6 @@ class VoiceMessageView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : RelativeLayout(context, attrs, defStyleAttr) {
-    //todo AUDIO add scroll to message on mini player click
-
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
 
     private val binding by lazy { ViewVoiceMessageBinding.bind(this) }

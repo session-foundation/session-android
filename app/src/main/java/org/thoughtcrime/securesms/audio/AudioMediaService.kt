@@ -11,7 +11,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.DefaultMediaNotificationProvider
-import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
@@ -29,7 +28,6 @@ import org.thoughtcrime.securesms.audio.model.MediaItemFactory.EXTRA_MESSAGE_ID
 import org.thoughtcrime.securesms.audio.model.MediaItemFactory.EXTRA_THREAD_ADDRESS
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.util.getParcelableCompat
 
 @AndroidEntryPoint

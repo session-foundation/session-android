@@ -451,7 +451,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val libraryButton  by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
     private val cameraButton   by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
 
-    private var messageToScrollTimestamp: MessageId? = null
+    private var messageToScrollId: MessageId? = null
     private val firstLoad = AtomicBoolean(true)
 
     private var isKeyboardVisible = false
@@ -652,7 +652,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     AudioMiniPlayer(
                         modifier = Modifier.onSizeChanged { miniPlayerHeightPx = it.height },
                         audio = audio,
-                        onPlayerTap = { /* todo */ },
+                        onPlayerTap = {
+                            // if we are in the conversation where the audio is from, scroll to it
+                            if(viewModel.address == audio.playable.thread) {
+                                highlightMessageFromId(audio.playable.messageId)
+                            } else {
+                                // otherwise we go to the right conversation first
+                                val intent = ConversationActivityV2.createIntent(
+                                    this@ConversationActivityV2,
+                                    address = audio.playable.thread,
+                                    scrollToMessage = audio.playable.messageId
+                                )
+
+                                startActivity(intent)
+                                finish()
+                            }
+                        },
                         onPlayPause = viewModel::togglePlayPause,
                         onPlaybackSpeedToggle = viewModel::cyclePlaybackSpeed,
                         onClose = viewModel::stopAudio
@@ -662,7 +677,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         // messageIdToScroll
-        messageToScrollTimestamp = IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)
+        messageToScrollId = IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)
         setUpToolBar()
         setUpInputBar()
         setUpLinkPreviewObserver()
@@ -906,8 +921,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         adapter.changeCursor(cursor)
 
         if (cursor != null) {
-            val messageTimestamp = messageToScrollTimestamp
-            messageToScrollTimestamp = null
+            val messageIdToScrollTo = messageToScrollId
+            messageToScrollId = null
             val newUnreadCount = data.threadUnreadCount
 
             // Update the unreadCount value to be loaded from the database since we got a new message
@@ -919,8 +934,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 updateUnreadCountIndicator()
             }
 
-            if (messageTimestamp != null) {
-                jumpToMessage( messageTimestamp, firstLoad.get(), null)
+            if (messageIdToScrollTo != null) {
+                jumpToMessage( messageIdToScrollTo, firstLoad.get(), null)
             } else {
                 if (firstLoad.getAndSet(false)) {
                     scrollToFirstUnreadMessageOrBottom()
@@ -2184,24 +2199,33 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun highlightMessageFromTimestamp(timestamp: Long) {
         // Try to find the message with the given timestamp
         adapter.getItemPositionForTimestamp(timestamp)?.let { targetMessagePosition ->
-
-            // If the view is already visible then we don't have to scroll before highlighting it..
-            binding.conversationRecyclerView.findViewHolderForLayoutPosition(targetMessagePosition)?.let { viewHolder ->
-                if (viewHolder.itemView is VisibleMessageView) {
-                    (viewHolder.itemView as VisibleMessageView).playHighlight()
-                    return
-                }
-            }
-
-            // ..otherwise, set the pending highlight target and trigger a scroll.
-            // Note: If the targeted message isn't the very first one then we scroll slightly past it to give it some breathing room.
-            // Also: The offset must be negative to provide room above it.
-            pendingHighlightMessagePosition = targetMessagePosition
-            currentTargetedScrollOffsetPx = if (targetMessagePosition > 0) nonFirstMessageOffsetPx else 0
-            linearSmoothScroller.targetPosition = targetMessagePosition
-            (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)?.startSmoothScroll(linearSmoothScroller)
-
+            highlightMessageAtIndex(targetMessagePosition)
         } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
+    }
+
+    private fun highlightMessageFromId(messageId: MessageId) {
+        // Try to find the message with the given timestamp
+        adapter.getItemPositionForId(messageId)?.let { targetMessagePosition ->
+            highlightMessageAtIndex(targetMessagePosition)
+        } ?: Log.i(TAG, "Could not find message with id: $messageId")
+    }
+
+    fun highlightMessageAtIndex(targetMessagePosition: Int) {
+       // If the view is already visible then we don't have to scroll before highlighting it..
+        binding.conversationRecyclerView.findViewHolderForLayoutPosition(targetMessagePosition)?.let { viewHolder ->
+            if (viewHolder.itemView is VisibleMessageView) {
+                (viewHolder.itemView as VisibleMessageView).playHighlight()
+                return
+            }
+        }
+
+        // ..otherwise, set the pending highlight target and trigger a scroll.
+        // Note: If the targeted message isn't the very first one then we scroll slightly past it to give it some breathing room.
+        // Also: The offset must be negative to provide room above it.
+        pendingHighlightMessagePosition = targetMessagePosition
+        currentTargetedScrollOffsetPx = if (targetMessagePosition > 0) nonFirstMessageOffsetPx else 0
+        linearSmoothScroller.targetPosition = targetMessagePosition
+        (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)?.startSmoothScroll(linearSmoothScroller)
     }
 
     override fun onReactionClicked(emoji: String, messageId: MessageId, userWasSender: Boolean) {
@@ -2271,7 +2295,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // Jump to the newly sent message once it gets added
         if (sentMessageId != null) {
-            messageToScrollTimestamp = sentMessageId
+            messageToScrollId = sentMessageId
         }
     }
 

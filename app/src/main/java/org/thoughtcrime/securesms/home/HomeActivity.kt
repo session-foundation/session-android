@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalActivity
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -25,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -365,10 +367,16 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         animationSpec = tween(durationMillis = 200, easing = FastOutLinearInEasing)
                     )
                 ) { audio ->
+                    val context = LocalContext.current
+
                     AudioMiniPlayer(
                         audio = audio,
                         onPlayerTap = {
-                            //todo AUDIO scroll to message
+                            push(ConversationActivityV2.createIntent(
+                                context,
+                                address = audio.playable.thread,
+                                scrollToMessage = audio.playable.messageId
+                            ))
                         },
                         onPlayPause = homeViewModel::togglePlayPause,
                         onPlaybackSpeedToggle = homeViewModel::cyclePlaybackSpeed,
