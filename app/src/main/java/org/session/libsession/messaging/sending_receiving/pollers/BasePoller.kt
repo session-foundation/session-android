@@ -97,10 +97,8 @@ abstract class BasePoller<T>(
     private fun nextPollDelaySeconds(
         numConsecutiveFailures: Int,
     ): Int {
-        return (successfulPollIntervalSeconds +
-                ((numConsecutiveFailures - 1).coerceAtLeast(0) * successfulPollIntervalSeconds))
-            .coerceAtMost(maxRetryIntervalSeconds)
-
+        val delay = successfulPollIntervalSeconds * (numConsecutiveFailures + 1)
+        return delay.coerceAtMost(maxRetryIntervalSeconds)
     }
 
     /**
