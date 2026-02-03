@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.pro
 
 import android.app.Application
 import androidx.collection.ArraySet
+import androidx.collection.arraySetOf
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -37,9 +38,11 @@ import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVID
 import network.loki.messenger.libsession_util.pro.ProConfig
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.Util
 import network.loki.messenger.libsession_util.util.asSequence
+import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -56,7 +59,6 @@ import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
@@ -69,6 +71,7 @@ import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.util.State
+import org.thoughtcrime.securesms.util.castAwayType
 import java.time.Duration
 import java.time.Instant
 import java.util.EnumSet
@@ -82,7 +85,6 @@ import kotlin.time.Duration.Companion.milliseconds
 class ProStatusManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
-    recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
     private val serverApiExecutor: ServerApiExecutor,
     private val addProPaymentApiFactory: AddProPaymentApi.Factory,
@@ -96,7 +98,15 @@ class ProStatusManager @Inject constructor(
 
     val proDataState: StateFlow<ProDataState> = loginState.flowWithLoggedInState {
         combine(
-            recipientRepository.observeSelf().map { it.shouldShowProBadge }.distinctUntilChanged(),
+            configFactory.get().userConfigsChanged(onlyConfigTypes = arraySetOf(UserConfigType.USER_PROFILE))
+                .castAwayType()
+                .onStart { emit(Unit) }
+                .map {
+                    configFactory.get().withUserConfigs { configs ->
+                        configs.userProfile.getProFeatures().contains(ProProfileFeature.PRO_BADGE)
+                    }
+                }
+                .distinctUntilChanged(),
             proDetailsRepository.get().loadState,
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
                 .onStart { emit(Unit) }
@@ -107,7 +117,7 @@ class ProStatusManager @Inject constructor(
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
-        ){ shouldShowProBadge, proDetailsState,
+        ){ showProBadgePreference, proDetailsState,
            debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
@@ -131,7 +141,7 @@ class ProStatusManager @Inject constructor(
 
                 ProDataState(
                     type = proDetailsState.lastUpdated?.first?.toProStatus(nowMs) ?: ProStatus.NeverSubscribed,
-                    showProBadge = shouldShowProBadge,
+                    showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
             }// debug data
@@ -207,7 +217,7 @@ class ProStatusManager @Inject constructor(
                     },
 
                     refreshState = proDataRefreshState,
-                    showProBadge = shouldShowProBadge,
+                    showProBadge = showProBadgePreference,
                 )
             }
         }
@@ -441,7 +451,7 @@ class ProStatusManager @Inject constructor(
     /**
      * Adds Pro features, if any, to an outgoing visible message
      */
-    fun addProFeatures(visibleMessage: VisibleMessage) {
+    fun addProFeatures(message: Message) {
         if (proDataState.value.type !is ProStatus.Active) {
             return
         }
@@ -452,11 +462,12 @@ class ProStatusManager @Inject constructor(
             proFeatures += configs.userProfile.getProFeatures().asSequence()
         }
 
-        if (Util.countCodepoints(visibleMessage.text.orEmpty()) > MAX_CHARACTER_REGULAR){
+        if (message is VisibleMessage &&
+                Util.countCodepoints(message.text.orEmpty()) > MAX_CHARACTER_REGULAR){
             proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
         }
 
-        visibleMessage.proFeatures = proFeatures
+        message.proFeatures = proFeatures
     }
 
     /**

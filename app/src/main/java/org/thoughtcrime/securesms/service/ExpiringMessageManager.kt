@@ -200,7 +200,7 @@ class ExpiringMessageManager @Inject constructor(
         if (message.expiryMode is ExpiryMode.AfterSend ||
             (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)) {
             getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, clock.currentTimeMillis())
+                .markExpireStarted(messageId.id, message.sentTimestamp!!)
         }
     }
 

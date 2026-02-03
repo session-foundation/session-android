@@ -13,6 +13,8 @@ import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.view.animation.ScaleAnimation
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.view.ViewGroupCompat
 import androidx.fragment.app.Fragment
@@ -33,6 +35,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.mediasend.CameraXActivity.Companion.KEY_MEDIA_SEND_COUNT
 import org.thoughtcrime.securesms.mediasend.MediaSendViewModel.CountButtonState
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
@@ -50,7 +53,8 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragment.Controller,
     MediaPickerItemFragment.Controller, MediaSendFragment.Controller,
-    ImageEditorFragment.Controller, CameraXFragment.Controller{
+    ImageEditorFragment.Controller {
+
     private var recipient: Recipient? = null
     private val viewModel: MediaSendViewModel by viewModels()
 
@@ -59,6 +63,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     @Inject
     lateinit var recipientRepository: RecipientRepository
 
+    private var lastEntryFromCameraCapture: Boolean = false
 
     override val applyDefaultWindowInsets: Boolean
         get() = false // we want to handle window insets manually here for fullscreen fragments like the camera screen
@@ -74,44 +79,49 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             ViewGroupCompat.installCompatInsetsDispatch(it.root)
         }
 
-        setResult(RESULT_CANCELED)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleBackPressedCompat()
+            }
+        })
 
-        if (savedInstanceState != null) {
-            return
-        }
+        setResult(RESULT_CANCELED)
 
         // Apply windowInsets for our own UI (not the fragment ones because they will want to do their own things)
         binding.mediasendBottomBar.applySafeInsetsPaddings()
 
-        recipient = recipientRepository.getRecipientSync(fromSerialized(
-            intent.getStringExtra(KEY_ADDRESS)!!
-        ))
+        recipient = recipientRepository.getRecipientSync(
+            fromSerialized(
+                intent.getStringExtra(KEY_ADDRESS)!!
+            )
+        )
 
         viewModel.onBodyChanged(intent.getStringExtra(KEY_BODY)!!)
 
-        val media: List<Media?>? = intent.getParcelableArrayListExtra(KEY_MEDIA)
-        val isCamera = intent.getBooleanExtra(KEY_IS_CAMERA, false)
+        if (savedInstanceState == null) {
+            val media: List<Media?>? = intent.getParcelableArrayListExtra(KEY_MEDIA)
+            val isCamera = intent.getBooleanExtra(KEY_IS_CAMERA, false)
 
-        if (isCamera) {
-            val fragment: Fragment = CameraXFragment()
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
-                .commit()
-        } else if (!isEmpty(media)) {
-            viewModel.onSelectedMediaChanged(this, media!!)
+            if (isCamera) {
+                navigateToCamera()
+            } else if (!isEmpty(media)) {
+                viewModel.onSelectedMediaChanged(this, media!!)
 
-            val fragment: Fragment = MediaSendFragment.newInstance(recipient!!.address)
+                lastEntryFromCameraCapture = false
 
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
-                .commit()
-        } else {
-            val fragment = MediaPickerFolderFragment.newInstance(
-                recipient!!
-            )
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_FOLDER_PICKER)
-                .commit()
+                val fragment: Fragment = MediaSendFragment.newInstance(recipient!!.address)
+
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
+                    .commit()
+            } else {
+                val fragment = MediaPickerFolderFragment.newInstance(
+                    recipient!!
+                )
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.mediasend_fragment_container, fragment, TAG_FOLDER_PICKER)
+                    .commit()
+            }
         }
 
         initializeCountButtonObserver()
@@ -129,15 +139,29 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         }
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
+    private fun handleBackPressedCompat() {
+        val fm = supportFragmentManager
+        val isCameraFlow = intent.getBooleanExtra(KEY_IS_CAMERA, false)
 
-        if (intent.getBooleanExtra(
-                KEY_IS_CAMERA,
-                false
-            ) && supportFragmentManager.backStackEntryCount == 0
-        ) {
-            viewModel.onImageCaptureUndo(this)
+        // Special case: we just came from camera, in camera-first flow,
+        // and we're on the editor as the only fragment.
+        if (lastEntryFromCameraCapture && isCameraFlow && fm.backStackEntryCount == 1) {
+            fm.popBackStackImmediate() // remove the editor fragment
+            viewModel.onImageCaptureUndo(this@MediaSendActivity)
+            lastEntryFromCameraCapture = false
+            navigateToCamera()
+            return
+        }
+
+        // Otherwise: normal fragment back behaviour
+        if (fm.backStackEntryCount > 0) {
+            fm.popBackStack()
+        } else {
+            // Root of the activity
+            if (isCameraFlow) {
+                setResult(RESULT_CANCELED, Intent())
+            }
+            finish()
         }
     }
 
@@ -173,8 +197,9 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     override fun onMediaSelected(media: Media) {
         try {
             viewModel.onSingleMediaSelected(this, media)
+            lastEntryFromCameraCapture = false
             navigateToMediaSend(recipient!!.address)
-        } catch (e: Exception){
+        } catch (e: Exception) {
             Log.e(TAG, "Error selecting media", e)
             Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_LONG).show()
         }
@@ -234,67 +259,30 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         fragment?.onTouchEventsNeeded(needed)
     }
 
-    override fun onCameraError() {
-        lifecycleScope.launch {
-            Toast.makeText(applicationContext, R.string.cameraErrorUnavailable, Toast.LENGTH_SHORT).show()
-            setResult(RESULT_CANCELED, Intent())
-            finish()
-        }
-    }
-
-    override fun onImageCaptured(imageUri: Uri, size: Long, width: Int, height: Int) {
-        Log.i(TAG, "Camera image captured.")
-        SimpleTask.run(lifecycle, {
-            try {
-                return@run Media(
-                    imageUri,
-                    constructPhotoFilename(this),
-                    MediaTypes.IMAGE_JPEG,
-                    System.currentTimeMillis(),
-                    width,
-                    height,
-                    size,
-                    Media.ALL_MEDIA_BUCKET_ID,
-                    null
-                )
-            } catch (e: Exception) {
-                return@run null
-            }
-        }, { media: Media? ->
-            if (media == null) {
-                onNoMediaAvailable()
-                return@run
-            }
-            Log.i(TAG, "Camera capture stored: " + media.uri.toString())
-
-            viewModel.onImageCaptured(media)
-            navigateToMediaSend(recipient!!.address)
-        })
-    }
-
     private fun initializeCountButtonObserver() {
         viewModel.getCountButtonState().observe(
             this
         ) { buttonState: CountButtonState? ->
             if (buttonState == null) return@observe
-            binding.mediasendCountButtonText.text = buttonState.count.toString()
-            binding.mediasendCountButton.isEnabled = buttonState.isVisible
+            binding.mediasendCountContainer.mediasendCountButtonText.text = buttonState.count.toString()
+            binding.mediasendCountContainer.mediasendCountButton.isEnabled = buttonState.isVisible
             animateButtonVisibility(
-                binding.mediasendCountButton,
-                binding.mediasendCountButton.visibility,
+                binding.mediasendCountContainer.mediasendCountButton,
+                binding.mediasendCountContainer.mediasendCountButton.visibility,
                 if (buttonState.isVisible) View.VISIBLE else View.GONE
             )
             if (buttonState.count > 0) {
-                binding.mediasendCountButton.setOnClickListener { v: View? ->
+                binding.mediasendCountContainer.mediasendCountButton.setOnClickListener { v: View? ->
+                    lastEntryFromCameraCapture = false
                     navigateToMediaSend(
                         recipient!!.address
                     )
                 }
                 if (buttonState.isVisible) {
-                    animateButtonTextChange(binding.mediasendCountButton)
+                    animateButtonTextChange(binding.mediasendCountContainer.mediasendCountButton)
                 }
             } else {
-                binding.mediasendCountButton.setOnClickListener(null)
+                binding.mediasendCountContainer.mediasendCountButton.setOnClickListener(null)
             }
         }
     }
@@ -384,21 +372,10 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             .request(Manifest.permission.CAMERA)
             .withPermanentDenialDialog(permanentDenialTxt)
             .onAllGranted {
-                val fragment = orCreateCameraFragment
-                supportFragmentManager.beginTransaction()
-                    .setCustomAnimations(
-                        R.anim.slide_from_right,
-                        R.anim.slide_to_left,
-                        R.anim.slide_from_left,
-                        R.anim.slide_to_right
-                    )
-                    .replace(
-                        R.id.mediasend_fragment_container,
-                        fragment,
-                        TAG_CAMERA
-                    )
-                    .addToBackStack(null)
-                    .commit()
+                val countNow = viewModel.getCountButtonState().value?.count ?: 0
+                val intent = Intent(this@MediaSendActivity, CameraXActivity::class.java)
+                    .putExtra(KEY_MEDIA_SEND_COUNT, countNow)
+                cameraLauncher.launch(intent)
 
                 viewModel.onCameraStarted()
             }
@@ -411,14 +388,6 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             }
             .execute()
     }
-
-    private val orCreateCameraFragment: CameraXFragment
-        get() {
-            val fragment =
-                supportFragmentManager.findFragmentByTag(TAG_CAMERA) as CameraXFragment?
-
-            return fragment ?: CameraXFragment()
-        }
 
     private fun animateButtonVisibility(button: View, oldVisibility: Int, newVisibility: Int) {
         if (oldVisibility == newVisibility) return
@@ -511,6 +480,74 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         }
     }
 
+    private val cameraLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK && result.data != null) {
+                val data = result.data!!
+
+                val uriString = data.getStringExtra(CameraXActivity.EXTRA_IMAGE_URI)
+                val size = data.getLongExtra(CameraXActivity.EXTRA_IMAGE_SIZE, -1L)
+                val width = data.getIntExtra(CameraXActivity.EXTRA_IMAGE_WIDTH, -1)
+                val height = data.getIntExtra(CameraXActivity.EXTRA_IMAGE_HEIGHT, -1)
+
+                val uri = uriString?.let { Uri.parse(it) }
+
+                if (uri == null || size <= 0 || width <= 0 || height <= 0) {
+                    handleCameraError()
+                } else {
+                    handleCameraImageCaptured(uri, size, width, height)
+                }
+            }else{
+                if(supportFragmentManager.backStackEntryCount == 0){
+                    finish()
+                }
+            }
+        }
+
+    private fun handleCameraError() {
+        lifecycleScope.launch {
+            Toast.makeText(applicationContext, R.string.cameraErrorUnavailable, Toast.LENGTH_SHORT)
+                .show()
+            setResult(RESULT_CANCELED, Intent())
+            finish()
+        }
+    }
+
+    private fun handleCameraImageCaptured(imageUri: Uri, size: Long, width: Int, height: Int) {
+        Log.i(TAG, "Camera image captured.")
+        SimpleTask.run(lifecycle, {
+            try {
+                return@run Media(
+                    imageUri,
+                    constructPhotoFilename(this),
+                    MediaTypes.IMAGE_JPEG,
+                    System.currentTimeMillis(),
+                    width,
+                    height,
+                    size,
+                    Media.ALL_MEDIA_BUCKET_ID,
+                    null
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Error constructing Media from camera result", e)
+                return@run null
+            }
+        }, { media: Media? ->
+            if (media == null) {
+                onNoMediaAvailable()
+                return@run
+            }
+            Log.i(TAG, "Camera capture stored: ${media.uri}")
+            viewModel.onImageCaptured(media)
+            lastEntryFromCameraCapture = true
+            navigateToMediaSend(recipient!!.address)
+        })
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+    }
+
     companion object {
         private val TAG: String = MediaSendActivity::class.java.simpleName
 
@@ -564,3 +601,4 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         }
     }
 }
+

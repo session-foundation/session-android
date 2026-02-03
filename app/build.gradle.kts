@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.plugin.parcelize)
@@ -152,8 +151,12 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                file("proguard-rules.pro")
+            )
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
@@ -189,7 +192,6 @@ android {
 
         getByName("debug") {
             isDefault = true
-            isMinifyEnabled = false
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
@@ -201,30 +203,32 @@ android {
         }
     }
 
+    testBuildType = "qa"
+
     sourceSets {
         getByName("test").apply {
-            java.srcDirs("$projectDir/src/sharedTest/java")
-            resources.srcDirs("$projectDir/src/main/assets")
+            kotlin.directories += "$projectDir/src/sharedTest/java"
+            resources.directories += "$projectDir/src/main/assets"
         }
 
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
-            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+            maybeCreate(variant).kotlin.directories += "$firebaseCommonDir/kotlin"
         }
 
         val nonPlayCommonDir = "src/nonPlayCommon"
         nonPlayVariants.forEach { variant ->
             maybeCreate(variant).apply {
-                java.srcDirs("$nonPlayCommonDir/kotlin")
-                resources.srcDirs("$nonPlayCommonDir/resources")
+                kotlin.directories += "$nonPlayCommonDir/kotlin"
+                resources.directories += "$nonPlayCommonDir/resources"
             }
         }
 
         val nonDebugDir = "src/nonDebug"
         nonDebugBuildTypes.forEach { buildType ->
             maybeCreate(buildType).apply {
-                java.srcDirs("$nonDebugDir/kotlin")
-                resources.srcDirs("$nonDebugDir/resources")
+                kotlin.directories += "$nonDebugDir/kotlin"
+                resources.directories += "$nonDebugDir/resources"
             }
         }
     }
@@ -372,6 +376,11 @@ dependencies {
     if (huaweiEnabled) {
         val huaweiImplementation = configurations.maybeCreate("huaweiImplementation")
         huaweiImplementation(libs.huawei.push)
+
+        // These are compileOnly on the Huawei flavor so R8 can resolve optional HMS classes
+        // referenced by HMS Push during minification.
+        compileOnly(libs.huawei.hianalytics)
+        compileOnly(libs.huawei.availableupdate)
     }
 
     implementation(libs.androidx.media3.exoplayer)

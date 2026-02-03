@@ -771,6 +771,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             val navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
             val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
 
+            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+
             val keyboardVisible = imeInsets.bottom > 0
 
             if (keyboardVisible != isKeyboardVisible) {
@@ -787,6 +789,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             binding.bottomSpacer.updateLayoutParams<LayoutParams> {
                 height = if (keyboardVisible) imeInsets.bottom else navInsets.bottom
             }
+
+            binding.contentContainer.updatePadding(
+                left = systemBarsInsets.left,
+                right = systemBarsInsets.right
+            )
 
             windowInsets
         }
@@ -2209,7 +2216,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun playVoiceMessageAtIndexIfPossible(indexInAdapter: Int) {
-        if (!textSecurePreferences.autoplayAudioMessages()) return
+        if (!textSecurePreferences.isAutoplayAudioMessagesEnabled()) return
 
         if (indexInAdapter < 0 || indexInAdapter >= adapter.itemCount) { return }
         val viewHolder = binding.conversationRecyclerView.findViewHolderForAdapterPosition(indexInAdapter) as? ConversationAdapter.VisibleMessageViewHolder ?: return

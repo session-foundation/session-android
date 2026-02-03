@@ -50,10 +50,13 @@ fun Activity.setComposeContent(content: @Composable () -> Unit) {
         .let(::setContentView)
 }
 
-fun Fragment.createThemedComposeView(content: @Composable () -> Unit): ComposeView = requireContext().createThemedComposeView(content)
-fun Context.createThemedComposeView(content: @Composable () -> Unit): ComposeView = ComposeView(this).apply {
-    setThemedContent(content)
-}
+fun Fragment.createThemedComposeView(content: @Composable () -> Unit): ComposeView =
+    requireContext().createThemedComposeView(content)
+
+fun Context.createThemedComposeView(content: @Composable () -> Unit): ComposeView =
+    ComposeView(this).apply {
+        setThemedContent(content)
+    }
 
 // Method to actually open a given URL via an Intent that will use the default browser
 /**
@@ -75,9 +78,14 @@ fun Context.openUrl(url: String): Boolean {
 // Extension method to use the Phrase library to substitute strings & return a CharSequence.
 // The pair is the key name, such as APP_NAME_KEY and the value is the localised string, such as context.getString(R.string.app_name).
 // Note: We cannot have Pair<String, Int> versions of this or the `getSubbedString` method because the JVM sees the signatures as identical.
-fun Context.getSubbedCharSequence(stringId: Int, vararg substitutionPairs: Pair<String, String>): CharSequence {
+fun Context.getSubbedCharSequence(
+    stringId: Int,
+    vararg substitutionPairs: Pair<String, String>
+): CharSequence {
     val phrase = Phrase.from(this, stringId)
-    for ((key, value) in substitutionPairs) { phrase.put(key, value) }
+    for ((key, value) in substitutionPairs) {
+        phrase.put(key, value)
+    }
     return phrase.format()
 }
 
@@ -108,6 +116,10 @@ fun Context.isWhitelistedFromDoze(): Boolean {
 }
 
 fun Activity.requestDozeWhitelist() {
+    (this as Context).requestDozeWhitelist()
+}
+
+fun Context.requestDozeWhitelist() {
     if (isWhitelistedFromDoze()) return
 
     val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
@@ -127,6 +139,22 @@ fun Activity.requestDozeWhitelist() {
                 Toast.makeText(this, R.string.errorGeneric, Toast.LENGTH_LONG).show()
             }
         }
+    }
+}
+
+fun Context.openBatteryOptimizationSettings(){
+    try {
+        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+            data = Uri.parse("package:${packageName}")
+        }
+
+        startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        // Fallback: open the generic Battery Optimization settings screen
+        val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(fallbackIntent)
     }
 }
 
@@ -169,7 +197,7 @@ fun AnimateFade(
     fadeInAnimationSpec: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow),
     fadeOutAnimationSpec: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow),
     content: @Composable() AnimatedVisibilityScope.() -> Unit
-){
+) {
     AnimatedVisibility(
         modifier = modifier,
         visible = visible,

@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -25,7 +26,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
@@ -109,7 +109,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
-import org.thoughtcrime.securesms.util.applySafeInsetsMargins
+import org.thoughtcrime.securesms.util.applyBottomInsetMargin
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.fadeIn
@@ -278,6 +278,20 @@ class HomeActivity : ScreenLockActionBarActivity(),
             homeViewModel.onSearchClicked()
         }
         binding.sessionToolbar.disableClipping()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val searchHandled = homeViewModel.isSearchOpen.value &&
+                        binding.globalSearchInputLayout.handleBackPressed()
+                if (searchHandled) return
+
+                if (homeViewModel.onBackPressed()) {
+                    return
+                }
+
+                finish()
+            }
+        })
 
         lifecycleScope.launch {
             homeViewModel.shouldShowCurrentUserProBadge
@@ -502,6 +516,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
             )
         }
 
+        rewireConversationOptionsCallbacksIfPresent()
+
         applyViewInsets()
     }
 
@@ -639,95 +655,109 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // endregion
 
     // region Interaction
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (homeViewModel.isSearchOpen.value && binding.globalSearchInputLayout.handleBackPressed()) {
-            return
-        }
-
-        if (!homeViewModel.onBackPressed()) {
-            super.onBackPressed()
-        }
-    }
 
     override fun onConversationClick(thread: ThreadRecord) {
         push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {
-        val bottomSheet = ConversationOptionsBottomSheet()
-        bottomSheet.publicKey = publicKey
-        bottomSheet.thread = thread
         val threadRecipient = thread.recipient
-        bottomSheet.group = groupDatabase.getGroup(threadRecipient.address.toString()).orNull()
-        bottomSheet.onViewDetailsTapped = {
-            bottomSheet.dismiss()
+        val bottomSheet = ConversationOptionsBottomSheet.newInstance(
+            publicKey = publicKey,
+            threadId = thread.threadId,
+            address = threadRecipient.address.toString()
+        )
+        attachConversationOptionsCallbacks(bottomSheet, thread)
+        bottomSheet.show(supportFragmentManager, ConversationOptionsBottomSheet.FRAGMENT_TAG)
+    }
+
+    /**
+     * If a ConversationOptionsBottomSheet was restored by FragmentManager after a
+     * configuration change, re-attach its callbacks and refresh the ThreadRecord.
+     */
+    private fun rewireConversationOptionsCallbacksIfPresent() {
+        val sheet = supportFragmentManager
+            .findFragmentByTag(ConversationOptionsBottomSheet.FRAGMENT_TAG)
+                as? ConversationOptionsBottomSheet ?: return
+
+        val threadId = sheet.requireArguments()
+            .getLong(ConversationOptionsBottomSheet.ARG_THREAD_ID)
+
+        val threadRecord = homeViewModel.data.value?.items?.asSequence()
+            ?.filterIsInstance<HomeViewModel.Item.Thread>()
+            ?.firstOrNull { it.thread.threadId == threadId }?.thread
+
+        threadRecord?.let {
+            attachConversationOptionsCallbacks(sheet, it)
+        }
+    }
+
+    private fun attachConversationOptionsCallbacks(
+        sheet: ConversationOptionsBottomSheet,
+        thread: ThreadRecord
+    ) {
+        val threadRecipient = thread.recipient
+        sheet.onViewDetailsTapped = {
+            sheet.dismiss()
             homeViewModel.showUserProfileModal(thread)
         }
-        bottomSheet.onCopyConversationId = onCopyConversationId@{
-            bottomSheet.dismiss()
+        sheet.onCopyConversationId = {
+            sheet.dismiss()
             if (threadRecipient.address is Address.WithAccountId && !threadRecipient.isSelf) {
-                val clip = ClipData.newPlainText("Account ID", threadRecipient.address.accountId.hexString)
-                val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                manager.setPrimaryClip(clip)
-                Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
-            }
-            else if (threadRecipient.data is RecipientData.Community) {
+                val clip = ClipData.newPlainText(
+                    "Account ID",
+                    threadRecipient.address.accountId.hexString
+                )
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(clip)
+                Toast.makeText(this@HomeActivity, R.string.copied, Toast.LENGTH_SHORT).show()
+            } else if (threadRecipient.data is RecipientData.Community) {
                 val clip = ClipData.newPlainText("Community URL", threadRecipient.data.joinURL)
-                val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                manager.setPrimaryClip(clip)
-                Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(clip)
+                Toast.makeText(this@HomeActivity, R.string.copied, Toast.LENGTH_SHORT).show()
             }
         }
-        bottomSheet.onBlockTapped = {
-            bottomSheet.dismiss()
-            if (!threadRecipient.blocked) {
-                blockConversation(thread)
-            }
+        sheet.onBlockTapped = {
+            sheet.dismiss()
+            if (!threadRecipient.blocked) blockConversation(thread)
         }
-        bottomSheet.onUnblockTapped = {
-            bottomSheet.dismiss()
-            if (threadRecipient.blocked) {
-                unblockConversation(thread)
-            }
+        sheet.onUnblockTapped = {
+            sheet.dismiss()
+            if (threadRecipient.blocked) unblockConversation(thread)
         }
-        bottomSheet.onAdminLeaveTapped = {
-            bottomSheet.dismiss()
+        sheet.onAdminLeaveTapped = {
+            sheet.dismiss()
             deleteConversation(thread, false)
         }
-        bottomSheet.onDeleteTapped = {
-            bottomSheet.dismiss()
+        sheet.onDeleteTapped = {
+            sheet.dismiss()
             deleteConversation(thread, true)
         }
-        bottomSheet.onNotificationTapped = {
-            bottomSheet.dismiss()
-            // go to the notification settings
-            val intent = Intent(this, NotificationSettingsActivity::class.java).apply {
+        sheet.onNotificationTapped = {
+            sheet.dismiss()
+            startActivity(Intent(this, NotificationSettingsActivity::class.java).apply {
                 putExtra(NotificationSettingsActivity.ARG_ADDRESS, threadRecipient.address)
-            }
-            startActivity(intent)
+            })
         }
-        bottomSheet.onPinTapped = {
-            bottomSheet.dismiss()
+        sheet.onPinTapped = {
+            sheet.dismiss()
             setConversationPinned(threadRecipient.address, true)
         }
-        bottomSheet.onUnpinTapped = {
-            bottomSheet.dismiss()
+        sheet.onUnpinTapped = {
+            sheet.dismiss()
             setConversationPinned(threadRecipient.address, false)
         }
-        bottomSheet.onMarkAllAsReadTapped = {
-            bottomSheet.dismiss()
+        sheet.onMarkAllAsReadTapped = {
+            sheet.dismiss()
             markAllAsRead(thread)
         }
-        bottomSheet.onMarkAsUnreadTapped = {
-            bottomSheet.dismiss()
+        sheet.onMarkAsUnreadTapped = {
+            sheet.dismiss()
             markAsUnread(thread)
         }
-        bottomSheet.onDeleteContactTapped = {
-            bottomSheet.dismiss()
+        sheet.onDeleteContactTapped = {
+            sheet.dismiss()
             confirmDeleteContact(thread)
         }
-        bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
     private fun blockConversation(thread: ThreadRecord) {
@@ -984,9 +1014,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         )
 
-        binding.newConversationButton.applySafeInsetsMargins(
+        binding.newConversationButton.applyBottomInsetMargin(
             typeMask = WindowInsetsCompat.Type.navigationBars(),
-            additionalInsets = Insets.of(0,0,0, resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset))
+            extraBottom = resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
         )
     }
 }
