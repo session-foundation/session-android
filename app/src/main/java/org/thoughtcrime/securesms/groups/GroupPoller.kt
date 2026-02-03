@@ -7,21 +7,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
+import org.session.libsession.messaging.sending_receiving.pollers.BasePoller
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
@@ -42,7 +34,7 @@ import org.thoughtcrime.securesms.api.swarm.SwarmSnodeSelector
 import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import java.time.Instant
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.days
 
@@ -53,7 +45,6 @@ class GroupPoller @AssistedInject constructor(
     private val configFactoryProtocol: ConfigFactoryProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
-    private val appVisibilityManager: AppVisibilityManager,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val messageParser: MessageParser,
@@ -62,125 +53,18 @@ class GroupPoller @AssistedInject constructor(
     private val alterTtlApiApiFactory: AlterTtlApi.Factory,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val swarmSnodeSelector: SwarmSnodeSelector,
+    networkConnectivity: NetworkConnectivity,
+    appVisibilityManager: AppVisibilityManager,
+): BasePoller<GroupPoller.GroupPollResult>(
+    networkConnectivity = networkConnectivity,
+    appVisibilityManager = appVisibilityManager,
+    scope = scope
 ) {
-    companion object {
-        private const val POLL_INTERVAL = 3_000L
-        private const val SWARM_FETCH_INTERVAL = 1800_000L // Every 30 minutes
-
-        private const val TAG = "GroupPoller"
-    }
-
-    data class State(
-        val hadAtLeastOneSuccessfulPoll: Boolean = false,
-        val lastPoll: PollResult? = null,
-        val inProgress: Boolean = false,
+    data class GroupPollResult(
+        val groupExpired: Boolean?
     )
 
-    data class PollResult(
-        val startedAt: Instant,
-        val finishedAt: Instant,
-        val result: Result<Unit>,
-        val groupExpired: Boolean?
-    ) {
-        fun hasNonRetryableError(): Boolean {
-            val e = result.exceptionOrNull()
-            return e != null && (e is NonRetryableException || e is CancellationException)
-        }
-    }
-
-
-    // A channel to send tokens to trigger a poll
-    private val pollOnceTokens = Channel<PollOnceToken>()
-
-    // A flow that represents the state of the poller.
-    val state: StateFlow<State> = flow {
-        var lastState = State()
-        val pendingTokens = mutableListOf<PollOnceToken>()
-
-        while (true) {
-            pendingTokens.add(pollOnceTokens.receive())
-
-            // Drain all the tokens we've received up to this point, so we can reply them all at once
-            while (true) {
-                val result = pollOnceTokens.tryReceive()
-                result.getOrNull()?.let(pendingTokens::add) ?: break
-            }
-
-            lastState = lastState.copy(inProgress = true).also { emit(it) }
-
-            val pollResult = pollSemaphore.withPermit {
-                doPollOnce()
-            }
-
-            lastState = lastState.copy(
-                hadAtLeastOneSuccessfulPoll = lastState.hadAtLeastOneSuccessfulPoll || pollResult.result.isSuccess,
-                lastPoll = pollResult,
-                inProgress = false
-            ).also { emit(it) }
-
-            // Notify all pending tokens
-            pendingTokens.forEach {
-                it.resultCallback.trySend(pollResult)
-            }
-            pendingTokens.clear()
-        }
-    }.stateIn(scope, SharingStarted.Eagerly, State())
-
-    init {
-        // This coroutine is here to periodically request polling the group when the app
-        // becomes visible
-        scope.launch {
-            while (true) {
-                // Wait for the app becomes visible
-                appVisibilityManager.isAppVisible.first { visible -> visible }
-
-                // As soon as the app becomes visible, start polling
-                Log.d(TAG, "Requesting routine poll for group($groupId)")
-                if (requestPollOnce().hasNonRetryableError()) {
-                    Log.v(TAG, "Error polling group $groupId and stopped polling")
-                    break
-                }
-                Log.d(TAG, "Routine poll done once for group($groupId)")
-
-                // As long as the app is visible, keep polling
-                while (true) {
-                    // Wait POLL_INTERVAL
-                    delay(POLL_INTERVAL)
-
-                    val appInBackground = !appVisibilityManager.isAppVisible.value
-
-                    if (appInBackground) {
-                        Log.d(TAG, "App became invisible, stopping polling group $groupId")
-                        break
-                    }
-
-                    Log.d(TAG, "Requesting routine poll for group($groupId)")
-
-                    if (requestPollOnce().hasNonRetryableError()) {
-                        Log.v(TAG, "Error polling group $groupId and stopped polling")
-                        return@launch
-                    }
-
-                    Log.d(TAG, "Routine poll done once for group($groupId)")
-                }
-            }
-        }
-    }
-
-    /**
-     * Request to poll the group once and return the result. It's guaranteed that
-     * the poll will be run AT LEAST once after the request is sent, but it's not guaranteed
-     * that one request will result in one poll, as the poller may choose to batch multiple requests
-     * together.
-     */
-    suspend fun requestPollOnce(): PollResult {
-        val resultChannel = Channel<PollResult>()
-        pollOnceTokens.send(PollOnceToken(resultChannel))
-        return resultChannel.receive()
-    }
-
-    private suspend fun doPollOnce(): PollResult {
-        val pollStartedAt = Instant.now()
+    override suspend fun doPollOnce(isFirstPollSinceApoStarted: Boolean): GroupPollResult = pollSemaphore.withPermit {
         var groupExpired: Boolean? = null
 
         val result = runCatching {
@@ -206,7 +90,7 @@ class GroupPoller @AssistedInject constructor(
                     throw NonRetryableException("Group has been kicked")
                 }
 
-                Log.v(TAG, "Start polling group($groupId) message snode = ${snode.ip}")
+                Log.v(logTag, "Start polling group($groupId) message snode = ${snode.ip}")
 
                 val adminKey = group.adminKey
 
@@ -351,21 +235,13 @@ class GroupPoller @AssistedInject constructor(
             }
         }
 
-        Log.d(TAG, "Group($groupId) polling completed, success = ${result.isSuccess}")
+        Log.d(logTag, "Group($groupId) polling completed, success = ${result.isSuccess}")
 
-        if (result.isFailure) {
-            val error = result.exceptionOrNull()
-            Log.e(TAG, "Error polling group", error)
-        }
+        result.getOrThrow()
 
-        val pollResult = PollResult(
-            startedAt = pollStartedAt,
-            finishedAt = Instant.now(),
-            result = result,
+        GroupPollResult(
             groupExpired = groupExpired
         )
-
-        return pollResult
     }
 
     private fun RetrieveMessageResponse.Message.toConfigMessage(): ConfigMessage {
@@ -401,7 +277,7 @@ class GroupPoller @AssistedInject constructor(
         }
 
         Log.d(
-            TAG, "Handling group config messages(" +
+            logTag, "Handling group config messages(" +
                     "info = ${infoResponse.size}, " +
                     "keys = ${keysResponse.size}, " +
                     "members = ${membersResponse.size})"
@@ -430,7 +306,7 @@ class GroupPoller @AssistedInject constructor(
                         namespace = Namespace.GROUP_MESSAGES(),
                         hash = message.hash
                     )) {
-                    Log.v(TAG, "Skipping duplicated group message ${message.hash} for group $groupId")
+                    Log.v(logTag, "Skipping duplicated group message ${message.hash} for group $groupId")
                     continue
                 }
 
@@ -451,19 +327,13 @@ class GroupPoller @AssistedInject constructor(
                         pro = result.pro,
                     )
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error handling group message", e)
+                    Log.e(logTag, "Error handling group message", e)
                 }
             }
         }
 
-        Log.d(TAG, "Handled ${messages.size} group messages for $groupId in ${System.currentTimeMillis() - start}ms")
+        Log.d(logTag, "Handled ${messages.size} group messages for $groupId in ${System.currentTimeMillis() - start}ms")
     }
-
-    /**
-     * A token to poll a group once and receive the result. Note that it's not guaranteed that
-     * one token will trigger one poll, as the poller may batch multiple requests together.
-     */
-    private data class PollOnceToken(val resultCallback: SendChannel<PollResult>)
 
     @AssistedFactory
     interface Factory {

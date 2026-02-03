@@ -28,7 +28,7 @@ class PollerManager @Inject constructor(
 
 
     val isPolling: Boolean
-        get() = currentPoller.value?.pollState?.value == Poller.PollState.Polling
+        get() = currentPoller.value?.pollState?.value is BasePoller.PollState.Polling
 
     /**
      * Requests a poll from the current poller.
@@ -36,6 +36,6 @@ class PollerManager @Inject constructor(
      * If there's none, it will suspend until one is created.
      */
     suspend fun pollOnce() {
-        currentPoller.filterNotNull().first().requestPollOnce()
+        currentPoller.filterNotNull().first().manualPollOnce()
     }
 }
