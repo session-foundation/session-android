@@ -32,8 +32,6 @@ class VoiceMessageView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : RelativeLayout(context, attrs, defStyleAttr) {
-
-    //todo AUDIO need to add the auto playback of consecutive audio messages
     //todo AUDIO add scroll to message on mini player click
 
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
@@ -41,7 +39,6 @@ class VoiceMessageView @JvmOverloads constructor(
     private val binding by lazy { ViewVoiceMessageBinding.bind(this) }
 
     var delegate: VisibleMessageViewDelegate? = null
-    var indexInAdapter = -1
 
     private var playable: PlayableAudio? = null
 

@@ -67,7 +67,6 @@ class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
-    var indexInAdapter: Int = -1
 
     private val MAX_COLLAPSED_LINE_COUNT = 25
 
@@ -217,7 +216,6 @@ class VisibleMessageContentView : ConstraintLayout {
                 // Audio attachment
                 if (overallAttachmentState == AttachmentState.DONE || message.isOutgoing) {
                     binding.voiceMessageView.root.isVisible = true
-                    binding.voiceMessageView.root.indexInAdapter = indexInAdapter
                     binding.voiceMessageView.root.delegate = context as? ConversationActivityV2
                     val sender = if(message.isOutgoing){
                         recipientRepository.getSelf()

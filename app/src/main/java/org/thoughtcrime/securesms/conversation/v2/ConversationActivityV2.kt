@@ -136,6 +136,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.recordAudio
@@ -282,6 +283,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var snodeClock: SnodeClock
+    @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
 
@@ -1346,6 +1348,21 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
             }
         }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                audioPlaybackManager.events.collectLatest { event ->
+                    when (event){
+                        is AudioPlaybackManager.AudioPlaybackEvent.Ended -> {
+                            // safety to wait until player is back to idle before doing anything else
+                            audioPlaybackManager.playbackState.first { it is AudioPlaybackState.Idle }
+                            // now try to play the next message in the conversation, if it is a voice note
+                            playVoiceMessageAtIndexIfPossible(event.playable.messageId)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun scrollToFirstUnreadMessageOrBottom() {
@@ -2215,11 +2232,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         fragment?.dismissAllowingStateLoss()
     }
 
-    override fun playVoiceMessageAtIndexIfPossible(indexInAdapter: Int) {
+    private fun playVoiceMessageAtIndexIfPossible(messageId: MessageId) {
         if (!textSecurePreferences.isAutoplayAudioMessagesEnabled()) return
 
-        if (indexInAdapter < 0 || indexInAdapter >= adapter.itemCount) { return }
-        val viewHolder = binding.conversationRecyclerView.findViewHolderForAdapterPosition(indexInAdapter) as? ConversationAdapter.VisibleMessageViewHolder ?: return
+        val finishedMessageIndex = adapter.getItemPositionForId(messageId) ?: return
+        val nextIndex = finishedMessageIndex + 1
+
+        if (nextIndex < 0 || nextIndex >= adapter.itemCount) { return }
+        val viewHolder = binding.conversationRecyclerView.findViewHolderForAdapterPosition(nextIndex) as? ConversationAdapter.VisibleMessageViewHolder ?: return
         viewHolder.view.playVoiceMessage()
     }
 

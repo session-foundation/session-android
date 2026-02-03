@@ -24,6 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,6 +54,14 @@ class AudioPlaybackManager @Inject constructor(
     private val _playbackState =
         MutableStateFlow<AudioPlaybackState>(AudioPlaybackState.Idle)
     val playbackState: StateFlow<AudioPlaybackState> = _playbackState.asStateFlow()
+
+    // Keeping certain aspect different from the state, like audio ending, which is more an event
+    // than a definite state
+    private val _events = MutableSharedFlow<AudioPlaybackEvent>(
+        replay = 0,
+        extraBufferCapacity = 16
+    )
+    val events: Flow<AudioPlaybackEvent> = _events
 
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private var progressJob: Job? = null
@@ -419,9 +428,11 @@ class AudioPlaybackManager @Inject constructor(
                 currentPlayable?.let { p ->
                     val cached = playbackCache[p.messageId.serialize()] ?: SavedAudioState()
                     playbackCache[p.messageId.serialize()] = SavedAudioState(0L, cached.playbackSpeed)
-                }
 
-                stop()
+                    stop()
+                    _events.tryEmit(AudioPlaybackEvent.Ended(p))
+                } ?: stop()
+
                 return
             }
 
@@ -451,5 +462,9 @@ class AudioPlaybackManager @Inject constructor(
 
         playbackCache[p.messageId.serialize()] =
             SavedAudioState(c.currentPosition.coerceAtLeast(0L), cached.playbackSpeed)
+    }
+
+    sealed interface AudioPlaybackEvent {
+        data class Ended(val playable: PlayableAudio) : AudioPlaybackEvent
     }
 }
