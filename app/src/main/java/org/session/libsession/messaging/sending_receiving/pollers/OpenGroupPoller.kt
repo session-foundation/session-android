@@ -4,15 +4,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -37,10 +29,8 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.CommunityDatabase
-import org.thoughtcrime.securesms.util.AppVisibilityManager
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Provider
-
-private typealias PollRequestToken = Channel<Result<List<String>>>
 
 /**
  * A [OpenGroupPoller] is responsible for polling all communities on a particular server.
@@ -52,7 +42,6 @@ private typealias PollRequestToken = Channel<Result<List<String>>>
  */
 class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
-    private val appVisibilityManager: AppVisibilityManager,
     private val configFactory: ConfigFactoryProtocol,
     private val trimThreadJobFactory: TrimThreadJob.Factory,
     private val openGroupDeleteJobFactory: OpenGroupDeleteJob.Factory,
@@ -63,76 +52,17 @@ class OpenGroupPoller @AssistedInject constructor(
     private val getDirectMessageFactory: GetDirectMessagesApi.Factory,
     private val pollRoomInfoFactory: PollRoomApi.Factory,
     private val getCapsApi: Provider<GetCapsApi>,
+    networkConnectivity: NetworkConnectivity,
     private val json: Json,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
     @Assisted private val pollerSemaphore: Semaphore,
-) {
-    companion object {
-        private const val POLL_INTERVAL_MILLS: Long = 4000L
-        const val MAX_INACTIVITIY_PERIOD_MILLS = 14 * 24 * 60 * 60 * 1000L // 14 days
+): BasePoller<Unit>(networkConnectivity = networkConnectivity, scope = scope) {
+    override val successfulPollIntervalSeconds: Int
+        get() = 4
 
-        private const val TAG = "OpenGroupPoller"
-    }
-
-    private val pendingPollRequest = Channel<PollRequestToken>()
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val pollState: StateFlow<PollState> = flow {
-        val tokens = arrayListOf<PollRequestToken>()
-
-        while (true) {
-            // Wait for next request(s) to come in
-            tokens.clear()
-            tokens.add(pendingPollRequest.receive())
-            tokens.addAll(generateSequence { pendingPollRequest.tryReceive().getOrNull() })
-
-            Log.d(TAG, "Polling open group messages for server: $server")
-            emit(PollState.Polling)
-            val pollResult = runCatching {
-                pollerSemaphore.withPermit {
-                    pollOnce()
-                }
-            }
-            tokens.forEach { it.trySend(pollResult) }
-            emit(PollState.Idle(pollResult))
-
-            pollResult.exceptionOrNull()?.let {
-                Log.e(TAG, "Error while polling open groups for $server", it)
-            }
-
-        }
-    }.stateIn(scope, SharingStarted.Eagerly, PollState.Idle(null))
-
-    init {
-        // Start a periodic polling request when the app becomes visible
-        scope.launch {
-            appVisibilityManager.isAppVisible
-                .collectLatest { visible ->
-                    if (visible) {
-                        while (true) {
-                            val r = requestPollAndAwait()
-                            if (r.isSuccess) {
-                                delay(POLL_INTERVAL_MILLS)
-                            } else {
-                                delay(2000L)
-                            }
-                        }
-                    }
-                }
-        }
-    }
-
-    /**
-     * Requests a poll and await for the result.
-     *
-     * The result will be a list of room tokens that were polled.
-     */
-    suspend fun requestPollAndAwait(): Result<List<String>> {
-        val token: PollRequestToken = Channel()
-        pendingPollRequest.send(token)
-        return token.receive()
-    }
+    override val maxRetryIntervalSeconds: Int
+        get() = 30
 
     private fun handleRoomPollInfo(
         address: Address.Community,
@@ -147,7 +77,7 @@ class OpenGroupPoller @AssistedInject constructor(
      *
      * @return A list of rooms that were polled.
      */
-    private suspend fun pollOnce(): List<String> {
+    override suspend fun doPollOnce(isFirstPollSinceApStarted: Boolean): Unit = pollerSemaphore.withPermit {
         val allCommunities = configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
 
         val rooms = allCommunities
@@ -158,7 +88,7 @@ class OpenGroupPoller @AssistedInject constructor(
         }?.community?.pubKeyHex
 
         if (rooms.isEmpty() || serverKey.isNullOrBlank()) {
-            return emptyList()
+            return
         }
 
         coroutineScope {
@@ -255,8 +185,6 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
             }
         }
-
-        return rooms
     }
 
 
@@ -285,7 +213,7 @@ class OpenGroupPoller @AssistedInject constructor(
                         )
                     } catch (e: Exception) {
                         Log.e(
-                            TAG,
+                            logTag,
                             "Error processing open group message ${msg.id} in ${threadAddress.debugString}",
                             e
                         )
@@ -317,7 +245,7 @@ class OpenGroupPoller @AssistedInject constructor(
 
         val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
             ?: run {
-                Log.e(TAG, "No community server public key cannot process inbox messages")
+                Log.e(logTag, "No community server public key cannot process inbox messages")
                 return
             }
 
@@ -334,7 +262,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     )
 
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error processing inbox message", e)
+                    Log.e(logTag, "Error processing inbox message", e)
                 }
             }
         }
@@ -351,7 +279,7 @@ class OpenGroupPoller @AssistedInject constructor(
 
         val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
             ?: run {
-                Log.e(TAG, "No community server public key cannot process inbox messages")
+                Log.e(logTag, "No community server public key cannot process inbox messages")
                 return
             }
 
@@ -368,16 +296,10 @@ class OpenGroupPoller @AssistedInject constructor(
                     )
 
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error processing outbox message", e)
+                    Log.e(logTag, "Error processing outbox message", e)
                 }
             }
         }
-    }
-
-
-    sealed interface PollState {
-        data class Idle(val lastPolled: Result<List<String>>?) : PollState
-        data object Polling : PollState
     }
 
     @AssistedFactory

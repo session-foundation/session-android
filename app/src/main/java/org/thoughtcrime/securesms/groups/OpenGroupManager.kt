@@ -64,7 +64,7 @@ class OpenGroupManager @Inject constructor(
             .mapNotNull { it[server] }
             .first()
             .poller
-            .requestPollAndAwait()
+            .manualPollOnce()
     }
 
     fun delete(server: String, room: String) {
