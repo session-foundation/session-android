@@ -34,9 +34,6 @@ import org.thoughtcrime.securesms.util.getParcelableCompat
 
 @AndroidEntryPoint
 class AudioMediaService : MediaSessionService() {
-    //todo AUDIO add bar on top of convo to scroll back to playing audio message
-    //todo AUDIO add bar on top of home to open convo scrolled to playing audio message
-
     private val TAG = "AudioMediaService"
 
     private lateinit var player: ExoPlayer
@@ -143,8 +140,6 @@ class AudioMediaService : MediaSessionService() {
         override fun onPlaybackStateChanged(playbackState: Int) {
             // stop service once track has ended
             if (playbackState == Player.STATE_ENDED) {
-                player.stop()
-                player.clearMediaItems()
                 stopSelf()
                 return
             }

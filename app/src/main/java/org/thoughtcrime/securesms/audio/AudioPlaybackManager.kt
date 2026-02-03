@@ -414,9 +414,18 @@ class AudioPlaybackManager @Inject constructor(
         }
 
         override fun onPlaybackStateChanged(state: Int) {
-            val ended = state == Player.STATE_ENDED
-            if (!isScrubbing) updateFromController(forceEnded = ended)
-            if (ended) stopProgressTracking()
+            if (state == Player.STATE_ENDED) {
+                // Reset resume intent for this message
+                currentPlayable?.let { p ->
+                    val cached = playbackCache[p.messageId.serialize()] ?: SavedAudioState()
+                    playbackCache[p.messageId.serialize()] = SavedAudioState(0L, cached.playbackSpeed)
+                }
+
+                stop()
+                return
+            }
+
+            if (!isScrubbing) updateFromController()
         }
     }
 

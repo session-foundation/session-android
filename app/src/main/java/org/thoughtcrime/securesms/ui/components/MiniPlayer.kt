@@ -61,7 +61,9 @@ fun AudioMiniPlayer(
                     else R.drawable.media3_icon_play
                 ),
                 tint = LocalColors.current.text,
-                contentDescription = stringResource(R.string.playpause_button_play)  //todo AUDIO toggle ax
+                contentDescription = stringResource(if (audio is AudioPlaybackState.Active.Playing)
+                    R.string.playpause_button_pause
+                    else R.string.playpause_button_play)
             )
         }
 

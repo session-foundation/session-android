@@ -34,8 +34,6 @@ class VoiceMessageView @JvmOverloads constructor(
 ) : RelativeLayout(context, attrs, defStyleAttr) {
 
     //todo AUDIO need to add the auto playback of consecutive audio messages
-    //todo AUDIO can I retain the UI as the mini player slides up?
-    //todo AUDIO need to counter the height of the mini player
     //todo AUDIO add scroll to message on mini player click
 
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
