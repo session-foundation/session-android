@@ -106,32 +106,44 @@ class VoiceMessageView @JvmOverloads constructor(
     ) {
         this.playable = playable
 
-        val mainColor = VisibleMessageContentView.getTextColor(context, message)
-        val buttonBgColor = if(message.isOutgoing) context.getColorFromAttr(R.attr.colorPrimary) else mainColor
-        val buttonActionColor = if(message.isOutgoing) Color.WHITE else Color.BLACK
+        val textColor = VisibleMessageContentView.getTextColor(context, message)
 
+        val (color1, color2, trackEmptyColor) = if (message.isOutgoing) {
+            intArrayOf(
+                context.getColorFromAttr(R.attr.backgroundSecondary),  // bg secondary
+                context.getColorFromAttr(android.R.attr.textColorPrimary), // text primary
+                ColorUtils.setAlphaComponent(context.getColorFromAttr(R.attr.backgroundSecondary), 30)
+            )
+        } else {
+            intArrayOf(
+                context.getColorFromAttr(R.attr.accentColor),  // accent
+                context.getColorFromAttr(R.attr.colorPrimary), // bg primary
+                context.getColorFromAttr(android.R.attr.textColorSecondary), // text secondary
+            )
+        }
 
         // Apply Colors
-        binding.voiceMessageViewDurationTextView.setTextColor(mainColor)
-        binding.voiceMessageSpeedButton.setTextColor(mainColor)
-        binding.audioTitle.setTextColor(mainColor)
-        binding.voiceMessageSpeedButton.backgroundTintList =
-            ColorStateList.valueOf(ColorUtils.setAlphaComponent(buttonBgColor, 30))
+        binding.voiceMessageViewDurationTextView.setTextColor(textColor)
+        binding.audioTitle.setTextColor(textColor)
 
-        binding.voiceMessageViewLoader.backgroundTintList = ColorStateList.valueOf(buttonActionColor)
+        binding.playBg.backgroundTintList = ColorStateList.valueOf(color1)
+        binding.voiceMessageSeekBar.thumbTintList = ColorStateList.valueOf(color1)
+        binding.voiceMessageSeekBar.progressTintList = ColorStateList.valueOf(color1)
 
-        // Tint the SeekBar
-        val tintList = ColorStateList.valueOf(buttonBgColor)
-        binding.voiceMessageSeekBar.thumbTintList = tintList
-        binding.voiceMessageSeekBar.progressTintList = tintList
-        // Make the track slightly transparent
-        binding.voiceMessageSeekBar.progressBackgroundTintList =
-            ColorStateList.valueOf(ColorUtils.setAlphaComponent(mainColor, 70))
+        binding.voiceMessagePlaybackImageView.imageTintList = ColorStateList.valueOf(color2)
+        binding.voiceMessageViewLoader.backgroundTintList = ColorStateList.valueOf(color2)
 
-        // Tint Play button background/icon
-        binding.playBg.backgroundTintList = ColorStateList.valueOf(buttonBgColor)
-        binding.voiceMessagePlaybackImageView.imageTintList = ColorStateList.valueOf(buttonActionColor)
+        binding.voiceMessageSeekBar.progressBackgroundTintList = ColorStateList.valueOf(trackEmptyColor)
 
+        if (message.isOutgoing) {
+            binding.voiceMessageSpeedButton.backgroundTintList = ColorStateList.valueOf(color1)
+            binding.voiceMessageSpeedButton.setTextColor(color2)
+        } else {
+            binding.voiceMessageSpeedButton.backgroundTintList = ColorStateList.valueOf(color2)
+            binding.voiceMessageSpeedButton.setTextColor(textColor)
+        }
+
+        // text
         binding.audioTitle.text = if(playable?.isVoiceNote == true) context.getString(R.string.messageVoice)
         else playable?.filename ?: context.getString(R.string.unknown)
 

@@ -135,7 +135,6 @@ fun AudioMiniPlayer(
         )
     }
 }
-//todo AUDIO seeking shows a quick paused state
 
 @Preview
 @Composable
