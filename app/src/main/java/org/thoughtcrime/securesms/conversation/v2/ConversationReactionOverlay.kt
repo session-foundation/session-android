@@ -673,10 +673,8 @@ class ConversationReactionOverlay : FrameLayout {
         // Ban user
         if (userCanBanSelectedUsers(message) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_ban_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
-        }
-        // Ban and delete all
-        if (userCanBanSelectedUsers(message) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_trash_icon, R.string.banDeleteAll, { handleActionItemClicked(Action.BAN_AND_DELETE_ALL) })
+            items += ActionItem(R.attr.menu_unban_icon, R.string.banUnbanUser, { handleActionItemClicked(Action.UNBAN_USER) })
         }
         // Message detail
         if(!isDeleteOnly) {
@@ -833,6 +831,7 @@ class ConversationReactionOverlay : FrameLayout {
         SELECT,
         DELETE,
         BAN_USER,
+        UNBAN_USER,
         BAN_AND_DELETE_ALL
     }
 

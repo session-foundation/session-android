@@ -10,7 +10,7 @@ import org.thoughtcrime.securesms.api.http.HttpBody
 import org.thoughtcrime.securesms.api.http.HttpResponse
 import okhttp3.MediaType
 
-class BanUserApi @AssistedInject constructor(
+class UnbanUserApi @AssistedInject constructor(
     @Assisted("user") private val userToBan: String,
     @Assisted override val room: String,
     deps: CommunityApiDependencies,
@@ -18,7 +18,7 @@ class BanUserApi @AssistedInject constructor(
     override val requiresSigning: Boolean get() = true
     override val httpMethod: String get() = "POST"
     override val httpEndpoint: String =
-        "/user/${Uri.encode(userToBan)}/ban"
+        "/user/${Uri.encode(userToBan)}/unban"
 
     @Serializable
     private data class BanBody(val rooms: List<String>)
@@ -42,6 +42,6 @@ class BanUserApi @AssistedInject constructor(
         fun create(
             @Assisted("user") userToBan: String,
             room: String
-        ): BanUserApi
+        ): UnbanUserApi
     }
 }

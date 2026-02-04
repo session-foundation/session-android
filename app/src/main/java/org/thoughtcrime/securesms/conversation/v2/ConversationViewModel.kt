@@ -1112,6 +1112,19 @@ class ConversationViewModel @AssistedInject constructor(
             }
     }
 
+    fun unbanUser(recipient: Address) = viewModelScope.launch {
+        repository.unbanUser(
+            community = address as Address.Community,
+            userId = (recipient as Address.WithAccountId).accountId
+        )
+            .onSuccess {
+                showMessage(application.getString(R.string.banUnbanUserUnbanned))
+            }
+            .onFailure {
+                showMessage(application.getString(R.string.banUnbanErrorFailed))
+            }
+    }
+
     fun banAndDeleteAll(messageRecord: MessageRecord) = viewModelScope.launch {
         repository.banAndDeleteAll(
             community = address as Address.Community,
