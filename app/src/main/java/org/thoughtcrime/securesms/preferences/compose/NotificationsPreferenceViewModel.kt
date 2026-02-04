@@ -35,8 +35,8 @@ class NotificationsPreferenceViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UIState())
     val uiState: StateFlow<UIState> = _uiState
 
-    private val mutableEvents = MutableSharedFlow<NotificationPreferenceEvent>()
-    val events get() = mutableEvents
+    private val _uiEvents = MutableSharedFlow<NotificationPreferenceEvent>()
+    val uiEvents get() = _uiEvents
 
     val privacyOptions: List<NotificationPrivacyOption> by lazy {
         val labels = application.resources.getStringArray(R.array.pref_notification_privacy_entries)
@@ -136,7 +136,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
                     _uiState.update { it.copy(showWhitelistDisableDialog = true) }
                 } else {
                     viewModelScope.launch {
-                        mutableEvents.emit(
+                        _uiEvents.emit(
                             NotificationPreferenceEvent.NavigateToSystemBgWhitelist
                         )
                     }
@@ -159,7 +159,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, current)
 
                 viewModelScope.launch {
-                    mutableEvents.emit(
+                    _uiEvents.emit(
                         NotificationPreferenceEvent.StartRingtoneActivityForResult(
                             intent
                         )
@@ -189,13 +189,13 @@ class NotificationsPreferenceViewModel @Inject constructor(
 
             Commands.OpenSystemBgWhitelist -> {
                 viewModelScope.launch {
-                    mutableEvents.emit(NotificationPreferenceEvent.NavigateToSystemBgWhitelist)
+                    _uiEvents.emit(NotificationPreferenceEvent.NavigateToSystemBgWhitelist)
                 }
             }
 
             Commands.OpenBatteryOptimizationSettings -> {
                 viewModelScope.launch {
-                    mutableEvents.emit(NotificationPreferenceEvent.NavigateToBatteryOptimizationSettings)
+                    _uiEvents.emit(NotificationPreferenceEvent.NavigateToBatteryOptimizationSettings)
                 }
             }
 
@@ -208,7 +208,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 intent.putExtra(Settings.EXTRA_APP_PACKAGE, application.packageName)
 
                 viewModelScope.launch {
-                    mutableEvents.emit(NotificationPreferenceEvent.NavigateToActivity(intent))
+                    _uiEvents.emit(NotificationPreferenceEvent.NavigateToActivity(intent))
                 }
             }
 
