@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.os.BundleCompat
-import androidx.core.view.doOnLayout
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -72,7 +71,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
             if (address is Address.Standard) {
                 ActionSheetItem(
                     text = stringResource(R.string.block),
-                    leadingIcon = R.drawable.ic_user_round_x,
+                    leadingIcon = R.drawable.ic_user_round_block,
                     qaTag = stringResource(R.string.AccessibilityId_block),
                     onClick = {
                         showBlockConfirmation()

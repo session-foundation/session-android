@@ -12,7 +12,7 @@
         android:layout_margin="@dimen/very_small_spacing"
         android:layout_width="13dp"
         android:layout_height="13dp"
-        android:src="@drawable/ic_user_round_x"
+        android:src="@drawable/ic_user_round_block"
         app:tint="?danger" />
 
     <TextView
