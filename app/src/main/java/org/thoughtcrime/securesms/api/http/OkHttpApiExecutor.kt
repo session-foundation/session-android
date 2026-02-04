@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsignal.utilities.ByteArraySlice.Companion.toRequestBody
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class OkHttpApiExecutor(
@@ -16,6 +17,7 @@ class OkHttpApiExecutor(
     override suspend fun send(ctx: ApiExecutorContext, req: HttpRequest): HttpResponse {
         return semaphore.withPermit {
             withContext(Dispatchers.IO) {
+                Log.d("OkHttpApiExecutor", "Sending request: $req, with context: $ctx")
                 client.newCall(req.toOkHttpRequest()).execute().toHttpResponse()
             }
         }
