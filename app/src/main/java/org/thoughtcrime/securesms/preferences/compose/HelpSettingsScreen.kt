@@ -12,11 +12,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ScheduleTokenNotification
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
@@ -92,7 +90,7 @@ fun HelpSettingsScreen(
 fun HelpSettings(
     uiState: HelpSettingsViewModel.UIState,
     sendCommand: (HelpSettingsViewModel.Commands) -> Unit,
-    exporter: LogExporter?,
+    exporter: LogExporter,
     onBackPressed: () -> Unit
 ) {
 
@@ -204,21 +202,10 @@ fun HelpSettings(
 
     if (uiState.showExportDialog) {
         ExportLogsDialog(
-            logExporter = exporter!!,
+            logExporter = exporter,
             onDismissRequest = {
                 sendCommand(HelpSettingsViewModel.Commands.HideExportDialog)
             }
         )
     }
-}
-
-@Preview
-@Composable
-fun PreviewHelpSettingsScreen() {
-    HelpSettings(
-        uiState = HelpSettingsViewModel.UIState(),
-        sendCommand = { },
-        exporter = null,
-        onBackPressed = {}
-    )
 }
