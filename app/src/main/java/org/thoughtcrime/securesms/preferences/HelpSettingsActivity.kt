@@ -17,7 +17,7 @@ class HelpSettingsActivity: FullComposeScreenLockActivity() {
 
         HelpSettingsScreen(
             viewModel = viewModel,
-            onBackPressed = {this.finish()}
+            onBackPressed = this::finish
         )
     }
 
