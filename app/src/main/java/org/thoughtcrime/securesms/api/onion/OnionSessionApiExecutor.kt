@@ -70,12 +70,15 @@ class OnionSessionApiExecutor @Inject constructor(
 
         when (req) {
             is SessionApiRequest.SnodeJsonRPC -> {
+                Log.d("OnionSessionApiExecutor", "Sending Onion request to Snode destination. Method: ${req.request.method} -- Destination: ${req.snode}")
+
                 onionRequestVersion = OnionRequestVersion.V3
                 onionDestination = OnionDestination.SnodeDestination(req.snode)
                 payload = json.encodeToString(req.request).toByteArray()
             }
 
             is SessionApiRequest.HttpServerRequest -> {
+                Log.d("OnionSessionApiExecutor", "Sending Onion request to Server destination. Url: ${req.request.url}")
                 onionRequestVersion = OnionRequestVersion.V4
                 onionDestination = OnionDestination.ServerDestination(
                     host = req.request.url.host,
