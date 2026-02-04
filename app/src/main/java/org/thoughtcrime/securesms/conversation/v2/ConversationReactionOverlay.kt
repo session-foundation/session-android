@@ -680,7 +680,7 @@ class ConversationReactionOverlay : FrameLayout {
         if(!isDeleteOnly) {
             items += ActionItem(
                 R.attr.menu_info_icon,
-                R.string.messageInfo,
+                R.string.info,
                 { handleActionItemClicked(Action.VIEW_INFO) })
         }
         // Resend
