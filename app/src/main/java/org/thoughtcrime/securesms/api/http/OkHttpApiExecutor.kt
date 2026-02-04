@@ -17,7 +17,7 @@ class OkHttpApiExecutor(
     override suspend fun send(ctx: ApiExecutorContext, req: HttpRequest): HttpResponse {
         return semaphore.withPermit {
             withContext(Dispatchers.IO) {
-                Log.d("OkHttpApiExecutor", "Sending request: $req, with context: $ctx")
+                Log.d("OkHttpApiExecutor", "Sending request: ${req.url}")
                 client.newCall(req.toOkHttpRequest()).execute().toHttpResponse()
             }
         }
