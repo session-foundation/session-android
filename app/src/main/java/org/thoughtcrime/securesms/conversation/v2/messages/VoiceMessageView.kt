@@ -112,7 +112,7 @@ class VoiceMessageView @JvmOverloads constructor(
             intArrayOf(
                 context.getColorFromAttr(R.attr.backgroundSecondary),  // bg secondary
                 context.getColorFromAttr(android.R.attr.textColorPrimary), // text primary
-                ColorUtils.setAlphaComponent(context.getColorFromAttr(R.attr.backgroundSecondary), 30)
+                ColorUtils.setAlphaComponent(context.getColorFromAttr(R.attr.backgroundSecondary), 128)
             )
         } else {
             intArrayOf(
