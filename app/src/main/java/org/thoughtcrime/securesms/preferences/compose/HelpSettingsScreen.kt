@@ -16,12 +16,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ScheduleTokenNotification
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.components.ExportLogsDialog
 import org.thoughtcrime.securesms.ui.components.LogExporter
+import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -97,13 +100,13 @@ fun HelpSettings(
 
     BasePreferenceScreens(
         onBack = onBackPressed,
-        title = GetString(R.string.sessionConversations).string()
+        title = GetString(R.string.sessionHelp).string()
     ) {
         item {
             CategoryCell(
                 modifier = Modifier,
             ) {
-                IconActionRowItem(
+                ActionRowItem(
                     modifier = Modifier.fillMaxWidth(),
                     title = annotatedStringResource(R.string.helpReportABug),
                     subtitle = annotatedStringResource(
@@ -111,13 +114,17 @@ fun HelpSettings(
                             .put(APP_NAME_KEY, stringResource(R.string.app_name))
                             .format()
                     ),
-                    icon = R.drawable.ic_square_arrow_up_right,
-                    iconSize = LocalDimensions.current.iconSmall,
                     qaTag = R.string.qa_help_settings_export,
-                    onClick = { sendCommand(HelpSettingsViewModel.Commands.ExportLogs) }
+                    onClick = { sendCommand(HelpSettingsViewModel.Commands.ExportLogs) },
+                    endContent = {
+                        SlimFillButtonRect(
+                            text = stringResource(R.string.helpReportABugExportLogs),
+                            onClick = { sendCommand(HelpSettingsViewModel.Commands.ExportLogs) }
+                        )
+                    }
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         }
 
@@ -149,7 +156,6 @@ fun HelpSettings(
                 IconActionRowItem(
                     modifier = Modifier.fillMaxWidth(),
                     title = annotatedStringResource(R.string.helpWedLoveYourFeedback),
-                    subtitle = annotatedStringResource(R.string.blockedContactsManageDescription),
                     icon = R.drawable.ic_square_arrow_up_right,
                     iconSize = LocalDimensions.current.iconSmall,
                     qaTag = R.string.qa_help_settings_feedback,
