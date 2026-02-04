@@ -2638,6 +2638,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
+    override fun unbanUser(messages: Set<MessageRecord>) {
+        showSessionDialog {
+            title(R.string.banUnbanUser)
+            dangerButton(R.string.theContinue) { viewModel.unbanUser(messages.first().individualRecipient.address); endActionMode() }
+            cancelButton(::endActionMode)
+        }
+    }
+
     override fun banAndDeleteAll(messages: Set<MessageRecord>) {
         showSessionDialog {
             title(R.string.banDeleteAll)
@@ -2972,6 +2980,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 ConversationReactionOverlay.Action.DELETE -> deleteMessages(selectedItems)
                 ConversationReactionOverlay.Action.BAN_AND_DELETE_ALL -> banAndDeleteAll(selectedItems)
                 ConversationReactionOverlay.Action.BAN_USER -> banUser(selectedItems)
+                ConversationReactionOverlay.Action.UNBAN_USER -> unbanUser(selectedItems)
                 ConversationReactionOverlay.Action.COPY_ACCOUNT_ID -> copyAccountID(selectedItems)
             }
         }
