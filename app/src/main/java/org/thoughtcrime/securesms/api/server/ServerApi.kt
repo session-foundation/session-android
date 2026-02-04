@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.api.server
 
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.api.http.HttpRequest
@@ -43,6 +44,8 @@ abstract class ServerApi<ResponseType>(
             bodyAsText = response.body.toText(),
             ctx = failureContext,
         )
+
+        Log.d("ServerApi", "Network error for a Server endpoint ($baseUrl), with status:${response.statusCode} - error: $error")
 
         executorContext.set(
             key = ServerClientFailureContextKey,
