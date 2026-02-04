@@ -62,7 +62,9 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
             gradle_commands += ' -Phuawei '
 
         subprocess.run(f"""{gradle_commands} \
-                    assemble{flavor.capitalize()}{build_type.capitalize()} \
+                    assemble{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
+
+        subprocess.run(f"""{gradle_commands} \
                     bundle{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
 
         apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/{build_type}')
