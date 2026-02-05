@@ -2208,34 +2208,61 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun gotoMessage(position: Int, smoothScroll: Boolean, highlight: Boolean) {
-        if (smoothScroll) scrollToMessageSmooth(position, highlight)
-        else scrollToMessageInstant(position, highlight)
-    }
+        val rv = binding.conversationRecyclerView
+        val lm = rv.layoutManager as? LinearLayoutManager ?: return
 
-    private fun scrollToMessageInstant(position: Int, highlight: Boolean) {
-        val lm = binding.conversationRecyclerView.layoutManager as? LinearLayoutManager ?: return
+        // Unified offset calculation
         val offset = if (position > 0) scrollingBreathingRoom else 0
 
-        lm.scrollToPositionWithOffset(position, offset)
+        if (smoothScroll) {
+            rv.stopScroll()
 
-        if (highlight) {
-            binding.conversationRecyclerView.post {
-                (binding.conversationRecyclerView.findViewHolderForAdapterPosition(position)?.itemView as? VisibleMessageView)
-                    ?.playHighlight()
+            // if we are trying to smooth scroll somewhere really far away
+            // the animation feels too long. So if the target is far enough away
+            // we can first jump closish and then smooth scroll from there
+            val firstVisible = lm.findFirstVisibleItemPosition()
+            val distance = position - firstVisible
+
+            // Directional Proximity Jump
+            if (abs(distance) > 20) {
+                // If moving DOWN (distance > 0), jump to 10 items ABOVE target
+                // If moving UP (distance < 0), jump to 10 items BELOW target
+                val jumpToProxy = if (distance > 0) (position - 10).coerceAtLeast(0)
+                else position + 10
+
+                // Jump instantly
+                lm.scrollToPositionWithOffset(jumpToProxy, 0)
+
+                // We must wait for the jump to finish before smooth scrolling
+                rv.post {
+                    startSmoothScroll(position, offset, highlight)
+                }
+            } else {
+                // Target is close, just scroll
+                startSmoothScroll(position, offset, highlight)
+            }
+        } else {
+            // Instant
+            lm.scrollToPositionWithOffset(position, offset)
+            if (highlight) {
+                // Since we aren't scrolling, the idle state won't trigger,
+                // so we can't rely on `pendingHighlightMessagePosition`
+                // Trigger highlight manually after layout.
+                rv.post {
+                    (rv.findViewHolderForAdapterPosition(position)?.itemView as? VisibleMessageView)
+                        ?.playHighlight()
+                    pendingHighlightMessagePosition = null
+                }
             }
         }
     }
 
-    private fun scrollToMessageSmooth(position: Int, highlight: Boolean) {
+    private fun startSmoothScroll(position: Int, offset: Int, highlight: Boolean) {
         val rv = binding.conversationRecyclerView
         val lm = rv.layoutManager as? LinearLayoutManager ?: return
 
-        rv.stopScroll()
-
-        // ScrollListener handles the highlight when the glide finishes
+        currentTargetedScrollOffsetPx = offset
         pendingHighlightMessagePosition = if (highlight) position else null
-
-        currentTargetedScrollOffsetPx = if (position > 0) scrollingBreathingRoom else 0
 
         val scroller = object : LinearSmoothScroller(rv.context) {
             override fun getVerticalSnapPreference(): Int = SNAP_TO_START
@@ -2243,7 +2270,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 return super.calculateDyToMakeVisible(view, snapPreference) + currentTargetedScrollOffsetPx
             }
         }
-
         scroller.targetPosition = position
         lm.startSmoothScroll(scroller)
     }
