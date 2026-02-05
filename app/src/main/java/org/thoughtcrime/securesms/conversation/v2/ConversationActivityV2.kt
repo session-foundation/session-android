@@ -450,7 +450,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val libraryButton  by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
     private val cameraButton   by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
 
-    private var messageToScrollId: MessageId? = null
+    private var messageToScrollTo: MessageToScrollTo? = null
+    data class MessageToScrollTo(
+        val id: MessageId,
+        val smoothScroll: Boolean
+    )
+
     private val firstLoad = AtomicBoolean(true)
 
     private var isKeyboardVisible = false
@@ -667,7 +672,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         // messageIdToScroll
-        messageToScrollId = IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)
+        IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)?.let{
+            messageToScrollTo = MessageToScrollTo(
+                id = it,
+                smoothScroll = false
+            )
+        }
+
         setUpToolBar()
         setUpInputBar()
         setUpLinkPreviewObserver()
@@ -914,9 +925,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             unreadCount = data.threadUnreadCount
             updateUnreadCountIndicator()
 
-            if (messageToScrollId != null) {
-                if(gotoMessageById(messageToScrollId!!, smoothScroll = false, highlight = firstLoad)){
-                    messageToScrollId = null
+            if (messageToScrollTo != null) {
+                if(gotoMessageById(messageToScrollTo!!.id, smoothScroll = messageToScrollTo!!.smoothScroll, highlight = firstLoad)){
+                    messageToScrollTo = null
                 }
             } else {
                 if (firstLoad) {
@@ -2296,15 +2307,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         viewModel.beforeSendMessage()
 
-        val sentMessageId = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
+        if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
             sendAttachments(listOf(), getMessageBody(), binding.inputBar.quote, binding.inputBar.linkPreview)
         } else {
             sendTextOnlyMessage()
-        }
-
-        // Jump to the newly sent message once it gets added
-        if (sentMessageId != null) {
-            messageToScrollId = sentMessageId
         }
     }
 
@@ -2376,7 +2382,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 true
             ), false)
 
-            messageToScrollId = message.id
+            message.id?.let{
+                messageToScrollTo = MessageToScrollTo(
+                    id = it,
+                    smoothScroll = true
+                )
+            }
 
             waitForApprovalJobToBeSubmitted()
             messageSender.send(message, recipient.address)
@@ -2463,7 +2474,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     ), mms = true
                 )
 
-                messageToScrollId = message.id
+                message.id?.let{
+                    messageToScrollTo = MessageToScrollTo(
+                        id = it,
+                        smoothScroll = true
+                    )
+                }
 
                 if (deleteAttachmentFilesAfterSave) {
                     attachments
