@@ -2632,7 +2632,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun banUser(messages: Set<MessageRecord>) {
         showSessionDialog {
             title(R.string.banUser)
-            text(R.string.communityBanDescription)
+            text(
+                Phrase.from(applicationContext, R.string.communityBanUserDescription)
+                    .put(NAME_KEY, messages.first().individualRecipient.displayName())
+                    .format().toString()
+            )
             dangerButton(R.string.theContinue) { viewModel.banUser(messages.first().individualRecipient.address); endActionMode() }
             cancelButton(::endActionMode)
         }
@@ -2641,6 +2645,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun unbanUser(messages: Set<MessageRecord>) {
         showSessionDialog {
             title(R.string.banUnbanUser)
+            text(
+                Phrase.from(applicationContext, R.string.communityUnbanUserDescription)
+                    .put(NAME_KEY, messages.first().individualRecipient.displayName())
+                    .format().toString()
+            )
             dangerButton(R.string.theContinue) { viewModel.unbanUser(messages.first().individualRecipient.address); endActionMode() }
             cancelButton(::endActionMode)
         }

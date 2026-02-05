@@ -593,6 +593,49 @@ class ConversationReactionOverlay : FrameLayout {
         // control messages and "marked as deleted" messages can only delete
         val isDeleteOnly = message.isDeleted || containsControlMessage
 
+        // Resend
+        if (message.isFailed && !isDeprecatedLegacyGroup) {
+            items += ActionItem(R.attr.menu_reply_icon, R.string.resend, { handleActionItemClicked(Action.RESEND) })
+        }
+
+        // Resync
+        if (message.isSyncFailed && !isDeprecatedLegacyGroup) {
+            items += ActionItem(R.attr.menu_reply_icon, R.string.resync, { handleActionItemClicked(Action.RESYNC) })
+        }
+
+        // Save media..
+        if (message.isMms  && !isDeleteOnly) {
+            // ..but only provide the save option if the there is a media attachment which has finished downloading.
+            val mmsMessage = message as MediaMmsMessageRecord
+            if (mmsMessage.containsMediaSlide() && !mmsMessage.isMediaPending) {
+                items += ActionItem(R.attr.menu_save_icon,
+                    R.string.save,
+                    { handleActionItemClicked(Action.DOWNLOAD) },
+                    R.string.AccessibilityId_saveAttachment
+                )
+            }
+        }
+
+        // Reply
+        val canWrite = openGroup == null || openGroup.write
+        if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly
+            && !isDeprecatedLegacyGroup) {
+            items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, R.string.AccessibilityId_reply)
+        }
+
+        // Copy message text
+        if (!containsControlMessage && hasText && !isDeleteOnly) {
+            items += ActionItem(R.attr.menu_copy_icon, R.string.copy, { handleActionItemClicked(Action.COPY_MESSAGE) })
+        }
+
+        // Message detail
+        if(!isDeleteOnly) {
+            items += ActionItem(
+                R.attr.menu_info_icon,
+                R.string.info,
+                { handleActionItemClicked(Action.VIEW_INFO) })
+        }
+
         // Select message
         if(!isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(
@@ -603,20 +646,11 @@ class ConversationReactionOverlay : FrameLayout {
             )
         }
 
-        // Reply
-        val canWrite = openGroup == null || openGroup.write
-        if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly
-            && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, R.string.AccessibilityId_reply)
-        }
-        // Copy message text
-        if (!containsControlMessage && hasText && !isDeleteOnly) {
-            items += ActionItem(R.attr.menu_copy_icon, R.string.copy, { handleActionItemClicked(Action.COPY_MESSAGE) })
-        }
         // Copy Account ID
         if (!recipient.isCommunity && message.isIncoming && !isDeleteOnly) {
             items += ActionItem(R.attr.menu_copy_icon, R.string.accountIDCopy, { handleActionItemClicked(Action.COPY_ACCOUNT_ID) })
         }
+
         // Delete message
         if (!isDeprecatedLegacyGroup) {
             items += ActionItem(
@@ -634,33 +668,6 @@ class ConversationReactionOverlay : FrameLayout {
             items += ActionItem(R.attr.menu_ban_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
             items += ActionItem(R.attr.menu_trash_icon, R.string.banDeleteAll, { handleActionItemClicked(Action.BAN_AND_DELETE_ALL) })
             items += ActionItem(R.attr.menu_unban_icon, R.string.banUnbanUser, { handleActionItemClicked(Action.UNBAN_USER) })
-        }
-        // Message detail
-        if(!isDeleteOnly) {
-            items += ActionItem(
-                R.attr.menu_info_icon,
-                R.string.info,
-                { handleActionItemClicked(Action.VIEW_INFO) })
-        }
-        // Resend
-        if (message.isFailed && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_reply_icon, R.string.resend, { handleActionItemClicked(Action.RESEND) })
-        }
-        // Resync
-        if (message.isSyncFailed && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_reply_icon, R.string.resync, { handleActionItemClicked(Action.RESYNC) })
-        }
-        // Save media..
-        if (message.isMms  && !isDeleteOnly) {
-            // ..but only provide the save option if the there is a media attachment which has finished downloading.
-            val mmsMessage = message as MediaMmsMessageRecord
-            if (mmsMessage.containsMediaSlide() && !mmsMessage.isMediaPending) {
-                items += ActionItem(R.attr.menu_save_icon,
-                            R.string.save,
-                            { handleActionItemClicked(Action.DOWNLOAD) },
-                            R.string.AccessibilityId_saveAttachment
-                )
-            }
         }
 
         // deleted messages have  no emoji reactions
