@@ -222,7 +222,6 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
-import org.thoughtcrime.securesms.util.adapter.handleScrollToBottom
 import org.thoughtcrime.securesms.util.adapter.runWhenLaidOut
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
@@ -686,7 +685,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         setUpUiStateObserver()
 
         binding.scrollToBottomButton.setOnClickListener {
-            binding.conversationRecyclerView.handleScrollToBottom()
+            gotoConversationEnd()
         }
 
         // in case a phone call is in progress, this banner is visible and should bring the user back to the call
@@ -799,7 +798,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // when showing the keyboard, we should auto scroll the conversation recyclerview
                     // if we are near the bottom (within 50dp of bottom)
                     if (binding.conversationRecyclerView.isNearBottom) {
-                        binding.conversationRecyclerView.handleScrollToBottom()
+                        gotoConversationEnd()
                     }
                 }
             }
@@ -957,7 +956,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
                     if (binding.conversationRecyclerView.isNearBottom &&
                         !binding.conversationRecyclerView.isFullyScrolled) {
-                        binding.conversationRecyclerView.handleScrollToBottom()
+                        gotoConversationEnd()
                     }
                 }
 
@@ -2207,6 +2206,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
+    private fun gotoConversationEnd(smoothScroll: Boolean = true, highlight: Boolean = false){
+        val lastIndex = adapter.itemCount - 1
+        if (lastIndex >= 0) {
+            gotoMessage(lastIndex, smoothScroll = smoothScroll, highlight = highlight)
+        }
+    }
+
     private fun gotoMessage(position: Int, smoothScroll: Boolean, highlight: Boolean) {
         val rv = binding.conversationRecyclerView
         val lm = rv.layoutManager as? LinearLayoutManager ?: return
@@ -2228,7 +2234,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 // If moving DOWN (distance > 0), jump to 10 items ABOVE target
                 // If moving UP (distance < 0), jump to 10 items BELOW target
                 val jumpToProxy = if (distance > 0) (position - 10).coerceAtLeast(0)
-                else position + 10
+                else (position + 10).coerceAtMost(adapter.itemCount - 1)
 
                 // Jump instantly
                 lm.scrollToPositionWithOffset(jumpToProxy, 0)
@@ -2482,10 +2488,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (isShowingAttachmentOptions) {
             toggleAttachmentOptions()
         }
-
-        // Keep it fixed on the bottom right away < then once the message is loaded in our cursor adapter, the logic
-        // checking if we are near the bottom will be true and will then scroll the message fully
-        // binding.conversationRecyclerView.handleScrollToBottom(true)
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
