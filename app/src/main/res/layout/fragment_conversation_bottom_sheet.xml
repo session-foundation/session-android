@@ -52,15 +52,15 @@
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 
-    <TextView
-        android:id="@+id/blockTextView"
-        style="@style/BottomSheetActionItem"
-        android:contentDescription="@string/AccessibilityId_block"
-        android:text="@string/block"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_user_round_x"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible" />
+            <TextView
+                android:id="@+id/blockTextView"
+                style="@style/BottomSheetActionItem"
+                android:contentDescription="@string/AccessibilityId_block"
+                android:text="@string/block"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_user_round_block"
+                app:drawableTint="?attr/colorControlNormal"
+                tools:visibility="visible" />
 
     <TextView
         android:id="@+id/unblockTextView"
