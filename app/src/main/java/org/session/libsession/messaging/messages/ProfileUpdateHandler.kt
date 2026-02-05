@@ -8,9 +8,11 @@ import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.BitSet
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.MIN_CONVERSATION_LAST_READ_DAYS
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.AccountId
@@ -23,6 +25,8 @@ import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,6 +44,7 @@ class ProfileUpdateHandler @Inject constructor(
     private val recipientDatabase: RecipientSettingsDatabase,
     private val blindIdMappingRepository: BlindMappingRepository,
     private val recipientRepository: RecipientRepository,
+    private val snodeClock: SnodeClock,
 ) {
 
     fun handleProfileUpdate(senderId: AccountId, updates: Updates, fromCommunity: BaseCommunityInfo?) {
@@ -92,9 +97,28 @@ class ProfileUpdateHandler @Inject constructor(
                 }
 
                 if (shouldUpdate) {
-                    configs.convoInfoVolatile.set(
+                    val convo =
                         configs.convoInfoVolatile.getOrConstructOneToOne(standardSender.accountId.hexString)
-                            .copy(proProofInfo = updates.proProof)
+
+                    // If the convo is just created (lastRead == 0), we'll have to set the lastRead
+                    // to a valid value so that the config system won't reject the convo data
+                    // for having 0 lastRead. We choose to set it to a certain days before now.
+                    val lastRead = if (convo.lastRead == 0L) {
+                        snodeClock.currentTime()
+                            .minus(MIN_CONVERSATION_LAST_READ_DAYS.toLong(), ChronoUnit.DAYS)
+                            .toEpochMilli()
+                    } else {
+                        convo.lastRead
+                    }
+
+                    // When we are constructing the convo to store pro proof, we need to make sure
+                    // the last read is not too old, otherwise the convo data will get rejected by
+                    // the config system.
+                    configs.convoInfoVolatile.set(
+                        convo.copy(
+                            proProofInfo = updates.proProof,
+                            lastRead = lastRead
+                        )
                     )
                 }
             }

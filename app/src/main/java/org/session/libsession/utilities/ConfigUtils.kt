@@ -21,3 +21,12 @@ inline fun MutableContacts.updateContact(address: Address.Standard, updateFuncti
         true
     } ?: false
 }
+
+/**
+ * The minimal number of days to set on a conversation's lastRead timestamp, when
+ * the conversation is created without a known lastRead timestamp.
+ *
+ * This is to prevent the conversation data from getting pruned by not having a recent
+ * lastRead timestamp.
+ */
+const val MIN_CONVERSATION_LAST_READ_DAYS = 14
