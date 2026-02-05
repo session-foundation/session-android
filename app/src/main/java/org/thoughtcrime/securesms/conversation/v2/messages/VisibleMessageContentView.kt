@@ -31,7 +31,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.applyCollapsedEllipsisMinWidth
 import org.session.libsession.utilities.clearCollapsedMinWidth
@@ -182,7 +181,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 val r = Rect()
                 binding.quoteView.root.getGlobalVisibleRect(r)
                 if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
-                    delegate?.highlightMessageFromTimestamp(quote.id)
+                    delegate?.gotoMessageByTimestamp(timestamp = quote.id, smoothScroll = true, highlight = true)
                 }
             }
         }

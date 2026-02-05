@@ -124,7 +124,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
-import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
@@ -515,17 +514,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // message. To do this we keep track of the replied-to message's location in the recycler view.
     private var pendingHighlightMessagePosition: Int? = null
 
-    // Used to target a specific message and scroll to it with some breathing room above (offset) for all messages but the first
     private var currentTargetedScrollOffsetPx: Int = 0
-    private val nonFirstMessageOffsetPx by lazy { resources.getDimensionPixelSize(R.dimen.massive_spacing) * -1 }
-    private val linearSmoothScroller by lazy {
-        object : LinearSmoothScroller(binding.conversationRecyclerView.context) {
-            override fun getVerticalSnapPreference(): Int = SNAP_TO_START
-            override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
-                return super.calculateDyToMakeVisible(view, snapPreference) - currentTargetedScrollOffsetPx
-            }
-        }
-    }
+    private val scrollingBreathingRoom by lazy { resources.getDimensionPixelSize(R.dimen.massive_spacing) }
 
     // The coroutine job that was used to submit a message approval response to the snode
     private var conversationApprovalJob: Job? = null
@@ -655,7 +645,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         onPlayerTap = {
                             // if we are in the conversation where the audio is from, scroll to it
                             if(viewModel.address == audio.playable.thread) {
-                                highlightMessageFromId(audio.playable.messageId)
+                                gotoMessageById(audio.playable.messageId, smoothScroll = true, highlight = true)
                             } else {
                                 // otherwise we go to the right conversation first
                                 val intent = ConversationActivityV2.createIntent(
@@ -760,7 +750,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // This is used, for example, in the case of an audio notification tap
         val messageId = IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)
         if (messageId != null) {
-            jumpToMessage(messageId, true, null)
+            gotoMessageById(messageId, smoothScroll = false, highlight = true)
         }
     }
 
@@ -916,28 +906,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onLoadFinished(loader: Loader<ConversationLoader.Data>, data: ConversationLoader.Data?) {
         val cursor = data?.messageCursor
-        val oldCount = adapter.itemCount
-        val newCount = cursor?.count ?: 0
         adapter.changeCursor(cursor)
 
         if (cursor != null) {
-            val messageIdToScrollTo = messageToScrollId
-            messageToScrollId = null
-            val newUnreadCount = data.threadUnreadCount
+            val firstLoad = firstLoad.getAndSet(false)
 
-            // Update the unreadCount value to be loaded from the database since we got a new message
-            if (firstLoad.get() || oldCount != newCount || newUnreadCount != unreadCount) {
-                // Update the unreadCount value to be loaded from the database since we got a new
-                // message (we need to store it in a local variable as it can get overwritten on
-                // another thread before the 'firstLoad.getAndSet(false)' case below)
-                unreadCount = newUnreadCount
-                updateUnreadCountIndicator()
-            }
+            unreadCount = data.threadUnreadCount
+            updateUnreadCountIndicator()
 
-            if (messageIdToScrollTo != null) {
-                jumpToMessage( messageIdToScrollTo, firstLoad.get(), null)
+            if (messageToScrollId != null) {
+                if(gotoMessageById(messageToScrollId!!, smoothScroll = false, highlight = firstLoad)){
+                    messageToScrollId = null
+                }
             } else {
-                if (firstLoad.getAndSet(false)) {
+                if (firstLoad) {
                     scrollToFirstUnreadMessageOrBottom()
 
                     // On the first load, check if there unread messages
@@ -1400,12 +1382,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 lastSeenItemPosition,
                 ((layoutManager?.height ?: 0) / 2)
             )
-        }
-    }
-
-    private fun highlightViewAtPosition(position: Int) {
-        binding.conversationRecyclerView.post {
-            (layoutManager?.findViewByPosition(position) as? VisibleMessageView)?.playHighlight()
         }
     }
 
@@ -2196,36 +2172,69 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         return hitRect.contains(x, y)
     }
 
-    override fun highlightMessageFromTimestamp(timestamp: Long) {
+    override fun gotoMessageByTimestamp(timestamp: Long, smoothScroll: Boolean, highlight: Boolean) {
         // Try to find the message with the given timestamp
-        adapter.getItemPositionForTimestamp(timestamp)?.let { targetMessagePosition ->
-            highlightMessageAtIndex(targetMessagePosition)
-        } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
+        val targetMessagePosition = adapter.getItemPositionForTimestamp(timestamp)
+
+        if(targetMessagePosition != null){
+            gotoMessage(targetMessagePosition, smoothScroll = smoothScroll, highlight = highlight)
+        } else {
+            Log.i(TAG, "Could not find message with timestamp: $timestamp")
+        }
     }
 
-    private fun highlightMessageFromId(messageId: MessageId) {
-        // Try to find the message with the given timestamp
-        adapter.getItemPositionForId(messageId)?.let { targetMessagePosition ->
-            highlightMessageAtIndex(targetMessagePosition)
-        } ?: Log.i(TAG, "Could not find message with id: $messageId")
+    private fun gotoMessageById(messageId: MessageId, smoothScroll: Boolean, highlight: Boolean): Boolean {
+        // Try to find the message with the given id
+        val targetMessagePosition = adapter.getItemPositionForId(messageId)
+
+        if(targetMessagePosition != null){
+            gotoMessage(targetMessagePosition, smoothScroll = smoothScroll, highlight = highlight)
+            return true
+        } else {
+            Log.i(TAG, "Could not find message with id: $messageId")
+            return false
+        }
     }
 
-    fun highlightMessageAtIndex(targetMessagePosition: Int) {
-       // If the view is already visible then we don't have to scroll before highlighting it..
-        binding.conversationRecyclerView.findViewHolderForLayoutPosition(targetMessagePosition)?.let { viewHolder ->
-            if (viewHolder.itemView is VisibleMessageView) {
-                (viewHolder.itemView as VisibleMessageView).playHighlight()
-                return
+    private fun gotoMessage(position: Int, smoothScroll: Boolean, highlight: Boolean) {
+        if (smoothScroll) scrollToMessageSmooth(position, highlight)
+        else scrollToMessageInstant(position, highlight)
+    }
+
+    private fun scrollToMessageInstant(position: Int, highlight: Boolean) {
+        val lm = binding.conversationRecyclerView.layoutManager as? LinearLayoutManager ?: return
+        val offset = if (position > 0) scrollingBreathingRoom else 0
+
+        lm.scrollToPositionWithOffset(position, offset)
+
+        if (highlight) {
+            binding.conversationRecyclerView.post {
+                (binding.conversationRecyclerView.findViewHolderForAdapterPosition(position)?.itemView as? VisibleMessageView)
+                    ?.playHighlight()
+            }
+        }
+    }
+
+    private fun scrollToMessageSmooth(position: Int, highlight: Boolean) {
+        val rv = binding.conversationRecyclerView
+        val lm = rv.layoutManager as? LinearLayoutManager ?: return
+
+        rv.stopScroll()
+
+        // ScrollListener handles the highlight when the glide finishes
+        pendingHighlightMessagePosition = if (highlight) position else null
+
+        currentTargetedScrollOffsetPx = if (position > 0) scrollingBreathingRoom else 0
+
+        val scroller = object : LinearSmoothScroller(rv.context) {
+            override fun getVerticalSnapPreference(): Int = SNAP_TO_START
+            override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
+                return super.calculateDyToMakeVisible(view, snapPreference) + currentTargetedScrollOffsetPx
             }
         }
 
-        // ..otherwise, set the pending highlight target and trigger a scroll.
-        // Note: If the targeted message isn't the very first one then we scroll slightly past it to give it some breathing room.
-        // Also: The offset must be negative to provide room above it.
-        pendingHighlightMessagePosition = targetMessagePosition
-        currentTargetedScrollOffsetPx = if (targetMessagePosition > 0) nonFirstMessageOffsetPx else 0
-        linearSmoothScroller.targetPosition = targetMessagePosition
-        (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)?.startSmoothScroll(linearSmoothScroller)
+        scroller.targetPosition = position
+        lm.startSmoothScroll(scroller)
     }
 
     override fun onReactionClicked(emoji: String, messageId: MessageId, userWasSender: Boolean) {
@@ -2356,6 +2365,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
+
         lifecycleScope.launch(Dispatchers.Default) {
             // Put the message in the database and send it
             message.id = MessageId(smsDb.insertMessageOutbox(
@@ -2365,6 +2375,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 message.sentTimestamp!!,
                 true
             ), false)
+
+            messageToScrollId = message.id
 
             waitForApprovalJobToBeSubmitted()
             messageSender.send(message, recipient.address)
@@ -2390,9 +2402,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         message.sentTimestamp = sentTimestamp
         message.text = body
         val quote = quotedMessage?.let {
-            val quotedAttachments = (it as? MmsMessageRecord)?.slideDeck?.asAttachments() ?: listOf()
+            val quotedAttachments =
+                (it as? MmsMessageRecord)?.slideDeck?.asAttachments() ?: listOf()
             val sender = if (it.isOutgoing) {
-                fromSerialized(viewModel.blindedPublicKey ?: loginStateRepository.requireLocalNumber())
+                fromSerialized(
+                    viewModel.blindedPublicKey ?: loginStateRepository.requireLocalNumber()
+                )
             } else it.individualRecipient.address
             QuoteModel(it.dateSent, sender, it.body, false, quotedAttachments)
         }
@@ -2427,10 +2442,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         attachmentManager.clear()
 
         // Reset attachments button if needed
-        if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
+        if (isShowingAttachmentOptions) {
+            toggleAttachmentOptions()
+        }
 
-        // Keep it fixed on the bottom right away
-        binding.conversationRecyclerView.handleScrollToBottom(true)
+        // Keep it fixed on the bottom right away < then once the message is loaded in our cursor adapter, the logic
+        // checking if we are near the bottom will be true and will then scroll the message fully
+        // binding.conversationRecyclerView.handleScrollToBottom(true)
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
@@ -2444,6 +2462,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         runThreadUpdate = true
                     ), mms = true
                 )
+
+                messageToScrollId = message.id
 
                 if (deleteAttachmentFilesAfterSave) {
                     attachments
@@ -2998,7 +3018,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (result == null) return@Observer
             if (result.getResults().isNotEmpty()) {
                 result.getResults()[result.position]?.let {
-                    jumpToMessage(it.messageId, true) {
+                    if(!gotoMessageById(it.messageId, smoothScroll = false, highlight = true)) {
                         searchViewModel.onMissingResult()
                     }
                 }
@@ -3042,25 +3062,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         this.searchViewModel.onMoveDown()
     }
 
-    private fun jumpToMessage(messageId: MessageId, highlight: Boolean, onMessageNotFound: Runnable?) {
-        viewModel.threadId?.let { threadId ->
-            SimpleTask.run(lifecycle, {
-                mmsSmsDb.getMessagePositionInConversation(threadId, messageId, false)
-            }) { p: Int -> moveToMessagePosition(p, highlight, onMessageNotFound) }
-        }
-    }
-
-    private fun moveToMessagePosition(position: Int, highlight: Boolean, onMessageNotFound: Runnable?) {
-        if (position >= 0) {
-            binding.conversationRecyclerView.scrollToPosition(position)
-
-            if (highlight) {
-                runOnUiThread { highlightViewAtPosition(position) }
-            }
-        } else {
-            onMessageNotFound?.run()
-        }
-    }
     // endregion
 
     inner class ReactionsToolbarListener constructor(val message: MessageRecord) : OnActionSelectedListener {

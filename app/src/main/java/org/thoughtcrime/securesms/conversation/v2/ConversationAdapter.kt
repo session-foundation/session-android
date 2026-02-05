@@ -10,6 +10,7 @@ import com.bumptech.glide.RequestManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
@@ -250,6 +251,7 @@ class ConversationAdapter(
     }
 
     fun getItemPositionForTimestamp(timestamp: Long): Int? {
+        Log.i("", "*** Cursor: $cursor - $isActiveCursor")
         val cursor = this.cursor
         if (timestamp <= 0L || cursor == null || !isActiveCursor) return null
         for (i in 0 until itemCount) {
