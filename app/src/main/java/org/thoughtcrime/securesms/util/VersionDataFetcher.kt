@@ -3,8 +3,10 @@ package org.thoughtcrime.securesms.util
 import android.app.Application
 import android.content.Context
 import androidx.hilt.work.HiltWorker
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -36,6 +38,7 @@ class VersionDataFetcher @Inject constructor(
             .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP,
                 PeriodicWorkRequest.Builder(Worker::class, 4.hours.toJavaDuration())
                     .setInitialDelay(0L, TimeUnit.SECONDS)
+                    .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                     .build()
             )
             .await()
