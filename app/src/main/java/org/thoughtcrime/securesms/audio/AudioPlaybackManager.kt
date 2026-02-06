@@ -286,9 +286,10 @@ class AudioPlaybackManager @Inject constructor(
         }
 
         return bitmap?.let {
-            val stream = ByteArrayOutputStream()
-            it.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.toByteArray().takeIf { bytes -> bytes.size <= 500_000 }
+           ByteArrayOutputStream().use { stream ->
+                it.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                stream.toByteArray().takeIf { bytes -> bytes.size <= 500_000 }
+           }
         }
     }
 
