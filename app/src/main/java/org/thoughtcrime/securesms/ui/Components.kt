@@ -1500,7 +1500,7 @@ fun IconActionRowItem(
             ) {
                 Icon(
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
+                        .align(Alignment.Center)
                         .size(iconSize)
                         .qaTag(R.string.qa_action_item_icon),
                     painter = painterResource(id = icon),
