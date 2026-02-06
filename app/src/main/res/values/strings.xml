@@ -266,6 +266,7 @@
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
     <string name="communityBanDeleteDescription">This will ban the selected user from this Community and delete all their messages. Are you sure you want to continue?</string>
     <string name="communityBanDescription">This will ban the selected user from this Community. Are you sure you want to continue?</string>
+    <string name="communityBanUserDescription">Are you sure you want to Ban <b>{name}</b> from this Community?</string>
     <string name="communityDescriptionEnter">Enter a community description</string>
     <string name="communityEnterUrl">Enter Community URL</string>
     <string name="communityEnterUrlErrorInvalid">Invalid URL</string>
@@ -283,6 +284,7 @@
     <string name="communityLeaveError">Failed to leave {community_name}</string>
     <string name="communityNameEnter">Enter a community name</string>
     <string name="communityNameEnterPlease">Please enter a community name</string>
+    <string name="communityUnbanUserDescription">Are you sure you want to Unban <b>{name}</b> from this Community?</string>
     <string name="communityUnknown">Unknown Community</string>
     <string name="communityUrl">Community URL</string>
     <string name="communityUrlCopy">Copy Community URL</string>
