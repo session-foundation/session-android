@@ -2635,7 +2635,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             text(
                 Phrase.from(applicationContext, R.string.communityBanUserDescription)
                     .put(NAME_KEY, messages.first().individualRecipient.displayName())
-                    .format().toString()
+                    .format()
             )
             dangerButton(R.string.theContinue) { viewModel.banUser(messages.first().individualRecipient.address); endActionMode() }
             cancelButton(::endActionMode)
@@ -2648,7 +2648,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             text(
                 Phrase.from(applicationContext, R.string.communityUnbanUserDescription)
                     .put(NAME_KEY, messages.first().individualRecipient.displayName())
-                    .format().toString()
+                    .format()
             )
             dangerButton(R.string.theContinue) { viewModel.unbanUser(messages.first().individualRecipient.address); endActionMode() }
             cancelButton(::endActionMode)
