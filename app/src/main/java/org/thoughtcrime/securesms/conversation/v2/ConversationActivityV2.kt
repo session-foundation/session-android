@@ -542,7 +542,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         fun createIntent(
             context: Context,
             address: Address.Conversable,
-            // If provided, this will scroll to the message with the given timestamp and author
+            // If provided, this will scroll to the message with the given message id
             scrollToMessage: MessageId? = null
         ): Intent {
             require(!address.isBlinded) {

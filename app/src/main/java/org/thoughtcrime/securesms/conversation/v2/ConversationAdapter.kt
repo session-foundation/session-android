@@ -251,7 +251,6 @@ class ConversationAdapter(
     }
 
     fun getItemPositionForTimestamp(timestamp: Long): Int? {
-        Log.i("", "*** Cursor: $cursor - $isActiveCursor")
         val cursor = this.cursor
         if (timestamp <= 0L || cursor == null || !isActiveCursor) return null
         for (i in 0 until itemCount) {

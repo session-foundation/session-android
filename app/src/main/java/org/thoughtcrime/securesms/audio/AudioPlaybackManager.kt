@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.os.Bundle
+import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -41,7 +42,6 @@ import org.thoughtcrime.securesms.audio.model.MediaItemFactory
 import org.thoughtcrime.securesms.audio.model.PlayableAudio
 import org.thoughtcrime.securesms.database.model.MessageId
 import java.io.ByteArrayOutputStream
-import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -78,11 +78,20 @@ class AudioPlaybackManager @Inject constructor(
         val playbackSpeed: Float = 1f
     )
 
-    //todo AUDIO should we clear the cache when leaving a conversation?
-    private val playbackCache = ConcurrentHashMap<String, SavedAudioState>()
+    private val MAX_CACHE_ENTRIES = 100
+    private val playbackCacheLock = Any()
+    private val playbackCache = object : LinkedHashMap<String, SavedAudioState>(MAX_CACHE_ENTRIES, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, SavedAudioState>?): Boolean {
+            return size > MAX_CACHE_ENTRIES
+        }
+    }
 
-    fun getSavedState(messageId: MessageId): SavedAudioState =
+    fun getSavedState(messageId: MessageId): SavedAudioState = synchronized(playbackCacheLock) {
         playbackCache[messageId.serialize()] ?: SavedAudioState()
+    }
+    private fun putSavedState(messageId: MessageId, state: SavedAudioState) = synchronized(playbackCacheLock) {
+        playbackCache[messageId.serialize()] = state
+    }
 
     fun play(playable: PlayableAudio, startPositionMs: Long = -1L) {
         ensureController { c ->
@@ -158,8 +167,8 @@ class AudioPlaybackManager @Inject constructor(
         controller?.setPlaybackSpeed(speed)
 
         val pos = controller?.currentPosition ?: 0L
-        playbackCache[p.messageId.serialize()] =
-            SavedAudioState(pos, speed)
+        putSavedState(p.messageId,
+            SavedAudioState(pos, speed))
 
         updateFromController()
     }
@@ -320,20 +329,20 @@ class AudioPlaybackManager @Inject constructor(
         val buffered = c.bufferedPosition.coerceAtLeast(0L)
         val buffering = c.playbackState == Player.STATE_BUFFERING
 
-        val cached =
-            playbackCache[playable.messageId.serialize()] ?: SavedAudioState()
+        val cached = getSavedState(playable.messageId)
 
         val wantsToPlay = c.playWhenReady && c.playbackState != Player.STATE_ENDED
         val shouldShowPlaying = wantsToPlay && (c.isPlaying || buffering)
 
         // Persist resume intent when stable
         if (c.playbackState == Player.STATE_READY || c.playbackState == Player.STATE_ENDED) {
-            playbackCache[playable.messageId.serialize()] =
+            putSavedState(playable.messageId,
                 if (forceEnded) {
                     SavedAudioState(0L, cached.playbackSpeed)
                 } else {
                     SavedAudioState(position, cached.playbackSpeed)
                 }
+            )
         }
 
         _playbackState.value = when {
@@ -380,28 +389,61 @@ class AudioPlaybackManager @Inject constructor(
             .distinctUntilChanged()
     }
 
+    private val controllerLock = Any()
+
     private fun ensureController(onReady: (MediaController) -> Unit) {
-        controller?.let { onReady(it); return }
+        fun deliver(c: MediaController) {
+            // Ensure callback always runs on Main Thread
+            ContextCompat.getMainExecutor(context).execute { onReady(c) }
+        }
 
-        val token = SessionToken(
-            context,
-            ComponentName(context, AudioMediaService::class.java)
-        )
+        // If already connected
+        synchronized(controllerLock) {
+            controller?.let { deliver(it); return }
+        }
 
-        controllerFuture = MediaController.Builder(context, token)
-            .buildAsync()
-            .also { future ->
-                future.addListener({
-                    try {
-                        controller = future.get().also {
-                            it.addListener(controllerListener)
-                        }
-                        onReady(controller!!)
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Failed to connect MediaController", e)
-                    }
-                }, MoreExecutors.directExecutor())
+        // Async path: Re-use pending future or create new one
+        val futureToUse: ListenableFuture<MediaController> = synchronized(controllerLock) {
+            controller?.let { return@synchronized null } // Will be handled by ?: run below
+
+            controllerFuture ?: run {
+                val token = SessionToken(
+                    context,
+                    ComponentName(context, AudioMediaService::class.java)
+                )
+                MediaController.Builder(context, token)
+                    .buildAsync()
+                    .also { controllerFuture = it }
             }
+        } ?: run {
+            // Controller became available
+            synchronized(controllerLock) { controller }?.let { deliver(it) }
+            return
+        }
+
+        // Attach Listener (runs on background, so dispatch result to Main)
+        futureToUse.addListener({
+            try {
+                val c = futureToUse.get()
+
+                val ready = synchronized(controllerLock) {
+                    val installed = controller ?: c.also { newC ->
+                        controller = newC
+                        newC.addListener(controllerListener)
+                    }
+
+                    if (controllerFuture === futureToUse) controllerFuture = null
+                    installed
+                }
+
+                deliver(ready)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to connect MediaController", e)
+                synchronized(controllerLock) {
+                    if (controllerFuture === futureToUse) controllerFuture = null
+                }
+            }
+        }, MoreExecutors.directExecutor())
     }
 
     private val controllerListener = object : Player.Listener {
@@ -414,8 +456,8 @@ class AudioPlaybackManager @Inject constructor(
             if (state == Player.STATE_ENDED) {
                 // Reset resume intent for this message
                 currentPlayable?.let { p ->
-                    val cached = playbackCache[p.messageId.serialize()] ?: SavedAudioState()
-                    playbackCache[p.messageId.serialize()] = SavedAudioState(0L, cached.playbackSpeed)
+                    val cached = getSavedState(p.messageId)
+                    putSavedState(p.messageId, SavedAudioState(0L, cached.playbackSpeed))
 
                     stop()
                     _events.tryEmit(AudioPlaybackEvent.Ended(p))
@@ -446,10 +488,10 @@ class AudioPlaybackManager @Inject constructor(
     private fun saveCurrentStateToCache() {
         val c = controller ?: return
         val p = currentPlayable ?: return
-        val cached = playbackCache[p.messageId.serialize()] ?: SavedAudioState()
+        val cached = getSavedState(p.messageId)
 
-        playbackCache[p.messageId.serialize()] =
-            SavedAudioState(c.currentPosition.coerceAtLeast(0L), cached.playbackSpeed)
+        putSavedState(p.messageId,
+            SavedAudioState(c.currentPosition.coerceAtLeast(0L), cached.playbackSpeed))
     }
 
     sealed interface AudioPlaybackEvent {

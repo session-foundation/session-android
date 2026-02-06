@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.os.Bundle
 import androidx.annotation.OptIn
+import androidx.core.os.BundleCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -28,7 +29,6 @@ import org.thoughtcrime.securesms.audio.model.MediaItemFactory.EXTRA_MESSAGE_ID
 import org.thoughtcrime.securesms.audio.model.MediaItemFactory.EXTRA_THREAD_ADDRESS
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.util.getParcelableCompat
 
 @AndroidEntryPoint
 class AudioMediaService : MediaSessionService() {
@@ -70,10 +70,12 @@ class AudioMediaService : MediaSessionService() {
         val item = player.currentMediaItem ?: return
         val extras = item.mediaMetadata.extras ?: return
 
-        val thread = extras.getParcelableCompat<Address.Conversable>(EXTRA_THREAD_ADDRESS) ?: return
+        val thread = BundleCompat.getParcelable(
+            extras, EXTRA_THREAD_ADDRESS, Address.Conversable::class.java
+        ) ?: return
 
-        val messageId = extras.getParcelableCompat<MessageId>(
-            EXTRA_MESSAGE_ID
+        val messageId =BundleCompat.getParcelable(
+            extras, EXTRA_MESSAGE_ID, MessageId::class.java
         ) ?: return
 
         val intent = ConversationActivityV2.createIntent(
