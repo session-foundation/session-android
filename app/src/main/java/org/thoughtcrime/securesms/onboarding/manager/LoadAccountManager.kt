@@ -8,12 +8,10 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
-import org.thoughtcrime.securesms.util.VersionDataFetcher
 import javax.inject.Inject
 
 class LoadAccountManager @Inject constructor(
     private val prefs: TextSecurePreferences,
-    private val versionDataFetcher: VersionDataFetcher,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val loginStateRepository: LoginStateRepository,
     private val database: LokiAPIDatabaseProtocol
@@ -37,8 +35,6 @@ class LoadAccountManager @Inject constructor(
 
             // Mark that the user has viewed their seed to prevent being prompted again
             prefs.setHasViewedSeed(true)
-
-            versionDataFetcher.startTimedVersionCheck()
         }
     }
 }
