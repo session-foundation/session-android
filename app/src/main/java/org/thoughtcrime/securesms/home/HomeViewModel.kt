@@ -38,6 +38,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -78,7 +79,8 @@ class HomeViewModel @Inject constructor(
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
     private val dateUtils: DateUtils,
-    private val donationManager: DonationManager
+    private val donationManager: DonationManager,
+    private val audioPlaybackManager: AudioPlaybackManager,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -106,6 +108,8 @@ class HomeViewModel @Inject constructor(
         extraBufferCapacity = 1
     )
     val uiEvents: SharedFlow<UiEvent> = _uiEvents
+
+    val audioPlaybackState = audioPlaybackManager.playbackState
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -456,6 +460,18 @@ class HomeViewModel @Inject constructor(
 
     fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean{
         return groupManager.isCurrentUserLastAdmin(groupId)
+    }
+
+    fun stopAudio(){
+        audioPlaybackManager.stop()
+    }
+
+    fun togglePlayPause(){
+        audioPlaybackManager.togglePlayPause()
+    }
+
+    fun cyclePlaybackSpeed(){
+        audioPlaybackManager.cyclePlaybackSpeed()
     }
 
     data class DialogsState(
