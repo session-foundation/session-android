@@ -93,7 +93,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
-import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindMappingRepository
@@ -165,6 +165,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
     private val communityApiExecutor: CommunityApiExecutor,
     private val deleteAllReactionsApiFactory: DeleteAllReactionsApi.Factory,
+    private val audioPlaybackManager: AudioPlaybackManager,
     private val loginStateRepository: LoginStateRepository,
 ) : InputbarViewModel(
     application = application,
@@ -180,6 +181,8 @@ class ConversationViewModel @AssistedInject constructor(
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
+
+    val audioPlaybackState = audioPlaybackManager.playbackState
 
     val threadIdFlow: StateFlow<Long?> =
         storage.getThreadId(address)
@@ -677,13 +680,6 @@ class ConversationViewModel @AssistedInject constructor(
         return MessageRequestUiState.Invisible
     }
 
-    override fun onCleared() {
-        super.onCleared()
-
-        // Stop all voice message when exiting this page
-        AudioSlidePlayer.stopAll()
-    }
-
     fun saveDraft(text: String) {
         threadId?.let { threadID ->
             GlobalScope.launch(Dispatchers.IO) {
@@ -812,9 +808,7 @@ class ConversationViewModel @AssistedInject constructor(
      */
     fun deleteLocally(messages: Set<MessageRecord>) {
         // make sure to stop audio messages, if any
-        messages.filterIsInstance<MmsMessageRecord>()
-            .mapNotNull { it.slideDeck.audioSlide }
-            .forEach(::stopMessageAudio)
+        stopAudioIfPlaying(messages)
 
         // if the message was already marked as deleted or control messages, remove it from the db instead
         if(messages.all { it.isDeleted || it.isControlMessage }){
@@ -847,9 +841,7 @@ class ConversationViewModel @AssistedInject constructor(
         data: DeleteForEveryoneDialogData
     ) = viewModelScope.launch {
         // make sure to stop audio messages, if any
-        data.messages.filterIsInstance<MmsMessageRecord>()
-            .mapNotNull { it.slideDeck.audioSlide }
-            .forEach(::stopMessageAudio)
+        stopAudioIfPlaying(data.messages)
 
         // the exact logic for this will depend on the messages type
         when(data.messageType){
@@ -1093,10 +1085,22 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     /**
-     * Stops audio player if its current playing is the one given in the message.
+     * Checks if any of the provided messages are currently playing audio.
+     * If so, stops the playback.
      */
-    private fun stopMessageAudio(audioSlide: AudioSlide) {
-        AudioSlidePlayer.getInstance()?.takeIf { it.audioSlide == audioSlide }?.stop()
+    private fun stopAudioIfPlaying(messages: Set<MessageRecord>) {
+        val isAudioPlaying = messages
+            .asSequence()
+            .filterIsInstance<MmsMessageRecord>()
+            .filter { it.slideDeck.audioSlide != null }
+            .any { message ->
+                // Check if this specific message ID is the one currently playing
+                audioPlaybackManager.isActive(message.messageId)
+            }
+
+        if (isAudioPlaying) {
+            audioPlaybackManager.stop()
+        }
     }
 
     fun banUser(recipient: Address) = viewModelScope.launch {
@@ -1522,6 +1526,18 @@ class ConversationViewModel @AssistedInject constructor(
                 // being able to send messages in these conversations.
             }
         }
+    }
+
+    fun stopAudio(){
+        audioPlaybackManager.stop()
+    }
+
+    fun togglePlayPause(){
+        audioPlaybackManager.togglePlayPause()
+    }
+
+    fun cyclePlaybackSpeed(){
+        audioPlaybackManager.cyclePlaybackSpeed()
     }
 
     @AssistedFactory

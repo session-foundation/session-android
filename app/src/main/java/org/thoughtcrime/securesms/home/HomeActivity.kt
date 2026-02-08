@@ -10,8 +10,15 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalActivity
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.offset
@@ -19,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -61,6 +69,7 @@ import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
@@ -90,7 +99,9 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
+import org.thoughtcrime.securesms.ui.LatchedAnimatedVisibility
 import org.thoughtcrime.securesms.ui.PathDot
+import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -172,7 +183,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         .createIntent(
                             this,
                             address = model.messageResult.conversationRecipient.address as Address.Conversable,
-                            scrollToMessage = model.messageResult.sentTimestampMs to model.messageResult.messageRecipient.address
+                            scrollToMessage = model.messageResult.messageId
                         )
 
                     is GlobalSearchAdapter.Model.SavedMessages -> ConversationActivityV2
@@ -339,6 +350,40 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up empty state view
         binding.emptyStateContainer.setThemedContent {
             EmptyView(isNewAccount)
+        }
+
+        // setup the compose content for the mini player
+        binding.miniPlayer.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setThemedContent {
+                val playbackState by homeViewModel.audioPlaybackState.collectAsStateWithLifecycle()
+                val active = playbackState as? AudioPlaybackState.Active
+
+                LatchedAnimatedVisibility(
+                    value = active,
+                    enter = EnterTransition.None,
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = tween(durationMillis = 200, easing = FastOutLinearInEasing)
+                    )
+                ) { audio ->
+                    val context = LocalContext.current
+
+                    AudioMiniPlayer(
+                        audio = audio,
+                        onPlayerTap = {
+                            push(ConversationActivityV2.createIntent(
+                                context,
+                                address = audio.playable.thread,
+                                scrollToMessage = audio.playable.messageId
+                            ))
+                        },
+                        onPlayPause = homeViewModel::togglePlayPause,
+                        onPlaybackSpeedToggle = homeViewModel::cyclePlaybackSpeed,
+                        onClose = homeViewModel::stopAudio
+                    )
+                }
+            }
         }
 
         // set the compose dialog content
