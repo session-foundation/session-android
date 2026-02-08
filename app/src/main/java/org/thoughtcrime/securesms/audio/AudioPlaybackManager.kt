@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.os.Bundle
-import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -17,9 +16,7 @@ import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import coil3.toBitmap
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -32,9 +29,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -49,12 +46,10 @@ import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 @Singleton
 class AudioPlaybackManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     private val TAG = "AudioPlaybackManager"
 
@@ -75,7 +70,6 @@ class AudioPlaybackManager @Inject constructor(
 
     private val controllerMutex = Mutex()
     private var controller: MediaController? = null
-    private var connectionJob: Deferred<MediaController>? = null
 
     private var currentPlayable: PlayableAudio? = null
     private var isScrubbing = false
@@ -410,77 +404,25 @@ class AudioPlaybackManager @Inject constructor(
         }
     }
 
-    private suspend fun getOrConnectController(): MediaController {
-        controller?.let { return it }
-
-        val jobToAwait: Deferred<MediaController> = controllerMutex.withLock {
-            // Double check inside mutex
-            controller?.let { return it }
-
-            connectionJob?.let { return@withLock it }
-
-            val deferred = CompletableDeferred<MediaController>()
-            connectionJob = deferred
-
-            scope.launch {
-                try {
-                    val token = SessionToken(
-                        context,
-                        ComponentName(context, AudioMediaService::class.java)
-                    )
-
-                    val newController = awaitMediaController(token)
-
-                    // Set controller and clear job
-                    val finalController = controllerMutex.withLock {
-                        val installed = controller ?: newController.also {
-                            controller = it
-                            it.addListener(controllerListener)
-                        }
-
-                        // Clear the job now that controller is set
-                        if (connectionJob === deferred) connectionJob = null
-
-                        installed
-                    }
-
-                    deferred.complete(finalController)
-
-                } catch (t: Throwable) {
-                    controllerMutex.withLock {
-                        if (connectionJob === deferred) connectionJob = null
-                    }
-                    deferred.completeExceptionally(t)
-                }
-            }
-
-            deferred
+    private suspend fun getOrConnectController(): MediaController = controllerMutex.withLock {
+        if (controller != null) {
+            return controller!!
         }
 
-        return jobToAwait.await()
+        val token = SessionToken(
+            context,
+            ComponentName(context, AudioMediaService::class.java)
+        )
+
+        return MediaController.Builder(context, token)
+            .buildAsync()
+            .await()
+            .also { created ->
+                controller = created
+                created.addListener(controllerListener)
+            }
     }
 
-    /**
-     * Bridges Media3 buildAsync() to coroutines
-     */
-    private suspend fun awaitMediaController(token: SessionToken): MediaController =
-        suspendCancellableCoroutine { cont ->
-            val future = MediaController.Builder(context, token).buildAsync()
-            val mainExec = ContextCompat.getMainExecutor(context)
-
-            future.addListener({
-                if (!cont.isActive) return@addListener
-                try {
-                    cont.resume(future.get())
-                } catch (t: Throwable) {
-                    cont.resumeWithException(t)
-                }
-            }, mainExec)
-
-            cont.invokeOnCancellation {
-                future.cancel(false)
-            }
-        }
 
     /**
      * Not used at the moment since the class is a Singleton
@@ -488,10 +430,6 @@ class AudioPlaybackManager @Inject constructor(
      */
     fun release() {
         stopProgressTracking()
-
-        // Cancel any pending connect
-        connectionJob?.cancel()
-        connectionJob = null
 
         // Detach and release controller
         controller?.removeListener(controllerListener)
