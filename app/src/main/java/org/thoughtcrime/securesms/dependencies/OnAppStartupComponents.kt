@@ -14,9 +14,7 @@ import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.tokenpage.TokenDataManager
-import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
-import org.thoughtcrime.securesms.util.VersionDataFetcher
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge
 import javax.inject.Inject
 
@@ -38,7 +36,6 @@ class OnAppStartupComponents private constructor(
         persistentLogger: PersistentLogger,
         appDisguiseManager: AppDisguiseManager,
         tokenFetcher: TokenFetcher,
-        versionDataFetcher: VersionDataFetcher,
         threadDatabase: ThreadDatabase,
         emojiIndexLoader: EmojiIndexLoader,
         subscriptionCoordinator: SubscriptionCoordinator,
@@ -57,7 +54,6 @@ class OnAppStartupComponents private constructor(
             persistentLogger,
             appDisguiseManager,
             tokenFetcher,
-            versionDataFetcher,
             threadDatabase,
             emojiIndexLoader,
             subscriptionCoordinator,

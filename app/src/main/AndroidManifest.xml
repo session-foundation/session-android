@@ -40,6 +40,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
@@ -334,6 +335,17 @@
             android:name="org.thoughtcrime.securesms.service.CallForegroundService"
             android:foregroundServiceType="phoneCall|microphone"
             android:exported="false" />
+        <service
+            android:name="org.thoughtcrime.securesms.audio.AudioMediaService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback">
+
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+
+        </service>
 
         <receiver
             android:name="org.thoughtcrime.securesms.notifications.MarkReadReceiver"

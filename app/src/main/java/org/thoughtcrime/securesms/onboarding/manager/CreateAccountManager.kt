@@ -10,11 +10,9 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
-import org.thoughtcrime.securesms.util.VersionDataFetcher
 import javax.inject.Inject
 
 class CreateAccountManager @Inject constructor(
-    private val versionDataFetcher: VersionDataFetcher,
     private val configFactory: ConfigFactoryProtocol,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     private val loginStateRepository: LoginStateRepository,
@@ -40,8 +38,6 @@ class CreateAccountManager @Inject constructor(
                 it.userProfile.setName(displayName)
                 it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
             }
-
-            versionDataFetcher.startTimedVersionCheck()
         }
     }
 }
