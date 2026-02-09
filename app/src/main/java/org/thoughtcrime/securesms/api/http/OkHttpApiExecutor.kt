@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.session.libsignal.utilities.ByteArraySlice.Companion.toRequestBody
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 
 class OkHttpApiExecutor(

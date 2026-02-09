@@ -2802,8 +2802,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun banUser(messages: Set<MessageRecord>) {
         showSessionDialog {
             title(R.string.banUser)
-            text(R.string.communityBanDescription)
+            text(
+                Phrase.from(applicationContext, R.string.communityBanUserDescription)
+                    .put(NAME_KEY, messages.first().individualRecipient.displayName())
+                    .format()
+            )
             dangerButton(R.string.theContinue) { viewModel.banUser(messages.first().individualRecipient.address); endActionMode() }
+            cancelButton(::endActionMode)
+        }
+    }
+
+    override fun unbanUser(messages: Set<MessageRecord>) {
+        showSessionDialog {
+            title(R.string.banUnbanUser)
+            text(
+                Phrase.from(applicationContext, R.string.communityUnbanUserDescription)
+                    .put(NAME_KEY, messages.first().individualRecipient.displayName())
+                    .format()
+            )
+            dangerButton(R.string.theContinue) { viewModel.unbanUser(messages.first().individualRecipient.address); endActionMode() }
             cancelButton(::endActionMode)
         }
     }
@@ -3123,6 +3140,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 ConversationReactionOverlay.Action.DELETE -> deleteMessages(selectedItems)
                 ConversationReactionOverlay.Action.BAN_AND_DELETE_ALL -> banAndDeleteAll(selectedItems)
                 ConversationReactionOverlay.Action.BAN_USER -> banUser(selectedItems)
+                ConversationReactionOverlay.Action.UNBAN_USER -> unbanUser(selectedItems)
                 ConversationReactionOverlay.Action.COPY_ACCOUNT_ID -> copyAccountID(selectedItems)
             }
         }
