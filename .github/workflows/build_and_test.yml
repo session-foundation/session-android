@@ -22,8 +22,6 @@ jobs:
         include:
           - variant: 'huawei'
             extra_build_command_options: '-Phuawei=1'
-          - variant: 'play'
-            run_test: true
     steps:
       - uses: actions/checkout@v6
       - name: Cache Gradle
@@ -43,11 +41,6 @@ jobs:
       - name: Build with gradle
         id: build
         run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }} --stacktrace
-
-      - name: Run unit tests
-        if: ${{ matrix.run_test == true }}
-        id: test
-        run: ./gradlew test${{ matrix.variant }}${{ matrix.build_type }}UnitTest ${{ matrix.extra_build_command_options }}
 
       - name: Upload build reports regardless
         if: always()

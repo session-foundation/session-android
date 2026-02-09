@@ -17,7 +17,7 @@ class GenerateIPCountryDataPlugin : Plugin<Project> {
             val androidComponents = project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
             androidComponents.onVariants { variant ->
                 val task = project.tasks.register("generate${variant.name.capitalized()}IpCountryData", GenerateCountryBlocksTask::class.java) {
-                    outputDir.set(project.layout.buildDirectory.dir("generated/${variant.name}"))
+                    outputDir.set(project.layout.buildDirectory.dir("generated/ip-country-${variant.name}"))
                 }
 
                 variant.sources.res!!.addGeneratedSourceDirectory(
