@@ -203,14 +203,9 @@ android {
         }
     }
 
-    testBuildType = "qa"
+    testBuildType = "debug"
 
     sourceSets {
-        getByName("test").apply {
-            kotlin.directories += "$projectDir/src/sharedTest/java"
-            resources.directories += "$projectDir/src/main/assets"
-        }
-
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
             maybeCreate(variant).kotlin.directories += "$firebaseCommonDir/kotlin"
@@ -232,7 +227,6 @@ android {
             }
         }
     }
-
 
     signingConfigs {
         create("play") {
