@@ -1740,7 +1740,11 @@ class AppTextSecurePreferences @Inject constructor(
         @Suppress("UNCHECKED_CAST")
         return when (val strategy = key.strategy) {
             is PreferenceKey.Strategy.Json<*> -> prefs.getString(key.name, null)?.let { encoded ->
-                json.decodeFromString(strategy.serializer, encoded)
+                runCatching {
+                    json.decodeFromString(strategy.serializer, encoded)
+                }.onFailure {
+                    Log.e("Preferences", "Unable to decode json for pref key = ${key.name}", it)
+                }.getOrNull()
             }
             is PreferenceKey.Strategy.PrimitiveBoolean -> prefs.getBoolean(key.name, strategy.defaultValue)
             is PreferenceKey.Strategy.PrimitiveFloat -> prefs.getFloat(key.name, strategy.defaultValue)
