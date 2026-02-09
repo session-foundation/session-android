@@ -217,6 +217,20 @@ class SnodeDatabaseTest {
     }
 
     @Test
+    fun `clear onion request paths works`() {
+        db.setSnodePool(snodes)
+
+        val paths = listOf(
+            listOf(snodes[0], snodes[1]),
+            listOf(snodes[2], snodes[3])
+        )
+        db.setOnionRequestPaths(paths)
+
+        db.clearOnionRequestPaths()
+        assertEquals(0, db.getOnionRequestPaths().size)
+    }
+
+    @Test
     fun `should be able to find random unused snodes for path`() {
         db.setSnodePool(snodes)
 

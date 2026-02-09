@@ -38,6 +38,8 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.needsCollapsing
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
+import org.thoughtcrime.securesms.audio.model.PlayableAudioMapper
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.DOCUMENT
@@ -64,7 +66,6 @@ class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
-    var indexInAdapter: Int = -1
 
     private val MAX_COLLAPSED_LINE_COUNT = 25
 
@@ -180,7 +181,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 val r = Rect()
                 binding.quoteView.root.getGlobalVisibleRect(r)
                 if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
-                    delegate?.highlightMessageFromTimestamp(quote.id)
+                    delegate?.gotoMessageByTimestamp(timestamp = quote.id, smoothScroll = true, highlight = true)
                 }
             }
         }
@@ -214,13 +215,25 @@ class VisibleMessageContentView : ConstraintLayout {
                 // Audio attachment
                 if (overallAttachmentState == AttachmentState.DONE || message.isOutgoing) {
                     binding.voiceMessageView.root.isVisible = true
-                    binding.voiceMessageView.root.indexInAdapter = indexInAdapter
                     binding.voiceMessageView.root.delegate = context as? ConversationActivityV2
-                    binding.voiceMessageView.root.bind(message, isStartOfMessageCluster, isEndOfMessageCluster)
-                    // We have to use onContentClick (rather than a click listener directly on the voice
-                    // message view) so as to not interfere with all the other gestures.
-                    onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
-                    onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
+                    val sender = if(message.isOutgoing){
+                        recipientRepository.getSelf()
+                    } else message.individualRecipient
+
+                    val audioSlide = message.slideDeck.audioSlide!!
+                    val playable = PlayableAudioMapper.fromAudioSlide(
+                        slide = audioSlide,
+                        messageId = message.messageId ,
+                        thread = thread.address as Address.Conversable,
+                        senderName = sender.displayName(),
+                        senderAvatar = sender.avatar
+                    )
+
+                    binding.voiceMessageView.root.bind(
+                        playable = playable,
+                        message = message
+                    )
+
                     binding.attachmentControlView.root.isVisible = false
                 } else {
                     val attachment = message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment
@@ -474,6 +487,7 @@ class VisibleMessageContentView : ConstraintLayout {
         listOf<View>(albumThumbnailView.root, linkPreviewView.root, voiceMessageView.root, quoteView.root).none { it.isVisible }
 
     fun recycle() {
+        binding.voiceMessageView.root.recycle()
         arrayOf(
             binding.deletedMessageView.root,
             binding.attachmentControlView.root,
@@ -488,7 +502,7 @@ class VisibleMessageContentView : ConstraintLayout {
     }
 
     fun playVoiceMessage() {
-        binding.voiceMessageView.root.togglePlayback()
+        binding.voiceMessageView.root.onPlayPauseClicked()
     }
 
     fun playHighlight() {

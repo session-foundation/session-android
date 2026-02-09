@@ -52,6 +52,7 @@ interface ConversationRepository {
     suspend fun deleteGroupV2MessagesRemotely(recipient: Address, messages: Set<MessageRecord>)
 
     suspend fun banUser(community: Address.Community, userId: AccountId): Result<Unit>
+    suspend fun unbanUser(community: Address.Community, userId: AccountId): Result<Unit>
     suspend fun banAndDeleteAll(community: Address.Community, userId: AccountId): Result<Unit>
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
     suspend fun clearAllMessageRequests(): Result<Unit>

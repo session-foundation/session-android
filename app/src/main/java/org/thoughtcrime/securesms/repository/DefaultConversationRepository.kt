@@ -26,6 +26,7 @@ import org.session.libsession.messaging.open_groups.api.BanUserApi
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
 import org.session.libsession.messaging.open_groups.api.DeleteUserMessagesApi
+import org.session.libsession.messaging.open_groups.api.UnbanUserApi
 import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
@@ -92,6 +93,7 @@ class DefaultConversationRepository @Inject constructor(
     private val deleteSwarmMessageApiFactory: DeleteSnodeMessageApi.Factory,
     private val deleteCommunityMessageApiFactory: DeleteCommunityMessageApi.Factory,
     private val banUserApiFactory: BanUserApi.Factory,
+    private val unbanUserApiFactory: UnbanUserApi.Factory,
     private val deleteUserMessageApiFactory: DeleteUserMessagesApi.Factory,
 ) : ConversationRepository {
 
@@ -473,6 +475,18 @@ class DefaultConversationRepository @Inject constructor(
             CommunityApiRequest(
                 serverBaseUrl = community.serverUrl,
                 api = banUserApiFactory.create(
+                    userToBan = userId.hexString,
+                    room = community.room
+                )
+            )
+        )
+    }
+
+    override suspend fun unbanUser(community: Address.Community, userId: AccountId): Result<Unit> = runCatching {
+        communityApiExecutor.execute(
+            CommunityApiRequest(
+                serverBaseUrl = community.serverUrl,
+                api = unbanUserApiFactory.create(
                     userToBan = userId.hexString,
                     room = community.room
                 )

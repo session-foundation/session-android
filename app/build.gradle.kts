@@ -203,14 +203,9 @@ android {
         }
     }
 
-    testBuildType = "qa"
+    testBuildType = "debug"
 
     sourceSets {
-        getByName("test").apply {
-            kotlin.directories += "$projectDir/src/sharedTest/java"
-            resources.directories += "$projectDir/src/main/assets"
-        }
-
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
             maybeCreate(variant).kotlin.directories += "$firebaseCommonDir/kotlin"
@@ -232,7 +227,6 @@ android {
             }
         }
     }
-
 
     signingConfigs {
         create("play") {
@@ -385,6 +379,11 @@ dependencies {
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.media3.ui.compose)
+    implementation(libs.androidx.media3.ui.compose.material3)
+
     implementation(libs.conscrypt.android)
     implementation(libs.android)
     implementation(libs.photoview)

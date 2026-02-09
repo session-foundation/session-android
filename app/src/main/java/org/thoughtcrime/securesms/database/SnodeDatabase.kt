@@ -18,6 +18,28 @@ import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.math.min
 
+/**
+ * A database interface for storing snode related data: the snode pool, swarms and onion request
+ * paths. It consists of 3 tables:
+ * - snodes: stores all known snodes, including those in the pool, swarms and paths.
+ *      Each snode has a strike count, which can be used to track misbehaving snodes and remove
+ *      them from the pool if necessary.
+ *
+ * - swarm_snodes: a mapping table between swarms (identified by pubkey) and snodes (identified by id).
+ *      This table references snodes with a foreign key, so if a snode is removed from the snodes
+ *      table, it will be automatically removed from all swarms as well.
+ *
+ * - onion_paths: stores onion request paths. Each path has a strike count as well, which can be used
+ *     to track bad paths and remove them if necessary.
+ *
+ * - onion_path_snodes: a mapping table between onion paths (identified by path_id) and snodes (identified by id).
+ *    This table references snodes with a foreign key, but with RESTRICT delete behavior, meaning
+ *    that a snode that is part of an onion path cannot be deleted from the snodes table until
+ *    it is removed from the path.
+ *    This is to prevent accidentally deleting snodes that are still in use in paths, as that could
+ *    lead to loss of all paths that contain that snode.
+ *
+ */
 @Singleton
 class SnodeDatabase @Inject constructor(
     private val helper: Provider<SupportSQLiteOpenHelper>,
@@ -141,8 +163,6 @@ class SnodeDatabase @Inject constructor(
     override fun setOnionRequestPaths(paths: List<Path>) {
         onionPathsCache.set(null)
         writableDatabase.transaction {
-            val newPathKeysAsJson = json.encodeToString(paths.map { it.pathKey() })
-
             class PathInfo(
                 val strike: Int,
                 val createdAtMs: Long,
@@ -266,7 +286,8 @@ class SnodeDatabase @Inject constructor(
 
     override fun clearOnionRequestPaths() {
         onionPathsCache.set(null)
-        writableDatabase.execSQL("DELETE FROM path_snodes WHERE 1")
+        //language=roomsql
+        writableDatabase.execSQL("DELETE FROM onion_path_snodes WHERE 1")
     }
 
     override fun increaseOnionRequestPathStrike(
