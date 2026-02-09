@@ -67,7 +67,7 @@ jobs:
           path: |
             ~/.gradle/caches
             .gradle
-          key: ${{ runner.os }}-test-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}-${{ matrix.variant }}
+          key: ${{ runner.os }}-test-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5
