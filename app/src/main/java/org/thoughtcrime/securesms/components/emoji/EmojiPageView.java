@@ -164,28 +164,6 @@ public class EmojiPageView extends RecyclerView implements VariationSelectorList
     }
   }
 
-  public void setRecyclerNestedScrollingEnabled(boolean enabled) {
-    setNestedScrollingEnabled(enabled);
-  }
-
-  public void smoothScrollToPositionTop(int position) {
-    int     currentPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
-    boolean shortTrip       = Math.abs(currentPosition - position) < 475;
-
-    if (shortTrip) {
-      RecyclerView.SmoothScroller smoothScroller = new LinearSmoothScroller(getContext()) {
-        @Override
-        protected int getVerticalSnapPreference() {
-          return LinearSmoothScroller.SNAP_TO_START;
-        }
-      };
-      smoothScroller.setTargetPosition(position);
-      layoutManager.startSmoothScroll(smoothScroller);
-    } else {
-      layoutManager.scrollToPositionWithOffset(position, 0);
-    }
-  }
-
   public @Nullable EmojiPageViewGridAdapter getAdapter() {
     return (EmojiPageViewGridAdapter) super.getAdapter();
   }

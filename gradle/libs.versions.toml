@@ -30,7 +30,7 @@ kryoVersion = "5.6.2"
 kspVersion = "2.3.5"
 legacySupportV13Version = "1.0.0"
 libsessionUtilAndroidVersion = "1.1.0-9-g4ae3baf"
-media3ExoplayerVersion = "1.8.0"
+media3ExoplayerVersion = "1.9.1"
 mockitoCoreVersion = "5.21.0"
 navVersion = "2.9.6"
 appcompatVersion = "1.7.1"
@@ -130,6 +130,10 @@ androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", 
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleVersion" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3ExoplayerVersion" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3ExoplayerVersion" }
+androidx-media3-session = { module = "androidx.media3:media3-session", version.ref = "media3ExoplayerVersion" }
+androidx-media3-common-ktx = { module = "androidx.media3:media3-common-ktx", version.ref = "media3ExoplayerVersion" }
+androidx-media3-ui-compose = { module = "androidx.media3:media3-ui-compose", version.ref = "media3ExoplayerVersion" }
+androidx-media3-ui-compose-material3 = { module = "androidx.media3:media3-ui-compose-material3", version.ref = "media3ExoplayerVersion" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceVersion" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerviewVersion" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtxVersion" }

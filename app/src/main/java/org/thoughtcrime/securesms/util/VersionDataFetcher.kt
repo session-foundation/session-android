@@ -1,77 +1,83 @@
 package org.thoughtcrime.securesms.util
 
-import android.os.Handler
-import android.os.Looper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import android.app.Application
+import android.content.Context
+import androidx.hilt.work.HiltWorker
+import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
+import androidx.work.await
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.file_server.GetClientVersionApi
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import org.thoughtcrime.securesms.api.server.execute
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.time.Duration.Companion.hours
-
-private val TAG: String = VersionDataFetcher::class.java.simpleName
-private val REFRESH_TIME_MS = 4.hours.inWholeMilliseconds
+import kotlin.time.toJavaDuration
 
 @Singleton
 class VersionDataFetcher @Inject constructor(
-    private val prefs: TextSecurePreferences,
-    private val serverApiExecutor: ServerApiExecutor,
-    private val getClientVersionApi: Provider<GetClientVersionApi>,
-) : OnAppStartupComponent {
-    private val handler = Handler(Looper.getMainLooper())
-    private val fetchVersionData = Runnable {
-        scope.launch {
-            try {
-                // Perform the version check
-                val clientVersion = serverApiExecutor.execute(
-                    ServerApiRequest(
-                        fileServer = FileServerApis.DEFAULT_FILE_SERVER,
-                        api = getClientVersionApi.get()
-                    )
+    private val application: Application,
+) : AuthAwareComponent {
+
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        WorkManager.getInstance(application)
+            .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP,
+                PeriodicWorkRequest.Builder(Worker::class, 4.hours.toJavaDuration())
+                    .setInitialDelay(0L, TimeUnit.SECONDS)
+                    .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+                    .build()
+            )
+            .await()
+
+        Log.d(TAG, "VersionDataFetcherWorker started")
+    }
+
+    override fun onLoggedOut() {
+        super.onLoggedOut()
+
+        WorkManager.getInstance(application)
+            .cancelUniqueWork(WORK_NAME)
+
+        Log.d(TAG, "VersionDataFetcherWorker cancelled")
+    }
+
+    companion object {
+        private const val TAG = "VersionDataFetcher"
+
+        private const val WORK_NAME = "VersionDataFetcherWorker"
+    }
+
+    @HiltWorker
+    class Worker @AssistedInject constructor(
+        private val serverApiExecutor: ServerApiExecutor,
+        private val getClientVersionApi: Provider<GetClientVersionApi>,
+        @Assisted context: Context,
+        @Assisted params: WorkerParameters,
+    ) : CoroutineWorker(context, params) {
+        override suspend fun doWork(): Result {
+            val clientVersion = serverApiExecutor.execute(
+                ServerApiRequest(
+                    fileServer = FileServerApis.DEFAULT_FILE_SERVER,
+                    api = getClientVersionApi.get()
                 )
-                Log.i(TAG, "Fetched version data: $clientVersion")
-                prefs.setLastVersionCheck()
-                startTimedVersionCheck()
-            } catch (e: Exception) {
-                // We can silently ignore the error
-                Log.e(TAG, "Error fetching version data", e)
-                // Schedule the next check for 4 hours from now, but do not setLastVersionCheck
-                // so the app will retry when the app is next foregrounded.
-                startTimedVersionCheck(REFRESH_TIME_MS)
-            }
+            )
+
+            Log.d(TAG, "Worker fetched version: $clientVersion")
+            return Result.success()
         }
-    }
-
-    private val scope = CoroutineScope(Dispatchers.Default)
-
-    /**
-     * Schedules fetching version data.
-     *
-     * @param delayMillis The delay before fetching version data. Default value is 4 hours from the
-     * last check or 0 if there was no previous check or if it was longer than 4 hours ago.
-     */
-    @JvmOverloads
-    fun startTimedVersionCheck(
-        delayMillis: Long = REFRESH_TIME_MS + prefs.getLastVersionCheck() - System.currentTimeMillis()
-    ) {
-        stopTimedVersionCheck()
-        handler.postDelayed(fetchVersionData, delayMillis)
-    }
-
-    fun stopTimedVersionCheck() {
-        handler.removeCallbacks(fetchVersionData)
-    }
-
-    override fun onPostAppStarted() {
-        startTimedVersionCheck()
     }
 }

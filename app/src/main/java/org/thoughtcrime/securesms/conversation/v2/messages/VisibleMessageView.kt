@@ -106,7 +106,6 @@ class VisibleMessageView : FrameLayout {
     private var onDoubleTap: (() -> Unit)? = null
     private var isOutgoing: Boolean = false
 
-    var indexInAdapter: Int = -1
     var isMessageSelected = false
         set(value) {
             field = value
@@ -298,7 +297,6 @@ class VisibleMessageView : FrameLayout {
         }
 
         // Populate content view
-        binding.messageContentView.root.indexInAdapter = indexInAdapter
         binding.messageContentView.root.bind(
             message,
             isStartOfMessageCluster,
