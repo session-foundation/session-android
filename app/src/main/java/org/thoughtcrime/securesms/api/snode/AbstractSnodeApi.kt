@@ -4,6 +4,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.session.libsession.snode.SwarmAuth
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
@@ -46,6 +47,8 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
                 snode = snode,
                 ctx = failureContext
             )
+
+            Log.d("SnodeApi", "Network error for a Snode endpoint ($snode), with status:${code} - error: $error")
 
             ctx.set(SnodeClientFailureKey, failureContext.copy(previousErrorCode = code))
 
