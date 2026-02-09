@@ -1134,7 +1134,9 @@ class ConversationViewModel @AssistedInject constructor(
                 showMessage(application.getString(R.string.banUserBanned))
 
                 // ..so we can now delete all their messages in this thread from local storage & remove the views.
-                repository.deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord)
+                withContext(Dispatchers.IO) {
+                    repository.deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord)
+                }
             }
             .onFailure {
                 showMessage(application.getString(R.string.banErrorFailed))
