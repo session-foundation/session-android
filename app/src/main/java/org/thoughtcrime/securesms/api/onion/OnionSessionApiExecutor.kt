@@ -22,6 +22,7 @@ import org.session.libsession.utilities.AESGCM
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.SessionApiExecutor
 import org.thoughtcrime.securesms.api.SessionApiRequest
@@ -69,12 +70,15 @@ class OnionSessionApiExecutor @Inject constructor(
 
         when (req) {
             is SessionApiRequest.SnodeJsonRPC -> {
+                Log.d("OnionSessionApiExecutor", "Sending Onion request to Snode destination. Method: ${req.request.method} -- Destination: ${req.snode}")
+
                 onionRequestVersion = OnionRequestVersion.V3
                 onionDestination = OnionDestination.SnodeDestination(req.snode)
                 payload = json.encodeToString(req.request).toByteArray()
             }
 
             is SessionApiRequest.HttpServerRequest -> {
+                Log.d("OnionSessionApiExecutor", "Sending Onion request to Server destination. Url: ${req.request.url}")
                 onionRequestVersion = OnionRequestVersion.V4
                 onionDestination = OnionDestination.ServerDestination(
                     host = req.request.url.host,
@@ -192,6 +196,8 @@ class OnionSessionApiExecutor @Inject constructor(
         destination: OnionDestination,
     ): OnionError {
         val guardSnode = path.first()
+
+        Log.d("OnionSessionApiExecutor", "Networking Error, got a non 200 response code: $httpResponseCode, body: $httpResponseBody")
 
         // ---- 502: hop can't find/contact next hop ----
         val nextNodeNotFound = "Next node not found: "
