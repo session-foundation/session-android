@@ -15,6 +15,7 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -459,6 +460,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private var isKeyboardVisible = false
 
+    private var pendingRecyclerViewScrollState: Parcelable? = null
+    private var hasRestoredRecyclerViewScrollState: Boolean = false
+
     private lateinit var reactionDelegate: ConversationReactionDelegate
     private val reactWithAnyEmojiStartPage = -1
 
@@ -529,6 +533,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Extras
         private const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
+        private const val CONVERSATION_SCROLL_STATE = "conversation_scroll_state"
 
         const val SHOW_SEARCH = "show_search"
 
@@ -569,6 +574,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
+
+        pendingRecyclerViewScrollState = savedInstanceState?.getParcelable(CONVERSATION_SCROLL_STATE)
+        hasRestoredRecyclerViewScrollState = false
 
         // Check if address is null before proceeding with initialization
         if (
@@ -924,12 +932,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             unreadCount = data.threadUnreadCount
             updateUnreadCountIndicator()
 
+            // If we have a saved RecyclerView scroll state (after rotation), restore it and skip first-load autoscroll.
+            if (!hasRestoredRecyclerViewScrollState && pendingRecyclerViewScrollState != null) {
+                val lm = binding.conversationRecyclerView.layoutManager
+                binding.conversationRecyclerView.runWhenLaidOut {
+                    lm?.onRestoreInstanceState(pendingRecyclerViewScrollState)
+                    hasRestoredRecyclerViewScrollState = true
+                    pendingRecyclerViewScrollState = null
+                }
+            }
+
             if (messageToScrollTo != null) {
                 if(gotoMessageById(messageToScrollTo!!.id, smoothScroll = messageToScrollTo!!.smoothScroll, highlight = firstLoad)){
                     messageToScrollTo = null
                 }
             } else {
-                if (firstLoad) {
+                if (firstLoad && pendingRecyclerViewScrollState == null && !hasRestoredRecyclerViewScrollState) {
                     scrollToFirstUnreadMessageOrBottom()
 
                     // On the first load, check if there unread messages
@@ -970,6 +988,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         viewModel.recipient.let {
             setUpOutdatedClientBanner()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        // Persist the current scroll position so rotations (e.g., portrait <-> landscape) don't jump to bottom.
+        val lm = binding.conversationRecyclerView.layoutManager
+        val state = lm?.onSaveInstanceState()
+        if (state != null) {
+            outState.putParcelable(CONVERSATION_SCROLL_STATE, state)
         }
     }
 
