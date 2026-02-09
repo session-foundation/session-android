@@ -183,7 +183,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val optionBlock: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.block),
-            icon = R.drawable.ic_user_round_x,
+            icon = R.drawable.ic_user_round_block,
             qaTag = R.string.qa_conversation_settings_block,
             onClick = ::confirmBlockUser
         )
