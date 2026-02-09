@@ -366,8 +366,8 @@ class VisibleMessageView : FrameLayout {
 
         // ----- Case i..) Message is incoming and scheduled to disappear -----
         if (message.isIncoming && scheduledToDisappear) {
-            // Display the status ('Read') and the show the timer only (no delivery icon)
-            binding.messageStatusTextView.isVisible  = true
+            // show the timer only (no delivery icon)
+            binding.messageStatusTextView.isVisible  = false
             binding.expirationTimerView.isVisible    = true
             binding.expirationTimerView.bringToFront()
             updateExpirationTimer(message)
