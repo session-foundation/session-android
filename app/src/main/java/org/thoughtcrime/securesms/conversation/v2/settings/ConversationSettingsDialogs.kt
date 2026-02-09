@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -36,7 +37,7 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsV
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupDescription
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupName
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CTAImage
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -80,6 +81,8 @@ fun ConversationSettingsDialogs(
             buttons.add(
                 DialogButtonData(
                     text = GetString(dialogsState.showSimpleDialog.negativeText),
+                    color = if (dialogsState.showSimpleDialog.negativeStyleDanger) LocalColors.current.danger
+                    else LocalColors.current.text,
                     qaTag = dialogsState.showSimpleDialog.negativeQaTag,
                     onClick = dialogsState.showSimpleDialog.onNegative
                 )
@@ -263,6 +266,7 @@ fun ConversationSettingsDialogs(
                         iconRes = R.drawable.ic_pro_badge,
                         iconSize = 40.sp to 18.sp,
                         style = LocalType.current.large,
+                        textQaTag = stringResource(R.string.qa_cta_body)
                     )
                 },
                 content = { CTAImage(heroImage = R.drawable.cta_hero_group) },
@@ -284,7 +288,7 @@ fun GroupAdminClearMessagesDialog(
     groupName: String,
     sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
 ){
-    var deleteForEveryone by remember { mutableStateOf(false) }
+    var deleteForEveryone by retain { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -441,7 +445,7 @@ fun PreviewCTAGroupDialog() {
     PreviewTheme {
         ConversationSettingsDialogs(
             dialogsState = ConversationSettingsViewModel.DialogsState(
-                proBadgeCTA = ConversationSettingsViewModel.ProBadgeCTA.Group(SubscriptionType.NeverSubscribed)
+                proBadgeCTA = ConversationSettingsViewModel.ProBadgeCTA.Group(ProStatus.NeverSubscribed)
             ),
             sendCommand = {}
         )

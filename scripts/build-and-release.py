@@ -62,7 +62,9 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
             gradle_commands += ' -Phuawei '
 
         subprocess.run(f"""{gradle_commands} \
-                    assemble{flavor.capitalize()}{build_type.capitalize()} \
+                    assemble{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
+
+        subprocess.run(f"""{gradle_commands} \
                     bundle{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
 
         apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/{build_type}')
@@ -151,9 +153,11 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
 
     # Make sure there are only last three versions of APKs
     all_apk_versions_and_ctime = [(re.search(r'session-(.+?)-', os.path.basename(name)).group(1), os.path.getmtime(name))
-                            for name in glob.glob(os.path.join(fdroid_workspace, 'repo/session-*-arm64-v8a.apk'))]
+                            for name in glob.glob(os.path.join(fdroid_workspace, 'repo/session-*-arm64-v8a*.apk'))]
+    
     # Sort by ctime DESC
     all_apk_versions_and_ctime.sort(key=lambda x: x[0], reverse=True)
+
     # Remove all but the last three versions
     for version, _ in all_apk_versions_and_ctime[KEEP_FDROID_VERSIONS:]:
         for apk in glob.glob(os.path.join(fdroid_workspace, f'repo/session-{version}-*.apk')):

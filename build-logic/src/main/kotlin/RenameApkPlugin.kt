@@ -20,11 +20,15 @@ class RenameApkPlugin : Plugin<Project> {
         project.plugins.withId("com.android.application") {
             val androidComponents = project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
             androidComponents.onVariants { variant ->
+                if (variant.buildType == "debug") {
+                    return@onVariants
+                }
+
                 val taskProvider = project.tasks.register(
                     "rename${variant.name.capitalized()}Apk",
                     RenameApkTask::class.java,
-                    variant.flavorName,
-                    variant.buildType
+                    variant.flavorName.orEmpty(),
+                    variant.buildType.orEmpty()
                 )
 
                 val request = variant.artifacts.use(taskProvider)
@@ -40,8 +44,8 @@ class RenameApkPlugin : Plugin<Project> {
 }
 
 abstract class RenameApkTask @Inject constructor(
-    private val flavourName: String?,
-    private val buildType: String?
+    private val flavourName: String,
+    private val buildType: String
 ) : DefaultTask() {
     @get:InputFiles
     abstract val inputDir: DirectoryProperty
@@ -65,6 +69,7 @@ abstract class RenameApkTask @Inject constructor(
                     flavourName,
                     buildType
                 ).filterNotNull()
+                    .filter { it.isNotBlank() }
                     .joinToString(separator = "-", postfix = ".apk")
 
                 val dst = outputDir.file(name).get().asFile

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -9,95 +8,116 @@
     app:behavior_hideable="true"
     app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/sheetScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:overScrollMode="ifContentScrolls">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/detailsTextView"
+                style="@style/BottomSheetActionItem"
+                android:contentDescription="@string/AccessibilityId_contactUserDetails"
+                android:text="@string/contactUserDetails"
+                app:drawableStartCompat="@drawable/ic_info"
+                app:drawableTint="?attr/colorControlNormal" />
+
+            <TextView
+                android:id="@+id/copyConversationId"
+                style="@style/BottomSheetActionItem"
+                android:text="@string/accountIDCopy"
+                android:visibility="visible"
+                app:drawableStartCompat="@drawable/ic_copy"
+                app:drawableTint="?attr/colorControlNormal" />
+
+            <TextView
+                android:id="@+id/copyCommunityUrl"
+                style="@style/BottomSheetActionItem"
+                android:text="@string/communityUrlCopy"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_copy"
+                app:drawableTint="?attr/colorControlNormal" />
+
+            <TextView
+                android:id="@+id/pinTextView"
+                style="@style/BottomSheetActionItem"
+                android:contentDescription="@string/AccessibilityId_pin"
+                android:text="@string/pin"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_pin"
+                app:drawableTint="?attr/colorControlNormal"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/unpinTextView"
+                style="@style/BottomSheetActionItem"
+                android:text="@string/pinUnpin"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_pin_off"
+                app:drawableTint="?attr/colorControlNormal"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/blockTextView"
+                style="@style/BottomSheetActionItem"
+                android:contentDescription="@string/AccessibilityId_block"
+                android:text="@string/block"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_user_round_block"
+                app:drawableTint="?attr/colorControlNormal"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/unblockTextView"
+                style="@style/BottomSheetActionItem"
+                android:text="@string/blockUnblock"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_check"
+                app:drawableTint="?attr/colorControlNormal"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/notificationsTextView"
+                style="@style/BottomSheetActionItem"
+                android:text="@string/sessionNotifications"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_volume_2"
+                app:drawableTint="?attr/colorControlNormal"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/markAllAsReadTextView"
+                style="@style/BottomSheetActionItem"
+                android:text="@string/messageMarkRead"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_mail_open"
+                app:drawableTint="?attr/colorControlNormal"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/markAsUnreadTextView"
+                style="@style/BottomSheetActionItem"
+                android:text="@string/messageMarkUnread"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_mail"
+                app:drawableTint="?attr/colorControlNormal"
+                tools:visibility="visible" />
+
     <TextView
-        android:id="@+id/detailsTextView"
+        android:id="@+id/adminLeaveGroupTextView"
         style="@style/BottomSheetActionItem"
-        android:contentDescription="@string/AccessibilityId_contactUserDetails"
-        android:text="@string/contactUserDetails"
-        app:drawableStartCompat="@drawable/ic_info"
+        android:contentDescription="@string/AccessibilityId_groupLeave"
+        android:visibility="gone"
+        android:text="@string/leave"
+        app:drawableStartCompat="@drawable/ic_log_out"
         app:drawableTint="?attr/colorControlNormal" />
 
-    <TextView
-        android:id="@+id/copyConversationId"
-        style="@style/BottomSheetActionItem"
-        android:visibility="visible"
-        android:text="@string/accountIDCopy"
-        app:drawableStartCompat="@drawable/ic_copy"
-        app:drawableTint="?attr/colorControlNormal" />
-
-    <TextView
-        android:id="@+id/copyCommunityUrl"
-        style="@style/BottomSheetActionItem"
-        android:visibility="gone"
-        android:text="@string/communityUrlCopy"
-        app:drawableStartCompat="@drawable/ic_copy"
-        app:drawableTint="?attr/colorControlNormal" />
-
-    <TextView
-        android:id="@+id/pinTextView"
-        style="@style/BottomSheetActionItem"
-        android:contentDescription="@string/AccessibilityId_pin"
-        android:text="@string/pin"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_pin"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/unpinTextView"
-        style="@style/BottomSheetActionItem"
-        android:text="@string/pinUnpin"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_pin_off"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/blockTextView"
-        style="@style/BottomSheetActionItem"
-        android:contentDescription="@string/AccessibilityId_block"
-        android:text="@string/block"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_user_round_x"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/unblockTextView"
-        style="@style/BottomSheetActionItem"
-        android:text="@string/blockUnblock"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_check"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/notificationsTextView"
-        style="@style/BottomSheetActionItem"
-        android:text="@string/sessionNotifications"
-        app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_volume_2"
-        tools:visibility="visible"
-        android:visibility="gone"
-        />
-
-    <TextView
-        android:id="@+id/markAllAsReadTextView"
-        style="@style/BottomSheetActionItem"
-        android:text="@string/messageMarkRead"
-        android:visibility="gone"
-        tools:visibility="visible"
-        app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_mail_open" />
-
-    <TextView
-        android:id="@+id/markAsUnreadTextView"
-        style="@style/BottomSheetActionItem"
-        android:text="@string/messageMarkUnread"
-        android:visibility="gone"
-        tools:visibility="visible"
-        app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_mail" />
 
     <TextView
         android:id="@+id/deleteTextView"
@@ -107,12 +127,15 @@
         app:drawableTint="?attr/colorControlNormal"
         tools:drawableStartCompat="@drawable/ic_trash_2" />
 
-    <TextView
-        android:id="@+id/deleteContactTextView"
-        style="@style/BottomSheetActionItem"
-        android:contentDescription="@string/qa_conversation_settings_delete_contact"
-        android:text="@string/contactDelete"
-        app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_user_round_trash" />
+            <TextView
+                android:id="@+id/deleteContactTextView"
+                style="@style/BottomSheetActionItem"
+                android:contentDescription="@string/qa_conversation_settings_delete_contact"
+                android:text="@string/contactDelete"
+                app:drawableStartCompat="@drawable/ic_user_round_trash"
+                app:drawableTint="?attr/colorControlNormal" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

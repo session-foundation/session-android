@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.pro.subscription
 
 import android.app.Application
-import android.widget.Toast
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -13,17 +12,14 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -31,12 +27,11 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager.PurchaseEvent
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -49,10 +44,11 @@ import javax.inject.Singleton
 @Singleton
 class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
-    @param:ManagerScope private val scope: CoroutineScope,
     private val currentActivityObserver: CurrentActivityObserver,
-    private val prefs: TextSecurePreferences
-) : SubscriptionManager {
+    private val prefs: TextSecurePreferences,
+    proStatusManager: ProStatusManager,
+    @param:ManagerScope scope: CoroutineScope,
+) : SubscriptionManager(proStatusManager, scope) {
     override val id = "google_play_store"
     override val name = "Google Play Store"
     override val description = ""
@@ -72,34 +68,23 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
         .stateIn(scope, SharingStarted.Eagerly, false)
 
-    override val quickRefundUrl = "https://support.google.com/googleplay/workflow/9813244"
-
-    private val _purchaseEvents = MutableSharedFlow<PurchaseEvent>(
-        replay = 0,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    override val purchaseEvents: SharedFlow<PurchaseEvent> = _purchaseEvents.asSharedFlow()
-
     private val billingClient by lazy {
         BillingClient.newBuilder(application)
             .setListener { result, purchases ->
-                Log.d(TAG, "onPurchasesUpdated: $result, $purchases")
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Billing callback. Result: $result, Purchases: ${purchases?.map { it.orderId }}")
+
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
-                        scope.launch {
-                           // signal that purchase was completed
-                            try {
-                                //todo PRO send confirmation to libsession
-                            } catch (e : Exception){
-                                _purchaseEvents.emit(PurchaseEvent.Failed())
-                            }
+                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label,
+                            "Billing callback. We have a purchase [${it.orderId}]. Acknowledged? ${it.isAcknowledged}")
 
-                            _purchaseEvents.emit(PurchaseEvent.Success)
-                        }
+                        onPurchaseSuccessful(
+                            orderId = it.orderId ?: "",
+                            paymentId = it.purchaseToken
+                        )
                     }
                 } else {
-                    Log.w(TAG, "Purchase failed or cancelled: $result")
+                    Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Purchase failed or cancelled: $result")
                     scope.launch {
                         _purchaseEvents.emit(PurchaseEvent.Cancelled)
                     }
@@ -126,8 +111,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             val result = getProductDetails()
 
-            check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                "Failed to query product details. Reason: ${result.billingResult}"
+            check(result?.billingResult?.responseCode == BillingClient.BillingResponseCode.OK) {
+                "Failed to query product details. Reason: ${result?.billingResult}"
             }
 
             val productDetails = checkNotNull(result.productDetailsList?.firstOrNull()) {
@@ -156,7 +141,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             // If user has an existing subscription, configure upgrade/downgrade
             if (existingPurchase != null) {
-                Log.d(TAG, "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION")
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Found existing subscription, configuring upgrade/downgrade with WITHOUT_PRORATION")
 
                 billingFlowParamsBuilder.setSubscriptionUpdateParams(
                     BillingFlowParams.SubscriptionUpdateParams.newBuilder()
@@ -183,17 +168,18 @@ class PlayStoreSubscriptionManager @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.e(TAG, "Error purchase plan", e)
+            Log.e(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error purchase plan", e)
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(application, application.getString(R.string.errorGeneric), Toast.LENGTH_LONG).show()
-            }
+            // pass the purchase error information to subscribers
+            _purchaseEvents.emit(PurchaseEvent.Failed.GenericError())
 
             return Result.failure(e)
         }
     }
 
-    private suspend fun getProductDetails(): ProductDetailsResult {
+    private suspend fun getProductDetails(): ProductDetailsResult? {
+        if(!billingClient.isReady || !_playBillingAvailable.value) return null
+
         return billingClient.queryProductDetails(
             QueryProductDetailsParams.newBuilder()
                 .setProductList(
@@ -211,6 +197,12 @@ class PlayStoreSubscriptionManager @Inject constructor(
     override fun onPostAppStarted() {
         super.onPostAppStarted()
 
+        if (!hasPlayServices() || !hasPlayStore()) {
+            _playBillingAvailable.update { false }
+            Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Play Billing unavailable (GMS/Play Store missing).")
+            return
+        }
+
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
 
@@ -218,12 +210,29 @@ class PlayStoreSubscriptionManager @Inject constructor(
             }
 
             override fun onBillingSetupFinished(result: BillingResult) {
-                Log.d(TAG, "onBillingSetupFinished with $result")
+                Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "onBillingSetupFinished with $result")
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     _playBillingAvailable.update { true }
+                } else {
+                    _playBillingAvailable.update { false }
+                    runCatching { billingClient.endConnection() }
                 }
             }
         })
+    }
+
+    private fun hasPlayServices(): Boolean {
+        val gms = GoogleApiAvailability.getInstance()
+        return gms.isGooglePlayServicesAvailable(application) == ConnectionResult.SUCCESS
+    }
+
+    private fun hasPlayStore(): Boolean {
+        return try {
+            val ai = application.packageManager.getApplicationInfo("com.android.vending", 0)
+            ai.enabled
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**
@@ -231,6 +240,8 @@ class PlayStoreSubscriptionManager @Inject constructor(
      * Returns null if no active subscription is found.
      */
     private suspend fun getExistingSubscription(): Purchase? {
+        if(!billingClient.isReady || !_playBillingAvailable.value) return null
+
         return try {
             val params = QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -240,10 +251,10 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             // Return the first active subscription
             result.purchasesList.firstOrNull {
-                it.purchaseState == Purchase.PurchaseState.PURCHASED //todo PRO Should we also OR PENDING here?
+                it.purchaseState == Purchase.PurchaseState.PURCHASED
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error querying existing subscription", e)
+            Log.e(DebugLogGroup.PRO_SUBSCRIPTION.label, "Error querying existing subscription", e)
             null
         }
     }
@@ -254,31 +265,16 @@ class PlayStoreSubscriptionManager @Inject constructor(
         else getExistingSubscription() != null
     }
 
-    override suspend fun isWithinQuickRefundWindow(): Boolean {
-        if(prefs.getDebugIsWithinQuickRefund() && prefs.forceCurrentUserAsPro()) return true // debug mode
-
-        val purchaseTimeMillis = getExistingSubscription()?.purchaseTime ?: return false
-
-        val now = Instant.now()
-        val purchaseInstant = Instant.ofEpochMilli(purchaseTimeMillis)
-
-        // Google Play allows refunds within 48 hours of purchase
-        val refundWindowHours = 48
-        val refundDeadline = purchaseInstant.plus(refundWindowHours.toLong(), ChronoUnit.HOURS)
-
-        return now.isBefore(refundDeadline)
-    }
-
     @Throws(Exception::class)
     override suspend fun getSubscriptionPrices(): List<SubscriptionManager.SubscriptionPricing> {
         val result = getProductDetails()
-        check(result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-            "Failed to query product details. Reason: ${result.billingResult}"
+        check(result?.billingResult?.responseCode == BillingClient.BillingResponseCode.OK) {
+            "Failed to query product details. Reason: ${result?.billingResult}"
         }
 
         val productDetails = result.productDetailsList?.firstOrNull()
             ?: run {
-                Log.w(TAG, "No ProductDetails returned for product id session_pro")
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "No ProductDetails returned for product id session_pro")
                 return emptyList()
             }
 
@@ -290,7 +286,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
         return availablePlans.mapNotNull { duration ->
             val offer = offersByBasePlan[duration.id]
             if (offer == null) {
-                Log.w(TAG, "No offer found for basePlanId=${duration.id}")
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "No offer found for basePlanId=${duration.id}")
                 return@mapNotNull null
             }
 

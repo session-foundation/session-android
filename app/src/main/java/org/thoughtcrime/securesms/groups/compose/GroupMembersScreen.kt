@@ -138,6 +138,7 @@ private fun EditGroupPreview() {
                     )
                 )
             ),
+            isSelf = false
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -160,6 +161,7 @@ private fun EditGroupPreview() {
                     )
                 )
             ),
+            isSelf = false
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -182,6 +184,7 @@ private fun EditGroupPreview() {
                     )
                 )
             ),
+            isSelf = false
         )
 
         GroupMembers(

@@ -25,10 +25,8 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.BaseViewModelTest
@@ -74,7 +72,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
             blocked = false,
             expiryMode = ExpiryMode.NONE,
             1,
-            proStatus = ProStatus.None,
+            proData = null,
             profileUpdatedAt = null
         )
     )
@@ -89,11 +87,12 @@ class ConversationViewModelTest : BaseViewModelTest() {
     private fun createViewModel(recipient: Recipient): ConversationViewModel {
         return ConversationViewModel(
             repository = repository,
-            storage = storage,
+            storage = mock{
+                on { getThreadId(recipient.address) } doReturn threadId
+            },
             groupDb = mock(),
             threadDb = mock {
                 on { getOrCreateThreadIdFor(recipient.address) } doReturn threadId
-                on { getThreadIdIfExistsFor(recipient.address) } doReturn threadId
                 on { updateNotifications } doAnswer {
                     emptyFlow()
                 }
@@ -112,7 +111,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
             },
             expiredGroupManager = mock(),
             avatarUtils = avatarUtils,
-            lokiAPIDb = mock(),
             dateUtils = mock(),
             proStatusManager = mock(),
             upmFactory = mock(),
@@ -131,6 +129,12 @@ class ConversationViewModelTest : BaseViewModelTest() {
             attachmentDatabase = mock {
                 on { changesNotification } doReturn MutableSharedFlow()
             },
+            openGroupManager = mock(),
+            attachmentDownloadJobFactory = mock(),
+            communityApiExecutor = mock(),
+            deleteAllReactionsApiFactory = mock(),
+            loginStateRepository = mock(),
+            audioPlaybackManager = mock(),
         )
     }
 

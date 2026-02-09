@@ -30,6 +30,7 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.applyCollapsedEllipsisMinWidth
 import org.session.libsession.utilities.clearCollapsedMinWidth
@@ -37,6 +38,8 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.needsCollapsing
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.displayName
+import org.thoughtcrime.securesms.audio.model.PlayableAudioMapper
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.DOCUMENT
@@ -63,7 +66,6 @@ class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
-    var indexInAdapter: Int = -1
 
     private val MAX_COLLAPSED_LINE_COUNT = 25
 
@@ -86,6 +88,8 @@ class VisibleMessageContentView : ConstraintLayout {
         searchQuery: String? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+        confirmCommunityJoin: (String, String) -> Unit,
+        confirmAttachmentDownload: (DatabaseAttachment)->Unit,
         suppressThumbnails: Boolean = false,
         isTextExpanded: Boolean = false,
         onTextExpanded: ((MessageId) -> Unit)? = null
@@ -177,7 +181,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 val r = Rect()
                 binding.quoteView.root.getGlobalVisibleRect(r)
                 if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
-                    delegate?.highlightMessageFromTimestamp(quote.id)
+                    delegate?.gotoMessageByTimestamp(timestamp = quote.id, smoothScroll = true, highlight = true)
                 }
             }
         }
@@ -211,13 +215,25 @@ class VisibleMessageContentView : ConstraintLayout {
                 // Audio attachment
                 if (overallAttachmentState == AttachmentState.DONE || message.isOutgoing) {
                     binding.voiceMessageView.root.isVisible = true
-                    binding.voiceMessageView.root.indexInAdapter = indexInAdapter
                     binding.voiceMessageView.root.delegate = context as? ConversationActivityV2
-                    binding.voiceMessageView.root.bind(message, isStartOfMessageCluster, isEndOfMessageCluster)
-                    // We have to use onContentClick (rather than a click listener directly on the voice
-                    // message view) so as to not interfere with all the other gestures.
-                    onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
-                    onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
+                    val sender = if(message.isOutgoing){
+                        recipientRepository.getSelf()
+                    } else message.individualRecipient
+
+                    val audioSlide = message.slideDeck.audioSlide!!
+                    val playable = PlayableAudioMapper.fromAudioSlide(
+                        slide = audioSlide,
+                        messageId = message.messageId ,
+                        thread = thread.address as Address.Conversable,
+                        senderName = sender.displayName(),
+                        senderAvatar = sender.avatar
+                    )
+
+                    binding.voiceMessageView.root.bind(
+                        playable = playable,
+                        message = message
+                    )
+
                     binding.attachmentControlView.root.isVisible = false
                 } else {
                     val attachment = message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment
@@ -229,7 +245,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             type = if (it.isVoiceNote) VOICE
                             else AUDIO,
                             overallAttachmentState,
-                            retryFailedAttachments = retryFailedAttachments
+                            retryFailedAttachments = retryFailedAttachments,
+                            confirmAttachmentDownload = confirmAttachmentDownload
                         )
                     }
                 }
@@ -281,7 +298,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             attachments = listOf(it),
                             type = DOCUMENT,
                             overallAttachmentState,
-                            retryFailedAttachments = retryFailedAttachments
+                            retryFailedAttachments = retryFailedAttachments,
+                            confirmAttachmentDownload = confirmAttachmentDownload
                         )
                     }
                 }
@@ -326,7 +344,8 @@ class VisibleMessageContentView : ConstraintLayout {
                             type = if (message.slideDeck.hasVideo()) VIDEO
                             else IMAGE,
                             state = overallAttachmentState,
-                            retryFailedAttachments = retryFailedAttachments
+                            retryFailedAttachments = retryFailedAttachments,
+                            confirmAttachmentDownload = confirmAttachmentDownload
                         )
                     }
                 }
@@ -334,7 +353,11 @@ class VisibleMessageContentView : ConstraintLayout {
             message.isOpenGroupInvitation -> {
                 hideBody = true
                 binding.openGroupInvitationView.root.bind(message, getTextColor(context, message))
-                onContentClick.add { binding.openGroupInvitationView.root.joinOpenGroup() }
+                onContentClick.add {
+                    binding.openGroupInvitationView.root.getCommunityInviteData()?.let{
+                        confirmCommunityJoin(it.first, it.second)
+                    }
+                }
             }
         }
 
@@ -412,6 +435,7 @@ class VisibleMessageContentView : ConstraintLayout {
         type: AttachmentControlView.AttachmentType,
         state: AttachmentState,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+        confirmAttachmentDownload: (DatabaseAttachment)->Unit
     ){
         binding.attachmentControlView.root.isVisible = true
         binding.albumThumbnailView.root.clearViews()
@@ -427,10 +451,9 @@ class VisibleMessageContentView : ConstraintLayout {
             // While downloads haven't been enabled for this convo, show a confirmation dialog
             AttachmentState.PENDING -> {
                 onContentClick.add {
-                    binding.attachmentControlView.root.showDownloadDialog(
-                        thread,
-                        attachments.first()
-                    )
+                    if (thread.autoDownloadAttachments != true) {
+                        confirmAttachmentDownload(attachments.first())
+                    }
                 }
             }
 
@@ -464,6 +487,7 @@ class VisibleMessageContentView : ConstraintLayout {
         listOf<View>(albumThumbnailView.root, linkPreviewView.root, voiceMessageView.root, quoteView.root).none { it.isVisible }
 
     fun recycle() {
+        binding.voiceMessageView.root.recycle()
         arrayOf(
             binding.deletedMessageView.root,
             binding.attachmentControlView.root,
@@ -478,7 +502,7 @@ class VisibleMessageContentView : ConstraintLayout {
     }
 
     fun playVoiceMessage() {
-        binding.voiceMessageView.root.togglePlayback()
+        binding.voiceMessageView.root.onPlayPauseClicked()
     }
 
     fun playHighlight() {

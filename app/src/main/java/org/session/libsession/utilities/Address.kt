@@ -8,10 +8,9 @@ import kotlinx.serialization.Serializable
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util
 import java.util.LinkedList
-import org.session.libsignal.utilities.Log
-import kotlin.text.startsWith
 
 @Serializable(with = AddressSerializer::class)
 sealed interface Address : Parcelable, Comparable<Address> {
@@ -81,7 +80,7 @@ sealed interface Address : Parcelable, Comparable<Address> {
     }
 
     data class LegacyGroup(val groupPublicKeyHex: String) : Conversable, GroupLike {
-        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+        override val address: String by lazy {
             GroupUtil.doubleEncodeGroupID(groupPublicKeyHex)
         }
 
@@ -101,7 +100,7 @@ sealed interface Address : Parcelable, Comparable<Address> {
         override val accountId: AccountId
             get() = blindedId.blindedId
 
-        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+        override val address: String by lazy {
             "${URI_PREFIX}${blindedId.blindedId.hexString}"
                 .toUri()
                 .buildUpon()
@@ -136,7 +135,7 @@ sealed interface Address : Parcelable, Comparable<Address> {
             }
         }
 
-        override val address: String by lazy(LazyThreadSafetyMode.NONE) {
+        override val address: String by lazy {
             "${URI_PREFIX}${Uri.encode(serverUrl)}"
                 .toUri()
                 .buildUpon()
@@ -175,7 +174,7 @@ sealed interface Address : Parcelable, Comparable<Address> {
     /**
      * A marker interface for addresses that represent a group-like entity.
      */
-    sealed interface GroupLike : Address
+    sealed interface GroupLike : Conversable
 
     sealed interface WithAccountId {
         val accountId: AccountId

@@ -9,13 +9,9 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Document;
-import org.session.libsession.utilities.IdentityKeyMismatch;
-import org.session.libsession.utilities.IdentityKeyMismatchList;
-import org.session.libsignal.crypto.IdentityKey;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-import org.thoughtcrime.securesms.database.model.MessageRecord;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,29 +53,8 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract void updateThreadId(long fromId, long toId);
 
-  public abstract MessageRecord getMessageRecord(long messageId) throws NoSuchMessageException;
-
   public abstract String getTypeColumn();
 
-  public void addMismatchedIdentity(long messageId, Address address, IdentityKey identityKey) {
-    try {
-      addToDocument(messageId, MISMATCHED_IDENTITIES,
-                    new IdentityKeyMismatch(address, identityKey),
-                    IdentityKeyMismatchList.class);
-    } catch (IOException e) {
-      Log.w(TAG, e);
-    }
-  }
-
-  public void removeMismatchedIdentity(long messageId, Address address, IdentityKey identityKey) {
-    try {
-      removeFromDocument(messageId, MISMATCHED_IDENTITIES,
-                         new IdentityKeyMismatch(address, identityKey),
-                         IdentityKeyMismatchList.class);
-    } catch (IOException e) {
-      Log.w(TAG, e);
-    }
-  }
 
   protected <D extends Document<I>, I> void removeFromDocument(long messageId, String column, I object, Class<D> clazz) throws IOException {
     SQLiteDatabase database = getWritableDatabase();

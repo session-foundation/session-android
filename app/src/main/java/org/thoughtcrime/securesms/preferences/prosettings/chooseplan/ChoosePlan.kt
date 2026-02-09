@@ -48,9 +48,13 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.ACTIVATION_TYPE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.ENTITY_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
@@ -62,9 +66,8 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.C
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowTCPolicyDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlan
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
-import org.thoughtcrime.securesms.pro.SubscriptionType
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
-import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
@@ -74,6 +77,7 @@ import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
 import org.thoughtcrime.securesms.ui.components.radioButtonColors
 import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.sessionDropShadow
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -103,22 +107,22 @@ fun ChoosePlan(
         Spacer(Modifier.height(LocalDimensions.current.spacing))
 
         val context = LocalContext.current
-        val title = when (planData.subscriptionType) {
-            is SubscriptionType.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
+        val title = when (planData.proStatus) {
+            is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
+                .put(DATE_KEY, planData.proStatus.renewingAtFormatted())
                 .format()
 
-            is SubscriptionType.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
+            is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(
                     CURRENT_PLAN_LENGTH_KEY, DateUtils.getLocalisedTimeDuration(
                         context = context,
-                        amount = planData.subscriptionType.duration.duration.months,
+                        amount = planData.proStatus.duration.duration.months,
                         unit = MeasureUnit.MONTH
                     )
                 )
-                .put(DATE_KEY, planData.subscriptionType.duration.expiryFromNow())
+                .put(DATE_KEY, planData.proStatus.renewingAtFormatted())
                 .format()
 
             else ->
@@ -165,12 +169,12 @@ fun ChoosePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
 
-        val buttonLabel = when (planData.subscriptionType) {
-            is SubscriptionType.Expired -> context.getString(R.string.renew)
-            is SubscriptionType.Active.Expiring -> Phrase.from(LocalContext.current, R.string.updateAccess)
+        val buttonLabel = when (planData.proStatus) {
+            is ProStatus.Expired -> context.getString(R.string.renew)
+            is ProStatus.Active.Expiring -> Phrase.from(LocalContext.current, R.string.updateAccess)
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format().toString()
-            is SubscriptionType.NeverSubscribed -> stringResource(R.string.upgrade)
+            is ProStatus.NeverSubscribed -> stringResource(R.string.upgrade)
             else -> Phrase.from(LocalContext.current, R.string.updateAccess)
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format().toString()
@@ -191,24 +195,25 @@ fun ChoosePlan(
 
         Spacer(Modifier.height(LocalDimensions.current.xxsSpacing))
 
-        val footer = when (planData.subscriptionType) {
-            is SubscriptionType.Expired ->
-                Phrase.from(LocalContext.current.getText(R.string.proRenewTosPrivacy))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(ICON_KEY, iconExternalLink)
-                    .format()
+        val (footerAction, footerActivation) = when (planData.proStatus) {
+            is ProStatus.Expired ->
+                stringResource(R.string.proRenewingAction) to
+                        stringResource(R.string.proReactivatingActivation)
 
-            is SubscriptionType.Active -> Phrase.from(LocalContext.current.getText(R.string.proTosPrivacy))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .put(ICON_KEY, iconExternalLink)
-                .format()
 
-            is SubscriptionType.NeverSubscribed ->
-                Phrase.from(LocalContext.current.getText(R.string.proUpgradingTosPrivacy))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(ICON_KEY, iconExternalLink)
-                    .format()
+            is ProStatus.Active -> stringResource(R.string.proUpdatingAction) to ""
+
+            is ProStatus.NeverSubscribed ->
+                stringResource(R.string.proUpgradingAction) to
+                        stringResource(R.string.proActivatingActivation)
+
         }
+
+        val footer = Phrase.from(LocalContext.current.getText(R.string.noteTosPrivacyPolicy))
+            .put(ACTION_TYPE_KEY, footerAction)
+            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+            .put(ICON_KEY, iconExternalLink)
+            .format()
 
         Text(
             modifier = Modifier.fillMaxWidth()
@@ -224,13 +229,33 @@ fun ChoosePlan(
                 .clip(MaterialTheme.shapes.extraSmall),
             text = annotatedStringResource(footer),
             textAlign = TextAlign.Center,
-            style = LocalType.current.small,
+            style = LocalType.current.base,
             color = LocalColors.current.text,
             inlineContent = inlineContentMap(
                 textSize = LocalType.current.small.fontSize,
                 imageColor = LocalColors.current.text
             ),
         )
+
+        // add another label in cases other than an active subscription
+        if (planData.proStatus !is ProStatus.Active) {
+            Spacer(Modifier.height(LocalDimensions.current.xxxsSpacing))
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = annotatedStringResource(
+                    Phrase.from(LocalContext.current.getText(R.string.proTosDescription))
+                        .put(ACTION_TYPE_KEY, footerAction)
+                        .put(ACTIVATION_TYPE_KEY, footerActivation)
+                        .put(ENTITY_KEY, NonTranslatableStringConstants.ENTITY_STF)
+                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                        .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                        .format()
+                ),
+                textAlign = TextAlign.Center,
+                style = LocalType.current.base,
+                color = LocalColors.current.text,
+            )
+        }
     }
 }
 
@@ -244,6 +269,7 @@ private fun PlanItem(
     onClick: () -> Unit
 ){
     val density = LocalDensity.current
+    val isLight = LocalColors.current.isLight
 
     // outer box
     Box(modifier = modifier.fillMaxWidth()) {
@@ -251,13 +277,17 @@ private fun PlanItem(
         Box(
             modifier = modifier
                 .padding(top = if(proPlan.badges.isNotEmpty()) maxOf(badgePadding, 9.dp) else 0.dp) // 9.dp is a simple fallback to match default styling
+                .then(
+                    if(isLight) Modifier.sessionDropShadow()
+                    else Modifier
+                )
                 .background(
                     color = LocalColors.current.backgroundSecondary,
                     shape = MaterialTheme.shapes.small
                 )
                 .border(
                     width = 1.dp,
-                    color = if(proPlan.selected) LocalColors.current.accent else LocalColors.current.borders,
+                    color = if(proPlan.selected) LocalColors.current.accentText else LocalColors.current.borders,
                     shape = MaterialTheme.shapes.small
                 )
                 .clip(MaterialTheme.shapes.small)
@@ -295,7 +325,7 @@ private fun PlanItem(
                     enabled = enabled,
                     colors = radioButtonColors(
                         unselectedBorder = LocalColors.current.borders,
-                        selectedBorder = LocalColors.current.accent,
+                        selectedBorder = LocalColors.current.accentText,
                     )
                 )
             }
@@ -346,7 +376,7 @@ private fun PlanBadge(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = LocalType.current.small.bold().copy(
-                    color = LocalColors.current.accentButtonFillText
+                    color = LocalColors.current.textOnAccent
                 )
             )
 
@@ -361,7 +391,7 @@ private fun PlanBadge(
                     Image(
                         painter = painterResource(id = R.drawable.ic_circle_help),
                         contentDescription = null,
-                        colorFilter = ColorFilter.tint(LocalColors.current.accentButtonFillText),
+                        colorFilter = ColorFilter.tint(LocalColors.current.textOnAccent),
                         modifier = Modifier
                             .size(LocalDimensions.current.iconXXSmall)
                             .clickable {

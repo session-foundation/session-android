@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.plugin.parcelize)
@@ -12,9 +11,9 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
+    id("local-snode-pool")
     id("rename-apk")
     id("witness")
 }
@@ -26,8 +25,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 430
-val canonicalVersionName = "1.30.0"
+val canonicalVersionCode = 437
+val canonicalVersionName = "1.31.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -86,26 +85,10 @@ kotlin {
     }
 }
 
-protobuf {
-    protoc {
-        artifact = libs.protoc.get().toString()
-    }
-
-    plugins {
-        generateProtoTasks {
-            all().forEach {
-                it.builtins {
-                    create("java") {
-                    }
-                }
-            }
-        }
-    }
-}
+val testJvmAgent = configurations.create("mockitoAgent")
 
 android {
     namespace = "network.loki.messenger"
-    useLibrary("org.apache.http.legacy")
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -152,6 +135,13 @@ android {
         buildConfigField("String", "USER_AGENT", "\"OWA\"")
         buildConfigField("int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode")
 
+        buildConfigField("org.thoughtcrime.securesms.pro.ProBackendConfig", "PRO_BACKEND_DEV", """
+            new org.thoughtcrime.securesms.pro.ProBackendConfig(
+                "https://pro-backend-dev.getsession.org",
+                "fc947730f49eb01427a66e050733294d9e520e545c7a27125a780634e0860a27"
+            )
+        """.trimIndent())
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
         testOptions {
@@ -161,8 +151,12 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                file("proguard-rules.pro")
+            )
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
@@ -198,7 +192,6 @@ android {
 
         getByName("debug") {
             isDefault = true
-            isMinifyEnabled = false
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
@@ -210,34 +203,30 @@ android {
         }
     }
 
-    sourceSets {
-        getByName("test").apply {
-            java.srcDirs("$projectDir/src/sharedTest/java")
-            resources.srcDirs("$projectDir/src/main/assets")
-        }
+    testBuildType = "debug"
 
+    sourceSets {
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
-            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+            maybeCreate(variant).kotlin.directories += "$firebaseCommonDir/kotlin"
         }
 
         val nonPlayCommonDir = "src/nonPlayCommon"
         nonPlayVariants.forEach { variant ->
             maybeCreate(variant).apply {
-                java.srcDirs("$nonPlayCommonDir/kotlin")
-                resources.srcDirs("$nonPlayCommonDir/resources")
+                kotlin.directories += "$nonPlayCommonDir/kotlin"
+                resources.directories += "$nonPlayCommonDir/resources"
             }
         }
 
         val nonDebugDir = "src/nonDebug"
         nonDebugBuildTypes.forEach { buildType ->
             maybeCreate(buildType).apply {
-                java.srcDirs("$nonDebugDir/kotlin")
-                resources.srcDirs("$nonDebugDir/resources")
+                kotlin.directories += "$nonDebugDir/kotlin"
+                resources.directories += "$nonDebugDir/resources"
             }
         }
     }
-
 
     signingConfigs {
         create("play") {
@@ -304,6 +293,9 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.jvmArgs("-javaagent:${testJvmAgent.asPath}")
+        }
     }
 
     lint {
@@ -332,6 +324,8 @@ android {
 
     testNamespace = "network.loki.messenger.test"
 }
+
+
 
 dependencies {
     implementation(project(":content-descriptions"))
@@ -378,10 +372,20 @@ dependencies {
     if (huaweiEnabled) {
         val huaweiImplementation = configurations.maybeCreate("huaweiImplementation")
         huaweiImplementation(libs.huawei.push)
+
+        // These are compileOnly on the Huawei flavor so R8 can resolve optional HMS classes
+        // referenced by HMS Push during minification.
+        compileOnly(libs.huawei.hianalytics)
+        compileOnly(libs.huawei.availableupdate)
     }
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.media3.ui.compose)
+    implementation(libs.androidx.media3.ui.compose.material3)
+
     implementation(libs.conscrypt.android)
     implementation(libs.android)
     implementation(libs.photoview)
@@ -397,28 +401,19 @@ dependencies {
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.protobuf.java)
     implementation(libs.jackson.databind)
     implementation(libs.okhttp)
     implementation(libs.phrase)
     implementation(libs.copper.flow)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.guava)
-    implementation(libs.kovenant)
-    implementation(libs.kovenant.android)
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
 
-    if (hasIncludedLibSessionUtilProject) {
-        implementation(
-            group = libs.libsession.util.android.get().group,
-            name = libs.libsession.util.android.get().name,
-            version = "dev-snapshot"
-        )
-    } else {
-        implementation(libs.libsession.util.android)
-    }
+    // If libsession_util project is included into the build, use that, otherwise use the published version
+    findProject(":libsession-util-android")?.let(::implementation)
+        ?: implementation(libs.libsession.util.android)
 
     implementation(libs.kryo)
     testImplementation(libs.junit)
@@ -437,8 +432,14 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.truth)
     testImplementation(libs.truth)
+    testImplementation(libs.androidx.sqlite.framework)
     androidTestImplementation(libs.truth)
     testRuntimeOnly(libs.mockito.core)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlin.test)
+
+    // Pull in appropriate JVM agents for unit test
+    testJvmAgent(libs.mockito.core) { isTransitive = false }
 
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.contrib)
@@ -452,7 +453,6 @@ dependencies {
     androidTestUtil(libs.androidx.orchestrator)
 
     testImplementation(libs.robolectric)
-    testImplementation(libs.robolectric.shadows.multidex)
     testImplementation(libs.conscrypt.openjdk.uber)
     testImplementation(libs.turbine)
 

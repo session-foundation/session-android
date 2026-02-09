@@ -11,12 +11,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -40,11 +45,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,31 +60,28 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ChangeEnvironment
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ClearTrustedDownloads
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.Copy07PrefixedBlindedPublicKey
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.CopyAccountId
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.HideDeprecationChangeDialog
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.HideEnvironmentWarningDialog
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.OverrideDeprecationState
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ScheduleTokenNotification
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowDeprecationChangeDialog
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowEnvironmentWarningDialog
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.GenerateContacts
-import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.*
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.FALSE
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.NOT_SET
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_1
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_2
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_3
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_4
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.TRUE
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
+import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.Button
-import org.thoughtcrime.securesms.ui.components.ButtonType
 import org.thoughtcrime.securesms.ui.components.DropDown
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
-import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -100,11 +104,11 @@ fun DebugMenu(
     val datePickerState = rememberDatePickerState()
     val timePickerState = rememberTimePickerState()
 
-    var showingDeprecatedDatePicker by remember { mutableStateOf(false) }
-    var showingDeprecatedTimePicker by remember { mutableStateOf(false) }
+    var showingDeprecatedDatePicker by retain { mutableStateOf(false) }
+    var showingDeprecatedTimePicker by retain { mutableStateOf(false) }
 
-    var showingDeprecatingStartDatePicker by remember { mutableStateOf(false) }
-    var showingDeprecatingStartTimePicker by remember { mutableStateOf(false) }
+    var showingDeprecatingStartDatePicker by retain { mutableStateOf(false) }
+    var showingDeprecatingStartTimePicker by retain { mutableStateOf(false) }
 
     val getPickedTime = {
         val localDate = ZonedDateTime.ofInstant(
@@ -123,7 +127,8 @@ fun DebugMenu(
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
-        }
+        },
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         // display a snackbar when required
         LaunchedEffect(uiState.snackMessage) {
@@ -175,13 +180,21 @@ fun DebugMenu(
             LoadingDialog(title = "Applying changes...")
         }
 
+        val layoutDirection = LocalLayoutDirection.current
+        val safeInsetsPadding = PaddingValues(
+            start = contentPadding.calculateStartPadding(layoutDirection) + LocalDimensions.current.spacing,
+            end = contentPadding.calculateEndPadding(layoutDirection) + LocalDimensions.current.spacing,
+            top = contentPadding.calculateTopPadding(),
+            bottom = contentPadding.calculateBottomPadding(),
+        )
+
         Column(
             modifier = Modifier
                 .background(LocalColors.current.background)
-                .padding(horizontal = LocalDimensions.current.spacing)
+                .padding(safeInsetsPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(contentPadding.calculateTopPadding()))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             // Info pane
             val clipboardManager = LocalClipboardManager.current
@@ -216,24 +229,44 @@ fun DebugMenu(
                 )
             }
 
-            if (uiState.dbInspectorState != DebugMenuViewModel.DatabaseInspectorState.NOT_AVAILABLE) {
-                DebugCell("Database inspector") {
-                    Button(
-                        onClick = {
-                            sendCommand(DebugMenuViewModel.Commands.ToggleDatabaseInspector)
-                        },
-                        text = if (uiState.dbInspectorState == DebugMenuViewModel.DatabaseInspectorState.STOPPED)
-                            "Start"
-                        else "Stop",
-                        type = ButtonType.AccentFill,
-                    )
+            // Debug Logger
+            DebugCell(
+                "Debug Logger",
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            )
+            {
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+
+                SlimFillButtonRect(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Show Debug Logs",
+                ) {
+                    sendCommand(DebugMenuViewModel.Commands.NavigateTo(DebugMenuDestination.DebugMenuLogs))
+                }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+                Column {
+                    DebugLogGroup.entries.forEach { logGroup ->
+                        DebugSwitchRow(
+                            text = "Show toasts for ${logGroup.label}",
+                            checked = uiState.showToastForGroups[logGroup.label] == true,
+                            onCheckedChange = {
+                                sendCommand(DebugMenuViewModel.Commands.ToggleDebugLogGroup(
+                                    group = logGroup,
+                                    showToast = it)
+                                )
+                            }
+                        )
+                    }
                 }
             }
 
             // Session Pro
             DebugCell(
                 "Session Pro",
-                verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                verticalArrangement = Arrangement.spacedBy(0.dp))
+            {
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
                 Text(text = "Purchase a plan")
@@ -266,7 +299,8 @@ fun DebugMenu(
                             style = LocalType.current.base
                         )
                         DropDown(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .padding(top = LocalDimensions.current.xxsSpacing),
                             selectedText = uiState.selectedDebugSubscriptionStatus.label,
                             values = uiState.debugSubscriptionStatuses.map { it.label },
@@ -297,7 +331,8 @@ fun DebugMenu(
                     style = LocalType.current.base
                 )
                 DropDown(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .padding(top = LocalDimensions.current.xxsSpacing),
                     selectedText = uiState.selectedDebugProPlanStatus.label,
                     values = uiState.debugProPlanStatus.map { it.label },
@@ -329,45 +364,21 @@ fun DebugMenu(
                 )
 
                 AnimatedVisibility(uiState.forceIncomingMessagesAsPro) {
-                    Column{
-                        DebugCheckboxRow(
-                            text = "Message Feature: Pro Badge",
-                            minHeight = 30.dp,
-                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.ProBadge),
-                            onCheckedChange = {
-                                sendCommand(
-                                    DebugMenuViewModel.Commands.SetMessageProFeature(
-                                        ProStatusManager.MessageProFeature.ProBadge, it
+                    Column {
+                        for (feature in (ProMessageFeature.entries + ProProfileFeature.entries)) {
+                            DebugCheckboxRow(
+                                text = "Message Feature: ${feature.name}",
+                                minHeight = 30.dp,
+                                checked = uiState.messageProFeature.contains(feature),
+                                onCheckedChange = {
+                                    sendCommand(
+                                        DebugMenuViewModel.Commands.SetMessageProFeature(
+                                            feature, it
+                                        )
                                     )
-                                )
-                            }
-                        )
-
-                        DebugCheckboxRow(
-                            text = "Message Feature: Long Message",
-                            minHeight = 30.dp,
-                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.LongMessage),
-                            onCheckedChange = {
-                                sendCommand(
-                                    DebugMenuViewModel.Commands.SetMessageProFeature(
-                                        ProStatusManager.MessageProFeature.LongMessage, it
-                                    )
-                                )
-                            }
-                        )
-
-                        DebugCheckboxRow(
-                            text = "Message Feature: Animated Avatar",
-                            minHeight = 30.dp,
-                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.AnimatedAvatar),
-                            onCheckedChange = {
-                                sendCommand(
-                                    DebugMenuViewModel.Commands.SetMessageProFeature(
-                                        ProStatusManager.MessageProFeature.AnimatedAvatar, it
-                                    )
-                                )
-                            }
-                        )
+                                }
+                            )
+                        }
                     }
 
                 }
@@ -409,6 +420,85 @@ fun DebugMenu(
                 }
             }
 
+            if (uiState.dbInspectorState != DebugMenuViewModel.DatabaseInspectorState.NOT_AVAILABLE) {
+                DebugCell("Database inspector") {
+                    SlimFillButtonRect(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            sendCommand(DebugMenuViewModel.Commands.ToggleDatabaseInspector)
+                        },
+                        text = if (uiState.dbInspectorState == DebugMenuViewModel.DatabaseInspectorState.STOPPED)
+                            "Start"
+                        else "Stop",
+                    )
+                }
+            }
+
+            // Donations
+            DebugCell("Donations") {
+                Text(
+                    text = "First app install: ${uiState.firstInstall}",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Has donated: ${uiState.hasDonated}",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Has copied donate URL: ${uiState.hasCopiedDonationURL}",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Seen donation CTA amount: ${uiState.seenDonateCTAAmount} times",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Last seen donation CTA: ${uiState.lastSeenDonateCTA}",
+                    style = LocalType.current.base
+                )
+                Text(
+                    text = "Show CTA from positive review: ${uiState.showDonateCTAFromPositiveReview}",
+                    style = LocalType.current.base
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
+                Divider()
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
+
+                DebugDropDownRow(
+                    text = "Debug 'Has donated': ",
+                    selectedText = uiState.hasDonatedDebug,
+                    values = listOf(NOT_SET, TRUE, FALSE),
+                    onValueSelected = {
+                        sendCommand(SetDebugHasDonated(it))
+                    }
+                )
+                DebugDropDownRow(
+                    text = "Debug 'Has copied link': ",
+                    selectedText = uiState.hasCopiedDonationURLDebug,
+                    values = listOf(NOT_SET, TRUE, FALSE),
+                    onValueSelected = {
+                        sendCommand(SetDebugHasCopiedDonation(it))
+                    }
+                )
+                DebugDropDownRow(
+                    text = "Debug 'CTA seen amount': ",
+                    selectedText = uiState.seenDonateCTAAmountDebug,
+                    values = listOf(NOT_SET, SEEN_1, SEEN_2, SEEN_3, SEEN_4),
+                    onValueSelected = {
+                        sendCommand(SetDebugDonationCTAViews(it))
+                    }
+                )
+                DebugDropDownRow(
+                    text = "Debug 'Show donation from app review': ",
+                    selectedText = uiState.showDonateCTAFromPositiveReviewDebug,
+                    values = listOf(NOT_SET, TRUE, FALSE),
+                    onValueSelected = {
+                        sendCommand(SetDebugShowDonationFromReview(it))
+                    }
+                )
+            }
+
             // Fake contacts
             DebugCell("Generate fake contacts") {
                 var prefix by remember { mutableStateOf("User-") }
@@ -433,7 +523,7 @@ fun DebugMenu(
                     )
                 }
 
-                SlimOutlineButton(modifier = Modifier.fillMaxWidth(), text = "Generate") {
+                SlimFillButtonRect(modifier = Modifier.fillMaxWidth(), text = "Generate") {
                     sendCommand(
                         GenerateContacts(
                             prefix = prefix,
@@ -446,7 +536,7 @@ fun DebugMenu(
             // Session Token
             DebugCell("Session Token") {
                 // Schedule a test token-drop notification for 10 seconds from now
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Schedule Token Page Notification (10s)",
                     onClick = { sendCommand(ScheduleTokenNotification) }
@@ -456,7 +546,7 @@ fun DebugMenu(
             // Keys
             DebugCell("User Details") {
 
-                SlimOutlineButton (
+                SlimFillButtonRect (
                     text = "Copy Account ID",
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
@@ -464,11 +554,19 @@ fun DebugMenu(
                     }
                 )
 
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     text = "Copy 07-prefixed Version Blinded Public Key",
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
                         sendCommand(Copy07PrefixedBlindedPublicKey)
+                    }
+                )
+
+                SlimFillButtonRect (
+                    text = "Copy Pro Master Key",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        sendCommand(DebugMenuViewModel.Commands.CopyProMasterKey)
                     }
                 )
             }
@@ -493,7 +591,7 @@ fun DebugMenu(
                     }
                 )
 
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Clear All Trusted Downloads",
                 ) {
@@ -542,14 +640,14 @@ fun DebugMenu(
                     }
                 )
 
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Reset Push Token",
                 ) {
                     sendCommand(DebugMenuViewModel.Commands.ResetPushToken)
                 }
 
-                SlimOutlineButton(
+                SlimFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Clear All Trusted Downloads",
                 ) {
@@ -722,13 +820,14 @@ private fun DebugRow(
     Row(
         modifier = modifier.heightIn(min = minHeight),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
     ) {
         Text(
             text = title,
             style = LocalType.current.base,
             modifier = Modifier.weight(1f)
         )
+
+        Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
 
         content()
     }
@@ -780,7 +879,30 @@ fun DebugCheckboxRow(
             )
         )
     }
+}
 
+@Composable
+fun DebugDropDownRow(
+    text: String,
+    selectedText: String,
+    values: List<String>,
+    onValueSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    minHeight: Dp = LocalDimensions.current.itemButtonIconSpacing,
+) {
+    DebugRow(
+        title = text,
+        minHeight = minHeight,
+        modifier = modifier
+            .fillMaxWidth(),
+    ) {
+        DropDown(
+            modifier = Modifier.weight(1f, fill = false),
+            selectedText = selectedText,
+            values = values,
+            onValueSelected = onValueSelected
+        )
+    }
 }
 
 @Composable
@@ -832,7 +954,7 @@ fun PreviewDebugMenu() {
                 forceOtherUsersAsPro = false,
                 forcePostPro = false,
                 forceShortTTl = false,
-                messageProFeature = setOf(ProStatusManager.MessageProFeature.AnimatedAvatar),
+                messageProFeature = setOf(ProMessageFeature.HIGHER_CHARACTER_LIMIT),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
                 debugSubscriptionStatuses = setOf(DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE),
                 selectedDebugSubscriptionStatus = DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE,
@@ -843,6 +965,16 @@ fun PreviewDebugMenu() {
                 withinQuickRefund = true,
                 forceDeterministicEncryption = false,
                 debugAvatarReupload = true,
+                hasDonated = false,
+                hasCopiedDonationURL = false,
+                seenDonateCTAAmount = 0,
+                lastSeenDonateCTA = "-",
+                showDonateCTAFromPositiveReview = false,
+                hasDonatedDebug = "",
+                hasCopiedDonationURLDebug = "",
+                seenDonateCTAAmountDebug = "",
+                showDonateCTAFromPositiveReviewDebug = "",
+                firstInstall = ""
             ),
             sendCommand = {},
             onClose = {}

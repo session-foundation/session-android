@@ -1,19 +1,22 @@
 package org.session.libsession.messaging.sending_receiving
 
+import network.loki.messenger.libsession_util.protocol.DecodedPro
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
-import org.session.libsession.messaging.messages.ProfileUpdateHandler.Updates.Companion.toUpdates
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
+import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -31,14 +34,19 @@ class MessageRequestResponseHandler @Inject constructor(
     private val smsDatabase: SmsDatabase,
     private val threadDatabase: ThreadDatabase,
     private val blindMappingRepository: BlindMappingRepository,
+    private val clock: SnodeClock,
 ) {
 
-    suspend fun handleVisibleMessage(message: VisibleMessage) {
+    fun handleVisibleMessage(
+        ctx: ReceivedMessageProcessor.MessageProcessingContext?,
+        message: VisibleMessage
+    ) {
         val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
 
-        val allBlindedAddresses = blindMappingRepository.calculateReverseMappings(
-            contactAddress = sender.address as Address.Standard
-        )
+        val senderAddress = sender.address as Address.Standard
+
+        val allBlindedAddresses = ctx?.getBlindIDMapping(senderAddress)
+            ?: blindMappingRepository.calculateReverseMappings(senderAddress)
 
         // Do we have an existing message request (including blinded requests)?
         val hasMessageRequest = configFactory.withUserConfigs { configs ->
@@ -54,6 +62,7 @@ class MessageRequestResponseHandler @Inject constructor(
 
         if (hasMessageRequest) {
             handleRequestResponse(
+                ctx = ctx,
                 messageSender = sender,
                 messageReceiver = receiver,
                 messageTimestampMs = message.sentTimestamp!!,
@@ -61,10 +70,16 @@ class MessageRequestResponseHandler @Inject constructor(
         }
     }
 
-    suspend fun handleExplicitRequestResponseMessage(message: MessageRequestResponse) {
+    fun handleExplicitRequestResponseMessage(
+        ctx: ReceivedMessageProcessor.MessageProcessingContext?,
+        message: MessageRequestResponse,
+        proto: SessionProtos.Content,
+        pro: DecodedPro?,
+    ) {
         val (sender, receiver) = fetchSenderAndReceiver(message) ?: return
         // Always handle explicit request response
         handleRequestResponse(
+            ctx = ctx,
             messageSender = sender,
             messageReceiver = receiver,
             messageTimestampMs = message.sentTimestamp!!,
@@ -72,7 +87,7 @@ class MessageRequestResponseHandler @Inject constructor(
 
         // Always process the profile update if any. We don't need
         // to process profile for other kind of messages as they should be handled elsewhere
-        message.profile?.toUpdates()?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMillis(), pro)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = (sender.address as Address.Standard).accountId,
                 updates = updates,
@@ -81,8 +96,8 @@ class MessageRequestResponseHandler @Inject constructor(
         }
     }
 
-    private suspend fun fetchSenderAndReceiver(message: Message): Pair<Recipient, Recipient>? {
-        val messageSender = recipientRepository.getRecipient(
+    private fun fetchSenderAndReceiver(message: Message): Pair<Recipient, Recipient>? {
+        val messageSender = recipientRepository.getRecipientSync(
             requireNotNull(message.sender) {
                 "MessageRequestResponse must have a sender"
             }.toAddress()
@@ -92,7 +107,7 @@ class MessageRequestResponseHandler @Inject constructor(
             Log.e(TAG, "MessageRequestResponse sender must be a standard address, but got: ${messageSender.address.debugString}")
             null
         } else {
-            messageSender to recipientRepository.getRecipient(
+            messageSender to recipientRepository.getRecipientSync(
                 requireNotNull(message.recipient) {
                     "MessageRequestResponse must have a receiver"
                 }.toAddress()
@@ -101,6 +116,7 @@ class MessageRequestResponseHandler @Inject constructor(
     }
 
     private fun handleRequestResponse(
+        ctx: ReceivedMessageProcessor.MessageProcessingContext?,
         messageSender: Recipient,
         messageReceiver: Recipient,
         messageTimestampMs: Long,
@@ -141,21 +157,20 @@ class MessageRequestResponseHandler @Inject constructor(
                 if (!didApproveMe) {
                     mmsDatabase.insertSecureDecryptedMessageInbox(
                         retrieved = IncomingMediaMessage(
-                            messageSender.address,
-                            messageTimestampMs,
-                            -1,
-                            0L,
-                            0L,
-                            true,
-                            false,
-                            Optional.absent(),
-                            Optional.absent(),
-                            Optional.absent(),
-                            null,
-                            Optional.absent(),
-                            Optional.absent(),
-                            Optional.absent(),
-                            Optional.absent()
+                            from = messageSender.address,
+                            sentTimeMillis = messageTimestampMs,
+                            expiresIn = 0L,
+                            expireStartedAt = 0L,
+                            isMessageRequestResponse = true,
+                            hasMention = false,
+                            body = null,
+                            group = null,
+                            attachments = emptyList(),
+                            proFeatures = emptySet(),
+                            messageContent = null,
+                            quote = null,
+                            linkPreviews = emptyList(),
+                            dataExtractionNotification = null
                         ),
                         threadId,
                         runThreadUpdate = true,
@@ -164,7 +179,8 @@ class MessageRequestResponseHandler @Inject constructor(
 
                 // Find all blinded conversations we have with this sender, move all the messages
                 // from the blinded conversations to the standard conversation.
-                val blindedConversationAddresses = blindMappingRepository.calculateReverseMappings(messageSender.address)
+                val blindedConversationAddresses = (ctx?.getBlindIDMapping(messageSender.address)
+                    ?: blindMappingRepository.calculateReverseMappings(messageSender.address))
                     .mapTo(hashSetOf()) { (c, id) ->
                         Address.CommunityBlindedId(
                             serverUrl = c.baseUrl,

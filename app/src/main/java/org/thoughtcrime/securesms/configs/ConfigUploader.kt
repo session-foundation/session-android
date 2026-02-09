@@ -1,17 +1,13 @@
 package org.thoughtcrime.securesms.configs
 
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
@@ -24,28 +20,36 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.model.PathStatus
+import org.session.libsession.network.onion.PathManager
+import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.StoreMessageResponse
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigPushResult
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.MutableGroupConfigs
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withMutableGroupConfigs
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi
+import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
+import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
+import org.thoughtcrime.securesms.api.snode.StoreMessageApi
+import org.thoughtcrime.securesms.api.snode.execute
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 
@@ -67,10 +71,12 @@ class ConfigUploader @Inject constructor(
     private val storageProtocol: StorageProtocol,
     private val clock: SnodeClock,
     private val networkConnectivity: NetworkConnectivity,
-    private val textSecurePreferences: TextSecurePreferences,
-) : OnAppStartupComponent {
-    private var job: Job? = null
-
+    private val swarmDirectory: SwarmDirectory,
+    private val pathManager: PathManager,
+    private val snodeApiExecutor: SnodeApiExecutor,
+    private val storeMessageApiFactory: StoreMessageApi.Factory,
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory,
+) : AuthAwareComponent {
     /**
      * A flow that only emits when
      * 1. There's internet connection AND,
@@ -82,91 +88,63 @@ class ConfigUploader @Inject constructor(
     private fun pathBecomesAvailable(): Flow<*> = networkConnectivity.networkAvailable
         .flatMapLatest { hasNetwork ->
             if (hasNetwork) {
-                OnionRequestAPI.hasPath.filter { it }
+                pathManager.status.filter { it == PathStatus.READY }
             } else {
                 emptyFlow()
             }
         }
 
-    // A flow that emits true when there's a logged in user
-    private fun hasLoggedInUser(): Flow<Boolean> = textSecurePreferences.watchLocalNumber()
-        .map { it != null }
-        .distinctUntilChanged()
-
-
-    @OptIn(DelicateCoroutinesApi::class, FlowPreview::class, ExperimentalCoroutinesApi::class)
-    override fun onPostAppStarted() {
-        require(job == null) { "Already started" }
-
-        job = GlobalScope.launch {
-            supervisorScope {
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        supervisorScope {
+            launch {
                 // For any of these events, we need to push the user configs:
                 // - The onion path has just become available to use
                 // - The user configs have been modified
                 // Also, these events are only relevant when there's a logged in user
-                val job1 = launch {
-                    hasLoggedInUser()
-                        .flatMapLatest { loggedIn ->
-                            if (loggedIn) {
-                                merge(
-                                    pathBecomesAvailable(),
-                                    configFactory.userConfigsChanged()
-                                        .filter { !it.fromMerge }
-                                        .debounce(1000L)
-                                )
-                            } else {
-                                emptyFlow()
-                            }
-                        }
-                        .collect {
-                            try {
-                                retryWithUniformInterval {
-                                    pushUserConfigChangesIfNeeded()
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to push user configs", e)
-                            }
-                        }
-                }
 
-                val job2 = launch {
-                    hasLoggedInUser()
-                        .flatMapLatest { loggedIn ->
-                            if (loggedIn) {
-                                merge(
-                                    // When the onion request path changes, we need to examine all the groups
-                                    // and push the pending configs for them
-                                    pathBecomesAvailable().flatMapLatest {
-                                        configFactory.withUserConfigs { configs -> configs.userGroups.allClosedGroupInfo() }
-                                            .asSequence()
-                                            .filter { !it.destroyed && !it.kicked }
-                                            .map { AccountId(it.groupAccountId) }
-                                            .asFlow()
-                                    },
-
-                                    // Or, when a group config is updated, we need to push the changes for that group
-                                    configFactory.configUpdateNotifications
-                                        .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                                        .map { it.groupId }
-                                        .debounce(1000L)
-                                )
-                            } else {
-                                emptyFlow()
-                            }
+                merge(
+                    pathBecomesAvailable(),
+                    configFactory.userConfigsChanged()
+                        .filter { !it.fromMerge }
+                        .debounce(1000L)
+                ).collect {
+                    try {
+                        retryWithUniformInterval {
+                            pushUserConfigChangesIfNeeded()
                         }
-                        .collect { groupId ->
-                        try {
-                            retryWithUniformInterval {
-                                pushGroupConfigsChangesIfNeeded(groupId)
-                            }
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Failed to push group configs", e)
-                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to push user configs", e)
                     }
                 }
+            }
 
-                job1.join()
-                job2.join()
+            launch {
+                merge(
+                    // When the onion request path changes, we need to examine all the groups
+                    // and push the pending configs for them
+                    pathBecomesAvailable().flatMapLatest {
+                        configFactory.withUserConfigs { configs -> configs.userGroups.allClosedGroupInfo() }
+                            .asSequence()
+                            .filter { !it.destroyed && !it.kicked }
+                            .map { AccountId(it.groupAccountId) }
+                            .asFlow()
+                    },
+
+                    // Or, when a group config is updated, we need to push the changes for that group
+                    configFactory.configUpdateNotifications
+                        .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                        .map { it.groupId }
+                        .debounce(1000L)
+                ).collect { groupId ->
+                    try {
+                        retryWithUniformInterval {
+                            pushGroupConfigsChangesIfNeeded(groupId)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to push group configs", e)
+                    }
+                }
             }
         }
     }
@@ -231,26 +209,26 @@ class ConfigUploader @Inject constructor(
 
         Log.d(TAG, "Pushing group configs")
 
-        val snode = SnodeAPI.getSingleTargetSnode(groupId.hexString).await()
+        val snode = swarmDirectory.getSingleTargetSnode(groupId.hexString)
         val auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
 
         // Keys push is different: it doesn't have the delete call so we don't call pushConfig.
         // Keys must be pushed first because the other configs depend on it.
         val keysPushResult = keysPush?.let { push ->
-            SnodeAPI.sendBatchRequest(
-                snode = snode,
-                publicKey = auth.accountId.hexString,
-                request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                    Namespace.GROUP_KEYS(),
-                    SnodeMessage(
-                        auth.accountId.hexString,
-                        Base64.encodeBytes(push),
-                        SnodeMessage.CONFIG_TTL,
-                        clock.currentTimeMills(),
-                    ),
-                    auth
-                ),
-                responseType = StoreMessageResponse::class.java
+            snodeApiExecutor.execute(
+                SnodeApiRequest(
+                    snode = snode,
+                    api = storeMessageApiFactory.create(
+                        namespace = Namespace.GROUP_KEYS(),
+                        message = SnodeMessage(
+                            auth.accountId.hexString,
+                            Base64.encodeBytes(push),
+                            SnodeMessage.CONFIG_TTL,
+                            clock.currentTimeMillis(),
+                        ),
+                        auth = auth
+                    )
+                )
             ).let(::listOf).toConfigPushResult()
         }
 
@@ -284,7 +262,7 @@ class ConfigUploader @Inject constructor(
                 val pendingConfig = configs.groupKeys.pendingConfig()
                 if (pendingConfig != null) {
                     for (hash in hashes) {
-                        configs.groupKeys.loadKey(pendingConfig, hash, timestamp)
+                        configs.groupKeys.loadKey(pendingConfig, hash, timestamp.toEpochMilli())
                     }
                 }
             }
@@ -309,27 +287,27 @@ class ConfigUploader @Inject constructor(
         // process will be cancelled. This is the requirement of pushing config: all messages have
         // to be sent successfully for us to consider this process as success
         val responses = coroutineScope {
-            val timestamp = clock.currentTimeMills()
+            val timestamp = clock.currentTimeMillis()
 
             Log.d(TAG, "Pushing ${push.messages.size} config messages")
 
             push.messages
                 .map { message ->
                     async {
-                        SnodeAPI.sendBatchRequest(
-                            snode = snode,
-                            publicKey = auth.accountId.hexString,
-                            request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                                namespace,
-                                SnodeMessage(
-                                    auth.accountId.hexString,
-                                    Base64.encodeBytes(message.data),
-                                    SnodeMessage.CONFIG_TTL,
-                                    timestamp,
-                                ),
-                                auth,
-                            ),
-                            responseType = StoreMessageResponse::class.java
+                        snodeApiExecutor.execute(
+                            SnodeApiRequest(
+                                snode = snode,
+                                api = storeMessageApiFactory.create(
+                                    namespace = namespace,
+                                    message = SnodeMessage(
+                                        auth.accountId.hexString,
+                                        Base64.encodeBytes(message.data),
+                                        SnodeMessage.CONFIG_TTL,
+                                        timestamp,
+                                    ),
+                                    auth = auth
+                                )
+                            )
                         )
                     }
                 }
@@ -337,10 +315,14 @@ class ConfigUploader @Inject constructor(
         }
 
         if (push.obsoleteHashes.isNotEmpty()) {
-            SnodeAPI.sendBatchRequest(
-                snode = snode,
-                publicKey = auth.accountId.hexString,
-                request = SnodeAPI.buildAuthenticatedDeleteBatchInfo(auth, push.obsoleteHashes)
+            snodeApiExecutor.execute(
+                SnodeApiRequest(
+                    snode = snode,
+                    api = deleteMessageApiFactory.create(
+                        swarmAuth = auth,
+                        messageHashes = push.obsoleteHashes
+                    )
+                )
             )
         }
 
@@ -376,7 +358,7 @@ class ConfigUploader @Inject constructor(
 
         Log.d(TAG, "Pushing ${pushes.size} user configs")
 
-        val snode = SnodeAPI.getSingleTargetSnode(userAuth.accountId.hexString).await()
+        val snode = swarmDirectory.getSingleTargetSnode(userAuth.accountId.hexString)
 
         val pushTasks = pushes.map { (configType, configPush) ->
             async {

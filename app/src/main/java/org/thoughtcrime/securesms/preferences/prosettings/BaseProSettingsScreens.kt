@@ -12,18 +12,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,8 +38,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,6 +55,7 @@ import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DangerFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.inlineContentMap
+import org.thoughtcrime.securesms.ui.sessionDropShadow
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -69,13 +72,12 @@ import org.thoughtcrime.securesms.ui.theme.bold
 fun BaseProSettingsScreen(
     disabled: Boolean,
     hideHomeAppBar: Boolean = false,
+    listState: LazyListState = rememberLazyListState(),
     onBack: () -> Unit,
     onHeaderClick: (() -> Unit)? = null,
     extraHeaderContent: @Composable (() -> Unit)? = null,
     content: @Composable LazyItemScope.() -> Unit
 ){
-    // We need the app bar to start as transparent and slowly go opaque as we scroll
-    val lazyListState = rememberLazyListState()
     // Calculate scroll fraction
     val density = LocalDensity.current
     val thresholdPx = remember(density) { with(density) { 28.dp.toPx() } } // amount before the appbar gets fully opaque
@@ -84,9 +86,9 @@ fun BaseProSettingsScreen(
     val rawFraction by remember {
         derivedStateOf {
             when {
-                lazyListState.layoutInfo.totalItemsCount == 0 -> 0f
-                lazyListState.firstVisibleItemIndex > 0 -> 1f
-                else -> (lazyListState.firstVisibleItemScrollOffset / thresholdPx).coerceIn(0f, 1f)
+                listState.layoutInfo.totalItemsCount == 0 -> 0f
+                listState.firstVisibleItemIndex > 0 -> 1f
+                else -> (listState.firstVisibleItemScrollOffset / thresholdPx).coerceIn(0f, 1f)
             }
         }
     }
@@ -107,19 +109,24 @@ fun BaseProSettingsScreen(
                     onBack = onBack,
                 )
             }} else {{}},
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddings ->
+
+        val layoutDirection = LocalLayoutDirection.current
+        val safeInsetsPadding = PaddingValues(
+            start = paddings.calculateStartPadding(layoutDirection) + LocalDimensions.current.spacing,
+            end = paddings.calculateEndPadding(layoutDirection)+ LocalDimensions.current.spacing,
+            top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                    .coerceAtLeast(0.dp) + 46.dp,
+            bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing
+        )
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .consumeWindowInsets(paddings)
-                .padding(horizontal = LocalDimensions.current.spacing),
-            state = lazyListState,
-            contentPadding = PaddingValues(
-                top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
-                    .coerceAtLeast(0.dp) + 46.dp,
-                bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing
-            ),
+                .consumeWindowInsets(paddings),
+            state = listState,
+            contentPadding = safeInsetsPadding,
             horizontalAlignment = CenterHorizontally
         ) {
             item {
@@ -312,9 +319,19 @@ fun NonOriginatingLinkCell(
         ) {
             // icon
             Box(modifier = Modifier
-                .background(
-                    color = LocalColors.current.accent.copy(alpha = 0.2f),
-                    shape = MaterialTheme.shapes.small
+                .then(
+                    if (LocalColors.current.isLight)
+                        Modifier.sessionDropShadow()
+                    else Modifier
+                )
+                .clip(MaterialTheme.shapes.small)
+                .background(color = LocalColors.current.backgroundSecondary)
+                .then(
+                    if (!LocalColors.current.isLight)
+                        Modifier.background(
+                            color = LocalColors.current.accent.copy(alpha = 0.2f),
+                        )
+                    else Modifier
                 )
                 .padding(10.dp)
             ){
@@ -322,7 +339,7 @@ fun NonOriginatingLinkCell(
                     modifier = Modifier.align(Center)
                         .size(LocalDimensions.current.iconMedium),
                     painter = painterResource(id = data.iconRes),
-                    tint = LocalColors.current.accent,
+                    tint = LocalColors.current.accentText,
                     contentDescription = null
                 )
             }

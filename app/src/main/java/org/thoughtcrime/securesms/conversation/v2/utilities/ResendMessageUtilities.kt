@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.utilities
 
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
@@ -12,8 +12,12 @@ import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import javax.inject.Inject
 
-object ResendMessageUtilities {
+class ResendMessageUtilities @Inject constructor(
+    private val messageSender: MessageSender,
+    private val storage: StorageProtocol,
+) {
 
     suspend fun resend(accountId: String?, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
         val recipient = messageRecord.recipient.address
@@ -31,6 +35,7 @@ object ResendMessageUtilities {
             message.openGroupInvitation = openGroupInvitation
         } else {
             message.text = messageRecord.body
+            message.proFeatures = messageRecord.proFeatures
         }
         message.sentTimestamp = messageRecord.timestamp
         if (recipient.isGroupOrCommunity) {
@@ -51,14 +56,14 @@ object ResendMessageUtilities {
             message.addSignalAttachments(messageRecord.slideDeck.asAttachments())
         }
         val sentTimestamp = message.sentTimestamp
-        val sender = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
+        val sender = storage.getUserPublicKey()
         if (sentTimestamp != null && sender != null) {
             if (isResync) {
-                MessagingModuleConfiguration.shared.storage.markAsResyncing(messageRecord.messageId)
-                MessageSender.sendNonDurably(message, Destination.from(recipient), isSyncMessage = true)
+                storage.markAsResyncing(messageRecord.messageId)
+                messageSender.sendNonDurably(message, Destination.from(recipient), isSyncMessage = true)
             } else {
-                MessagingModuleConfiguration.shared.storage.markAsSending(messageRecord.messageId)
-                MessageSender.send(message, recipient)
+                storage.markAsSending(messageRecord.messageId)
+                messageSender.send(message, recipient)
             }
         }
     }

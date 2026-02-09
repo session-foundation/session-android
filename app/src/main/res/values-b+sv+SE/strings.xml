@@ -15,8 +15,13 @@
     <string name="accountIdYoursDescription">Detta är ditt konto-ID. Andra användare kan skanna det för att starta en konversation med dig.</string>
     <string name="actualSize">Aktuella storlek</string>
     <string name="add">Lägg till</string>
-    <string name="addAdmins">Lägg till administratörer</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Lägg till administratör</item>
+        <item quantity="other">Lägg till administratörer</item>
+    </plurals>
+    <string name="addAdminSingular">Lägg till administratör</string>
     <string name="addAdminsDescription">Ange Account ID för användaren du gör till administratör.\n\nFör att lägga till flera användare, ange varje Account ID separerat med ett kommatecken. Upp till 20 Account ID:er kan anges åt gången.</string>
+    <string name="adminCannotBeDemoted">Administratörer kan inte nedgraderas eller tas bort från gruppen.</string>
     <string name="adminCannotBeRemoved">Administratörer kan inte tas bort.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> och <b>{count} andra </b> blev befordrade till Admin.</string>
     <string name="adminPromote">Uppgradera administratörer</string>
@@ -41,12 +46,19 @@
     <string name="adminRemovedUser"><b>{name}</b> blev borttagen som Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> och <b>{count} andra</b> togs bort som Admin.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> och <b>{other_name}</b> togs bort som Admin.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d administratör vald</item>
+        <item quantity="other">%1$d administratörer valda</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Sänder administratörsbehörighet</item>
         <item quantity="other">Sänder administratörsbehörigheter</item>
     </plurals>
     <string name="adminSettings">Admin Settings</string>
+    <string name="adminStatusYou">Du kan inte ändra din administratörsstatus. För att lämna gruppen, öppna konversationsinställningarna och välj Lämna gruppen.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> och <b>{other_name}</b> blev befordrade till Admin.</string>
+    <string name="admins">Administratörer</string>
+    <string name="allow">Tillåt</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonym</string>
     <string name="appIcon">App-ikon</string>
@@ -66,6 +78,7 @@
     <string name="appNameNotes">Anteckningar</string>
     <string name="appNameStocks">Aktier</string>
     <string name="appNameWeather">Väder</string>
+    <string name="appProBadge">{app_pro}-märke</string>
     <string name="appearanceAutoDarkMode">Automatisk mörkt läge</string>
     <string name="appearanceHideMenuBar">Dölj menyfältet</string>
     <string name="appearanceLanguage">Språk</string>
@@ -162,6 +175,7 @@
     <string name="blockUnblockNameTwo">Är du säker på att du vill avblockera <b>{name}</b> och en annan?</string>
     <string name="blockUnblockedUser">Avblockerad {name}</string>
     <string name="blockedContactsManageDescription">Visa och hantera blockerade kontakter.</string>
+    <string name="browserNotFound">Ingen webbläsare hittades för att öppna webbadressen, försök kopiera webbadressen istället</string>
     <string name="call">Samtal</string>
     <string name="callsCalledYou">{name} ringde dig</string>
     <string name="callsCannotStart">Du kan inte starta ett nytt samtal. Avsluta ditt nuvarande samtal först.</string>
@@ -190,6 +204,10 @@
     <string name="callsVoiceAndVideoToggleDescription">Möjliggör röst- och videosamtal till och från andra användare.</string>
     <string name="callsYouCalled">Du ringde {name}</string>
     <string name="callsYouMissedCallPermissions">Du missade ett samtal från <b>{name}</b> eftersom du inte har aktiverat <b>Röst- och videosamtal</b> i Sekretessinställningar.</string>
+    <string name="cameraAccessDeniedMessage">{app_name} behöver åtkomst till din kamera för att möjliggöra videosamtal, men detta tillstånd har nekats. Du kan inte ändra dina kamerabehörigheter under ett samtal.\n\nVill du avsluta samtalet nu och aktivera kameraåtkomst, eller vill du bli påmind efter samtalet?</string>
+    <string name="cameraAccessInstructions">För att tillåta åtkomst till kameran, öppna inställningarna och slå på behörigheten för kamera.</string>
+    <string name="cameraAccessReminderMessage">Under ditt senaste samtal försökte du använda video men kunde inte det eftersom kameråtkomst tidigare nekades. Öppna inställningarna och aktivera kamerabehörigheten för att tillåta kameråtkomst.</string>
+    <string name="cameraAccessRequired">Åtkomst till kamera krävs</string>
     <string name="cameraErrorNotFound">Ingen kamera hittades</string>
     <string name="cameraErrorUnavailable">Kameran är inte tillgänglig.</string>
     <string name="cameraGrantAccess">Tillåt kameraåtkomst</string>
@@ -197,9 +215,19 @@
     <string name="cameraGrantAccessDescription">{app_name} behöver åtkomst till kameran för att kunna fotografera och filma eller skanna QR-koder.</string>
     <string name="cameraGrantAccessQr">{app_name} behöver kameraåtkomst för att skanna QR-koder</string>
     <string name="cancel">Avbryt</string>
+    <string name="cancelAccess">Avsluta {pro}</string>
+    <string name="cancelProPlatform">Avsluta på webbplatsen för {platform} med det {platform_account} du använde för att registrera dig för {pro}.</string>
+    <string name="cancelProPlatformStore">Avsluta på webbplatsen för {platform_store} med det {platform_account} du använde för att registrera dig för {pro}.</string>
     <string name="change">Ändra</string>
     <string name="changePasswordFail">Misslyckades att ändra lösenordet</string>
     <string name="changePasswordModalDescription">Ändra ditt lösenord för {app_name}. Lokalt lagrad data kommer att krypteras om med ditt nya lösenord.</string>
+    <string name="changeSetting">Ändra inställning</string>
+    <string name="checkingProStatus">Kontrollerar status för {pro}</string>
+    <string name="checkingProStatusContinue">Kontrollerar din {pro}-status. Du kan fortsätta när kontrollen är klar.</string>
+    <string name="checkingProStatusDescription">Kontrollerar dina uppgifter om {pro}. Vissa åtgärder på denna sida kan vara otillgängliga tills kontrollen är klar.</string>
+    <string name="checkingProStatusEllipsis">Kontrollerar status för {pro}...</string>
+    <string name="checkingProStatusRenew">Kontrollerar dina {pro}-uppgifter. Du kan inte förnya förrän denna kontroll är slutförd.</string>
+    <string name="checkingProStatusUpgradeDescription">Kontrollerar din status för {pro}. Du kommer att kunna uppgradera till {pro} när denna kontroll är klar.</string>
     <string name="clear">Rensa</string>
     <string name="clearAll">Rensa alla</string>
     <string name="clearDataAll">Rensa all data</string>
@@ -258,11 +286,17 @@
     <string name="communityUrl">Community URL</string>
     <string name="communityUrlCopy">Kopiera community-URL</string>
     <string name="confirm">Bekräfta</string>
+    <string name="confirmPromotion">Bekräfta befordran</string>
+    <string name="confirmPromotionDescription">Är du säker? Administratörer kan inte nedgraderas eller tas bort från gruppen.</string>
     <string name="contactContacts">Kontakter</string>
     <string name="contactDelete">Radera kontakt</string>
     <string name="contactDeleteDescription">Är du säker på att du vill radera <b>{name}</b> från dina kontakter? Nya meddelanden från <b>{name}</b> kommer att anlända som en meddelandeförfrågan.</string>
     <string name="contactNone">Du har inga kontakter än</string>
     <string name="contactSelect">Välj Kontakter</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d kontakt vald</item>
+        <item quantity="other">%1$d kontakter valda</item>
+    </plurals>
     <string name="contactUserDetails">Visa användardetaljer</string>
     <string name="contentDescriptionCamera">Kamera</string>
     <string name="contentDescriptionChooseConversationType">Välj en åtgärd för att starta en konversation</string>
@@ -303,6 +337,7 @@
     <string name="copy">Kopiera</string>
     <string name="create">Skapa</string>
     <string name="creatingCall">Skapar samtalet</string>
+    <string name="currentBilling">Aktuell fakturering</string>
     <string name="currentPassword">Nuvarande lösenord</string>
     <string name="cut">Klipp ut</string>
     <string name="darkMode">Mörkt läge</string>
@@ -330,6 +365,14 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Vänligen vänta medans gruppen skapas...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Misslyckades att uppdatera grupp</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Du har inte behörighet att ta bort andras meddelanden</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Ta bort markerad bilaga</item>
+        <item quantity="other">Ta bort markerade bilagor</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Är du säker på att du vill ta bort den markerade bilagan? Meddelandet som är kopplat till bilagan kommer också att raderas.</item>
+        <item quantity="other">Är du säker på att du vill ta bort de valda bilagorna? Meddelandet som är kopplat till bilagorna kommer också att raderas.</item>
+    </plurals>
     <string name="deleteContactDescription">Är du säker på att du vill ta bort <b>{name}</b> från dina kontakter?\n\nDetta kommer att radera din konversation, inklusive alla meddelanden och bilagor. Framtida meddelanden från <b>{name}</b> kommer att visas som en meddelandeförfrågan.</string>
     <string name="deleteConversationDescription">Är du säker på att du vill radera din konversation med <b>{name}</b>?\nDetta kommer permanent radera alla meddelanden och bilagor.</string>
     <plurals name="deleteMessage">
@@ -369,6 +412,7 @@
     <string name="deleteMessagesDescriptionEveryone">Är du säker på att du vill radera dessa meddelanden för alla?</string>
     <string name="deleting">Raderar</string>
     <string name="developerToolsToggle">Slå på utvecklingsverktyg</string>
+    <string name="deviceNotificationSettings">Enhetens aviseringsinställningar</string>
     <string name="dictationStart">Starta diktering...</string>
     <string name="disappearingMessages">Försvinnande meddelanden</string>
     <string name="disappearingMessagesCountdownBig">Meddelande kommer att raderas om {time_large}</string>
@@ -416,6 +460,8 @@
     <string name="displayNameVisible">Ditt visningsnamn är synligt för användare, grupper och samhällen du interagerar med.</string>
     <string name="document">Dokument</string>
     <string name="donate">Donera</string>
+    <string name="donateSessionDescription">Starka krafter försöker försvaga den personliga integriteten, men vi kan inte fortsätta kampen ensamma.\n\nAtt donera hjälper till att hålla {app_name} säker, oberoende och online.</string>
+    <string name="donateSessionHelp">{app_name} behöver din hjälp</string>
     <string name="done">Klar</string>
     <string name="download">Hämta</string>
     <string name="downloading">Hämtar...</string>
@@ -445,17 +491,31 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Du och {name} reagerade med {emoji_name}</string>
     <string name="emojiReactsNotification">Reagerade på ditt meddelande {emoji}</string>
     <string name="enable">Aktivera</string>
+    <string name="enableCameraAccess">Aktivera kameratillgång?</string>
     <string name="enableNotifications">Visa aviseringar när du får nya meddelanden.</string>
+    <string name="endCallToEnable">Avsluta samtal för att aktivera</string>
     <string name="enjoyingSession">Gillar du {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Behöver förbättras {emoji}</string>
     <string name="enjoyingSessionButtonPositive">Det är fantastiskt {emoji}</string>
     <string name="enjoyingSessionDescription">Du har använt {app_name} ett tag, hur går det? Vi skulle uppskatta om du delar dina tankar.</string>
     <string name="enter">Enter</string>
+    <string name="enterPasswordDescription">Ange lösenordet du skapade för {app_name}</string>
+    <string name="enterPasswordTooltip">Ange lösenordet du använder för att låsa upp {app_name} vid start – inte ditt återställningslösenord</string>
+    <string name="errorCheckingProStatus">Fel vid kontroll av {pro}-status</string>
     <string name="errorConnection">Kontrollera din internetanslutning och försök igen.</string>
     <string name="errorCopyAndQuit">Kopiera felmeddelande och avsluta</string>
     <string name="errorDatabase">Databasfel</string>
     <string name="errorGeneric">Något gick fel. Försök igen senare.</string>
+    <string name="errorLoadingProAccess">Fel vid inläsning av åtkomst till {pro}</string>
+    <string name="errorNoLookupOns">{app_name} kunde inte söka efter denna ONS. Kontrollera din nätverksanslutning och försök igen.</string>
     <string name="errorUnknown">Ett okänt fel har uppstått.</string>
+    <string name="errorUnregisteredOns">Den här ONS är inte registrerad. Kontrollera att den är korrekt och försök igen.</string>
+    <string name="failedResendInvite">Det gick inte att skicka inbjudan igen till <b>{name}</b> i <b>{group_name}</b></string>
+    <string name="failedResendInviteMultiple">Det gick inte att skicka inbjudan igen till <b>{name}</b> och <b>{count} andra</b> i <b>{group_name}</b></string>
+    <string name="failedResendInviteTwo">Det gick inte att skicka inbjudan igen till <b>{name}</b> och <b>{other_name}</b> i <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Det gick inte att skicka befordran på nytt till <b>{name}</b> i <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Det gick inte att skicka befordran på nytt till <b>{name}</b> och <b>{count} andra</b> i <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Det gick inte att skicka befordran på nytt till <b>{name}</b> och <b>{other_name}</b> i <b>{group_name}</b></string>
     <string name="failedToDownload">Nedladdningen misslyckades</string>
     <string name="failures">Misslyckanden</string>
     <string name="feedback">Feedback</string>
@@ -509,6 +569,9 @@
     <string name="groupLeaveDescription">Är du säker på att du vill lämna <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Är du säker på att du vill lämna <b>{group_name}</b>?\n\nDetta kommer att ta bort alla medlemmar och radera allt gruppinnehåll.</string>
     <string name="groupLeaveErrorFailed">Misslyckades med att lämna {group_name}</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> blev inbjuden att gå med i gruppen. Chatt historik från de senaste 14 dagarna delades.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> och <b>{count}</b> andra blev inbjudna att gå med i gruppen. Chatt historik från de senaste 14 dagarna delades.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> och <b>{other_name}</b> blev inbjudna att gå med i gruppen. Chatt historik från de senaste 14 dagarna delades.</string>
     <string name="groupMemberLeft"><b>{name}</b> lämnade gruppen.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> och <b>{count} andra</b> lämnade gruppen.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> och <b>{other_name}</b> lämnade gruppen.</string>
@@ -520,6 +583,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> och <b>{other_name}</b> bjöds in att gå med i gruppen.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Du</b> och <b>{count} andra</b> bjöds in att gå med i gruppen. Chatt historik delades.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Du</b>och<b>{other_name}</b>blev inbjudna för att delta i gruppen. Chatt historiken är delad.</string>
+    <string name="groupMemberRemoveFailed">Det gick inte att ta bort <b>{name}</b> från <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedMultiple">Det gick inte att ta bort <b>{name}</b> och <b>{count} andra</b> från <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedOther">Det gick inte att ta bort <b>{name}</b> och <b>{other_name}</b> från <b>{group_name}</b></string>
     <string name="groupMemberYouLeft"><b>Du</b> lämnade gruppen.</string>
     <string name="groupMembers">Gruppmedlemmar</string>
     <string name="groupMembersNone">Det finns inga andra medlemmar i denna grupp.</string>
@@ -533,6 +599,7 @@
     <string name="groupNoMessages">Du har inga meddelanden från <b>{group_name}</b>. Skicka ett meddelande för att starta konversationen!</string>
     <string name="groupNotUpdatedWarning">Denna grupp har inte uppdaterats på över 30 dagar. Du kan uppleva problem med att skicka meddelanden eller visa gruppinformation.</string>
     <string name="groupOnlyAdmin">Du är den enda administratören i <b>{group_name}</b>.\n\nGruppmedlemmar och inställningar kan inte ändras utan en administratör.</string>
+    <string name="groupOnlyAdminLeave">Du är den enda administratören i <b>{group_name}</b>.\n\nGruppmedlemmar och inställningar kan inte ändras utan en administratör. För att lämna gruppen utan att radera den, lägg först till en ny administratör.</string>
     <string name="groupPendingRemoval">Avvaktar radering</string>
     <string name="groupPromotedYou"><b>Du</b> blev befordrad till Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> och <b>{count} andra</b> blev befordrade till Admin.</string>
@@ -577,10 +644,15 @@
     <string name="hideOthers">Dölj andra</string>
     <string name="image">Bild</string>
     <string name="images">bilder</string>
+    <string name="important">Viktigt</string>
     <string name="incognitoKeyboard">Inkognito-tangentbord</string>
     <string name="incognitoKeyboardDescription">Begär inkognitoläge om tillgängligt. Beroende på tangentbordet du använder kanske ditt tangentbord ignorerar denna begäran.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Ogiltig genväg</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Bjud in kontakt</item>
+        <item quantity="other">Bjud in kontakter</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Inbjudningen misslyckades</item>
         <item quantity="other">Inbjudningarna misslyckades</item>
@@ -589,8 +661,17 @@
         <item quantity="one">Inbjudningen kunde inte skickas. Vill du försöka igen?</item>
         <item quantity="other">Inbjudningarna kunde inte skickas. Vill du försöka igen?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Bjud in medlem</item>
+        <item quantity="other">Bjud in medlemmar</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Bjud in en ny medlem till gruppen genom att ange din väns Account ID, ONS eller skanna deras QR-kod {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Bjud in en ny medlem till gruppen genom att ange din väns Account ID, ONS eller skanna deras QR-kod</string>
     <string name="join">Anslut</string>
     <string name="later">Senare</string>
+    <string name="launchOnStartDescriptionDesktop">Starta {app_name} automatiskt när datorn startas.</string>
+    <string name="launchOnStartDesktop">Starta vid uppstart</string>
+    <string name="launchOnStartupDisabledDesktop">Denna inställning hanteras av ditt system på GNU/Linux. För att aktivera automatisk start, lägg till {app_name} i dina startprogram i systeminställningarna.</string>
     <string name="learnMore">Läs mer</string>
     <string name="leave">Lämna</string>
     <string name="leaving">Lämnar...</string>
@@ -605,6 +686,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>Du</b> och <b>{other_name}</b> gick med i gruppen.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> och <b>{other_name}</b> gick med i gruppen.</string>
     <string name="legacyGroupMemberYouNew"><b>Du</b> gick med i gruppen.</string>
+    <string name="limitBackgroundActivity">Begränsa bakgrundsaktivitet?</string>
+    <string name="limitBackgroundActivityDescription">Du tillåter för närvarande att {app_name} körs i bakgrunden för att förbättra aviseringarnas tillförlitlighet. Att ändra denna inställning kan leda till mindre tillförlitliga aviseringar.</string>
     <string name="linkPreviews">Förhandsgranskning av länkar</string>
     <string name="linkPreviewsDescription">Visa länkförhandsvisningar för stödda URL:er.</string>
     <string name="linkPreviewsEnable">Aktivera förhandsgranskningar av länkar</string>
@@ -629,9 +712,16 @@
     <string name="lockAppUnlock">Tryck om du vill låsa upp</string>
     <string name="lockAppUnlocked">{app_name} är upplåst</string>
     <string name="logs">Loggar</string>
+    <string name="manageAdmins">Hantera administratörer</string>
     <string name="manageMembers">Hantera medlemmar</string>
+    <string name="managePro">Hantera {pro}</string>
     <string name="max">Max</string>
+    <string name="maybeLater">Kanske senare</string>
     <string name="media">Media</string>
+    <plurals name="memberSelected">
+        <item quantity="one">%1$d medlem vald</item>
+        <item quantity="other">%1$d medlemmar valda</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d medlem</item>
         <item quantity="other">%1$d medlemmar</item>
@@ -641,7 +731,9 @@
         <item quantity="other">%1$d aktiva medlemmar</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Lägg till Account ID eller ONS</string>
+    <string name="membersGroupPromotionAcceptInvite">Medlemmar kan endast befordras efter att de har accepterat en inbjudan att gå med i gruppen.</string>
     <string name="membersInvite">Bjud in kontakter</string>
+    <string name="membersInviteNoContacts">Du har inga kontakter att bjuda in till den här gruppen.\nGå tillbaka och bjud in medlemmar med deras Account ID eller ONS.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Skicka inbjudan</item>
         <item quantity="other">Skicka inbjudningar</item>
@@ -650,8 +742,10 @@
     <string name="membersInviteShareDescriptionMultiple">Vill du dela gruppmeddelandehistorik med <b>{name}</b> och <b>{count} andra</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Vill du dela gruppmeddelandehistorik med <b>{name}</b> och <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Dela meddelandehistorik</string>
+    <string name="membersInviteShareMessageHistoryDays">Dela meddelandehistorik från de senaste 14 dagarna</string>
     <string name="membersInviteShareNewMessagesOnly">Dela endast nya meddelanden</string>
     <string name="membersInviteTitle">Bjud in</string>
+    <string name="membersNonAdmins">Medlemmar (icke-administratörer)</string>
     <string name="menuBar">Menyrad</string>
     <string name="message">Meddelande</string>
     <string name="messageBubbleReadMore">Läs mer</string>
@@ -670,6 +764,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Starta en ny konversation genom att ange din väns Account ID eller ONS.</string>
     <string name="messageNewDescriptionMobile">Starta en ny konversation genom att ange din väns Account ID, ONS eller skanna deras QR-kod.</string>
+    <string name="messageNewDescriptionMobileLink">Starta en ny konversation genom att ange din väns Account ID, ONS eller skanna deras QR-kod {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Du har ett nytt meddelande.</item>
         <item quantity="other">Du har %1$d nya meddelanden.</item>
@@ -720,19 +815,24 @@
     <string name="modalMessageTooLongTitle">Meddelandet är för långt</string>
     <string name="newPassword">Nytt Lösenord</string>
     <string name="next">Nästa</string>
+    <string name="nextSteps">Nästa steg</string>
     <string name="nicknameDescription">Välj ett smeknamn för <b>{name}</b>. Detta kommer att visas för dig i dina en-till-en- och gruppkonversationer.</string>
     <string name="nicknameEnter">Ange smeknamn</string>
     <string name="nicknameErrorShorter">Vänligen ange ett kortare smeknamn</string>
     <string name="nicknameRemove">Ta bort smeknamn</string>
     <string name="nicknameSet">Ange smeknamn</string>
     <string name="no">Nej</string>
+    <string name="noNonAdminsInGroup">Det finns inga icke-administratörer i den här gruppen.</string>
     <string name="noSuggestions">Inga förslag</string>
+    <string name="nonProLongerMessagesDescription">Du kan skicka meddelanden med upp till 10 000 tecken i alla konversationer.</string>
+    <string name="nonProUnlimitedPinnedDescription">Organisera chattar med obegränsade fastnålade konversationer.</string>
     <string name="none">Inga</string>
     <string name="notNow">Inte nu</string>
     <string name="noteToSelf">Påminnelse till mig själv</string>
     <string name="noteToSelfEmpty">Du har inga meddelanden i Note to Self.</string>
     <string name="noteToSelfHide">Göm Notera till mig själv</string>
     <string name="noteToSelfHideDescription">Är du säker på att du vill dölja Påminnelse till mig själv?</string>
+    <string name="noteTosPrivacyPolicy"><b>OBS</b>: Genom att {action_type} godkänner du {app_pro} <b>Användarvillkoren</b> {icon} och <b>Sekretesspolicyn</b> {icon}</string>
     <string name="notificationDisplay">Aviseringsvisning</string>
     <string name="notificationSenderNameAndPreview">Visa avsändarens namn och en förhandsvisning av meddelandets innehåll.</string>
     <string name="notificationSenderNameOnly">Visa endast avsändarens namn utan något meddelandeinnehåll.</string>
@@ -776,6 +876,12 @@
     <string name="off">Av</string>
     <string name="okay">Okej</string>
     <string name="on">På</string>
+    <string name="onDevice">På din {device_type}-enhet</string>
+    <string name="onDeviceCancelDescription">Öppna detta {app_name}-konto på en {device_type}-enhet som är inloggad på det {platform_account} du ursprungligen registrerade dig med. Avsluta sedan {pro} via inställningarna i {app_pro}.</string>
+    <string name="onDeviceDescription">Öppna detta {app_name}-konto på en {device_type}-enhet som är inloggad på det {platform_account} du ursprungligen registrerade dig med. Uppdatera sedan din åtkomst till {pro} via inställningarna i {app_pro}.</string>
+    <string name="onLinkedDevice">På en länkad enhet</string>
+    <string name="onPlatformStoreWebsite">På webbplatsen för {platform_store}</string>
+    <string name="onPlatformWebsite">På webbplatsen för {platform}</string>
     <string name="onboardingAccountCreate">Skapa konto</string>
     <string name="onboardingAccountCreated">Konto Skapat</string>
     <string name="onboardingAccountExists">Jag har ett konto</string>
@@ -800,6 +906,9 @@
     <string name="onsErrorNotRecognized">Vi kunde inte känna igen denna ONS. Vänligen kontrollera det och försök igen.</string>
     <string name="onsErrorUnableToSearch">Vi kunde inte söka efter denna ONS. Vänligen försök igen senare.</string>
     <string name="open">Öppna</string>
+    <string name="openPlatformStoreWebsite">Öppna webbplatsen för {platform_store}</string>
+    <string name="openPlatformWebsite">Öppna webbplatsen för {platform}</string>
+    <string name="openSettings">Öppna inställningar</string>
     <string name="openSurvey">Öppna undersökning</string>
     <string name="other">Övrigt</string>
     <string name="password">Lösenord</string>
@@ -827,11 +936,14 @@
     <string name="passwordStrengthCharLength">Längre än 12 tecken</string>
     <string name="passwordStrengthIncludeNumber">Inkluderar en siffra</string>
     <string name="passwordStrengthIncludesLowercase">Inkluderar en liten bokstav</string>
+    <string name="passwordStrengthIncludesSymbol">Innehåller en symbol</string>
     <string name="passwordStrengthIncludesUppercase">Inkluderar en stor bokstav</string>
     <string name="passwordStrengthIndicator">Indikator för lösenordsstyrka</string>
     <string name="passwordStrengthIndicatorDescription">Att skapa ett starkt lösenord hjälper till att skydda dina meddelanden och bilagor om din enhet skulle gå förlorad eller bli stulen.</string>
     <string name="passwords">Lösenord</string>
     <string name="paste">Klistra in</string>
+    <string name="paymentError">Betalningsfel</string>
+    <string name="paymentProError">Din betalning har behandlats, men ett fel inträffade vid {action_type} av din {pro}-status.\n\nKontrollera nätverksanslutningen och försök igen.</string>
     <string name="permissionChange">Ändra tillåtelse</string>
     <string name="permissionMusicAudioDenied">{app_name} behöver åtkomst till musik och ljud för att skicka filer, musik och ljud, men åtkomsten har nekats permanent. Tryck på Inställningar → Behörigheter, och slå på \'Musik och ljud\'.</string>
     <string name="permissionsAppleMusic">{app_name} behöver åtkomst till Apple Music för att spela upp bifogade mediafiler.</string>
@@ -870,31 +982,171 @@
     <string name="pinConversation">Fäst konversation</string>
     <string name="pinUnpin">Lossa</string>
     <string name="pinUnpinConversation">Lossa konversation</string>
+    <string name="plusLoadsMore">Plus mycket mer...</string>
+    <string name="plusLoadsMoreDescription">Nya funktioner kommer snart till {pro}. Upptäck vad som är på gång på <b>{pro} Roadmap</b> {icon}</string>
     <string name="preferences">Inställningar</string>
     <string name="preview">Förhandsgranska</string>
     <string name="previewNotification">Förhandsgranska avisering</string>
+    <string name="proAccessActivatedAutoShort">Din åtkomst till {pro} är aktiv!\n\nDin åtkomst till {pro} kommer att förnyas automatiskt med ytterligare <b>{current_plan_length}</b> den <b>{date}</b>.</string>
+    <string name="proAccessActivatesAuto">Din åtkomst till {pro} är aktiv!\n\nDin åtkomst till {pro} kommer att förnyas automatiskt med ytterligare\n<b>{current_plan_length}</b> den <b>{date}</b>. Alla ändringar du gör här kommer att träda i kraft vid din nästa förnyelse.</string>
+    <string name="proAccessError">Åtkomstfel för {pro}</string>
+    <string name="proAccessExpireDate">Din åtkomst till {pro} upphör <b>{date}</b>.</string>
+    <string name="proAccessLoading">Åtkomst till {pro} läses in</string>
+    <string name="proAccessLoadingDescription">Uppgifter om din åtkomst till {pro} laddas fortfarande. Du kan inte uppdatera förrän processen är klar.</string>
+    <string name="proAccessLoadingEllipsis">åtkomst till {pro} läses in...</string>
+    <string name="proAccessNetworkLoadError">Det går inte att ansluta till nätverket för att läsa in uppgifter om åtkomst till {pro}. Uppdatering av {pro} via {app_name} kommer att inaktiveras tills anslutningen har återställts.\n\nKontrollera din nätverksanslutning och försök igen.</string>
+    <string name="proAccessNotFound">{pro} Åtkomst hittades inte</string>
+    <string name="proAccessNotFoundDescription">{app_name} har upptäckt att ditt konto inte har tillgång till {pro}. Om du tror att detta är ett misstag, vänligen kontakta {app_name}s support för hjälp.</string>
+    <string name="proAccessRecover">Återställ åtkomst till {pro}</string>
+    <string name="proAccessRenew">Förnya åtkomst till {pro}</string>
+    <string name="proAccessRenewDesktop">För närvarande kan {pro}-åtkomst endast köpas och förnyas via {platform_store} eller {platform_store_other}. Eftersom du använder {app_name} Desktop kan du inte förnya här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att göra det möjligt för användare att köpa {pro}-åtkomst utanför {platform_store} och {platform_store_other}. <b>{pro}-utvecklingsplan</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Förnya din {pro}-åtkomst på <b><font color="0">{platform_store}-webbplatsen</font></b> med det {platform_account} du använde för att registrera dig för {pro}.</string>
+    <string name="proAccessRenewPlatformWebsite">Förnya via <b><font color="0">{platform}s webbplats</font></b> med det {platform_account} du registrerade dig för {pro} med.</string>
+    <string name="proAccessRenewStart">Förnya din åtkomst till {pro} för att börja använda kraftfulla {app_pro} Beta-funktioner igen.</string>
+    <string name="proAccessRestored">{pro} Åtkomst återställd</string>
+    <string name="proAccessRestoredDescription">{app_name} upptäckte och återskapade åtkomst till {pro} för ditt konto. Din {pro}-status har återställts!</string>
+    <string name="proAccessSignUp">Eftersom du ursprungligen registrerade dig för {app_pro} via <b>{platform_store}</b>, måste du använda ditt {platform_account} för att uppdatera din åtkomst till {pro}.</string>
+    <string name="proAccessUpgradeDesktop">För närvarande kan åtkomst till {pro} endast köpas via {platform_store} eller {platform_store_other}. Eftersom du använder {app_name} Desktop, kan du inte uppgradera till {pro} här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att möjliggöra köp av åtkomst till {pro} utanför {platform_store} och {platform_store_other}. <b>{pro} utvecklingsplan</b> {icon}</string>
     <string name="proActivated">Aktiverat</string>
+    <string name="proActivatingActivation">aktiverar</string>
+    <string name="proAllSet">Allt är klart!</string>
+    <string name="proAllSetDescription">Din åtkomst till {app_pro} har uppdaterats! Du kommer att debiteras när {pro} automatiskt förnyas <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">Du har redan</string>
     <string name="proAnimatedDisplayPicture">Fortsätt och ladda upp GIF:ar och animerade WebP-bilder som visningsbild!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Skaffa animerade visningsbilder och lås upp premiumfunktioner med {app_pro}</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Skaffa animerade visningsbilder och lås upp premiumfunktioner med {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Animerad visningsbild</string>
     <string name="proAnimatedDisplayPictureModalDescription">användare kan ladda upp GIF:ar</string>
+    <string name="proAnimatedDisplayPictures">Animerade visningsbilder</string>
+    <string name="proAnimatedDisplayPicturesDescription">Ställ in animerade GIF-bilder och WebP-bilder som din visningsbild.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Ladda upp GIF:ar med</string>
-    <string name="proCallToActionLongerMessages">Vill du skicka längre meddelanden? Skicka mer text och lås upp premiumfunktioner med {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Vill du ha fler fästen? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Vill du ha mer än 5 fästisar? Organisera dina chattar och lås upp premiumfunktioner med {app_pro}</string>
+    <string name="proAutoRenewTime">{pro} förnyas automatiskt om <b>{time}</b></string>
+    <string name="proBadge">{pro}-märke</string>
+    <string name="proBadgeVisible">Visa märket {app_pro} för andra användare</string>
+    <string name="proBadges">Märken</string>
+    <string name="proBadgesDescription">Visa ditt stöd för {app_name} med ett exklusivt märke bredvid ditt visningsnamn.</string>
+    <plurals name="proBadgesSent">
+        <item quantity="one">%1$s %2$s-märken skickade</item>
+        <item quantity="other">%1$s %2$s-märken skickade</item>
+    </plurals>
+    <string name="proBetaFeatures">{pro} beta-funktioner</string>
+    <string name="proBilledAnnually">{price} Faktureras årligen</string>
+    <string name="proBilledMonthly">{price} Faktureras månadsvis</string>
+    <string name="proBilledQuarterly">{price} Faktureras kvartalsvis</string>
+    <string name="proCallToActionLongerMessages">Vill du skicka längre meddelanden?\nSkicka mer text och lås upp premiumfunktioner med {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Vill du ha fler fästen?\nOrganisera dina chattar och lås upp premiumfunktioner med {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Vill du ha mer än {limit} fästisar?\nOrganisera dina chattar och lås upp premiumfunktioner med {app_pro} Beta</string>
+    <string name="proCancelSorry">Tråkigt att se att du avbryter {pro}. Här är vad du behöver veta innan du avbryter din åtkomst till {pro}.</string>
+    <string name="proCancellation">Uppsägning</string>
+    <string name="proCancellationDescription">Att avsluta åtkomsten till {pro} kommer att förhindra automatisk förnyelse innan åtkomsten till {pro} löper ut. Att avsluta {pro} leder <b>inte</b> till någon återbetalning. Du kommer fortfarande att kunna använda {app_pro}-funktioner tills din {pro}-åtkomst löper ut.\n\nEftersom du ursprungligen registrerade dig för {app_pro} med ditt <b>{platform_account}</b>, måste du använda samma {platform_account} för att avsluta {pro}.</string>
+    <string name="proCancellationOptions">Två sätt att avsluta din åtkomst till {pro}:</string>
+    <string name="proChooseAccess">Välj det {pro}-abonnemang som passar dig.\nLängre tillgång ger större rabatter.</string>
+    <string name="proClearAllDataDevice">Är du säker på att du vill ta bort dina data från den här enheten?\n\n<b>{app_pro}</b> kan inte överföras till ett annat konto. Spara ditt återställningslösenord för att säkerställa att du kan återställa din åtkomst till {pro} senare.</string>
+    <string name="proClearAllDataNetwork">Är du säker på att du vill ta bort dina data från nätverket? Om du fortsätter kommer du inte att kunna återställa dina meddelanden eller kontakter.\n\n<b>{app_pro}</b> kan inte överföras till ett annat konto. Spara ditt återställningslösenord för att säkerställa att du kan återställa din åtkomst till {pro} senare.</string>
+    <string name="proDiscountTooltip">Din åtkomst till {pro} är redan rabatterad med {percent}% av fullpriset för {app_pro}.</string>
+    <string name="proErrorRefreshingStatus">Fel vid uppdatering av {pro}-status</string>
+    <string name="proExpired">Utgången</string>
+    <string name="proExpiredDescription">Tyvärr har din åtkomst till {pro} upphört.\nFörnya den för att återaktivera de exklusiva förmånerna och funktionerna i {app_pro} Beta.</string>
+    <string name="proExpiringSoon">Löper ut snart</string>
+    <string name="proExpiringSoonDescription">Din åtkomst till {pro} löper ut om <b>{time}</b>.\nUppdatera nu för fortsatt åtkomst till de exklusiva förmånerna och funktionerna i {app_pro} Beta</string>
+    <string name="proExpiringTime">{pro} upphör om <b>{time}</b></string>
+    <string name="proFaq">{pro} Vanliga frågor</string>
+    <string name="proFaqDescription">Hitta svar på vanliga frågor i {app_pro} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Ladda upp GIF- och WebP-visningsbilder</string>
     <string name="proFeatureListLargerGroups">Större gruppchattar upp till 300 medlemmar</string>
     <string name="proFeatureListLoadsMore">Plus många fler exklusiva funktioner</string>
     <string name="proFeatureListLongerMessages">Meddelanden upp till 10 000 tecken</string>
     <string name="proFeatureListPinnedConversations">Fäst obegränsat antal konversationer</string>
+    <string name="proFullestPotential">Vill du använda {app_name} till sin fulla potential?\nUppgradera till {app_pro} Beta för att få tillgång till massor av exklusiva förmåner och funktioner.</string>
     <string name="proGroupActivated">Grupp aktiverad</string>
     <string name="proGroupActivatedDescription">Den här gruppen har utökad kapacitet! Den kan ha upp till 300 medlemmar eftersom en gruppadministratör har</string>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="one">%1$s grupp uppgraderad</item>
+        <item quantity="other">%1$s Grupper uppgraderade</item>
+    </plurals>
+    <string name="proImportantDescription">Att begära återbetalning är slutgiltigt. Om den godkänns kommer din åtkomst till {pro} att avbrytas omedelbart och du kommer att förlora åtkomst till alla {pro}-funktioner.</string>
     <string name="proIncreasedAttachmentSizeFeature">Större bilagegräns</string>
     <string name="proIncreasedMessageLengthFeature">Förlängd meddelandelängd</string>
+    <string name="proLargerGroups">Större grupper</string>
+    <string name="proLargerGroupsDescription">Grupper där du är administratör uppgraderas automatiskt för att stödja 300 medlemmar.</string>
+    <string name="proLargerGroupsTooltip">Större gruppchattar (upp till 300 medlemmar) kommer snart för alla Pro Beta-användare!</string>
+    <string name="proLongerMessages">Längre meddelanden</string>
+    <string name="proLongerMessagesDescription">Du kan skicka meddelanden med upp till 10 000 tecken i alla konversationer.</string>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">%1$s Längre meddelande skickat</item>
+        <item quantity="other">%1$s längre meddelanden skickade</item>
+    </plurals>
     <string name="proMessageInfoFeatures">Detta meddelande använde följande funktioner från {app_pro}:</string>
+    <string name="proNewInstallation">Med en ny installation</string>
+    <string name="proNewInstallationDescription">Installera om {app_name} på den här enheten via {platform_store}, återställ ditt konto med ditt återställningslösenord och förnya {pro} från inställningarna i {app_pro}.</string>
+    <string name="proNewInstallationUpgrade">Installera om {app_name} på den här enheten via {platform_store}, återställ ditt konto med ditt återställningslösenord och uppgradera till {pro} från inställningarna i {app_pro}.</string>
+    <string name="proOptionsRenewalSubtitle">För närvarande finns det tre sätt att förnya:</string>
+    <string name="proOptionsTwoRenewalSubtitle">För tillfället finns det två sätt att förnya:</string>
+    <string name="proPercentOff">{percent}% rabatt</string>
+    <plurals name="proPinnedConversations">
+        <item quantity="one">%1$s fastnålad konversation</item>
+        <item quantity="other">%1$s fastnålade konversationer</item>
+    </plurals>
+    <string name="proPlanPlatformRefund">Eftersom du ursprungligen registrerade dig för {app_pro} via <b><font color="0">{platform_store}</font></b>så måste du använda din {platform_account} för att begära återbetalning.</string>
+    <string name="proPlanPlatformRefundLong">Eftersom du ursprungligen registrerade dig för {app_pro} via <b><font color="0">{platform_store}</font></b>, så kommer din begäran om återbetalning att behandlas av {app_name} Support.\n\nBegär återbetalning genom att trycka på knappen nedan och fyll i formuläret för återbetalning.\n\nÄven om {app_name} Support strävar efter att behandla en begäran om återbetalning inom 24–72 timmar, så kan det ta längre tid vid tillfällen med många förfrågningar om återbetalning.</string>
+    <string name="proPlanRenewSupport">Din tillgång till {app_pro} har förnyats! Tack för att du stöttar {network_name}.</string>
+    <string name="proPriceOneMonth">1 månad – {monthly_price} / månad</string>
+    <string name="proPriceThreeMonths">3 månader – {monthly_price} / månad</string>
+    <string name="proPriceTwelveMonths">12 månader – {monthly_price} / månad</string>
+    <string name="proReactivatingActivation">återaktiverar</string>
+    <string name="proRefundAccountDevice">Öppna detta {app_name}-konto på en {device_type}-enhet som är inloggad på det {platform_account} du ursprungligen registrerade dig med. Begär sedan återbetalning via inställningarna i {app_pro}.</string>
+    <string name="proRefundDescription">Vi är ledsna att du vill avsluta. Här är vad du behöver veta innan du begär en återbetalning.</string>
+    <string name="proRefundNextSteps">{platform} behandlar nu din återbetalningsförfrågan. Detta tar vanligtvis 24–48 timmar. Beroende på deras beslut kan din {pro}-status ändras i {app_name}.</string>
+    <string name="proRefundRequestSessionSupport">Din återbetalningsbegäran kommer att hanteras av {app_name} Support.\n\nBegär återbetalning genom att trycka på knappen nedan och fylla i formuläret för återbetalning.\n\nÄven om {app_name} Support strävar efter att behandla återbetalningsbegäran inom 24–72 timmar kan det ta längre tid vid hög belastning.</string>
+    <string name="proRefundRequestStorePolicies">Din återbetalningsbegäran hanteras uteslutande av {platform} via <b>{platform} webbplats</b>.\n\nPå grund av {platform}s återbetalningspolicyer har utvecklarna av {app_name} ingen möjlighet att påverka resultatet av återbetalningsförfrågningar. Detta inkluderar om begäran godkänns eller nekas, samt om en fullständig eller delvis återbetalning ges.</string>
+    <string name="proRefundSupport">Vänligen kontakta {platform} för ytterligare uppdateringar om din återbetalningsförfrågan. På grund av {platform}s återbetalningspolicyer har utvecklarna av {app_name} ingen möjlighet att påverka resultatet av återbetalningsförfrågningar.\n\n<font color="0">{platform} Återbetalningssupport</font></string>
+    <string name="proRefunding">Återbetalning av {pro}</string>
+    <string name="proRefundingDescription">Återbetalningar för {app_pro} hanteras uteslutande av {platform} via {platform_store}.\n\nPå grund av {platform}s återbetalningspolicyer har utvecklarna av {app_name} ingen möjlighet att påverka resultatet av återbetalningsförfrågningar. Detta inkluderar om begäran godkänns eller nekas, samt om en fullständig eller delvis återbetalning ges.</string>
+    <string name="proRenewAnimatedDisplayPicture">Vill du använda animerade visningsbilder igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
+    <string name="proRenewBeta">Förnya {pro} Beta</string>
+    <string name="proRenewDesktopLinked">Förnya din {pro}-åtkomst från {app_pro}-inställningarna på en länkad enhet med {app_name} installerad via {platform_store} eller {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Vill du skicka längre meddelanden igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
+    <string name="proRenewMaxPotential">Vill du använda {app_name} till dess fulla potential igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
+    <string name="proRenewPinFiveConversations">Vill du fästa fler än {limit} konversationer igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
+    <string name="proRenewPinMoreConversations">Vill du fästa fler konversationer igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
+    <string name="proRenewTosPrivacy">Genom att förnya godkänner du {app_pro} <b>Användarvillkoren</b> {icon} och <b>Sekretesspolicyn</b> {icon}</string>
+    <string name="proRenewingAction">förnyar</string>
+    <string name="proRenewingNoAccessBilling">För närvarande kan åtkomst till {pro} endast köpas och förnyas via {platform_store} eller {platform_store_other}. Eftersom du installerade {app_name} med hjälp av {build_variant}, så kan du inte förnya här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att göra det möjligt för användare att köpa åtkomst till {pro} utanför {platform_store} och {platform_store_other}.<b> Utvecklingsplan för {pro}</b> {icon}</string>
+    <string name="proRequestedRefund">Återbetalning begärd</string>
     <string name="proSendMore">Skicka mer med</string>
-    <string name="proUserProfileModalCallToAction">Vill du få ut mer av {app_name}? Uppgradera till {app_pro} för en kraftfullare meddelandeupplevelse.</string>
+    <string name="proSettings">{pro}-inställningar</string>
+    <string name="proStartUsing">Börja använda {pro}</string>
+    <string name="proStats">Din {pro}-statistik</string>
+    <string name="proStatsLoading">{pro}-statistik läses in</string>
+    <string name="proStatsLoadingDescription">Din {pro}-statistik laddas, var god vänta.</string>
+    <string name="proStatsTooltip">{pro}-statistik återspeglar användning på den här enheten och kan visas annorlunda på länkade enheter</string>
+    <string name="proStatusError">Statusfel för {pro}</string>
+    <string name="proStatusInfoInaccurateNetworkError">Det går inte att ansluta till nätverket för att kontrollera din status för {pro}. Informationen som visas på den här sidan kan vara felaktig tills anslutningen har återställts.\n\nKontrollera din nätverksanslutning och försök igen.</string>
+    <string name="proStatusLoading">{pro}-status läses in</string>
+    <string name="proStatusLoadingDescription">Uppgifterna om {pro} läses in. Vissa åtgärder på denna sida kan vara otillgängliga tills inläsningen är klar.</string>
+    <string name="proStatusLoadingSubtitle">{pro}-status läses in</string>
+    <string name="proStatusNetworkErrorContinue">Det går inte att ansluta till nätverket för att kontrollera din {pro}-status. Du kan inte fortsätta förrän anslutningen har återställts.\n\nKontrollera din nätverksanslutning och försök igen.</string>
+    <string name="proStatusNetworkErrorDescription">Det går inte att ansluta till nätverket för att kontrollera din status för {pro}. Du kan inte uppgradera till {pro} förrän anslutningen har återställts.\n\nKontrollera din nätverksanslutning och försök igen.</string>
+    <string name="proStatusRefreshNetworkError">Det går inte att ansluta till nätverket för att uppdatera din {pro}-status. Vissa åtgärder på den här sidan kommer att inaktiveras tills anslutningen har återställts.\n\nKontrollera din nätverksanslutning och försök igen.</string>
+    <string name="proStatusRenewError">Det gick inte att ansluta till nätverket för att läsa in din nuvarande åtkomst till {pro}. Att förnya {pro} via {app_name} kommer att inaktiveras tills anslutningen har återställts.\n\nKontrollera din nätverksanslutning och försök igen.</string>
+    <string name="proSupportDescription">Behöver du hjälp med {pro}? Skicka en förfrågan till supportteamet.</string>
+    <string name="proTosDescription">Genom att {action_type} håller du på att {activation_type} {app_pro} via {app_name}-protokollet. {entity} underlättar denna aktivering men är inte leverantör av {app_pro}. {entity} ansvarar inte för prestanda, tillgänglighet eller funktionalitet för {app_pro}.</string>
+    <string name="proTosPrivacy">Genom att uppdatera godkänner du {app_pro} <b>Användarvillkoren</b> {icon} och <b>Sekretesspolicyn</b> {icon}</string>
+    <string name="proUnlimitedPins">Obegränsat med nålar</string>
+    <string name="proUnlimitedPinsDescription">Organisera alla dina chattar med obegränsade fastnålade konversationer.</string>
+    <string name="proUpdateAccessDescription">Ditt nuvarande faktureringsalternativ ger <b>{current_plan_length}</b> åtkomst till {pro}. Är du säker på att du vill byta till faktureringsalternativet <b>{selected_plan_length_singular}</b>?\n\nGenom att uppdatera kommer din åtkomst till {pro} att automatiskt förnyas den <b>{date}</b> för ytterligare <b>{selected_plan_length}</b> åtkomst till {pro}.</string>
+    <string name="proUpdateAccessExpireDescription">Din åtkomst till {pro} upphör den <b>{date}</b>.\n\nGenom att uppdatera kommer din åtkomst till {pro} att automatiskt förnyas den <b>{date}</b> för ytterligare <b>{selected_plan_length}</b> åtkomst till {pro}.</string>
+    <string name="proUpdatingAction">uppdaterar</string>
+    <string name="proUpgradeAccess">Uppgradera till {app_pro} Beta för att få tillgång till massor av exklusiva förmåner och funktioner.</string>
+    <string name="proUpgradeDesktopLinked">Uppgradera till {pro} från {app_pro}-inställningarna på en länkad enhet med {app_name} installerad via {platform_store} eller {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">För närvarande kan åtkomst till {pro} endast köpas via {platform_store} eller {platform_store_other}. Eftersom du installerade {app_name} med hjälp av {build_variant}, kan du inte uppgradera till {pro} här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att möjliggöra köp av åtkomst till {pro} utanför {platform_store} och {platform_store_other}.<b> {pro} utvecklingsplan</b> {icon}</string>
+    <string name="proUpgradeOption">För tillfället finns det endast ett sätt att uppgradera:</string>
+    <string name="proUpgradeOptionsTwo">För tillfället finns det två sätt att uppgradera:</string>
+    <string name="proUpgraded">Du har uppgraderat till {app_pro}!\nTack för att du stöttar {network_name}.</string>
+    <string name="proUpgradingAction">uppgraderar</string>
+    <string name="proUpgradingTo">Uppgraderar till {pro}</string>
+    <string name="proUpgradingTosPrivacy">Genom att uppdatera godkänner du {app_pro} <b>Användarvillkoren</b> {icon} och <b>Sekretesspolicyn</b> {icon}</string>
+    <string name="proUserProfileModalCallToAction">Vill du få ut mer av {app_name}?\nUppgradera till {app_pro} Beta för en mer avancerad meddelandeupplevelse.</string>
+    <string name="processingRefundRequest">{platform} behandlar din återbetalningsbegäran</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Visa bild</string>
     <string name="profileDisplayPictureRemoveError">Misslyckades med att ta bort visningsbild.</string>
@@ -902,6 +1154,11 @@
     <string name="profileDisplayPictureSizeError">Vänligen välj en mindre fil.</string>
     <string name="profileErrorUpdate">Misslyckades att uppdatera profilen.</string>
     <string name="promote">Främja</string>
+    <string name="promoteAdminsWarning">Administratörer kommer att kunna se de senaste 14 dagarnas meddelandehistorik och kan inte nedgraderas eller tas bort från gruppen.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Befordra medlem</item>
+        <item quantity="other">Befordra medlemmar</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Befordran Misslyckades</item>
         <item quantity="other">Befordringar Misslyckades</item>
@@ -927,6 +1184,7 @@
     <string name="received">Mottaget:</string>
     <string name="receivedAnswer">Mottog svar</string>
     <string name="receivingCallOffer">Inkommande erbjudande för samtal</string>
+    <string name="receivingPreOffer">Receiving Pre Offer</string>
     <string name="recommended">Rekommenderat</string>
     <string name="recoveryPasswordBannerDescription">Spara ditt återställningslösenord så att du inte förlorar tillgången till ditt konto.</string>
     <string name="recoveryPasswordBannerTitle">Spara ditt återställningslösenord</string>
@@ -949,22 +1207,60 @@
     <string name="recoveryPasswordWarningSendDescription">Detta är ditt återställningslösenord. Om du skickar det till någon kommer de att ha full tillgång till ditt konto.</string>
     <string name="recreateGroup">Skapa gruppen igen</string>
     <string name="redo">Gör om</string>
+    <string name="refundNonOriginatorApple">Eftersom du ursprungligen registrerade dig för {app_pro} via en annan {platform_account}, så måste du använda <b><font color="0">{platform_account}</font></b> för att uppdatera din åtkomst till {pro}.</string>
+    <string name="refundRequestOptions">Två sätt att begära återbetalning:</string>
     <string name="remainingCharactersOverTooltip">Förkorta meddelandet med {count} tecken</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d tecken kvar</item>
         <item quantity="other">%1$d tecken kvar</item>
     </plurals>
+    <string name="remindMeLater">Påminn mig senare</string>
     <string name="remove">Ta bort</string>
+    <plurals name="removeMember">
+        <item quantity="one">Ta bort medlem</item>
+        <item quantity="other">Ta bort medlemmar</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Ta bort medlem och dess meddelanden</item>
+        <item quantity="other">Ta bort medlemmar och deras meddelanden</item>
+    </plurals>
     <string name="removePasswordFail">Misslyckades med att ta bort lösenord</string>
     <string name="removePasswordModalDescription">Ta bort ditt nuvarande lösenord för {app_name}. Lokalt lagrad data kommer att krypteras om med en slumpmässigt genererad nyckel som lagras på din enhet.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Tar bort medlem</item>
+        <item quantity="other">Tar bort medlemmar</item>
+    </plurals>
+    <string name="renew">Förnya</string>
+    <string name="renewingPro">Förnyelse av {pro}</string>
     <string name="reply">Svara</string>
+    <string name="requestRefund">Begär återbetalning</string>
+    <string name="requestRefundPlatformWebsite">Begär en återbetalning på <b><font color="0">{platform}s webbplats</font></b> med det {platform_account} du registrerade dig för {pro} med.</string>
     <string name="resend">Skicka på nytt</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Skicka inbjudan igen</item>
+        <item quantity="other">Skicka inbjudningar igen</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Skicka befordran igen</item>
+        <item quantity="other">Skicka befordringar igen</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Skickar inbjudan igen</item>
+        <item quantity="other">Skicka inbjudningar igen</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Skickar befordran</item>
+        <item quantity="other">Skickar befordringar</item>
+    </plurals>
     <string name="resolving">Läser in landinformation ...</string>
     <string name="restart">Starta om</string>
     <string name="resync">Synkronisera</string>
     <string name="retry">Försök igen</string>
     <string name="reviewLimit">Betygsättningsgräns</string>
     <string name="reviewLimitDescription">Det verkar som att du redan betygsatt {app_name} nyligen – tack för din feedback!</string>
+    <string name="runAppBackground">Kör appen i bakgrunden</string>
+    <string name="runSessionBackground">Köra {app_name} i bakgrunden?</string>
+    <string name="runSessionBackgroundDescription">Eftersom du använder Slow Mode rekommenderar vi att du tillåter att {app_name} körs i bakgrunden för att förbättra aviseringarna. Det kan förbättra aviseringarnas konsekvens, även om ditt system fortfarande kan begränsa bakgrundsaktivitet automatiskt.\n\nDu kan ändra detta senare i Inställningar.</string>
     <string name="save">Spara</string>
     <string name="saved">Sparad</string>
     <string name="savedMessages">Sparade meddelanden</string>
@@ -973,6 +1269,8 @@
     <string name="screenSecurity">Skärmsäkerhet</string>
     <string name="screenshotNotifications">Aviseringar för skärmdump</string>
     <string name="screenshotNotificationsDescription">Kräv en avisering när en kontakt tar en skärmdump av en enskild chatt.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Dölj {app_name}-fönstret i skärmdumpar som tas på den här enheten.</string>
+    <string name="screenshotProtectionDesktop">Skärmdumpsskydd</string>
     <string name="screenshotTaken"><b>{name}</b> tog en skärmbild.</string>
     <string name="search">Sök</string>
     <string name="searchContacts">Sök kontakter</string>
@@ -993,6 +1291,10 @@
     <string name="sending">Skickar</string>
     <string name="sendingCallOffer">Skickar erbjudande för samtal</string>
     <string name="sendingConnectionCandidates">Skickar kontakt kandidater</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Sänder befordran</item>
+        <item quantity="other">Sänder administratörsbehörigheter</item>
+    </plurals>
     <string name="sent">Skickat:</string>
     <string name="sessionAppearance">Utseende</string>
     <string name="sessionClearData">Rensa data</string>
@@ -1013,19 +1315,25 @@
     <string name="sessionNotifications">Aviseringar</string>
     <string name="sessionPermissions">Behörigheter</string>
     <string name="sessionPrivacy">Integritet</string>
+    <string name="sessionProBeta">{app_pro} Beta</string>
     <string name="sessionRecoveryPassword">Återställningslösenord</string>
     <string name="sessionSettings">Inställningar</string>
     <string name="set">Ange</string>
     <string name="setCommunityDisplayPicture">Ange Community-visningsbild</string>
     <string name="setPasswordModalDescription">Ställ in ett lösenord för {app_name}. Lokalt lagrade data kommer att krypteras med detta lösenord. Du kommer att bli ombedd att ange detta lösenord varje gång {app_name} startas.</string>
+    <string name="settingsCannotChangeDesktop">Kan inte uppdatera inställning</string>
     <string name="settingsRestartDescription">Du måste starta om {app_name} för att tillämpa dina nya inställningar.</string>
     <string name="settingsScreenSecurityDesktop">Skärmsäkerhet</string>
+    <string name="settingsStartCategoryDesktop">Uppstart</string>
     <string name="share">Dela</string>
     <string name="shareAccountIdDescription">Bjud in din vän att chatta med dig på {app_name} genom att dela ditt Account ID med dem.</string>
     <string name="shareAccountIdDescriptionCopied">Dela med dina vänner var du än brukar prata med dem — flytta sedan konversationen hit.</string>
     <string name="shareExtensionDatabaseError">Det finns ett problem med att öppna databasen. Starta om appen och försök igen.</string>
     <string name="shareExtensionNoAccountError">Oops! Ser ut som att du inte har ett {app_name} konto ännu.\n\nDu behöver skapa ett först hos {app_name} innan du kan dela.</string>
+    <string name="shareGroupMessageHistory">Vill du dela gruppens meddelandehistorik med den här användaren?</string>
     <string name="shareToSession">Dela till {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Tyvärr stöder {app_name} endast delning av flera bilder och videor samtidigt</string>
+    <string name="sharingSupportMultipleMediaExcluded">Delning stöder endast media. Icke-mediefiler har exkluderats</string>
     <string name="show">Visa</string>
     <string name="showAll">Visa alla</string>
     <string name="showLess">Visa färre</string>
@@ -1041,6 +1349,7 @@
     <string name="theContinue">Fortsätt</string>
     <string name="theDefault">Standard</string>
     <string name="theError">Fel</string>
+    <string name="theReturn">Tillbaka</string>
     <string name="themePreview">Förhandsvisning av tema</string>
     <string name="tooltipAccountIdVisible"><b>{name}</b>:s Account ID är synligt baserat på dina tidigare interaktioner</string>
     <string name="tooltipBlindedIdCommunities">Maskerade ID används i Communitys för att minska spam och öka sekretessen</string>
@@ -1052,6 +1361,10 @@
     <string name="unavailable">Otillgänglig</string>
     <string name="undo">Ångra</string>
     <string name="unknown">Okänd</string>
+    <string name="unsupportedCpu">Processorn stöds ej</string>
+    <string name="update">Uppdatera</string>
+    <string name="updateAccess">Uppdatera {pro}-åtkomst</string>
+    <string name="updateAccessTwo">Två sätt att uppdatera din åtkomst till {pro}:</string>
     <string name="updateApp">App-uppdateringar</string>
     <string name="updateCommunityInformation">Uppdatera communityinformation</string>
     <string name="updateCommunityInformationDescription">Communitynamn och beskrivning är synliga för alla communitymedlemmar</string>
@@ -1074,13 +1387,18 @@
     <string name="updated">Senast uppdaterad för {relative_time} sedan</string>
     <string name="updates">Uppdateringar</string>
     <string name="updating">Uppdaterar...</string>
+    <string name="upgrade">Uppgradera</string>
+    <string name="upgradeSession">Uppgradera {app_name}</string>
     <string name="upgradeTo">Uppgradera till</string>
     <string name="uploading">Laddar upp</string>
     <string name="urlCopy">Kopiera URL</string>
     <string name="urlOpen">Öppna URL</string>
     <string name="urlOpenBrowser">Detta kommer att öppna i din webbläsare.</string>
     <string name="urlOpenDescription">Är du säker på att du vill öppna denna URL i din webbläsare?\n\n<b>{url}</b></string>
+    <string name="urlOpenDescriptionAlternative">Länkar kommer att öppnas i din webbläsare.</string>
     <string name="useFastMode">Använd snabbläge</string>
+    <string name="viaPlatformWebsiteDescription">Ändra din plan med det {platform_account} du använde vid registrering, via <b><font color="0">{platform}s webbplats</font></b>.</string>
+    <string name="viaStoreWebsite">Via webbplatsen för {platform}</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kunde inte spela upp video.</string>
     <string name="view">Visa</string>
@@ -1089,9 +1407,11 @@
     <string name="waitFewMinutes">Detta kan dröja några minuter.</string>
     <string name="waitOneMoment">Ett ögonblick...</string>
     <string name="warning">Varning</string>
+    <string name="warningIosVersionEndingSupport">Stödet för iOS 15 har avslutats. Uppdatera till iOS 16 eller senare för att fortsätta få appuppdateringar.</string>
     <string name="window">Fönster</string>
     <string name="yes">Ja</string>
     <string name="you">Du</string>
+    <string name="yourCpuIsUnsupportedSSE42">Din processor stöder inte SSE 4.2-instruktioner, vilket krävs av {app_name} på GNU/Linux x64-operativsystem för att bearbeta bilder. Uppgradera till en kompatibel processor eller använd ett annat operativsystem.</string>
     <string name="yourRecoveryPassword">Ditt återställningslösenord</string>
     <string name="zoomFactor">Zoomfaktor</string>
     <string name="zoomFactorDescription">Justera storleken på text och visuella element.</string>

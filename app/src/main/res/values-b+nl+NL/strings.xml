@@ -15,8 +15,13 @@
     <string name="accountIdYoursDescription">Dit is uw Account-ID. Andere gebruikers kunnen het scannen om een gesprek met u te beginnen.</string>
     <string name="actualSize">Werkelijke grootte</string>
     <string name="add">Toevoegen</string>
-    <string name="addAdmins">Beheerders toevoegen</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Beheerder toevoegen</item>
+        <item quantity="other">Beheerders toevoegen</item>
+    </plurals>
+    <string name="addAdminSingular">Beheerder toevoegen</string>
     <string name="addAdminsDescription">Voer de account-ID in van de gebruiker die u promoot als admin.\n\nOm meerdere gebruikers toe te voegen, voer elk account-ID in, gescheiden door een komma. Tot 20 Account ID\'s kunnen tegelijkertijd worden opgegeven.</string>
+    <string name="adminCannotBeDemoted">Beheerders kunnen niet gedegradeerd of verwijderd worden uit de groep.</string>
     <string name="adminCannotBeRemoved">Admins kunnen niet worden verwijderd.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> en <b>{count} anderen</b> zijn gepromoveerd tot Admin.</string>
     <string name="adminPromote">Beheerders promoveren</string>
@@ -41,12 +46,19 @@
     <string name="adminRemovedUser"><b>{name}</b> is verwijderd als Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> en <b>{count} anderen</b> zijn verwijderd als beheerder.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> en <b>{other_name}</b> zijn verwijderd als beheerder.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d beheerder geselecteerd</item>
+        <item quantity="other">%1$d beheerders geselecteerd</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Beheerder promotie versturen</item>
         <item quantity="other">Beheerder promoties versturen</item>
     </plurals>
     <string name="adminSettings">Admin instellingen</string>
+    <string name="adminStatusYou">Je kunt je eigen beheerdersstatus niet wijzigen. Om de groep te verlaten, open je de gespreksinstellingen en kies je Groep verlaten.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> en <b>{other_name}</b> zijn gepromoveerd tot Admin.</string>
+    <string name="admins">Beheerders</string>
+    <string name="allow">Toestaan</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anoniem</string>
     <string name="appIcon">App icoon</string>
@@ -163,6 +175,7 @@
     <string name="blockUnblockNameTwo">Weet je zeker dat je <b>{name}</b> en 1 andere wilt deblokkeren?</string>
     <string name="blockUnblockedUser">Gedeblokkeerd {name}</string>
     <string name="blockedContactsManageDescription">Bekijk en beheer geblokkeerde contacten.</string>
+    <string name="browserNotFound">Geen browser gevonden om die URL te openen. Probeer in plaats daarvan de URL te kopiëren</string>
     <string name="call">Bellen</string>
     <string name="callsCalledYou">{name} heeft je gebeld</string>
     <string name="callsCannotStart">U kunt geen nieuw gesprek starten. Maak eerst uw huidige gesprek af.</string>
@@ -191,6 +204,10 @@
     <string name="callsVoiceAndVideoToggleDescription">Inschakelen van spraak- en video-oproepen naar en van andere gebruikers.</string>
     <string name="callsYouCalled">U belde {name}</string>
     <string name="callsYouMissedCallPermissions">U heeft een gemiste oproep van <b>{name}</b> omdat u <b>Geluid- en Video-oproepen</b> niet heeft ingeschakeld in Privacy-instellingen.</string>
+    <string name="cameraAccessDeniedMessage">{app_name} heeft toegang tot uw camera nodig om videogesprekken mogelijk te maken, maar deze toestemming is geweigerd. U kunt uw cameramachtigingen niet bijwerken tijdens een gesprek.\n\nWilt u het gesprek nu beëindigen en camera-toegang inschakelen, of wilt u na het gesprek een herinnering ontvangen?</string>
+    <string name="cameraAccessInstructions">Om camera-toegang toe te staan, opent u de instellingen en schakelt u de machtiging Camera in.</string>
+    <string name="cameraAccessReminderMessage">Tijdens uw laatste gesprek probeerde u video te gebruiken, maar dat lukte niet omdat de toegang tot de camera eerder was geweigerd. Om camera-toegang toe te staan, opent u de instellingen en schakelt u de machtiging Camera in.</string>
+    <string name="cameraAccessRequired">Camera-toegang vereist</string>
     <string name="cameraErrorNotFound">Geen camera gevonden</string>
     <string name="cameraErrorUnavailable">Camera niet beschikbaar.</string>
     <string name="cameraGrantAccess">Toegang tot camera verlenen</string>
@@ -198,9 +215,19 @@
     <string name="cameraGrantAccessDescription">{app_name} heeft toegang tot de camera nodig om foto\'s en video\'s te maken of QR-codes te scannen.</string>
     <string name="cameraGrantAccessQr">{app_name} heeft toegang tot de camera nodig om QR-codes te scannen</string>
     <string name="cancel">Annuleren</string>
+    <string name="cancelAccess">{pro} annuleren</string>
+    <string name="cancelProPlatform">Annuleer op de {platform}-website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
+    <string name="cancelProPlatformStore">Annuleer op de {platform_store}-website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="change">Wijzigen</string>
     <string name="changePasswordFail">Wachtwoord wijzigen mislukt</string>
     <string name="changePasswordModalDescription">Wijzig je wachtwoord voor {app_name}. Lokaal opgeslagen gegevens worden opnieuw versleuteld met je nieuwe wachtwoord.</string>
+    <string name="changeSetting">Instelling wijzigen</string>
+    <string name="checkingProStatus">{pro}-status controleren</string>
+    <string name="checkingProStatusContinue">Uw {pro}-status wordt gecontroleerd. U kunt doorgaan zodra deze controle is voltooid.</string>
+    <string name="checkingProStatusDescription">Jouw {pro}-gegevens worden gecontroleerd. Sommige acties op deze pagina zijn mogelijk niet beschikbaar tot deze controle is voltooid.</string>
+    <string name="checkingProStatusEllipsis">{pro}-status controleren...</string>
+    <string name="checkingProStatusRenew">{pro}-gegevens worden gecontroleerd. Je kunt pas verlengen nadat deze controle is voltooid.</string>
+    <string name="checkingProStatusUpgradeDescription">Je {pro}-status wordt gecontroleerd. Je kunt upgraden naar {pro} zodra deze controle is voltooid.</string>
     <string name="clear">Wissen</string>
     <string name="clearAll">Alles wissen</string>
     <string name="clearDataAll">Wis alle gegevens</string>
@@ -230,7 +257,7 @@
     <string name="clearMessagesGroupDescription">Weet u zeker dat u alle <b>{group_name}</b> berichten van uw apparaat wilt wissen?</string>
     <string name="clearMessagesGroupDescriptionUpdated">Weet je zeker dat je alle berichten van <b>{group_name}</b> op dit apparaat wilt wissen?</string>
     <string name="clearMessagesNoteToSelfDescription">Weet u zeker dat u alle \"Notitie aan mijzelf\" berichten van uw apparaat wilt wissen?</string>
-    <string name="clearMessagesNoteToSelfDescriptionUpdated">Weet u zeker dat u alle <b>{Bericht aan Jezelf}</b> op dit apparaat wilt wissen?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Weet u zeker dat u alle <b>Bericht aan Jezelf</b> op dit apparaat wilt wissen?</string>
     <string name="clearOnThisDevice">Wissen op dit apparaat</string>
     <string name="close">Sluiten</string>
     <string name="closeApp">Applicatie sluiten</string>
@@ -259,11 +286,17 @@
     <string name="communityUrl">Community URL</string>
     <string name="communityUrlCopy">Kopieer Community URL</string>
     <string name="confirm">Bevestigen</string>
+    <string name="confirmPromotion">Promotie bevestigen</string>
+    <string name="confirmPromotionDescription">Weet je het zeker? Beheerders kunnen niet worden gedegradeerd of uit de groep worden verwijderd.</string>
     <string name="contactContacts">Contacten</string>
     <string name="contactDelete">Verwijder contactpersoon</string>
     <string name="contactDeleteDescription">Weet u zeker dat u <b>{name}</b> uit uw contacten wilt verwijderen? Nieuwe berichten van <b>{name}</b> komen binnen als een berichtverzoek.</string>
     <string name="contactNone">U heeft nog geen contactpersonen</string>
     <string name="contactSelect">Contacten selecteren</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d contact geselecteerd</item>
+        <item quantity="other">%1$d contactpersonen geselecteerd</item>
+    </plurals>
     <string name="contactUserDetails">Gebruikersgegevens</string>
     <string name="contentDescriptionCamera">Camera</string>
     <string name="contentDescriptionChooseConversationType">Kies een actie om een gesprek te beginnen</string>
@@ -304,6 +337,7 @@
     <string name="copy">Kopieer</string>
     <string name="create">Aanmaken</string>
     <string name="creatingCall">Oproep starten</string>
+    <string name="currentBilling">Huidige facturering</string>
     <string name="currentPassword">Huidig wachtwoord</string>
     <string name="cut">Knippen</string>
     <string name="darkMode">Donkere modus</string>
@@ -331,6 +365,14 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Een moment geduld, de groep wordt aangemaakt...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Het is mislukt om de groep bij te werken</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Je hebt geen toestemming om andermans berichten te verwijderen</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Geselecteerde bijlage verwijderen</item>
+        <item quantity="other">Geselecteerde bijlagen verwijderen</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Weet u zeker dat u de geselecteerde bijlage wilt verwijderen? Het bericht dat aan de bijlage is gekoppeld, wordt ook verwijderd.</item>
+        <item quantity="other">Weet u zeker dat u de geselecteerde bijlagen wilt verwijderen? De berichten die aan de bijlagen zijn gekoppeld, worden ook verwijderd.</item>
+    </plurals>
     <string name="deleteContactDescription">Weet u zeker dat u <b>{name}</b> wilt verwijderen uit uw contacten?\n\nDit zal je gesprek, inclusief alle berichten en bijlagen, verwijderen. Toekomstige berichten van <b>{name}</b> worden weergegeven als een berichtverzoek.</string>
     <string name="deleteConversationDescription">Weet u zeker dat u uw gesprek met <b>{name}</b>wilt verwijderen?\nAlle berichten en bijlagen worden permanent verwijderd.</string>
     <plurals name="deleteMessage">
@@ -370,6 +412,7 @@
     <string name="deleteMessagesDescriptionEveryone">Weet u zeker dat u deze berichten voor iedereen wilt wissen?</string>
     <string name="deleting">Aan het verwijderen</string>
     <string name="developerToolsToggle">Ontwikkelopties weergeven</string>
+    <string name="deviceNotificationSettings">Apparaatmeldingsinstellingen</string>
     <string name="dictationStart">Dicteren starten...</string>
     <string name="disappearingMessages">Zelf-wissende berichten</string>
     <string name="disappearingMessagesCountdownBig">Bericht verdwijnt over {time_large}</string>
@@ -417,6 +460,8 @@
     <string name="displayNameVisible">Uw weergeven naam is zichtbaar voor gebruikers, groepen en gemeenschappen waarmee u communiceert.</string>
     <string name="document">Document</string>
     <string name="donate">Doneer</string>
+    <string name="donateSessionDescription">Krachtige machten proberen privacy te ondermijnen, maar we kunnen deze strijd niet alleen voeren.\n\nDonaties helpen om {app_name} veilig, onafhankelijk en online te houden.</string>
+    <string name="donateSessionHelp">{app_name} heeft je hulp nodig</string>
     <string name="done">Klaar</string>
     <string name="download">Downloaden</string>
     <string name="downloading">Aan het downloaden...</string>
@@ -446,17 +491,31 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">U en {name} reageerden met {emoji_name}</string>
     <string name="emojiReactsNotification">Reageerde op je bericht {emoji}</string>
     <string name="enable">Inschakelen</string>
+    <string name="enableCameraAccess">Camera-toegang inschakelen?</string>
     <string name="enableNotifications">Toon meldingen wanneer je nieuwe berichten ontvangt.</string>
+    <string name="endCallToEnable">Beëindig gesprek om in te schakelen</string>
     <string name="enjoyingSession">Geniet je van {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Moet beter {emoji}</string>
     <string name="enjoyingSessionButtonPositive">Geweldig {emoji}</string>
     <string name="enjoyingSessionDescription">Je gebruikt {app_name} al een tijdje, hoe gaat het? We horen graag je mening.</string>
     <string name="enter">Verder</string>
+    <string name="enterPasswordDescription">Voer het wachtwoord in dat je voor {app_name} hebt ingesteld</string>
+    <string name="enterPasswordTooltip">Voer het wachtwoord in dat je gebruikt om {app_name} bij het opstarten te ontgrendelen, niet je Herstelwachtwoord</string>
+    <string name="errorCheckingProStatus">Fout bij het controleren van {pro}-status</string>
     <string name="errorConnection">Controleer je internetverbinding en probeer het opnieuw.</string>
     <string name="errorCopyAndQuit">Foutmelding kopiëren en afsluiten</string>
     <string name="errorDatabase">Databasefout</string>
     <string name="errorGeneric">Er ging iets mis. Probeer het later nog eens.</string>
+    <string name="errorLoadingProAccess">Fout bij laden van {pro}-toegang</string>
+    <string name="errorNoLookupOns">{app_name} kon deze ONS niet opzoeken. Controleer je netwerkverbinding en probeer het opnieuw.</string>
     <string name="errorUnknown">Er is een onbekende fout opgetreden.</string>
+    <string name="errorUnregisteredOns">Deze ONS is niet geregistreerd. Controleer of deze correct is en probeer het opnieuw.</string>
+    <string name="failedResendInvite">Het opnieuw verzenden van de uitnodiging naar <b>{name}</b> in <b>{group_name}</b> is mislukt</string>
+    <string name="failedResendInviteMultiple">Het opnieuw verzenden van de uitnodiging naar <b>{name}</b> en <b>{count} anderen</b> in <b>{group_name}</b> is mislukt</string>
+    <string name="failedResendInviteTwo">Het opnieuw verzenden van de uitnodiging naar <b>{name}</b> en <b>{other_name}</b> in <b>{group_name}</b> is mislukt</string>
+    <string name="failedResendPromotion">Promotie opnieuw verzenden naar <b>{name}</b> in <b>{group_name}</b> is mislukt</string>
+    <string name="failedResendPromotionMultiple">Promotie opnieuw verzenden naar <b>{name}</b> en <b>{count} anderen</b> in <b>{group_name}</b> is mislukt</string>
+    <string name="failedResendPromotionTwo">Promotie opnieuw verzenden naar <b>{name}</b> en <b>{other_name}</b> in <b>{group_name}</b> is mislukt</string>
     <string name="failedToDownload">Downloaden mislukt</string>
     <string name="failures">Mislukkingen</string>
     <string name="feedback">Feedback</string>
@@ -510,6 +569,9 @@
     <string name="groupLeaveDescription">Weet u zeker dat u <b>{group_name}</b> wilt verlaten?</string>
     <string name="groupLeaveDescriptionAdmin">Weet u zeker dat u de groep <b>{group_name}</b> wil verlaten?\n\nDit zal alle leden en de inhoud van de groep verwijderen.</string>
     <string name="groupLeaveErrorFailed">Het verlaten van {group_name} is mislukt</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> is uitgenodigd om lid te worden van de groep. Gespreksgeschiedenis van de afgelopen 14 dagen is gedeeld.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> en <b>{count}</b> anderen zijn uitgenodigd om lid te worden van de groep. Gespreksgeschiedenis van de afgelopen 14 dagen is gedeeld.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> en <b>{other_name}</b> zijn uitgenodigd om lid te worden van de groep. Gespreksgeschiedenis van de afgelopen 14 dagen is gedeeld.</string>
     <string name="groupMemberLeft"><b>{name}</b> heeft de groep verlaten.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> en <b>{count} anderen</b> hebben de groep verlaten.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> en <b>{other_name}</b> hebben de groep verlaten.</string>
@@ -521,6 +583,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> en <b>{other_name}</b> zijn uitgenodigd om lid te worden van de groep.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>U</b> en <b>{count} anderen</b> zijn uitgenodigd om lid te worden van de groep. Geschiedenis van het gesprek is gedeeld.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>U</b> en <b>{other_name}</b> zijn uitgenodigd om lid te worden van de groep. Gespreksgeschiedenis wordt gedeeld.</string>
+    <string name="groupMemberRemoveFailed"><b>{name}</b> kon niet worden verwijderd uit <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedMultiple"><b>{name}</b> en <b>{count} anderen</b> konden niet worden verwijderd uit <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedOther"><b>{name}</b> en <b>{other_name}</b> konden niet worden verwijderd uit <b>{group_name}</b></string>
     <string name="groupMemberYouLeft"><b>U</b> heeft de groep verlaten.</string>
     <string name="groupMembers">Groepsleden</string>
     <string name="groupMembersNone">Er zijn geen andere leden in deze groep.</string>
@@ -534,6 +599,7 @@
     <string name="groupNoMessages">U heeft geen berichten van <b>{group_name}</b>. Stuur een bericht om het gesprek te starten!</string>
     <string name="groupNotUpdatedWarning">De groep is niet bijgewerkt gedurende de afgelopen 30 dagen. U kunt problemen ervaren bij het verzenden van berichten of bekijken van de groepsinformatie.</string>
     <string name="groupOnlyAdmin">U bent de enige beheerder in <b>{group_name}</b>.\n\nGroepsleden en instellingen kunnen niet worden gewijzigd zonder een beheerder.</string>
+    <string name="groupOnlyAdminLeave">Je bent de enige beheerder van <b>{group_name}</b>.\n\nGroepsleden en instellingen kunnen niet worden gewijzigd zonder een beheerder. Om de groep te verlaten zonder deze te verwijderen, voeg eerst een nieuwe beheerder toe.</string>
     <string name="groupPendingRemoval">In afwachting van verwijdering</string>
     <string name="groupPromotedYou"><b>U</b> bent gepromoveerd tot Admin.</string>
     <string name="groupPromotedYouMultiple"><b>U</b> en <b>{count} anderen</b> zijn gepromoveerd tot Admin.</string>
@@ -583,6 +649,10 @@
     <string name="incognitoKeyboardDescription">Vraag incognito modus aan indien beschikbaar. Afhankelijk van het toetsenbord dat je gebruikt, kan je toetsenbord dit verzoek negeren.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Ongeldige snelkoppeling</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Contactpersoon uitnodigen</item>
+        <item quantity="other">Contactpersonen uitnodigen</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Uitnodiging mislukt</item>
         <item quantity="other">Uitnodigingen mislukt</item>
@@ -591,8 +661,17 @@
         <item quantity="one">De uitnodiging kon niet worden verzonden. Wilt u het opnieuw proberen?</item>
         <item quantity="other">De uitnodigingen konden niet worden verzonden. Wilt u het opnieuw proberen?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Lid uitnodigen</item>
+        <item quantity="other">Leden uitnodigen</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Nodig een nieuw lid uit voor de groep door de Account-ID of ONS van je vriend in te voeren of hun QR-code te scannen {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Nodig een nieuw lid uit voor de groep door het Account-ID of ONS van je vriend in te voeren of hun QR-code te scannen</string>
     <string name="join">Deelnemen</string>
     <string name="later">Later</string>
+    <string name="launchOnStartDescriptionDesktop">Start {app_name} automatisch wanneer je computer wordt opgestart.</string>
+    <string name="launchOnStartDesktop">Starten bij opstarten</string>
+    <string name="launchOnStartupDisabledDesktop">Deze instelling wordt beheerd door je systeem op Linux. Om automatisch opstarten in te schakelen, voeg je {app_name} toe aan je opstarttoepassingen in de systeeminstellingen.</string>
     <string name="learnMore">Kom meer te weten</string>
     <string name="leave">Verlaten</string>
     <string name="leaving">Vertrekken...</string>
@@ -607,6 +686,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>U</b> en <b>{other_name}</b> zijn lid geworden van de groep.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> en <b>{other_name}</b> zijn lid geworden van de groep.</string>
     <string name="legacyGroupMemberYouNew"><b>U</b> bent lid geworden van de groep.</string>
+    <string name="limitBackgroundActivity">Achtergrondactiviteit beperken?</string>
+    <string name="limitBackgroundActivityDescription">Je staat momenteel toe dat {app_name} op de achtergrond wordt uitgevoerd om de betrouwbaarheid van meldingen te verbeteren. Het wijzigen van deze instelling kan leiden tot minder betrouwbare meldingen.</string>
     <string name="linkPreviews">Link-voorbeelden</string>
     <string name="linkPreviewsDescription">Toon linkvoorbeelden voor ondersteunde URL\'s.</string>
     <string name="linkPreviewsEnable">Linkvoorbeelden inschakelen</string>
@@ -631,10 +712,16 @@
     <string name="lockAppUnlock">Tik om te ontgrendelen</string>
     <string name="lockAppUnlocked">{app_name} is ontgrendeld</string>
     <string name="logs">Logboeken</string>
+    <string name="manageAdmins">Beheerders beheren</string>
     <string name="manageMembers">Leden beheren</string>
     <string name="managePro">{pro} beheren</string>
     <string name="max">Maximaal</string>
+    <string name="maybeLater">Misschien later</string>
     <string name="media">Media</string>
+    <plurals name="memberSelected">
+        <item quantity="one">%1$d lid geselecteerd</item>
+        <item quantity="other">%1$d leden geselecteerd</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d lid</item>
         <item quantity="other">%1$d leden</item>
@@ -644,7 +731,9 @@
         <item quantity="other">%1$d actieve leden</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Account-ID of ONS toevoegen</string>
+    <string name="membersGroupPromotionAcceptInvite">Leden kunnen pas worden gepromoveerd nadat ze een uitnodiging hebben geaccepteerd om lid te worden van de groep.</string>
     <string name="membersInvite">Contactpersonen uitnodigen</string>
+    <string name="membersInviteNoContacts">Je hebt geen contacten om uit te nodigen voor deze groep.\nGa terug en nodig leden uit via hun Account-ID of ONS.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Uitnodiging verzenden</item>
         <item quantity="other">Uitnodigingen verzenden</item>
@@ -653,8 +742,10 @@
     <string name="membersInviteShareDescriptionMultiple">Wilt u de groepsberichtgeschiedenis delen met <b>{name}</b> en <b>{count} anderen</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Wilt u de groepsberichtgeschiedenis delen met <b>{name}</b> en <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Berichtgeschiedenis delen</string>
+    <string name="membersInviteShareMessageHistoryDays">Berichtgeschiedenis van de laatste 14 dagen delen</string>
     <string name="membersInviteShareNewMessagesOnly">Alleen nieuwe berichten delen</string>
     <string name="membersInviteTitle">Uitnodigen</string>
+    <string name="membersNonAdmins">Leden (geen beheerders)</string>
     <string name="menuBar">Menubalk</string>
     <string name="message">Bericht</string>
     <string name="messageBubbleReadMore">Lees meer</string>
@@ -673,6 +764,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Start een nieuw gesprek door het invoeren van de Account-ID van uw vriend of ONS.</string>
     <string name="messageNewDescriptionMobile">Start een nieuw gesprek door de Account-ID van uw vriend, ONS in te voeren of door zijn/haar/hen QR-code te scannen.</string>
+    <string name="messageNewDescriptionMobileLink">Start een nieuw gesprek door de Account-ID van je vriend, ONS in te voeren of hun QR-code te scannen {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Je hebt een nieuw bericht.</item>
         <item quantity="other">Je hebt %1$d nieuwe berichten.</item>
@@ -730,13 +822,17 @@
     <string name="nicknameRemove">Verwijder bijnaam</string>
     <string name="nicknameSet">Bijnaam instellen</string>
     <string name="no">Nee</string>
+    <string name="noNonAdminsInGroup">Er zijn geen leden zonder beheerdersrechten in deze groep.</string>
     <string name="noSuggestions">Geen suggesties</string>
+    <string name="nonProLongerMessagesDescription">Verzend berichten tot 10.000 tekens in alle gesprekken.</string>
+    <string name="nonProUnlimitedPinnedDescription">Orden gesprekken met onbeperkt vastgezette gesprekken.</string>
     <string name="none">Geen</string>
     <string name="notNow">Nu niet</string>
     <string name="noteToSelf">Notitie aan mezelf</string>
     <string name="noteToSelfEmpty">U heeft geen berichten in Notitie naar Mijzelf.</string>
     <string name="noteToSelfHide">Notitie aan mezelf verbergen</string>
     <string name="noteToSelfHideDescription">Weet u zeker dat u Notitie aan jezelf wilt verbergen?</string>
+    <string name="noteTosPrivacyPolicy"><b>LET OP</b>: Door {action_type} ga je akkoord met de <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon} van {app_pro}</string>
     <string name="notificationDisplay">Notificatie weergave</string>
     <string name="notificationSenderNameAndPreview">Toon de naam van de afzender en een voorbeeld van de berichtinhoud.</string>
     <string name="notificationSenderNameOnly">Toon alleen de naam van de afzender zonder enige berichtinhoud.</string>
@@ -781,6 +877,11 @@
     <string name="okay">Oké</string>
     <string name="on">Aan</string>
     <string name="onDevice">Op je {device_type} apparaat</string>
+    <string name="onDeviceCancelDescription">Open dit {app_name}-account op een {device_type}-apparaat dat is aangemeld met het {platform_account} waarmee je je oorspronkelijk hebt geregistreerd. Annuleer {pro} vervolgens via de {app_pro}-instellingen.</string>
+    <string name="onDeviceDescription">Open dit {app_name}-account op een {device_type} waarop je bent aangemeld met het {platform_account} waarmee je je oorspronkelijk hebt geregistreerd. Werk vervolgens je {pro}-toegang bij via de instellingen van {app_pro}.</string>
+    <string name="onLinkedDevice">Op een gekoppeld apparaat</string>
+    <string name="onPlatformStoreWebsite">Op de {platform_store}-website</string>
+    <string name="onPlatformWebsite">Op de {platform}-website</string>
     <string name="onboardingAccountCreate">Account aanmaken</string>
     <string name="onboardingAccountCreated">Account aangemaakt</string>
     <string name="onboardingAccountExists">Ik heb een account</string>
@@ -805,6 +906,9 @@
     <string name="onsErrorNotRecognized">We konden deze ONS niet herkennen. Controleer deze alsjeblieft en probeer het opnieuw.</string>
     <string name="onsErrorUnableToSearch">We konden niet zoeken naar deze ONS. Probeer het later opnieuw.</string>
     <string name="open">Openen</string>
+    <string name="openPlatformStoreWebsite">Open de {platform_store}-website</string>
+    <string name="openPlatformWebsite">Open de {platform} website</string>
+    <string name="openSettings">Instellingen openen</string>
     <string name="openSurvey">Enquête openen</string>
     <string name="other">Overige</string>
     <string name="password">Wachtwoord</string>
@@ -838,6 +942,8 @@
     <string name="passwordStrengthIndicatorDescription">Een sterk wachtwoord helpt je berichten en bijlagen te beschermen als je apparaat ooit verloren raakt of wordt gestolen.</string>
     <string name="passwords">Wachtwoorden</string>
     <string name="paste">Plakken</string>
+    <string name="paymentError">Betalingsfout</string>
+    <string name="paymentProError">Je betaling is succesvol verwerkt, maar er is een fout opgetreden bij het {action_type} van je {pro}-status.\n\nControleer je netwerkverbinding en probeer het opnieuw.</string>
     <string name="permissionChange">Machtiging wijzigen</string>
     <string name="permissionMusicAudioDenied">{app_name} heeft toegang nodig tot muziek en audio om bestanden, muziek en audio te verzenden, maar dit is permanent geweigerd. Ga naar Instellingen → Toestemmingen en schakel \"Muziek en audio\" in.</string>
     <string name="permissionsAppleMusic">{app_name} moet Apple Music gebruiken om mediabijlagen af te spelen.</string>
@@ -881,11 +987,33 @@
     <string name="preferences">Voorkeuren</string>
     <string name="preview">Voorbeeld</string>
     <string name="previewNotification">Voorbeeldmelding</string>
+    <string name="proAccessActivatedAutoShort">Je toegang tot {pro} is actief!\n\nJe toegang tot {pro} wordt automatisch verlengd voor nog eens <b>{current_plan_length}</b> op <b>{date}</b>.</string>
+    <string name="proAccessActivatesAuto">Je toegang tot {pro} is actief!\n\nJe toegang tot {pro} wordt automatisch verlengd voor nog eens\n<b>{current_plan_length}</b> op <b>{date}</b>. Alle wijzigingen die je hier aanbrengt, gaan in bij je volgende verlenging.</string>
+    <string name="proAccessError">Fout bij {pro}-toegang</string>
+    <string name="proAccessExpireDate">Je toegang tot {pro} verloopt op <b>{date}</b>.</string>
+    <string name="proAccessLoading">{pro}-toegang wordt geladen</string>
+    <string name="proAccessLoadingDescription">Je toegangsgegevens voor {pro} worden nog steeds geladen. Je kunt geen updates uitvoeren totdat dit proces is voltooid.</string>
+    <string name="proAccessLoadingEllipsis">{pro}-toegang wordt geladen...</string>
+    <string name="proAccessNetworkLoadError">Kan geen verbinding maken met het netwerk om je {pro}-toegangsgegevens te laden. Bijwerken van {pro} via {app_name} is uitgeschakeld totdat de verbinding is hersteld.\n\nControleer je netwerkverbinding en probeer het opnieuw.</string>
+    <string name="proAccessNotFound">{pro}-toegang niet gevonden</string>
+    <string name="proAccessNotFoundDescription">{app_name} heeft vastgesteld dat je account geen {pro}-toegang heeft. Als je denkt dat dit een vergissing is, neem dan contact op met de ondersteuning van {app_name} voor hulp.</string>
+    <string name="proAccessRecover">{pro}-toegang herstellen</string>
+    <string name="proAccessRenew">{pro}-toegang verlengen</string>
+    <string name="proAccessRenewDesktop">Momenteel kan {pro}-toegang alleen worden gekocht en verlengd via de {platform_store} of {platform_store_other}. Omdat je {app_name} Desktop gebruikt, kun je hier niet verlengen.\n\nDe ontwikkelaars van {app_name} werken hard aan alternatieve betaalmogelijkheden om gebruikers toe te staan {pro}-toegang aan te schaffen buiten de {platform_store} en {platform_store_other} om. <b>{pro}-routekaart</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Verleng je {pro}-toegang op de <b><font color="0">{platform_store}-website</font></b> met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
+    <string name="proAccessRenewPlatformWebsite">Verleng via de <b><font color="0">{platform}-website</font></b> met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
+    <string name="proAccessRenewStart">Verleng je {pro}-toegang om opnieuw gebruik te maken van krachtige {app_pro} bètaversie-functies.</string>
+    <string name="proAccessRestored">{pro}-toegang hersteld</string>
+    <string name="proAccessRestoredDescription">{app_name} heeft {pro}-toegang voor je account gedetecteerd en hersteld. Je {pro}-status is hersteld!</string>
+    <string name="proAccessSignUp">Omdat je je oorspronkelijk voor {app_pro} hebt aangemeld via de <b>{platform_store}</b>, moet je je {platform_account} gebruiken om je {pro}-toegang bij te werken.</string>
+    <string name="proAccessUpgradeDesktop">{pro}-toegang kan momenteel alleen worden gekocht via de {platform_store} of {platform_store_other}. Omdat u {app_name} Desktop gebruikt, kunt u hier niet upgraden naar {pro}.\n\nDe ontwikkelaars van {app_name} werken hard aan alternatieve betaalmogelijkheden zodat gebruikers {pro}-toegang buiten de {platform_store} en {platform_store_other} kunnen aanschaffen. <b>{pro} Routekaart</b> {icon}</string>
     <string name="proActivated">Geactiveerd</string>
+    <string name="proActivatingActivation">activeren</string>
     <string name="proAllSet">Alles is geregeld!</string>
+    <string name="proAllSetDescription">Je {app_pro} toegang is bijgewerkt! Je wordt gefactureerd wanneer {pro} automatisch wordt verlengd op <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">Je hebt al</string>
     <string name="proAnimatedDisplayPicture">Upload nu GIF\'s en geanimeerde WebP-afbeeldingen voor je profielfoto!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Krijg geanimeerde profielfoto\'s en ontgrendel premiumfuncties met {app_pro}</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Krijg geanimeerde profielfoto\'s en ontgrendel premiumfuncties met {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Geanimeerde profielfoto</string>
     <string name="proAnimatedDisplayPictureModalDescription">gebruikers kunnen GIF\'s uploaden</string>
     <string name="proAnimatedDisplayPictures">Geanimeerde profielfoto\'s</string>
@@ -896,15 +1024,32 @@
     <string name="proBadgeVisible">Toon het {app_pro} badge aan andere gebruikers</string>
     <string name="proBadges">Badges</string>
     <string name="proBadgesDescription">Toon je steun voor {app_name} met een exclusieve badge naast je schermnaam.</string>
+    <plurals name="proBadgesSent">
+        <item quantity="one">%1$s %2$s-badge verzonden</item>
+        <item quantity="other">%1$s %2$s-badges verzonden</item>
+    </plurals>
     <string name="proBetaFeatures">{pro} functies</string>
     <string name="proBilledAnnually">{price} Jaarlijks gefactureerd</string>
     <string name="proBilledMonthly">{price} Maandelijks gefactureerd</string>
     <string name="proBilledQuarterly">{price} per kwartaal gefactureerd</string>
-    <string name="proCallToActionLongerMessages">Wil je langere berichten versturen? Verstuur meer tekst en ontgrendel premiumfuncties met {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Wil je meer vastzetten? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Wil je meer dan 5 vastgezette gesprekken? Organiseer je chats en ontgrendel premiumfuncties met {app_pro}</string>
+    <string name="proCallToActionLongerMessages">Wil je langere berichten versturen?\nVerstuur meer tekst en ontgrendel premiumfuncties met {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Wil je meer vastzetten?\nOrganiseer je chats en ontgrendel premiumfuncties met {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Wil je meer dan {limit} vastgezette gesprekken?\nOrganiseer je chats en ontgrendel premiumfuncties met {app_pro} Beta</string>
+    <string name="proCancelSorry">Jammer dat je {pro} annuleert. Dit moet je weten voordat je je {pro}-toegang annuleert.</string>
+    <string name="proCancellation">Annulering</string>
+    <string name="proCancellationDescription">Door {pro}-toegang te annuleren wordt automatische verlenging uitgeschakeld voordat je {pro}-toegang verloopt. Het annuleren van {pro} leidt <b>niet</b> tot een terugbetaling. Je kunt {app_pro}-functies blijven gebruiken totdat je {pro}-toegang verloopt.\n\nOmdat je je oorspronkelijk hebt aangemeld voor {app_pro} met je <b>{platform_account}</b>, moet je dezelfde {platform_account} gebruiken om {pro} te annuleren.</string>
+    <string name="proCancellationOptions">Twee manieren om je {pro}-toegang te annuleren:</string>
+    <string name="proCancellationShortDescription">Door {pro}-toegang te annuleren wordt automatische verlenging uitgeschakeld voordat {pro} verloopt.\n\nHet annuleren van {pro} leidt <b>niet</b> tot een terugbetaling. Je kunt {app_pro}-functies blijven gebruiken totdat je {pro}-toegang verloopt.</string>
+    <string name="proChooseAccess">Kies de {pro}-toegangsoptie die het beste bij u past.\nLangere toegang betekent grotere kortingen.</string>
+    <string name="proClearAllDataDevice">Weet je zeker dat je je gegevens van dit apparaat wilt verwijderen?\n\n<b>{app_pro}</b> kan niet worden overgedragen naar een ander account. Sla je Herstelwachtwoord op om ervoor te zorgen dat je later je {pro}-toegang kunt herstellen.</string>
+    <string name="proClearAllDataNetwork">Weet je zeker dat je je gegevens van het netwerk wilt verwijderen? Als je doorgaat, kun je je berichten of contacten niet herstellen.\n\n<b>{app_pro}</b> kan niet worden overgedragen naar een ander account. Sla je Herstelwachtwoord op om ervoor te zorgen dat je later je {pro}-toegang kunt herstellen.</string>
+    <string name="proDiscountTooltip">Je toegang tot {pro} is al met {percent}% verlaagd ten opzichte van de volledige prijs van {app_pro}.</string>
+    <string name="proErrorRefreshingStatus">Fout bij verversen van {pro}-status</string>
     <string name="proExpired">Verlopen</string>
+    <string name="proExpiredDescription">Helaas is je toegang tot {pro} verlopen.\nVerleng om opnieuw toegang te krijgen tot de exclusieve voordelen en functies van {app_pro} Beta.</string>
     <string name="proExpiringSoon">Verloopt binnenkort</string>
+    <string name="proExpiringSoonDescription">Je toegang tot {pro} verloopt over <b>{time}</b>.\nWerk nu bij om toegang te behouden tot de exclusieve voordelen en functies van {app_pro} Beta</string>
+    <string name="proExpiringTime">{pro} verloopt over <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFaqDescription">Vind antwoorden op veelgestelde vragen in de {app_pro} FAQ.</string>
     <string name="proFeatureListAnimatedDisplayPicture">Upload GIF- en WebP-profielfoto\'s</string>
@@ -912,31 +1057,97 @@
     <string name="proFeatureListLoadsMore">En nog veel meer exclusieve functies</string>
     <string name="proFeatureListLongerMessages">Berichten tot 10.000 tekens</string>
     <string name="proFeatureListPinnedConversations">Onbeperkt gesprekken vastzetten</string>
+    <string name="proFullestPotential">Wilt u {app_name} maximaal benutten?\nUpgrade naar {app_pro} Beta om toegang te krijgen tot tal van exclusieve voordelen en functies.</string>
     <string name="proGroupActivated">Groep geactiveerd</string>
     <string name="proGroupActivatedDescription">Deze groep heeft een grotere capaciteit! Er kunnen nu tot 300 leden deelnemen omdat een groepsbeheerder een</string>
+    <plurals name="proGroupsUpgraded">
+        <item quantity="one">%1$s groep geüpgraded</item>
+        <item quantity="other">%1$s groepen geüpgraded</item>
+    </plurals>
+    <string name="proImportantDescription">Het aanvragen van een terugbetaling is definitief. Indien goedgekeurd, wordt je toegang tot {pro} onmiddellijk geannuleerd en verlies je toegang tot alle {pro}-functies.</string>
     <string name="proIncreasedAttachmentSizeFeature">Verhoogde bijlagegrootte</string>
     <string name="proIncreasedMessageLengthFeature">Verlengde berichtlengte</string>
     <string name="proLargerGroups">Grotere groepen</string>
     <string name="proLargerGroupsDescription">Groepen waarvan jij beheerder bent, worden automatisch geüpgraded om 300 leden te ondersteunen.</string>
+    <string name="proLargerGroupsTooltip">Grotere groepsgesprekken (tot 300 leden) komen binnenkort beschikbaar voor alle Pro-bètagebruikers!</string>
     <string name="proLongerMessages">Langere berichten</string>
     <string name="proLongerMessagesDescription">Je kunt berichten tot 10.000 tekens verzenden in alle gesprekken.</string>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">%1$s langer verzonden bericht</item>
+        <item quantity="other">%1$s langere berichten verzonden</item>
+    </plurals>
     <string name="proMessageInfoFeatures">Dit bericht maakte gebruik van de volgende {app_pro}-functies:</string>
+    <string name="proNewInstallation">Met een nieuwe installatie</string>
+    <string name="proNewInstallationDescription">Installeer {app_name} opnieuw op dit apparaat via de {platform_store}, herstel je account met je Herstelwachtwoord en verleng {pro} vanuit de {app_pro}-instellingen.</string>
+    <string name="proNewInstallationUpgrade">Installeer {app_name} opnieuw op dit apparaat via de {platform_store}, herstel uw account met uw herstelwachtwoord en upgrade naar {pro} via de {app_pro}-instellingen.</string>
+    <string name="proOptionsRenewalSubtitle">Voor nu zijn er drie manieren om te verlengen:</string>
+    <string name="proOptionsTwoRenewalSubtitle">Er zijn momenteel twee manieren om te verlengen:</string>
     <string name="proPercentOff">{percent}% korting</string>
+    <plurals name="proPinnedConversations">
+        <item quantity="one">%1$s vastgezette conversatie</item>
+        <item quantity="other">%1$s vastgezette gesprekken</item>
+    </plurals>
+    <string name="proPlanPlatformRefund">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, moet je hetzelfde {platform_account} gebruiken om een terugbetaling aan te vragen.</string>
+    <string name="proPlanPlatformRefundLong">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, wordt je restitutieverzoek afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren.</string>
+    <string name="proPlanRenewSupport">Je {app_pro}-toegang is verlengd! Bedankt voor je steun aan het {network_name}.</string>
     <string name="proPriceOneMonth">1 maand - {monthly_price} / maand</string>
     <string name="proPriceThreeMonths">3 maanden - {monthly_price} / maand</string>
     <string name="proPriceTwelveMonths">12 maanden - {monthly_price} / maand</string>
+    <string name="proReactivatingActivation">opnieuw activeren</string>
+    <string name="proRefundAccountDevice">Open dit {app_name}-account op een {device_type}-apparaat dat is aangemeld met het {platform_account} waarmee je je oorspronkelijk hebt geregistreerd. Vraag daarna een terugbetaling aan via de {app_pro}-instellingen.</string>
     <string name="proRefundDescription">Het spijt ons dat je vertrekt. Dit moet je weten voordat je een terugbetaling aanvraagt.</string>
+    <string name="proRefundNextSteps">{platform} verwerkt nu je terugbetalingsverzoek. Dit duurt meestal 24-48 uur. Afhankelijk van hun beslissing kan je {pro} status wijzigen in {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Je restitutieverzoek wordt afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren.</string>
+    <string name="proRefundRequestStorePolicies">Je terugbetalingsverzoek wordt uitsluitend afgehandeld door {platform} via de website van <b>{platform}</b>.\n\nVanwege het restitutiebeleid van {platform} hebben ontwikkelaars van {app_name} geen invloed op de uitkomst van terugbetalingsverzoeken. Dit geldt zowel voor de goedkeuring of afwijzing van het verzoek als voor het wel of niet toekennen van een volledige of gedeeltelijke terugbetaling.</string>
+    <string name="proRefundSupport">Neem contact op met {platform} voor verdere updates over je restitutieverzoek. Vanwege het restitutiebeleid van {platform} hebben de ontwikkelaars van {app_name} geen invloed op de uitkomst van restitutieverzoeken.\n\n<font color="0">{platform} Terugbetalingsondersteuning</font></string>
     <string name="proRefunding">Terugbetalen {pro}</string>
+    <string name="proRefundingDescription">Terugbetalingen voor {app_pro} worden uitsluitend afgehandeld door {platform} via de {platform_store}.\n\nVanwege het restitutiebeleid van {platform} hebben ontwikkelaars van {app_name} geen invloed op de uitkomst van terugbetalingsverzoeken. Dit omvat zowel de goedkeuring als afwijzing van het verzoek, evenals of een volledige of gedeeltelijke terugbetaling wordt uitgegeven.</string>
+    <string name="proRenewAnimatedDisplayPicture">Wil je opnieuw geanimeerde profielfoto\'s gebruiken?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
+    <string name="proRenewBeta">{pro} Beta verlengen</string>
+    <string name="proRenewDesktopLinked">Verleng je {pro}-toegang via de instellingen van {app_pro} op een gekoppeld apparaat met {app_name} geïnstalleerd via de {platform_store} of {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Wilt u weer langere berichten versturen?\nVerleng uw {pro}-toegang om de functies te ontgrendelen die u hebt gemist.</string>
+    <string name="proRenewMaxPotential">Wil je {app_name} opnieuw maximaal benutten?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
+    <string name="proRenewPinFiveConversations">Wil je opnieuw meer dan {limit} gesprekken vastmaken?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
+    <string name="proRenewPinMoreConversations">Wil je opnieuw meer gesprekken vastmaken?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
+    <string name="proRenewTosPrivacy">Door te verlengen gaat u akkoord met de {app_pro} <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon}</string>
+    <string name="proRenewingAction">verlengen</string>
+    <string name="proRenewingNoAccessBilling">Momenteel kan {pro}-toegang alleen worden gekocht en verlengd via de {platform_store} of {platform_store_other}. Omdat je {app_name} hebt geïnstalleerd met de {build_variant}, kun je hier niet verlengen.\n\nDe ontwikkelaars van {app_name} werken hard aan alternatieve betaalopties zodat gebruikers {pro}-toegang kunnen aanschaffen buiten de {platform_store} en {platform_store_other}.<b> {pro} Routekaart</b> {icon}</string>
     <string name="proRequestedRefund">Terugbetaling aangevraagd</string>
     <string name="proSendMore">Verstuur meer met</string>
     <string name="proSettings">{pro} instellingen</string>
+    <string name="proStartUsing">Begin met {pro} gebruiken</string>
     <string name="proStats">Je {pro} statistieken</string>
+    <string name="proStatsLoading">{pro}-statistieken worden geladen</string>
+    <string name="proStatsLoadingDescription">Je {pro}-statistieken worden geladen, even geduld.</string>
     <string name="proStatsTooltip">{pro} statistieken weerspiegelen het gebruik op dit apparaat en kunnen anders weergegeven worden op gekoppelde apparaten</string>
+    <string name="proStatusError">Fout {pro}-status</string>
+    <string name="proStatusInfoInaccurateNetworkError">Kan geen verbinding maken met het netwerk om je {pro}-status te controleren. De informatie op deze pagina kan onjuist zijn totdat de verbinding is hersteld.\n\nControleer je netwerkverbinding en probeer het opnieuw.</string>
+    <string name="proStatusLoading">{pro}-status wordt geladen</string>
+    <string name="proStatusLoadingDescription">Je {pro}-gegevens worden geladen. Sommige acties op deze pagina zijn mogelijk niet beschikbaar tot het laden is voltooid.</string>
+    <string name="proStatusLoadingSubtitle">{pro}-status wordt geladen</string>
+    <string name="proStatusNetworkErrorContinue">Kan geen verbinding maken met het netwerk om je {pro}-status te controleren. Je kunt niet doorgaan totdat de verbinding is hersteld.\n\nControleer je netwerkverbinding en probeer het opnieuw.</string>
+    <string name="proStatusNetworkErrorDescription">Kan geen verbinding maken met het netwerk om je {pro}-status te controleren. Je kunt niet upgraden naar {pro} totdat de verbinding is hersteld.\n\nControleer je netwerkverbinding en probeer het opnieuw.</string>
+    <string name="proStatusRefreshNetworkError">Kan geen verbinding maken met het netwerk om je {pro}-status te vernieuwen. Sommige acties op deze pagina worden uitgeschakeld totdat de verbinding is hersteld.\n\nControleer je netwerkverbinding en probeer het opnieuw.</string>
+    <string name="proStatusRenewError">Kan geen verbinding maken met het netwerk om je huidige {pro}-toegang te laden. {pro} verlengen via {app_name} wordt uitgeschakeld totdat de verbinding is hersteld.\n\nControleer je netwerkverbinding en probeer opnieuw.</string>
+    <string name="proSupportDescription">Hulp nodig met {pro}? Dien een verzoek in bij het ondersteuningsteam.</string>
+    <string name="proTosDescription">Door {action_type} ben je {activation_type} {app_pro} via het {app_name}-protocol. {entity} faciliteert deze activatie, maar is niet de aanbieder van {app_pro}. {entity} is niet verantwoordelijk voor de prestaties, beschikbaarheid of functionaliteit van {app_pro}.</string>
     <string name="proTosPrivacy">Door bij te werken ga je akkoord met de {app_pro} <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon}</string>
     <string name="proUnlimitedPins">Onbeperkte Pins</string>
     <string name="proUnlimitedPinsDescription">Organiseer al je chats met onbeperkt vastgezette gesprekken.</string>
-    <string name="proUserProfileModalCallToAction">Wil je meer uit {app_name} halen? Upgrade naar {app_pro} voor een krachtigere berichtbeleving.</string>
+    <string name="proUpdateAccessDescription">Je huidige factureringsoptie geeft <b>{current_plan_length}</b> {pro}-toegang. Weet je zeker dat je wilt overschakelen naar de factureringsoptie <b>{selected_plan_length_singular}</b>?\n\nBij het bijwerken wordt je {pro}-toegang automatisch verlengd op <b>{date}</b> voor een extra <b>{selected_plan_length}</b> {pro}-toegang.</string>
+    <string name="proUpdateAccessExpireDescription">Je {pro}-toegang verloopt op <b>{date}</b>.\n\nBij het bijwerken wordt je {pro}-toegang automatisch verlengd op <b>{date}</b> voor een extra <b>{selected_plan_length}</b> {pro}-toegang.</string>
+    <string name="proUpdatingAction">bijwerken</string>
+    <string name="proUpgradeAccess">Upgrade naar {app_pro} Beta om toegang te krijgen tot tal van exclusieve voordelen en functies.</string>
+    <string name="proUpgradeDesktopLinked">Upgrade naar {pro} via de {app_pro}-instellingen op een gekoppeld apparaat waarop {app_name} is geïnstalleerd via de {platform_store} of {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">{pro}-toegang kan momenteel alleen worden aangeschaft via de {platform_store} of {platform_store_other}. Omdat u {app_name} hebt geïnstalleerd met de {build_variant}, kunt u hier niet naar {pro} upgraden.\n\nOntwikkelaars van {app_name} werken hard aan alternatieve betaalmogelijkheden waarmee gebruikers {pro}-toegang buiten de {platform_store} en {platform_store_other} kunnen aanschaffen.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proUpgradeOption">Er is momenteel slechts één manier om te upgraden:</string>
+    <string name="proUpgradeOptionsTwo">Er zijn momenteel twee manieren om te upgraden:</string>
+    <string name="proUpgraded">U bent geüpgraded naar {app_pro}!\nBedankt voor uw steun aan het {network_name}.</string>
+    <string name="proUpgradingAction">opwaarderen</string>
+    <string name="proUpgradingTo">Upgrade naar {pro}</string>
+    <string name="proUpgradingTosPrivacy">Door te upgraden gaat u akkoord met de {app_pro} <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon}</string>
+    <string name="proUserProfileModalCallToAction">Wil je meer uit {app_name} halen?\nUpgrade naar {app_pro} Beta voor een krachtigere berichtbeleving.</string>
+    <string name="processingRefundRequest">{platform} verwerkt je restitutieverzoek</string>
     <string name="profile">Profiel</string>
     <string name="profileDisplayPicture">Toon afbeelding</string>
     <string name="profileDisplayPictureRemoveError">Verwijderen profielfoto mislukt.</string>
@@ -944,6 +1155,11 @@
     <string name="profileDisplayPictureSizeError">Kies een kleiner bestand.</string>
     <string name="profileErrorUpdate">Profiel bijwerken mislukt.</string>
     <string name="promote">Promoveren</string>
+    <string name="promoteAdminsWarning">Beheerders kunnen de laatste 14 dagen van de berichtgeschiedenis bekijken en kunnen niet worden gedegradeerd of uit de groep worden verwijderd.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Lid promoveren</item>
+        <item quantity="other">Leden promoveren</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Promotie mislukt</item>
         <item quantity="other">Promoties mislukt</item>
@@ -992,24 +1208,60 @@
     <string name="recoveryPasswordWarningSendDescription">Dit is uw herstelwachtwoord. Als u het naar iemand stuurt hebben ze volledige toegang tot uw account.</string>
     <string name="recreateGroup">Groep opnieuw aanmaken</string>
     <string name="redo">Opnieuw doen</string>
+    <string name="refundNonOriginatorApple">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via een ander {platform_account}, moet je dat <b><font color="0">{platform_account}</font></b> gebruiken om je {pro}-toegang bij te werken.</string>
+    <string name="refundRequestOptions">Twee manieren om een terugbetaling aan te vragen:</string>
     <string name="remainingCharactersOverTooltip">Verkort berichtlengte met {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">%1$d teken resterend</item>
         <item quantity="other">%1$d tekens resterend</item>
     </plurals>
+    <string name="remindMeLater">Herinner me later</string>
     <string name="remove">Verwijderen</string>
+    <plurals name="removeMember">
+        <item quantity="one">Lid verwijderen</item>
+        <item quantity="other">Leden verwijderen</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Lid en diens berichten verwijderen</item>
+        <item quantity="other">Leden en hun berichten verwijderen</item>
+    </plurals>
     <string name="removePasswordFail">Verwijderen wachtwoord mislukt</string>
     <string name="removePasswordModalDescription">Verwijder je huidige wachtwoord voor {app_name}. Lokaal opgeslagen gegevens worden opnieuw versleuteld met een willekeurig gegenereerde sleutel, opgeslagen op je apparaat.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Lid wordt verwijderd</item>
+        <item quantity="other">Leden worden verwijderd</item>
+    </plurals>
     <string name="renew">Verlengen</string>
+    <string name="renewingPro">{pro} verlengen</string>
     <string name="reply">Antwoord</string>
     <string name="requestRefund">Terugbetaling aanvragen</string>
+    <string name="requestRefundPlatformWebsite">Vraag een terugbetaling aan op de <b><font color="0">{platform}-website</font></b> met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="resend">Opnieuw verzenden</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Uitnodiging opnieuw verzenden</item>
+        <item quantity="other">Uitnodigingen opnieuw verzenden</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Promotie opnieuw verzenden</item>
+        <item quantity="other">Promoties opnieuw verzenden</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Uitnodiging wordt opnieuw verzonden</item>
+        <item quantity="other">Uitnodigingen worden opnieuw verzonden</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Promotie wordt opnieuw verzonden</item>
+        <item quantity="other">Promoties worden opnieuw verzonden</item>
+    </plurals>
     <string name="resolving">Landinformatie wordt geladen...</string>
     <string name="restart">Herstart</string>
     <string name="resync">Opnieuw synchroniseren</string>
     <string name="retry">Opnieuw proberen</string>
     <string name="reviewLimit">Beoordelingslimiet</string>
     <string name="reviewLimitDescription">Het lijkt erop dat je {app_name} onlangs al hebt beoordeeld, bedankt voor je feedback!</string>
+    <string name="runAppBackground">App op de achtergrond uitvoeren</string>
+    <string name="runSessionBackground">{app_name} op de achtergrond uitvoeren?</string>
+    <string name="runSessionBackgroundDescription">Aangezien je de trage modus gebruikt, raden we aan {app_name} toe te staan op de achtergrond uit te voeren om de meldingen te verbeteren. Dit kan de consistentie van meldingen verbeteren, hoewel je systeem mogelijk de achtergrondactiviteit nog beperkt.\n\nJe kunt dit later wijzigen in Instellingen.</string>
     <string name="save">Opslaan</string>
     <string name="saved">Opgeslagen</string>
     <string name="savedMessages">Opgeslagen berichten</string>
@@ -1018,6 +1270,8 @@
     <string name="screenSecurity">Scherm beveiliging</string>
     <string name="screenshotNotifications">Screenshot Notificaties</string>
     <string name="screenshotNotificationsDescription">Een melding vereisen wanneer een contact een screenshot maakt van een een-op-een-chat.</string>
+    <string name="screenshotProtectionDescriptionDesktop">Verberg het venster van {app_name} in screenshots die op dit apparaat worden gemaakt.</string>
+    <string name="screenshotProtectionDesktop">Screenshotbeveiliging</string>
     <string name="screenshotTaken"><b>{name}</b> heeft een schermafbeelding gemaakt.</string>
     <string name="search">Zoeken</string>
     <string name="searchContacts">Contacten zoeken</string>
@@ -1038,6 +1292,10 @@
     <string name="sending">Verzenden</string>
     <string name="sendingCallOffer">Oproepaanbod verzenden</string>
     <string name="sendingConnectionCandidates">Kandidaten voor verbinding verzenden</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Beheerder promotie versturen</item>
+        <item quantity="other">Beheerder promoties versturen</item>
+    </plurals>
     <string name="sent">Verzonden:</string>
     <string name="sessionAppearance">Uiterlijk</string>
     <string name="sessionClearData">Gegevens wissen</string>
@@ -1064,14 +1322,19 @@
     <string name="set">Instellen</string>
     <string name="setCommunityDisplayPicture">Instellen Groeps afbeelding</string>
     <string name="setPasswordModalDescription">Stel een wachtwoord in voor {app_name}. Lokaal opgeslagen gegevens worden versleuteld met dit wachtwoord. Je wordt gevraagd dit wachtwoord in te voeren telkens wanneer {app_name} wordt gestart.</string>
+    <string name="settingsCannotChangeDesktop">Kan instelling niet bijwerken</string>
     <string name="settingsRestartDescription">Uw moet {app_name} opnieuw starten om uw nieuwe instellingen toe te passen.</string>
     <string name="settingsScreenSecurityDesktop">Scherm beveiliging</string>
+    <string name="settingsStartCategoryDesktop">Opstarten</string>
     <string name="share">Delen</string>
     <string name="shareAccountIdDescription">Nodig uw vriend uit om met u te chatten op {app_name} door uw Account ID met hen te delen.</string>
     <string name="shareAccountIdDescriptionCopied">Deel met uw vrienden waar u normaal gesproken contact mee hebt - en vervolg vervolgens het gesprek hier.</string>
     <string name="shareExtensionDatabaseError">Er is een probleem bij het openen van de database. Herstart de app en probeer het opnieuw.</string>
     <string name="shareExtensionNoAccountError">Oeps! Het lijkt er op dat u nog geen {app_name} account heeft.\n\nU dient er een aan te maken in de {app_name} app voordat u iets kunt delen.</string>
+    <string name="shareGroupMessageHistory">Wil je de berichtgeschiedenis van de groep delen met deze gebruiker?</string>
     <string name="shareToSession">Delen met {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Sorry, {app_name} ondersteunt alleen het tegelijk delen van meerdere afbeeldingen en video\'s</string>
+    <string name="sharingSupportMultipleMediaExcluded">Delen ondersteunt alleen media. Niet-mediale bestanden zijn uitgesloten</string>
     <string name="show">Tonen</string>
     <string name="showAll">Alles tonen</string>
     <string name="showLess">Minder tonen</string>
@@ -1099,6 +1362,10 @@
     <string name="unavailable">Niet beschikbaar</string>
     <string name="undo">Ongedaan maken</string>
     <string name="unknown">Onbekend</string>
+    <string name="unsupportedCpu">Niet-ondersteunde CPU</string>
+    <string name="update">Update</string>
+    <string name="updateAccess">Toegang tot {pro} bijwerken</string>
+    <string name="updateAccessTwo">Twee manieren om je {pro}-toegang bij te werken:</string>
     <string name="updateApp">Nieuwe versies van de app</string>
     <string name="updateCommunityInformation">Community-informatie bijwerken</string>
     <string name="updateCommunityInformationDescription">Communitynaam en beschrijving zijn zichtbaar voor alle communityleden</string>
@@ -1121,6 +1388,8 @@
     <string name="updated">{relative_time} geleden voor het laatst bijgewerkt</string>
     <string name="updates">Updates</string>
     <string name="updating">Bijwerken...</string>
+    <string name="upgrade">Opwaarderen</string>
+    <string name="upgradeSession">{app_name} upgraden</string>
     <string name="upgradeTo">Upgraden naar</string>
     <string name="uploading">Uploaden</string>
     <string name="urlCopy">Kopieer URL</string>
@@ -1129,6 +1398,8 @@
     <string name="urlOpenDescription">Weet u zeker dat u deze URL in uw browser wilt openen?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Links worden in uw browser geopend.</string>
     <string name="useFastMode">Gebruik Snelle Modus</string>
+    <string name="viaPlatformWebsiteDescription">Wijzig je abonnement met het {platform_account} waarmee je je hebt aangemeld, via de <b><font color="0">{platform}-website</font></b>.</string>
+    <string name="viaStoreWebsite">Via de {platform} website</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan video niet afspelen.</string>
     <string name="view">Bekijken</string>
@@ -1137,9 +1408,11 @@
     <string name="waitFewMinutes">Dit kan een paar minuten duren.</string>
     <string name="waitOneMoment">Een moment geduld aub...</string>
     <string name="warning">Waarschuwing</string>
+    <string name="warningIosVersionEndingSupport">De ondersteuning voor iOS 15 is beëindigd. Werk bij naar iOS 16 of hoger om app-updates te blijven ontvangen.</string>
     <string name="window">Venster</string>
     <string name="yes">Ja</string>
     <string name="you">Uw</string>
+    <string name="yourCpuIsUnsupportedSSE42">Je CPU ondersteunt geen SSE 4.2-instructies, die vereist zijn door {app_name} op Linux x64-besturingssystemen om afbeeldingen te verwerken. Upgrade naar een compatibele CPU of gebruik een ander besturingssysteem.</string>
     <string name="yourRecoveryPassword">Je herstelwachtwoord</string>
     <string name="zoomFactor">Zoomfactor</string>
     <string name="zoomFactorDescription">Pas de grootte van tekst en visuele elementen aan.</string>

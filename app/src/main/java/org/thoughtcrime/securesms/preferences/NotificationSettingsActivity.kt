@@ -1,23 +1,22 @@
 package org.thoughtcrime.securesms.preferences
 
-import android.os.Bundle
+import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
 import dagger.hilt.android.AndroidEntryPoint
-import network.loki.messenger.R
-import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.FullComposeScreenLockActivity
+import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceScreen
+import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel
 
 @AndroidEntryPoint
-class NotificationSettingsActivity : ScreenLockActionBarActivity() {
+class NotificationSettingsActivity : FullComposeScreenLockActivity() {
 
-    override val applyDefaultWindowInsets: Boolean
-        get() = false
+    @Composable
+    override fun ComposeContent() {
+        val viewModel: NotificationsPreferenceViewModel by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
-        super.onCreate(savedInstanceState, isReady)
-        setContentView(R.layout.activity_fragment_wrapper)
-        supportActionBar!!.title = resources.getString(R.string.sessionNotifications)
-        val fragment = NotificationsPreferenceFragment()
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.fragmentContainer, fragment)
-        transaction.commit()
+        NotificationsPreferenceScreen(
+            viewModel = viewModel,
+            onBackPressed = this::finish
+        )
     }
 }

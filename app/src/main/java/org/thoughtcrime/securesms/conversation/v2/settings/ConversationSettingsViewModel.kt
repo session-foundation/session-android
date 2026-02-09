@@ -20,16 +20,16 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -41,14 +41,15 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NA
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.isPro
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.upsertContact
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -59,8 +60,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -182,7 +183,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val optionBlock: OptionsItem by lazy{
         OptionsItem(
             name = context.getString(R.string.block),
-            icon = R.drawable.ic_user_round_x,
+            icon = R.drawable.ic_user_round_block,
             qaTag = R.string.qa_conversation_settings_block,
             onClick = ::confirmBlockUser
         )
@@ -282,21 +283,38 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         )
     }
 
-    private val optionLeaveGroup: OptionsItem by lazy{
+    private val optionManageAdmins: OptionsItem by lazy{
+        OptionsItem(
+            name = context.getString(R.string.manageAdmins),
+            icon = R.drawable.ic_add_admin_custom,
+            qaTag = R.string.qa_conversation_settings_manage_admins,
+            onClick = {
+                (address as? Address.Group)?.let {
+                    navigateTo(ConversationSettingsDestination.RouteManageAdmins(it))
+                }
+            }
+        )
+    }
+
+    private val optionLeaveGroup: OptionsItem by lazy {
         OptionsItem(
             name = context.getString(R.string.groupLeave),
             icon = R.drawable.ic_log_out,
             qaTag = R.string.qa_conversation_settings_leave_group,
-            onClick = ::confirmLeaveGroup
+            onClick = ::handleLeaveOptionClick
         )
     }
 
-    private val optionDeleteGroup: OptionsItem by lazy{
+    // Delete group:
+    // - Admins can delete a group, even if other admins are still in the group
+    // - Non admins can sometimes see this option if they were kicked out of a group
+    //   In that case "delete" group is a fake delete, it's really only there to remove the "broken" group
+    private val optionDeleteGroup: OptionsItem by lazy {
         OptionsItem(
             name = context.getString(R.string.groupDelete),
             icon = R.drawable.ic_trash_2,
             qaTag = R.string.qa_conversation_settings_delete_group,
-            onClick = ::confirmLeaveGroup
+            onClick = ::confirmDeleteGroup
         )
     }
 
@@ -396,7 +414,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
 
             conversation.data is RecipientData.Group -> {
-                conversation.data.partial.description to // description
+                conversation.data.description to // description
                         context.getString(R.string.qa_conversation_settings_description_groups) // description qa tag
             }
 
@@ -532,7 +550,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
             conversation.data is RecipientData.Group -> {
                 // if the user is kicked or the group destroyed, only show "Delete Group"
-                if (!conversation.data.partial.shouldPoll){
+                if (!conversation.data.shouldPoll){
                     listOf(
                             OptionsCategory(
                                 items = listOf(
@@ -569,6 +587,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         dangerOptions.addAll(
                             listOf(
                                 optionClearMessages,
+                                optionLeaveGroup,
                                 optionDeleteGroup
                             )
                         )
@@ -577,6 +596,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                         adminOptions.addAll(
                             listOf(
                                 optionManageMembers,
+                                optionManageAdmins,
                                 optionDisappearingMessage(disappearingSubtitle)
                             )
                         )
@@ -657,10 +677,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> emptyList()
         }
 
-        val showProBadge = conversation.proStatus.shouldShowProBadge() && !conversation.isLocalNumber
+        val showProBadge = conversation.shouldShowProBadge && !conversation.isLocalNumber
 
         // if it's a one on one convo and the user isn't pro themselves
-        val proBadgeClickable = if(conversation.is1on1 && myself.proStatus.isPro()) false
+        val proBadgeClickable = if(conversation.is1on1 && myself.isPro) false
         else showProBadge // otherwise whenever the badge is shown
 
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
@@ -716,14 +736,17 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun pinConversation(){
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
-        val maxPins = proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().proStatus)
-        if(totalPins >= maxPins){
+        val maxPins =
+            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+        if (totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogState.update {
-                it.copy(pinCTA = PinProCTA(
-                    overTheLimit = totalPins > maxPins,
-                    proSubscription = proStatusManager.subscriptionState.value.type
-                ))
+                it.copy(
+                    pinCTA = PinProCTA(
+                        overTheLimit = totalPins > maxPins,
+                        proSubscription = proStatusManager.proDataState.value.type
+                    )
+                )
             }
         } else {
             viewModelScope.launch {
@@ -1010,7 +1033,126 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun confirmLeaveGroup(){
+    /**
+     * Entry point for the "Leave group" menu item.
+     *
+     * - For admins, branches to an admin-specific flow (only admin vs multiple admins).
+     * - For non-admins, just shows a standard leave confirmation and leaves the group.
+     */
+    private fun handleLeaveOptionClick(){
+        val groupV2Id = (address as? Address.Group)?.accountId ?: return
+        val groupInfo = configFactory.getGroup(groupV2Id)?: return
+
+        if(groupInfo.hasAdminKey()){
+            confirmAdminLeaveGroup()
+        }else{
+            confirmLeaveGroup()
+        }
+    }
+
+    /**
+     * Admin-specific "Leave group" confirmation.
+     *
+     * @param isUserLastAdmin Whether the current user is the only admin.
+     *
+     * Behavior:
+     * - If there is only one admin:
+     *   - Primary action: go to Manage Admins (so they can promote others).
+     *   - Secondary action: open a second confirmation to delete/leave the group.
+     *
+     * - If there are multiple admins:
+     *   - Primary action: leave the group without deleting it.
+     *   - Secondary action: do nothing.
+     */
+    private fun confirmAdminLeaveGroup(){
+        val groupV2Id = (address as? Address.Group)?.accountId ?: return
+        val isUserLastAdmin = groupManager.isCurrentUserLastAdmin(groupV2Id)
+
+        _dialogState.update { state ->
+            val dialogData = groupManager.getLeaveGroupConfirmationDialogData(
+                groupV2Id,
+                _uiState.value.name
+            ) ?: return
+
+            state.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = dialogData.title,
+                    message = dialogData.message,
+                    positiveText = context.getString(dialogData.positiveText),
+                    negativeText = context.getString(dialogData.negativeText),
+                    positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
+                    negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
+                    onPositive = {
+                        if (isUserLastAdmin){// option to add new admin(s)
+                            // Calling this to have the ManageAdminScreen in the backstack so we can
+                            // get its VM and PromoteMembersScreen can navigate back to it after sending promotions
+                            navigateTo(
+                                ConversationSettingsDestination.RouteManageAdmins(
+                                    groupAddress = address,
+                                    navigateToPromoteMembers = true
+                                )
+                            )
+                        }else{
+                            // there are other admins so admin can leave without deleting
+                            leaveGroup()
+                        }
+                    },
+                    positiveStyleDanger = !isUserLastAdmin,
+                    onNegative = {
+                        // Show confirmation dialog to delete or leave the group
+                        // put True here since this option is to "Delete Group"
+                        if (isUserLastAdmin){
+                            // with how we handle dialog dismissal on option click, showing the simpleDialog
+                            // from another simpleDialog without delay will cause it to become null and not display
+                            viewModelScope.launch {
+                                delay(200)
+                                confirmDeleteGroup()
+                            }
+                        }
+                    },
+                    showXIcon = dialogData.showCloseButton,
+                    negativeStyleDanger = isUserLastAdmin // red color on the right
+                )
+            )
+        }
+    }
+
+    private fun confirmDeleteGroup() {
+        val groupV2Id = (address as? Address.Group)?.accountId ?: return
+        val groupInfo = configFactory.getGroup(groupV2Id) ?: return
+        _dialogState.update { state ->
+            val dialogData = groupManager.getDeleteGroupConfirmationDialogData(
+                groupV2Id,
+                _uiState.value.name
+            ) ?: return
+
+            state.copy(
+                showSimpleDialog = SimpleDialogData(
+                    title = dialogData.title,
+                    message = dialogData.message,
+                    positiveText = context.getString(dialogData.positiveText),
+                    negativeText = context.getString(dialogData.negativeText),
+                    positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
+                    negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
+                    onPositive = { leaveGroup(deleteGroup = groupInfo.hasAdminKey()) },
+                    showXIcon = dialogData.showCloseButton
+                )
+            )
+        }
+    }
+
+    /**
+     * Show the confirmation dialog for leaving the group.
+     *
+     * This is used for:
+     *  - Non-admins leaving the group
+     *  - Admins confirming "Delete group"
+     *  - Users cleaning up a kicked/destroyed group
+     *
+     * @param deleteGroup this will be passed on to [leaveGroup] to determine if
+     * we want to Delete the group or simply Leave.
+     */
+    private fun confirmLeaveGroup() {
         val groupV2Id = (address as? Address.Group)?.accountId ?: return
         _dialogState.update { state ->
             val dialogData = groupManager.getLeaveGroupConfirmationDialogData(
@@ -1024,27 +1166,35 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     message = dialogData.message,
                     positiveText = context.getString(dialogData.positiveText),
                     negativeText = context.getString(dialogData.negativeText),
-                    positiveQaTag = dialogData.positiveQaTag?.let{ context.getString(it) },
-                    negativeQaTag = dialogData.negativeQaTag?.let{ context.getString(it) },
-                    onPositive = ::leaveGroup,
-                    onNegative = {}
+                    positiveQaTag = dialogData.positiveQaTag?.let { context.getString(it) },
+                    negativeQaTag = dialogData.negativeQaTag?.let { context.getString(it) },
+                    onPositive = { leaveGroup() },
+                    showXIcon = dialogData.showCloseButton
                 )
             )
         }
     }
 
-    private fun leaveGroup() {
+    /**
+     * @param deleteGroup will determine if we want to Delete the group or simply leave.
+     *
+     * Note that the worker will always delete the group if the only admin tries to leave.
+     */
+    private fun leaveGroup(deleteGroup: Boolean = false) {
         val conversation = recipient ?: return
         viewModelScope.launch {
             showLoading()
 
             try {
                 withContext(Dispatchers.Default) {
-                    groupManagerV2.leaveGroup(AccountId(conversation.address.toString()))
+                    groupManagerV2.leaveGroup(
+                        groupId = AccountId(conversation.address.toString()),
+                        deleteGroup = deleteGroup
+                    )
                 }
                 hideLoading()
                 goBackHome()
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 hideLoading()
 
                 val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
@@ -1240,8 +1390,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.ShowProBadgeCTA -> {
                 _dialogState.update {
                     it.copy(
-                        proBadgeCTA = if(recipient?.isGroupV2Recipient == true) ProBadgeCTA.Group(proStatusManager.subscriptionState.value.type)
-                        else ProBadgeCTA.Generic(proStatusManager.subscriptionState.value.type)
+                        proBadgeCTA = if(recipient?.isGroupV2Recipient == true) ProBadgeCTA.Group(proStatusManager.proDataState.value.type)
+                        else ProBadgeCTA.Generic(proStatusManager.proDataState.value.type)
                     )
                 }
             }
@@ -1446,12 +1596,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     data class PinProCTA(
         val overTheLimit: Boolean,
-        val proSubscription: SubscriptionType
+        val proSubscription: ProStatus
     )
 
-    sealed class ProBadgeCTA(open val proSubscription: SubscriptionType) {
-        data class Generic(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
-        data class Group(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
+    sealed class ProBadgeCTA(open val proSubscription: ProStatus) {
+        data class Generic(override val proSubscription: ProStatus): ProBadgeCTA(proSubscription)
+        data class Group(override val proSubscription: ProStatus): ProBadgeCTA(proSubscription)
     }
 
     data class NicknameDialogData(

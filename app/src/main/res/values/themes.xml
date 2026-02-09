@@ -16,8 +16,6 @@
        <item name="colorDividerBackground">@color/gray50</item>
        <item name="colorPrimaryVariant">?colorPrimary</item>
        <item name="bottomSheetDialogTheme">@style/Theme.Session.BottomSheet</item>
-       <item name="android:backgroundDimEnabled">false</item>
-       <item name="android:backgroundDimAmount">0</item>
        <item name="dialogCornerRadius">@dimen/dialog_corner_radius</item>
        <item name="android:alertDialogTheme">@style/ThemeOverlay.Session.AlertDialog</item>
        <item name="alertDialogTheme">@style/ThemeOverlay.Session.AlertDialog</item>
@@ -30,7 +28,8 @@
        <item name="colorOnSurface">?android:textColorPrimary</item>
        <item name="colorSurface">?backgroundSecondary</item>
        <item name="menu_trash_icon">@drawable/ic_trash_2</item>
-       <item name="menu_ban_icon">@drawable/ic_ban</item>
+       <item name="menu_ban_icon">@drawable/ic_user_round_x</item>
+       <item name="menu_unban_icon">@drawable/ic_user_round_tick</item>
        <item name="menu_save_icon">@drawable/ic_arrow_down_to_line</item>=
        <item name="menu_copy_icon">@drawable/ic_copy</item>
        <item name="menu_reply_icon">@drawable/ic_reply</item>

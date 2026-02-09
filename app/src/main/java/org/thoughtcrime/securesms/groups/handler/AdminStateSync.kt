@@ -1,17 +1,16 @@
 package org.thoughtcrime.securesms.groups.handler
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsession.utilities.withMutableGroupConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,47 +25,39 @@ import javax.inject.Singleton
 @Singleton
 class AdminStateSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
-    private val preferences: TextSecurePreferences,
-    @param:ManagerScope private val scope: CoroutineScope
-) : OnAppStartupComponent {
-    private var job: Job? = null
+) : AuthAwareComponent {
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.USER_GROUPS))
+            .collect {
+                val localNumber = loggedInState.accountId.hexString
 
-    override fun onPostAppStarted() {
-        require(job == null) { "Already started" }
+                // Go through evey user groups and if we are admin of any of the groups,
+                // make sure we mark any pending group promotion status as "accepted"
 
-        job = scope.launch {
-            configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.USER_GROUPS))
-                .collect {
-                    val localNumber = preferences.getLocalNumber() ?: return@collect
-
-                    // Go through evey user groups and if we are admin of any of the groups,
-                    // make sure we mark any pending group promotion status as "accepted"
-
-                    val allAdminGroups = configFactory.withUserConfigs { configs ->
-                        configs.userGroups.all()
-                            .asSequence()
-                            .mapNotNull {
-                                if ((it as? GroupInfo.ClosedGroupInfo)?.hasAdminKey() == true) {
-                                    AccountId(it.groupAccountId)
-                                } else {
-                                    null
-                                }
+                val allAdminGroups = configFactory.withUserConfigs { configs ->
+                    configs.userGroups.all()
+                        .asSequence()
+                        .mapNotNull {
+                            if ((it as? GroupInfo.ClosedGroupInfo)?.hasAdminKey() == true) {
+                                AccountId(it.groupAccountId)
+                            } else {
+                                null
                             }
-                    }
+                        }
+                }
 
-                    val groupToMarkAccepted = allAdminGroups
-                        .filter { groupId -> isMemberPromotionPending(groupId, localNumber) }
+                val groupToMarkAccepted = allAdminGroups
+                    .filter { groupId -> isMemberPromotionPending(groupId, localNumber) }
 
-                    for (groupId in groupToMarkAccepted) {
-                        configFactory.withMutableGroupConfigs(groupId) { groupConfigs ->
-                            groupConfigs.groupMembers.get(localNumber)?.let { member ->
-                                member.setPromotionAccepted()
-                                groupConfigs.groupMembers.set(member)
-                            }
+                for (groupId in groupToMarkAccepted) {
+                    configFactory.withMutableGroupConfigs(groupId) { groupConfigs ->
+                        groupConfigs.groupMembers.get(localNumber)?.let { member ->
+                            member.setPromotionAccepted()
+                            groupConfigs.groupMembers.set(member)
                         }
                     }
                 }
-        }
+            }
     }
 
     private fun isMemberPromotionPending(groupId: AccountId, localNumber: String): Boolean {

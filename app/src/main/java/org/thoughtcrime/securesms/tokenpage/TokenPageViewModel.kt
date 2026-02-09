@@ -11,28 +11,23 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import nl.komponents.kovenant.Promise
 import org.session.libsession.LocalisedTimeUtil.toShortSinglePartString
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.network.onion.PathManager
+import org.session.libsession.network.snode.SwarmDirectory
 import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_NETWORK_DATA_PRICE
 import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_SHORT
 import org.session.libsession.utilities.NonTranslatableStringConstants.USD_NAME_SHORT
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -40,7 +35,6 @@ import org.thoughtcrime.securesms.util.NumberUtil.formatAbbreviated
 import org.thoughtcrime.securesms.util.NumberUtil.formatWithDecimalPlaces
 import javax.inject.Inject
 import kotlin.math.min
-import kotlin.sequences.filter
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
@@ -49,8 +43,10 @@ class TokenPageViewModel @Inject constructor(
     @param:ApplicationContext val context: Context,
     private val tokenDataManager: TokenDataManager,
     private val dateUtils: DateUtils,
-    private val prefs: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     private val conversationRepository: ConversationRepository,
+    private val swarmDirectory: SwarmDirectory,
+    private val pathManager: PathManager
 ) : ViewModel() {
     private val TAG = "TokenPageVM"
 
@@ -239,15 +235,12 @@ class TokenPageViewModel @Inject constructor(
     // Note: We pass this in to the token page so we can call it when we refresh the page.
     private suspend fun getNodeData() {
         withContext(Dispatchers.Default) {
-            val myPublicKey = prefs.getLocalNumber() ?: return@withContext
-
-            val getSwarmSetPromise: Promise<Set<Snode>, Exception> =
-                SnodeAPI.getSwarm(myPublicKey)
+            val myPublicKey = loginStateRepository.requireLocalNumber()
 
             val numSessionNodesInOurSwarm = try {
                 // Get the count of Session nodes in our swarm (technically in the range 1..10, but
                 // even a new account seems to start with a nodes-in-swarm count of 4).
-                getSwarmSetPromise.await().size
+                swarmDirectory.getSwarm(myPublicKey).size
             } catch (e: Exception) {
                 Log.w(TAG, "Couldn't get nodes in swarm count.", e)
                 5 // Pick a sane middle-ground should we error for any reason
@@ -281,7 +274,7 @@ class TokenPageViewModel @Inject constructor(
             }
 
             // This is hard-coded to 2 on Android but may vary on other platforms
-            val pathCount = OnionRequestAPI.paths.value.size
+            val pathCount = pathManager.paths.value.size
 
             /*
             Note: Num session nodes securing you messages formula is:

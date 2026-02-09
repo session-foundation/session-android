@@ -1,0 +1,189 @@
+package org.thoughtcrime.securesms.pro
+
+import android.content.Context
+import androidx.hilt.work.HiltWorker
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.WorkQuery
+import androidx.work.WorkerParameters
+import androidx.work.await
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapNotNull
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
+import org.session.libsignal.exceptions.NonRetryableException
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.execute
+import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.pro.api.GetProDetailsApi
+import org.thoughtcrime.securesms.pro.api.ProDetails
+import org.thoughtcrime.securesms.pro.api.ServerApiRequest
+import org.thoughtcrime.securesms.pro.api.successOrThrow
+import org.thoughtcrime.securesms.pro.db.ProDatabase
+import java.time.Duration
+import javax.inject.Provider
+
+/**
+ * A worker that fetches the user's Pro details from the server and updates the local database.
+ *
+ * This worker doesn't do any business logic in terms of when to schedule itself, it simply performs
+ * the fetch and update operation regardlessly. It, however, does schedule the [ProProofGenerationWorker]
+ * if needed based on the fetched Pro details, this is because the proof generation logic
+ * is tightly coupled to the fetched Pro details state.
+ */
+@HiltWorker
+class FetchProDetailsWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted params: WorkerParameters,
+    private val proBackendConfig: Provider<ProBackendConfig>,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val getProDetailsApiFactory: GetProDetailsApi.Factory,
+    private val proDatabase: ProDatabase,
+    private val loginStateRepository: LoginStateRepository,
+    private val snodeClock: SnodeClock,
+    private val configFactory: ConfigFactoryProtocol,
+    private val prefs: TextSecurePreferences,
+) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        if (!prefs.forcePostPro()) {
+            Log.d(TAG, "Pro details fetch skipped because pro is not enabled")
+            return Result.success()
+        }
+
+        val proMasterKey =
+            requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
+                "User must be logged in to fetch pro details"
+            }
+
+        return try {
+            Log.d(TAG, "Fetching Pro details from server")
+            val details = serverApiExecutor.execute(
+                ServerApiRequest(
+                    proBackendConfig = proBackendConfig.get(),
+                    api = getProDetailsApiFactory.create(proMasterKey)
+                )
+            ).successOrThrow()
+
+            Log.d(
+                TAG,
+                "Fetched pro details, status = ${details.status}, " +
+                        "autoRenew = ${details.autoRenewing}, expiry = ${details.expiry}"
+            )
+
+            configFactory.withMutableUserConfigs { configs ->
+                if (details.expiry != null) {
+                    configs.userProfile.setProAccessExpiryMs(details.expiry.toEpochMilli())
+                } else {
+                    configs.userProfile.removeProAccessExpiry()
+                }
+
+                // Remove the pro config immediately if we know we are not pro anymore.
+                // We will schedule proof generation below if we are still pro.
+                if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
+                    configs.userProfile.removeProConfig()
+                }
+            }
+            proDatabase.updateProDetails(proDetails = details, updatedAt = snodeClock.currentTime())
+
+            scheduleProofGenerationIfNeeded(details)
+
+            Result.success()
+        } catch (e: CancellationException) {
+            Log.d(TAG, "Work cancelled")
+            throw e
+        } catch (e: NonRetryableException) {
+            Log.e(TAG, "Non-retryable error fetching pro details", e)
+            Result.failure()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching pro details", e)
+            Result.retry()
+        }
+    }
+
+
+    private suspend fun scheduleProofGenerationIfNeeded(details: ProDetails) {
+        val now = snodeClock.currentTimeMillis()
+
+        if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
+            Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")
+            ProProofGenerationWorker.cancel(context)
+        } else {
+            val currentProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
+
+            if (currentProof == null || currentProof.expiryMs <= now) {
+                Log.d(
+                    TAG,
+                    "Pro is active but no valid proof found, scheduling proof generation now"
+                )
+                ProProofGenerationWorker.schedule(context)
+            } else if (currentProof.expiryMs - now <= Duration.ofMinutes(60).toMillis() &&
+                details.expiry!!.toEpochMilli() - now > Duration.ofMinutes(60).toMillis() &&
+                details.autoRenewing == true
+            ) {
+                val delay = Duration.ofMinutes((Math.random() * 50 + 10).toLong())
+                Log.d(TAG, "Pro proof is expiring soon, scheduling proof generation in $delay")
+                ProProofGenerationWorker.schedule(context, delay)
+            } else {
+                Log.d(
+                    TAG,
+                    "Pro proof is still valid for a long period, no need to schedule proof generation"
+                )
+            }
+        }
+    }
+
+    companion object {
+        private const val TAG = "FetchProDetailsWorker"
+
+        fun watch(context: Context): Flow<WorkInfo> {
+            val workQuery = WorkQuery.Builder
+                .fromUniqueWorkNames(listOf(TAG))
+                .build()
+
+            return WorkManager.getInstance(context)
+                .getWorkInfosFlow(workQuery)
+                .mapNotNull { it.firstOrNull() }
+        }
+
+        fun schedule(
+            context: Context,
+            existingWorkPolicy: ExistingWorkPolicy,
+            delay: Duration? = null
+        ) {
+            WorkManager.getInstance(context)
+                .enqueueUniqueWork(
+                    uniqueWorkName = TAG,
+                    existingWorkPolicy = existingWorkPolicy,
+                    request = OneTimeWorkRequestBuilder<FetchProDetailsWorker>()
+                        .apply {
+                            if (delay != null) {
+                                setInitialDelay(delay)
+                            }
+                        }
+                        .addTag(TAG)
+                        .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+                        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(10))
+                        .build()
+                )
+        }
+
+        suspend fun cancel(context: Context) {
+            WorkManager.getInstance(context)
+                .cancelUniqueWork(TAG)
+                .await()
+        }
+    }
+}

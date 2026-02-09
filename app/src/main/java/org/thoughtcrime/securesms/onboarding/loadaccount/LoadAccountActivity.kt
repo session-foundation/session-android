@@ -5,8 +5,11 @@ import android.view.View
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
@@ -43,11 +46,12 @@ class LoadAccountActivity : BaseActionBarActivity() {
 
         supportActionBar?.setTitle(R.string.loadAccount)
         prefs.setConfigurationMessageSynced(false)
-        prefs.setRestorationTime(System.currentTimeMillis())
+
 
         lifecycleScope.launch {
-            viewModel.events.collect {
-                loadAccountManager.load(it.mnemonic)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                val mnemonic = viewModel.events.first().mnemonic
+                loadAccountManager.load(mnemonic)
                 start<MessageNotificationsActivity>()
             }
         }

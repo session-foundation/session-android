@@ -30,6 +30,9 @@ import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -123,7 +126,7 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel?.inputBarState?.collect { state ->
+                viewModel?.inputBarState?.collectLatest { state ->
                     binding.inputBar.setState(state)
                 }
             }
@@ -207,10 +210,7 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     override fun onRailItemDeleteClicked(distanceFromActive: Int) {
         val currentItem = binding?.mediasendPager?.currentItem ?: return
 
-        viewModel?.onMediaItemRemoved(
-            requireContext(),
-            currentItem + distanceFromActive
-        )
+        viewModel?.onMediaItemRemoved(currentItem + distanceFromActive)
     }
 
     fun onTouchEventsNeeded(needed: Boolean) {

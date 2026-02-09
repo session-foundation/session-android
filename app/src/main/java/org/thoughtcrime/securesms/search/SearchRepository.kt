@@ -1,76 +1,62 @@
 package org.thoughtcrime.securesms.search
 
-import android.content.Context
 import android.database.Cursor
-import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.toGroupString
+import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.contacts.ContactAccessor
 import org.thoughtcrime.securesms.database.CursorList
-import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsColumns
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SearchDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
-import org.thoughtcrime.securesms.util.Stopwatch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 // Class to manage data retrieval for search
 @Singleton
 class SearchRepository @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val searchDatabase: SearchDatabase,
-    private val threadDatabase: ThreadDatabase,
-    private val groupDatabase: GroupDatabase,
-    private val contactAccessor: ContactAccessor,
     private val recipientRepository: RecipientRepository,
-    private val conversationRepository: ConversationRepository,
+    private val conversationRepository: Lazy<ConversationRepository>,
     private val configFactory: ConfigFactoryProtocol,
-    private val prefs: TextSecurePreferences,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
-    private val executor = SignalExecutors.SERIAL
+    private val searchSemaphore = Semaphore(1)
 
-    fun query(query: String, callback: (SearchResult) -> Unit) {
-        // If the sanitized search is empty then abort without search
-        val cleanQuery = sanitizeQuery(query).trim { it <= ' ' }
+    suspend fun query(query: String): SearchResult = withContext(Dispatchers.Default) {
+        searchSemaphore.withPermit {
+            // If the sanitized search is empty then abort without search
+            val cleanQuery = sanitizeQuery(query).trim { it <= ' ' }
 
-        executor.execute {
-            val timer =
-                Stopwatch("FtsQuery")
-            timer.split("clean")
-
-            val contacts =
-                queryContacts(cleanQuery)
-            timer.split("Contacts")
-
-            val conversations =
-                queryConversations(cleanQuery)
-            timer.split("Conversations")
-
+            val contacts = queryContacts(cleanQuery)
+            val conversations = queryConversations(cleanQuery)
             val messages = queryMessages(cleanQuery)
-            timer.split("Messages")
 
-            timer.stop(TAG)
-            callback(
-                SearchResult(
-                    cleanQuery,
-                    contacts,
-                    conversations,
-                    messages
-                )
+            SearchResult(
+                cleanQuery,
+                contacts,
+                conversations,
+                messages
             )
         }
     }
@@ -83,9 +69,10 @@ class SearchRepository @Inject constructor(
             return
         }
 
-        executor.execute {
-            val messages = queryMessages(cleanQuery, threadId)
-            callback(messages)
+        scope.launch {
+            searchSemaphore.withPermit {
+                callback(queryMessages(cleanQuery, threadId))
+            }
         }
     }
 
@@ -128,16 +115,45 @@ class SearchRepository @Inject constructor(
 
     private fun queryConversations(
         query: String,
-    ): List<GroupRecord> {
-        val numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query)
-        val addresses = numbers.map { fromSerialized(it) }
+    ) : List<Recipient> {
+        if(query.isEmpty()) return emptyList()
 
-        return threadDatabase.getThreads(addresses)
-            .map { groupDatabase.getGroup(it.recipient.address.toGroupString()).get() }
+        return configFactory.withUserConfigs { configs ->
+            configs.userGroups.all()
+        }.asSequence()
+            .mapNotNull { group ->
+                when (group) {
+                    is GroupInfo.ClosedGroupInfo -> {
+                        if(group.invited) null // do not show groups V2 we have not yet accepted
+                        else recipientRepository.getRecipientSync(
+                            Address.Group(AccountId(group.groupAccountId))
+                        )
+                    }
+
+                    is GroupInfo.LegacyGroupInfo -> {
+                        recipientRepository.getRecipientSync(
+                            Address.LegacyGroup(group.accountId)
+                        )
+                    }
+
+                    is GroupInfo.CommunityGroupInfo -> {
+                        recipientRepository.getRecipientSync(
+                            Address.Community(
+                                serverUrl = group.community.baseUrl,
+                                room = group.community.room
+                            )
+                        )
+                    }
+                }
+            }
+            .filter { group ->
+                group.displayName().contains(query, ignoreCase = true)
+            }
+            .toList()
     }
 
-    private fun queryMessages(query: String): CursorList<MessageResult> {
-        val allConvo = conversationRepository.conversationListAddressesFlow.value
+    private suspend fun queryMessages(query: String): CursorList<MessageResult> {
+        val allConvo = conversationRepository.get().conversationListAddressesFlow.first()
         val messages = searchDatabase.queryMessages(query, allConvo)
         return if (messages != null)
             CursorList(messages, MessageModelBuilder())
@@ -177,6 +193,10 @@ class SearchRepository @Inject constructor(
 
     private inner class MessageModelBuilder() : CursorList.ModelBuilder<MessageResult> {
         override fun build(cursor: Cursor): MessageResult {
+            val messageId = MessageId(
+                id = cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID)),
+                mms = cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsDatabase.TRANSPORT)) == MmsSmsDatabase.MMS_TRANSPORT
+            )
             val conversationAddress =
                 fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS)))
             val messageAddress =
@@ -188,12 +208,15 @@ class SearchRepository @Inject constructor(
                 cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))
             val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.THREAD_ID))
 
-            return MessageResult(conversationRecipient, messageRecipient, body, threadId, sentMs)
+            return MessageResult(
+                messageId = messageId,
+                conversationRecipient = conversationRecipient,
+                messageRecipient = messageRecipient,
+                bodySnippet = body,
+                threadId = threadId,
+                sentTimestampMs = sentMs
+            )
         }
-    }
-
-    interface Callback<E> {
-        fun onResult(result: E)
     }
 
     companion object {

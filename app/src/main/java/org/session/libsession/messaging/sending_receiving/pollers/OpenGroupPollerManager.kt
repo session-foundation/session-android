@@ -1,13 +1,12 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
@@ -17,10 +16,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.castAwayType
@@ -43,30 +43,23 @@ private const val TAG = "OpenGroupPollerManager"
 class OpenGroupPollerManager @Inject constructor(
     pollerFactory: OpenGroupPoller.Factory,
     configFactory: ConfigFactoryProtocol,
-    preferences: TextSecurePreferences,
+    loginStateRepository: LoginStateRepository,
     @ManagerScope scope: CoroutineScope
 ) : OnAppStartupComponent {
     private val pollerSemaphore = Semaphore(3)
 
     val pollers: StateFlow<Map<String, PollerHandle>> =
-        preferences.watchLocalNumber()
-            .map { it != null }
-            .distinctUntilChanged()
-            .flatMapLatest { loggedIn ->
-                if (loggedIn) {
-                    configFactory
-                        .userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS))
-                        .castAwayType()
-                        .onStart { emit(Unit) }
-                        .map {
-                            configFactory.withUserConfigs { configs ->
-                                configs.userGroups.allCommunityInfo()
-                            }.mapTo(hashSetOf()) { it.community.baseUrl }
-                        }
-                } else {
-                    flowOf(emptySet())
+        loginStateRepository.flowWithLoggedInState {
+            configFactory
+                .userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS))
+                .castAwayType()
+                .onStart { emit(Unit) }
+                .map {
+                    configFactory.withUserConfigs { configs ->
+                        configs.userGroups.allCommunityInfo()
+                    }.mapTo(hashSetOf()) { it.community.baseUrl }
                 }
-            }
+        }
             .distinctUntilChanged()
             .scan(emptyMap<String, PollerHandle>()) { acc, value ->
                 if (acc.keys == value) {
@@ -97,7 +90,7 @@ class OpenGroupPollerManager @Inject constructor(
 
     val isAllCaughtUp: Boolean
         get() = pollers.value.values.all {
-            (it.poller.pollState.value as? OpenGroupPoller.PollState.Idle)?.lastPolled != null
+            it.poller.pollState.value is BasePoller.PollState.Polled
         }
 
 
@@ -107,9 +100,11 @@ class OpenGroupPollerManager @Inject constructor(
             pollers.value.map { (server, handle) ->
                 handle.pollerScope.launch {
                     runCatching {
-                        handle.poller.requestPollAndAwait()
+                        handle.poller.manualPollOnce()
                     }.onFailure {
-                        Log.e(TAG, "Error polling open group ${server}", it)
+                        if (it !is CancellationException) {
+                            Log.e(TAG, "Error polling open group $server", it)
+                        }
                     }
                 }
             }.joinAll()

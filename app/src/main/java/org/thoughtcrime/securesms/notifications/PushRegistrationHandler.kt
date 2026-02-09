@@ -3,31 +3,24 @@ package org.thoughtcrime.securesms.notifications
 import android.content.Context
 import androidx.work.await
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicBoolean
@@ -44,62 +37,42 @@ class PushRegistrationHandler @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val tokenFetcher: TokenFetcher,
     @param:ApplicationContext private val context: Context,
-    @param:ManagerScope private val scope: CoroutineScope,
     @param:PushNotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
-    private val storage: StorageProtocol,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
-) : OnAppStartupComponent {
+) : AuthAwareComponent {
 
-    private var job: Job? = null
+    private val firstRun = AtomicBoolean(true)
 
-    @OptIn(FlowPreview::class)
-    override fun onPostAppStarted() {
-        require(job == null) { "Job is already running" }
-
-
-        job = scope.launch {
-            val firstRun = AtomicBoolean(true)
-
-            @Suppress("OPT_IN_USAGE")
-            preferences.watchLocalNumber()
-                .filterNotNull()
-                .distinctUntilChanged()
-                .flatMapLatest { localNumber ->
-                    if (hasCoreIdentity()) {
-                        combine(
-                            configFactory.userConfigsChanged(
-                                    onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS),
-                                    debounceMills = 500
-                                )
-                                .castAwayType()
-                                .onStart { emit(Unit) },
-                            preferences.pushEnabled,
-                            tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
-                        ) { _, enabled, token ->
-                            if (enabled) {
-                                desiredSubscriptions(localNumber, token)
-                            } else {
-                                emptyList()
-                            }
-                        }
-                    } else {
-                        emptyFlow()
-                    }
-                }
-                .distinctUntilChanged()
-                .collectLatest { desiredRegistrations ->
-                    val changes = semaphore.withPermit {
-                        pushRegistrationDatabase.ensureRegistrations(desiredRegistrations)
-                    }
-
-                    Log.d(TAG, "Push registration changes: $changes")
-
-                    if (firstRun.compareAndSet(true, false) || changes > 0) {
-                        PushRegistrationWorker.enqueue(context, delay = null).await()
-                    }
-                }
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        combine(
+            configFactory.userConfigsChanged(
+                onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS),
+                debounceMills = 500
+            )
+                .castAwayType()
+                .onStart { emit(Unit) },
+            preferences.pushEnabled,
+            tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
+        ) { _, enabled, token ->
+            if (enabled) {
+                desiredSubscriptions(loggedInState.accountId.hexString, token)
+            } else {
+                emptyList()
+            }
         }
+            .distinctUntilChanged()
+            .collectLatest { desiredRegistrations ->
+                val changes = semaphore.withPermit {
+                    pushRegistrationDatabase.ensureRegistrations(desiredRegistrations)
+                }
+
+                Log.d(TAG, "Push registration changes: $changes")
+
+                if (firstRun.compareAndSet(true, false) || changes > 0) {
+                    PushRegistrationWorker.enqueue(context, delay = null).await()
+                }
+            }
     }
 
     /**
@@ -123,10 +96,6 @@ class PushRegistrationHandler @Inject constructor(
                 }
             }
         }
-
-    private fun hasCoreIdentity(): Boolean {
-        return preferences.getLocalNumber() != null && storage.getUserED25519KeyPair() != null
-    }
 
     companion object {
         private const val TAG = "PushRegistrationHandler"

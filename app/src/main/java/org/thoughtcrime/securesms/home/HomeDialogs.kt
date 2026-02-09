@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -12,18 +12,34 @@ import com.squareup.phrase.Phrase
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.GotoProSettings
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HandleUserProfileCommand
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideDonationCTADialog
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideExpiredCTADialog
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HidePinCTADialog
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideSimpleDialog
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUrlDialog
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUserProfileModal
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.OnLinkCopied
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.OnLinkOpened
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.ShowDonationConfirmation
 import org.thoughtcrime.securesms.home.startconversation.StartConversationSheet
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PinProCTA
+import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.UserProfileModal
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 @Composable
@@ -32,6 +48,42 @@ fun HomeDialogs(
     sendCommand: (HomeViewModel.Commands) -> Unit
 ) {
     SessionMaterialTheme {
+        //  Simple dialogs
+        if (dialogsState.showSimpleDialog != null) {
+            val buttons = mutableListOf<DialogButtonData>()
+            if(dialogsState.showSimpleDialog.positiveText != null) {
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(dialogsState.showSimpleDialog.positiveText),
+                        color = if (dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                        else LocalColors.current.text,
+                        qaTag = dialogsState.showSimpleDialog.positiveQaTag,
+                        onClick = dialogsState.showSimpleDialog.onPositive
+                    )
+                )
+            }
+            if(dialogsState.showSimpleDialog.negativeText != null){
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(dialogsState.showSimpleDialog.negativeText),
+                        qaTag = dialogsState.showSimpleDialog.negativeQaTag,
+                        onClick = dialogsState.showSimpleDialog.onNegative
+                    )
+                )
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(dialogsState.showSimpleDialog.title),
+                text = annotatedStringResource(dialogsState.showSimpleDialog.message),
+                showCloseButton = dialogsState.showSimpleDialog.showXIcon,
+                buttons = buttons
+            )
+        }
+
         // pin CTA
         if(dialogsState.pinCTA != null){
             PinProCTA(
@@ -66,7 +118,7 @@ fun HomeDialogs(
 
         // we need a delay before displaying this.
         // Setting the delay in the VM does not account for render and it seems to appear immediately
-        var showExpiring by remember { mutableStateOf(false) }
+        var showExpiring by retain { mutableStateOf(false) }
         LaunchedEffect(dialogsState.proExpiringCTA) {
             showExpiring = false
             if (dialogsState.proExpiringCTA != null) {
@@ -107,7 +159,7 @@ fun HomeDialogs(
 
         // we need a delay before displaying this.
         // Setting the delay in the VM does not account for render and it seems to appear immediately
-        var showExpired by remember { mutableStateOf(false) }
+        var showExpired by retain { mutableStateOf(false) }
         LaunchedEffect(dialogsState.proExpiredCTA) {
             showExpired = false
             if (dialogsState.proExpiredCTA) {
@@ -137,12 +189,57 @@ fun HomeDialogs(
                 positiveButtonText = stringResource(R.string.renew),
                 negativeButtonText = stringResource(R.string.cancel),
                 onUpgrade = {
-                    sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)
-                    sendCommand(HomeViewModel.Commands.GotoProSettings(ProSettingsDestination.ChoosePlan))
+                    sendCommand(HideExpiredCTADialog)
+                    sendCommand(GotoProSettings(ProSettingsDestination.ChoosePlan))
                 },
                 onCancel = {
-                    sendCommand(HomeViewModel.Commands.HideExpiredCTADialog)
+                    sendCommand(HideExpiredCTADialog)
                 }
+            )
+        }
+
+        // we need a delay before displaying this.
+        // Setting the delay in the VM does not account for render and it seems to appear immediately
+        var showDonation by retain { mutableStateOf(false) }
+        LaunchedEffect(dialogsState.donationCTA) {
+            showDonation = false
+            if (dialogsState.donationCTA) {
+                delay(1500)
+                showDonation = true
+            }
+        }
+
+        if (showDonation && dialogsState.donationCTA) {
+            val context = LocalContext.current
+            SimpleSessionProCTA(
+                heroImage = R.drawable.cta_hero_flower,
+                title = Phrase.from(context,R.string.donateSessionHelp)
+                    .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                    .format()
+                    .toString(),
+                showProBadge = false,
+                text = Phrase.from(context,R.string.donateSessionDescription)
+                    .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+                    .format()
+                    .toString(),
+                positiveButtonText = stringResource(R.string.donate),
+                negativeButtonText = stringResource(R.string.maybeLater),
+                onUpgrade = {
+                    sendCommand(HideDonationCTADialog)
+                    sendCommand(ShowDonationConfirmation)
+                },
+                onCancel = {
+                    sendCommand(HideDonationCTADialog)
+                }
+            )
+        }
+
+        if(dialogsState.showUrlDialog != null){
+            OpenURLAlertDialog(
+                url = dialogsState.showUrlDialog,
+                onLinkOpened = { sendCommand(OnLinkOpened(dialogsState.showUrlDialog)) },
+                onLinkCopied = { sendCommand(OnLinkCopied(dialogsState.showUrlDialog)) },
+                onDismissRequest = { sendCommand(HideUrlDialog) }
             )
         }
     }

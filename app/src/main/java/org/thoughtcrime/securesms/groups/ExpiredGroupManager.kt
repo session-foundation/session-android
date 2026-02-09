@@ -29,7 +29,7 @@ class ExpiredGroupManager @Inject constructor(
     @Suppress("OPT_IN_USAGE")
     val expiredGroups: StateFlow<Set<AccountId>> = pollerManager.watchAllGroupPollingState()
         .mapNotNull { (groupId, state) ->
-            val expired = state.lastPoll?.groupExpired
+            val expired = state.lastPolledResult?.getOrNull()?.groupExpired
 
             if (expired == null) {
                 // Poller doesn't know about the expiration state yet, so we skip

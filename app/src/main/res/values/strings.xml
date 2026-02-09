@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Session</string>
-    <string name="NoNonAdminsInGroup">There are no non-admin members in this group.</string>
     <string name="about">About</string>
     <string name="accept">Accept</string>
     <string name="accountIDCopy">Copy Account ID</string>
@@ -21,7 +20,7 @@
         <item quantity="one">Add Admin</item>
         <item quantity="other">Add Admins</item>
     </plurals>
-    <string name="addAdmins">Add Admins</string>
+    <string name="addAdminSingular">Add Admin</string>
     <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
     <string name="adminCannotBeDemoted">Admins cannot be demoted or removed from the group.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
@@ -60,6 +59,7 @@
     <string name="adminStatusYou">You cannot change your admin status. To leave the group, open the conversation settings and select Leave Group.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> and <b>{other_name}</b> were promoted to Admin.</string>
     <string name="admins">Admins</string>
+    <string name="allow">Allow</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
@@ -176,6 +176,7 @@
     <string name="blockUnblockNameTwo">Are you sure you want to unblock <b>{name}</b> and 1 other?</string>
     <string name="blockUnblockedUser">Unblocked {name}</string>
     <string name="blockedContactsManageDescription">View and manage blocked contacts.</string>
+    <string name="browserNotFound">No browser found to open that URL, try copying the URL instead</string>
     <string name="call">Call</string>
     <string name="callsCalledYou">{name} called you</string>
     <string name="callsCannotStart">You cannot start a new call. Finish your current call first.</string>
@@ -216,15 +217,15 @@
     <string name="cameraGrantAccessQr">{app_name} needs camera access to scan QR codes</string>
     <string name="cancel">Cancel</string>
     <string name="cancelAccess">Cancel {pro}</string>
-    <string name="cancelProPlan">Cancel {pro} Plan</string>
     <string name="cancelProPlatform">Cancel on the {platform} website, using the {platform_account} you signed up for {pro} with.</string>
     <string name="cancelProPlatformStore">Cancel on the {platform_store} website, using the {platform_account} you signed up for {pro} with.</string>
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
+    <string name="changeSetting">Change Setting</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
     <string name="checkingProStatusContinue">Checking your {pro} status. You\'ll be able to continue once this check is complete.</string>
-    <string name="checkingProStatusDescription">Checking your {pro} details. Some information on this page may be unavailable until this check is complete.</string>
+    <string name="checkingProStatusDescription">Checking your {pro} details. Some actions on this page may be unavailable until this check is complete.</string>
     <string name="checkingProStatusEllipsis">Checking {pro} Status...</string>
     <string name="checkingProStatusRenew">Checking your {pro} details. You cannot renew until this check is complete.</string>
     <string name="checkingProStatusUpgradeDescription">Checking your {pro} status. You\'ll be able to upgrade to {pro} once this check is complete.</string>
@@ -265,6 +266,7 @@
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
     <string name="communityBanDeleteDescription">This will ban the selected user from this Community and delete all their messages. Are you sure you want to continue?</string>
     <string name="communityBanDescription">This will ban the selected user from this Community. Are you sure you want to continue?</string>
+    <string name="communityBanUserDescription">Are you sure you want to ban <b>{name}</b> from this Community?</string>
     <string name="communityDescriptionEnter">Enter a community description</string>
     <string name="communityEnterUrl">Enter Community URL</string>
     <string name="communityEnterUrlErrorInvalid">Invalid URL</string>
@@ -282,6 +284,7 @@
     <string name="communityLeaveError">Failed to leave {community_name}</string>
     <string name="communityNameEnter">Enter a community name</string>
     <string name="communityNameEnterPlease">Please enter a community name</string>
+    <string name="communityUnbanUserDescription">Are you sure you want to unban <b>{name}</b> from this Community?</string>
     <string name="communityUnknown">Unknown Community</string>
     <string name="communityUrl">Community URL</string>
     <string name="communityUrlCopy">Copy Community URL</string>
@@ -412,6 +415,7 @@
     <string name="deleteMessagesDescriptionEveryone">Are you sure you want to delete these messages for everyone?</string>
     <string name="deleting">Deleting</string>
     <string name="developerToolsToggle">Toggle Developer Tools</string>
+    <string name="deviceNotificationSettings">Device Notification Settings</string>
     <string name="dictationStart">Start Dictation...</string>
     <string name="disappearingMessages">Disappearing Messages</string>
     <string name="disappearingMessagesCountdownBig">Message will delete in {time_large}</string>
@@ -459,6 +463,8 @@
     <string name="displayNameVisible">Your Display Name is visible to users, groups, and communities you interact with.</string>
     <string name="document">Document</string>
     <string name="donate">Donate</string>
+    <string name="donateSessionDescription">Powerful forces are trying to weaken privacy, but we can’t continue this fight alone.\n\nDonating helps keep {app_name} secure, independent, and online.</string>
+    <string name="donateSessionHelp">{app_name} Needs Your Help</string>
     <string name="done">Done</string>
     <string name="download">Download</string>
     <string name="downloading">Downloading...</string>
@@ -510,6 +516,9 @@
     <string name="failedResendInvite">Failed to resend invite to <b>{name}</b> in <b>{group_name}</b></string>
     <string name="failedResendInviteMultiple">Failed to resend invite to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
     <string name="failedResendInviteTwo">Failed to resend invite to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Failed to resend promotion to <b>{name}</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Failed to resend promotion to <b>{name}</b> and <b>{count} others</b> in <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Failed to resend promotion to <b>{name}</b> and <b>{other_name}</b> in <b>{group_name}</b></string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
     <string name="feedback">Feedback</string>
@@ -593,8 +602,9 @@
     <string name="groupNoMessages">You have no messages from <b>{group_name}</b>. Send a message to start the conversation!</string>
     <string name="groupNotUpdatedWarning">This group has not been updated in over 30 days. You may experience issues sending messages or viewing group information.</string>
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin.</string>
-    <string name="groupOnlyAdminLeave">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin. To leave the group without deleting it, please add a new admin first</string>
+    <string name="groupOnlyAdminLeave">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin. To leave the group without deleting it, please add a new admin first.</string>
     <string name="groupPendingRemoval">Pending removal</string>
+    <string name="groupPermissionReadOnly">This group is read-only</string>
     <string name="groupPromotedYou"><b>You</b> were promoted to Admin.</string>
     <string name="groupPromotedYouMultiple"><b>You</b> and <b>{count} others</b> were promoted to Admin.</string>
     <string name="groupPromotedYouTwo"><b>You</b> and <b>{other_name}</b> were promoted to Admin.</string>
@@ -660,6 +670,7 @@
         <item quantity="other">Invite Members</item>
     </plurals>
     <string name="inviteNewMemberGroupLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code</string>
     <string name="join">Join</string>
     <string name="later">Later</string>
     <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
@@ -679,6 +690,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>You</b> and <b>{other_name}</b> joined the group.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> and <b>{other_name}</b> joined the group.</string>
     <string name="legacyGroupMemberYouNew"><b>You</b> joined the group.</string>
+    <string name="limitBackgroundActivity">Limit Background Activity?</string>
+    <string name="limitBackgroundActivityDescription">You currently allow {app_name} to run in the background to improve notification reliability. Changing this setting could result in less reliable notifications.</string>
     <string name="linkPreviews">Link Previews</string>
     <string name="linkPreviewsDescription">Show link previews for supported URLs.</string>
     <string name="linkPreviewsEnable">Enable Link Previews</string>
@@ -707,6 +720,7 @@
     <string name="manageMembers">Manage Members</string>
     <string name="managePro">Manage {pro}</string>
     <string name="max">Max</string>
+    <string name="maybeLater">Maybe Later</string>
     <string name="media">Media</string>
     <plurals name="memberSelected">
         <item quantity="one">%1$d Member Selected</item>
@@ -721,8 +735,7 @@
         <item quantity="other">%1$d active members</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Add Account ID or ONS</string>
-    <string name="membersGroupPromotionAcceptInvite">Members can only be promoted once they\'ve&amp;#13;
-accepted an invite to join the group.</string>
+    <string name="membersGroupPromotionAcceptInvite">Members can only be promoted once they\'ve accepted an invite to join the group.</string>
     <string name="membersInvite">Invite Contacts</string>
     <string name="membersInviteNoContacts">You don’t have any contacts to invite to this group.\nGo back and invite members using their Account ID or ONS.</string>
     <plurals name="membersInviteSend">
@@ -733,8 +746,7 @@ accepted an invite to join the group.</string>
     <string name="membersInviteShareDescriptionMultiple">Would you like to share group message history with <b>{name}</b> and <b>{count} others</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Would you like to share group message history with <b>{name}</b> and <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Share message history</string>
-    <string name="membersInviteShareMessageHistoryDays">Share message history from last&amp;#13;
-14 days</string>
+    <string name="membersInviteShareMessageHistoryDays">Share message history from last 14 days</string>
     <string name="membersInviteShareNewMessagesOnly">Share new messages only</string>
     <string name="membersInviteTitle">Invite</string>
     <string name="membersNonAdmins">Members (Non-Admins)</string>
@@ -814,6 +826,7 @@ accepted an invite to join the group.</string>
     <string name="nicknameRemove">Remove Nickname</string>
     <string name="nicknameSet">Set Nickname</string>
     <string name="no">No</string>
+    <string name="noNonAdminsInGroup">There are no non-admin members in this group.</string>
     <string name="noSuggestions">No Suggestions</string>
     <string name="nonProLongerMessagesDescription">Send messages up to 10,000 characters in all conversations.</string>
     <string name="nonProUnlimitedPinnedDescription">Organize chats with unlimited pinned conversations.</string>
@@ -823,6 +836,7 @@ accepted an invite to join the group.</string>
     <string name="noteToSelfEmpty">You have no messages in Note to Self.</string>
     <string name="noteToSelfHide">Hide Note to Self</string>
     <string name="noteToSelfHideDescription">Are you sure you want to hide Note to Self?</string>
+    <string name="noteTosPrivacyPolicy"><b>PLEASE NOTE</b>: By {action_type}, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="notificationDisplay">Notification Display</string>
     <string name="notificationSenderNameAndPreview">Display the sender\'s name and a preview of the message content.</string>
     <string name="notificationSenderNameOnly">Display only the sender\'s name without any message content.</string>
@@ -932,6 +946,8 @@ accepted an invite to join the group.</string>
     <string name="passwordStrengthIndicatorDescription">Setting a strong password helps protect your messages and attachments if your device is ever lost or stolen.</string>
     <string name="passwords">Passwords</string>
     <string name="paste">Paste</string>
+    <string name="paymentError">Payment Error</string>
+    <string name="paymentProError">Your payment has been processed successfully, but there was an error {action_type} your {pro} status.\n\nPlease check your network connection and retry.</string>
     <string name="permissionChange">Permission Change</string>
     <string name="permissionMusicAudioDenied">{app_name} needs music and audio access in order to send files, music and audio, but it has been permanently denied. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
     <string name="permissionsAppleMusic">{app_name} needs to use Apple Music to play media attachments.</string>
@@ -997,11 +1013,12 @@ accepted an invite to join the group.</string>
     <string name="proAccessSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b>, you\'ll need to use your {platform_account} to update your {pro} access.</string>
     <string name="proAccessUpgradeDesktop">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proActivated">Activated</string>
+    <string name="proActivatingActivation">activating</string>
     <string name="proAllSet">You\'re all set!</string>
     <string name="proAllSetDescription">Your {app_pro} access was updated! You will be billed when {pro} is automatically renewed on <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">You’ve already got</string>
     <string name="proAnimatedDisplayPicture">Go ahead and upload GIFs and animated WebP images for your display picture!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Get animated display pictures and unlock premium features with {app_pro}</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Get animated display pictures and unlock premium features with {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Animated Display Picture</string>
     <string name="proAnimatedDisplayPictureModalDescription">users can upload GIFs</string>
     <string name="proAnimatedDisplayPictures">Animated Display Pictures</string>
@@ -1020,9 +1037,9 @@ accepted an invite to join the group.</string>
     <string name="proBilledAnnually">{price} Billed Annually</string>
     <string name="proBilledMonthly">{price} Billed Monthly</string>
     <string name="proBilledQuarterly">{price} Billed Quarterly</string>
-    <string name="proCallToActionLongerMessages">Want to send longer messages? Send more text and unlock premium features with {app_pro}</string>
-    <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Want more than 5 pins? Organize your chats and unlock premium features with {app_pro}</string>
+    <string name="proCallToActionLongerMessages">Want to send longer messages?\nSend more text and unlock premium features with {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Want more pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Want more than {limit} pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
     <string name="proCancelSorry">Sorry to see you cancel {pro}. Here\'s what you need to know before canceling your {pro} access.</string>
     <string name="proCancellation">Cancellation</string>
     <string name="proCancellationDescription">Canceling {pro} access will prevent automatic renewal from occurring before {pro} access expires. Canceling {pro} does <b>not</b> result in a refund. You will continue to be able to use {app_pro} features until your {pro} access expires.\n\nBecause you originally signed up for {app_pro} using your <b>{platform_account}</b>, you\'ll need to use the same {platform_account} to cancel {pro}.</string>
@@ -1034,9 +1051,9 @@ accepted an invite to join the group.</string>
     <string name="proDiscountTooltip">Your {pro} access is already discounted by {percent}% of the full {app_pro} price.</string>
     <string name="proErrorRefreshingStatus">Error refreshing {pro} status</string>
     <string name="proExpired">Expired</string>
-    <string name="proExpiredDescription">Unfortunately, your {pro} access has expired. Renew to reactivate the exclusive perks and features of {app_pro}.</string>
+    <string name="proExpiredDescription">Unfortunately, your {pro} access has expired.\nRenew to reactivate the exclusive perks and features of {app_pro} Beta.</string>
     <string name="proExpiringSoon">Expiring Soon</string>
-    <string name="proExpiringSoonDescription">Your {pro} access is expiring in <b>{time}</b>. Update now to keep accessing the exclusive perks and features of {app_pro}.</string>
+    <string name="proExpiringSoonDescription">Your {pro} access is expiring in <b>{time}</b>.\nUpdate now to keep accessing the exclusive perks and features of {app_pro} Beta</string>
     <string name="proExpiringTime">{pro} expiring in <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFaqDescription">Find answers to common questions in the {app_pro} FAQ.</string>
@@ -1081,6 +1098,7 @@ accepted an invite to join the group.</string>
     <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
     <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
+    <string name="proReactivatingActivation">re-activating</string>
     <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">We’re sorry to see you go. Here\'s what you need to know before requesting a refund.</string>
     <string name="proRefundNextSteps">{platform} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
@@ -1094,10 +1112,12 @@ accepted an invite to join the group.</string>
     <string name="proRenewDesktopLinked">Renew your {pro} access from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Want to send longer messages again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewMaxPotential">Want to use {app_name} to its max potential again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
-    <string name="proRenewPinFiveConversations">Want to pin more than 5 conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
+    <string name="proRenewPinFiveConversations">Want to pin more than {limit} conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewPinMoreConversations">Want to pin more conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewTosPrivacy">By renewing, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
-    <string name="proRenewalUnsuccessful">Pro renewal unsuccessful, retrying soon</string>
+    <string name="proRenewalUnsuccessful">{pro} renewal unsuccessful, retrying soon</string>
+    <string name="proRenewalUnsuccessfulTitle">{pro} Renewal Unsuccessful</string>
+    <string name="proRenewingAction">renewing</string>
     <string name="proRenewingNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
@@ -1117,20 +1137,24 @@ accepted an invite to join the group.</string>
     <string name="proStatusRefreshNetworkError">Unable to connect to the network to refresh your {pro} status. Some actions on this page will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusRenewError">Unable to connect to the network to load your current {pro} access. Renewing {pro} via {app_name} will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proSupportDescription">Need help with {pro}? Submit a request to the support team.</string>
+    <string name="proTosDescription">By {action_type}, you are {activation_type} {app_pro} via the {app_name} Protocol. {entity} will facilitate that activation but is not the provider of {app_pro}. {entity} is not responsible for the performance, availability, or functionality of {app_pro}.</string>
     <string name="proTosPrivacy">By updating, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
     <string name="proUnlimitedPinsDescription">Organize all your chats with unlimited pinned conversations.</string>
-    <string name="proUpdateAccessDescription">Your current billing option grants <b>{current_plan_length}</b> of {pro} access. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
+    <string name="proUnsuccessfulRenewalDescription">Your {pro} access couldn’t be renewed due to a payment issue with your {platform_account}. Please check the status of your payment on the {platform_store}.\n\nYour {pro} access will remain active and you may continue to make billing changes while the {platform_store} retries your payment.</string>
+    <string name="proUpdateAccessDescription">Your current billing option will grant an additional <b>{current_plan_length}</b> of {pro} access when your next renewal occurs. Are you sure you want to switch to the <b>{selected_plan_length_singular}</b> billing option?\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUpdateAccessExpireDescription">Your {pro} access will expire on <b>{date}</b>.\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
+    <string name="proUpdatingAction">updating</string>
     <string name="proUpgradeAccess">Upgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
     <string name="proUpgradeDesktopLinked">Upgrade to {pro} from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
     <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proUpgradeOption">For now, there is only one way to upgrade:</string>
     <string name="proUpgradeOptionsTwo">For now, there are two ways to upgrade:</string>
     <string name="proUpgraded">You have upgraded to {app_pro}!\nThank you for supporting the {network_name}.</string>
+    <string name="proUpgradingAction">upgrading</string>
     <string name="proUpgradingTo">Upgrading to {pro}</string>
     <string name="proUpgradingTosPrivacy">By upgrading, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
-    <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
+    <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}?\nUpgrade to {app_pro} Beta for a more powerful messaging experience.</string>
     <string name="processingRefundRequest">{platform} is processing your refund request</string>
     <string name="profile">Profile</string>
     <string name="profileDisplayPicture">Display Picture</string>
@@ -1163,6 +1187,8 @@ accepted an invite to join the group.</string>
     <string name="rateSession">Rate {app_name}?</string>
     <string name="rateSessionApp">Rate App</string>
     <string name="rateSessionModalDescription">We\'re glad you\'re enjoying {app_name}, if you have a moment, rating us in the {storevariant} helps others discover private, secure messaging!</string>
+    <string name="rateSessionModalDescriptionUpdated">{app_name} runs no ads, sells no data, and answers only to its users. Your {storevariant} rating helps more people find messaging that actually respects their privacy.</string>
+    <string name="rateUs">Rate Us</string>
     <string name="read">Read</string>
     <string name="readReceipts">Read Receipts</string>
     <string name="readReceiptsDescription">Show read receipts for all messages you send and receive.</string>
@@ -1205,9 +1231,13 @@ accepted an invite to join the group.</string>
         <item quantity="one">Remove Member</item>
         <item quantity="other">Remove Members</item>
     </plurals>
+    <plurals name="removeMemberLowercase">
+        <item quantity="one">Remove member</item>
+        <item quantity="other">Remove members</item>
+    </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="one">Remove member and their messages</item>
-        <item quantity="other">Remove member and their messages</item>
+        <item quantity="other">Remove members and their messages</item>
     </plurals>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="removePasswordModalDescription">Remove your current password for {app_name}. Locally stored data will be re-encrypted with a randomly generated key, stored on your device.</string>
@@ -1243,6 +1273,9 @@ accepted an invite to join the group.</string>
     <string name="retry">Retry</string>
     <string name="reviewLimit">Review Limit</string>
     <string name="reviewLimitDescription">It looks like you\'ve already reviewed {app_name} recently, thanks for your feedback!</string>
+    <string name="runAppBackground">Run App in the Background</string>
+    <string name="runSessionBackground">Run {app_name} in the Background?</string>
+    <string name="runSessionBackgroundDescription">Since you’re using slow mode, we recommend allowing {app_name} to run in the background to improve notifications. This can improve notification consistency, although your system may still automatically limit background activity.\n\nYou can change this later in Settings.</string>
     <string name="save">Save</string>
     <string name="saved">Saved</string>
     <string name="savedMessages">Saved messages</string>
@@ -1273,6 +1306,10 @@ accepted an invite to join the group.</string>
     <string name="sending">Sending</string>
     <string name="sendingCallOffer">Sending Call Offer</string>
     <string name="sendingConnectionCandidates">Sending Connection Candidates</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Sending Promotion</item>
+        <item quantity="other">Sending Promotions</item>
+    </plurals>
     <string name="sent">Sent:</string>
     <string name="sessionAppearance">Appearance</string>
     <string name="sessionClearData">Clear Data</string>
@@ -1308,7 +1345,10 @@ accepted an invite to join the group.</string>
     <string name="shareAccountIdDescriptionCopied">Share with your friends wherever you usually speak with them — then move the conversation here.</string>
     <string name="shareExtensionDatabaseError">There is an issue opening the database. Please restart the app and try again.</string>
     <string name="shareExtensionNoAccountError">Oops! Looks like you don\'t have a {app_name} account yet.\n\nYou\'ll need to create one in the {app_name} app before you can share.</string>
+    <string name="shareGroupMessageHistory">Would you like to share group message history with this user?</string>
     <string name="shareToSession">Share to {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Sorry, {app_name} only supports sharing multiple images and videos at once</string>
+    <string name="sharingSupportMultipleMediaExcluded">Sharing only supports media. Non-media files have been excluded</string>
     <string name="show">Show</string>
     <string name="showAll">Show All</string>
     <string name="showLess">Show Less</string>
@@ -1374,7 +1414,7 @@ accepted an invite to join the group.</string>
     <string name="useFastMode">Use Fast Mode</string>
     <string name="viaPlatformWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform} website</font></b> .</string>
     <string name="viaStoreWebsite">Via the {platform} website</string>
-    <string name="viaStoreWebsiteDescription">Update your {pro} access using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store}</font></b> website.</string>
+    <string name="viaStoreWebsiteDescription">Update your {pro} access using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store} website</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Unable to play video.</string>
     <string name="view">View</string>

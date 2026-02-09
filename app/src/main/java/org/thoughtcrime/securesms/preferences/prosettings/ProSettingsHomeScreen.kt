@@ -19,12 +19,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -53,21 +56,14 @@ import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
-import org.session.libsession.utilities.recipients.shouldShowProBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToCancel
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToChoosePlan
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToRefund
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnHeaderClicked
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OnProStatsClicked
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.SetShowProBadge
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionState
-import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
+import org.thoughtcrime.securesms.pro.previewExpiredApple
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
@@ -98,8 +94,6 @@ import org.thoughtcrime.securesms.ui.theme.primaryRed
 import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.util.NumberUtil
 import org.thoughtcrime.securesms.util.State
-import java.time.Duration
-import java.time.Instant
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -107,13 +101,26 @@ import java.time.Instant
 fun ProSettingsHomeScreen(
     viewModel: ProSettingsViewModel,
     inSheet: Boolean,
+    shouldScrollToTop: Boolean = false,
+    onScrollToTopConsumed: () -> Unit = {},
     onBack: () -> Unit,
 ) {
     val data by viewModel.proSettingsUIState.collectAsState()
 
+    val listState = rememberLazyListState()
+
+    // check if we requested to scroll to the top
+    LaunchedEffect(shouldScrollToTop) {
+        if (shouldScrollToTop) {
+            listState.scrollToItem(0)
+            onScrollToTopConsumed()
+        }
+    }
+
     ProSettingsHome(
         data = data,
         inSheet = inSheet,
+        listState = listState,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
@@ -124,28 +131,30 @@ fun ProSettingsHomeScreen(
 fun ProSettingsHome(
     data: ProSettingsViewModel.ProSettingsState,
     inSheet: Boolean,
+    listState: LazyListState,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
-    val subscriptionType = data.subscriptionState.type
+    val subscriptionType = data.proDataState.type
     val context = LocalContext.current
 
-    val expiredInMainScreen = subscriptionType is SubscriptionType.Expired && !inSheet
-    val expiredInSheet = subscriptionType is SubscriptionType.Expired && inSheet
+    val expiredInMainScreen = subscriptionType is ProStatus.Expired && !inSheet
+    val expiredInSheet = subscriptionType is ProStatus.Expired && inSheet
 
     BaseProSettingsScreen(
         disabled = expiredInMainScreen,
         hideHomeAppBar = inSheet,
+        listState = listState,
         onBack = onBack,
         onHeaderClick = {
             // add a click handling if the subscription state is loading or errored
-            if(data.subscriptionState.refreshState !is State.Success<*>){
+            if(data.proDataState.refreshState !is State.Success<*>){
                 sendCommand(OnHeaderClicked(inSheet))
             } else null
         },
         extraHeaderContent = {
             // display extra content if the subscription state is loading or errored
-            when(data.subscriptionState.refreshState){
+            when(data.proDataState.refreshState){
                 is State.Loading -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -154,7 +163,7 @@ fun ProSettingsHome(
                         Text(
                             text = Phrase.from(context.getText(
                                 when(subscriptionType){
-                                    is SubscriptionType.Active -> R.string.proStatusLoadingSubtitle
+                                    is ProStatus.Active -> R.string.proStatusLoadingSubtitle
                                     else -> R.string.checkingProStatus
                                 }))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
@@ -176,7 +185,7 @@ fun ProSettingsHome(
                         Text(
                             text = Phrase.from(context.getText(
                                 when(subscriptionType){
-                                    is SubscriptionType.Active -> R.string.proErrorRefreshingStatus
+                                    is ProStatus.Active -> R.string.proErrorRefreshingStatus
                                     else -> R.string.errorCheckingProStatus
                                 }))
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
@@ -200,8 +209,8 @@ fun ProSettingsHome(
         }
     ) {
         // Header for non-pro users or expired users in sheet mode
-        if(subscriptionType is SubscriptionType.NeverSubscribed || expiredInSheet) {
-            if(data.subscriptionState.refreshState !is State.Success){
+        if(subscriptionType is ProStatus.NeverSubscribed || expiredInSheet) {
+            if(data.proDataState.refreshState !is State.Success){
                 Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
             }
 
@@ -221,7 +230,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
             Box {
-                val enableButon = data.subscriptionState.refreshState is State.Success
+                val enableButon = data.proDataState.refreshState is State.Success
                 AccentFillButtonRect(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.theContinue),
@@ -251,7 +260,7 @@ fun ProSettingsHome(
         }
 
         // Pro Stats
-        if(subscriptionType is SubscriptionType.Active){
+        if(subscriptionType is ProStatus.Active){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProStats(
                 data = data.proStats,
@@ -260,12 +269,14 @@ fun ProSettingsHome(
         }
 
         // Pro account settings
-        if(subscriptionType is SubscriptionType.Active){
+        if(subscriptionType is ProStatus.Active){
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
-                data = subscriptionType,
-                subscriptionRefreshState = data.subscriptionState.refreshState,
+                showProBadge = data.proDataState.showProBadge,
+                proStatus = data.proDataState.type,
+                subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
+                inGracePeriod = data.inGracePeriod,
                 expiry = data.subscriptionExpiryLabel,
                 sendCommand = sendCommand,
             )
@@ -276,7 +287,7 @@ fun ProSettingsHome(
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProManage(
                 data = subscriptionType,
-                subscriptionRefreshState = data.subscriptionState.refreshState,
+                subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
                 sendCommand = sendCommand,
             )
@@ -293,8 +304,8 @@ fun ProSettingsHome(
         // do not display the footer in sheet mode
         if(!inSheet){
            ProSettingsFooter(
-               subscriptionType = subscriptionType,
-               subscriptionRefreshState = data.subscriptionState.refreshState,
+               proStatus = subscriptionType,
+               subscriptionRefreshState = data.proDataState.refreshState,
                inSheet = inSheet,
                sendCommand = sendCommand
            )
@@ -509,10 +520,12 @@ fun ProStatItem(
 @Composable
 fun ProSettings(
     modifier: Modifier = Modifier,
-    data: SubscriptionType.Active,
+    showProBadge: Boolean,
+    proStatus: ProStatus.Active,
     subscriptionRefreshState: State<Unit>,
     inSheet: Boolean,
     expiry: CharSequence,
+    inGracePeriod: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ){
     CategoryCell(
@@ -521,6 +534,8 @@ fun ProSettings(
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
     ) {
+        val refunding = proStatus.refundInProgress
+
         // Cell content
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -535,6 +550,7 @@ fun ProSettings(
                     tint = LocalColors.current.text
                 )
             }
+
 
             val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                 is State.Loading -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
@@ -552,20 +568,38 @@ fun ProSettings(
                             LocalColors.current.warning, chevronIcon
                     )
 
-                is State.Success<*> -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
-                        expiry,
-                            LocalColors.current.text, chevronIcon
-                )
+                is State.Success<*> -> {
+                    Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
+                        if(refunding) Phrase.from(LocalContext.current, R.string.processingRefundRequest)
+                            .put(PLATFORM_KEY, proStatus.providerData.platform)
+                            .format().toString()
+                        else expiry,
+                        if(inGracePeriod) LocalColors.current.warning
+                                else LocalColors.current.text,
+                        if(refunding){{
+                            Icon(
+                                modifier = Modifier.align(Alignment.Center)
+                                    .size(LocalDimensions.current.iconMedium)
+                                    .qaTag(R.string.qa_action_item_icon),
+                                painter = painterResource(id = R.drawable.ic_circle_warning_custom),
+                                contentDescription = null,
+                                tint = LocalColors.current.text
+                            )
+                        }} else chevronIcon
+                    )
+                }
             }
 
             ActionRowItem(
-                title = annotatedStringResource(
+                title = if(refunding) annotatedStringResource(R.string.proRequestedRefund)
+                else annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.updateAccess)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(subtitle),
                 subtitleColor = subColor,
+                enabled = !refunding,
                 endContent = {
                     Box(
                         modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
@@ -589,7 +623,7 @@ fun ProSettings(
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format().toString()
                 ),
-                checked = data.proStatus.shouldShowProBadge(),
+                checked = showProBadge,
                 qaTag = R.string.qa_pro_settings_action_show_badge,
                 onCheckedChange = { sendCommand(SetShowProBadge(it)) }
             )
@@ -600,7 +634,7 @@ fun ProSettings(
 @Composable
 fun ProFeatures(
     modifier: Modifier = Modifier,
-    data: SubscriptionType,
+    data: ProStatus,
     disabled: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
@@ -629,7 +663,7 @@ fun ProFeatures(
             // Longer messages
             ProFeatureItem(
                 title = stringResource(R.string.proLongerMessages),
-                subtitle = if(data is SubscriptionType.Active) annotatedStringResource(R.string.proLongerMessagesDescription)
+                subtitle = if(data is ProStatus.Active) annotatedStringResource(R.string.proLongerMessagesDescription)
                 else annotatedStringResource(R.string.nonProLongerMessagesDescription),
                 icon = R.drawable.ic_message_square,
                 iconGradientStart = primaryBlue,
@@ -763,7 +797,7 @@ private fun ProFeatureItem(
 @Composable
 fun ProManage(
     modifier: Modifier = Modifier,
-    data: SubscriptionType,
+    data: ProStatus,
     inSheet: Boolean,
     subscriptionRefreshState: State<Unit>,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
@@ -773,6 +807,7 @@ fun ProManage(
         title = Phrase.from(LocalContext.current, R.string.managePro)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
+        dropShadow = LocalColors.current.isLight && data is ProStatus.Expired
     ) {
         // Cell content
         Column(
@@ -790,8 +825,24 @@ fun ProManage(
                     }
                 )
             }
+
+            val recoverButton: @Composable ()->Unit = {
+                IconActionRowItem(
+                    title = annotatedStringResource(
+                        Phrase.from(LocalContext.current, R.string.proAccessRecover)
+                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                            .format().toString()
+                    ),
+                    icon = R.drawable.ic_refresh_cw,
+                    qaTag = R.string.qa_pro_settings_action_recover_plan,
+                    onClick = {
+                        sendCommand(RecoverAccount)
+                    }
+                )
+            }
+
             when(data){
-                is SubscriptionType.Active.AutoRenewing -> {
+                is ProStatus.Active.AutoRenewing -> {
                     IconActionRowItem(
                         title = annotatedStringResource(
                             Phrase.from(LocalContext.current, R.string.cancelAccess)
@@ -810,11 +861,15 @@ fun ProManage(
                     refundButton()
                 }
 
-                is SubscriptionType.Active.Expiring -> {
+                is ProStatus.Active.Expiring -> {
                     refundButton()
                 }
 
-                is SubscriptionType.Expired -> {
+                is ProStatus.NeverSubscribed -> {
+                    recoverButton()
+                }
+
+                is ProStatus.Expired -> {
                     // the details depend on the loading/error state
                     fun renewIcon(color: Color): @Composable BoxScope.() -> Unit = {
                         Icon(
@@ -845,7 +900,7 @@ fun ProManage(
 
                         is State.Success<*> -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             null,
-                            LocalColors.current.text, renewIcon(LocalColors.current.accent)
+                            LocalColors.current.text, renewIcon(LocalColors.current.accentText)
                         )
                     }
 
@@ -855,7 +910,7 @@ fun ProManage(
                                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
-                        titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accent
+                        titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accentText
                         else LocalColors.current.text,
                         subtitle = if(subtitle == null) null else annotatedStringResource(subtitle),
                         subtitleColor = subColor,
@@ -871,21 +926,8 @@ fun ProManage(
                     )
 
                     Divider()
-                    IconActionRowItem(
-                        title = annotatedStringResource(
-                            Phrase.from(LocalContext.current, R.string.proAccessRecover)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                .format().toString()
-                        ),
-                        icon = R.drawable.ic_refresh_cw,
-                        qaTag = R.string.qa_pro_settings_action_request_refund,
-                        onClick = {
-                            //todo PRO implement
-                        }
-                    )
+                    recoverButton()
                 }
-
-                is SubscriptionType.NeverSubscribed -> {}
             }
         }
     }
@@ -893,16 +935,16 @@ fun ProManage(
 
 @Composable
 fun ProSettingsFooter(
-    subscriptionType: SubscriptionType,
+    proStatus: ProStatus,
     subscriptionRefreshState: State<Unit>,
     inSheet: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
-    // Manage Pro - Pro
-    if(subscriptionType is SubscriptionType.Active){
+    // Manage Pro - Expired has this in the header so exclude it here
+    if(proStatus !is ProStatus.Expired) {
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
         ProManage(
-            data = subscriptionType,
+            data = proStatus,
             inSheet = inSheet,
             subscriptionRefreshState = subscriptionRefreshState,
             sendCommand = sendCommand,
@@ -914,7 +956,7 @@ fun ProSettingsFooter(
     CategoryCell(
         title = stringResource(R.string.sessionHelp),
     ) {
-        val iconColor = if(subscriptionType is SubscriptionType.Expired) LocalColors.current.text
+        val iconColor = if(proStatus is ProStatus.Expired) LocalColors.current.text
         else LocalColors.current.accentText
 
         // Cell content
@@ -968,27 +1010,15 @@ fun PreviewProSettingsPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
-                            visible = true,
-                            validUntil = Instant.now() + Duration.ofDays(14),
-                        ),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
+                proDataState = ProDataState(
+                    type = previewAutoRenewingApple,
                     refreshState = State.Success(Unit),
+                    showProBadge = true,
                 ),
             ),
             inSheet = false,
             sendCommand = {},
+            listState = rememberLazyListState(),
             onBack = {},
         )
     }
@@ -1002,26 +1032,14 @@ fun PreviewProSettingsProLoading(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
-                            visible = true,
-                            validUntil = Instant.now() + Duration.ofDays(14),
-                        ),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
+                proDataState = ProDataState(
+                    type = previewAutoRenewingApple,
                     refreshState = State.Loading,
+                    showProBadge = true,
                 ),
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1036,26 +1054,14 @@ fun PreviewProSettingsProError(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
-                            visible = true,
-                            validUntil = Instant.now() + Duration.ofDays(14),
-                        ),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
+                proDataState = ProDataState(
+                    type = previewAutoRenewingApple,
                     refreshState = State.Error(Exception()),
+                    showProBadge = true,
                 ),
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1070,21 +1076,14 @@ fun PreviewProSettingsExpired(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                        device = "iOS",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://www.apple.com/account/subscriptions",
-                    )),
+                proDataState = ProDataState(
+                    type = previewExpiredApple,
                     refreshState = State.Success(Unit),
+                    showProBadge = true,
                 )
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1099,21 +1098,14 @@ fun PreviewProSettingsExpiredInSheet(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )),
+                proDataState = ProDataState(
+                    type = previewExpiredApple,
                     refreshState = State.Success(Unit),
+                    showProBadge = true,
                 )
             ),
             inSheet = true,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1128,21 +1120,14 @@ fun PreviewProSettingsExpiredLoading(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                        device = "iOS",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://www.apple.com/account/subscriptions",
-                    )),
+                proDataState = ProDataState(
+                    type = previewExpiredApple,
                     refreshState = State.Loading,
+                    showProBadge = true,
                 )
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1157,21 +1142,14 @@ fun PreviewProSettingsExpiredError(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                        device = "iOS",
-                        store = "Apple App Store",
-                        platform = "Apple",
-                        platformAccount = "Apple Account",
-                        subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                        refundUrl = "https://www.apple.com/account/subscriptions",
-                    )),
+                proDataState = ProDataState(
+                    type = previewExpiredApple,
                     refreshState = State.Error(Exception()),
+                    showProBadge = true,
                 )
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1186,12 +1164,14 @@ fun PreviewProSettingsNonPro(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.NeverSubscribed,
+                proDataState = ProDataState(
+                    type = ProStatus.NeverSubscribed,
                     refreshState = State.Success(Unit),
+                    showProBadge = true,
                 )
             ),
             inSheet = false,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )
@@ -1206,12 +1186,14 @@ fun PreviewProSettingsNonProInSheet(
     PreviewTheme(colors) {
         ProSettingsHome(
             data = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.NeverSubscribed,
+                proDataState = ProDataState(
+                    type = ProStatus.NeverSubscribed,
                     refreshState = State.Success(Unit),
+                    showProBadge = true,
                 )
             ),
             inSheet = true,
+            listState = rememberLazyListState(),
             sendCommand = {},
             onBack = {},
         )

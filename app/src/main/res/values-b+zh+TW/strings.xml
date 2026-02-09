@@ -15,7 +15,6 @@
     <string name="accountIdYoursDescription">這是您的帳號 ID。其他使用者可以掃描來與你對話。</string>
     <string name="actualSize">實際大小</string>
     <string name="add">新增</string>
-    <string name="addAdmins">新增管理員</string>
     <string name="addAdminsDescription">請輸入您要晉升為管理員的使用者的 Account ID。\n\n若要新增多位使用者，請輸入以逗號分隔的每個 Account ID。一次最多可指定 20 個 Account ID。</string>
     <string name="adminCannotBeRemoved">無法移除管理員。</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> 和 <b>{count} 位其他成員</b> 被設置為管理員。</string>
@@ -800,13 +799,9 @@
     <string name="proActivated">已啟用</string>
     <string name="proAlreadyPurchased">您已擁有</string>
     <string name="proAnimatedDisplayPicture">您可以為您的顯示圖片上傳 GIF 或動畫 WebP 圖片了！</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">取得動畫顯示圖片並透過 {app_pro} 解鎖進階功能</string>
     <string name="proAnimatedDisplayPictureFeature">動畫顯示圖片</string>
     <string name="proAnimatedDisplayPictureModalDescription">用戶可以上傳 GIF</string>
-    <string name="proAnimatedDisplayPicturesNonProModalDescription">使用 {app_pro} 上傳 GIF 圖片</string>
-    <string name="proCallToActionLongerMessages">想傳送更長的訊息嗎？與 {app_pro} 一起傳送更多文字並解鎖進階功能</string>
-    <string name="proCallToActionPinnedConversations">想要釘選更多對話嗎？使用 {app_pro} 整理您的聊天並解鎖進階功能</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">想要釘選超過 5 則對話嗎？使用 {app_pro} 整理您的聊天並解鎖進階功能</string>
+    <string name="proAnimatedDisplayPicturesNonProModalDescription">上傳 GIF</string>
     <string name="proFeatureListAnimatedDisplayPicture">上傳 GIF 和 WebP 顯示圖片</string>
     <string name="proFeatureListLargerGroups">最大支援 300 位成員的大型群組聊天室</string>
     <string name="proFeatureListLoadsMore">以及更多獨家功能</string>
@@ -818,7 +813,6 @@
     <string name="proIncreasedMessageLengthFeature">訊息長度提升</string>
     <string name="proMessageInfoFeatures">本訊息使用了以下 {app_pro} 功能：</string>
     <string name="proSendMore">升級後可傳送更多內容</string>
-    <string name="proUserProfileModalCallToAction">想要充分利用 {app_name}？升級為 {app_pro}，享受更強大的訊息體驗。</string>
     <string name="profile">個人檔案</string>
     <string name="profileDisplayPicture">顯示圖片</string>
     <string name="profileDisplayPictureRemoveError">無法刪除顯示圖片。</string>

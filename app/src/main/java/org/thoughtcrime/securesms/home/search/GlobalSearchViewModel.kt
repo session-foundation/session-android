@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -21,10 +22,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.search.SearchRepository
-import org.thoughtcrime.securesms.search.model.SearchResult
 import javax.inject.Inject
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -45,9 +43,9 @@ class GlobalSearchViewModel @Inject constructor(
         configFactory.configUpdateNotifications
     )
 
-    val noteToSelfString by lazy { application.getString(R.string.noteToSelf).lowercase() }
+    val noteToSelfString: String by lazy { application.getString(R.string.noteToSelf).lowercase() }
 
-    val result = combine(
+    val result: SharedFlow<GlobalSearchResult> = combine(
         _queryText,
         observeChangesAffectingSearch().onStart { emit(Unit) }
     ) { query, _ -> query }
@@ -64,7 +62,7 @@ class GlobalSearchViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    val results = searchRepository.suspendQuery(query).toGlobalSearchResult()
+                    val results = searchRepository.query(query).toGlobalSearchResult()
 
                     // show "Note to Self" is the user searches for parts of"Note to Self"
                     if(noteToSelfString.contains(query.lowercase())){
@@ -85,8 +83,3 @@ class GlobalSearchViewModel @Inject constructor(
     }
 }
 
-private suspend fun SearchRepository.suspendQuery(query: String): SearchResult {
-    return suspendCoroutine { cont ->
-        query(query, cont::resume)
-    }
-}

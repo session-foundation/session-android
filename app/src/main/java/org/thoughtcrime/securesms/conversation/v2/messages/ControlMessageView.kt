@@ -29,9 +29,12 @@ import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isGroup
 import org.session.libsession.utilities.isGroupOrCommunity
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -72,6 +75,9 @@ class ControlMessageView : LinearLayout {
     @Inject lateinit var disappearingMessages: DisappearingMessages
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var recipientRepository: RecipientRepository
+    @Inject lateinit var loginStateRepository: LoginStateRepository
+    @Inject lateinit var threadDatabase: ThreadDatabase
+    @Inject lateinit var messageFormatter: MessageFormatter
 
     val controlContentView: View get() = binding.controlContentView
 
@@ -79,13 +85,20 @@ class ControlMessageView : LinearLayout {
         layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
     }
 
-    fun bind(message: MessageRecord, previous: MessageRecord?, longPress: (() -> Unit)? = null) {
+    fun bind(message: MessageRecord,
+             threadRecipient: Recipient,
+             previous: MessageRecord?,
+             longPress: (() -> Unit)? = null) {
         binding.dateBreakTextView.showDateBreak(message, previous, dateUtils)
         binding.iconImageView.isGone = true
         binding.expirationTimerView.isGone = true
         binding.followSetting.isGone = true
 
-        var messageBody: CharSequence = message.getDisplayBody(context)
+        val messageBody = messageFormatter.formatMessageBody(
+            context = context,
+            message = message,
+            threadRecipient = threadRecipient,
+        )
 
         binding.root.contentDescription = null
         binding.textView.text = messageBody
@@ -95,9 +108,7 @@ class ControlMessageView : LinearLayout {
                 binding.apply {
                     expirationTimerView.isVisible = true
 
-                    val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
-
-                    if (threadRecipient?.isGroup == true) {
+                    if (threadRecipient.isGroupRecipient) {
                         expirationTimerView.setTimerIcon()
                     } else {
                         expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
@@ -106,7 +117,7 @@ class ControlMessageView : LinearLayout {
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
                             && !message.isOutgoing
                             && messageContent.expiryMode != (message.individualRecipient?.expiryMode ?: ExpiryMode.NONE)
-                            && threadRecipient?.isGroupOrCommunity != true
+                            && !threadRecipient.isGroupOrCommunityRecipient
 
                     if (followSetting.isVisible) {
                         binding.controlContentView.setOnClickListener {
@@ -134,20 +145,6 @@ class ControlMessageView : LinearLayout {
                 }
             }
             message.isMessageRequestResponse -> {
-                val msgRecipient = message.recipient.address.toString()
-                val me = TextSecurePreferences.getLocalNumber(context)
-                binding.textView.text =  if (me == msgRecipient) { // you accepted the user's request
-                    DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
-                        ?.let { recipientRepository.getRecipientSync(it) }
-                        ?.let { recipient ->  context.getSubbedCharSequence(
-                            R.string.messageRequestYouHaveAccepted,
-                            NAME_KEY to recipient.displayName()
-                            )
-                        }
-                } else { // they accepted your request
-                    context.getString(R.string.messageRequestsAccepted)
-                }
-
                 binding.root.contentDescription = context.getString(R.string.AccessibilityId_message_request_config_message)
             }
             message.isCallLog -> {

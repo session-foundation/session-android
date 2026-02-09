@@ -10,13 +10,19 @@
     <string name="accountIdErrorInvalid">Toto ID účtu je neplatné. Zkontrolujte to prosím a zkuste to znovu.</string>
     <string name="accountIdOrOnsEnter">Zadejte ID účtu nebo ONS</string>
     <string name="accountIdOrOnsInvite">Pozvat ID účtu nebo ONS</string>
-    <string name="accountIdShare">Ahoj, používám {app_name} k rychlou komunikaci s úplným soukromím a bezpečností. Připoj se ke mě! Moje ID účtu je\n\n{account_id}\n\nAdresa pro stažení je {session_download_url}</string>
     <string name="accountIdYours">ID vašeho účtu</string>
     <string name="accountIdYoursDescription">Toto je vaše ID účtu. Ostatní uživatelé jej mohou naskenovat, aby s vámi mohli zahájit konverzaci.</string>
     <string name="actualSize">Skutečná velikost</string>
     <string name="add">Přidat</string>
-    <string name="addAdmins">Přidat správce</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Přidat správce</item>
+        <item quantity="few">Přidat správce</item>
+        <item quantity="many">Přidat správce</item>
+        <item quantity="other">Přidat správce</item>
+    </plurals>
+    <string name="addAdminSingular">Přidat správce</string>
     <string name="addAdminsDescription">Zadejte ID účtu uživatele, kterého povyšujete na správce.\n\nChcete-li přidat více uživatelů, zadejte každé ID účtu oddělené čárkou. Najednou lze zadat až 20 ID účtů.</string>
+    <string name="adminCannotBeDemoted">Správci nemohou být poníženi ani odebráni ze skupiny.</string>
     <string name="adminCannotBeRemoved">Správce nelze odebrat.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> a <b>{count} dalších</b> byli povýšeni na správce.</string>
     <string name="adminPromote">Povýšit na správce</string>
@@ -41,6 +47,12 @@
     <string name="adminRemovedUser"><b>{name}</b> byl/a odebrán/a jako správce.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> a <b>{count} dalším</b> bylo odebráno správcovství.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> a <b>{other_name}</b> bylo odebráno správcovství.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d správce vybrán</item>
+        <item quantity="few">%1$d správcové vybráni</item>
+        <item quantity="many">%1$d správců vybráno</item>
+        <item quantity="other">%1$d správců vybráno</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Odesílání povýšení na správce</item>
         <item quantity="few">Odesílání povýšení na správce</item>
@@ -48,7 +60,10 @@
         <item quantity="other">Odesílání povýšení na správce</item>
     </plurals>
     <string name="adminSettings">Nastavení správce</string>
+    <string name="adminStatusYou">Nemůžete změnit svůj stav správce. Chcete-li skupinu opustit, otevřete nastavení konverzace a vyberte možnost Opustit skupinu.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> a <b>{other_name}</b> byli povýšeni na správce.</string>
+    <string name="admins">Správci</string>
+    <string name="allow">Povolit</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymní</string>
     <string name="appIcon">Ikona aplikace</string>
@@ -165,6 +180,7 @@
     <string name="blockUnblockNameTwo">Opravdu chcete odblokovat <b>{name}</b> a 1 další?</string>
     <string name="blockUnblockedUser">{name} odblokován(a)</string>
     <string name="blockedContactsManageDescription">Zobrazit a spravovat blokované kontakty.</string>
+    <string name="browserNotFound">Nenalezen žádný prohlížeč pro otevření této URL, zkuste místo toho zkopírovat URL</string>
     <string name="call">Volat</string>
     <string name="callsCalledYou">{name} vám volal(a)</string>
     <string name="callsCannotStart">Nemůžete zahájit nový hovor. Dokončete nejprve svůj aktuální hovor.</string>
@@ -193,6 +209,10 @@
     <string name="callsVoiceAndVideoToggleDescription">Povolí hlasové a video hovory k ostatním uživatelům i od nich.</string>
     <string name="callsYouCalled">Volali jste {name}</string>
     <string name="callsYouMissedCallPermissions">Zmeškali jste hovor od <b>{name}</b>, protože jste neměli povoleny <b>Hlasové a video hovory</b> v nastavení ochrany soukromí.</string>
+    <string name="cameraAccessDeniedMessage">Aplikace {app_name} vyžaduje přístup k vašemu fotoaparátu, aby mohla provádět videohovory, ale toto oprávnění bylo zamítnuto. Během hovoru nelze aktualizovat oprávnění k fotoaparátu.\n\nChcete nyní ukončit hovor a povolit přístup k fotoaparátu, nebo chcete, aby vám to bylo připomenuto po skončení hovoru?</string>
+    <string name="cameraAccessInstructions">Chcete-li povolit přístup k fotoaparátu, otevřete nastavení a povolte oprávnění k fotoaparátu.</string>
+    <string name="cameraAccessReminderMessage">Během posledního hovoru jste se pokusili použít video, ale nebylo to možné, protože přístup k fotoaparátu byl dříve zamítnut. Chcete-li povolit přístup k fotoaparátu, otevřete nastavení a povolte oprávnění k fotoaparátu.</string>
+    <string name="cameraAccessRequired">Je vyžadován přístup k fotoaparátu</string>
     <string name="cameraErrorNotFound">Nebyla nalezena žádná kamera</string>
     <string name="cameraErrorUnavailable">Kamera není dostupná.</string>
     <string name="cameraGrantAccess">Povolit přístup k fotoaparátu</string>
@@ -200,10 +220,18 @@
     <string name="cameraGrantAccessDescription">{app_name} potřebuje přístup k fotoaparátu pro pořizování fotografií a videí nebo skenování QR kódů.</string>
     <string name="cameraGrantAccessQr">{app_name} potřebuje přístup k fotoaparátu ke skenování QR kódů</string>
     <string name="cancel">Zrušit</string>
+    <string name="cancelAccess">Zrušit {pro}</string>
+    <string name="cancelProPlatform">Zrušení proveďte na webu {platform} pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
+    <string name="cancelProPlatformStore">Zrušení proveďte na webu {platform_store} pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
     <string name="change">Změnit</string>
     <string name="changePasswordFail">Změna hesla selhala</string>
     <string name="changePasswordModalDescription">Změňte své heslo pro {app_name}. Lokálně uložená data budou znovu zašifrována pomocí vašeho nového hesla.</string>
+    <string name="changeSetting">Změnit nastavení</string>
     <string name="checkingProStatus">Kontrola stavu {pro}</string>
+    <string name="checkingProStatusContinue">Kontroluje se váš stav {pro}. Jakmile kontrola skončí, budete moci pokračovat.</string>
+    <string name="checkingProStatusDescription">Kontrolují se vaše údaje {pro}. Některé akce na této stránce nemusí být dostupné, dokud kontrola nebude dokončena.</string>
+    <string name="checkingProStatusEllipsis">Kontrola stavu {pro}...</string>
+    <string name="checkingProStatusRenew">Kontrolují se podrobnosti vašeho {pro}. Dokud tato kontrola není dokončena, není možné prodloužení.</string>
     <string name="checkingProStatusUpgradeDescription">Kontroluje se váš stav {pro}. Jakmile kontrola skončí, budete moci navýšit na {pro}.</string>
     <string name="clear">Smazat</string>
     <string name="clearAll">Smazat vše</string>
@@ -265,11 +293,19 @@
     <string name="communityUrl">Adresa komunity</string>
     <string name="communityUrlCopy">Kopírovat adresu komunity</string>
     <string name="confirm">Potvrdit</string>
+    <string name="confirmPromotion">Potvrdit povýšení</string>
+    <string name="confirmPromotionDescription">Jste si jistí? Správci nemohou být ponížení ani odebráni ze skupiny.</string>
     <string name="contactContacts">Kontakty</string>
     <string name="contactDelete">Smazat kontakt</string>
     <string name="contactDeleteDescription">Jste si jisti, že chcete smazat <b>{name}</b> ze svých kontaktů? Nové zprávy od <b>{name}</b> budou doručeny jako žádosti o komunikaci.</string>
     <string name="contactNone">Zatím nemáte žádné kontakty</string>
     <string name="contactSelect">Vybrat kontakty</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d kontakt vybráno</item>
+        <item quantity="few">%1$d kontakty vybrány</item>
+        <item quantity="many">%1$d kontaktů vybráno</item>
+        <item quantity="other">%1$d kontaktů vybráno</item>
+    </plurals>
     <string name="contactUserDetails">Podrobnosti uživatele</string>
     <string name="contentDescriptionCamera">Kamera</string>
     <string name="contentDescriptionChooseConversationType">Zvolte akci pro zahájení konverzace</string>
@@ -310,6 +346,7 @@
     <string name="copy">Kopírovat</string>
     <string name="create">Vytvořit</string>
     <string name="creatingCall">Vytváření hovoru</string>
+    <string name="currentBilling">Současné fakturování</string>
     <string name="currentPassword">Aktuální heslo</string>
     <string name="cut">Vyjmout</string>
     <string name="darkMode">Tmavý režim</string>
@@ -337,6 +374,18 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Počkejte prosím, než se skupina vytvoří...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Aktualizace skupiny selhala</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Nemáte oprávnění k mazání zpráv ostatních</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Smazat vybranou přílohu</item>
+        <item quantity="few">Smazat vybrané přílohy</item>
+        <item quantity="many">Smazat vybrané přílohy</item>
+        <item quantity="other">Smazat vybrané přílohy</item>
+    </plurals>
+    <plurals name="deleteAttachmentsDescription">
+        <item quantity="one">Opravdu chcete smazat vybranou přílohu? Zpráva přidružená k této příloze bude také smazána.</item>
+        <item quantity="few">Opravdu chcete smazat vybrané přílohy? Zpráva přidružená k těmto přílohám bude také smazána.</item>
+        <item quantity="many">Opravdu chcete smazat vybrané přílohy? Zpráva přidružená k těmto přílohám bude také smazána.</item>
+        <item quantity="other">Opravdu chcete smazat vybrané přílohy? Zpráva přidružená k těmto přílohám bude také smazána.</item>
+    </plurals>
     <string name="deleteContactDescription">Opravdu chcete smazat <b>{name}</b> z vašich kontaktů?\n\nTím smažete vaše konverzace, včetně všech zpráv a příloh. Budoucí zprávy od <b>{name}</b> se zobrazí jako žádost o komunikaci.</string>
     <string name="deleteConversationDescription">Opracdu chcete smazat konverzaci s <b>{name}</b>?\nTím trvale smažete všechny zprávy a přílohy.</string>
     <plurals name="deleteMessage">
@@ -390,6 +439,7 @@
     <string name="deleteMessagesDescriptionEveryone">Jste si jisti, že chcete smazat tyto zprávy pro všechny?</string>
     <string name="deleting">Mazání</string>
     <string name="developerToolsToggle">Přepnout nástroje vývojáře</string>
+    <string name="deviceNotificationSettings">Nastavení zařízení pro upozornění</string>
     <string name="dictationStart">Začít diktovat...</string>
     <string name="disappearingMessages">Mizející zprávy</string>
     <string name="disappearingMessagesCountdownBig">Zpráva zmizí za {time_large}</string>
@@ -437,6 +487,8 @@
     <string name="displayNameVisible">Vaše zobrazované jméno je viditelné pro uživatele, skupiny a komunity, se kterými jste ve spojení.</string>
     <string name="document">Dokument</string>
     <string name="donate">Darovat</string>
+    <string name="donateSessionDescription">Mocné síly se snaží oslabit soukromí, ale tento boj nemůžeme vést sami.\n\nPříspěvky pomáhají udržet aplikaci {app_name} bezpečnou, nezávislou a online.</string>
+    <string name="donateSessionHelp">{app_name} potřebuje vaši pomoc</string>
     <string name="done">Hotovo</string>
     <string name="download">Stáhnout</string>
     <string name="downloading">Stahování...</string>
@@ -468,17 +520,31 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Vy a {name} reagovali {emoji_name}</string>
     <string name="emojiReactsNotification">Reagoval(a) na vaši zprávu {emoji}</string>
     <string name="enable">Povolit</string>
+    <string name="enableCameraAccess">Povolit přístup k fotoaparátu?</string>
     <string name="enableNotifications">Zobrazit upozornění při přijetí nových zpráv.</string>
+    <string name="endCallToEnable">Pro povolení ukončit hovor</string>
     <string name="enjoyingSession">Líbí se vám {app_name}?</string>
     <string name="enjoyingSessionButtonNegative">Potřebuje vylepšit {emoji}</string>
     <string name="enjoyingSessionButtonPositive">Skvělé {emoji}</string>
     <string name="enjoyingSessionDescription">Používáte {app_name} \na rádi bychom znali váš názor.</string>
     <string name="enter">Vstoupit</string>
+    <string name="enterPasswordDescription">Zadejte heslo, které jste nastavili pro {app_name}</string>
+    <string name="enterPasswordTooltip">Zadejte heslo, které používáte k odemknutí {app_name} při spuštění, nikoli heslo pro obnovení</string>
+    <string name="errorCheckingProStatus">Chyba kontroly stavu {pro}</string>
     <string name="errorConnection">Zkontrolujte prosím připojení k internetu a zkuste to znovu.</string>
     <string name="errorCopyAndQuit">Zkopírovat chybu a ukončit</string>
     <string name="errorDatabase">Chyba databáze</string>
     <string name="errorGeneric">Něco se pokazilo. Zkuste to prosím později.</string>
+    <string name="errorLoadingProAccess">Chyba načítání přístupu k {pro}</string>
+    <string name="errorNoLookupOns">{app_name} nemohla vyhledat tento ONS. Zkontrolujte prosím připojení k internetu a zkuste to znovu.</string>
     <string name="errorUnknown">Došlo k neznámé chybě.</string>
+    <string name="errorUnregisteredOns">Tento ONS není registrován. Zkontrolujte prosím jeho správnost a zkuste to znovu.</string>
+    <string name="failedResendInvite">Nepodařilo se znovu odeslat pozvánku pro <b>{name}</b> ve skupině <b>{group_name}</b></string>
+    <string name="failedResendInviteMultiple">Nepodařilo se znovu odeslat pozvánku pro <b>{name}</b> a <b>{count} dalších</b> ve skupině <b>{group_name}</b></string>
+    <string name="failedResendInviteTwo">Nepodařilo se znovu odeslat pozvánku pro <b>{name}</b> a <b>{other_name}</b> ve skupině <b>{group_name}</b></string>
+    <string name="failedResendPromotion">Nepodařilo se znovu odeslat povýšení pro <b>{name}</b> ve skupině <b>{group_name}</b></string>
+    <string name="failedResendPromotionMultiple">Nepodařilo se znovu odeslat povýšení pro <b>{name}</b> a <b>{count} dalších</b> ve skupině <b>{group_name}</b></string>
+    <string name="failedResendPromotionTwo">Nepodařilo se znovu odeslat pozvánku pro <b>{name}</b> a <b>{other_name}</b> ve skupině <b>{group_name}</b></string>
     <string name="failedToDownload">Stahování selhalo</string>
     <string name="failures">Chyby</string>
     <string name="feedback">Zpětná vazba</string>
@@ -534,6 +600,9 @@
     <string name="groupLeaveDescription">Opravdu chcete opustit <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Jste si jisti, že chcete opustit <b>{group_name}</b>?\n\nTímto odeberete všechny členy a smažete veškerý obsah skupiny.</string>
     <string name="groupLeaveErrorFailed">Selhalo odhlášení ze skupiny {group_name}</string>
+    <string name="groupMemberInvitedHistory"><b>{name}</b> byl(a) pozván(a) do skupiny. Byla sdílena i historie konverzací skupiny za posledních 14 dní.</string>
+    <string name="groupMemberInvitedHistoryMultiple"><b>{name}</b> a <b>{count}</b> další byli pozváni do skupiny. Byla sdílena i historie konverzací skupiny za posledních 14 dní.</string>
+    <string name="groupMemberInvitedHistoryTwo"><b>{name}</b> a <b>{other_name}</b> byli pozváni do skupiny. Byla sdílena i historie konverzací skupiny za posledních 14 dní.</string>
     <string name="groupMemberLeft"><b>{name}</b> opustil(a) skupinu.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> a <b>{count} dalších</b> opustilo skupinu.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> a <b>{other_name}</b> opustili skupinu.</string>
@@ -545,6 +614,9 @@
     <string name="groupMemberNewTwo"><b>{name}</b> a <b>{other_name}</b> byli pozváni do skupiny.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vy</b> a <b>{count} dalších</b> bylo pozváno do skupiny. Historie konverzace byla sdílena.</string>
     <string name="groupMemberNewYouHistoryTwo"><b>Vy</b> a <b>{other_name}</b> jste byli pozvání do skupiny. Historie konverzace byla sdílena.</string>
+    <string name="groupMemberRemoveFailed">Nepodařilo se odebrat <b>{name}</b> z <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedMultiple">Nepodařilo se odebrat <b>{name}</b> a <b>{count} dalších</b> z <b>{group_name}</b></string>
+    <string name="groupMemberRemoveFailedOther">Nepodařilo se odebrat <b>{name}</b> a <b>{other_name}</b> z <b>{group_name}</b></string>
     <string name="groupMemberYouLeft"><b>Opustil/a jste skupinu.</b></string>
     <string name="groupMembers">Členové skupiny</string>
     <string name="groupMembersNone">V této skupině nejsou žádní další členové.</string>
@@ -558,6 +630,7 @@
     <string name="groupNoMessages">Nemáte žádné zprávy od <b>{group_name}</b>. Pošlete zprávu pro zahájení konverzace!</string>
     <string name="groupNotUpdatedWarning">Tato skupina nebyla aktualizována déle než 30 dní. Může dojít k problémům s odesíláním zpráv nebo zobrazováním informací o skupině.</string>
     <string name="groupOnlyAdmin">Jste jediný správce ve skupině <b>{group_name}</b>.\n\nČlenové skupiny a nastavení nelze změnit bez správce.</string>
+    <string name="groupOnlyAdminLeave">Jste jediný správce skupiny <b>{group_name}</b>.\n\nČlenové skupiny a nastavení nelze změnit bez správce. Pokud chcete skupinu opustit bez jejího smazání, nejprve přidejte nového správce</string>
     <string name="groupPendingRemoval">Čeká na odebrání</string>
     <string name="groupPromotedYou"><b>Byli jste povýšeni na správce.</b></string>
     <string name="groupPromotedYouMultiple"><b>Vy</b> a <b>{count} dalších</b> jste byli povýšeni na správce.</string>
@@ -566,16 +639,16 @@
     <string name="groupRemoveDescriptionMultiple">Chcete odstranit <b>{name}</b> a <b>{count} dalších</b> ze skupiny <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Chcete odstranit <b>{name}</b> a <b>{other_name}</b> ze skupiny <b>{group_name}</b>?</string>
     <plurals name="groupRemoveMessages">
-        <item quantity="one">Odstranit uživatele a jeho zprávy</item>
-        <item quantity="few">Odstranit uživatele a jejich zprávy</item>
-        <item quantity="many">Odstranit uživatele a jejich zprávy</item>
-        <item quantity="other">Odstranit uživatele a jejich zprávy</item>
+        <item quantity="one">Odebrat uživatele a jeho zprávy</item>
+        <item quantity="few">Odebrat uživatele a jejich zprávy</item>
+        <item quantity="many">Odebrat uživatele a jejich zprávy</item>
+        <item quantity="other">Odebrat uživatele a jejich zprávy</item>
     </plurals>
     <plurals name="groupRemoveUserOnly">
-        <item quantity="one">Odstranit uživatele</item>
-        <item quantity="few">Odstranit uživatele</item>
-        <item quantity="many">Odstranit uživatele</item>
-        <item quantity="other">Odstranit uživatele</item>
+        <item quantity="one">Odebrat uživatele</item>
+        <item quantity="few">Odebrat uživatele</item>
+        <item quantity="many">Odebrat uživatele</item>
+        <item quantity="other">Odebrat uživatele</item>
     </plurals>
     <string name="groupRemoved"><b>{name}</b> byl odebrán ze skupiny.</string>
     <string name="groupRemovedMultiple"><b>{name}</b> a <b>{count} dalších</b> byli odebráni ze skupiny.</string>
@@ -611,6 +684,12 @@
     <string name="incognitoKeyboardDescription">Požadovat anonymní režim, pokud je k dispozici. V závislosti na klávesnici, kterou používáte, může být tento požadavek ignorován.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Chybná zkratka</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Pozvat kontakt</item>
+        <item quantity="few">Pozvat kontakty</item>
+        <item quantity="many">Pozvat kontakty</item>
+        <item quantity="other">Pozvat kontakty</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Pozvání selhalo</item>
         <item quantity="few">Pozvání selhala</item>
@@ -623,6 +702,14 @@
         <item quantity="many">Pozvánky nemohly být odeslány. Chcete to zkusit znovu?</item>
         <item quantity="other">Pozvánky nemohly být odeslány. Chcete to zkusit znovu?</item>
     </plurals>
+    <plurals name="inviteMembers">
+        <item quantity="one">Pozvat člena</item>
+        <item quantity="few">Pozvat členy</item>
+        <item quantity="many">Pozvat členy</item>
+        <item quantity="other">Pozvat členy</item>
+    </plurals>
+    <string name="inviteNewMemberGroupLink">Pozvěte nového člena do skupiny zadáním ID účtu vašeho přítele, ONS nebo naskenováním jejich QR kódu {icon}</string>
+    <string name="inviteNewMemberGroupNoLink">Pozvěte nového člena do skupiny zadáním ID účtu vašeho přítele, ONS nebo naskenováním jejich QR kódu</string>
     <string name="join">Připojit</string>
     <string name="later">Později</string>
     <string name="launchOnStartDescriptionDesktop">Spustit {app_name} automaticky při spuštění počítače.</string>
@@ -642,6 +729,8 @@
     <string name="legacyGroupMemberNewYouOther"><b>Vy</b> a <b>{other_name}</b> se připojili ke skupině.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> a <b>{other_name}</b> se připojili ke skupině.</string>
     <string name="legacyGroupMemberYouNew"><b>Vy</b> jste se připojili ke skupině.</string>
+    <string name="limitBackgroundActivity">Omezit aktivitu na pozadí?</string>
+    <string name="limitBackgroundActivityDescription">Aktuálně povolujete {app_name} běžet na pozadí, aby bylo zajištěno spolehlivější doručování oznámení. Změna této volby může vést k méně spolehlivým oznámením.</string>
     <string name="linkPreviews">Náhledy odkazů</string>
     <string name="linkPreviewsDescription">Zobrazit náhledy odkazů pro podporované URL adresy.</string>
     <string name="linkPreviewsEnable">Zapnout náhledy odkazů</string>
@@ -666,10 +755,18 @@
     <string name="lockAppUnlock">Klepněte pro odemčení</string>
     <string name="lockAppUnlocked">{app_name} je odemčena</string>
     <string name="logs">Logy</string>
+    <string name="manageAdmins">Spravovat správce</string>
     <string name="manageMembers">Spravovat členy</string>
     <string name="managePro">Spravovat {pro}</string>
     <string name="max">Maximum</string>
+    <string name="maybeLater">Možná později</string>
     <string name="media">Média</string>
+    <plurals name="memberSelected">
+        <item quantity="one">%1$d člen vybrán</item>
+        <item quantity="few">%1$d členové vybráni</item>
+        <item quantity="many">%1$d členů vybráno</item>
+        <item quantity="other">%1$d členů vybráno</item>
+    </plurals>
     <plurals name="members">
         <item quantity="one">%1$d člen</item>
         <item quantity="few">%1$d členové</item>
@@ -683,7 +780,9 @@
         <item quantity="other">%1$d aktivních členů</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Přidat ID účtu nebo ONS</string>
+    <string name="membersGroupPromotionAcceptInvite">Členové mohou být povýšeni teprve poté, co přijmou pozvání ke vstupu do skupiny.</string>
     <string name="membersInvite">Pozvat kontakty</string>
+    <string name="membersInviteNoContacts">Nemáte žádné kontakty, které byste mohli pozvat do této skupiny.\nVraťte se zpět později a pozvěte členy pomocí jejich ID účtu nebo ONS.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Odeslat pozvánku</item>
         <item quantity="few">Odeslat pozvánky</item>
@@ -694,8 +793,10 @@
     <string name="membersInviteShareDescriptionMultiple">Chcete sdílet historii zpráv skupiny s <b>{name}</b> a <b>{count} dalšími</b>?</string>
     <string name="membersInviteShareDescriptionTwo">Chcete sdílet historii zpráv skupiny s <b>{name}</b> a <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Sdílet historii zpráv</string>
+    <string name="membersInviteShareMessageHistoryDays">Sdílet historii zpráv za posledních 14 dní</string>
     <string name="membersInviteShareNewMessagesOnly">Sdílet pouze nové zprávy</string>
     <string name="membersInviteTitle">Pozvat</string>
+    <string name="membersNonAdmins">Členové (ne správci)</string>
     <string name="menuBar">Panel menu</string>
     <string name="message">Zpráva</string>
     <string name="messageBubbleReadMore">Více</string>
@@ -716,6 +817,7 @@
     </plurals>
     <string name="messageNewDescriptionDesktop">Zahajte novou konverzaci zadáním ID účtu vašeho přítele nebo ONS.</string>
     <string name="messageNewDescriptionMobile">Zahajte novou konverzaci zadáním ID účtu vašeho přítele, ONS nebo naskenováním jejich QR kódu.</string>
+    <string name="messageNewDescriptionMobileLink">Zahajte novou konverzaci zadáním ID účtu vašeho přítele, ONS nebo naskenováním jejich QR kódu {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Máte novou zprávu.</item>
         <item quantity="few">Máte %1$d nové zprávy.</item>
@@ -779,13 +881,17 @@
     <string name="nicknameRemove">Odstranit přezdívku</string>
     <string name="nicknameSet">Nastavit přezdívku</string>
     <string name="no">Ne</string>
+    <string name="noNonAdminsInGroup">V této skupině nejsou žádní členové, kromě správců.</string>
     <string name="noSuggestions">Žádné návrhy</string>
+    <string name="nonProLongerMessagesDescription">Ve všech konverzacích můžete odesílat zprávy o délce až 10000 znaků.</string>
+    <string name="nonProUnlimitedPinnedDescription">Organizujte komunikace pomocí neomezeného počtu připnutých konverzací.</string>
     <string name="none">Nic</string>
     <string name="notNow">Teď ne</string>
     <string name="noteToSelf">Poznámka sobě</string>
     <string name="noteToSelfEmpty">Nemáte žádné zprávy v Poznámka sobě.</string>
     <string name="noteToSelfHide">Skrýt Poznámku sobě</string>
     <string name="noteToSelfHideDescription">Jste si jisti, že chcete skrýt Poznámku sobě?</string>
+    <string name="noteTosPrivacyPolicy"><b>UPOZORNĚNÍ</b>: {action_type} znamená, že souhlasíte s <b>Podmínkami služby</b> {icon} a se <b>Zásadami ochrany osobních údajů</b> {icon} {app_pro}</string>
     <string name="notificationDisplay">Zobrazení upozornění</string>
     <string name="notificationSenderNameAndPreview">Zobrazit jméno odesílatele a náhled obsahu zprávy.</string>
     <string name="notificationSenderNameOnly">Zobrazit pouze jméno odesílatele bez obsahu zprávy.</string>
@@ -830,6 +936,11 @@
     <string name="okay">OK</string>
     <string name="on">Zap.</string>
     <string name="onDevice">Na vašem zařízení {device_type}</string>
+    <string name="onDeviceCancelDescription">Otevřete tento účet {app_name} na zařízení {device_type}, které je přihlášeno do účtu {platform_account}, pomocí kterého jste se původně zaregistrovali. Poté zrušte {pro} v nastavení {app_pro}.</string>
+    <string name="onDeviceDescription">Otevřete tento účet {app_name} na zařízení {device_type}, které je přihlášeno do {platform_account}, pomocí kterého jste se původně zaregistrovali. Poté aktualizujte svůj přístup {pro} v nastavení {app_pro}.</string>
+    <string name="onLinkedDevice">Na propojeném zařízení</string>
+    <string name="onPlatformStoreWebsite">Na webových stránkách {platform_store}</string>
+    <string name="onPlatformWebsite">Na webových stránkách {platform}</string>
     <string name="onboardingAccountCreate">Vytvořit účet</string>
     <string name="onboardingAccountCreated">Účet vytvořen</string>
     <string name="onboardingAccountExists">Mám účet</string>
@@ -854,6 +965,9 @@
     <string name="onsErrorNotRecognized">Nepodařilo se rozpoznat tento ONS. Zkontrolujte ho a zkuste to znovu.</string>
     <string name="onsErrorUnableToSearch">Nepodařilo se vyhledat tento ONS. Zkuste to prosím později.</string>
     <string name="open">Otevřít</string>
+    <string name="openPlatformStoreWebsite">Otevřete webovou stránku {platform_store}</string>
+    <string name="openPlatformWebsite">Otevřete webovou stránku {platform}</string>
+    <string name="openSettings">Otevřít nastavení</string>
     <string name="openSurvey">Otevřít dotazník</string>
     <string name="other">Ostatní</string>
     <string name="password">Heslo</string>
@@ -887,6 +1001,8 @@
     <string name="passwordStrengthIndicatorDescription">Nastavení silného hesla pomáhá chránit vaše zprávy a přílohy v případě ztráty nebo odcizení zařízení.</string>
     <string name="passwords">Hesla</string>
     <string name="paste">Vložit</string>
+    <string name="paymentError">Platební chyba</string>
+    <string name="paymentProError">Vaše platba byla úspěšně zpracována, ale došlo k chybě {action_type} vašeho stavu {pro}.\n\nZkontrolujte prosím vaše síťové připojení a zkuste to znovu.</string>
     <string name="permissionChange">Změna oprávnění</string>
     <string name="permissionMusicAudioDenied">{app_name} potřebuje přístup k hudbě a zvuku, aby mohla posílat soubory, hudbu a zvuk. Přístup byl ale trvale odepřen. Klepněte na Nastavení → Oprávnění a zapněte \"Hudba a zvuk\".</string>
     <string name="permissionsAppleMusic">{app_name} potřebuje použít Apple Music pro přehrávání mediálních příloh.</string>
@@ -930,16 +1046,40 @@
     <string name="preferences">Předvolby</string>
     <string name="preview">Náhled</string>
     <string name="previewNotification">Náhled upozornění</string>
+    <string name="proAccessActivatedAutoShort">Váš přístup k {pro} je aktivní!\n\nPřístup k {pro} bude automaticky prodloužen na další <b>{current_plan_length}</b> dne <b>{date}</b>.</string>
+    <string name="proAccessActivatedNotAuto">Váš přístup k {pro} vyprší dne <b>{date}</b>.\n\nAktualizujte si přístup k {pro} nyní, abyste zajistili automatické prodloužení před vypršením {pro}.</string>
+    <string name="proAccessActivatesAuto">Váš přístup k {pro} je aktivní!\n\nVáš přístup k {pro} bude automaticky prodloužen na další\n<b>{current_plan_length}</b> dne <b>{date}</b>. Veškeré změny, které zde provedete, se projeví při dalším prodloužení.</string>
+    <string name="proAccessError">Chyba přístupu k {pro}</string>
+    <string name="proAccessExpireDate">Váš přístup k {pro} vyprší dne <b>{date}</b>.</string>
+    <string name="proAccessLoading">Načítání přístupu k {pro}</string>
+    <string name="proAccessLoadingDescription">Informace o vašem přístupu k {pro} se stále načítají. Dokud nebude tento proces dokončen, nemůžete provézt aktualizaci.</string>
+    <string name="proAccessLoadingEllipsis">Načítání přístupu k {pro}...</string>
+    <string name="proAccessNetworkLoadError">Nelze se připojit k síti aby byly načteny informace o vašem přístupu k {pro}. Aktualizace {pro} prostřednictvím {app_name} nebude aktivní, dokud nebude obnoveno připojení.\n\nZkontrolujte připojení k síti a zkuste to znovu.</string>
+    <string name="proAccessNotFound">Přístup k {pro} nebyl nalezen</string>
+    <string name="proAccessNotFoundDescription">Aplikace {app_name} zjistila, že váš účet nemá přístup k {pro}. Pokud si myslíte, že se jedná o chybu, kontaktujte podporu {app_name} a požádejte o pomoc.</string>
+    <string name="proAccessRecover">Obnovit přístup k {pro}</string>
+    <string name="proAccessRenew">Prodloužit přístup k {pro}</string>
+    <string name="proAccessRenewDesktop">V současnosti lze přístup k {pro} zakoupit a prodloužit pouze prostřednictvím {platform_store} nebo {platform_store_other}. Protože používáte {app_name} Desktop, nemůžete zde provést prodloužení.\n\nVývojáři {app_name} intenzivně pracují na alternativních platebních možnostech, které by uživatelům umožnily zakoupit přístup k {pro} mimo {platform_store} a {platform_store_other}. <b>Plán vývoje {pro}</b> {icon}</string>
+    <string name="proAccessRenewPlatformStoreWebsite">Prodlužte si přístup k {pro} na <b><font color="0">webu {platform_store}</font></b> pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
+    <string name="proAccessRenewPlatformWebsite">Prodlužte na <b><font color="0">webu {platform}</font></b> pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
+    <string name="proAccessRenewStart">Prodlužte svůj přístup k {pro}, abyste mohli znovu používat výkonné funkce {app_pro} Beta.</string>
+    <string name="proAccessRestored">Přístup k {pro} obnoven</string>
+    <string name="proAccessRestoredDescription">Aplikace {app_name} rozpoznala a obnovila vašemu účtu přístup k {pro}. Váš stav {pro} byl obnoven!</string>
+    <string name="proAccessSignUp">Protože jste si původně zaregistrovali {app_pro} přes <b>{platform_store}</b>, je třeba, abyste k aktualizaci svého přístupu k {pro} využili svůj {platform_account}.</string>
+    <string name="proAccessUpgradeDesktop">V současnosti lze přístup k {pro} zakoupit pouze prostřednictvím {platform_store} nebo {platform_store_other}. Protože používáte {app_name} Desktop, nemůžete zde provést navýšení na {pro}.\n\nVývojáři {app_name} intenzivně pracují na alternativních platebních možnostech, které by uživatelům umožnily zakoupit přístup k {pro} mimo {platform_store} a {platform_store_other}. <b>Plán vývoje {pro}</b> {icon}</string>
     <string name="proActivated">Aktivováno</string>
+    <string name="proActivatingActivation">aktivování</string>
     <string name="proAllSet">Vše je nastaveno!</string>
+    <string name="proAllSetDescription">Váš přístup k {app_pro} byl aktualizován! Účtování proběhne při automatickém prodloužení {pro} dne <b>{date}</b>.</string>
     <string name="proAlreadyPurchased">Už máte</string>
     <string name="proAnimatedDisplayPicture">Jako váš zobrazovaný profilový obrázek nastavte animovaný GIF nebo WebP!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Získejte možnost nahrát animovaný zobrazovaný obrázek profilu a další prémiové funkce se Session Pro</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Získejte možnost nahrát animovaný zobrazovaný obrázek profilu a další prémiové funkce se {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Animovaný zobrazovaný obrázek</string>
     <string name="proAnimatedDisplayPictureModalDescription">uživatelé mohou nahrávat GIFy</string>
     <string name="proAnimatedDisplayPictures">Animované zobrazované obrázky</string>
     <string name="proAnimatedDisplayPicturesDescription">Nastavte si animované obrázky GIF a WebP jako svůj zobrazovaný profilový obrázek.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Nahrajte GIFy se</string>
+    <string name="proAutoRenewTime">{pro} bude automaticky prodlouženo za <b>{time}</b></string>
     <string name="proBadge">Odznak {pro}</string>
     <string name="proBadgeVisible">Zobrazit odznak {app_pro} ostatním uživatelům</string>
     <string name="proBadges">Odznaky</string>
@@ -954,13 +1094,23 @@
     <string name="proBilledAnnually">{price} účtováno ročně</string>
     <string name="proBilledMonthly">{price} účtováno měsíčně</string>
     <string name="proBilledQuarterly">{price} účtováno čtvrtletně</string>
-    <string name="proCallToActionLongerMessages">Chcete posílat delší zprávy? Posílejte více textu odemknutím prémiových funkcí Session Pro</string>
-    <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než 5 připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
+    <string name="proCallToActionLongerMessages">Chcete posílat delší zprávy?\nPosílejte více textu odemknutím prémiových funkcí {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversations">Chcete více připnutí?\nOrganizujte své chaty a odemkněte prémiové funkce pomocí {app_pro} Beta</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než {limit} připnutí?\nOrganizujte své chaty a odemkněte prémiové funkce pomocí {app_pro} Beta</string>
+    <string name="proCancelSorry">Mrzí nás, že rušíte {pro}. Než zrušíte {pro}, přečtěte si, co byste měli vědět.</string>
     <string name="proCancellation">Zrušit</string>
+    <string name="proCancellationDescription">Zrušení přístupu k {pro} zabrání jeho automatickému prodloužení před vypršením platnosti přístupu k {pro}. Zrušením {pro} <b>nedojde</b> k vrácení peněz. Funkce {app_pro} budete moci využívat až do vypršení přístupu k {pro}.\n\nProtože jste si původně {app_pro} zařídili pomocí účtu <b>{platform_account}</b>, bude ke zrušení přístupu k {pro} potřeba použít stejný {platform_account}.</string>
+    <string name="proCancellationOptions">Dva způsoby, jak zrušit váš přístup k {pro}:</string>
+    <string name="proCancellationShortDescription">Zrušením přístupu k {pro} zabráníte jeho automatickému prodloužení předtím, než {pro} vyprší.\n\nZrušení {pro} <b>neznamená</b> vrácení peněz. Funkce {app_pro} můžete používat až do vypršení přístupu {pro}.</string>
+    <string name="proChooseAccess">Vyberte si možnost přístupu k {pro}, která vám vyhovuje nejlépe.\nDelší přístup znamená vyšší slevu.</string>
+    <string name="proClearAllDataDevice">Opravdu chcete smazat svá data z tohoto zařízení?\n\n<b>{app_pro}</b> nelze převést na jiný účet. Uložte si své heslo pro obnovení, abyste mohli svůj přístup k {pro} později obnovit.</string>
+    <string name="proClearAllDataNetwork">Opravdu chcete smazat svá data ze sítě? Pokud budete pokračovat, nebudete moci obnovit vaše zprávy ani kontakty.\n\n<b>{app_pro}</b> nelze převést na jiný účet. Uložte si své heslo pro obnovení, abyste mohli svůj přístup k {pro} později obnovit.</string>
+    <string name="proDiscountTooltip">Váš přístup k {pro} je již zlevněn o {percent} % z plné ceny {app_pro}.</string>
     <string name="proErrorRefreshingStatus">Chyba obnovování stavu {pro}</string>
     <string name="proExpired">Platnost vypršela</string>
+    <string name="proExpiredDescription">Bohužel, váš tarif {pro} vypršel. Prodlužte jej, abyste znovu získali přístup k exkluzivním výhodám a funkcím {app_pro}.</string>
     <string name="proExpiringSoon">Brzy vyprší</string>
+    <string name="proExpiringSoonDescription">Váš přístup k {pro} vyprší za <b>{time}</b>.\nProveďte nyní aktualizaci, abyste si zachovali přístup k exkluzivním výhodám a funkcím {app_pro} Beta</string>
     <string name="proExpiringTime">{pro} vyprší za <b>{time}</b></string>
     <string name="proFaq">{pro} FAQ</string>
     <string name="proFaqDescription">Najděte odpovědi na časté dotazy v nápovědě {app_pro}.</string>
@@ -969,6 +1119,7 @@
     <string name="proFeatureListLoadsMore">A další exkluzivních funkce</string>
     <string name="proFeatureListLongerMessages">Zprávy až do 10000 znaků</string>
     <string name="proFeatureListPinnedConversations">Připněte neomezený počet konverzací</string>
+    <string name="proFullestPotential">Chcete využít potenciál {app_name} naplno?\nPřejděte na {app_pro} Beta a získejte přístup k mnoha exkluzivním výhodám a funkcím.</string>
     <string name="proGroupActivated">Skupina aktivována</string>
     <string name="proGroupActivatedDescription">Tato skupina má navýšenou kapacitu! Může podporovat až 300 členů, protože správce skupiny má</string>
     <plurals name="proGroupsUpgraded">
@@ -977,6 +1128,7 @@
         <item quantity="many">%1$s skupin navýšeno</item>
         <item quantity="other">%1$s skupin navýšeno</item>
     </plurals>
+    <string name="proImportantDescription">Žádost o vrácení peněz je konečná. Pokud bude schválena, váš přístup k {pro} bude ihned zrušen a ztratíte přístup ke všem funkcím {pro}.</string>
     <string name="proIncreasedAttachmentSizeFeature">Navýšená velikost přílohy</string>
     <string name="proIncreasedMessageLengthFeature">Navýšená délka zprávy</string>
     <string name="proLargerGroups">Větší skupiny</string>
@@ -991,6 +1143,11 @@
         <item quantity="other">%1$s delších zpráv odesláno</item>
     </plurals>
     <string name="proMessageInfoFeatures">V této zprávě byly použity následující funkce {app_pro}:</string>
+    <string name="proNewInstallation">Pomocí nové instalace</string>
+    <string name="proNewInstallationDescription">Znovu nainstalujte {app_name} na tomto zařízení prostřednictvím {platform_store}, obnovte svůj účet pomocí hesla pro obnovení a prodlužte {pro} v nastavení {app_pro}.</string>
+    <string name="proNewInstallationUpgrade">Znovu nainstalujte {app_name} na tomto zařízení prostřednictvím {platform_store}, obnovte svůj účet pomocí hesla pro obnovení a navyšte na {pro} v nastavení {app_pro}.</string>
+    <string name="proOptionsRenewalSubtitle">Nyní jsou k dispozici tři způsoby prodloužení:</string>
+    <string name="proOptionsTwoRenewalSubtitle">Nyní jsou k dispozici dva způsoby prodloužení:</string>
     <string name="proPercentOff">Sleva {percent} %</string>
     <plurals name="proPinnedConversations">
         <item quantity="one">%1$s připnutá konverzace</item>
@@ -998,15 +1155,35 @@
         <item quantity="many">%1$s připnutých konverzací</item>
         <item quantity="other">%1$s připnutých konverzací</item>
     </plurals>
+    <string name="proPlanPlatformRefund">Protože jste se původně zaregistrovali do {app_pro} přes <b><font color="0">obchod {platform_store}</font></b>, budete muset pro žádost o vrácení peněz použít stejný účet {platform_account}.</string>
+    <string name="proPlanPlatformRefundLong">Protože jste si původně zakoupili {app_pro} přes <b><font color="0">obchod {platform_store}</font></b>, váš požadavek na vrácení peněz bude zpracován podporou {app_name}.\n\nPožádejte o vrácení peněz kliknutím na tlačítko níže a vyplněním formuláře žádosti o vrácení peněz.\n\nAčkoliv se podpora {app_name} snaží zpracovat žádosti o vrácení peněz během 24-72 hodin, může zpracování trvat i déle, pokud dochází k vysokému počtu žádostí.</string>
+    <string name="proPlanRenewSupport">Váš přístup k {app_pro} byl prodloužen! Děkujeme, že podporujete síť {network_name}.</string>
     <string name="proPriceOneMonth">1 měsíc – {monthly_price} / měsíc</string>
     <string name="proPriceThreeMonths">3 měsíce – {monthly_price} / měsíc</string>
     <string name="proPriceTwelveMonths">12 měsíců – {monthly_price} / měsíc</string>
+    <string name="proReactivatingActivation">opětovné aktivování</string>
+    <string name="proRefundAccountDevice">Otevřete tento účet {app_name} na zařízení {device_type}, které je přihlášeno k účtu {platform_account}, se kterým jste se původně zaregistrovali. Poté požádejte o vrácení platby přes nastavení {app_pro}.</string>
     <string name="proRefundDescription">Mrzí nás, že to rušíte. Než požádáte o vrácení peněz, přečtěte si informace, které byste měli vědět.</string>
+    <string name="proRefundNextSteps">{platform} nyní zpracovává vaši žádost o vrácení peněz. Obvykle to trvá 24-48 hodin. V závislosti na jejich rozhodnutí se může váš stav {pro} v aplikaci {app_name} změnit.</string>
     <string name="proRefundRequestSessionSupport">Váš požadavek na vrácení peněz bude zpracován podporou {app_name}.\n\nPožádejte o vrácení peněz kliknutím na tlačítko níže a vyplněním formuláře žádosti o vrácení peněz.\n\nAčkoliv se podpora {app_name} snaží zpracovat žádosti o vrácení peněz během 24–72 hodin, může zpracování trvat i déle, v případě že je vyřizováno mnoho žádostí.</string>
+    <string name="proRefundRequestStorePolicies">Vaši žádost o vrácení peněz bude vyřizovat výhradně {platform} prostřednictvím <b>webu {platform}</b>.\n\nVzhledem k pravidlům vracení peněz {platform} nemají vývojáři {app_name} žádný vliv na výsledek žádostí o vrácení peněz. To zahrnuje i rozhodnutí, zda bude žádost schválena nebo zamítnuta, a také, zda bude vrácena část peněz, nebo všechny peníze.</string>
+    <string name="proRefundSupport">Pro další informace o vaší žádosti o vrácení peněz kontaktujte prosím {platform}. Vzhledem k zásadám pro vrácení peněz {platform} nemají vývojáři aplikace {app_name} žádnou možnost ovlivnit výsledek žádosti o vrácení.\n\n<font color="0">Podpora vrácení peněz {platform}</font></string>
     <string name="proRefunding">Vracení peněz za {pro}</string>
+    <string name="proRefundingDescription">Vrácení peněz za {app_pro} je vyřizováno výhradně prostřednictvím {platform} v obchodě {platform_store}.\n\nVzhledem k pravidlům vracení peněz služby {platform} nemají vývojáři {app_name} žádný vliv na výsledek žádostí o vrácení peněz. To zahrnuje i rozhodnutí, zda bude žádost schválena nebo zamítnuta, a také, zda bude vrácena část peněz, nebo všechny peníze.</string>
+    <string name="proRenewAnimatedDisplayPicture">Chcete znovu používat animované profilové obrázky?\nObnovte si přístup k {pro} pro odemknutí funkcí, které vám chyběly.</string>
+    <string name="proRenewBeta">Prodloužit {pro} Beta</string>
+    <string name="proRenewDesktopLinked">Prodlužte svůj přístup k {pro} v nastavení {app_pro} na propojeném zařízení s nainstalovanou aplikací {app_name} prostřednictvím {platform_store} nebo {platform_store_other}.</string>
+    <string name="proRenewLongerMessages">Chcete znovu posílat delší zprávy?\nObnovte si přístup k {pro} pro odemknutí funkcí, které vám chyběly.</string>
+    <string name="proRenewMaxPotential">Chcete znovu využít {app_name} naplno?\nProdlužte si přístup k {pro} pro odemknutí funkcí, které vám chyběly.</string>
+    <string name="proRenewPinFiveConversations">Chcete si znovu připnout více než {limit} konverzací?\nProdlužte si přístup k {pro} pro odemknutí funkcí, které vám chyběly.</string>
+    <string name="proRenewPinMoreConversations">Chcete si znovu připnout více konverzací?\nProdlužte si přístup k {pro} pro odemknutí funkcí, které vám chyběly.</string>
+    <string name="proRenewTosPrivacy">Prodloužením souhlasíte s <b>Podmínkami služby</b> {icon} a <b>Zásadami ochrany osobních údajů</b> {icon} {app_pro}</string>
+    <string name="proRenewingAction">prodlužování</string>
+    <string name="proRenewingNoAccessBilling">V současnosti lze přístup k {pro} zakoupit a prodloužit pouze prostřednictvím {platform_store} nebo {platform_store_other}. Protože jste nainstalovali {app_name} pomocí {build_variant}, nemůžete zde prodloužit přístup.\n\nVývojáři {app_name} intenzivně pracují na alternativních platebních možnostech, které by uživatelům umožnily zakoupit přístup k {pro} mimo {platform_store} a {platform_store_other}.<b> Plán vývoje {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Žádost o vrácení peněz</string>
     <string name="proSendMore">Posílejte více se</string>
     <string name="proSettings">Nastavení {pro}</string>
+    <string name="proStartUsing">Začít používat {pro}</string>
     <string name="proStats">Vaše statistiky {pro}</string>
     <string name="proStatsLoading">Načítání statistik {pro}</string>
     <string name="proStatsLoadingDescription">Vaše statistiky {pro} se načítají, počkejte prosím.</string>
@@ -1016,12 +1193,29 @@
     <string name="proStatusLoading">Stav načítání {pro}</string>
     <string name="proStatusLoadingDescription">Načítají se vaše informace {pro}. Některé akce na této stránce nemusí být dostupné, dokud nebude načítání dokončeno.</string>
     <string name="proStatusLoadingSubtitle">stav načítání {pro}</string>
+    <string name="proStatusNetworkErrorContinue">Nelze se připojit k síti, aby bylo možné zkontrolovat váš stav {pro}. Dokud nebude obnoveno připojení, nelze pokračovat.\n\nZkontrolujte připojení k síti a zkuste to znovu.</string>
     <string name="proStatusNetworkErrorDescription">Nelze se připojit k síti, aby bylo možné zkontrolovat váš stav {pro}. Dokud nebude obnoveno připojení, nelze provést navýšení na {pro}.\n\nZkontrolujte připojení k síti a zkuste to znovu.</string>
     <string name="proStatusRefreshNetworkError">Nelze se připojit k síti, aby se obnovil váš stav {pro}. Některé akce na této stránce budou deaktivovány, dokud nebude obnoveno připojení.\n\nZkontrolujte připojení k síti a zkuste to znovu.</string>
+    <string name="proStatusRenewError">Nelze se připojit k síti kvůli načtení vašeho aktuálního přístupu k {pro}. Obnovení {pro} prostřednictvím {app_name} bude deaktivováno, dokud nebude obnoveno připojení.\n\nZkontrolujte připojení k síti a zkuste to znovu.</string>
+    <string name="proSupportDescription">Potřebujete pomoc s {pro}? Pošlete žádost týmu podpory.</string>
+    <string name="proTosDescription">Tím, že provádíte {action_type}, {activation_type} {app_pro} prostřednictvím protokolu {app_name}. {entity} tuto aktivaci zprostředkuje, ale není poskytovatelem služby {app_pro}. {entity} nenese odpovědnost za výkon, dostupnost ani funkčnost služby {app_pro}.</string>
     <string name="proTosPrivacy">Aktualizací souhlasíte s <b>Podmínkami služby</b> {icon} a <b>Zásadami ochrany osobních údajů</b> {icon} {app_pro}</string>
     <string name="proUnlimitedPins">Neomezený počet připnutí</string>
     <string name="proUnlimitedPinsDescription">Organizujte si komunikaci pomocí neomezeného počtu připnutých konverzací.</string>
-    <string name="proUserProfileModalCallToAction">Chcete z {app_name} získat více? Navyštee na {app_pro} pro výkonnější posílání zpráv.</string>
+    <string name="proUpdateAccessDescription">Vaše aktuální fakturační možnost zahrnuje <b>{current_plan_length}</b> přístupu k {pro}. Jste si jisti, že chcete přejít na fakturační možnost <b>{selected_plan_length_singular}</b>?\n\nPo aktualizaci se váš přístup k {pro} automaticky prodlouží <b>{date}</b> na dalších <b>{selected_plan_length}</b> přístupu k {pro}.</string>
+    <string name="proUpdateAccessExpireDescription">Váš přístup k {pro} vyprší <b>{date}</b>.\n\nAktualizací se váš {pro} přístup automaticky prodlouží <b>{date}</b> na dalších <b>{selected_plan_length}</b> přístupu k {pro}.</string>
+    <string name="proUpdatingAction">aktualizování</string>
+    <string name="proUpgradeAccess">Navyšte na {app_pro} Beta a získejte přístup k mnoha exkluzivním výhodám a funkcím.</string>
+    <string name="proUpgradeDesktopLinked">Navyšte na {pro} v nastavení {app_pro} na propojeném zařízení s nainstalovanou {app_name} prostřednictvím {platform_store} nebo {platform_store_other}.</string>
+    <string name="proUpgradeNoAccessBilling">V současnosti lze přístup k {pro} zakoupit pouze prostřednictvím {platform_store} nebo {platform_store_other}. Protože jste nainstalovali {app_name} pomocí {build_variant}, nemůžete zde navýšit na {pro}.\n\nVývojáři {app_name} intenzivně pracují na alternativních platebních možnostech, které by uživatelům umožnily zakoupit přístup k {pro} mimo {platform_store} a {platform_store_other}.<b> Plán vývoje {pro}</b> {icon}</string>
+    <string name="proUpgradeOption">V tuto chvíli je k dispozici pouze jedna možnost navýšení:</string>
+    <string name="proUpgradeOptionsTwo">Nyní jsou k dispozici dva způsoby navýšení:</string>
+    <string name="proUpgraded">Navýšili jste na {app_pro}!\n\nDěkujeme, že podporujete síť {network_name}.</string>
+    <string name="proUpgradingAction">navyšování</string>
+    <string name="proUpgradingTo">Navýšení na {pro}</string>
+    <string name="proUpgradingTosPrivacy">Navýšením souhlasíte s <b>Podmínkami služby</b> {icon} a <b>Zásadami ochrany osobních údajů</b> {icon} {app_pro}</string>
+    <string name="proUserProfileModalCallToAction">Chcete z {app_name} získat více?\nNavyštee na {app_pro} Beta pro výkonnější posílání zpráv.</string>
+    <string name="processingRefundRequest">{platform} zpracovává vaši žádost o vrácení peněz</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Zobrazovaný obrázek</string>
     <string name="profileDisplayPictureRemoveError">Chyba při odstraňování zobrazovaného obrázku.</string>
@@ -1029,6 +1223,13 @@
     <string name="profileDisplayPictureSizeError">Prosím vyberte menší soubor.</string>
     <string name="profileErrorUpdate">Nepodařilo se aktualizovat profil.</string>
     <string name="promote">Povýšit</string>
+    <string name="promoteAdminsWarning">Správci budou moci vidět historii zpráv za posledních 14 dní a nemohou být ponížení ani odebráni ze skupiny.</string>
+    <plurals name="promoteMember">
+        <item quantity="one">Povýšit člena</item>
+        <item quantity="few">Povýšit členy</item>
+        <item quantity="many">Povýšit členy</item>
+        <item quantity="other">Povýšit členy</item>
+    </plurals>
     <plurals name="promotionFailed">
         <item quantity="one">Povýšení selhalo</item>
         <item quantity="few">Povýšení selhala</item>
@@ -1081,6 +1282,8 @@
     <string name="recoveryPasswordWarningSendDescription">Toto je vaše heslo pro obnovení. Pokud ho někomu pošlete, bude mít plný přístup k vašemu účtu.</string>
     <string name="recreateGroup">Znovu vytvořit skupinu</string>
     <string name="redo">Znovu</string>
+    <string name="refundNonOriginatorApple">Protože jste si původně zaregistrovali {app_pro} přes jiný {platform_account}, je třeba použít ten <b><font color="0">{platform_account}</font></b>, abyste aktualizovali svůj přístup k {pro}.</string>
+    <string name="refundRequestOptions">Dva způsoby, jak požádat o vrácení platby:</string>
     <string name="remainingCharactersOverTooltip">Zkraťte délku zprávy o {count}</string>
     <plurals name="remainingCharactersTooltip">
         <item quantity="one">Zbývá %1$d znak</item>
@@ -1088,18 +1291,67 @@
         <item quantity="many">Zbývá %1$d znaků</item>
         <item quantity="other">Zbývá %1$d znaků</item>
     </plurals>
+    <string name="remindMeLater">Připomenout později</string>
     <string name="remove">Odstranit</string>
+    <plurals name="removeMember">
+        <item quantity="one">Odebrat člena</item>
+        <item quantity="few">Odebrat členy</item>
+        <item quantity="many">Odebrat členy</item>
+        <item quantity="other">Odebrat členy</item>
+    </plurals>
+    <plurals name="removeMemberMessages">
+        <item quantity="one">Odebrat člena a jeho zprávy</item>
+        <item quantity="few">Odebrat členy a jejich zprávy</item>
+        <item quantity="many">Odebrat členy a jejich zprávy</item>
+        <item quantity="other">Odebrat členy a jejich zprávy</item>
+    </plurals>
     <string name="removePasswordFail">Odebrání hesla selhalo</string>
     <string name="removePasswordModalDescription">Odstraňte své aktuální heslo pro {app_name}. Lokálně uložená data budou znovu zašifrována pomocí náhodně vygenerovaného klíče uloženého ve vašem zařízení.</string>
+    <plurals name="removingMember">
+        <item quantity="one">Odebírání člena</item>
+        <item quantity="few">Odebírání členů</item>
+        <item quantity="many">Odebírání členů</item>
+        <item quantity="other">Odebírání členů</item>
+    </plurals>
+    <string name="renew">Prodloužit</string>
+    <string name="renewingPro">Prodlužování {pro}</string>
     <string name="reply">Odpovědět</string>
     <string name="requestRefund">Požádat o vrácení platby</string>
+    <string name="requestRefundPlatformWebsite">Požádejte o vrácení platby na webových stránkách <b><font color="0">{platform}</font></b> pomocí účtu {platform_account}, kterým jste se zaregistrovali do {pro}.</string>
     <string name="resend">Odeslat znovu</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Znovu odeslat pozvánku</item>
+        <item quantity="few">Znovu odeslat pozvánky</item>
+        <item quantity="many">Znovu odeslat pozvánky</item>
+        <item quantity="other">Znovu odeslat pozvánky</item>
+    </plurals>
+    <plurals name="resendPromotion">
+        <item quantity="one">Znovu odeslat povýšení</item>
+        <item quantity="few">Znovu odeslat povýšení</item>
+        <item quantity="many">Znovu odeslat povýšení</item>
+        <item quantity="other">Znovu odeslat povýšení</item>
+    </plurals>
+    <plurals name="resendingInvite">
+        <item quantity="one">Opětovné odesílání pozvánky</item>
+        <item quantity="few">Opětovné odesílání pozvánek</item>
+        <item quantity="many">Opětovné odesílání pozvánek</item>
+        <item quantity="other">Opětovné odesílání pozvánek</item>
+    </plurals>
+    <plurals name="resendingPromotion">
+        <item quantity="one">Opětovné odesílání povýšení</item>
+        <item quantity="few">Opětovné odesílání povýšení</item>
+        <item quantity="many">Opětovné odesílání povýšení</item>
+        <item quantity="other">Opětovné odesílání povýšení</item>
+    </plurals>
     <string name="resolving">Načítám informace o zemi...</string>
     <string name="restart">Restartovat</string>
     <string name="resync">Znovu synchronizovat</string>
     <string name="retry">Opakovat</string>
     <string name="reviewLimit">Omezení hodnocení</string>
     <string name="reviewLimitDescription">Zdá se, že jste nedávno hodnotili {app_name}. Děkujeme vám za vaši zpětnou vazbu!</string>
+    <string name="runAppBackground">Provozovat aplikaci na pozadí</string>
+    <string name="runSessionBackground">Spustit {app_name} na pozadí?</string>
+    <string name="runSessionBackgroundDescription">Protože používáte pomalý režim, doporučujeme povolit aplikaci {app_name} běžet na pozadí, pro lepší upozorňování. Může to zajistit větší konzistentnost oznámení, i když váš systém může i tak automaticky omezit aktivitu na pozadí.\n\nToto nastavení můžete později změnit v Nastavení.</string>
     <string name="save">Uložit</string>
     <string name="saved">Uloženo</string>
     <string name="savedMessages">Uložené zprávy</string>
@@ -1132,6 +1384,12 @@
     <string name="sending">Odesílání</string>
     <string name="sendingCallOffer">Odesílání nabídky hovoru</string>
     <string name="sendingConnectionCandidates">Odesílání kandidátů na připojení</string>
+    <plurals name="sendingPromotion">
+        <item quantity="one">Odesílání povýšení</item>
+        <item quantity="few">Odesílání povýšení</item>
+        <item quantity="many">Odesílání povýšení</item>
+        <item quantity="other">Odesílání povýšení</item>
+    </plurals>
     <string name="sent">Odesláno:</string>
     <string name="sessionAppearance">Vzhled</string>
     <string name="sessionClearData">Vyčistit data</string>
@@ -1167,7 +1425,10 @@
     <string name="shareAccountIdDescriptionCopied">Sdílejte se svými přáteli tam, kde s nimi obvykle mluvíte — a pak konverzaci přesuňte sem.</string>
     <string name="shareExtensionDatabaseError">Při otevírání databáze se vyskytl problém. Prosím, restartujte aplikaci a zkuste to znovu.</string>
     <string name="shareExtensionNoAccountError">Ups! Vypadá to, že ještě nemáte účet {app_name}.\n\nPřed sdílením si ho budete muset v aplikaci {app_name} vytvořit.</string>
+    <string name="shareGroupMessageHistory">Chcete sdílet historii zpráv skupiny s tímto uživatelem?</string>
     <string name="shareToSession">Sdílet do {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Je nám líto, {app_name} podporuje pouze sdílení více obrázků a videí najednou</string>
+    <string name="sharingSupportMultipleMediaExcluded">Sdílení podporuje pouze média. Soubory, které nejsou médii, byly vyloučeny</string>
     <string name="show">Zobrazit</string>
     <string name="showAll">Zobrazit všechny</string>
     <string name="showLess">Zobrazit méně</string>
@@ -1196,6 +1457,9 @@
     <string name="undo">Vrátit zpět</string>
     <string name="unknown">Neznámé</string>
     <string name="unsupportedCpu">Nepodporovaný procesor</string>
+    <string name="update">Aktualizovat</string>
+    <string name="updateAccess">Aktualizovat přístup {pro}</string>
+    <string name="updateAccessTwo">Dva způsoby, jak aktualizovat váš přístup k {pro}:</string>
     <string name="updateApp">Aktualizace aplikace</string>
     <string name="updateCommunityInformation">Upravit informace o komunitě</string>
     <string name="updateCommunityInformationDescription">Název a popis komunity jsou viditelné pro všechny členy komunity</string>
@@ -1218,6 +1482,7 @@
     <string name="updated">Naposledy aktualizováno před {relative_time}</string>
     <string name="updates">Aktualizace</string>
     <string name="updating">Aktualizuji...</string>
+    <string name="upgrade">Navýšení</string>
     <string name="upgradeSession">Navýšit {app_name}</string>
     <string name="upgradeTo">Navýšit na</string>
     <string name="uploading">Nahrávání</string>
@@ -1227,6 +1492,8 @@
     <string name="urlOpenDescription">Opravdu chcete otevřít tuto URL adresu ve vašem prohlížeči?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Odkazy se otevřou ve vašem prohlížeči.</string>
     <string name="useFastMode">Použít rychlý režim</string>
+    <string name="viaPlatformWebsiteDescription">Změňte svůj tarif pomocí {platform_account}, kterým jste se zaregistrovali, prostřednictvím <b><font color="0">webu {platform}</font></b>.</string>
+    <string name="viaStoreWebsite">Přes webové stránky {platform}</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Nelze přehrát video.</string>
     <string name="view">Zobrazit</string>
@@ -1235,6 +1502,7 @@
     <string name="waitFewMinutes">Může to trvat několik minut.</string>
     <string name="waitOneMoment">Okamžik prosím...</string>
     <string name="warning">Varování</string>
+    <string name="warningIosVersionEndingSupport">Podpora pro iOS 15 byla ukončena. Aktualizujte na iOS 16 nebo novější verzi, abyste mohli i nadále dostávat aktualizace aplikace.</string>
     <string name="window">Okno</string>
     <string name="yes">Ano</string>
     <string name="you">Vy</string>

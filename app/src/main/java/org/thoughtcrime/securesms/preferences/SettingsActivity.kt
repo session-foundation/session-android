@@ -53,8 +53,7 @@ class SettingsActivity : FullComposeScreenLockActivity() {
                  if(viewModel.isAnimated(uri)){ // no cropping for animated images
                      viewModel.onAvatarPicked(uri)
                  } else {
-                     val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-                     cropImage(it, outputFile)
+                     cropImage(it)
                  }
 
              }
@@ -65,13 +64,12 @@ class SettingsActivity : FullComposeScreenLockActivity() {
          if (success) {
              viewModel.hideAvatarPickerOptions() // close the bottom sheet
 
-             val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-             val inputFile = viewModel.getTempFile()?.let(Uri::fromFile)
+             val inputFile = viewModel.getTempFile()?.let { FileProviderUtil.getUriFor(this, it) }
              if (inputFile == null) {
                  Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
                  return@registerForActivityResult
              }
-             cropImage(inputFile, outputFile)
+             cropImage(inputFile)
          } else {
              Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
          }
@@ -130,12 +128,13 @@ class SettingsActivity : FullComposeScreenLockActivity() {
             .execute()
     }
 
-    private fun cropImage(inputFile: Uri, outputFile: Uri){
+    private fun cropImage(inputFile: Uri){
         lifecycleScope.launch {
             try {
-                val inputType = withContext(Dispatchers.Default) {
-                    contentResolver.getType(inputFile)
-                }
+                val file = File(cacheDir, "cropped.webp")
+                if(file.exists()) file.delete()
+
+                val outputFile = FileProviderUtil.getUriFor(this@SettingsActivity, file)
 
                 onAvatarCropped.launch(
                     CropImageContractOptions(
@@ -158,11 +157,7 @@ class SettingsActivity : FullComposeScreenLockActivity() {
                             activityMenuIconColor = txtColor,
                             activityMenuTextColor = txtColor,
                             activityTitle = activityTitle,
-                            outputCompressFormat = when {
-                                inputType?.startsWith("image/png") == true -> Bitmap.CompressFormat.PNG
-                                inputType?.startsWith("image/webp") == true -> Bitmap.CompressFormat.WEBP
-                                else -> Bitmap.CompressFormat.JPEG
-                            }
+                            outputCompressFormat = Bitmap.CompressFormat.WEBP
                         )
                     )
                 )

@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -36,12 +37,10 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.session.libsession.utilities.recipients.ProStatus
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GoToProSettings
-import org.thoughtcrime.securesms.pro.SubscriptionDetails
-import org.thoughtcrime.securesms.pro.SubscriptionState
-import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
+import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
+import org.thoughtcrime.securesms.pro.previewExpiredApple
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -53,8 +52,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.util.State
-import java.time.Duration
-import java.time.Instant
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -64,9 +61,12 @@ fun PlanConfirmationScreen(
     onBack: () -> Unit,
 ) {
     val proData by viewModel.proSettingsUIState.collectAsState()
+    val previousState by viewModel.choosePlanState.collectAsState()
 
     PlanConfirmation(
         proData = proData,
+        previousProState = (previousState as? State.Success<ProSettingsViewModel.ChoosePlanState>)
+            ?.value?.proStatus ?: ProStatus.NeverSubscribed,
         sendCommand = viewModel::onCommand,
         onBack = onBack,
     )
@@ -76,9 +76,14 @@ fun PlanConfirmationScreen(
 @Composable
 fun PlanConfirmation(
     proData: ProSettingsViewModel.ProSettingsState,
+    previousProState: ProStatus,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ) {
+    BackHandler {
+        sendCommand(ProSettingsViewModel.Commands.OnPostPlanConfirmation)
+    }
+
     Scaffold(
         topBar = {},
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
@@ -112,8 +117,8 @@ fun PlanConfirmation(
 
             Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
 
-            val description = when (proData.subscriptionState.type) {
-                is SubscriptionType.Active -> {
+            val description = when (previousProState) {
+                is ProStatus.Active -> {
                     Phrase.from(context.getText(R.string.proAllSetDescription))
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .put(PRO_KEY, NonTranslatableStringConstants.PRO)
@@ -121,14 +126,14 @@ fun PlanConfirmation(
                         .format()
                 }
 
-                is SubscriptionType.NeverSubscribed -> {
+                is ProStatus.NeverSubscribed -> {
                     Phrase.from(context.getText(R.string.proUpgraded))
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .put(NETWORK_NAME_KEY, NETWORK_NAME)
                         .format()
                 }
 
-                is SubscriptionType.Expired -> {
+                is ProStatus.Expired -> {
                     Phrase.from(context.getText(R.string.proPlanRenewSupport))
                         .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .put(NETWORK_NAME_KEY, NETWORK_NAME)
@@ -147,8 +152,8 @@ fun PlanConfirmation(
 
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
-            val buttonLabel = when (proData.subscriptionState.type) {
-                is SubscriptionType.Active -> stringResource(R.string.theReturn)
+            val buttonLabel = when (previousProState) {
+                is ProStatus.Active -> stringResource(R.string.theReturn)
 
                 else -> {
                     Phrase.from(context.getText(R.string.proStartUsing))
@@ -163,7 +168,7 @@ fun PlanConfirmation(
                     .widthIn(max = LocalDimensions.current.maxContentWidth),
                 text = buttonLabel,
                 onClick = {
-                    sendCommand(GoToProSettings)
+                    sendCommand(ProSettingsViewModel.Commands.OnPostPlanConfirmation)
                 }
             )
 
@@ -182,24 +187,13 @@ private fun PreviewPlanConfirmationActive(
         PlanConfirmation(
             proData = ProSettingsViewModel.ProSettingsState(
                 subscriptionExpiryDate = "20th June 2026",
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Active.AutoRenewing(
-                        proStatus = ProStatus.Pro(
-                            visible = true,
-                            validUntil = Instant.now() + Duration.ofDays(14),
-                        ),
-                        duration = ProSubscriptionDuration.THREE_MONTHS,
-                        subscriptionDetails = SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )
-                    ),
-                    refreshState = State.Success(Unit),),
+                proDataState = ProDataState(
+                    type = previewAutoRenewingApple,
+                    refreshState = State.Success(Unit),
+                    showProBadge = false,
+                ),
             ),
+            previousProState = previewAutoRenewingApple,
             sendCommand = {},
             onBack = {},
         )
@@ -214,19 +208,13 @@ private fun PreviewPlanConfirmationExpired(
     PreviewTheme(colors) {
         PlanConfirmation(
             proData = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.Expired(
-                        expiredAt = Instant.now() - Duration.ofDays(14),
-                        SubscriptionDetails(
-                            device = "iOS",
-                            store = "Apple App Store",
-                            platform = "Apple",
-                            platformAccount = "Apple Account",
-                            subscriptionUrl = "https://www.apple.com/account/subscriptions",
-                            refundUrl = "https://www.apple.com/account/subscriptions",
-                        )),
-                    refreshState = State.Success(Unit),),
+                proDataState = ProDataState(
+                    type = previewExpiredApple,
+                    refreshState = State.Success(Unit),
+                    showProBadge = true,
+                    ),
             ),
+            previousProState = previewExpiredApple,
             sendCommand = {},
             onBack = {},
         )
@@ -241,10 +229,13 @@ private fun PreviewPlanConfirmationNeverSub(
     PreviewTheme(colors) {
         PlanConfirmation(
             proData = ProSettingsViewModel.ProSettingsState(
-                subscriptionState = SubscriptionState(
-                    type = SubscriptionType.NeverSubscribed,
-                    refreshState = State.Success(Unit),),
+                proDataState = ProDataState(
+                    type = ProStatus.NeverSubscribed,
+                    refreshState = State.Success(Unit),
+                    showProBadge = true,
+                ),
             ),
+            previousProState = ProStatus.NeverSubscribed,
             sendCommand = {},
             onBack = {},
         )
