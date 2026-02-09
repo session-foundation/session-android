@@ -32,6 +32,7 @@ import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.SwarmSnodeSelector
 import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
+import org.thoughtcrime.securesms.preferences.PreferenceKey
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Duration.Companion.days
@@ -60,15 +61,19 @@ class Poller @AssistedInject constructor(
     private val userPublicKey: String
         get() = storage.getUserPublicKey().orEmpty()
 
+    companion object {
+        private val hasMigratedToMultiPartConfigKey = PreferenceKey.boolean("migrated_to_multi_part_config")
+    }
+
 
     @AssistedFactory
     interface Factory {
         fun create(scope: CoroutineScope): Poller
     }
 
-    override suspend fun doPollOnce(isFirstPollSinceApoStarted: Boolean) {
+    override suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean) {
         // Migrate to multipart config when needed
-        if (isFirstPollSinceApoStarted && !preferences.migratedToMultiPartConfig) {
+        if (isFirstPollSinceAppStarted && !preferences.get(hasMigratedToMultiPartConfigKey)) {
             val allConfigNamespaces = intArrayOf(Namespace.USER_PROFILE(),
                 Namespace.USER_GROUPS(),
                 Namespace.CONTACTS(),
@@ -82,13 +87,13 @@ class Poller @AssistedInject constructor(
             lokiApiDatabase.clearLastMessageHashesByNamespaces(*allConfigNamespaces)
             receivedMessageHashDatabase.removeAllByNamespaces(*allConfigNamespaces)
 
-            preferences.migratedToMultiPartConfig = true
+            preferences.set(hasMigratedToMultiPartConfigKey, true)
         }
 
         // When we are only just starting to set up the account, we want to poll only the user
         // profile config so the user can see their name/avatar ASAP. Once this is done, we
         // will do a full poll immediately.
-        val pollOnlyUserProfileConfig = isFirstPollSinceApoStarted &&
+        val pollOnlyUserProfileConfig = isFirstPollSinceAppStarted &&
                 configFactory.withUserConfigs { it.userProfile.activeHashes().isEmpty() }
 
         poll(

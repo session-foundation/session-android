@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -70,11 +71,11 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOW_DON
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
+import org.thoughtcrime.securesms.preferences.PreferenceKey
 import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
-import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -274,12 +275,17 @@ interface TextSecurePreferences {
     fun isSendWithEnterEnabled() : Boolean
     fun updateBooleanFromKey(key : String, value : Boolean)
 
+    fun batchSet(vararg keyValues: Pair<PreferenceKey<*>, *>)
+    fun <T> set(key: PreferenceKey<T>, value: T)
+    fun remove(key: PreferenceKey<*>)
+    fun <T> get(key: PreferenceKey<T>): T
+    fun <T> watch(key: PreferenceKey<T>): Flow<T?>
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
     var migratedToGroupV2Config: Boolean
     var migratedToDisablingKDF: Boolean
-    var migratedToMultiPartConfig: Boolean
 
     var migratedDisappearingMessagesToMessageContent: Boolean
 
@@ -371,7 +377,6 @@ interface TextSecurePreferences {
         const val ENVIRONMENT = "debug_environment"
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
-        const val MIGRATED_TO_MULTIPART_CONFIG = "migrated_to_multi_part_config"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -758,10 +763,6 @@ class AppTextSecurePreferences @Inject constructor(
         set(value) = getDefaultSharedPreferences(context).edit(commit = true) {
             putBoolean(TextSecurePreferences.MIGRATED_TO_DISABLING_KDF, value)
         }
-
-    override var migratedToMultiPartConfig: Boolean
-        get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, false)
-        set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, value)
 
     override var migratedDisappearingMessagesToMessageContent: Boolean
         get() = getBooleanPreference("migrated_disappearing_messages_to_message_content", false)
@@ -1692,6 +1693,66 @@ class AppTextSecurePreferences @Inject constructor(
     override fun updateBooleanFromKey(key: String, value: Boolean) {
         setBooleanPreference(key, value)
         _events.tryEmit(key)
+    }
+
+    override fun batchSet(vararg keyValues: Pair<PreferenceKey<*>, *>) {
+        if (keyValues.isEmpty()) {
+            return
+        }
+
+        getDefaultSharedPreferences(context).edit {
+            for ((key, value) in keyValues) {
+                @Suppress("UNCHECKED_CAST")
+                when (val strategy = key.strategy) {
+                    is PreferenceKey.Strategy.PrimitiveBoolean -> putBoolean(key.name, value as Boolean)
+                    is PreferenceKey.Strategy.PrimitiveFloat -> putFloat(key.name, value as Float)
+                    is PreferenceKey.Strategy.PrimitiveInt -> putInt(key.name, value as Int)
+                    is PreferenceKey.Strategy.PrimitiveLong -> putLong(key.name, value as Long)
+                    is PreferenceKey.Strategy.PrimitiveString -> putString(key.name, value as? String)
+                    is PreferenceKey.Strategy.Json<*> -> putString(key.name,
+                        value?.let {
+                            json.encodeToString(strategy.serializer as SerializationStrategy<Any?>, it)
+                        }
+                    )
+                }
+            }
+        }
+
+        for ((key, _) in keyValues) {
+            _events.tryEmit(key.name)
+        }
+    }
+
+    override fun <T> set(key: PreferenceKey<T>, value: T) {
+        batchSet(key to value)
+    }
+
+    override fun remove(key: PreferenceKey<*>) {
+        getDefaultSharedPreferences(context).edit {
+            remove(key.name)
+        }
+
+        _events.tryEmit(key.name)
+    }
+
+    override fun <T> get(key: PreferenceKey<T>): T {
+        val prefs = getDefaultSharedPreferences(context)
+        @Suppress("UNCHECKED_CAST")
+        return when (val strategy = key.strategy) {
+            is PreferenceKey.Strategy.Json<*> -> prefs.getString(key.name, null)?.let { encoded ->
+                json.decodeFromString(strategy.serializer, encoded)
+            }
+            is PreferenceKey.Strategy.PrimitiveBoolean -> prefs.getBoolean(key.name, strategy.defaultValue)
+            is PreferenceKey.Strategy.PrimitiveFloat -> prefs.getFloat(key.name, strategy.defaultValue)
+            is PreferenceKey.Strategy.PrimitiveInt -> prefs.getInt(key.name, strategy.defaultValue)
+            is PreferenceKey.Strategy.PrimitiveLong -> prefs.getLong(key.name, strategy.defaultValue)
+            is PreferenceKey.Strategy.PrimitiveString -> prefs.getString(key.name, strategy.defaultValue)
+        } as T
+    }
+
+    override fun <T> watch(key: PreferenceKey<T>): Flow<T?> {
+        return _events.filter { it == key.name }
+            .map { get(key) }
     }
 }
 
