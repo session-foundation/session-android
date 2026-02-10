@@ -307,6 +307,14 @@
     <string name="qa_preferences_dialog_enable">preferences-dialog-option-enable</string>
     <string name="qa_preferences_dialog_cancel">preferences-dialog-option-cancel</string>
 
+    <!-- Help settings -->
+    <string name="qa_help_settings_export">preferences-option-export</string>
+    <string name="qa_help_settings_translate">preferences-option-translate</string>
+    <string name="qa_help_settings_feedback">preferences-option-feedback</string>
+    <string name="qa_help_settings_support">preferences-option-help</string>
+    <string name="qa_help_settings_faq">preferences-option-faq</string>
+
+
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>

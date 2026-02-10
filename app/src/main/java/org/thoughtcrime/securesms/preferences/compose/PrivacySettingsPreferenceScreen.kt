@@ -55,7 +55,7 @@ fun PrivacySettingsPreferenceScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
+        viewModel.uiEvents.collect { event ->
             when (event) {
                 is OpenAppNotificationSettings -> {
                     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
