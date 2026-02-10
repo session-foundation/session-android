@@ -18,6 +18,7 @@
         app:tabMinWidth="48dp"
         app:tabMode="scrollable"
         app:tabPaddingEnd="5dp"
+        app:tabRippleColor="@color/transparent"
         app:tabSelectedTextColor="?android:textColorPrimary"
         app:tabTextColor="?android:textColorTertiary"
         app:tabPaddingStart="5dp" />

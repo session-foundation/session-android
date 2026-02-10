@@ -51,7 +51,6 @@ import org.thoughtcrime.securesms.debugmenu.DebugLogger
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponents
-import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.glide.RemoteFileLoader
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
@@ -141,7 +140,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
         initializeWebRtc()
         initializeBlobProvider()
-        refresh()
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {

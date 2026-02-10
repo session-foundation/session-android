@@ -6,7 +6,6 @@ import org.session.libsession.network.SnodeClock
 import org.thoughtcrime.securesms.auth.AuthAwareComponentsHandler
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
-import org.thoughtcrime.securesms.emoji.EmojiIndexLoader
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import org.thoughtcrime.securesms.logging.PersistentLogger
@@ -37,7 +36,6 @@ class OnAppStartupComponents private constructor(
         appDisguiseManager: AppDisguiseManager,
         tokenFetcher: TokenFetcher,
         threadDatabase: ThreadDatabase,
-        emojiIndexLoader: EmojiIndexLoader,
         subscriptionCoordinator: SubscriptionCoordinator,
         authAwareHandler: AuthAwareComponentsHandler,
         snodeClock: SnodeClock,
@@ -55,7 +53,6 @@ class OnAppStartupComponents private constructor(
             appDisguiseManager,
             tokenFetcher,
             threadDatabase,
-            emojiIndexLoader,
             subscriptionCoordinator,
             authAwareHandler,
             snodeClock

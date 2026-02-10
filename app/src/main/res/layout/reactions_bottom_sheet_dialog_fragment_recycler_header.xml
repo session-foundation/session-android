@@ -15,15 +15,17 @@
         android:layout_width="match_parent"
         android:layout_marginHorizontal="@dimen/medium_spacing"
         android:gravity="center_vertical">
-        <org.thoughtcrime.securesms.components.emoji.EmojiImageView
+        <TextView
             android:id="@+id/header_view_emoji"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:textSize="@dimen/medium_font_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
             android:layout_gravity="center_vertical"
             android:gravity="center"
             android:textStyle="bold"
             app:emoji_forceCustom="true" />
+
         <TextView
             android:id="@+id/header_view_emoji_count"
             android:layout_weight="1"

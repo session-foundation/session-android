@@ -8,7 +8,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.util.AvatarUtils;
 
@@ -16,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 
 import network.loki.messenger.R;
+
+
 
 public final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecipientsAdapter.ViewHolder> {
 
@@ -132,8 +133,8 @@ public final class ReactionRecipientsAdapter extends RecyclerView.Adapter<Reacti
       clearAll.setOnClickListener(isUserModerator ? (View.OnClickListener) v -> {
         callback.onClearAll(emoji.getBaseEmoji(), messageId);
       } : null);
-      EmojiImageView emojiView = itemView.findViewById(R.id.header_view_emoji);
-      emojiView.setImageEmoji(emoji.getDisplayEmoji());
+      TextView emojiView = itemView.findViewById(R.id.header_view_emoji);
+      emojiView.setText(emoji.getDisplayEmoji());
       TextView count = itemView.findViewById(R.id.header_view_emoji_count);
       count.setText(String.format(" •  %s", emoji.getCount()));
     }

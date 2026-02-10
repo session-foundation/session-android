@@ -21,7 +21,6 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import org.session.libsession.utilities.recipients.Recipient;
-import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.util.AvatarUtils;
 import org.thoughtcrime.securesms.util.LifecycleDisposable;
@@ -125,12 +124,12 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
         tab.setCustomView(R.layout.reactions_pill_large);
 
         View           customView = Objects.requireNonNull(tab.getCustomView());
-        EmojiImageView emoji      = customView.findViewById(R.id.reactions_pill_emoji);
+        TextView emoji      = customView.findViewById(R.id.reactions_pill_emoji);
         TextView       text       = customView.findViewById(R.id.reactions_pill_count);
         EmojiCount     emojiCount = recipientsAdapter.getEmojiCount(position);
 
         customView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.reaction_pill_dialog_background));
-        emoji.setImageEmoji(emojiCount.getDisplayEmoji());
+        emoji.setText(emojiCount.getDisplayEmoji());
         text.setText(NumberUtil.getFormattedNumber(emojiCount.getCount()));
       });
 
