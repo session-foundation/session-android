@@ -21,7 +21,6 @@ import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import org.session.libsession.utilities.ServiceUtil;
 import org.thoughtcrime.securesms.util.LRUCache;
