@@ -17,11 +17,15 @@
 package org.thoughtcrime.securesms.mms;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.util.MediaUtil;
+
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -101,7 +105,7 @@ public class SlideDeck {
   }
 
     public @NonNull List<Slide> getThumbnailSlides() {
-        List<Slide> result = new LinkedList<>();
+        List<Slide> result = new ArrayList<>();
         for (Slide slide : slides) {
             if (slide.hasImage()) result.add(slide);
         }

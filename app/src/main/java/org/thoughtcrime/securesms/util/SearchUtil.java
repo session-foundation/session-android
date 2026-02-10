@@ -10,8 +10,8 @@ import androidx.annotation.Nullable;
 
 import org.session.libsignal.utilities.Pair;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -66,7 +66,7 @@ public class SearchUtil {
     String       normalizedText      = text.toLowerCase(locale);
     String       normalizedHighlight = highlight.toLowerCase(locale);
 
-    List<String> highlightTokens = new LinkedList<>();
+    List<String> highlightTokens = new ArrayList<>();
 
     for (String token : normalizedHighlight.split("\\s+")) {
           if (!token.isEmpty()) {
@@ -74,7 +74,7 @@ public class SearchUtil {
           }
     }
 
-    List<Pair<Integer, Integer>> ranges = new LinkedList<>();
+    List<Pair<Integer, Integer>> ranges = new ArrayList<>();
 
     int lastHighlightEndIndex = 0;
 
