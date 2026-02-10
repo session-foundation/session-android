@@ -296,9 +296,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
         })
 
         lifecycleScope.launch {
-            homeViewModel.shouldShowCurrentUserProBadge
-                .collectLatest {
-                    binding.sessionHeaderProBadge.isVisible = it
+            homeViewModel.uiState.collectLatest {
+                    binding.sessionHeaderProBadge.isVisible = it.showCurrentUserProBadge
                 }
         }
 
@@ -326,7 +325,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
             binding.seedReminderView.setThemedContent {
-                if (!textSecurePreferences.getHasViewedSeed()) SeedReminder { start<RecoveryPasswordActivity>() }
+                val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+                if (uiState.showRecoveryPhraseBackupBanner) SeedReminder { start<RecoveryPasswordActivity>() }
             }
         }
 

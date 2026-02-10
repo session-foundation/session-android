@@ -144,6 +144,15 @@ class HomeViewModel @Inject constructor(
             .onStart { emit(Unit) }
             .map { prefs.hasHiddenMessageRequests() }
     ) { (unapproveConvoCount, convoList), typingStatus, hiddenMessageRequest ->
+        // check if we should show the recovery phrase backup banner:
+        // - if the user has not yet seen the warning
+        // - if the user has at least 3 conversations
+        if (!prefs.getHasViewedSeed() && convoList.size >= 3){
+            _uiState.update {
+                it.copy(showRecoveryPhraseBackupBanner = true)
+            }
+        }
+
         Data(
             items = buildList {
                 if (unapproveConvoCount > 0 && !hiddenMessageRequest) {
@@ -163,10 +172,8 @@ class HomeViewModel @Inject constructor(
         emit(null)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
-        .observeSelf()
-        .map { it.isPro } // this is one place where the badge shows even if you decided to hide it - always show it on the home screen is the user is pro
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val _uiState = MutableStateFlow<UIState>(UIState())
+    val uiState: StateFlow<UIState> = _uiState
 
     private var userProfileModalJob: Job? = null
     private var userProfileModalUtils: UserProfileUtils? = null
@@ -252,6 +259,17 @@ class HomeViewModel @Inject constructor(
                 // check if we should display the donation CTA - unless we have a pro CTA already
                 if(!showExpiring && !showExpired && donationManager.shouldShowDonationCTA()){
                     showDonationCTA()
+                }
+            }
+        }
+
+        // observe current user's recipient data change
+        viewModelScope.launch {
+            recipientRepository.observeSelf().collect {
+                _uiState.update { state ->
+                    state.copy(
+                        showCurrentUserProBadge = it.isPro
+                    )
                 }
             }
         }
@@ -502,6 +520,11 @@ class HomeViewModel @Inject constructor(
         data class OpenProSettings(val start: ProSettingsDestination) : UiEvent
         data object ShowWhiteListSystemDialog: UiEvent // once confirmed, this is for the system whitelist dialog
     }
+
+    data class UIState(
+        val showCurrentUserProBadge: Boolean = false,
+        val showRecoveryPhraseBackupBanner: Boolean = false
+    )
 
     sealed interface Commands {
         data object HidePinCTADialog : Commands

@@ -2,7 +2,12 @@
 
 ########## BASELINE / ATTRIBUTES ##########
 # Core attrs (serialization/DI/reflective access often rely on these)
--keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,MethodParameters,Record
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,MethodParameters,Record,KotlinMetadata
+
+# Keep Kotlin collection singleton
+-keep class kotlin.collections.EmptySet { *; }
+-keep class kotlin.collections.EmptyList { *; }
+-keep class kotlin.collections.EmptyMap { *; }
 
 # Honor @Keep if present
 -keep @androidx.annotation.Keep class * { *; }
@@ -136,6 +141,10 @@
 -keep class org.session.libsession.messaging.utilities.UpdateMessageData { *; }
 -keep class org.session.libsession.messaging.utilities.UpdateMessageData$* { *; }
 -keepnames class org.session.libsession.messaging.utilities.UpdateMessageData$*
+-keep class org.session.libsession.messaging.utilities.Data { *; }
+-keepnames class org.session.libsession.messaging.utilities.Data
+-keep class org.session.libsession.messaging.messages.Message { *; }
+-keepnames class org.session.libsession.messaging.messages.Message
 
 ########## HUAWEI / HMS (minified builds) ##########
 # Device-only classes referenced by HMS internals — not present on Maven.
