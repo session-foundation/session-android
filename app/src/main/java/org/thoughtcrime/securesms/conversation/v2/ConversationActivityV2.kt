@@ -951,6 +951,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     pendingRecyclerViewScrollState == null &&
                     !hasRestoredRecyclerViewScrollState
 
+                if (shouldAutoScrollOnFirstLoad) {
+                    scrollToFirstUnreadMessageOrBottom()
+                } else {
+                    // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
+                    // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
+                    if (binding.conversationRecyclerView.isNearBottom &&
+                        !binding.conversationRecyclerView.isFullyScrolled) {
+                        gotoConversationEnd()
+                    }
+                }
+
                 // We should do this check regardless of whether we're restoring a saved scroll position.
                 if (firstLoad && unreadCount == 0 && adapter.itemCount > 0) {
                     lifecycleScope.launch(Dispatchers.Default) {
@@ -968,17 +979,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                                 )
                             }
                         }
-                    }
-                }
-
-                if (shouldAutoScrollOnFirstLoad) {
-                    scrollToFirstUnreadMessageOrBottom()
-                } else {
-                    // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
-                    // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
-                    if (binding.conversationRecyclerView.isNearBottom &&
-                        !binding.conversationRecyclerView.isFullyScrolled) {
-                        gotoConversationEnd()
                     }
                 }
 
