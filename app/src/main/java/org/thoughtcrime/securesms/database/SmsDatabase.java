@@ -26,8 +26,6 @@ import android.database.Cursor;
 import androidx.collection.ArraySet;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.json.JSONArray;
@@ -554,8 +552,8 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(TYPE, type);
     contentValues.put(EXPIRES_IN, message.getExpiresInMillis());
     contentValues.put(EXPIRE_STARTED, message.getExpireStartedAtMillis());
-    contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());
-    contentValues.put(READ_RECEIPT_COUNT, Stream.of(earlyReadReceipts.values()).mapToLong(Long::longValue).sum());
+    contentValues.put(DELIVERY_RECEIPT_COUNT, earlyDeliveryReceipts.values().stream().mapToLong(Long::longValue).sum());
+    contentValues.put(READ_RECEIPT_COUNT, earlyReadReceipts.values().stream().mapToLong(Long::longValue).sum());
     contentValues.put(PRO_MESSAGE_FEATURES, ProFeatureExtKt.toProMessageBitSetValue(message.getProFeatures()));
     contentValues.put(PRO_PROFILE_FEATURES, ProFeatureExtKt.toProProfileBitSetValue(message.getProFeatures()));
 

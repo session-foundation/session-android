@@ -25,8 +25,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
-import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.json.JSONArray;
@@ -61,12 +59,14 @@ import org.thoughtcrime.securesms.util.SharedConfigUtilsKt;
 import java.io.Closeable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -152,9 +152,10 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED, SNIPPET_CONTENT,
   };
 
-  private static final List<String> TYPED_THREAD_PROJECTION = Stream.of(THREAD_PROJECTION)
-                                                                    .map(columnName -> TABLE_NAME + "." + columnName)
-                                                                    .toList();
+  private static final List<String> TYPED_THREAD_PROJECTION =
+            Arrays.stream(THREAD_PROJECTION)
+                    .map(columnName -> TABLE_NAME + "." + columnName)
+                    .collect(Collectors.toList());
 
   private static final List<String> COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION =
           CollectionsKt.plus(

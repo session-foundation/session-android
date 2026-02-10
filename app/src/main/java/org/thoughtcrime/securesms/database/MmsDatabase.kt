@@ -20,7 +20,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.annimon.stream.Stream
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
@@ -594,14 +593,8 @@ class MmsDatabase @Inject constructor(
         contentValues.put(ADDRESS, message.recipient.toString())
         contentValues.put(PRO_PROFILE_FEATURES, message.proFeatures.toProProfileBitSetValue())
         contentValues.put(PRO_MESSAGE_FEATURES, message.proFeatures.toProMessageBitSetValue())
-        contentValues.put(
-            DELIVERY_RECEIPT_COUNT,
-            Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }
-                .sum())
-        contentValues.put(
-            READ_RECEIPT_COUNT,
-            Stream.of(earlyReadReceipts.values).mapToLong { obj: Long -> obj }
-                .sum())
+        contentValues.put(DELIVERY_RECEIPT_COUNT, earlyDeliveryReceipts.values.sum())
+        contentValues.put(READ_RECEIPT_COUNT, earlyReadReceipts.values.sum())
         val quoteAttachments: MutableList<Attachment?> = LinkedList()
         if (message.outgoingQuote != null) {
             contentValues.put(QUOTE_ID, message.outgoingQuote.id)
@@ -667,10 +660,9 @@ class MmsDatabase @Inject constructor(
         val allAttachments: MutableList<Attachment?> = LinkedList()
         val thumbnailJobs: MutableList<AttachmentId> = ArrayList()  // Collector for thumbnail jobs
 
-        val previewAttachments =
-            Stream.of(linkPreviews).filter { lp: LinkPreview -> lp.getThumbnail().isPresent }
-                .map { lp: LinkPreview -> lp.getThumbnail().get() }
-                .toList()
+        val previewAttachments: List<Attachment> =
+            linkPreviews
+                .mapNotNull { lp -> lp.getThumbnail().orNull() }
 
         allAttachments.addAll(attachments)
         allAttachments.addAll(previewAttachments)
@@ -1066,11 +1058,10 @@ class MmsDatabase @Inject constructor(
             return recipientRepository.getRecipientSync(serialized.toAddress())
         }
 
-        private fun getSlideDeck(attachments: List<DatabaseAttachment?>): SlideDeck? {
-            val messageAttachments: List<Attachment?>? = Stream.of(attachments)
-                .filterNot { obj: DatabaseAttachment? -> obj!!.isQuote }
-                .toList()
-            return SlideDeck(context, messageAttachments!!)
+        private fun getSlideDeck(attachments: List<DatabaseAttachment?>): SlideDeck {
+            val messageAttachments: List<Attachment?> =
+                attachments.filterNot { it?.isQuote == true }
+            return SlideDeck(context, messageAttachments)
         }
 
         private fun getQuote(cursor: Cursor): Quote? {
@@ -1082,11 +1073,10 @@ class MmsDatabase @Inject constructor(
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (
-                    (retrievedQuote as? MmsMessageRecord)?.slideDeck ?:
-                    Stream.of(attachmentDatabase.getAttachment(cursor))
-                        .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
-                        .toList()
-                        .let { SlideDeck(context, it) }
+                    (retrievedQuote as? MmsMessageRecord)?.slideDeck
+                        ?: attachmentDatabase.getAttachment(cursor)
+                            .filter { it?.isQuote == true }
+                            .let { SlideDeck(context, it) }
                     )
             return Quote(
                 quoteId,

@@ -68,7 +68,6 @@ import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
-import com.annimon.stream.Stream
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
@@ -2984,14 +2983,21 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun saveAttachments(message: MmsMessageRecord) {
-        val attachments: List<SaveAttachmentTask.Attachment?> = Stream.of(message.slideDeck.slides)
-            .filter { s: Slide -> s.uri != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument()) }
-            .map { s: Slide -> SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.filename) }
-            .toList()
+        val attachments: List<SaveAttachmentTask.Attachment> =
+            message.slideDeck.slides
+                .asSequence()
+                .filter { s ->
+                    s.uri != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument())
+                }
+                .map { s ->
+                    SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.filename)
+                }
+                .toList()
+
         if (attachments.isNotEmpty()) {
             val saveTask = SaveAttachmentTask(this)
             saveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, *attachments.toTypedArray())
-            if (!message.isOutgoing) { sendMediaSavedNotification() }
+            if (!message.isOutgoing) sendMediaSavedNotification()
             return
         }
         // Implied else that there were no attachment(s)
