@@ -8,8 +8,6 @@ import android.text.style.CharacterStyle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.annimon.stream.Stream;
-
 import org.session.libsignal.utilities.Pair;
 
 import java.util.Collections;
@@ -67,7 +65,14 @@ public class SearchUtil {
 
     String       normalizedText      = text.toLowerCase(locale);
     String       normalizedHighlight = highlight.toLowerCase(locale);
-    List<String> highlightTokens     = Stream.of(normalizedHighlight.split("\\s")).filter(s -> s.trim().length() > 0).toList();
+
+    List<String> highlightTokens = new LinkedList<>();
+
+    for (String token : normalizedHighlight.split("\\s+")) {
+          if (!token.isEmpty()) {
+              highlightTokens.add(token);
+          }
+    }
 
     List<Pair<Integer, Integer>> ranges = new LinkedList<>();
 

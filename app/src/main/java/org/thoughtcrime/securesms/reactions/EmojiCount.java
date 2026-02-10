@@ -2,8 +2,6 @@ package org.thoughtcrime.securesms.reactions;
 
 import androidx.annotation.NonNull;
 
-import com.annimon.stream.Stream;
-
 import java.util.List;
 
 import kotlin.collections.CollectionsKt;
