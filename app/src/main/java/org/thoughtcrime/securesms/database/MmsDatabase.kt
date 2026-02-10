@@ -661,9 +661,8 @@ class MmsDatabase @Inject constructor(
         val thumbnailJobs: MutableList<AttachmentId> = ArrayList()  // Collector for thumbnail jobs
 
         val previewAttachments: List<Attachment> =
-            linkPreviews.asSequence()
+            linkPreviews
                 .mapNotNull { lp -> lp.getThumbnail().orNull() }
-                .toList()
 
         allAttachments.addAll(attachments)
         allAttachments.addAll(previewAttachments)
