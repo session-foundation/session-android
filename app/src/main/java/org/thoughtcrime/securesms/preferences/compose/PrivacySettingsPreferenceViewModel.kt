@@ -43,11 +43,11 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
 
     private val keyguardSecure = MutableStateFlow(true)
 
-    private val mutableEvents = MutableSharedFlow<PrivacySettingsPreferenceEvent>(
+    private val _uiEvents = MutableSharedFlow<PrivacySettingsPreferenceEvent>(
         replay = 1,
         extraBufferCapacity = 1
     )
-    val events get() = mutableEvents
+    val uiEvents get() = _uiEvents
 
     private val _uiState = MutableStateFlow(UIState())
     val uiState: StateFlow<UIState> = _uiState
@@ -162,7 +162,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
             val index = prefItemsOrder.indexOf(keyToScroll)
             if (index >= 0) {
                 delay(500L) // slight delay to make the transition less jarring
-                mutableEvents.tryEmit(
+                _uiEvents.tryEmit(
                     PrivacySettingsPreferenceEvent.ScrollToIndex(index)
                 )
             }
@@ -201,7 +201,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
                 if (!uiState.value.screenLockEnabled) return
                 prefs.setScreenLockEnabled(command.isEnabled)
                 viewModelScope.launch {
-                    mutableEvents.emit(PrivacySettingsPreferenceEvent.StartLockToggledService)
+                    _uiEvents.emit(PrivacySettingsPreferenceEvent.StartLockToggledService)
                 }
             }
 
@@ -234,13 +234,13 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
             Commands.AskMicPermission -> {
                 // Ask for permission
                 viewModelScope.launch {
-                    mutableEvents.emit(PrivacySettingsPreferenceEvent.AskMicrophonePermission)
+                    _uiEvents.emit(PrivacySettingsPreferenceEvent.AskMicrophonePermission)
                 }
             }
 
             Commands.NavigateToAppNotificationsSettings -> {
                 viewModelScope.launch {
-                    mutableEvents.emit(PrivacySettingsPreferenceEvent.OpenAppNotificationSettings)
+                    _uiEvents.emit(PrivacySettingsPreferenceEvent.OpenAppNotificationSettings)
                 }
             }
 

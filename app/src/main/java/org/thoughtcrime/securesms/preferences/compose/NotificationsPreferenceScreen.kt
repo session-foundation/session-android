@@ -72,7 +72,7 @@ fun NotificationsPreferenceScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
+        viewModel.uiEvents.collect { event ->
             when (event) {
                 is NavigateToActivity -> {
                     context.startActivity(event.intent)
