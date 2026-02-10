@@ -15,6 +15,7 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -459,6 +460,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private var isKeyboardVisible = false
 
+    private var pendingRecyclerViewScrollState: Parcelable? = null
+    private var hasRestoredRecyclerViewScrollState: Boolean = false
+
     private lateinit var reactionDelegate: ConversationReactionDelegate
     private val reactWithAnyEmojiStartPage = -1
 
@@ -529,6 +533,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Extras
         private const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
+        private const val CONVERSATION_SCROLL_STATE = "conversation_scroll_state"
 
         const val SHOW_SEARCH = "show_search"
 
@@ -569,6 +574,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
+
+        pendingRecyclerViewScrollState = savedInstanceState?.getParcelable(CONVERSATION_SCROLL_STATE)
+        hasRestoredRecyclerViewScrollState = false
 
         // Check if address is null before proceeding with initialization
         if (
@@ -924,39 +932,53 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             unreadCount = data.threadUnreadCount
             updateUnreadCountIndicator()
 
+            // If we have a saved RecyclerView scroll state (after rotation), restore it and skip first-load autoscroll.
+            if (!hasRestoredRecyclerViewScrollState && pendingRecyclerViewScrollState != null) {
+                val lm = binding.conversationRecyclerView.layoutManager
+                binding.conversationRecyclerView.runWhenLaidOut {
+                    lm?.onRestoreInstanceState(pendingRecyclerViewScrollState)
+                    hasRestoredRecyclerViewScrollState = true
+                    pendingRecyclerViewScrollState = null
+                }
+            }
+
             if (messageToScrollTo != null) {
                 if(gotoMessageById(messageToScrollTo!!.id, smoothScroll = messageToScrollTo!!.smoothScroll, highlight = firstLoad)){
                     messageToScrollTo = null
                 }
             } else {
-                if (firstLoad) {
+                val shouldAutoScrollOnFirstLoad = firstLoad &&
+                    pendingRecyclerViewScrollState == null &&
+                    !hasRestoredRecyclerViewScrollState
+
+                if (shouldAutoScrollOnFirstLoad) {
                     scrollToFirstUnreadMessageOrBottom()
-
-                    // On the first load, check if there unread messages
-                    if (unreadCount == 0 && adapter.itemCount > 0) {
-                        lifecycleScope.launch(Dispatchers.Default) {
-                            val isUnread = configFactory.withUserConfigs {
-                                it.convoInfoVolatile.getConversationUnread(
-                                    viewModel.address,
-                                )
-                            }
-
-                            viewModel.threadId?.let { threadId ->
-                                if (isUnread) {
-                                    storage.markConversationAsRead(
-                                        threadId,
-                                        clock.currentTimeMillis()
-                                    )
-                                }
-                            }
-                        }
-                    }
                 } else {
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
                     if (binding.conversationRecyclerView.isNearBottom &&
                         !binding.conversationRecyclerView.isFullyScrolled) {
                         gotoConversationEnd()
+                    }
+                }
+
+                // We should do this check regardless of whether we're restoring a saved scroll position.
+                if (firstLoad && unreadCount == 0 && adapter.itemCount > 0) {
+                    lifecycleScope.launch(Dispatchers.Default) {
+                        val isUnread = configFactory.withUserConfigs {
+                            it.convoInfoVolatile.getConversationUnread(
+                                viewModel.address,
+                            )
+                        }
+
+                        viewModel.threadId?.let { threadId ->
+                            if (isUnread) {
+                                storage.markConversationAsRead(
+                                    threadId,
+                                    clock.currentTimeMillis()
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -970,6 +992,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         viewModel.recipient.let {
             setUpOutdatedClientBanner()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        // Persist the current scroll position so rotations (e.g., portrait <-> landscape) don't jump to bottom.
+        val lm = binding.conversationRecyclerView.layoutManager
+        val state = lm?.onSaveInstanceState()
+        if (state != null) {
+            outState.putParcelable(CONVERSATION_SCROLL_STATE, state)
         }
     }
 
@@ -2270,10 +2303,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         currentTargetedScrollOffsetPx = offset
         pendingHighlightMessagePosition = if (highlight) position else null
 
+        val lastIndex = adapter.itemCount - 1
+        val snapToEnd = (position == lastIndex)
+
         val scroller = object : LinearSmoothScroller(rv.context) {
-            override fun getVerticalSnapPreference(): Int = SNAP_TO_START
+            override fun getVerticalSnapPreference(): Int =
+                if (snapToEnd) SNAP_TO_END else SNAP_TO_START
+
             override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
-                return super.calculateDyToMakeVisible(view, snapPreference) + currentTargetedScrollOffsetPx
+                val dy = super.calculateDyToMakeVisible(view, snapPreference)
+                return if (snapToEnd) dy else dy + currentTargetedScrollOffsetPx
             }
         }
         scroller.targetPosition = position

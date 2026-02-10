@@ -271,8 +271,9 @@ class VisibleMessageView : FrameLayout {
         // Update message status indicator
         showStatusMessage(message, lastSentMessageId)
 
-        // Emoji Reactions
-        if (!message.isDeleted && message.reactions.isNotEmpty()) {
+        // Emoji Reactions // we hide the emoji reactions if the contact isn't approved, nor approved us
+        if (!message.isDeleted && message.reactions.isNotEmpty()
+            && threadRecipient.approvedMe && threadRecipient.approved) {
             val capabilities = (threadRecipient.address as? Address.Community)?.serverUrl?.let { lokiApiDb.getServerCapabilities(it) }
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
