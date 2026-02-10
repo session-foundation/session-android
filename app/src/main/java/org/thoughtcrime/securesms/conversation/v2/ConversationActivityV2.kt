@@ -2270,10 +2270,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         currentTargetedScrollOffsetPx = offset
         pendingHighlightMessagePosition = if (highlight) position else null
 
+        val lastIndex = adapter.itemCount - 1
+        val snapToEnd = (position == lastIndex)
+
         val scroller = object : LinearSmoothScroller(rv.context) {
-            override fun getVerticalSnapPreference(): Int = SNAP_TO_START
+            override fun getVerticalSnapPreference(): Int =
+                if (snapToEnd) SNAP_TO_END else SNAP_TO_START
+
             override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
-                return super.calculateDyToMakeVisible(view, snapPreference) + currentTargetedScrollOffsetPx
+                val dy = super.calculateDyToMakeVisible(view, snapPreference)
+                return if (snapToEnd) dy else dy + currentTargetedScrollOffsetPx
             }
         }
         scroller.targetPosition = position
