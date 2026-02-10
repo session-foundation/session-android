@@ -947,28 +947,32 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     messageToScrollTo = null
                 }
             } else {
-                if (firstLoad && pendingRecyclerViewScrollState == null && !hasRestoredRecyclerViewScrollState) {
-                    scrollToFirstUnreadMessageOrBottom()
+                val shouldAutoScrollOnFirstLoad = firstLoad &&
+                    pendingRecyclerViewScrollState == null &&
+                    !hasRestoredRecyclerViewScrollState
 
-                    // On the first load, check if there unread messages
-                    if (unreadCount == 0 && adapter.itemCount > 0) {
-                        lifecycleScope.launch(Dispatchers.Default) {
-                            val isUnread = configFactory.withUserConfigs {
-                                it.convoInfoVolatile.getConversationUnread(
-                                    viewModel.address,
+                // We should do this check regardless of whether we're restoring a saved scroll position.
+                if (firstLoad && unreadCount == 0 && adapter.itemCount > 0) {
+                    lifecycleScope.launch(Dispatchers.Default) {
+                        val isUnread = configFactory.withUserConfigs {
+                            it.convoInfoVolatile.getConversationUnread(
+                                viewModel.address,
+                            )
+                        }
+
+                        viewModel.threadId?.let { threadId ->
+                            if (isUnread) {
+                                storage.markConversationAsRead(
+                                    threadId,
+                                    clock.currentTimeMillis()
                                 )
-                            }
-
-                            viewModel.threadId?.let { threadId ->
-                                if (isUnread) {
-                                    storage.markConversationAsRead(
-                                        threadId,
-                                        clock.currentTimeMillis()
-                                    )
-                                }
                             }
                         }
                     }
+                }
+
+                if (shouldAutoScrollOnFirstLoad) {
+                    scrollToFirstUnreadMessageOrBottom()
                 } else {
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
