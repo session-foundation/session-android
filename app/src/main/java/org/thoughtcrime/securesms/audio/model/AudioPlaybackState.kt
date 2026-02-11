@@ -16,7 +16,7 @@ sealed class AudioPlaybackState(
         }
     }
 
-    data object Idle : AudioPlaybackState(1f)
+    data class Idle(override val playbackSpeed: Float = 1f) : AudioPlaybackState(playbackSpeed)
 
     sealed class Active(
         open val playable: PlayableAudio,
