@@ -35,7 +35,6 @@ import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.notifications.PushUnregisterApi
-import kotlin.jvm.Throws
 
 @HiltWorker
 class GroupLeavingWorker @AssistedInject constructor(
