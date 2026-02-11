@@ -5,8 +5,6 @@
  */
 package org.session.libsession.messaging.sending_receiving.attachments
 
-import org.session.libsignal.utilities.guava.Optional
-
 /**
  * Represents a received SignalServiceAttachment "handle."  This
  * is a pointer to the actual attachment content, which needs to be

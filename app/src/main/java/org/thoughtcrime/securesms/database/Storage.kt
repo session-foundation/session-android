@@ -400,7 +400,7 @@ open class Storage @Inject constructor(
                 )
                 smsDatabase.insertMessageInbox(textMessage.copy(isSecureMessage = true), message.receivedTimestamp ?: 0, runThreadUpdate)
             }
-            messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
+            messageID = insertResult?.messageId?.let { MessageId(it, mms = false) }
         }
 
         message.serverHash?.let { serverHash ->
@@ -847,7 +847,7 @@ open class Storage @Inject constructor(
                 isGroupUpdateMessage = true,
                 message = inviteJson
             ),  true)
-            return insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
+            return insertResult?.messageId?.let { MessageId(it, mms = false) }
         }
     }
 
