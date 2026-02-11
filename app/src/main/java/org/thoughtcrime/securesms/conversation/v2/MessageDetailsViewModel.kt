@@ -235,7 +235,10 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private fun AttachmentDatabase.duration(slide: Slide): String? =
         slide.takeIf { it.hasAudio() }
             ?.run { asAttachment() as? DatabaseAttachment }
-            ?.run { getAttachmentAudioExtras(attachmentId)?.durationMs }
+            ?.run {
+                getAttachmentAudioExtras(attachmentId)?.durationMs
+                    ?: this.audioDurationMs
+            }
             ?.takeIf { it > 0 }
             ?.let {
                 String.format(
