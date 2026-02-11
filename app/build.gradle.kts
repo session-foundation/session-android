@@ -395,7 +395,6 @@ dependencies {
     implementation(libs.subsampling.scale.image.view) {
         exclude(group = "com.android.support", module = "support-annotations")
     }
-    implementation(libs.stream)
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)

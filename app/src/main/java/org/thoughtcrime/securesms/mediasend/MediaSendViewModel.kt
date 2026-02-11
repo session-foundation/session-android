@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
-import com.annimon.stream.Stream
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +15,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
@@ -138,22 +136,17 @@ class MediaSendViewModel @Inject constructor(
                     _effects.tryEmit(MediaSendEffect.ShowError(Error.TOO_MANY_ITEMS))
                 }
 
-                val computedId: String =
-                    if (filteredMedia.isNotEmpty()) {
-                        Stream.of(filteredMedia)
-                            .skip(1)
-                            .reduce(
-                                filteredMedia[0].bucketId ?: Media.ALL_MEDIA_BUCKET_ID
-                            ) { id: String?, m: Media ->
-                                if (equals(id, m.bucketId ?: Media.ALL_MEDIA_BUCKET_ID)) {
-                                    id
-                                } else {
-                                    Media.ALL_MEDIA_BUCKET_ID
-                                }
-                            }
-                    } else {
-                        Media.ALL_MEDIA_BUCKET_ID
-                    }
+                val computedId = run {
+                    fun String?.normalize() = this?.ifEmpty { Media.ALL_MEDIA_BUCKET_ID }
+                        ?: Media.ALL_MEDIA_BUCKET_ID
+
+                    filteredMedia
+                        .asSequence()
+                        .drop(1)
+                        .fold(filteredMedia.firstOrNull()?.bucketId.normalize()) { acc, media ->
+                            if (acc == media.bucketId.normalize()) acc else Media.ALL_MEDIA_BUCKET_ID
+                        }
+                }
 
                 val newVisibility =
                     if (filteredMedia.isEmpty()) CountButtonState.Visibility.CONDITIONAL
@@ -468,18 +461,13 @@ class MediaSendViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        if (!sentMedia) {
-            Stream.of(selectedMedia)
-                .map { obj: Media -> obj.uri }
-                .filter { uri: Uri? ->
-                    BlobUtils.isAuthority(
-                        uri!!
-                    )
-                }
-                .forEach { uri: Uri? ->
-                    BlobUtils.getInstance().delete(context, uri!!)
-                }
-        }
+        if (sentMedia) return
+
+        selectedMedia
+            .asSequence()
+            .map { it.uri }
+            .filter(BlobUtils::isAuthority)
+            .forEach { BlobUtils.getInstance().delete(context, it) }
     }
 
     enum class Error {
