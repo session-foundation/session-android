@@ -12,8 +12,11 @@ import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import java.io.DataInputStream
 import java.lang.ref.WeakReference
+import java.util.Locale
+import java.util.Optional
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.absoluteValue
 
 
@@ -23,10 +26,8 @@ class IP2Country @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
     // Cache for IP to country name lookups.
-    // Note that due to the limitation of LruCache, the country name can't be null.
-    // So we will store an empty country name for IPs that don't have a match,
-    // and handle that case in the lookup method.
-    private val countryNamesCache = LruCache<String, String>(16)
+    // Note that due to the limitation of LruCache, the country record can't be null.
+    private val countryCache = LruCache<String, Optional<CountryRecord>>(16)
 
     private var ipv4ToCountryRef = WeakReference<Pair<UIntArray, IntArray>>(null)
 
@@ -69,7 +70,12 @@ class IP2Country @Inject constructor(
         }
     }
 
-    private val countryToNames: IntObjectMap<String> by lazy {
+    private data class CountryRecord(
+        val countryCode: String,
+        val englishName: String,
+    )
+
+    private val countryByRegionId: IntObjectMap<CountryRecord> by lazy {
         CSVReader(context.resources.openRawResource(R.raw.geolite2_country_locations_english).reader())
             .use { csv ->
                 csv.skip(1)
@@ -81,7 +87,10 @@ class IP2Country @Inject constructor(
                         .forEach { cols ->
                             val code = cols[0].toInt()
                             val name = cols[5]
-                            put(code, name)
+                            put(code, CountryRecord(
+                                countryCode = cols[4],
+                                englishName = name,
+                            ))
                         }
                 }.apply {
                     Log.d(TAG, "Loaded country code to name mapping in ${System.currentTimeMillis() - start}ms")
@@ -96,25 +105,33 @@ class IP2Country @Inject constructor(
     // region Implementation
     suspend fun lookupCountry(ip: String): String? {
         // return early if cached
-        var found = countryNamesCache[ip]
+        var found = countryCache[ip]
         if (found == null) {
-            found = withContext(Dispatchers.Default) {
+            found = Optional.ofNullable(withContext(Dispatchers.Default) {
                 val ipInt = ipv4Int(ip)
                 val (ips, codes) = ensureIpv4ToCountry()
 
                 val index = ips.binarySearch(ipInt).let { it.takeIf { it >= 0 } ?: (it.absoluteValue - 2) }
                 val code = codes.getOrNull(index)
-                code?.let(countryToNames::get)
-            }
+                code?.let(countryByRegionId::get)
+            })
 
-            countryNamesCache.put(ip, found.orEmpty())
+            countryCache.put(ip, found)
 
-            if (found == null) {
+            if (found.isEmpty) {
                 Log.d(TAG, "Country name for $ip couldn't be found")
             }
         }
 
-        return found?.takeIf { it.isNotBlank() }
+        return found.getOrNull()?.let { record ->
+            Locale.Builder()
+                .setRegion(record.countryCode)
+                .build()
+                .displayCountry
+                .takeIf { it.isNotBlank() }
+                ?: record.englishName
+
+        }
     }
     // endregion
 
