@@ -79,3 +79,11 @@ jobs:
         id: build
         run: ./gradlew testPlayDebugUnitTest --stacktrace
 
+      - name: Upload build reports regardless
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-reports
+          path: app/build/reports
+          if-no-files-found: ignore
+
