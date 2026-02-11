@@ -5,7 +5,6 @@ import static org.session.libsignal.utilities.Util.SECURE_RANDOM;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
-import com.annimon.stream.Stream;
 import com.bumptech.glide.util.ContentLengthInputStream;
 
 import org.session.libsignal.utilities.Log;
@@ -128,60 +127,69 @@ public class ChunkedDataFetcher {
     return compositeController;
   }
 
-  private void fetchChunks(@NonNull String url,
-                           long contentLength,
-                           Optional<Pair<InputStream, Long>> firstChunk,
-                           CompositeRequestController compositeController,
-                           Callback callback)
-  {
-    List<ByteRange> requestPattern;
-    try {
-      if (firstChunk.isPresent()) {
-        requestPattern = Stream.of(getRequestPattern(contentLength - firstChunk.get().second()))
-                               .map(b -> new ByteRange(b.start + firstChunk.get().second(),
-                                                       b.end   + firstChunk.get().second(),
-                                                       b.ignoreFirst))
-                               .toList();
-      } else {
-        requestPattern = getRequestPattern(contentLength);
-      }
-    } catch (IOException e) {
-      callback.onFailure(e);
-      compositeController.cancel();
-      return;
-    }
+    private void fetchChunks(@NonNull String url,
+                             long contentLength,
+                             Optional<Pair<InputStream, Long>> firstChunk,
+                             CompositeRequestController compositeController,
+                             Callback callback)
+    {
+        final List<ByteRange> requestPattern;
+        try {
+            if (firstChunk.isPresent()) {
+                long offset = firstChunk.get().second();
 
-    SignalExecutors.UNBOUNDED.execute(() -> {
-      List<CallRequestController> controllers = Stream.of(requestPattern).map(range -> makeChunkRequest(client, url, range)).toList();
-      List<InputStream>           streams     = new ArrayList<>(controllers.size() + (firstChunk.isPresent() ? 1 : 0));
-
-      if (firstChunk.isPresent()) {
-        streams.add(firstChunk.get().first());
-      }
-
-      Stream.of(controllers).forEach(compositeController::addController);
-
-      for (CallRequestController controller : controllers) {
-        Optional<InputStream> stream = controller.getStream();
-
-        if (!stream.isPresent()) {
-          Log.w(TAG, "Stream was canceled.");
-          callback.onFailure(new IOException("Failure"));
-          compositeController.cancel();
-          return;
+                List<ByteRange> base = getRequestPattern(contentLength - offset);
+                List<ByteRange> shifted = new ArrayList<>(base.size());
+                for (ByteRange b : base) {
+                    shifted.add(new ByteRange(b.start + offset, b.end + offset, b.ignoreFirst));
+                }
+                requestPattern = shifted;
+            } else {
+                requestPattern = getRequestPattern(contentLength);
+            }
+        } catch (IOException e) {
+            callback.onFailure(e);
+            compositeController.cancel();
+            return;
         }
 
-        streams.add(stream.get());
-      }
+        SignalExecutors.UNBOUNDED.execute(() -> {
+            List<CallRequestController> controllers = new ArrayList<>(requestPattern.size());
+            for (ByteRange range : requestPattern) {
+                controllers.add(makeChunkRequest(client, url, range));
+            }
 
-      try {
-        callback.onSuccess(new InputStreamList(streams));
-      } catch (IOException e) {
-        callback.onFailure(e);
-        compositeController.cancel();
-      }
-    });
-  }
+            List<InputStream> streams = new ArrayList<>(controllers.size() + (firstChunk.isPresent() ? 1 : 0));
+
+            if (firstChunk.isPresent()) {
+                streams.add(firstChunk.get().first());
+            }
+
+            for (CallRequestController c : controllers) {
+                compositeController.addController(c);
+            }
+
+            for (CallRequestController controller : controllers) {
+                Optional<InputStream> stream = controller.getStream();
+
+                if (!stream.isPresent()) {
+                    Log.w(TAG, "Stream was canceled.");
+                    callback.onFailure(new IOException("Failure"));
+                    compositeController.cancel();
+                    return;
+                }
+
+                streams.add(stream.get());
+            }
+
+            try {
+                callback.onSuccess(new InputStreamList(streams));
+            } catch (IOException e) {
+                callback.onFailure(e);
+                compositeController.cancel();
+            }
+        });
+    }
 
   private CallRequestController makeChunkRequest(@NonNull OkHttpClient client, @NonNull String url, @NonNull ByteRange range) {
     Request request = new Request.Builder()

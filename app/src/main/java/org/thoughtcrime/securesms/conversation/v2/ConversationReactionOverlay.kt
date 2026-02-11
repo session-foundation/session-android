@@ -711,9 +711,11 @@ class ConversationReactionOverlay : FrameLayout {
             items += ActionItem(R.attr.menu_unban_icon, R.string.banUnbanUser, { handleActionItemClicked(Action.UNBAN_USER) })
         }
 
-        // deleted messages have  no emoji reactions
-        backgroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
-        foregroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
+        // deleted messages, legacy groups, or non approved message requests have no emoji reactions
+        val showEmojiReactions = !isDeleteOnly && !isDeprecatedLegacyGroup
+                && threadRecipient.approved && threadRecipient.approvedMe
+        backgroundView.isVisible = showEmojiReactions
+        foregroundView.isVisible = showEmojiReactions
         return items
     }
 

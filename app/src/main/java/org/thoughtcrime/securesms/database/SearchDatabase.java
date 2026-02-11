@@ -5,8 +5,6 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
-import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.Address;
@@ -14,8 +12,10 @@ import org.session.libsession.utilities.Util;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Provider;
 
@@ -189,12 +189,14 @@ public class SearchDatabase extends Database {
     );
   }
 
-  private String adjustQuery(@NonNull String query) {
-    List<String> tokens = Stream.of(query.split(" ")).filter(s -> s.trim().length() > 0).toList();
-    String       prefixQuery = Util.join(tokens, "* ");
+    private String adjustQuery(@NonNull String query) {
+        List<String> tokens = Arrays.stream(query.split(" "))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
 
-    prefixQuery += "*";
-
-    return prefixQuery;
-  }
+        String prefixQuery = Util.join(tokens, "* ");
+        prefixQuery += "*";
+        return prefixQuery;
+    }
 }
