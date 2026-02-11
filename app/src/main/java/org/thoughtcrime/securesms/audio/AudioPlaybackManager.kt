@@ -54,7 +54,7 @@ class AudioPlaybackManager @Inject constructor(
     private val TAG = "AudioPlaybackManager"
 
     private val _playbackState =
-        MutableStateFlow<AudioPlaybackState>(AudioPlaybackState.Idle)
+        MutableStateFlow<AudioPlaybackState>(AudioPlaybackState.Idle(1f))
     val playbackState: StateFlow<AudioPlaybackState> = _playbackState.asStateFlow()
 
     // Keeping certain aspect different from the state, like audio ending, which is more an event
@@ -156,8 +156,10 @@ class AudioPlaybackManager @Inject constructor(
         stopProgressTracking()
         controller?.stop()
         controller?.clearMediaItems()
+
+        val speed = currentPlayable?.let { getSavedState(it.messageId).playbackSpeed } ?: 1f
         currentPlayable = null
-        _playbackState.value = AudioPlaybackState.Idle
+        _playbackState.value = AudioPlaybackState.Idle(speed)
     }
 
     fun seekTo(positionMs: Long) {
@@ -385,7 +387,9 @@ class AudioPlaybackManager @Inject constructor(
                             false
                         )
                     } else {
-                        AudioPlaybackState.Idle
+                        AudioPlaybackState.Idle(
+                            saved.playbackSpeed
+                        )
                     }
                 }
             }
