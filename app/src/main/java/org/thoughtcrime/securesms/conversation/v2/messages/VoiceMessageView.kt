@@ -143,7 +143,12 @@ class VoiceMessageView @JvmOverloads constructor(
             binding.voiceMessageSpeedButton.setTextColor(textColor)
         }
 
-        // text
+        // duration
+        this.durationMs = playable?.durationMs?.coerceAtLeast(0) ?: 0L
+        binding.voiceMessageViewDurationTextView.text =
+            MediaUtil.getFormattedVoiceMessageDuration(this.durationMs)
+
+        // title
         binding.audioTitle.text = if(playable?.isVoiceNote == true) context.getString(R.string.messageVoice)
         else playable?.filename ?: context.getString(R.string.unknown)
 
@@ -194,7 +199,7 @@ class VoiceMessageView @JvmOverloads constructor(
             is AudioPlaybackState.Idle -> {
                 isPlaying = false
                 binding.voiceMessageViewLoader.isVisible = false
-                updateSeekBar(0, 0) // Reset
+                updateSeekBar(0, this.durationMs) // Reset
                 renderIcon()
             }
             is AudioPlaybackState.Active.Loading -> {
