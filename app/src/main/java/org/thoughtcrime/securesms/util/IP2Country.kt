@@ -127,7 +127,7 @@ class IP2Country @Inject constructor(
             Locale.Builder()
                 .setRegion(record.countryCode)
                 .build()
-                .displayCountry
+                .getDisplayCountry(locale)
                 .takeIf { it.isNotBlank() }
                 ?: record.englishName
 
