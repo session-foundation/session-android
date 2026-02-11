@@ -33,7 +33,7 @@ class IP2CountryTest {
             "223.121.129.0" to "China",
             "223.122.0.0" to "Hong Kong SAR China",
             "223.123.0.0" to "Pakistan",
-            "223.123.128.0" to "China", // Becoming hong kong soon
+            "223.123.128.0" to "Hong Kong SAR China",
             "223.124.0.0" to "China",
             "223.128.0.0" to "China",
             "223.130.0.0" to "Singapore",
