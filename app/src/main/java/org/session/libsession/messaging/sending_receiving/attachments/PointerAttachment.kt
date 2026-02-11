@@ -47,7 +47,6 @@ class PointerAttachment private constructor(
 
         @JvmStatic
         fun forPointers(pointers: List<SignalServiceAttachment>?): List<Attachment> {
-            // preserves old behavior: null -> empty list, only add non-null conversions
             return pointers.orEmpty().mapNotNull { forPointer(it) }
         }
 
@@ -63,7 +62,7 @@ class PointerAttachment private constructor(
 
         @JvmStatic
         fun forPointer(pointer: SignalServiceAttachment?, fastPreflightId: String?): Attachment? {
-            if (pointer == null || !pointer.isPointer) return null
+            if (pointer == null || !pointer.isPointer()) return null
 
             val p = pointer.asPointer()
 

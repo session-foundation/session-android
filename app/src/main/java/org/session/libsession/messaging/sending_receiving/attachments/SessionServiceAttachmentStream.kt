@@ -7,22 +7,28 @@ package org.session.libsession.messaging.sending_receiving.attachments
 
 import android.util.Size
 import com.google.protobuf.ByteString
-import org.session.libsignal.utilities.guava.Optional
 import org.session.protos.SessionProtos
-import org.session.libsignal.messages.SignalServiceAttachment as SAttachment
 import java.io.InputStream
 import kotlin.math.round
 
 /**
  * Represents a local SignalServiceAttachment to be sent.
  */
-class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType: String?, val length: Long, val filename: String, val voiceNote: Boolean, val preview: Optional<ByteArray?>, val width: Int, val height: Int, val caption: Optional<String?>) : SessionServiceAttachment(contentType) {
-
-    constructor(inputStream: InputStream?, contentType: String?, length: Long, filename: String, voiceNote: Boolean) : this(inputStream, contentType, length, filename, voiceNote, Optional.absent<ByteArray?>(), 0, 0, Optional.absent<String?>()) {}
+class SessionServiceAttachmentStream(
+    val inputStream: InputStream?,
+    contentType: String?,
+    val length: Long,
+    val filename: String?,
+    val voiceNote: Boolean,
+    val preview: ByteArray? = null,
+    val width: Int = 0,
+    val height: Int = 0,
+    val caption: String? = null
+) : SessionServiceAttachment(contentType) {
 
     // Though now required, `digest` may be null for pre-existing records or from
     // messages received from other clients
-    var digest: Optional<ByteArray> = Optional.absent()
+    var digest: ByteArray? = null
 
     // This only applies for attachments being uploaded.
     var isUploaded: Boolean = false
@@ -40,13 +46,13 @@ class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType:
         builder.contentType = this.contentType
         builder.fileName = this.filename
 
-        if (!this.caption.get().isNullOrEmpty()) {
-            builder.caption = this.caption.get()
-        }
+        caption?.takeIf { it.isNotBlank() }?.let { builder.caption = it }
 
         builder.size = this.length.toInt()
         builder.key = this.key
-        builder.digest = ByteString.copyFrom(this.digest.get())
+        digest
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { builder.digest = ByteString.copyFrom(it) }
         builder.flags = if (this.voiceNote) SessionProtos.AttachmentPointer.Flags.VOICE_MESSAGE.number else 0
 
         //TODO I did copy the behavior of iOS below, not sure if that's relevant here...

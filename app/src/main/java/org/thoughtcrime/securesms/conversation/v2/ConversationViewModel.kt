@@ -641,7 +641,7 @@ class ConversationViewModel @AssistedInject constructor(
         return when {
             recipient.isGroupV2Recipient -> !repository.isGroupReadOnly(recipient)
             recipient.isLegacyGroupRecipient -> {
-                groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true &&
+                groupDb.getGroup(recipient.address.toGroupString())?.isActive == true &&
                         deprecationState != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
             }
             address.isCommunityInbox && !recipient.acceptsBlindedCommunityMessageRequests -> false
@@ -1434,7 +1434,7 @@ class ConversationViewModel @AssistedInject constructor(
     private fun showDisappearingMessages(recipient: Recipient) {
         recipient.let { convo ->
             if (convo.isLegacyGroupRecipient) {
-                groupDb.getGroup(convo.address.toGroupString()).orNull()?.run {
+                groupDb.getGroup(convo.address.toGroupString())?.run {
                     if (!isActive) return
                 }
             }

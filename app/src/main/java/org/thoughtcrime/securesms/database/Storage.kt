@@ -65,7 +65,6 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -328,7 +327,6 @@ open class Storage @Inject constructor(
                 attachment.filename = FilenameUtils.getFilenameFromUri(context, Uri.parse(attachment.url), attachment.contentType, signalAttachment)
             }
 
-            val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
             val linkPreviews = linkPreview.mapNotNull { it }
             val insertResult = if (isUserSender || isUserBlindedSender) {
                 val pointers = attachments.mapNotNull {
@@ -339,7 +337,7 @@ open class Storage @Inject constructor(
                     message = message,
                     recipient = targetAddress,
                     attachments = pointers,
-                    outgoingQuote = quote.orNull(),
+                    outgoingQuote = quotes,
                     linkPreview = linkPreviews.firstOrNull(),
                     expiresInMillis = expiresInMillis,
                     expireStartedAt = expireStartedAt
@@ -356,14 +354,14 @@ open class Storage @Inject constructor(
                     expiresIn = expiresInMillis,
                     expireStartedAt = expireStartedAt,
                     group = threadRecipient.address as? Address.GroupLike,
-                    attachments = PointerAttachment.forPointers(Optional.of(signalServiceAttachments)),
+                    attachments = PointerAttachment.forPointers(signalServiceAttachments),
                     quote = quotes,
                     linkPreviews = linkPreviews
                 )
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
 
-            messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = true) }
+            messageID = insertResult?.messageId?.let { MessageId(it, mms = true) }
 
         } else {
             val isOpenGroupInvitation = (message.openGroupInvitation != null)
@@ -625,10 +623,7 @@ open class Storage @Inject constructor(
         lokiMessageDatabase.setMessageServerHash(messageId, serverHash)
     }
 
-    override fun getGroup(groupID: String): GroupRecord? {
-        val group = groupDatabase.getGroup(groupID)
-        return if (group.isPresent) { group.get() } else null
-    }
+    override fun getGroup(groupID: String): GroupRecord? = groupDatabase.getGroup(groupID)
 
     override fun createGroup(groupID: String, title: String?, members: List<Address>, avatar: SignalServiceAttachmentPointer?, relay: String?, admins: List<Address>, formationTimestamp: Long) {
         groupDatabase.create(groupID, title, members, avatar, relay, admins, formationTimestamp)
@@ -660,9 +655,9 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun isGroupActive(groupPublicKey: String): Boolean {
-        return groupDatabase.getGroup(GroupUtil.doubleEncodeGroupID(groupPublicKey)).orNull()?.isActive == true
-    }
+    override fun isGroupActive(groupPublicKey: String): Boolean =
+        groupDatabase.getGroup(GroupUtil.doubleEncodeGroupID(groupPublicKey))?.isActive == true
+
 
     override fun setActive(groupID: String, value: Boolean) {
         groupDatabase.setActive(groupID, value)

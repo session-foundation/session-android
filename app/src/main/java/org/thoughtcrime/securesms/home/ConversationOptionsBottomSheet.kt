@@ -96,7 +96,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         thread = requireNotNull(
             threadDatabase.getThreads(listOf(address)).firstOrNull()
         ) { "Thread not found for address: $addressString" }
-        group = groupDatabase.getGroup(thread.recipient.address.toString()).orNull()
+        group = groupDatabase.getGroup(thread.recipient.address.toString())
     }
 
     override fun onCreateView(
@@ -189,10 +189,10 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
             // the text, content description and icon will change depending on the type
             when {
                 recipient.isLegacyGroupRecipient -> {
-                    val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
+                    val group = groupDatabase.getGroup(recipient.address.toString())
 
-                    val isGroupAdmin = group.admins.map { it.toString() }
-                        .contains(loginStateRepository.requireLocalNumber())
+                    val isGroupAdmin = group?.admins?.map { it.toString() }
+                        ?.contains(loginStateRepository.requireLocalNumber()) ?: false
 
                     if (isGroupAdmin) {
                         text = context.getString(R.string.delete)

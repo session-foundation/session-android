@@ -16,7 +16,7 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.GroupRecord;
 import org.session.libsignal.database.LokiOpenGroupDatabaseProtocol;
-import org.session.libsignal.utilities.guava.Optional;
+import org.session.libsignal.messages.SignalServiceAttachmentPointer;
 import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
@@ -120,36 +120,27 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     return updateNotification;
   }
 
-  public Optional<GroupRecord> getGroup(String groupId) {
-    try (Cursor cursor = getReadableDatabase().query(TABLE_NAME, null, GROUP_ID + " = ?",
-                                                                    new String[] {groupId},
-                                                                    null, null, null))
-    {
-      if (cursor != null && cursor.moveToNext()) {
-        return getGroup(cursor);
-      }
-
-      return Optional.absent();
+    @Nullable
+    public GroupRecord getGroup(@NonNull String groupId) {
+        try (Cursor cursor = getReadableDatabase().query(
+                TABLE_NAME,
+                null,
+                GROUP_ID + " = ?",
+                new String[] { groupId },
+                null, null, null
+        )) {
+            if (cursor != null && cursor.moveToNext()) {
+                return getGroup(cursor);
+            }
+            return null;
+        }
     }
-  }
 
-  public Optional<GroupRecord> getGroup(Cursor cursor) {
-    Reader reader = new Reader(cursor);
-    return Optional.fromNullable(reader.getCurrent());
-  }
-
-  public boolean isUnknownGroup(String groupId) {
-    return !getGroup(groupId).isPresent();
-  }
-
-  public Reader getGroupsFilteredByTitle(String constraint) {
-    @SuppressLint("Recycle")
-    Cursor cursor = getReadableDatabase().query(TABLE_NAME, null, TITLE + " LIKE ?",
-                                                                                        new String[]{"%" + constraint + "%"},
-                                                                                        null, null, null);
-
-    return new Reader(cursor);
-  }
+    @Nullable
+    public GroupRecord getGroup(@NonNull Cursor cursor) {
+        Reader reader = new Reader(cursor);
+        return reader.getCurrent();
+    }
 
   public Reader getGroups() {
     @SuppressLint("Recycle")
@@ -212,7 +203,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       contentValues.put(AVATAR_ID, avatar.getId());
       contentValues.put(AVATAR_KEY, avatar.getKey());
       contentValues.put(AVATAR_CONTENT_TYPE, avatar.getContentType());
-      contentValues.put(AVATAR_DIGEST, avatar.getDigest().orNull());
+      contentValues.put(AVATAR_DIGEST, avatar.getDigest());
       contentValues.put(AVATAR_URL, avatar.getUrl());
     }
 
@@ -249,7 +240,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       contentValues.put(AVATAR_ID, avatar.getId());
       contentValues.put(AVATAR_CONTENT_TYPE, avatar.getContentType());
       contentValues.put(AVATAR_KEY, avatar.getKey());
-      contentValues.put(AVATAR_DIGEST, avatar.getDigest().orNull());
+      contentValues.put(AVATAR_DIGEST, avatar.getDigest());
       contentValues.put(AVATAR_URL, avatar.getUrl());
     }
 
@@ -394,10 +385,10 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     return getCurrentMembers(groupId, true);
   }
 
-  public boolean isActive(String groupId) {
-    Optional<GroupRecord> record = getGroup(groupId);
-    return record.isPresent() && record.get().isActive();
-  }
+    public boolean isActive(@NonNull String groupId) {
+        GroupRecord record = getGroup(groupId);
+        return record != null && record.isActive();
+    }
 
   public void setActive(String groupId, boolean active) {
     SQLiteDatabase database = getWritableDatabase();
