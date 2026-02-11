@@ -27,7 +27,6 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
-import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -895,7 +894,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                     .putExtra(OUTGOING_EXTRA, mms.isOutgoing)
                     .putExtra(DATE_EXTRA, mms.timestamp)
                     .putExtra(SIZE_EXTRA, slide.asAttachment().size)
-                    .putExtra(CAPTION_EXTRA, slide.caption.orNull())
+                    .putExtra(CAPTION_EXTRA, slide.caption)
                     .putExtra(LEFT_IS_RECENT_EXTRA, false)
             }
             return previewIntent

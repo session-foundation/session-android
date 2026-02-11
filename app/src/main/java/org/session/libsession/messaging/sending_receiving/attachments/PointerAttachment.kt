@@ -46,11 +46,13 @@ class PointerAttachment private constructor(
     companion object {
 
         @JvmStatic
+        @JvmName("forSignalPointers")
         fun forPointers(pointers: List<SignalServiceAttachment>?): List<Attachment> {
             return pointers.orEmpty().mapNotNull { forPointer(it) }
         }
 
         @JvmStatic
+        @JvmName("forQuotedPointers")
         fun forPointers(pointers: List<SessionProtos.DataMessage.Quote.QuotedAttachment>?): List<Attachment> {
             return pointers.orEmpty().mapNotNull { forPointer(it) }
         }

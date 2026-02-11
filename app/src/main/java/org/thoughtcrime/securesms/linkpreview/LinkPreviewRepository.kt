@@ -126,8 +126,8 @@ class LinkPreviewRepository {
                     val body = bodyObj.string()
                     val openGraph: OpenGraph = LinkPreviewUtil.parseOpenGraphFields(body)
 
-                    val title: String? = openGraph.title.orNull()
-                    var imageUrl: String? = openGraph.imageUrl.orNull()
+                    val title: String? = openGraph.title
+                    var imageUrl: String? = openGraph.imageUrl
 
                     if (!imageUrl.isNullOrEmpty() && !LinkPreviewUtil.isValidMediaUrl(imageUrl)) {
                         Log.i(TAG, "Image URL was invalid or for a non-whitelisted domain. Skipping.")
