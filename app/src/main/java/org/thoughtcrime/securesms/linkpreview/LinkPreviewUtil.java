@@ -9,7 +9,6 @@ import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import com.annimon.stream.Stream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -47,10 +46,17 @@ public final class LinkPreviewUtil {
             return Collections.emptyList();
         }
 
-        return Stream.of(spannable.getSpans(0, spannable.length(), URLSpan.class))
-                .map(span -> new Link(span.getURL(), spannable.getSpanStart(span)))
-                .filter(link -> isValidLinkUrl(link.getUrl()))
-                .toList();
+        URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        List<Link> links = new java.util.ArrayList<>(spans.length);
+
+        for (URLSpan span : spans) {
+            Link link = new Link(span.getURL(), spannable.getSpanStart(span));
+            if (isValidLinkUrl(link.getUrl())) {
+                links.add(link);
+            }
+        }
+
+        return links;
     }
 
     /**
@@ -215,14 +221,19 @@ public final class LinkPreviewUtil {
 
         @SuppressLint("ObsoleteSdkInt")
         public long getDate() {
-            return Stream.of(values.get(KEY_PUBLISHED_TIME_1),
-                            values.get(KEY_PUBLISHED_TIME_2),
-                            values.get(KEY_MODIFIED_TIME_1),
-                            values.get(KEY_MODIFIED_TIME_2))
-                    .map(OpenGraph::parseISO8601)
-                    .filter(time -> time > 0)
-                    .findFirst()
-                    .orElse(0L);
+            String[] candidates = new String[] {
+                    values.get(KEY_PUBLISHED_TIME_1),
+                    values.get(KEY_PUBLISHED_TIME_2),
+                    values.get(KEY_MODIFIED_TIME_1),
+                    values.get(KEY_MODIFIED_TIME_2)
+            };
+
+            for (String c : candidates) {
+                long t = parseISO8601(c);
+                if (t > 0) return t;
+            }
+
+            return 0L;
         }
     }
 
