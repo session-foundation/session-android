@@ -35,6 +35,7 @@ import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.notifications.PushUnregisterApi
+import kotlin.jvm.Throws
 
 @HiltWorker
 class GroupLeavingWorker @AssistedInject constructor(
@@ -140,15 +141,24 @@ class GroupLeavingWorker @AssistedInject constructor(
 
                     // We now have an admin option to leave group so we need a way of Deleting the group
                     // even if there are more admins
-                    if (weAreTheOnlyAdmin || deleteGroup) {
-                        configFactory.withMutableGroupConfigs(groupId) { configs ->
-                            configs.groupInfo.destroyGroup()
-                        }
+                    if ((weAreTheOnlyAdmin || deleteGroup)) {
+                        try {
+                            configFactory.withMutableGroupConfigs(groupId) { configs ->
+                                configs.groupInfo.destroyGroup()
+                            }
 
-                        // Must wait until the config is pushed, otherwise if we go through the rest
-                        // of the code it will destroy the conversation, destroying the necessary configs
-                        // along the way, we won't be able to push the "destroyed" state anymore.
-                        configFactory.waitUntilGroupConfigsPushed(groupId, timeoutMills = 0L)
+                            // Must wait until the config is pushed, otherwise if we go through the rest
+                            // of the code it will destroy the conversation, destroying the necessary configs
+                            // along the way, we won't be able to push the "destroyed" state anymore.
+                            configFactory.waitUntilGroupConfigsPushed(groupId, timeoutMills = 0L)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Throwable) {
+                            // If the destruction of group can't be done, there's nothing
+                            // else we can do. So we will proceed with the rest where
+                            // we remove the group entry from the database.
+                            Log.e(TAG, "Error while destroying group $groupId. Proceeding...", e)
+                        }
                     }
                 }
 
