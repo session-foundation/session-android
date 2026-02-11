@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
-import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -71,7 +70,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOW_DON
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
-import org.thoughtcrime.securesms.preferences.PreferenceKey
 import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
@@ -274,12 +272,6 @@ interface TextSecurePreferences {
     fun setSendWithEnterEnabled(enabled: Boolean)
     fun isSendWithEnterEnabled() : Boolean
     fun updateBooleanFromKey(key : String, value : Boolean)
-
-    fun batchSet(vararg keyValues: Pair<PreferenceKey<*>, *>)
-    fun <T> set(key: PreferenceKey<T>, value: T)
-    fun remove(key: PreferenceKey<*>)
-    fun <T> get(key: PreferenceKey<T>): T
-    fun <T> watch(key: PreferenceKey<T>): Flow<T?>
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -1693,70 +1685,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun updateBooleanFromKey(key: String, value: Boolean) {
         setBooleanPreference(key, value)
         _events.tryEmit(key)
-    }
-
-    override fun batchSet(vararg keyValues: Pair<PreferenceKey<*>, *>) {
-        if (keyValues.isEmpty()) {
-            return
-        }
-
-        getDefaultSharedPreferences(context).edit {
-            for ((key, value) in keyValues) {
-                @Suppress("UNCHECKED_CAST")
-                when (val strategy = key.strategy) {
-                    is PreferenceKey.Strategy.PrimitiveBoolean -> putBoolean(key.name, value as Boolean)
-                    is PreferenceKey.Strategy.PrimitiveFloat -> putFloat(key.name, value as Float)
-                    is PreferenceKey.Strategy.PrimitiveInt -> putInt(key.name, value as Int)
-                    is PreferenceKey.Strategy.PrimitiveLong -> putLong(key.name, value as Long)
-                    is PreferenceKey.Strategy.PrimitiveString -> putString(key.name, value as? String)
-                    is PreferenceKey.Strategy.Json<*> -> putString(key.name,
-                        value?.let {
-                            json.encodeToString(strategy.serializer as SerializationStrategy<Any?>, it)
-                        }
-                    )
-                }
-            }
-        }
-
-        for ((key, _) in keyValues) {
-            _events.tryEmit(key.name)
-        }
-    }
-
-    override fun <T> set(key: PreferenceKey<T>, value: T) {
-        batchSet(key to value)
-    }
-
-    override fun remove(key: PreferenceKey<*>) {
-        getDefaultSharedPreferences(context).edit {
-            remove(key.name)
-        }
-
-        _events.tryEmit(key.name)
-    }
-
-    override fun <T> get(key: PreferenceKey<T>): T {
-        val prefs = getDefaultSharedPreferences(context)
-        @Suppress("UNCHECKED_CAST")
-        return when (val strategy = key.strategy) {
-            is PreferenceKey.Strategy.Json<*> -> prefs.getString(key.name, null)?.let { encoded ->
-                runCatching {
-                    json.decodeFromString(strategy.serializer, encoded)
-                }.onFailure {
-                    Log.e("Preferences", "Unable to decode json for pref key = ${key.name}", it)
-                }.getOrNull()
-            }
-            is PreferenceKey.Strategy.PrimitiveBoolean -> prefs.getBoolean(key.name, strategy.defaultValue)
-            is PreferenceKey.Strategy.PrimitiveFloat -> prefs.getFloat(key.name, strategy.defaultValue)
-            is PreferenceKey.Strategy.PrimitiveInt -> prefs.getInt(key.name, strategy.defaultValue)
-            is PreferenceKey.Strategy.PrimitiveLong -> prefs.getLong(key.name, strategy.defaultValue)
-            is PreferenceKey.Strategy.PrimitiveString -> prefs.getString(key.name, strategy.defaultValue)
-        } as T
-    }
-
-    override fun <T> watch(key: PreferenceKey<T>): Flow<T?> {
-        return _events.filter { it == key.name }
-            .map { get(key) }
     }
 }
 

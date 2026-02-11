@@ -19,7 +19,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
@@ -33,6 +32,7 @@ import org.thoughtcrime.securesms.api.swarm.SwarmSnodeSelector
 import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.preferences.PreferenceKey
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Duration.Companion.days
@@ -41,7 +41,7 @@ class Poller @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
-    private val preferences: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     networkConnectivity: NetworkConnectivity,
     private val snodeClock: SnodeClock,
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
@@ -73,7 +73,7 @@ class Poller @AssistedInject constructor(
 
     override suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean) {
         // Migrate to multipart config when needed
-        if (isFirstPollSinceAppStarted && !preferences.get(hasMigratedToMultiPartConfigKey)) {
+        if (isFirstPollSinceAppStarted && !prefs[hasMigratedToMultiPartConfigKey]) {
             val allConfigNamespaces = intArrayOf(Namespace.USER_PROFILE(),
                 Namespace.USER_GROUPS(),
                 Namespace.CONTACTS(),
@@ -87,7 +87,7 @@ class Poller @AssistedInject constructor(
             lokiApiDatabase.clearLastMessageHashesByNamespaces(*allConfigNamespaces)
             receivedMessageHashDatabase.removeAllByNamespaces(*allConfigNamespaces)
 
-            preferences.set(hasMigratedToMultiPartConfigKey, true)
+            prefs[hasMigratedToMultiPartConfigKey] = true
         }
 
         // When we are only just starting to set up the account, we want to poll only the user

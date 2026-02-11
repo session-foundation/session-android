@@ -13,17 +13,15 @@ interface PreferenceKey<out T>{
         override val strategy: Strategy<out T>
     ): PreferenceKey<T>
 
-
     sealed interface Strategy<T> {
         data class PrimitiveInt(val defaultValue: Int) : Strategy<Int>
         data class PrimitiveLong(val defaultValue: Long) : Strategy<Long>
         data class PrimitiveFloat(val defaultValue: Float) : Strategy<Float>
         data class PrimitiveBoolean(val defaultValue: Boolean) : Strategy<Boolean>
         data class PrimitiveString(val defaultValue: String?) : Strategy<String?>
-        data class PrimitiveEnum<T: Enum<*>>(val clazz: Class<T>, val defaultValue: T?): Strategy<T?>
+        data class Enum<T: kotlin.Enum<*>>(val choices: List<T>, val defaultValue: T?): Strategy<T?>
         data class Json<T>(val serializer: KSerializer<T>) : Strategy<T?>
     }
-
 
     companion object {
         fun boolean(name: String, defaultValue: Boolean = false): PreferenceKey<Boolean> =
@@ -45,7 +43,7 @@ interface PreferenceKey<out T>{
             Simple(name, Strategy.Json(serializer))
 
         inline fun <reified T: Enum<*>> enum(name: String, defaultValue: T? = null): PreferenceKey<T?> {
-            return Simple(name, Strategy.PrimitiveEnum(T::class.java, defaultValue))
+            return Simple(name, Strategy.Enum(T::class.java.enumConstants!!.toList(), defaultValue))
         }
 
         fun instantAsMills(name: String): PreferenceKey<Instant?> =
