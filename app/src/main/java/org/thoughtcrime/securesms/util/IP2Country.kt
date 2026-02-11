@@ -103,7 +103,7 @@ class IP2Country @Inject constructor(
 
 
     // region Implementation
-    suspend fun lookupCountry(ip: String): String? {
+    suspend fun lookupCountry(ip: String, locale: Locale = Locale.getDefault()): String? {
         // return early if cached
         var found = countryCache[ip]
         if (found == null) {
