@@ -13,9 +13,9 @@ import org.session.protos.SessionProtos;
 import java.util.LinkedList;
 import java.util.List;
 
-public class PointerAttachment extends Attachment {
+public class PointerAttachmentzz extends Attachment {
 
-  private PointerAttachment(@NonNull String contentType, int transferState, long size,
+  private PointerAttachmentzz(@NonNull String contentType, int transferState, long size,
                             @Nullable String fileName,  @NonNull String location,
                             @Nullable String key, @Nullable String relay,
                             @Nullable byte[] digest, @Nullable String fastPreflightId, boolean voiceNote,
@@ -82,7 +82,7 @@ public class PointerAttachment extends Attachment {
       encodedKey = Base64.encodeBytes(pointer.get().asPointer().getKey());
     }
 
-    return Optional.of(new PointerAttachment(pointer.get().getContentType(),
+    return Optional.of(new PointerAttachmentzz(pointer.get().getContentType(),
             AttachmentState.PENDING.getValue(),
             pointer.get().asPointer().getSize().or(0),
             pointer.get().asPointer().getFilename(),
@@ -99,7 +99,7 @@ public class PointerAttachment extends Attachment {
   }
 
   public static Optional<Attachment> forPointer(SessionProtos.AttachmentPointer pointer) {
-    return Optional.of(new PointerAttachment(pointer.getContentType(),
+    return Optional.of(new PointerAttachmentzz(pointer.getContentType(),
             AttachmentState.PENDING.getValue(),
             (long)pointer.getSize(),
             pointer.getFileName(),
@@ -118,7 +118,7 @@ public class PointerAttachment extends Attachment {
   public static Optional<Attachment> forPointer(SessionProtos.DataMessage.Quote.QuotedAttachment pointer) {
     SessionProtos.AttachmentPointer thumbnail = pointer.getThumbnail();
 
-    return Optional.of(new PointerAttachment(pointer.getContentType(),
+    return Optional.of(new PointerAttachmentzz(pointer.getContentType(),
             AttachmentState.PENDING.getValue(),
             thumbnail != null ? (long)thumbnail.getSize() : 0,
             thumbnail.getFileName(),
@@ -140,7 +140,7 @@ public class PointerAttachment extends Attachment {
    * @return Signal Attachment
    */
   public static Attachment forAttachment(org.session.libsession.messaging.messages.visible.Attachment attachment) {
-    return new PointerAttachment(
+    return new PointerAttachmentzz(
             attachment.getContentType(),
             AttachmentState.PENDING.getValue(),
             attachment.getSizeInBytes(),

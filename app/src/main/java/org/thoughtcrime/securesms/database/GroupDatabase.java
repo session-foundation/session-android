@@ -16,7 +16,6 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.GroupRecord;
 import org.session.libsignal.database.LokiOpenGroupDatabaseProtocol;
-import org.session.libsignal.messages.SignalServiceAttachmentPointer;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
