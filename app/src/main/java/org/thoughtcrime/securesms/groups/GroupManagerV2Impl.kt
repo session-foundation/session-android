@@ -589,21 +589,19 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             // Send out the promote message to the members concurrently
-            val promoteMessage = GroupUpdated(
-                GroupUpdateMessage.newBuilder()
-                    .setPromoteMessage(
-                        GroupUpdatePromoteMessage.newBuilder()
-                            .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
-                            .setName(groupName)
-                    )
-                    .build()
-            )
-
             val promotionDeferred = members.associateWith { member ->
                 async {
                     // The promotion message shouldn't be persisted to avoid being retried automatically
                     messageSender.sendNonDurably(
-                        message = promoteMessage,
+                        message = GroupUpdated(
+                            GroupUpdateMessage.newBuilder()
+                                .setPromoteMessage(
+                                    GroupUpdatePromoteMessage.newBuilder()
+                                        .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
+                                        .setName(groupName)
+                                )
+                                .build()
+                        ),
                         address = Address.fromSerialized(member.hexString),
                         isSyncMessage = false,
                     )
