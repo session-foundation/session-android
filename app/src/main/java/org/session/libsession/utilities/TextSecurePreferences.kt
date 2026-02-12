@@ -4,10 +4,8 @@ import android.content.Context
 import android.hardware.Camera
 import android.net.Uri
 import android.provider.Settings
-import androidx.annotation.ArrayRes
 import androidx.annotation.StyleRes
 import androidx.camera.core.CameraSelector
-import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -37,6 +35,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_CHECKED_DOZE_WHITELIST
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
@@ -44,7 +43,9 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_PATH_ROTATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SEEN_DONATION_CTA
+import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_SNODE_POOL_REFRESH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LEGACY_PREF_KEY_SELECTED_UI_MODE
@@ -67,8 +68,6 @@ import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
-import java.util.Arrays
-import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -114,7 +113,6 @@ interface TextSecurePreferences {
     fun setHasSeenGIFMetaDataWarning()
     fun isGifSearchInGridLayout(): Boolean
     fun setIsGifSearchInGridLayout(isGrid: Boolean)
-    fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
@@ -167,8 +165,6 @@ interface TextSecurePreferences {
     fun setStringSetPreference(key: String, value: Set<String>)
     fun getHasViewedSeed(): Boolean
     fun setHasViewedSeed(hasViewedSeed: Boolean)
-    fun getLastSnodePoolRefreshDate(): Long
-    fun setLastSnodePoolRefreshDate(date: Date)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -233,6 +229,8 @@ interface TextSecurePreferences {
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
 
+    fun hasCheckedDozeWhitelist(): Boolean
+    fun setHasCheckedDozeWhitelist(hasChecked: Boolean)
     fun hasDonated(): Boolean
     fun setHasDonated(hasDonated: Boolean)
     fun hasCopiedDonationURL(): Boolean
@@ -252,6 +250,11 @@ interface TextSecurePreferences {
     fun setSeenDonationCTAAmountDebug(amount: String?)
     fun showDonationCTAFromPositiveReviewDebug(): String?
     fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
+
+    fun getLastSnodePoolRefresh(): Long
+    fun setLastSnodePoolRefresh(epochMs: Long)
+    fun getLastPathRotation(): Long
+    fun setLastPathRotation(epochMs: Long)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
@@ -302,7 +305,6 @@ interface TextSecurePreferences {
         @Deprecated("No longer used, kept for migration purposes")
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
-        const val NOTIFICATION_PRIORITY_PREF = "pref_notification_priority"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
         const val READ_RECEIPTS_PREF = "pref_read_receipts"
         const val INCOGNITO_KEYBORAD_PREF = "pref_incognito_keyboard"
@@ -408,6 +410,8 @@ interface TextSecurePreferences {
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
 
+        const val HAS_CHECKED_DOZE_WHITELIST = "has_checked_doze_whitelist"
+
         // Donation
         const val HAS_DONATED = "has_donated"
         const val HAS_COPIED_DONATION_URL = "has_copied_donation_url"
@@ -419,6 +423,9 @@ interface TextSecurePreferences {
         const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
         const val DEBUG_SEEN_DONATION_CTA_AMOUNT = "debug_seen_donation_cta_amount"
         const val DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "debug_show_donation_cta_from_positive_review"
+
+        const val LAST_SNODE_POOL_REFRESH = "last_snode_pool_refresh"
+        const val LAST_PATH_ROTATION = "last_path_rotation"
 
         @JvmStatic
         fun isPushEnabled(context: Context): Boolean {
@@ -668,14 +675,6 @@ interface TextSecurePreferences {
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
         }
 
-        fun getLastSnodePoolRefreshDate(context: Context?): Long {
-            return getLongPreference(context!!, "last_snode_pool_refresh_date", 0)
-        }
-
-        fun setLastSnodePoolRefreshDate(context: Context?, date: Date) {
-            setLongPreference(context!!, "last_snode_pool_refresh_date", date.time)
-        }
-
         @JvmStatic
         fun removeHasHiddenMessageRequests(context: Context) {
             removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
@@ -726,7 +725,7 @@ class AppTextSecurePreferences @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val json: Json,
 ): TextSecurePreferences {
-    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, false))
+    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, if (BuildConfig.BUILD_TYPE != "release") true else false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
     override var migratedToGroupV2Config: Boolean
@@ -905,11 +904,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setIsGifSearchInGridLayout(isGrid: Boolean) {
         setBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, isGrid)
-    }
-
-    override fun getNotificationPriority(): Int {
-        return getStringPreference(
-            TextSecurePreferences.NOTIFICATION_PRIORITY_PREF, NotificationCompat.PRIORITY_HIGH.toString())!!.toInt()
     }
 
     override fun getMessageBodyTextSize(): Int {
@@ -1153,12 +1147,20 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference("has_viewed_seed", hasViewedSeed)
     }
 
-    override fun getLastSnodePoolRefreshDate(): Long {
-        return getLongPreference("last_snode_pool_refresh_date", 0)
+    override fun getLastSnodePoolRefresh(): Long {
+        return getLongPreference(LAST_SNODE_POOL_REFRESH, 0)
     }
 
-    override fun setLastSnodePoolRefreshDate(date: Date) {
-        setLongPreference("last_snode_pool_refresh_date", date.time)
+    override fun setLastSnodePoolRefresh(epochMs: Long) {
+        setLongPreference(LAST_SNODE_POOL_REFRESH, epochMs)
+    }
+
+    override fun getLastPathRotation(): Long {
+        return getLongPreference(LAST_PATH_ROTATION, 0)
+    }
+
+    override fun setLastPathRotation(epochMs: Long) {
+        setLongPreference(LAST_PATH_ROTATION, epochMs)
     }
 
     override fun getLastOpenTimeDate(): Long {
@@ -1543,6 +1545,14 @@ class AppTextSecurePreferences @Inject constructor(
                 json.encodeToString(it)
             })
         }
+
+    override fun hasCheckedDozeWhitelist(): Boolean {
+        return getBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, false)
+    }
+
+    override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
+        setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
+    }
 
     override fun hasDonated(): Boolean {
         return getBooleanPreference(HAS_DONATED, false)

@@ -10,14 +10,14 @@ import androidx.recyclerview.widget.RecyclerView.NO_ID
 import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewMessageRequestBannerBinding
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 
 class HomeAdapter(
     private val context: Context,
-    private val configFactory: ConfigFactory,
     private val listener: ConversationClickListener,
     private val showMessageRequests: () -> Unit,
     private val hideMessageRequests: () -> Unit,
+    private val messageFormatter: MessageFormatter,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -29,7 +29,7 @@ class HomeAdapter(
         set(newData) {
             if (field === newData) return
 
-            val diff = HomeDiffUtil(field, newData, context, configFactory)
+            val diff = HomeDiffUtil(field, newData, context, messageFormatter)
             val diffResult = DiffUtil.calculateDiff(diff)
             field = newData
             diffResult.dispatchUpdatesTo(this)

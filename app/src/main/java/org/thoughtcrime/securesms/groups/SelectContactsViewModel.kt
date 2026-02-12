@@ -17,21 +17,19 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -50,7 +48,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val mutableSearchQuery = MutableStateFlow("")
 
     // Input: The selected contact account IDs
-    private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<Address>())
+    private val mutableSelectedContacts = MutableStateFlow(emptySet<SelectedContact>())
 
     // Input: The manually added items to select from. This will be combined (and deduped) with the contacts
     // the user has. This is useful for selecting contacts that are not in the user's contacts list.
@@ -65,7 +63,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     val contacts: StateFlow<List<ContactItem>> = combine(
         contactsFlow,
         mutableSearchQuery.debounce(100L),
-        mutableSelectedContactAccountIDs,
+        mutableSelectedContacts,
         ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -73,30 +71,12 @@ open class SelectContactsViewModel @AssistedInject constructor(
             .map { it.isNotEmpty() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    // Output
+    // Output: to be used by VMs extending this base VM
+    val selectedContacts: StateFlow<Set<SelectedContact>> = mutableSelectedContacts
+
+    // Output : snapshot helper
     val currentSelected: Set<Address>
-        get() = mutableSelectedContactAccountIDs.value
-
-    private val footerCollapsed = MutableStateFlow(false)
-
-    val collapsibleFooterState: StateFlow<CollapsibleFooterState> =
-        combine(mutableSelectedContactAccountIDs, footerCollapsed) { selected, isCollapsed ->
-            val count = selected.size
-            val visible = count > 0
-            val title = if (count == 0) GetString("")
-            else GetString(
-                context.resources.getQuantityString(R.plurals.contactSelected, count, count)
-            )
-
-            CollapsibleFooterState(
-                visible = visible,
-                // auto-expand when nothing is selected, otherwise keep user's choice
-                collapsed = if (!visible) false else isCollapsed,
-                footerActionTitle = title
-            )
-        }
-            .distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, CollapsibleFooterState())
+        get() = mutableSelectedContacts.value.map { it.address }.toSet()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
@@ -127,9 +107,10 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private fun filterContacts(
         contacts: Collection<Recipient>,
         query: String,
-        selectedAccountIDs: Set<Address>
+        selectedContacts: Set<SelectedContact>
     ): List<ContactItem> {
         val items = mutableListOf<ContactItem>()
+        val selectedAddresses = selectedContacts.asSequence().map { it.address }.toSet()
         for (contact in contacts) {
             if (query.isBlank() || contact.searchName.contains(query, ignoreCase = true)) {
                 val avatarData = avatarUtils.getUIDataFromRecipient(contact)
@@ -138,7 +119,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                         name = contact.searchName,
                         address = contact.address,
                         avatarUIData = avatarData,
-                        selected = selectedAccountIDs.contains(contact.address),
+                        selected = selectedAddresses.contains(contact.address),
                         showProBadge = contact.shouldShowProBadge
                     )
                 )
@@ -151,35 +132,37 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableManuallyAddedContacts.value = accountIDs
     }
 
+    // Used when getting results from a QR or AccountId input field
+    fun setManuallySelectedAddress(address : Address){
+        val selectedItem = SelectedContact(address, "")
+        mutableSelectedContacts.value = setOf(selectedItem)
+    }
+
     fun onSearchQueryChanged(query: String) {
         mutableSearchQuery.value = query
     }
 
     open fun onContactItemClicked(address: Address) {
-        val newSet = mutableSelectedContactAccountIDs.value.toHashSet()
-        if (!newSet.remove(address)) {
-            newSet.add(address)
+        val newSet = mutableSelectedContacts.value.toHashSet()
+        val selectedContact = contacts.value.find { it.address == address }
+
+        if(selectedContact == null) return
+
+        val item = SelectedContact(address = selectedContact.address, name = selectedContact.name)
+        if (!newSet.remove(item)) {
+            newSet.add(item)
         }
-        mutableSelectedContactAccountIDs.value = newSet
+        mutableSelectedContacts.value = newSet
     }
 
     fun selectAccountIDs(accountIDs: Set<Address>) {
-        mutableSelectedContactAccountIDs.value += accountIDs
+        val toAdd = accountIDs.map { address -> SelectedContact(address) }.toSet()
+        mutableSelectedContacts.update { (it + toAdd).toSet() }
     }
 
     fun clearSelection(){
-        mutableSelectedContactAccountIDs.value = emptySet()
+        mutableSelectedContacts.value = emptySet()
     }
-
-    fun toggleFooter() {
-        footerCollapsed.update { !it }
-    }
-
-    data class CollapsibleFooterState(
-        val visible: Boolean = false,
-        val collapsed: Boolean = false,
-        val footerActionTitle : GetString = GetString("")
-    )
 
     @AssistedFactory
     interface Factory {
@@ -200,4 +183,9 @@ data class ContactItem(
     val avatarUIData: AvatarUIData,
     val selected: Boolean,
     val showProBadge: Boolean
+)
+
+data class SelectedContact(
+    val address: Address,
+    val name: String = ""
 )

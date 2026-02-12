@@ -10,8 +10,10 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -46,7 +48,9 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.model.PathStatus
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
@@ -54,10 +58,12 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -84,9 +90,14 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
+import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.primaryGreen
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.applySafeInsetsMargins
@@ -133,6 +144,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var avatarUtils: AvatarUtils
     @Inject lateinit var loginStateRepository: LoginStateRepository
+    @Inject lateinit var messageFormatter: MessageFormatter
+    @Inject lateinit var pathManager: PathManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -141,7 +154,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private val publicKey: String by lazy { loginStateRepository.requireLocalNumber() }
 
     private val homeAdapter: HomeAdapter by lazy {
-        HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
+        HomeAdapter(
+            context = this,
+            messageFormatter = messageFormatter,
+            listener = this,
+            showMessageRequests = ::showMessageRequests,
+            hideMessageRequests = ::hideMessageRequests,
+        )
     }
 
     private val globalSearchAdapter by lazy {
@@ -215,6 +234,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
             val recipient by recipientRepository.observeSelf()
                 .collectAsState(null)
 
+            val pathStatus by pathManager.status.collectAsState()
+
             Avatar(
                 size = LocalDimensions.current.iconMediumAvatar,
                 data = avatarUtils.getUIDataFromRecipient(recipient),
@@ -222,6 +243,24 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = ::openSettings
+                ),
+                badge = AvatarBadge.ComposeBadge(
+                    content = {
+                        val glowSize = LocalDimensions.current.xxxsSpacing
+                        Crossfade(
+                            targetState = when (pathStatus){
+                            PathStatus.BUILDING -> LocalColors.current.warning
+                            PathStatus.ERROR -> LocalColors.current.danger
+                            else -> primaryGreen
+                        }, label = "path") {
+                            PathDot(
+                                modifier = Modifier.offset(glowSize*0.5f, glowSize*0.5f),
+                                dotSize = LocalDimensions.current.xxsSpacing,
+                                glowSize = glowSize,
+                                color = it
+                            )
+                        }
+                    }
                 )
             )
         }
@@ -249,6 +288,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
                                     event.start
                                 )
                             )
+                        }
+
+                        is HomeViewModel.UiEvent.ShowWhiteListSystemDialog -> {
+                            requestDozeWhitelist()
                         }
                     }
                 }
@@ -611,9 +654,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 unblockConversation(thread)
             }
         }
+        bottomSheet.onAdminLeaveTapped = {
+            bottomSheet.dismiss()
+            deleteConversation(thread, false)
+        }
         bottomSheet.onDeleteTapped = {
             bottomSheet.dismiss()
-            deleteConversation(thread)
+            deleteConversation(thread, true)
         }
         bottomSheet.onNotificationTapped = {
             bottomSheet.dismiss()
@@ -705,7 +752,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun markAllAsRead(thread: ThreadRecord) {
         lifecycleScope.launch(Dispatchers.Default) {
-            storage.markConversationAsRead(thread.threadId, clock.currentTimeMills())
+            storage.markConversationAsRead(thread.threadId, clock.currentTimeMillis())
         }
     }
 
@@ -715,14 +762,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    private fun deleteConversation(thread: ThreadRecord) {
+    /**
+     * @param isAdminDeleteGroup will determine if the group will be deleted by admin
+     * false : admin will only leave the group (group has > 1 admin)
+     * true : admin will delete the group (can delete even if > 1 admin)
+     */
+    private fun deleteConversation(thread: ThreadRecord, isAdminDeleteGroup : Boolean) {
         val recipient = thread.recipient
 
         if (recipient.address is Address.Group) {
             confirmAndLeaveGroup(
-                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(recipient.address.accountId, recipient.displayName())
+                dialogData = homeViewModel.getLeaveGroupConfirmationDialog(thread, isAdminDeleteGroup)
             ) {
-                homeViewModel.leaveGroup(recipient.address.accountId)
+                homeViewModel.leaveGroup(recipient.address.accountId, isAdminDeleteGroup)
             }
 
             return

@@ -4,11 +4,13 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +32,7 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
@@ -44,6 +47,8 @@ import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.DonationManager
 import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
@@ -154,13 +159,48 @@ class HomeViewModel @Inject constructor(
 
     val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
         .observeSelf()
-        .map { it.shouldShowProBadge }
+        .map { it.isPro } // this is one place where the badge shows even if you decided to hide it - always show it on the home screen is the user is pro
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private var userProfileModalJob: Job? = null
     private var userProfileModalUtils: UserProfileUtils? = null
 
     init {
+        // check for white list status in case of slow mode
+        if(!prefs.hasCheckedDozeWhitelist() // the user has not yet seen the dialog
+            && !prefs.pushEnabled.value // the user is in slow mode
+            && !context.isWhitelistedFromDoze() // the user isn't yet whitelisted
+        ){
+            prefs.setHasCheckedDozeWhitelist(true)
+            viewModelScope.launch {
+                delay(1500)
+                _dialogsState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = Phrase.from(context, R.string.runSessionBackground)
+                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                .format().toString(),
+                            message = Phrase.from(context, R.string.runSessionBackgroundDescription)
+                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                                .format().toString(),
+                            positiveText = context.getString(R.string.allow),
+                            negativeText = context.getString(R.string.cancel),
+                            positiveQaTag = context.getString(R.string.qa_conversation_settings_dialog_whitelist_confirm),
+                            negativeQaTag = context.getString(R.string.qa_conversation_settings_dialog_whitelist_cancel),
+                            positiveStyleDanger = false,
+                            onPositive = {
+                                // show system whitelist dialog
+                                viewModelScope.launch {
+                                    _uiEvents.emit(UiEvent.ShowWhiteListSystemDialog)
+                                }
+                            },
+                            onNegative = {}
+                        )
+                    )
+                }
+            }
+        }
+
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.proDataState.collect { subscription ->
@@ -175,7 +215,7 @@ class HomeViewModel @Inject constructor(
                 if(subscription.type is ProStatus.Active.Expiring
                     && !prefs.hasSeenProExpiring()
                 ){
-                    val validUntil = subscription.type.validUntil
+                    val validUntil = subscription.type.renewingAt
                     showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
                     Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $showExpiring")
                     if (showExpiring) {
@@ -261,9 +301,9 @@ class HomeViewModel @Inject constructor(
         configFactory.removeContactOrBlindedContact(address)
     }
 
-    fun leaveGroup(accountId: AccountId) {
+    fun leaveGroup(accountId: AccountId, deleteGroup : Boolean) {
         viewModelScope.launch(Dispatchers.Default) {
-            groupManager.leaveGroup(accountId)
+            groupManager.leaveGroup(accountId, deleteGroup)
         }
     }
 
@@ -331,6 +371,10 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
+            is Commands.HideSimpleDialog -> {
+                _dialogsState.update { it.copy(showSimpleDialog = null) }
+            }
+
             is Commands.HideDonationCTADialog -> {
                 _dialogsState.update { it.copy(donationCTA = false) }
             }
@@ -386,12 +430,39 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun getLeaveGroupConfirmationDialog(thread: ThreadRecord, isDeleteGroup : Boolean): GroupManagerV2.ConfirmDialogData? {
+        val recipient = thread.recipient
+        if (recipient.address is Address.Group) {
+            val accountId = recipient.address.accountId
+            // Admin will delete the group
+            return if (isDeleteGroup) {
+                groupManager.getDeleteGroupConfirmationDialogData(
+                    accountId,
+                    recipient.displayName()
+                )
+            } else {
+                // more than 1 admin will leave
+                groupManager.getLeaveGroupConfirmationDialogData(
+                    accountId,
+                    recipient.displayName()
+                )
+            }
+        }
+
+        return null
+    }
+
+    fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean{
+        return groupManager.isCurrentUserLastAdmin(groupId)
+    }
+
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
         val userProfileModal: UserProfileModalData? = null,
         val showStartConversationSheet: StartConversationSheetData? = null,
         val proExpiringCTA: ProExpiringCTA? = null,
         val proExpiredCTA: Boolean = false,
+        val showSimpleDialog: SimpleDialogData? = null,
         val donationCTA: Boolean = false,
         val showUrlDialog: String? = null,
     )
@@ -411,6 +482,7 @@ class HomeViewModel @Inject constructor(
 
     sealed interface UiEvent {
         data class OpenProSettings(val start: ProSettingsDestination) : UiEvent
+        data object ShowWhiteListSystemDialog: UiEvent // once confirmed, this is for the system whitelist dialog
     }
 
     sealed interface Commands {
@@ -430,6 +502,8 @@ class HomeViewModel @Inject constructor(
         data object ShowStartConversationSheet : Commands
         data object HideStartConversationSheet : Commands
 
+        data object HideSimpleDialog: Commands
+
         data class GotoProSettings(
             val destination: ProSettingsDestination
         ): Commands
@@ -438,8 +512,8 @@ class HomeViewModel @Inject constructor(
     companion object {
         private val CONVERSATION_COMPARATOR = compareByDescending<ThreadRecord> { it.recipient.isPinned }
             .thenByDescending { it.recipient.priority }
-            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenByDescending { it.date }
+            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenBy { it.recipient.displayName() }
     }
 }

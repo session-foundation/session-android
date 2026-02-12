@@ -33,7 +33,7 @@ import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsession.snode.SnodeAPI;
+import org.session.libsession.network.SnodeClock;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
@@ -231,6 +231,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   private final MutableSharedFlow<Long> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
   private final Json json;
   private final TextSecurePreferences prefs;
+  private final SnodeClock snodeClock;
 
   private final Lazy<@NonNull RecipientRepository> recipientRepository;
   private final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
@@ -251,6 +252,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
                         Lazy<@NonNull SmsDatabase> smsDatabase,
                         Lazy<@NonNull MarkReadProcessor> markReadProcessor,
                         TextSecurePreferences prefs,
+                        SnodeClock snodeClock,
                         Json json) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
@@ -260,6 +262,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     this.mmsDatabase = mmsDatabase;
     this.smsDatabase = smsDatabase;
     this.markReadProcessor = markReadProcessor;
+    this.snodeClock = snodeClock;
 
     this.json = json;
     this.prefs = prefs;
@@ -443,7 +446,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     contentValues.put(UNREAD_MENTION_COUNT, 0);
 
     if (lastSeen) {
-      contentValues.put(LAST_SEEN, SnodeAPI.getNowWithOffset());
+      contentValues.put(LAST_SEEN, snodeClock.currentTimeMillis());
     }
 
     SQLiteDatabase db = getWritableDatabase();
@@ -552,7 +555,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     SQLiteDatabase db = getWritableDatabase();
 
     ContentValues contentValues = new ContentValues(1);
-    long lastSeenTime = timestamp == -1 ? SnodeAPI.getNowWithOffset() : timestamp;
+    long lastSeenTime = timestamp == -1 ? snodeClock.currentTimeMillis() : timestamp;
     contentValues.put(LAST_SEEN, lastSeenTime);
     db.beginTransaction();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(threadId)});
@@ -650,10 +653,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     }
   }
 
-  public long getThreadIdIfExistsFor(Address address) {
-    return getThreadIdIfExistsFor(address.getAddress());
-  }
-
   public long getOrCreateThreadIdFor(Address address) {
     boolean created = false;
 
@@ -662,7 +661,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     long threadId = getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
 
     if (threadId < 0) {
-      threadId = getThreadIdIfExistsFor(address);
+      threadId = getThreadIdIfExistsFor(address.getAddress());
     } else {
       created = true;
     }
@@ -868,7 +867,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       }
 
       final boolean isUnread = address instanceof Address.Conversable &&
-              configFactory.get().withUserConfigs(configs ->
+              ConfigFactoryProtocolKt.withUserConfigs(configFactory.get(), configs ->
                 SharedConfigUtilsKt.getConversationUnread(
                         configs.getConvoInfoVolatile(), (Address.Conversable) address));
 

@@ -23,6 +23,7 @@ class GroupInviteException(
     val isPromotion: Boolean,
     val inviteeAccountIds: List<String>,
     val groupName: String,
+    val isReinvite: Boolean,
     underlying: Throwable
 ) : RuntimeException(underlying) {
     init {
@@ -41,19 +42,26 @@ class GroupInviteException(
         val third = inviteeAccountIds.getOrNull(2)?.let(getInviteeName)
 
         if (second != null && third != null) {
-            return Phrase.from(context, if (isPromotion) R.string.adminPromotionFailedDescriptionMultiple else R.string.groupInviteFailedMultiple)
+            val errorString =
+                if (isPromotion)  if (isReinvite) R.string.failedResendPromotionMultiple else R.string.adminPromotionFailedDescriptionMultiple else
+                    if (isReinvite) R.string.failedResendInviteMultiple else R.string.groupInviteFailedMultiple
+            return Phrase.from(context, errorString)
                 .put(NAME_KEY, first)
                 .put(COUNT_KEY, inviteeAccountIds.size - 1)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
         } else if (second != null) {
-            return Phrase.from(context, if (isPromotion) R.string.adminPromotionFailedDescriptionTwo else R.string.groupInviteFailedTwo)
+            val errorString = if (isPromotion) if (isReinvite) R.string.failedResendPromotionTwo else  R.string.adminPromotionFailedDescriptionTwo else
+                if (isReinvite) R.string.failedResendInviteTwo else R.string.groupInviteFailedTwo
+            return Phrase.from(context, errorString)
                 .put(NAME_KEY, first)
                 .put(OTHER_NAME_KEY, second)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
         } else {
-            return Phrase.from(context, if (isPromotion) R.string.adminPromotionFailedDescription else R.string.groupInviteFailedUser)
+            val errorString = if (isPromotion) if (isReinvite) R.string.failedResendPromotion else R.string.adminPromotionFailedDescription else
+                if (isReinvite) R.string.failedResendInvite else R.string.groupInviteFailedUser
+            return Phrase.from(context, errorString)
                 .put(NAME_KEY, first)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()

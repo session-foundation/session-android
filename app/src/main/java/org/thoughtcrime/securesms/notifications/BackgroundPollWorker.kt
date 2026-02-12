@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
@@ -20,8 +21,11 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.groups.GroupPollerManager
+import org.thoughtcrime.securesms.util.findCause
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.minutes
 
@@ -139,9 +143,15 @@ class BackgroundPollWorker @AssistedInject constructor(
             }
 
             return Result.success()
-        } catch (exception: Exception) {
-            Log.e(TAG, "Background poll failed due to error: ${exception.message}.", exception)
-            return Result.retry()
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (e: Exception) {
+            Log.e(TAG, "Background poll failed", e)
+            return if (e.findCause<NonRetryableException>() != null) {
+                Result.failure()
+            } else {
+                Result.retry()
+            }
         }
     }
 

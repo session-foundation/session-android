@@ -28,10 +28,9 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
@@ -39,6 +38,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.upsertContact
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -190,7 +191,7 @@ class DebugMenuViewModel @AssistedInject constructor(
 
             is Commands.Copy07PrefixedBlindedPublicKey -> {
                 val secretKey = storage.getUserED25519KeyPair()?.secretKey?.data
-                    ?: throw (FileServerApi.Error.NoEd25519KeyPair)
+                    ?: throw (FileServerApis.Error.NoEd25519KeyPair)
                 val userBlindedKeys = BlindKeyAPI.blindVersionKeyPair(secretKey)
 
                 val clip = ClipData.newPlainText("07-prefixed Version Blinded Public Key",

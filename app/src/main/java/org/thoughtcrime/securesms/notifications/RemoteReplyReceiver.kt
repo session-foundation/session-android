@@ -28,9 +28,8 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -40,6 +39,7 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.MmsException
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import javax.inject.Inject
 
 /**
@@ -74,6 +74,10 @@ class RemoteReplyReceiver : BroadcastReceiver() {
     @Inject
     lateinit var messageSender: MessageSender
 
+
+    @Inject
+    lateinit var proStatusManager: ProStatusManager
+
     @SuppressLint("StaticFieldLeak")
     override fun onReceive(context: Context, intent: Intent) {
         if (REPLY_ACTION != intent.getAction()) return
@@ -94,8 +98,9 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                 override fun doInBackground(vararg params: Void?): Void? {
                     val threadId = threadDatabase.getOrCreateThreadIdFor(address)
                     val message = VisibleMessage()
-                    message.sentTimestamp = clock.currentTimeMills()
+                    message.sentTimestamp = clock.currentTimeMillis()
                     message.text = responseText.toString()
+                    proStatusManager.addProFeatures(message)
                     val expiryMode = recipientRepository.getRecipientSync(address).expiryMode
 
                     val expiresInMillis = expiryMode.expiryMillis

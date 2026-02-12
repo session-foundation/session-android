@@ -13,24 +13,31 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.sending_receiving.notifications.Response
+import org.session.libsession.messaging.sending_receiving.notifications.NotificationServer
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.batch.BatchApiExecutor
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
-import org.thoughtcrime.securesms.util.getRootCause
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.util.findCause
 import java.time.Duration
 import java.time.Instant
 
@@ -41,14 +48,26 @@ import java.time.Instant
 class PushRegistrationWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
-    private val registry: PushRegistryV2,
     private val storage: StorageProtocol,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val loginStateRepository: LoginStateRepository,
     @param:PushNotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
+    pushApiBatcher: PushApiBatcher,
+    serverApiExecutor: ServerApiExecutor,
+    @ManagerScope scope: CoroutineScope,
+    private val pushRegisterApiFactory: PushRegisterApi.Factory,
+    private val pushUnregisterApiFactory: PushUnregisterApi.Factory,
 ) : CoroutineWorker(context, params) {
+    private val serverApiExecutor: ServerApiExecutor by lazy {
+        BatchApiExecutor(
+            actualExecutor = serverApiExecutor,
+            batcher = pushApiBatcher,
+            scope = scope,
+        )
+    }
+
     override suspend fun doWork(): Result = semaphore.withPermit {
         val work = pushRegistrationDatabase.getPendingRegistrationWork(
             limit = MAX_REGISTRATIONS_PER_RUN
@@ -60,55 +79,64 @@ class PushRegistrationWorker @AssistedInject constructor(
         )
 
         supervisorScope {
-            val unregisterResults = async {
-                batchRequest(
-                    items = work.unregister,
-                    buildRequest = { r ->
-                        registry.buildUnregisterRequest(
-                            r.input.pushToken,
-                            swarmAuthForAccount(AccountId(r.accountId))
-                        )
-                    },
-                    sendBatchRequest = registry::unregister
-                )
-            }
+            val unregisterJobs = work.unregister
+                .map { r ->
+                    async {
+                        r to runCatching {
+                            serverApiExecutor.execute(
+                                ServerApiRequest(
+                                    serverBaseUrl = NotificationServer.LATEST.url,
+                                    serverX25519PubKeyHex = NotificationServer.LATEST.publicKey,
+                                    api = pushUnregisterApiFactory.create(
+                                        token = r.input.pushToken,
+                                        swarmAuth = swarmAuthForAccount(AccountId(r.accountId)),
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
 
-            val registerResults = async {
-                batchRequest(
-                    items = work.register,
-                    buildRequest = { r ->
-                        val accountId = AccountId(r.accountId)
-                        registry.buildRegisterRequest(
-                            token = r.input.pushToken,
-                            swarmAuth = swarmAuthForAccount(accountId),
-                            namespaces = if (accountId.prefix == IdPrefix.GROUP) {
-                                GROUP_PUSH_NAMESPACES
-                            } else {
-                                REGULAR_PUSH_NAMESPACES
-                            }
-                        )
-                    },
-                    sendBatchRequest = registry::register
-                )
-            }
-
-
+            val registerJobs = work.register
+                .map { r ->
+                    async {
+                        r to runCatching {
+                            serverApiExecutor.execute(
+                                ServerApiRequest(
+                                    serverBaseUrl = NotificationServer.LATEST.url,
+                                    serverX25519PubKeyHex = NotificationServer.LATEST.publicKey,
+                                    api = pushRegisterApiFactory.create(
+                                        token = r.input.pushToken,
+                                        swarmAuth = swarmAuthForAccount(AccountId(r.accountId)),
+                                        namespaces = if (AccountId(r.accountId).prefix == IdPrefix.GROUP) {
+                                            GROUP_PUSH_NAMESPACES
+                                        } else {
+                                            REGULAR_PUSH_NAMESPACES
+                                        }
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
 
             pushRegistrationDatabase.updateRegistrations(
-                registerResults.await().map { (r, result) ->
+                registerJobs.awaitAll().map { (r, result) ->
                     PushRegistrationDatabase.RegistrationWithState(
                         accountId = r.accountId,
                         input = r.input,
                         state = when {
                             result.isSuccess -> {
                                 PushRegistrationDatabase.RegistrationState.Registered(
-                                    due = Instant.now().plus(Duration.ofDays(RE_REGISTER_INTERVAL_DAYS)),
+                                    due = Instant.now()
+                                        .plus(Duration.ofDays(RE_REGISTER_INTERVAL_DAYS)),
                                 )
                             }
 
                             result.isFailure -> {
                                 val exception = result.exceptionOrNull()!!
-                                if (exception.getRootCause<NonRetryableException>() != null) {
+                                if (exception.findCause<NonRetryableException>() != null ||
+                                    exception.findCause<UnhandledStatusCodeException>()?.code == 403) {
                                     Log.e(TAG, "Push registration failed permanently", exception)
                                     PushRegistrationDatabase.RegistrationState.PermanentError
                                 } else {
@@ -141,9 +169,12 @@ class PushRegistrationWorker @AssistedInject constructor(
                 }
             )
 
-            pushRegistrationDatabase.removeRegistrations(unregisterResults.await().map {
+            pushRegistrationDatabase.removeRegistrations(unregisterJobs.awaitAll().map {
                 if (it.second.isFailure) {
-                    Log.e(TAG, "Push unregistration failed: (${it.second.exceptionOrNull()?.message})")
+                    Log.e(
+                        TAG,
+                        "Push unregistration failed: (${it.second.exceptionOrNull()?.message})"
+                    )
                 }
 
                 PushRegistrationDatabase.Registration(
@@ -167,51 +198,6 @@ class PushRegistrationWorker @AssistedInject constructor(
         return Result.success()
     }
 
-    private suspend inline fun <T, Req, Res: Response> batchRequest(
-        items: List<T>,
-        buildRequest: (T) -> Req,
-        sendBatchRequest: suspend (Collection<Req>) -> List<Res>,
-    ): List<Pair<T, kotlin.Result<Unit>>> {
-        if (items.isEmpty()) {
-            return emptyList()
-        }
-
-        val results = ArrayList<Pair<T, kotlin.Result<Unit>>>(items.size)
-
-        val batchRequestItems = mutableListOf<T>()
-        val batchRequests = mutableListOf<Req>()
-
-        for (item in items) {
-            try {
-                val request = buildRequest(item)
-                batchRequestItems += item
-                batchRequests += request
-            } catch (ec: Exception) {
-                results += item to kotlin.Result.failure(NonRetryableException("Failed to build a request", ec))
-            }
-        }
-
-        try {
-            val responses = sendBatchRequest(batchRequests)
-            responses.forEachIndexed { idx, response ->
-                val item = batchRequestItems[idx]
-                results += item to when {
-                    response.isSuccess() -> kotlin.Result.success(Unit)
-                    response.error == 403 -> kotlin.Result.failure(NonRetryableException("Request failed: code = ${response.error}, message = ${response.message}"))
-                    else -> kotlin.Result.failure(RuntimeException("Request failed: code = ${response.error}, message = ${response.message}"))
-                }
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // If the batch API fails, mark all requests in this batch as failed.
-            batchRequestItems.forEach { item ->
-                results += item to kotlin.Result.failure(e)
-            }
-        }
-
-        return results
-    }
 
     private fun swarmAuthForAccount(accountId: AccountId): SwarmAuth {
         return when {

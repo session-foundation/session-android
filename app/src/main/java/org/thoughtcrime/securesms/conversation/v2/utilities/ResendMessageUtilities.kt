@@ -35,6 +35,7 @@ class ResendMessageUtilities @Inject constructor(
             message.openGroupInvitation = openGroupInvitation
         } else {
             message.text = messageRecord.body
+            message.proFeatures = messageRecord.proFeatures
         }
         message.sentTimestamp = messageRecord.timestamp
         if (recipient.isGroupOrCommunity) {

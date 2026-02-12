@@ -1,24 +1,23 @@
 package org.thoughtcrime.securesms.service
 
-import android.content.Context
 import dagger.Lazy
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -28,8 +27,6 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
-import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.mms.MmsException
 import java.io.IOException
 import javax.inject.Inject
@@ -48,7 +45,6 @@ private val TAG = ExpiringMessageManager::class.java.simpleName
  */
 @Singleton
 class ExpiringMessageManager @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val smsDatabase: SmsDatabase,
     private val mmsDatabase: MmsDatabase,
     private val clock: SnodeClock,
@@ -56,15 +52,13 @@ class ExpiringMessageManager @Inject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val recipientRepository: RecipientRepository,
     private val threadDatabase: ThreadDatabase,
-    @ManagerScope scope: CoroutineScope,
-) : MessageExpirationManagerProtocol, OnAppStartupComponent {
+) : MessageExpirationManagerProtocol, AuthAwareComponent {
 
-    init {
-        scope.launch {
-            listOf(
-                launch { processDatabase(smsDatabase) },
-                launch { processDatabase(mmsDatabase) }
-            ).joinAll()
+
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        supervisorScope {
+            launch { processDatabase(smsDatabase) }
+            launch { processDatabase(mmsDatabase) }
         }
     }
 
@@ -192,7 +186,7 @@ class ExpiringMessageManager @Inject constructor(
         val messageId = message.id
         if (message.expiryMode != ExpiryMode.NONE && messageId != null) {
             getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, clock.currentTimeMills())
+                .markExpireStarted(messageId.id, clock.currentTimeMillis())
         }
     }
 
@@ -206,13 +200,13 @@ class ExpiringMessageManager @Inject constructor(
         if (message.expiryMode is ExpiryMode.AfterSend ||
             (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)) {
             getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, clock.currentTimeMills())
+                .markExpireStarted(messageId.id, message.sentTimestamp!!)
         }
     }
 
     private suspend fun processDatabase(db: MessagingDatabase) {
         while (true) {
-            val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMills())
+            val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMillis())
 
             if (expiredMessages.isNotEmpty()) {
                 Log.d(TAG, "Deleting ${expiredMessages.size} expired messages from ${db.javaClass.simpleName}")
@@ -226,7 +220,7 @@ class ExpiringMessageManager @Inject constructor(
             }
 
             val nextExpiration = db.nextExpiringTimestamp
-            val now = clock.currentTimeMills()
+            val now = clock.currentTimeMillis()
 
             if (nextExpiration > 0 && nextExpiration <= now) {
                 continue // Proceed to the next iteration if the next expiration is already or about go to in the past

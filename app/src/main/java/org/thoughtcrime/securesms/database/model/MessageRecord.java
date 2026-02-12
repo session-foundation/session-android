@@ -16,33 +16,17 @@
  */
 package org.thoughtcrime.securesms.database.model;
 
-import android.content.Context;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.ForegroundColorSpan;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.session.libsession.messaging.MessagingModuleConfiguration;
-import org.session.libsession.messaging.calls.CallMessageType;
-import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage;
-import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
-import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.AddressKt;
-import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsignal.utilities.AccountId;
-import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import network.loki.messenger.R;
 import network.loki.messenger.libsession_util.protocol.ProFeature;
 
 /**
@@ -126,59 +110,6 @@ public abstract class MessageRecord extends DisplayRecord {
     }
 
     return groupUpdateMessage;
-  }
-
-  @Override
-  public CharSequence getDisplayBody(@NonNull Context context) {
-    if (isGroupUpdateMessage()) {
-      UpdateMessageData updateMessageData = getGroupUpdateMessage();
-      Address groupRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
-
-      if (updateMessageData == null || groupRecipient == null) {
-        return "";
-      }
-
-      SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
-              context,
-              AddressKt.isGroupV2(groupRecipient) ? new AccountId(groupRecipient.toString()) : null, // accountId is only used for GroupsV2
-              updateMessageData,
-              MessagingModuleConfiguration.getShared().getConfigFactory(),
-              isOutgoing(),
-              getTimestamp(),
-              getExpireStarted())
-      );
-
-      if (updateMessageData.isGroupErrorQuitKind()) {
-        text.setSpan(new ForegroundColorSpan(ThemeUtil.getThemedColor(context, R.attr.danger)), 0, text.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-      } else if (updateMessageData.isGroupLeavingKind()) {
-        text.setSpan(new ForegroundColorSpan(ThemeUtil.getThemedColor(context, android.R.attr.textColorTertiary)), 0, text.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-      }
-
-      return text;
-    } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
-        Address rec = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
-        if(rec == null) return "";
-        boolean isGroup = AddressKt.isGroupOrCommunity(rec);
-      return UpdateMessageBuilder.INSTANCE
-              .buildExpirationTimerMessage(context, ((DisappearingMessageUpdate) getMessageContent()).getExpiryMode(), isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing());
-    } else if (isDataExtractionNotification()) {
-      if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().toString())));
-      else if (isMediaSavedNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED, getIndividualRecipient().getAddress().toString())));
-    } else if (isCallLog()) {
-      CallMessageType callType;
-      if (isIncomingCall()) {
-        callType = CallMessageType.CALL_INCOMING;
-      } else if (isOutgoingCall()) {
-        callType = CallMessageType.CALL_OUTGOING;
-      } else if (isMissedCall()) {
-        callType = CallMessageType.CALL_MISSED;
-      } else {
-        callType = CallMessageType.CALL_FIRST_MISSED;
-      }
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildCallMessage(context, callType, getIndividualRecipient().getAddress().toString()));
-    }
-
-    return new SpannableString(getBody());
   }
 
   public boolean isGroupExpirationTimerUpdate() {

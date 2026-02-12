@@ -9,7 +9,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsignal.protos.SignalServiceProtos
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.pro.toProMessageBitSetValue
 import org.thoughtcrime.securesms.pro.toProProfileBitSetValue
@@ -30,12 +30,11 @@ data class VisibleMessage(
     var reaction: Reaction? = null,
     var hasMention: Boolean = false,
     var blocksMessageRequests: Boolean = false,
-    var proFeatures: Set<ProFeature> = emptySet()
 ) : Message()  {
 
     // This empty constructor is needed for kryo serialization
     @Keep
-    constructor(): this(proFeatures = emptySet())
+    constructor(): this(text = null)
 
     override val isSelfSendValid: Boolean = true
 
@@ -56,7 +55,7 @@ data class VisibleMessage(
     companion object {
         const val TAG = "VisibleMessage"
 
-        fun fromProto(proto: SignalServiceProtos.Content): VisibleMessage? =
+        fun fromProto(proto: SessionProtos.Content): VisibleMessage? =
             proto.dataMessage?.let { VisibleMessage().apply {
                 if (it.hasSyncTarget()) syncTarget = it.syncTarget
                 text = it.body
@@ -71,7 +70,7 @@ data class VisibleMessage(
     }
 
     protected override fun buildProto(
-        builder: SignalServiceProtos.Content.Builder,
+        builder: SessionProtos.Content.Builder,
         messageDataProvider: MessageDataProvider
     ) {
         val dataMessage = builder.dataMessageBuilder
@@ -114,19 +113,6 @@ data class VisibleMessage(
         // Sync target
         if (syncTarget != null) {
             dataMessage.syncTarget = syncTarget
-        }
-
-        // Pro features
-        if (proFeatures.any { it is ProMessageFeature }) {
-            builder.proMessageBuilder.setMsgBitset(
-                proFeatures.toProMessageBitSetValue()
-            )
-        }
-
-        if (proFeatures.any { it is ProProfileFeature }) {
-            builder.proMessageBuilder.setProfileBitset(
-                proFeatures.toProProfileBitSetValue()
-            )
         }
     }
     // endregion

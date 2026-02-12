@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -12,7 +10,6 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
@@ -32,7 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityPathBinding
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
@@ -60,6 +57,9 @@ class PathActivity : ScreenLockActionBarActivity() {
     @Inject
     lateinit var inAppReviewManager: InAppReviewManager
 
+    @Inject
+    lateinit var pathManager: PathManager
+
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
@@ -83,9 +83,7 @@ class PathActivity : ScreenLockActionBarActivity() {
         lifecycleScope.launch {
             // Check if the
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                OnionRequestAPI.paths
-                    .map { it.isEmpty() }
-                    .distinctUntilChanged()
+                pathManager.paths
                     .collectLatest {
                         update(true)
                     }
@@ -127,13 +125,12 @@ class PathActivity : ScreenLockActionBarActivity() {
     private fun update(isAnimated: Boolean) {
         binding.pathRowsContainer.removeAllViews()
 
-        val paths = OnionRequestAPI.paths.value
+        val paths = pathManager.paths.value
         if (paths.isNotEmpty()) {
             val path = paths.firstOrNull() ?: return finish()
             val dotAnimationRepeatInterval = path.count().toLong() * 1000 + 1000
             val pathRows = path.mapIndexed { index, snode ->
-                val isGuardSnode = (OnionRequestAPI.guardSnodes.contains(snode))
-                getPathRow(snode, LineView.Location.Middle, index.toLong() * 1000 + 2000, dotAnimationRepeatInterval, isGuardSnode)
+                getPathRow(snode, LineView.Location.Middle, index.toLong() * 1000 + 2000, dotAnimationRepeatInterval, index == 0)
             }
             val youRow = getPathRow(resources.getString(R.string.you), null, LineView.Location.Top, 1000, dotAnimationRepeatInterval)
             val destinationRow = getPathRow(resources.getString(R.string.onionRoutingPathDestination), null, LineView.Location.Bottom, path.count().toLong() * 1000 + 2000, dotAnimationRepeatInterval)
@@ -209,10 +206,14 @@ class PathActivity : ScreenLockActionBarActivity() {
         private var dotAnimationRepeatInterval: Long = 0
         private var job: Job? = null
 
+        private val validColor by lazy {
+            ContextCompat.getColor(context, R.color.accent_green)
+        }
+
         private val dotView by lazy {
             val result = PathDotView(context)
             result.setBackgroundResource(R.drawable.accent_dot)
-            result.mainColor = context.getAccentColor()
+            result.mainColor = validColor
             result
         }
 

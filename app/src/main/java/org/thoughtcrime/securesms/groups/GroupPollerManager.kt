@@ -23,8 +23,10 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
+import org.session.libsession.messaging.sending_receiving.pollers.BasePoller
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -127,22 +129,22 @@ class GroupPollerManager @Inject constructor(
 
 
     @Suppress("OPT_IN_USAGE")
-    fun watchGroupPollingState(groupId: AccountId): Flow<GroupPoller.State> {
+    fun watchGroupPollingState(groupId: AccountId): Flow<BasePoller.PollState<GroupPoller.GroupPollResult>> {
         return groupPollers
             .flatMapLatest { pollers ->
-                pollers[groupId]?.poller?.state ?: flowOf(GroupPoller.State())
+                pollers[groupId]?.poller?.pollState ?: flowOf(BasePoller.PollState.Idle)
             }
             .distinctUntilChanged()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun watchAllGroupPollingState(): Flow<Pair<AccountId, GroupPoller.State>> {
+    fun watchAllGroupPollingState(): Flow<Pair<AccountId, BasePoller.PollState<GroupPoller.GroupPollResult>>> {
         return groupPollers
             .flatMapLatest { pollers ->
                 // Merge all poller states into a single flow of (groupId, state) pairs
                 merge(
                     *pollers
-                        .map { (id, poller) -> poller.poller.state.map { state -> id to state } }
+                        .map { (id, poller) -> poller.poller.pollState.map { state -> id to state } }
                         .toTypedArray()
                 )
             }
@@ -152,7 +154,7 @@ class GroupPollerManager @Inject constructor(
         supervisorScope {
             groupPollers.value.values.map {
                 async {
-                    it.poller.requestPollOnce()
+                    it.poller.manualPollOnce()
                 }
             }.awaitAll()
         }
@@ -164,11 +166,11 @@ class GroupPollerManager @Inject constructor(
      * Note that if the group is not supposed to be polled (kicked, destroyed, etc) then
      * this function will hang forever. It's your responsibility to set a timeout if needed.
      */
-    suspend fun pollOnce(groupId: AccountId): GroupPoller.PollResult {
+    suspend fun pollOnce(groupId: AccountId): GroupPoller.GroupPollResult {
         return groupPollers.mapNotNull { it[groupId] }
             .first()
             .poller
-            .requestPollOnce()
+            .manualPollOnce()
     }
 
     data class GroupPollerHandle(

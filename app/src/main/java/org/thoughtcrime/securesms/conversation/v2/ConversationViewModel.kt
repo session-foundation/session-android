@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
@@ -47,7 +48,6 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BitSet
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.BlindedContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.UserPic
@@ -58,6 +58,10 @@ import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteAllReactionsApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
@@ -83,16 +87,17 @@ import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTy
 import org.session.libsession.utilities.toGroupString
 import org.session.libsession.utilities.upsertContact
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withMutableUserConfigs
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
@@ -142,7 +147,6 @@ class ConversationViewModel @AssistedInject constructor(
     private val threadDb: ThreadDatabase,
     private val reactionDb: ReactionDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val lokiAPIDb: LokiAPIDatabase,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
     private val callManager: CallManager,
@@ -158,7 +162,10 @@ class ConversationViewModel @AssistedInject constructor(
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
     private val openGroupManager: OpenGroupManager,
-    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory
+    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val deleteAllReactionsApiFactory: DeleteAllReactionsApi.Factory,
+    private val loginStateRepository: LoginStateRepository,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -175,29 +182,18 @@ class ConversationViewModel @AssistedInject constructor(
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
     val threadIdFlow: StateFlow<Long?> =
-        threadDb.getThreadIdIfExistsFor(address).takeIf { it != -1L }
+        storage.getThreadId(address)
             ?.let { MutableStateFlow(it) }
-            ?: threadDb
-                .updateNotifications
-                .map {
-                    withContext(Dispatchers.Default) {
-                        threadDb.getThreadIdIfExistsFor(address)
-                    }
-                }
-                .filter { it != -1L }
+            ?: threadDb.updateNotifications
+                .map { storage.getThreadId(address) }
+                .flowOn(Dispatchers.Default)
+                .filterNotNull()
                 .take(1)
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.Eagerly,
-                    initialValue = null
-                )
+                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /**
-     * Current thread ID, or -1 if it doesn't exist yet.
-     *
-     */
+     // Current thread ID, or null if it doesn't exist yet.
     @Deprecated("Use threadIdFlow instead")
-    val threadId: Long get() = threadIdFlow.value ?: -1L
+    val threadId: Long? get() = threadIdFlow.value
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
@@ -211,12 +207,12 @@ class ConversationViewModel @AssistedInject constructor(
     val conversationReloadNotification: SharedFlow<*> = merge(
         threadIdFlow
             .filterNotNull()
-            .flatMapLatest { id ->  threadDb.updateNotifications.filter { it == id } },
+            .flatMapLatest { id -> threadDb.updateNotifications.filter { it == id } },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
     ).debounce(200L) // debounce to avoid too many reloads
-        .shareIn(viewModelScope, SharingStarted.Eagerly)
+        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
 
     val showSendAfterApprovalText: Flow<Boolean> get() = recipientFlow.map { r ->
@@ -271,7 +267,8 @@ class ConversationViewModel @AssistedInject constructor(
         get() {
             if (!recipient.isGroupV2Recipient) return null
 
-            return repository.getInvitingAdmin(threadId)?.let(recipientRepository::getRecipientSync)
+            if (threadId == null) return null
+            return repository.getInvitingAdmin(threadId!!)?.let(recipientRepository::getRecipientSync)
         }
 
     val groupV2ThreadState: Flow<GroupThreadStatus> get() = when {
@@ -299,10 +296,12 @@ class ConversationViewModel @AssistedInject constructor(
 
     val blindedPublicKey: String?
         get() = if (recipient.data !is RecipientData.Community || edKeyPair == null || !serverCapabilities.contains(OpenGroupApi.Capability.BLIND.name.lowercase())) null else {
-            BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = edKeyPair!!.secretKey.data,
-                serverPubKey = Hex.fromStringCondensed((recipient.data as RecipientData.Community).serverPubKey),
-            )?.pubKey?.data
+            loginStateRepository.peekLoginState()
+                ?.getBlindedKeyPair(
+                    serverUrl = (recipient.data as RecipientData.Community).serverUrl,
+                    serverPubKeyHex = (recipient.data as RecipientData.Community).serverPubKey
+                )
+                ?.pubKey?.data
                 ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
         }
 
@@ -686,16 +685,21 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun saveDraft(text: String) {
-        GlobalScope.launch(Dispatchers.IO) {
-            repository.saveDraft(threadId, text)
+        threadId?.let { threadID ->
+            GlobalScope.launch(Dispatchers.IO) {
+                repository.saveDraft(threadID, text)
+            }
         }
+
     }
 
     fun getDraft(): String? {
-        val draft: String? = repository.getDraft(threadId)
+        val threadID = threadId ?: return null
+
+        val draft = repository.getDraft(threadID)
 
         viewModelScope.launch(Dispatchers.IO) {
-            repository.clearDrafts(threadId)
+            repository.clearDrafts(threadID)
         }
 
         return draft
@@ -1108,6 +1112,19 @@ class ConversationViewModel @AssistedInject constructor(
             }
     }
 
+    fun unbanUser(recipient: Address) = viewModelScope.launch {
+        repository.unbanUser(
+            community = address as Address.Community,
+            userId = (recipient as Address.WithAccountId).accountId
+        )
+            .onSuccess {
+                showMessage(application.getString(R.string.banUnbanUserUnbanned))
+            }
+            .onFailure {
+                showMessage(application.getString(R.string.banUnbanErrorFailed))
+            }
+    }
+
     fun banAndDeleteAll(messageRecord: MessageRecord) = viewModelScope.launch {
         repository.banAndDeleteAll(
             community = address as Address.Community,
@@ -1117,7 +1134,9 @@ class ConversationViewModel @AssistedInject constructor(
                 showMessage(application.getString(R.string.banUserBanned))
 
                 // ..so we can now delete all their messages in this thread from local storage & remove the views.
-                repository.deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord)
+                withContext(Dispatchers.IO) {
+                    repository.deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord)
+                }
             }
             .onFailure {
                 showMessage(application.getString(R.string.banErrorFailed))
@@ -1379,11 +1398,15 @@ class ConversationViewModel @AssistedInject constructor(
             (address as? Address.Community)?.let { openGroup ->
                 lokiMessageDb.getServerID(messageId)?.let { serverId ->
                     runCatching {
-                        OpenGroupApi.deleteAllReactions(
-                            openGroup.room,
-                            openGroup.serverUrl,
-                            serverId,
-                            emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = openGroup.serverUrl,
+                                api = deleteAllReactionsApiFactory.create(
+                                    room = openGroup.room,
+                                    messageId = serverId,
+                                    emoji = emoji
+                                )
+                            )
                         )
                     }
                 }

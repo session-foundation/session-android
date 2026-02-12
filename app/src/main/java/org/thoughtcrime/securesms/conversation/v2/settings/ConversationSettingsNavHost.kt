@@ -6,12 +6,15 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
@@ -26,17 +29,24 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.Disappear
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
-import org.thoughtcrime.securesms.groups.EditGroupViewModel
+import org.thoughtcrime.securesms.groups.ManageGroupMembersViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
-import org.thoughtcrime.securesms.groups.SelectContactsViewModel
-import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel
+import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel
+import org.thoughtcrime.securesms.groups.PromoteMembersViewModel
+import org.thoughtcrime.securesms.groups.compose.ManageGroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
-import org.thoughtcrime.securesms.groups.compose.GroupMinimumVersionBanner
+import org.thoughtcrime.securesms.groups.compose.InviteAccountIdScreen
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
+import org.thoughtcrime.securesms.groups.compose.ManageGroupAdminsScreen
+import org.thoughtcrime.securesms.groups.compose.PromoteMembersScreen
+import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
+import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
@@ -60,6 +70,30 @@ sealed interface ConversationSettingsDestination: Parcelable {
     @Serializable
     @Parcelize
     data class RouteManageMembers private constructor(
+        private val address: String
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group): this(groupAddress.address)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
+
+    @Serializable
+    @Parcelize
+    data class RouteManageAdmins private constructor(
+        private val address: String,
+        val navigateToPromoteMembers: Boolean = false
+    ) : ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group, navigateToPromoteMembers: Boolean = false) : this(
+            groupAddress.address,
+            navigateToPromoteMembers
+        )
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
+
+    @Serializable
+    @Parcelize
+    data class RoutePromoteMembers(
         private val address: String
     ): ConversationSettingsDestination {
         constructor(groupAddress: Address.Group): this(groupAddress.address)
@@ -96,6 +130,18 @@ sealed interface ConversationSettingsDestination: Parcelable {
     data class RouteInviteToCommunity(
         val communityUrl: String
     ): ConversationSettingsDestination
+
+    @Serializable
+    @Parcelize
+    data class RouteInviteAccountIdToGroup private constructor(
+        private val address: String,
+        val excludingAccountIDs: List<String>
+    ): ConversationSettingsDestination {
+        constructor(groupAddress: Address.Group, excludingAccountIDs: List<String>)
+        : this(groupAddress.address, excludingAccountIDs)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
 }
 
 @SuppressLint("RestrictedApi")
@@ -185,20 +231,29 @@ fun ConversationSettingsNavHost(
                 val data: RouteManageMembers = backStackEntry.toRoute()
 
                 val viewModel =
-                    hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
-                        factory.create(data.groupAddress)
+                    hiltViewModel<ManageGroupMembersViewModel, ManageGroupMembersViewModel.Factory> { factory ->
+                        factory.create(data.groupAddress, navigator)
                     }
 
-                EditGroupScreen(
+                ManageGroupMembersScreen(
                     viewModel = viewModel,
-                    navigateToInviteContact = {
-                        navController.navigate(
-                            RouteInviteToGroup(
-                                groupAddress = data.groupAddress,
-                                excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection.toList()
-                            )
-                        )
+                    onBack = dropUnlessResumed {
+                        handleBack()
                     },
+                )
+            }
+
+            // Manage group Admins
+            horizontalSlideComposable<RouteManageAdmins> { backStackEntry ->
+                val data: RouteManageAdmins = backStackEntry.toRoute()
+
+                val viewModel =
+                    hiltViewModel<ManageGroupAdminsViewModel, ManageGroupAdminsViewModel.Factory> { factory ->
+                        factory.create(data.groupAddress, navigator, data.navigateToPromoteMembers)
+                    }
+
+                ManageGroupAdminsScreen(
+                    viewModel = viewModel,
                     onBack = dropUnlessResumed {
                         handleBack()
                     },
@@ -210,8 +265,9 @@ fun ConversationSettingsNavHost(
                 val data: RouteInviteToGroup = backStackEntry.toRoute()
 
                 val viewModel =
-                    hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
+                    hiltViewModel<InviteMembersViewModel, InviteMembersViewModel.Factory> { factory ->
                         factory.create(
+                            groupAddress = data.groupAddress,
                             excludingAccountIDs = data.excludingAccountIDs.map(Address::fromSerialized).toSet()
                         )
                     }
@@ -222,29 +278,26 @@ fun ConversationSettingsNavHost(
                         RouteManageMembers(data.groupAddress)
                     )
                 }
-                val editGroupViewModel: EditGroupViewModel = hiltViewModel(parentEntry)
+                val manageGroupMembersViewModel: ManageGroupMembersViewModel = hiltViewModel(parentEntry)
 
                 InviteContactsScreen(
                     viewModel = viewModel,
-                    onDoneClicked = dropUnlessResumed {
+                    onDoneClicked = { shareHistory ->
                         //send invites from the manage group screen
-                        editGroupViewModel.onContactSelected(viewModel.currentSelected)
-
+                        manageGroupMembersViewModel.onSendInviteClicked(viewModel.currentSelected, shareHistory)
                         handleBack()
                     },
                     onBack = dropUnlessResumed {
                         handleBack()
                     },
-                    banner = {
-                        GroupMinimumVersionBanner()
-                    }
+                    forCommunity = false
                 )
             }
 
             // Invite Contacts to community
             horizontalSlideComposable<RouteInviteToCommunity> { backStackEntry ->
                 val viewModel =
-                    hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
+                    hiltViewModel<InviteMembersViewModel, InviteMembersViewModel.Factory> { factory ->
                         factory.create()
                     }
 
@@ -264,10 +317,94 @@ fun ConversationSettingsNavHost(
 
                         // clear selected contacts
                         viewModel.clearSelection()
+                        handleBack()
                     },
                     onBack = dropUnlessResumed {
                         handleBack()
                     },
+                    forCommunity = true
+                )
+            }
+
+            // Invite contacts using Account ID
+            horizontalSlideComposable<RouteInviteAccountIdToGroup> { backStackEntry ->
+                val data: RouteInviteAccountIdToGroup = backStackEntry.toRoute()
+
+                val viewModel =
+                    hiltViewModel<InviteMembersViewModel, InviteMembersViewModel.Factory> { factory ->
+                        factory.create(
+                            groupAddress = data.groupAddress,
+                            excludingAccountIDs = data.excludingAccountIDs.map(Address::fromSerialized).toSet()
+                        )
+                    }
+
+                val newMessageViewModel = hiltViewModel<NewMessageViewModel>()
+                val uiState by newMessageViewModel.state.collectAsState(State())
+
+                // grab a hold of manage group's VM
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(
+                        RouteManageMembers(data.groupAddress)
+                    )
+                }
+
+                val manageGroupMembersViewModel: ManageGroupMembersViewModel = hiltViewModel(parentEntry)
+
+                LaunchedEffect(Unit) {
+                    newMessageViewModel.success.collect { success ->
+                        viewModel.sendCommand(
+                            InviteMembersViewModel.Commands.HandleAccountId(
+                                address = success.address
+                            )
+                        )
+                    }
+                }
+
+                InviteAccountIdScreen(
+                    viewModel = viewModel,
+                    state = uiState,
+                    qrErrors = newMessageViewModel.qrErrors,
+                    callbacks = newMessageViewModel,
+                    onBack = { handleBack() },
+                    onHelp = { newMessageViewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) },
+                    onDismissHelpDialog = {
+                        newMessageViewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog)
+                    },
+                    onSendInvite = { shareHistory ->
+                        manageGroupMembersViewModel.onCommand(
+                            ManageGroupMembersViewModel.Commands.SendInvites(
+                                address = viewModel.currentSelected,
+                                shareHistory = shareHistory
+                            )
+                        )
+                        handleBack()
+                    },
+                )
+            }
+
+            // Promote Members to group Admin
+            horizontalSlideComposable<RoutePromoteMembers> { backStackEntry ->
+                val data: RoutePromoteMembers = backStackEntry.toRoute()
+
+                val viewModel =
+                    hiltViewModel<PromoteMembersViewModel, PromoteMembersViewModel.Factory> { factory ->
+                        factory.create(groupAddress = data.groupAddress)
+                    }
+
+                val parentEntry = remember(backStackEntry) {
+                    navController.previousBackStackEntry ?: error("RouteManageAdmin not in backstack")
+                }
+                val manageGroupAdminsViewModel: ManageGroupAdminsViewModel = hiltViewModel(parentEntry)
+
+                PromoteMembersScreen(
+                    viewModel = viewModel,
+                    onBack = dropUnlessResumed {
+                        handleBack()
+                    },
+                    onPromoteClicked = { selectedMembers ->
+                        manageGroupAdminsViewModel.onSendPromotionsClicked(selectedMembers)
+                        handleBack()
+                    }
                 )
             }
 

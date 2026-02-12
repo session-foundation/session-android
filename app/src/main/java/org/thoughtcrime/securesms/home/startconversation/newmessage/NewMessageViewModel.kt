@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.home.startconversation.newmessage
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
@@ -16,15 +15,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
-import org.thoughtcrime.securesms.preferences.SettingsViewModel
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
@@ -32,8 +28,9 @@ import javax.inject.Inject
 @HiltViewModel
 class NewMessageViewModel @Inject constructor(
     private val application: Application,
-    private val configFactory: ConfigFactoryProtocol,
-): ViewModel(), Callbacks {
+    private val onsResolver: OnsResolver,
+) : ViewModel(), Callbacks {
+    private val HELP_URL : String = "https://getsession.org/account-ids"
 
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
@@ -41,7 +38,10 @@ class NewMessageViewModel @Inject constructor(
     private val _success = MutableSharedFlow<Success>()
     val success get() = _success
 
-    private val _qrErrors = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _qrErrors = MutableSharedFlow<String>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     val qrErrors = _qrErrors.asSharedFlow()
 
     private var loadOnsJob: Job? = null
@@ -52,7 +52,13 @@ class NewMessageViewModel @Inject constructor(
     override fun onChange(value: String) {
         loadOnsJob?.cancel()
         loadOnsJob = null
-        _state.update { it.copy(newMessageIdOrOns = value, isTextErrorColor = false, loading = false) }
+        _state.update {
+            it.copy(
+                newMessageIdOrOns = value,
+                isTextErrorColor = false,
+                loading = false
+            )
+        }
     }
 
     override fun onContinue() {
@@ -98,11 +104,17 @@ class NewMessageViewModel @Inject constructor(
                     isPrefixRequired = false
                 ) && PublicKeyValidation.hasValidPrefix(value)
             ) {
-                onPublicKey(value)
+                onChange(value)
+                _state.update { it.copy(validIdFromQr = value) }
             } else {
                 _qrErrors.tryEmit(application.getString(R.string.qrNotAccountId))
+                _state.update { it.copy(validIdFromQr = "") }
             }
         }
+    }
+
+    override fun onClearQrCode() {
+        _state.update {it.copy(validIdFromQr = "") }
     }
 
     private fun resolveONS(ons: String) {
@@ -114,7 +126,7 @@ class NewMessageViewModel @Inject constructor(
         loadOnsJob = viewModelScope.launch {
             try {
                 val publicKey = withTimeout(30_000L, {
-                   SnodeAPI.getAccountID(ons)
+                    onsResolver.resolve(ons)
                 })
                 onPublicKey(publicKey)
             } catch (e: Exception) {
@@ -125,7 +137,12 @@ class NewMessageViewModel @Inject constructor(
     }
 
     private fun onError(e: Exception) {
-        _state.update { it.copy(loading = false, isTextErrorColor = true, error = GetString(e) { it.toMessage() }) }
+        _state.update {
+            it.copy(
+                loading = false,
+                isTextErrorColor = true,
+                error = GetString(e) { it.toMessage() })
+        }
     }
 
     private fun onPublicKey(publicKey: String) {
@@ -141,12 +158,18 @@ class NewMessageViewModel @Inject constructor(
         if (PublicKeyValidation.hasValidPrefix(publicKey)) {
             onPublicKey(publicKey)
         } else {
-            _state.update { it.copy(isTextErrorColor = true, error = GetString(R.string.accountIdErrorInvalid), loading = false) }
+            _state.update {
+                it.copy(
+                    isTextErrorColor = true,
+                    error = GetString(R.string.accountIdErrorInvalid),
+                    loading = false
+                )
+            }
         }
     }
 
     private fun Exception.toMessage() = when (this) {
-        is SnodeAPI.Error.Generic -> application.getString(R.string.errorUnregisteredOns)
+        is UnhandledStatusCodeException -> application.getString(R.string.errorUnregisteredOns)
         else -> Phrase.from(application, R.string.errorNoLookupOns)
             .put(APP_NAME_KEY, application.getString(R.string.app_name))
             .format().toString()
@@ -155,13 +178,13 @@ class NewMessageViewModel @Inject constructor(
     fun onCommand(commands: Commands) {
         when (commands) {
             is Commands.ShowUrlDialog -> {
-                _state.update { it.copy(showUrlDialog = true) }
+                _state.update { it.copy(showUrlDialog = HELP_URL) }
             }
 
             is Commands.DismissUrlDialog -> {
                 _state.update {
                     it.copy(
-                        showUrlDialog = false
+                        showUrlDialog = null
                     )
                 }
             }
@@ -179,12 +202,11 @@ data class State(
     val isTextErrorColor: Boolean = false,
     val error: GetString? = null,
     val loading: Boolean = false,
-    val showUrlDialog : Boolean = false
+    val showUrlDialog: String? = null,
+    val validIdFromQr: String = "",
 ) {
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
 }
-
-
 
 
 data class Success(val address: Address.Standard)

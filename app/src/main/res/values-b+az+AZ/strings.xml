@@ -978,6 +978,7 @@
     <string name="proAllSetDescription">{app_pro} erişiminiz güncəllənib! {pro} abunəliyiniz <b>{date}</b> tarixində avtomatik yeniləndiyi zaman ödəniş haqqı alınacaq.</string>
     <string name="proAlreadyPurchased">Artıq yüksəltdiniz</string>
     <string name="proAnimatedDisplayPicture">Getdik və ekran şəkliniz üçün GIF-lər və animasiyalı WebP təsvirləri yükləyin!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">{app_pro} Beta ilə animasiyalı ekran şəkilləri əldə edin və premium özəlliklərin kilidini açın</string>
     <string name="proAnimatedDisplayPictureFeature">Animasiyalı profil şəkli</string>
     <string name="proAnimatedDisplayPictureModalDescription">istifadəçiləri GIF-ləri yükləyə bilər</string>
     <string name="proAnimatedDisplayPictures">Animasiyalı ekran şəkilləri</string>
@@ -996,12 +997,15 @@
     <string name="proBilledAnnually">{price} - illik haqq</string>
     <string name="proBilledMonthly">{price} - aylıq haqq</string>
     <string name="proBilledQuarterly">{price} - rüblük haqq</string>
+    <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz?\n{app_pro} Beta ilə daha çox mesaj göndərin və premim özəlliklərin kilidini açın</string>
+    <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz?\n{app_pro} Beta ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">{limit} danışıqdan çoxunu sancmaq istəyirsiniz?\n{app_pro} Beta ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCancellation">Ləğv etmə</string>
     <string name="proCancellationOptions">{pro} erişiminizi ləğv etməyin iki yolu var:</string>
     <string name="proDiscountTooltip">Tam {app_pro} qiymətinə sahib {pro} erişiminiz üçün artıq {percent}% endirim var.</string>
     <string name="proErrorRefreshingStatus">{pro} statusunu təzələmə xətası</string>
     <string name="proExpired">Müddəti bitib</string>
-    <string name="proExpiredDescription">Təəssüf ki, {pro} erişiminizin istifadə müddəti bitib. {app_pro} üzrə eksklüziv imtiyazları və özəllikləri təkrar aktivləşdirmək üçün yeniləyin.</string>
+    <string name="proExpiredDescription">Təəssüf ki, {pro} erişiminizin istifadə müddəti bitib.\n{app_pro} üzrə eksklüziv imtiyazları və özəllikləri təkrar aktivləşdirmək üçün yeniləyin.</string>
     <string name="proExpiringSoon">Tezliklə bitir</string>
     <string name="proExpiringTime">{pro}, <b>{time}</b> vaxtında başa çatır</string>
     <string name="proFaq">{pro} TVS</string>
@@ -1053,7 +1057,6 @@
     <string name="proRenewDesktopLinked">{pro} erişiminizi, {platform_store} və ya {platform_store_other} üzərindən {app_name} quraşdırılmış və əlaqələndirilmiş cihazın {app_pro} ayarlarında yeniləyin.</string>
     <string name="proRenewMaxPotential">{app_name} tətbiqini yenidən maksimum potensialda istifadə etmək istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
     <string name="proRenewPinMoreConversations">Daha çox danışığı təkrar sancmaq istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
-    <string name="proRenewalUnsuccessful">Pro yeniləməsi uğursuz oldu, tezliklə yenidən sınanacaq</string>
     <string name="proRequestedRefund">Geri ödəmə tələb edildi</string>
     <string name="proSendMore">Daha çoxunu göndərmək üçün</string>
     <string name="proSettings">{pro} ayarları</string>
@@ -1072,6 +1075,7 @@
     <string name="proTosPrivacy">Güncəlləyərək, {app_pro} <b>Xidmət Şərtləri</b> {icon} və <b>Məxfilik Siyasəti</b> {icon} ilə razılaşırsınız</string>
     <string name="proUnlimitedPins">Limitsiz sancma</string>
     <string name="proUnlimitedPinsDescription">Limitsiz sancılmış danışıqla bütün söhbətlərinizi təşkil edin.</string>
+    <string name="proUserProfileModalCallToAction">{app_name} tətbiqindən daha çox faydalanmaq istəyirsiniz?\nDaha güclü mesajlaşma təcrübəsi üçün {app_pro} Betaya yüksəldin.</string>
     <string name="processingRefundRequest">{platform} geri ödəmə tələbinizi emal edir</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Ekran şəkli</string>
@@ -1314,7 +1318,6 @@
     <string name="urlOpenDescriptionAlternative">Keçidlər, brauzerinizdə açılacaq.</string>
     <string name="useFastMode">Sürətli rejimi istifadə et</string>
     <string name="viaStoreWebsite">{platform} veb saytı vasitəsilə</string>
-    <string name="viaStoreWebsiteDescription">Qeydiyyatdan keçdiyiniz {platform_account} hesabını istifadə edərək {pro} erişiminizi <b><font color="0">{platform_store}</font></b> veb saytı üzərindən güncəlləyin.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Video oxudula bilmir.</string>
     <string name="view">Göstər</string>

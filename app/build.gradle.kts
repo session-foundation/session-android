@@ -12,9 +12,9 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
+    id("local-snode-pool")
     id("rename-apk")
     id("witness")
 }
@@ -26,8 +26,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 436
-val canonicalVersionName = "1.30.3"
+val canonicalVersionCode = 437
+val canonicalVersionName = "1.31.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -86,22 +86,7 @@ kotlin {
     }
 }
 
-protobuf {
-    protoc {
-        artifact = libs.protoc.get().toString()
-    }
-
-    plugins {
-        generateProtoTasks {
-            all().forEach {
-                it.builtins {
-                    create("java") {
-                    }
-                }
-            }
-        }
-    }
-}
+val testJvmAgent = configurations.create("mockitoAgent")
 
 android {
     namespace = "network.loki.messenger"
@@ -150,6 +135,13 @@ android {
         buildConfigField("int", "CONTENT_PROXY_PORT", "443")
         buildConfigField("String", "USER_AGENT", "\"OWA\"")
         buildConfigField("int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode")
+
+        buildConfigField("org.thoughtcrime.securesms.pro.ProBackendConfig", "PRO_BACKEND_DEV", """
+            new org.thoughtcrime.securesms.pro.ProBackendConfig(
+                "https://pro-backend-dev.getsession.org",
+                "fc947730f49eb01427a66e050733294d9e520e545c7a27125a780634e0860a27"
+            )
+        """.trimIndent())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
@@ -303,6 +295,9 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.jvmArgs("-javaagent:${testJvmAgent.asPath}")
+        }
     }
 
     lint {
@@ -331,6 +326,8 @@ android {
 
     testNamespace = "network.loki.messenger.test"
 }
+
+
 
 dependencies {
     implementation(project(":content-descriptions"))
@@ -394,28 +391,19 @@ dependencies {
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.protobuf.java)
     implementation(libs.jackson.databind)
     implementation(libs.okhttp)
     implementation(libs.phrase)
     implementation(libs.copper.flow)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.guava)
-    implementation(libs.kovenant)
-    implementation(libs.kovenant.android)
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
 
-    if (hasIncludedLibSessionUtilProject) {
-        implementation(
-            group = libs.libsession.util.android.get().group,
-            name = libs.libsession.util.android.get().name,
-            version = "dev-snapshot"
-        )
-    } else {
-        implementation(libs.libsession.util.android)
-    }
+    // If libsession_util project is included into the build, use that, otherwise use the published version
+    findProject(":libsession-util-android")?.let(::implementation)
+        ?: implementation(libs.libsession.util.android)
 
     implementation(libs.kryo)
     testImplementation(libs.junit)
@@ -434,8 +422,14 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.truth)
     testImplementation(libs.truth)
+    testImplementation(libs.androidx.sqlite.framework)
     androidTestImplementation(libs.truth)
     testRuntimeOnly(libs.mockito.core)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlin.test)
+
+    // Pull in appropriate JVM agents for unit test
+    testJvmAgent(libs.mockito.core) { isTransitive = false }
 
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.contrib)
@@ -449,7 +443,6 @@ dependencies {
     androidTestUtil(libs.androidx.orchestrator)
 
     testImplementation(libs.robolectric)
-    testImplementation(libs.robolectric.shadows.multidex)
     testImplementation(libs.conscrypt.openjdk.uber)
     testImplementation(libs.turbine)
 

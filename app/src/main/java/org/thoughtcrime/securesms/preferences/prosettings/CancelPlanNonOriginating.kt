@@ -52,7 +52,10 @@ fun CancelPlanNonOriginating(
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PLATFORM_ACCOUNT_KEY, providerData.platformAccount)
             .format(),
-        linkCellsInfo = stringResource(R.string.proCancellationOptions),
+        linkCellsInfo =
+            Phrase.from(context.getText(R.string.proCancellationOptions))
+                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                .format().toString(),
         linkCells = listOf(
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onDevice))
