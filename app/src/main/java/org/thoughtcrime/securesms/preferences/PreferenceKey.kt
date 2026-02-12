@@ -14,13 +14,13 @@ interface PreferenceKey<out T>{
     ): PreferenceKey<T>
 
     sealed interface Strategy<T> {
-        data class PrimitiveInt(val defaultValue: Int) : Strategy<Int>
-        data class PrimitiveLong(val defaultValue: Long) : Strategy<Long>
-        data class PrimitiveFloat(val defaultValue: Float) : Strategy<Float>
-        data class PrimitiveBoolean(val defaultValue: Boolean) : Strategy<Boolean>
-        data class PrimitiveString(val defaultValue: String?) : Strategy<String?>
-        data class Enum<T: kotlin.Enum<*>>(val choices: List<T>, val defaultValue: T?): Strategy<T?>
-        data class Json<T>(val serializer: KSerializer<T>) : Strategy<T?>
+        class PrimitiveInt(val defaultValue: Int) : Strategy<Int>
+        class PrimitiveLong(val defaultValue: Long) : Strategy<Long>
+        class PrimitiveFloat(val defaultValue: Float) : Strategy<Float>
+        class PrimitiveBoolean(val defaultValue: Boolean) : Strategy<Boolean>
+        class PrimitiveString(val defaultValue: String?) : Strategy<String?>
+        class Enum<T: kotlin.Enum<*>>(val choices: List<T>, val defaultValue: T?): Strategy<T?>
+        class Json<T>(val serializer: KSerializer<T>) : Strategy<T?>
     }
 
     companion object {

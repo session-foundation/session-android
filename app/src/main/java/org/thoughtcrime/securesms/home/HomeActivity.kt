@@ -89,7 +89,9 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
+import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -157,6 +159,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var messageFormatter: MessageFormatter
     @Inject lateinit var pathManager: PathManager
+    @Inject lateinit var prefs: PreferenceStorage
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -619,7 +622,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         binding.searchToolbar.isVisible = isSearchShown
         binding.sessionToolbar.isVisible = !isSearchShown
-        binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isSearchShown
+        binding.seedReminderView.isVisible = !prefs[HAS_VIEWED_SEED] && !isSearchShown
         binding.globalSearchRecycler.isVisible = isSearchShown
 
 
@@ -644,7 +647,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         messageNotifier.setHomeScreenVisible(true)
         if (loginStateRepository.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
-        if (textSecurePreferences.getHasViewedSeed()) {
+        if (prefs[HAS_VIEWED_SEED]) {
             binding.seedReminderView.isVisible = false
         }
 

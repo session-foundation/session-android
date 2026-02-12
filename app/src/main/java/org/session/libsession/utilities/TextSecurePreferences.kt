@@ -174,8 +174,6 @@ interface TextSecurePreferences {
     fun removePreference(key: String)
     fun getStringSetPreference(key: String, defaultValues: Set<String>): Set<String>?
     fun setStringSetPreference(key: String, value: Set<String>)
-    fun getHasViewedSeed(): Boolean
-    fun setHasViewedSeed(hasViewedSeed: Boolean)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -683,10 +681,6 @@ interface TextSecurePreferences {
             }
         }
 
-        fun getHasViewedSeed(context: Context): Boolean {
-            return getBooleanPreference(context, "has_viewed_seed", false)
-        }
-
         @Deprecated("We no longer keep the profile expiry in prefs, we write them in the file instead. Keeping it here for migration purposes")
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
@@ -1182,14 +1176,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setStringSetPreference(key: String, value: Set<String>) {
         getDefaultSharedPreferences(context).edit { putStringSet(key, value) }
-    }
-
-    override fun getHasViewedSeed(): Boolean {
-        return getBooleanPreference("has_viewed_seed", false)
-    }
-
-    override fun setHasViewedSeed(hasViewedSeed: Boolean) {
-        setBooleanPreference("has_viewed_seed", hasViewedSeed)
     }
 
     override fun getLastSnodePoolRefresh(): Long {
