@@ -3,22 +3,37 @@ package org.thoughtcrime.securesms.groups.compose
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -29,11 +44,16 @@ import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
+import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.SearchBarWithClose
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -99,7 +119,9 @@ fun MemberItem(
         Avatar(
             size = LocalDimensions.current.iconLarge,
             data = avatarUIData,
-            badge = if (showAsAdmin) { AvatarBadge.ResourceBadge.Admin } else AvatarBadge.None
+            badge = if (showAsAdmin) {
+                AvatarBadge.ResourceBadge.Admin
+            } else AvatarBadge.None
         )
 
         Column(
@@ -190,7 +212,7 @@ fun InviteMembersDialog(
     onInviteClicked: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var shareHistory by remember { mutableStateOf(true) }
+    var shareHistory by retain { mutableStateOf(true) }
 
     AlertDialog(
         modifier = modifier,
@@ -268,6 +290,99 @@ fun ManageMemberItem(
         selected = selected,
         showRadioButton = !member.isSelf
     )
+}
+
+@Composable
+fun MembersSearchHeader(
+    searchFocused: Boolean,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    onClear: () -> Unit,
+    onFocusChanged: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    placeholder: String = LocalResources.current.getString(R.string.search)
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            // important for stickyHeader so rows don't show through
+            .background(LocalColors.current.background)
+            .padding(vertical = LocalDimensions.current.smallSpacing)
+    ) {
+        SearchBarWithClose(
+            query = searchQuery,
+            onValueChanged = onQueryChange,
+            onClear = onClear,
+            placeholder = if (searchFocused) "" else placeholder,
+            enabled = enabled,
+            isFocused = searchFocused,
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
+            onFocusChanged = onFocusChanged
+        )
+    }
+}
+
+@Composable
+fun CollapsibleFooterBottomBar(
+    footer: CollapsibleFooterActionData,
+    onToggle: () -> Unit,
+    onClose: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+            .imePadding()
+    ) {
+        CollapsibleFooterAction(
+            data = footer,
+            onCollapsedClicked = onToggle,
+            onClosedClicked = onClose
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BaseManageGroupScreen(
+    title: String,
+    onBack: () -> Unit,
+    enableCollapsingTopBarInLandscape: Boolean,
+    collapseTopBar : Boolean = false,
+    bottomBar: @Composable () -> Unit,
+    content: @Composable (paddingValues: PaddingValues) -> Unit,
+) {
+    val isLandscape = getAdaptiveInfo().isLandscape
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    val scaffoldModifier =
+        if (enableCollapsingTopBarInLandscape && isLandscape)
+            Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        else
+            Modifier
+
+    LaunchedEffect(isLandscape, collapseTopBar) {
+        if (isLandscape && collapseTopBar) {
+            scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
+        }
+    }
+
+    Scaffold(
+        modifier = scaffoldModifier,
+        topBar = {
+            BackAppBar(
+                title = title,
+                onBack = onBack,
+                scrollBehavior = if (enableCollapsingTopBarInLandscape && isLandscape) scrollBehavior else null
+            )
+        },
+        bottomBar = bottomBar,
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
+    ) { paddingValues ->
+        content(paddingValues)
+    }
 }
 
 @Preview

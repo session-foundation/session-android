@@ -210,10 +210,7 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     override fun onRailItemDeleteClicked(distanceFromActive: Int) {
         val currentItem = binding?.mediasendPager?.currentItem ?: return
 
-        viewModel?.onMediaItemRemoved(
-            requireContext(),
-            currentItem + distanceFromActive
-        )
+        viewModel?.onMediaItemRemoved(currentItem + distanceFromActive)
     }
 
     fun onTouchEventsNeeded(needed: Boolean) {

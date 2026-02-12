@@ -8,7 +8,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -107,7 +107,7 @@ fun ConversationV2Dialogs(
         // delete message(s)
         if(dialogsState.deleteEveryone != null){
             val data = dialogsState.deleteEveryone
-            var deleteForEveryone by remember { mutableStateOf(data.defaultToEveryone)}
+            var deleteForEveryone by retain { mutableStateOf(data.defaultToEveryone)}
 
             AlertDialog(
                 onDismissRequest = {

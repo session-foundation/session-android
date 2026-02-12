@@ -284,7 +284,37 @@
     <string name="qa_manage_members_dialog_remove_member_messages">remove-member-messages-option</string>
     <string name="qa_manage_members_dialog_share_message_history">share-message-history-option</string>
     <string name="qa_manage_members_dialog_share_new_messages">share-new-messages-option</string>
-    
+
+    <!-- Preferences -->
+    <string name="qa_preferences_voice_calls">preferences-option-voice-call</string>
+    <string name="qa_preferences_lock_app">preferences-option-lock-app</string>
+    <string name="qa_preferences_message_requests">preferences-option-message-requests</string>
+    <string name="qa_preferences_read_receipt">preferences-option-read-receipt</string>
+    <string name="qa_preferences_typing_indicator">preferences-option-typing-indicators</string>
+    <string name="qa_preferences_link_previews">preferences-option-link-previews</string>
+    <string name="qa_preferences_incognito_keyboard">preferences-option-incognito-keyboard</string>
+    <string name="qa_preferences_trim_threads">preferences-option-trim-threads</string>
+    <string name="qa_preferences_send_with_enter">preferences-option-send-with-enter</string>
+    <string name="qa_preferences_autoplay_audio">preferences-option-autoplay-audio</string>
+    <string name="qa_preferences_option_blocked_contacts">preferences-option-blocked-contacts</string>
+    <string name="qa_preferences_option_notification_privacy">preferences-option-notification-privacy</string>
+    <string name="qa_preferences_ringtone">preferences-option-ringtone</string>
+    <string name="qa_preferences_navigate_device_settings">preferences-option-navigate-device-settings</string>
+    <string name="qa_preferences_vibrate">preferences-option-vibrate</string>
+    <string name="qa_preferences_sound_when_app_is_open">preferences-option-sound-when-app-is-open</string>
+    <string name="qa_preferences_whitelist">preferences-option-whitelist</string>
+    <string name="qa_preferences_enable_push">preferences-option-enable-push</string>
+    <string name="qa_preferences_dialog_enable">preferences-dialog-option-enable</string>
+    <string name="qa_preferences_dialog_cancel">preferences-dialog-option-cancel</string>
+
+    <!-- Help settings -->
+    <string name="qa_help_settings_export">preferences-option-export</string>
+    <string name="qa_help_settings_translate">preferences-option-translate</string>
+    <string name="qa_help_settings_feedback">preferences-option-feedback</string>
+    <string name="qa_help_settings_support">preferences-option-help</string>
+    <string name="qa_help_settings_faq">preferences-option-faq</string>
+
+
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
