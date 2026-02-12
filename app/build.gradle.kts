@@ -477,6 +477,7 @@ dependencies {
     implementation(libs.zxing.core)
 
     implementation(libs.androidx.biometric)
+    implementation(libs.autolink)
 
     playImplementation(libs.android.billing)
     playImplementation(libs.android.billing.ktx)

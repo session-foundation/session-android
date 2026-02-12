@@ -9,7 +9,6 @@ import android.text.Spannable
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
-import android.text.util.Linkify
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
@@ -41,6 +40,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.audio.model.PlayableAudioMapper
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.Util.addUrlSpansWithAutolink
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.DOCUMENT
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.IMAGE
@@ -534,11 +534,10 @@ class VisibleMessageContentView : ConstraintLayout {
                 ForegroundColorSpan(context.getColorFromAttr(android.R.attr.textColorPrimary))
             }, body, searchQuery)
 
-        Linkify.addLinks(body, Linkify.WEB_URLS)
-
+        body.addUrlSpansWithAutolink()
         // replace URLSpans with ModalURLSpans
         body.getSpans<URLSpan>(0, body.length).toList().forEach { urlSpan ->
-            val updatedUrl = urlSpan.url.let { it.toHttpUrlOrNull().toString() }
+            val updatedUrl = urlSpan.url.toHttpUrlOrNull()?.toString() ?: urlSpan.url
             val replacementSpan = ModalURLSpan(updatedUrl) { url ->
                 val activity = context as? ConversationActivityV2
                 activity?.showOpenUrlDialog(url)
@@ -549,6 +548,7 @@ class VisibleMessageContentView : ConstraintLayout {
             body.removeSpan(urlSpan)
             body.setSpan(replacementSpan, start, end, flags)
         }
+
         return body
     }
 
