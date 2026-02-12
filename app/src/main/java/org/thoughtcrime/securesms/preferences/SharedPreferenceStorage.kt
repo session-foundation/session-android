@@ -18,6 +18,12 @@ import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
+/**
+ * A [PreferenceStorage] implementation that uses Android's [SharedPreferences] as the underlying
+ * storage mechanism.
+ * 
+ * It also includes an in-memory cache for improved read performance and a flow to observe changes to preferences.
+ */
 class SharedPreferenceStorage @AssistedInject constructor(
     @Assisted private val prefs: SharedPreferences,
     private val json: Json,
