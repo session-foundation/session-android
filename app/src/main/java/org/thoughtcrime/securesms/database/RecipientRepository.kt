@@ -303,7 +303,7 @@ class RecipientRepository @Inject constructor(
                 when (address) {
                     is Address.LegacyGroup -> {
                         val group: GroupRecord? =
-                            groupDatabase.getGroup(address.toGroupString()).orNull()
+                            groupDatabase.getGroup(address.toGroupString())
 
                         val groupConfig = configFactory.withUserConfigs {
                             it.userGroups.getLegacyGroupInfo(address.groupPublicKeyHex)

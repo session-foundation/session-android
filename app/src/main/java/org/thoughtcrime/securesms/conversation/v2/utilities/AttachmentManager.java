@@ -47,7 +47,6 @@ import org.session.libsession.utilities.Address;
 import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.SettableFuture;
-import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity;
 import org.thoughtcrime.securesms.mediasend.MediaSendActivity;
 import org.thoughtcrime.securesms.mms.AudioSlide;
@@ -75,7 +74,7 @@ public class AttachmentManager {
     private final @NonNull AttachmentListener         attachmentListener;
 
     private @NonNull  List<Uri>       garbage = new LinkedList<>();
-    private @NonNull  Optional<Slide> slide   = Optional.absent();
+    private @Nullable Slide slide   = null;
     private @Nullable Uri             captureUri;
 
     public AttachmentManager(@NonNull Activity activity, @NonNull AttachmentListener listener) {
@@ -85,7 +84,7 @@ public class AttachmentManager {
 
     public void clear() {
         markGarbage(getSlideUri());
-        slide = Optional.absent();
+        slide = null;
         attachmentListener.onAttachmentChanged();
     }
 
@@ -94,7 +93,7 @@ public class AttachmentManager {
         cleanup(getSlideUri());
 
         captureUri = null;
-        slide      = Optional.absent();
+        slide      = null;
 
         Iterator<Uri> iterator = garbage.listIterator();
 
@@ -127,7 +126,7 @@ public class AttachmentManager {
             captureUri = null;
         }
 
-        this.slide = Optional.of(slide);
+        this.slide = slide;
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -230,7 +229,7 @@ public class AttachmentManager {
     public @NonNull
     SlideDeck buildSlideDeck() {
         SlideDeck deck = new SlideDeck();
-        if (slide.isPresent()) deck.addSlide(slide.get());
+        if (slide != null) deck.addSlide(slide);
         return deck;
     }
 
@@ -403,7 +402,7 @@ public class AttachmentManager {
     }
 
     private @Nullable Uri getSlideUri() {
-        return slide.isPresent() ? slide.get().getUri() : null;
+        return slide != null ? slide.getUri() : null;
     }
 
     public @Nullable Uri getCaptureUri() {

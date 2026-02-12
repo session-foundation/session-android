@@ -21,7 +21,6 @@ import java.util.regex.Pattern;
 import okhttp3.HttpUrl;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Optional;
 
 public final class LinkPreviewUtil {
 
@@ -192,12 +191,12 @@ public final class LinkPreviewUtil {
             this.faviconUrl = faviconUrl;
         }
 
-        public @NonNull Optional<String> getTitle() {
-            return Optional.of(Util.getFirstNonEmpty(values.get(KEY_TITLE), htmlTitle));
+        public String getTitle() {
+            return Util.getFirstNonEmpty(values.get(KEY_TITLE), htmlTitle);
         }
 
-        public @NonNull Optional<String> getImageUrl() {
-            return Optional.of(Util.getFirstNonEmpty(values.get(KEY_IMAGE_URL), faviconUrl));
+        public String getImageUrl() {
+            return Util.getFirstNonEmpty(values.get(KEY_IMAGE_URL), faviconUrl);
         }
 
          private static long parseISO8601(String date) {
@@ -205,11 +204,7 @@ public final class LinkPreviewUtil {
             if (date == null || date.isEmpty()) { return -1L; }
 
             SimpleDateFormat format;
-            if (Build.VERSION.SDK_INT >= 24) {
-                format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault());
-            } else {
-                format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
-            }
+             format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
 
             try {
                 return format.parse(date).getTime();

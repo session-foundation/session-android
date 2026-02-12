@@ -1,11 +1,9 @@
 package org.session.libsession.messaging.utilities
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.JsonParseException
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.protos.SessionProtos.GroupUpdateInfoChangeMessage
 import org.session.protos.SessionProtos.GroupUpdateMemberChangeMessage.Type
 import org.session.libsignal.utilities.JsonUtil
@@ -94,22 +92,6 @@ class UpdateMessageData () {
 
     companion object {
         val TAG = UpdateMessageData::class.simpleName
-
-        fun buildGroupUpdate(type: SignalServiceGroup.Type, name: String, members: Collection<String>): UpdateMessageData? {
-            return when(type) {
-                SignalServiceGroup.Type.CREATION -> UpdateMessageData(Kind.GroupCreation)
-                SignalServiceGroup.Type.NAME_CHANGE -> UpdateMessageData(Kind.GroupNameChange(name))
-                SignalServiceGroup.Type.MEMBER_ADDED -> UpdateMessageData(Kind.GroupMemberAdded(members, name))
-                SignalServiceGroup.Type.MEMBER_REMOVED -> UpdateMessageData(Kind.GroupMemberRemoved(members, name))
-                SignalServiceGroup.Type.QUIT -> UpdateMessageData(Kind.GroupMemberLeft(members, name))
-                SignalServiceGroup.Type.LEAVING -> UpdateMessageData(Kind.GroupLeaving)
-                SignalServiceGroup.Type.ERROR_QUIT -> UpdateMessageData(Kind.GroupErrorQuit(groupName = name))
-                SignalServiceGroup.Type.UNKNOWN,
-                SignalServiceGroup.Type.UPDATE,
-                SignalServiceGroup.Type.DELIVER,
-                SignalServiceGroup.Type.REQUEST_INFO -> null
-            }
-        }
 
         fun buildGroupUpdate(groupUpdated: GroupUpdated, groupName: String): UpdateMessageData? {
             val inner = groupUpdated.inner
