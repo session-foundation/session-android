@@ -121,14 +121,14 @@ class Attachment {
             id = 0L,
             contentType = ct,
             key = k,
-            size = sizeInBytes,      // Int?
-            preview = null,          // ByteArray?
+            size = sizeInBytes,    
+            preview = null,
             width = size?.width ?: 0,
             height = size?.height ?: 0,
-            digest = digest,         // ByteArray?
-            filename = file ?: "",   // OR keep nullable in pointer; see note below
+            digest = digest,
+            filename = file ?: "",
             voiceNote = (kind == Kind.VOICE_MESSAGE),
-            caption = caption,       // String?
+            caption = caption,
             url = u
         )
     }
