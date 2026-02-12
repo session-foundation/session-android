@@ -22,7 +22,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
-import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
 import java.util.ArrayList;
@@ -52,19 +51,16 @@ public class SlideDeck {
     slides.clear();
   }
 
-  @NonNull
-  public String getBody() {
-    String body = "";
-
-    for (Slide slide : slides) {
-      Optional<String> slideBody = slide.getBody();
-
-      if (slideBody.isPresent()) {
-        body = slideBody.get();
-      }
+    @NonNull
+    public String getBody() {
+        for (Slide slide : slides) {
+            String body = slide.getBody();
+            if (body != null) {
+                return body;
+            }
+        }
+        return "";
     }
-    return body;
-  }
 
   @NonNull
   public List<Attachment> asAttachments() {
