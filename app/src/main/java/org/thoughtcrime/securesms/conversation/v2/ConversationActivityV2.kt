@@ -1288,8 +1288,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 previewState.isLoading -> {
                     binding.inputBar.draftLinkPreview()
                 }
-                previewState.linkPreview.isPresent -> {
-                    binding.inputBar.updateLinkPreviewDraft(glide, previewState.linkPreview.get())
+                previewState.linkPreview != null -> {
+                    binding.inputBar.updateLinkPreviewDraft(glide, previewState.linkPreview)
                 }
                 else -> {
                     binding.inputBar.cancelLinkPreviewDraft()
@@ -1485,7 +1485,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
         val inputBarText = binding.inputBar.text
         if (textSecurePreferences.isLinkPreviewsEnabled()) {
-            linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
+            linkPreviewViewModel.onTextChanged(this, inputBarText)
         }
 
         // use the normalised version of the text's body to get the characters amount with the
@@ -1501,7 +1501,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 textSecurePreferences.setLinkPreviewsEnabled(true)
                 setUpLinkPreviewObserver()
                 linkPreviewViewModel.onEnabled()
-                linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
+                linkPreviewViewModel.onTextChanged(this, inputBarText)
             }
             textSecurePreferences.setHasSeenLinkPreviewSuggestionDialog()
         }

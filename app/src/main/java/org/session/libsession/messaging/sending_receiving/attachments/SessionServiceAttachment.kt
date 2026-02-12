@@ -1,8 +1,6 @@
 package org.session.libsession.messaging.sending_receiving.attachments
 
 import com.google.protobuf.ByteString
-import org.session.libsignal.utilities.guava.Optional
-import org.session.libsignal.messages.SignalServiceAttachment
 import java.io.InputStream
 
 abstract class SessionServiceAttachment protected constructor(val contentType: String?) {
@@ -82,7 +80,7 @@ abstract class SessionServiceAttachment protected constructor(val contentType: S
             requireNotNull(inputStream) { "Must specify stream!" }
             requireNotNull(contentType) { "No content type specified!" }
             require(length != 0L) { "No length specified!" }
-            return SessionServiceAttachmentStream(inputStream, contentType, length, filename, voiceNote, Optional.absent(), width, height, Optional.fromNullable(caption))
+            return SessionServiceAttachmentStream(inputStream, contentType, length, filename, voiceNote, null, width, height, caption)
         }
     }
 
