@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -107,17 +108,23 @@ class MarkReadProcessor @Inject constructor(
                     keySelector = { it.value.expirationInfo.expiresIn },
                     valueTransform = { it.key }
                 ).forEach { (expiresIn, hashes) ->
-                    swarmApiExecutor.execute(
-                        SwarmApiRequest(
-                            swarmPubKeyHex = userAuth.accountId.hexString,
-                            api = alterTtyFactory.create(
-                                messageHashes = hashes,
-                                auth = userAuth,
-                                alterType = AlterTtlApi.AlterType.Shorten,
-                                newExpiry = snodeClock.currentTimeMillis() + expiresIn
+                    try {
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = userAuth.accountId.hexString,
+                                api = alterTtyFactory.create(
+                                    messageHashes = hashes,
+                                    auth = userAuth,
+                                    alterType = AlterTtlApi.AlterType.Shorten,
+                                    newExpiry = snodeClock.currentTimeMillis() + expiresIn
+                                )
                             )
                         )
-                    )
+                    } catch (e: Throwable) {
+                        if (e !is CancellationException) {
+                            Log.e(TAG, "Failed to shorten expiry for messages with hashes $hashes", e)
+                        }
+                    }
                 }
         }
     }
