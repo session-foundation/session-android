@@ -16,15 +16,20 @@
  */
 package org.thoughtcrime.securesms.conversation.v2
 
-import android.content.Context
 import android.text.Spannable
 import android.text.style.URLSpan
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.nibor.autolink.LinkExtractor
+import org.nibor.autolink.LinkSpan
+import org.nibor.autolink.LinkType
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
+import java.util.EnumSet
 
 object Util {
     private val TAG: String = Log.tag(Util::class.java)
+
+    private val autoLinkExtractor: LinkExtractor = LinkExtractor.builder()
+        .linkTypes(EnumSet.of(LinkType.URL, LinkType.WWW))
+        .build()
 
     /**
      * Returns half of the difference between the given length, and the length when scaled by the
@@ -35,90 +40,33 @@ object Util {
         return (length - scaledLength) / 2
     }
 
-    fun Spannable.replaceUrlSpanWithModal(context: Context, urlSpan: URLSpan) {
-        val start = getSpanStart(urlSpan)
-        val end = getSpanEnd(urlSpan)
-        val flags = getSpanFlags(urlSpan)
-
-        // Clean up Linkify spans
-        val cleaned = (this as CharSequence).cleanLinkifyUrlSpan(start, end, urlSpan.url)
-
-        val replacementSpan = ModalURLSpan(cleaned.url) { url ->
-            val activity = context as? ConversationActivityV2
-            activity?.showOpenUrlDialog(url)
-        }
-
-        removeSpan(urlSpan)
-        setSpan(replacementSpan, start, cleaned.end, flags)
-    }
-
-    private data class CleanUrlResult(val end: Int, val url: String)
-
     /**
-     * Cleans up greedy Linkify spans by trimming
-     * Example: "(https://example.com)Video" should link only "https://example.com".
+     * Uses autolink-java to detect URLs with better boundaries than Android Linkify,
+     * and applies standard URLSpan spans only.
      */
-    private fun CharSequence.cleanLinkifyUrlSpan(start: Int, end: Int, originalUrl: String): CleanUrlResult {
-        var trimmedEnd = end
+    fun Spannable.addUrlSpansWithAutolink() {
+        // Remove any existing URLSpans first so we don't get overlapping links
+        getSpans(0, length, URLSpan::class.java).forEach { removeSpan(it) }
 
-        // 1) Trim common trailing punctuation that is almost never intended to be part of the URL.
-        while (trimmedEnd > start) {
-            val last = this[trimmedEnd - 1]
-            if (last == '.' || last == ',' || last == ';' || last == ':' || last == '!' || last == '?' ||
-                last == '"' || last == '\'' || last == '”' || last == '’' || last == '…') {
-                trimmedEnd--
-            } else {
-                break
+        // extract the links
+        val text = toString()
+        val spans = autoLinkExtractor.extractLinks(text)
+
+        // iterate detected link and keep only those that represent real links
+        for (s in spans) {
+            if (s !is LinkSpan) continue
+
+            // This is the exact range autolink detected
+            val start = s.beginIndex
+            val end = s.endIndex
+            val raw = text.substring(start, end)
+
+            val url = when (s.type) {
+                LinkType.WWW -> "https://$raw"
+                else -> raw
             }
+
+            setSpan(URLSpan(url), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
-
-        // 2) If there is an unmatched closing bracket/paren/brace, cut the URL before it.
-        run {
-            var paren = 0
-            var bracket = 0
-            var brace = 0
-            val candidate = this.subSequence(start, trimmedEnd)
-            for (i in candidate.indices) {
-                when (candidate[i]) {
-                    '(' -> paren++
-                    ')' -> {
-                        if (paren == 0) {
-                            trimmedEnd = start + i
-                            return@run
-                        }
-                        paren--
-                    }
-                    '[' -> bracket++
-                    ']' -> {
-                        if (bracket == 0) {
-                            trimmedEnd = start + i
-                            return@run
-                        }
-                        bracket--
-                    }
-                    '{' -> brace++
-                    '}' -> {
-                        if (brace == 0) {
-                            trimmedEnd = start + i
-                            return@run
-                        }
-                        brace--
-                    }
-                }
-            }
-        }
-
-        // 3) Parse. If parsing fails, trim character-by-character until it succeeds.
-        var parsed = this.subSequence(start, trimmedEnd).toString().toHttpUrlOrNull()
-        while (parsed == null && trimmedEnd > start) {
-            trimmedEnd--
-            parsed = this.subSequence(start, trimmedEnd).toString().toHttpUrlOrNull()
-        }
-
-        val finalUrl = parsed?.toString()
-            ?: originalUrl.toHttpUrlOrNull()?.toString()
-            ?: originalUrl
-
-        return CleanUrlResult(end = if (parsed != null) trimmedEnd else end, url = finalUrl)
     }
 }
