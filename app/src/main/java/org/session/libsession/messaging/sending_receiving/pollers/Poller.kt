@@ -340,6 +340,8 @@ class Poller @AssistedInject constructor(
                             )
                         )
                     }
+                }.onFailure { throwable ->
+                    if (throwable is CancellationException) throw throwable
                 }
             }
         }
