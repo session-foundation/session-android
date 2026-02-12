@@ -4,8 +4,6 @@ import androidx.annotation.AttrRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 
-import org.session.libsignal.utilities.guava.Preconditions;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -22,7 +20,9 @@ class ReactWithAnyEmojiPage {
   private final List<ReactWithAnyEmojiPageBlock> pageBlocks;
 
   ReactWithAnyEmojiPage(@NonNull List<ReactWithAnyEmojiPageBlock> pageBlocks) {
-    Preconditions.checkArgument(!pageBlocks.isEmpty());
+      if (pageBlocks.isEmpty()) {
+          throw new IllegalArgumentException("pageBlocks must not be empty");
+      }
 
     this.pageBlocks = pageBlocks;
   }

@@ -191,7 +191,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 downloadPendingAttachment(attach)
             }
             message.linkPreviews.forEach { preview ->
-                val previewThumbnail = preview.getThumbnail().orNull() as? DatabaseAttachment ?: return@forEach
+                val previewThumbnail = preview.thumbnail as? DatabaseAttachment ?: return@forEach
                 downloadPendingAttachment(previewThumbnail)
             }
         }

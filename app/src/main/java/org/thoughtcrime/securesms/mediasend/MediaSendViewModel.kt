@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager.hasFullAccess
@@ -52,7 +51,7 @@ class MediaSendViewModel @Inject constructor(
         private set
 
     private var sentMedia: Boolean = false
-    private var lastImageCapture: Optional<Media>
+    private var lastImageCapture: Media?
 
     private val _uiState = MutableStateFlow(MediaSendUiState())
     val uiState: StateFlow<MediaSendUiState> = _uiState.asStateFlow()
@@ -82,7 +81,7 @@ class MediaSendViewModel @Inject constructor(
 
     init {
         this.savedDrawState = HashMap()
-        this.lastImageCapture = Optional.absent()
+        this.lastImageCapture = null
         this.body = ""
 
         _uiState.value = MediaSendUiState(
@@ -294,7 +293,7 @@ class MediaSendViewModel @Inject constructor(
             return
         }
 
-        lastImageCapture = Optional.of(media)
+        lastImageCapture = media
 
         selected.add(media)
 
@@ -312,7 +311,7 @@ class MediaSendViewModel @Inject constructor(
     }
 
     fun onImageCaptureUndo() {
-        val last = if (lastImageCapture.isPresent) lastImageCapture.get() else return
+        val last = if (lastImageCapture != null) lastImageCapture!! else return
         val current = selectedMedia
 
         if (!(current.size == 1 && current.contains(last))) return
@@ -330,7 +329,7 @@ class MediaSendViewModel @Inject constructor(
             BlobUtils.getInstance().delete(context, last.uri)
         }
 
-        lastImageCapture = Optional.absent()
+        lastImageCapture = null
     }
 
     fun refreshPhotoAccessUi() {
