@@ -100,6 +100,8 @@ class OfficialCommunityRepository @Inject constructor(
                                 )
                             }
                         }
+                    }.onFailure {
+                        if (it is CancellationException) throw it
                     })
                 }
             }

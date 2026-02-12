@@ -2,6 +2,7 @@ package org.session.libsession.network.snode
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -177,6 +178,7 @@ class SnodeDirectory @Inject constructor(
             }.onFailure { e ->
                 lastError = e
                 Log.w("SnodeDirectory", "Seed node failed: $target", e)
+                if (e is CancellationException) throw e
             }
             .getOrNull()
             ?.toSnodeList()
@@ -277,11 +279,17 @@ class SnodeDirectory @Inject constructor(
         if (now >= last && now - last < POOL_REFRESH_INTERVAL_MS) return
 
         scope.launch {
-            refreshPoolFromSnodes(
-                totalSnodeQueries = 3,
-                minAppearance = 2,
-                distinctQuerySubnetPrefix = 24,
-            )
+            try {
+                refreshPoolFromSnodes(
+                    totalSnodeQueries = 3,
+                    minAppearance = 2,
+                    distinctQuerySubnetPrefix = 24,
+                )
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+
+                Log.w("SnodeDirectory", "Error refreshing snode pool", e)
+            }
         }
     }
 
