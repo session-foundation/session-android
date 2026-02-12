@@ -93,7 +93,13 @@ open class PathManager @Inject constructor(
         scope.launch {
             _paths.drop(1).collectLatest { paths ->
                 if (paths.isEmpty()) storage.clearOnionRequestPaths()
-                else storage.setOnionRequestPaths(paths)
+                else {
+                    try {
+                        storage.setOnionRequestPaths(paths)
+                    } catch (e: Exception) {
+                        Log.e("Onion Request", "Failed to persist paths to storage, keeping in-memory only", e)
+                    }
+                }
             }
         }
     }
