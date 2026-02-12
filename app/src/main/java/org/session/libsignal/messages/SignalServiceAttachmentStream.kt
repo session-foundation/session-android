@@ -9,7 +9,7 @@ class SignalServiceAttachmentStream(
     val inputStream: InputStream,
     contentType: String,
     val length: Long,
-    val filename: String,
+    val filename: String?,
     val voiceNote: Boolean,
     val preview: ByteArray?,
     val width: Int,

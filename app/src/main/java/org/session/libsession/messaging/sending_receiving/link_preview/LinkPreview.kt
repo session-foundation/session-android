@@ -9,15 +9,18 @@ import org.session.libsignal.utilities.JsonUtil
 import java.io.IOException
 import java.util.Objects
 
-class LinkPreview @JvmOverloads constructor(
+class LinkPreview (
 
-    @JsonProperty("url")
+    @param:JsonProperty("url")
+    @field:JsonProperty("url")
     val url: String,
 
-    @JsonProperty("title")
+    @param:JsonProperty("title")
+    @field:JsonProperty("title")
     val title: String,
 
-    @JsonProperty("attachmentId")
+    @param:JsonProperty("attachmentId")
+    @field:JsonProperty("attachmentId")
     val attachmentId: AttachmentId? = null
 ) {
 

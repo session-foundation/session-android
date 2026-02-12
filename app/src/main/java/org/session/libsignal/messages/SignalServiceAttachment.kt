@@ -23,7 +23,7 @@ abstract class SignalServiceAttachment(
 
         private var inputStream: InputStream? = null
         private var contentType: String? = null
-        private var filename: String = ""
+        private var filename: String? = null
         private var length: Long? = null
         private var voiceNote: Boolean = false
         private var width: Int = 0
@@ -42,7 +42,7 @@ abstract class SignalServiceAttachment(
             this.length = length
         }
 
-        fun withFileName(filename: String) = apply {
+        fun withFileName(filename: String?) = apply {
             this.filename = filename
         }
 

@@ -68,7 +68,6 @@ public class SignalGlideModule extends AppGlideModule {
             ((ApplicationContext) (context.getApplicationContext())).getRemoteFileLoader()
     ));
     registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
-    registry.append(AttachmentStreamUriLoader.AttachmentModel.class, InputStream.class, new AttachmentStreamUriLoader.Factory());
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
   }

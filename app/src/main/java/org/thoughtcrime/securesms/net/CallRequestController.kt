@@ -1,54 +1,55 @@
 package org.thoughtcrime.securesms.net
 
 import androidx.annotation.WorkerThread
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.runBlocking
+import okhttp3.Call
 import org.session.libsession.utilities.Util
 import java.io.InputStream
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
-import okhttp3.Call
-import kotlin.concurrent.thread
 
-class CallRequestController(
-    private val call: Call
-) : RequestController {
+class CallRequestController(private val call: Call) : RequestController {
 
-    private val done = CountDownLatch(1)
     private val canceled = AtomicBoolean(false)
+    private val result = CompletableDeferred<InputStream?>()
 
     @Volatile
     private var stream: InputStream? = null
 
     override fun cancel() {
-        // Don't block the caller; cancel on a background thread
         if (!canceled.compareAndSet(false, true)) return
 
-        thread(name = "CallRequestController-cancel", isDaemon = true) {
-            call.cancel()
-            stream?.let(Util::close)
-            stream = null
-            done.countDown()
-        }
+        call.cancel()
+
+        // Unblock waiters first
+        result.complete(null)
+
+        // Close any stream we might already have
+        stream?.let(Util::close)
+        stream = null
     }
 
     fun setStream(stream: InputStream) {
-        // If already canceled, immediately close what we were given.
+        // If already canceled or already completed, close immediately
         if (canceled.get()) {
             Util.close(stream)
             return
         }
 
         this.stream = stream
-        done.countDown()
+
+        // If we lost the race to cancel(), close what we were handed
+        if (!result.complete(stream)) {
+            Util.close(stream)
+            this.stream = null
+        }
     }
 
-    /**
-     * Blocks until the stream is available or until the request is canceled.
-     *
-     * @return the stream, or null if canceled before it was set
-     */
     @WorkerThread
-    fun getStream(): InputStream? {
-        done.await()
-        return if (canceled.get()) null else stream
+    fun getStream(): InputStream? = try {
+        runBlocking { result.await() }
+    } catch (_: CancellationException) {
+        null
     }
 }

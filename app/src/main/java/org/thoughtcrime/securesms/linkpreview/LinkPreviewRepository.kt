@@ -172,11 +172,7 @@ class LinkPreviewRepository {
                 response.use { res ->
                     res.body.byteStream().use { bodyStream ->
 
-                        val data = readFully(bodyStream) ?: run {
-                            controller.cancel()
-                            callback(null)
-                            return@use
-                        }
+                        val data = readFully(bodyStream)
 
                         val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
                         val thumbnail = bitmapToAttachment(

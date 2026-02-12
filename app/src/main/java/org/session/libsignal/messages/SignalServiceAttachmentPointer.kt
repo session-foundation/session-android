@@ -14,7 +14,7 @@ class SignalServiceAttachmentPointer(
     val width: Int,
     val height: Int,
     val digest: ByteArray?,
-    val filename: String,
+    val filename: String?,
     val voiceNote: Boolean,
     val caption: String?,
     val url: String

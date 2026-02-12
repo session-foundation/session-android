@@ -18,7 +18,7 @@ class SessionServiceAttachmentStream(
     val inputStream: InputStream?,
     contentType: String?,
     val length: Long,
-    val filename: String?,
+    val filename: String,
     val voiceNote: Boolean,
     val preview: ByteArray? = null,
     val width: Int = 0,
