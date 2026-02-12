@@ -121,7 +121,7 @@ class Attachment {
             id = 0L,
             contentType = ct,
             key = k,
-            size = sizeInBytes,    
+            size = sizeInBytes,
             preview = null,
             width = size?.width ?: 0,
             height = size?.height ?: 0,

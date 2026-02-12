@@ -90,8 +90,6 @@ class PointerAttachment private constructor(
 
         @JvmStatic
         fun forPointer(pointer: SessionProtos.AttachmentPointer?): Attachment? {
-            // Old code would NPE on pointer.getContentType() if pointer == null,
-            // but also had a pointless null-check later. This makes it safe:
             pointer ?: return null
 
             return PointerAttachment(
@@ -117,7 +115,6 @@ class PointerAttachment private constructor(
             pointer ?: return null
             val thumbnail = pointer.thumbnail
 
-            // Match existing behavior: if thumbnail is null, use defaults and url = ""
             return PointerAttachment(
                 pointer.contentType,
                 AttachmentState.PENDING.value,
