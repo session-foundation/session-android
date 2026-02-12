@@ -536,7 +536,7 @@ class VisibleMessageContentView : ConstraintLayout {
         body.addUrlSpansWithAutolink()
         // replace URLSpans with ModalURLSpans
         body.getSpans<URLSpan>(0, body.length).toList().forEach { urlSpan ->
-            val updatedUrl = urlSpan.url.toHttpUrlOrNull().toString()
+            val updatedUrl = urlSpan.url.toHttpUrlOrNull()?.toString() ?: urlSpan.url
             val replacementSpan = ModalURLSpan(updatedUrl) { url ->
                 val activity = context as? ConversationActivityV2
                 activity?.showOpenUrlDialog(url)

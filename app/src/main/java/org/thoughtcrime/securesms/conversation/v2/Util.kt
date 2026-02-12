@@ -19,7 +19,6 @@ package org.thoughtcrime.securesms.conversation.v2
 import android.text.Spannable
 import android.text.style.URLSpan
 import org.nibor.autolink.LinkExtractor
-import org.nibor.autolink.LinkSpan
 import org.nibor.autolink.LinkType
 import org.session.libsignal.utilities.Log
 import java.util.EnumSet
@@ -50,18 +49,16 @@ object Util {
 
         // extract the links
         val text = toString()
-        val spans = autoLinkExtractor.extractLinks(text)
+        val links = autoLinkExtractor.extractLinks(text)
 
-        // iterate detected link and keep only those that represent real links
-        for (s in spans) {
-            if (s !is LinkSpan) continue
-
+        // iterate detected links and keep only those that represent real links
+        for (link in links) {
             // This is the exact range autolink detected
-            val start = s.beginIndex
-            val end = s.endIndex
+            val start = link.beginIndex
+            val end = link.endIndex
             val raw = text.substring(start, end)
 
-            val url = when (s.type) {
+            val url = when (link.type) {
                 LinkType.WWW -> "https://$raw"
                 else -> raw
             }
