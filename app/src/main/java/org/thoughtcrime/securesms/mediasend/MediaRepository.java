@@ -12,7 +12,6 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
-import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.util.MediaUtil;
 import java.io.IOException;
@@ -249,8 +248,8 @@ class MediaRepository {
         long size   = media.getSize();
 
         if (size <= 0) {
-            Optional<Long> optionalSize = Optional.fromNullable(PartAuthority.getAttachmentSize(context, media.getUri()));
-            size = optionalSize.isPresent() ? optionalSize.get() : 0;
+            Long optionalSize = PartAuthority.getAttachmentSize(context, media.getUri());
+            size = optionalSize != null ? optionalSize : 0;
         }
 
         if (size <= 0) {

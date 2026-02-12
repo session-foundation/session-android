@@ -140,6 +140,7 @@ class VisibleMessageContentView : ConstraintLayout {
             binding.documentView.root.isVisible = false
             binding.albumThumbnailView.root.isVisible = false
             binding.openGroupInvitationView.root.isVisible = false
+            binding.attachmentControlView.root.isVisible = false
             return
         } else {
             binding.deletedMessageView.root.isVisible = false
@@ -191,7 +192,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 downloadPendingAttachment(attach)
             }
             message.linkPreviews.forEach { preview ->
-                val previewThumbnail = preview.getThumbnail().orNull() as? DatabaseAttachment ?: return@forEach
+                val previewThumbnail = preview.thumbnail as? DatabaseAttachment ?: return@forEach
                 downloadPendingAttachment(previewThumbnail)
             }
         }

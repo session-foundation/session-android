@@ -45,6 +45,8 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -68,6 +70,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
+    private val prefStorage: PreferenceStorage,
     private val loginStateRepository: LoginStateRepository,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
@@ -147,7 +150,7 @@ class HomeViewModel @Inject constructor(
         // check if we should show the recovery phrase backup banner:
         // - if the user has not yet seen the warning
         // - if the user has at least 3 conversations
-        if (!prefs.getHasViewedSeed() && convoList.size >= 3){
+        if (!prefStorage[HAS_VIEWED_SEED] && convoList.size >= 3){
             _uiState.update {
                 it.copy(showRecoveryPhraseBackupBanner = true)
             }
