@@ -140,6 +140,7 @@ class VisibleMessageContentView : ConstraintLayout {
             binding.documentView.root.isVisible = false
             binding.albumThumbnailView.root.isVisible = false
             binding.openGroupInvitationView.root.isVisible = false
+            binding.attachmentControlView.root.isVisible = false
             return
         } else {
             binding.deletedMessageView.root.isVisible = false
