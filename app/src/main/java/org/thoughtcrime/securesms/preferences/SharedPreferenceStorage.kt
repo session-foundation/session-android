@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.preferences
 
 import android.content.SharedPreferences
+import androidx.collection.LruCache
 import androidx.core.content.edit
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -14,12 +15,16 @@ import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.mapToStateFlow
+import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 class SharedPreferenceStorage @AssistedInject constructor(
     @Assisted private val prefs: SharedPreferences,
     private val json: Json,
 ) : PreferenceStorage {
     private val changes = MutableSharedFlow<PreferenceKey<*>>()
+
+    private val cache = LruCache<String, Optional<Any>>(100)
 
     override fun <T> set(key: PreferenceKey<T>, value: T) {
         prefs.edit {
@@ -40,11 +45,13 @@ class SharedPreferenceStorage @AssistedInject constructor(
                 }
             }
         }
+        cache.remove(key.name)
 
         changes.tryEmit(key)
     }
 
     override fun remove(key: PreferenceKey<*>) {
+        cache.remove(key.name)
         prefs.edit {
             remove(key.name)
         }
@@ -53,8 +60,14 @@ class SharedPreferenceStorage @AssistedInject constructor(
     }
 
     override fun <T> get(key: PreferenceKey<T>): T {
+        val cached = cache[key.name]
+        if (cached != null) {
+            @Suppress("UNCHECKED_CAST")
+            return cached.getOrNull() as T
+        }
+
         @Suppress("UNCHECKED_CAST")
-        return when (val strategy = key.strategy) {
+        val fetched = when (val strategy = key.strategy) {
             is PreferenceKey.Strategy.Json<*> -> prefs.getString(key.name, null)?.let { encoded ->
                 runCatching {
                     json.decodeFromString(strategy.serializer, encoded)
@@ -80,6 +93,9 @@ class SharedPreferenceStorage @AssistedInject constructor(
                 }
             }
         } as T
+
+        cache.put(key.name, Optional.ofNullable(fetched))
+        return fetched
     }
 
     override fun changes(): Flow<PreferenceKey<*>> {
