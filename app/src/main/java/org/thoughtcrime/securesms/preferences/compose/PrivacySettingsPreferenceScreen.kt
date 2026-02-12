@@ -306,7 +306,7 @@ fun PrivacySettingsPreference(
             buttons = listOf(
                 DialogButtonData(
                     text = GetString(stringResource(R.string.enable)),
-                    qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_enable),
                     onClick = {
                         sendCommand(AskMicPermission)
                     }
