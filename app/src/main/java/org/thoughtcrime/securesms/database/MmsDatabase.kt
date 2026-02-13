@@ -24,8 +24,6 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
@@ -59,7 +57,6 @@ import org.thoughtcrime.securesms.pro.toProProfileBitSetValue
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import org.thoughtcrime.securesms.util.asSequence
 import java.io.Closeable
-import java.io.IOException
 import java.util.LinkedList
 import javax.inject.Inject
 import javax.inject.Provider
@@ -419,7 +416,6 @@ class MmsDatabase @Inject constructor(
         return result
     }
 
-
     private fun getLinkPreviews(
         cursor: Cursor,
         attachments: List<DatabaseAttachment>
@@ -432,27 +428,22 @@ class MmsDatabase @Inject constructor(
         for (attachment in attachments) {
             attachmentIdMap[attachment.attachmentId] = attachment
         }
-        try {
-            val previews: MutableList<LinkPreview> = LinkedList()
-            val jsonPreviews = JSONArray(serializedPreviews)
-            for (i in 0 until jsonPreviews.length()) {
-                val preview = LinkPreview.deserialize(jsonPreviews.getJSONObject(i).toString())
-                if (preview.attachmentId != null) {
-                    val attachment = attachmentIdMap[preview.attachmentId]
-                    if (attachment != null) {
-                        previews.add(LinkPreview(preview.url, preview.title, attachment))
+
+        return runCatching {
+            json.decodeFromString<List<LinkPreview>>(serializedPreviews)
+                .mapNotNull { preview ->
+                    if (preview.attachmentId != null) {
+                        attachmentIdMap[preview.attachmentId]?.let { attachment ->
+                            preview.copy(thumbnail = attachment)
+                        }
+                    } else {
+                        preview
                     }
-                } else {
-                    previews.add(preview)
                 }
-            }
-            return previews
-        } catch (e: JSONException) {
-            Log.w(TAG, "Failed to parse shared contacts.", e)
-        } catch (e: IOException) {
-            Log.w(TAG, "Failed to parse shared contacts.", e)
-        }
-        return emptyList()
+        }.onFailure { err ->
+            Log.w(TAG, "Failed to decode link preview", err)
+        }.getOrNull()
+            .orEmpty()
     }
 
     @Throws(MmsException::class)
@@ -810,25 +801,19 @@ class MmsDatabase @Inject constructor(
         previews: List<LinkPreview?>
     ): String? {
         if (previews.isEmpty()) return null
-        val linkPreviewJson = JSONArray()
+        val normalisedPreviews = arrayListOf<LinkPreview>()
         for (preview in previews) {
-            try {
-                var attachmentId: AttachmentId? = null
-                val thumb = preview!!.thumbnail
-                if (thumb != null) {
-                    attachmentId = insertedAttachmentIds[thumb]
-                }
-                val updatedPreview = LinkPreview(
-                    preview.url, preview.title, attachmentId
-                )
-                linkPreviewJson.put(JSONObject(updatedPreview.serialize()))
-            } catch (e: JSONException) {
-                Log.w(TAG, "Failed to serialize shared contact. Skipping it.", e)
-            } catch (e: IOException) {
-                Log.w(TAG, "Failed to serialize shared contact. Skipping it.", e)
+            var attachmentId: AttachmentId? = null
+            val thumb = preview!!.thumbnail
+            if (thumb != null) {
+                attachmentId = insertedAttachmentIds[thumb]
             }
+
+            normalisedPreviews += LinkPreview(
+                preview.url, preview.title, attachmentId
+            )
         }
-        return linkPreviewJson.toString()
+        return json.encodeToString(normalisedPreviews)
     }
 
     private fun isDuplicateMessageRequestResponse(
