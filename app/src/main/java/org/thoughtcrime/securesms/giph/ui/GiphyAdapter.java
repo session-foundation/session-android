@@ -29,6 +29,7 @@ import org.session.libsession.utilities.ViewUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.giph.model.ChunkedImageUrl;
 import org.thoughtcrime.securesms.giph.model.GiphyImage;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 
