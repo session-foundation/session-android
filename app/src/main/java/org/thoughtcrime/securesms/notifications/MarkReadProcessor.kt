@@ -121,9 +121,9 @@ class MarkReadProcessor @Inject constructor(
                             )
                         )
                     } catch (e: Throwable) {
-                        if (e !is CancellationException) {
-                            Log.e(TAG, "Failed to shorten expiry for messages with hashes $hashes", e)
-                        }
+                        if (e is CancellationException) throw e
+
+                        Log.e(TAG, "Failed to shorten expiry for messages with hashes $hashes", e)
                     }
                 }
         }

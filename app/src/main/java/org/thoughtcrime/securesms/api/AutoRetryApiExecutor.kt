@@ -33,17 +33,17 @@ class AutoRetryApiExecutor<Req, Res>(
                     numRetried += 1
                     Log.e(TAG, "Retrying $req $numRetried times due to error", e)
                     delay(numRetried * 2000L)
-                } else if (e is ErrorWithFailureDecision) {
-                    // If we know the error is ErrorWithFailureDecision, we can
-                    // safely modify the stacktrace as we know that exception contains
-                    // a cause where it can pinpoint to the direct trace of the error.
-                    throw e.also { it.stackTrace = initStack }
                 } else {
-                    // If we aren't sure about the error type, we shouldn't modify the stacktrace
-                    // as it may lose important information about the error. In this case,
-                    // we'll just create a new exception with the original error as the cause,
-                    // so that we can preserve the original stacktrace.
-                    throw RuntimeException(e).also { it.stackTrace = initStack }
+                    // If we know the error is ErrorWithFailureDecision, we can
+                    // safely modify its stacktrace as we know that exception contains
+                    // a cause where it can pinpoint to the direct trace of the error.
+                    // Otherwise, we'll create a new exception to modify the stacktrace, so to
+                    // preserve the original error's stacktrace which may contain important
+                    // information about the error.
+
+                    val errorToUpdateStack = e.takeIf { it is ErrorWithFailureDecision } ?: RuntimeException(e)
+                    errorToUpdateStack.stackTrace = initStack
+                    throw errorToUpdateStack
                 }
             }
         }

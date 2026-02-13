@@ -333,9 +333,9 @@ class ConfigToDatabaseSync @Inject constructor(
                                 )
                             )
                         } catch (e: Exception) {
-                            if (e !is CancellationException) {
-                                Log.e(TAG, "Failed to delete messages from swarm for group", e)
-                            }
+                            if (e is CancellationException) throw e
+
+                            Log.e(TAG, "Failed to delete messages from swarm for group", e)
                         }
                     }
                 }
