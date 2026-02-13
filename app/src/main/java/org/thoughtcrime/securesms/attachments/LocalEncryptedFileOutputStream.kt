@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.attachments
 
-import android.app.Application
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -22,13 +21,13 @@ class LocalEncryptedFileOutputStream @AssistedInject constructor(
     @Assisted file: File,
     @Assisted meta: FileMetadata,
     codec: EmbeddedMetadataCodec,
-    application: Application
+    attachmentSecretProvider: AttachmentSecretProvider,
 ): OutputStream() {
     private val outputStream = EncryptionStream(
         out = FileOutputStream(file.also {
             it.parentFile!!.mkdirs() // Make sure the parent directory exists
         }),
-        key = AttachmentSecretProvider.getInstance(application).orCreateAttachmentSecret.modernKey,
+        key = attachmentSecretProvider.getOrCreateAttachmentSecret().modernKey,
     ).also {
         codec.encodeToStream(meta, it)
     }

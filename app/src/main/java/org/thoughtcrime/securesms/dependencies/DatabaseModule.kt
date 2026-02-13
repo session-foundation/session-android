@@ -9,7 +9,6 @@ import dagger.hilt.components.SingletonComponent
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.AttachmentSecret
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
-import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase
@@ -23,7 +22,6 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MediaDatabase
 import org.thoughtcrime.securesms.database.PushDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
@@ -41,7 +39,9 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAttachmentSecret(@ApplicationContext context: Context) = AttachmentSecretProvider.getInstance(context).orCreateAttachmentSecret
+    fun provideAttachmentSecret(attachmentSecretProvider: AttachmentSecretProvider): AttachmentSecret {
+        return attachmentSecretProvider.getOrCreateAttachmentSecret()
+    }
 
     @Provides
     @Singleton

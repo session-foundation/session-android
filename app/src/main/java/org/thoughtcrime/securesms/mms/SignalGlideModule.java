@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.mms;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -24,7 +23,6 @@ import com.bumptech.glide.module.AppGlideModule;
 
 import org.session.libsession.utilities.recipients.RemoteFile;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.crypto.AttachmentSecret;
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.giph.model.ChunkedImageUrl;
 import org.thoughtcrime.securesms.glide.ChunkedImageUrlLoader;
@@ -35,7 +33,6 @@ import org.thoughtcrime.securesms.glide.cache.EncryptedBitmapResourceEncoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedCacheEncoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedGifCacheDecoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedGifDrawableResourceEncoder;
-import org.thoughtcrime.securesms.mms.AttachmentStreamUriLoader.AttachmentModel;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 
 import java.io.File;
@@ -57,7 +54,7 @@ public class SignalGlideModule extends AppGlideModule {
 
   @Override
   public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
-    AttachmentSecretProvider secretProvider = AttachmentSecretProvider.getInstance(context);
+    AttachmentSecretProvider secretProvider = ((ApplicationContext) context.getApplicationContext()).getAttachmentSecretProvider();
 
     registry.prepend(File.class, File.class, UnitModelLoader.Factory.getInstance());
     registry.prepend(InputStream.class, new EncryptedCacheEncoder(secretProvider, glide.getArrayPool()));
@@ -71,7 +68,6 @@ public class SignalGlideModule extends AppGlideModule {
             ((ApplicationContext) (context.getApplicationContext())).getRemoteFileLoader()
     ));
     registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
-    registry.append(AttachmentModel.class, InputStream.class, new AttachmentStreamUriLoader.Factory());
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
   }

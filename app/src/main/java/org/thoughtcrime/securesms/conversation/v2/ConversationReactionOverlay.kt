@@ -140,7 +140,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Use your existing utility to handle insets
         applySafeInsetsPaddings(
-            typeMask = WindowInsetsCompat.Type.systemBars(),
+            typeMask = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout(),
             consumeInsets = false, // Don't consume so children can also access them
             applyTop = false,      // Don't apply as padding, just capture the values
             applyBottom = false
@@ -211,7 +211,17 @@ class ConversationReactionOverlay : FrameLayout {
         val contextMenu = ConversationContextMenu(dropdownAnchor, recipient?.let { getMenuActionItems(messageRecord, it) }.orEmpty())
         this.contextMenu = contextMenu
 
-        var endX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX - conversationItem.width + selectedConversationModel.bubbleWidth
+        // Visual left/right edges that account for system insets and configured margin.
+        val leftEdge = (systemInsets.left + scrubberHorizontalMargin).toFloat()
+        val rightEdge = (width - systemInsets.right - scrubberHorizontalMargin).toFloat()
+
+        // Start the bubble aligned to the same visual edge as the scrubber.
+        var endX = if (isMessageOnLeft) {
+            leftEdge
+        } else {
+            rightEdge - conversationItem.width
+        }
+
         var endY = selectedConversationModel.bubbleY - statusBarHeight
         conversationItem.x = endX
         conversationItem.y = endY
@@ -312,13 +322,23 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Adjust for system insets
         reactionBarBackgroundY = maxOf(reactionBarBackgroundY, systemInsets.top.toFloat() - statusBarHeight)
+
+        // Now that endScale is final, clamp the bubble X so it stays fully within the visual edges.
+        val minBubbleX = leftEdge
+        val maxBubbleX = rightEdge
+        endX = endX.coerceIn(minBubbleX, maxBubbleX)
+        // Ensure initial position is corrected before making the overlay visible.
+        conversationItem.x = endX
+        conversationItem.y = endY
+
         hideAnimatorSet.end()
         visibility = VISIBLE
 
+        // Place the scrubber on the same visual edges (accounting for its own width on the right).
         val scrubberX = if (isMessageOnLeft) {
-            scrubberHorizontalMargin.toFloat()
+            leftEdge
         } else {
-            (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
+            (rightEdge - scrubberWidth)
         }
 
         foregroundView.x = scrubberX
@@ -332,22 +352,37 @@ class ConversationReactionOverlay : FrameLayout {
         revealAnimatorSet.start()
 
         if (isWideLayout) {
-            val scrubberRight = scrubberX + scrubberWidth
-            val offsetX = when {
-                isMessageOnLeft -> scrubberRight + menuPadding
-                else -> scrubberX - contextMenu.getMaxWidth() - menuPadding
+            val menuXInOverlay = if (isMessageOnLeft) {
+                // Menu to the RIGHT of the scrubber
+                scrubberX + scrubberWidth + menuPadding
+            } else {
+                // Menu to the LEFT of the scrubber - use MENU width here, not scrubber width
+                scrubberX - contextMenu.getMaxWidth() - menuPadding
             }
-            // Adjust Y position to account for insets
-            val adjustedY = minOf(backgroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
-            contextMenu.show(offsetX.toInt(), adjustedY)
+
+            val maxMenuYInOverlay = (height - systemInsets.bottom - actualMenuHeight).toFloat()
+            val menuYInOverlay = minOf(backgroundView.y, maxMenuYInOverlay)
+
+            // Convert overlay-local to anchor relative as expected by ConversationContextMenu.show()
+            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
+            contextMenu.show(xOffset, yOffset)
+
         } else {
-            val contentX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX
-            val offsetX = when {
-                isMessageOnLeft -> contentX
-                else -> -contextMenu.getMaxWidth() + contentX + bubbleWidth
+            val menuXInOverlay = if (isMessageOnLeft) {
+                leftEdge
+            } else {
+                rightEdge - contextMenu.getMaxWidth()
             }
+
             val menuTop = endApparentTop + conversationItemSnapshot.height * endScale
-            contextMenu.show(offsetX.toInt(), (menuTop + menuPadding).toInt())
+            val menuYInOverlay = (menuTop + menuPadding)
+                .coerceIn(
+                    systemInsets.top.toFloat(),
+                    (height - systemInsets.bottom - actualMenuHeight).toFloat()
+                )
+
+            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
+            contextMenu.show(xOffset, yOffset)
         }
 
         val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
@@ -359,6 +394,12 @@ class ConversationReactionOverlay : FrameLayout {
             .x(endX)
             .y(endY)
             .setDuration(revealDuration.toLong())
+    }
+
+    private fun toAnchorOffsets(xInOverlay: Float, yInOverlay: Float): Pair<Int, Int> {
+        val xOffset = (xInOverlay - dropdownAnchor.x).toInt()
+        val yOffset = (yInOverlay - dropdownAnchor.y).toInt()
+        return xOffset to yOffset
     }
 
     private fun getReactionBarOffsetForTouch(itemY: Float,
@@ -670,9 +711,11 @@ class ConversationReactionOverlay : FrameLayout {
             items += ActionItem(R.attr.menu_unban_icon, R.string.banUnbanUser, { handleActionItemClicked(Action.UNBAN_USER) })
         }
 
-        // deleted messages have  no emoji reactions
-        backgroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
-        foregroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
+        // deleted messages, legacy groups, or non approved message requests have no emoji reactions
+        val showEmojiReactions = !isDeleteOnly && !isDeprecatedLegacyGroup
+                && threadRecipient.approved && threadRecipient.approvedMe
+        backgroundView.isVisible = showEmojiReactions
+        foregroundView.isVisible = showEmojiReactions
         return items
     }
 
