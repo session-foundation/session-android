@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.configs
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -323,10 +324,19 @@ class ConfigToDatabaseSync @Inject constructor(
                             messageHashes = cleanedHashes,
                             swarmAuth = groupAdminAuth
                         )
-                        swarmApiExecutor.execute(SwarmApiRequest(
-                            swarmPubKeyHex = groupInfoConfig.id.hexString,
-                            api = deleteMessageApi
-                        ))
+
+                        try {
+                            swarmApiExecutor.execute(
+                                SwarmApiRequest(
+                                    swarmPubKeyHex = groupInfoConfig.id.hexString,
+                                    api = deleteMessageApi
+                                )
+                            )
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+
+                            Log.e(TAG, "Failed to delete messages from swarm for group", e)
+                        }
                     }
                 }
             }
