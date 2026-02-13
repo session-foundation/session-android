@@ -11,9 +11,9 @@ import kotlinx.serialization.serializer
  * instances of [PreferenceKey] with the appropriate strategy for the type of preference you want to
  * store.
  */
-class PreferenceKey<out T>(
+class PreferenceKey<T>(
     val name: String,
-    val strategy: Strategy<out T>,
+    val strategy: Strategy<T>,
 ) {
 
     sealed interface Strategy<T> {

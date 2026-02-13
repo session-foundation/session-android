@@ -7,6 +7,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+/**
+ * A serializer that encodes a byte array as a compact Base64 string (without padding or line breaks).
+ */
 class BytesAsCompactB64Serializer : KSerializer<ByteArray> {
     override val descriptor = PrimitiveSerialDescriptor("BytesAsCompactB64Serializer", PrimitiveKind.STRING)
 

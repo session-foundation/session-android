@@ -38,7 +38,7 @@ class DatabaseSecretProvider @Inject constructor(
             val databaseSecret = DatabaseSecret(unencryptedSecret)
             val encryptedSecret = KeyStoreHelper.seal(databaseSecret.asBytes())
 
-            prefs[keyEncryptedSecret] = json.encodeToString(encryptedSecret)
+            prefs[keyEncryptedSecret] = encryptedSecret
             prefs.remove(keyUnencryptedSecret)
 
             return databaseSecret
