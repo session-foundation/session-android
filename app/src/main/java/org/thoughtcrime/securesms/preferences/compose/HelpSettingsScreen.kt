@@ -28,6 +28,7 @@ import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.openUrl
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 private const val CROWDIN_URL = "https://getsession.org/translate"
 private const val FEEDBACK_URL = "https://getsession.org/survey"
@@ -112,6 +113,7 @@ fun HelpSettings(
                             .put(APP_NAME_KEY, stringResource(R.string.app_name))
                             .format()
                     ),
+                    subtitleStyle = LocalType.current.large,
                     qaTag = R.string.qa_help_settings_export,
                     onClick = { sendCommand(HelpSettingsViewModel.Commands.ExportLogs) },
                     endContent = {
