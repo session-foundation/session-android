@@ -135,6 +135,7 @@ fun NotificationsPreference(
                         subtitle = annotatedStringResource(fastModeDescription),
                         checked = uiState.isPushEnabled,
                         qaTag = R.string.qa_preferences_enable_push,
+                        switchQaTag = R.string.qa_preferences_enable_push_toggle,
                         onCheckedChange = {isEnabled -> sendCommand(TogglePushEnabled(isEnabled)) }
                     )
 
@@ -144,6 +145,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.runAppBackground),
                         checked = uiState.isWhitelistedFromDoze,
                         qaTag = R.string.qa_preferences_whitelist,
+                        switchQaTag = R.string.qa_preferences_whitelist_toggle,
                         onCheckedChange = { sendCommand(WhiteListClicked) }
                     )
 
@@ -182,6 +184,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.notificationsSoundDescription),
                         checked = uiState.soundWhenAppIsOpen,
                         qaTag = R.string.qa_preferences_sound_when_app_is_open,
+                        switchQaTag = R.string.qa_preferences_sound_when_app_is_open_toggle,
                         onCheckedChange = {isEnabled -> sendCommand(ToggleSoundWhenOpen(isEnabled)) }
                     )
 
@@ -191,6 +194,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.notificationsVibrate),
                         checked = uiState.vibrate,
                         qaTag = R.string.qa_preferences_vibrate,
+                        switchQaTag = R.string.qa_preferences_vibrate_toggle,
                         onCheckedChange = {isEnabled -> sendCommand(ToggleVibrate(isEnabled)) }
                     )
                 }

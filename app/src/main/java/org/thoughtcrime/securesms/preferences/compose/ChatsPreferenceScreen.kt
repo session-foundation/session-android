@@ -56,6 +56,7 @@ private fun ConversationsPreference(
                     subtitle = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunitiesDescription),
                     checked = uiState.trimThreads,
                     qaTag = R.string.qa_preferences_trim_threads,
+                    switchQaTag = R.string.qa_preferences_trim_threads_toggle,
                     onCheckedChange = { isEnabled ->
                         sendCommand(
                             ChatsPreferenceViewModel.Commands.ToggleTrimThreads(
@@ -80,6 +81,7 @@ private fun ConversationsPreference(
                     subtitle = annotatedStringResource(R.string.conversationsSendWithEnterKeyDescription),
                     checked = uiState.sendWithEnter,
                     qaTag = R.string.qa_preferences_send_with_enter,
+                    switchQaTag = R.string.qa_preferences_send_with_enter_toggle,
                     onCheckedChange = { isEnabled ->
                         sendCommand(
                             ChatsPreferenceViewModel.Commands.ToggleSendWithEnter(
@@ -104,6 +106,7 @@ private fun ConversationsPreference(
                     subtitle = annotatedStringResource(R.string.conversationsAutoplayAudioMessageDescription),
                     checked = uiState.autoplayAudioMessage,
                     qaTag = R.string.qa_preferences_autoplay_audio,
+                    switchQaTag = R.string.qa_preferences_autoplay_audio_toggle,
                     onCheckedChange = { isEnabled ->
                         sendCommand(
                             ChatsPreferenceViewModel.Commands.ToggleAutoplayAudioMessages(
