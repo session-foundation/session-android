@@ -16,10 +16,19 @@
  */
 package org.thoughtcrime.securesms.conversation.v2
 
+import android.text.Spannable
+import android.text.style.URLSpan
+import org.nibor.autolink.LinkExtractor
+import org.nibor.autolink.LinkType
 import org.session.libsignal.utilities.Log
+import java.util.EnumSet
 
 object Util {
     private val TAG: String = Log.tag(Util::class.java)
+
+    private val autoLinkExtractor: LinkExtractor = LinkExtractor.builder()
+        .linkTypes(EnumSet.of(LinkType.URL, LinkType.WWW))
+        .build()
 
     /**
      * Returns half of the difference between the given length, and the length when scaled by the
@@ -30,4 +39,31 @@ object Util {
         return (length - scaledLength) / 2
     }
 
+    /**
+     * Uses autolink-java to detect URLs with better boundaries than Android Linkify,
+     * and applies standard URLSpan spans only.
+     */
+    fun Spannable.addUrlSpansWithAutolink() {
+        // Remove any existing URLSpans first so we don't get overlapping links
+        getSpans(0, length, URLSpan::class.java).forEach { removeSpan(it) }
+
+        // extract the links
+        val text = toString()
+        val links = autoLinkExtractor.extractLinks(text)
+
+        // iterate detected links and keep only those that represent real links
+        for (link in links) {
+            // This is the exact range autolink detected
+            val start = link.beginIndex
+            val end = link.endIndex
+            val raw = text.substring(start, end)
+
+            val url = when (link.type) {
+                LinkType.WWW -> "https://$raw"
+                else -> raw
+            }
+
+            setSpan(URLSpan(url), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
 }
