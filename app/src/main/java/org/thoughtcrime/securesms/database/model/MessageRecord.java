@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.database.model;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
@@ -106,19 +107,18 @@ public abstract class MessageRecord extends DisplayRecord {
   @Nullable
   public UpdateMessageData getGroupUpdateMessage() {
     if (isGroupUpdateMessage()) {
-      groupUpdateMessage = UpdateMessageData.Companion.fromJSON(getBody());
+      groupUpdateMessage = UpdateMessageData.Companion.fromJSON(
+              MessagingModuleConfiguration.getShared().getJson(),
+              getBody()
+      );
     }
 
     return groupUpdateMessage;
   }
 
   public boolean isGroupExpirationTimerUpdate() {
-    if (!isGroupUpdateMessage()) {
-      return false;
-    }
-
-    UpdateMessageData updateMessageData = UpdateMessageData.Companion.fromJSON(getBody());
-    return updateMessageData != null && updateMessageData.getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
+    return getGroupUpdateMessage() != null &&
+            getGroupUpdateMessage().getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
   }
 
     @Override

@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.signal
 
+import kotlinx.serialization.json.Json
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
@@ -83,6 +84,7 @@ data class IncomingTextMessage(
 
     companion object {
         fun fromOpenGroupInvitation(
+            json: Json,
             invitation: OpenGroupInvitation,
             sender: Address,
             sentTimestampMillis: Long,
@@ -92,7 +94,7 @@ data class IncomingTextMessage(
             val body = UpdateMessageData.buildOpenGroupInvitation(
                 url = invitation.url ?: return null,
                 name = invitation.name ?: return null,
-            ).toJSON()
+            ).toJSON(json)
 
             return IncomingTextMessage(
                 message = body,
