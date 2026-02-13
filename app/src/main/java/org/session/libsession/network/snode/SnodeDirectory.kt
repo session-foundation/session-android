@@ -176,9 +176,10 @@ class SnodeDirectory @Inject constructor(
                     }
                     .result
             }.onFailure { e ->
+                if (e is CancellationException) throw e
+
                 lastError = e
                 Log.w("SnodeDirectory", "Seed node failed: $target", e)
-                if (e is CancellationException) throw e
             }
             .getOrNull()
             ?.toSnodeList()
