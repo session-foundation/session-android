@@ -135,8 +135,8 @@ class GiphyActivity :
             if (viewHolder === finishingImage) {
                 val result = Intent().apply {
                     data = uri
-                    putExtra(EXTRA_WIDTH, viewHolder.image.gifWidth)
-                    putExtra(EXTRA_HEIGHT, viewHolder.image.gifHeight)
+                    putExtra(EXTRA_WIDTH, viewHolder.image.getGifWidth())
+                    putExtra(EXTRA_HEIGHT, viewHolder.image.getGifHeight())
                 }
                 setResult(RESULT_OK, result)
                 finish()
