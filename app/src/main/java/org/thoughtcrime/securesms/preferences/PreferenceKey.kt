@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.preferences
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
 
 /**
  * A key definition for a preference. It includes the name of the preference and the
@@ -21,6 +22,7 @@ class PreferenceKey<out T>(
         class PrimitiveFloat(val defaultValue: Float) : Strategy<Float>
         class PrimitiveBoolean(val defaultValue: Boolean) : Strategy<Boolean>
         class PrimitiveString(val defaultValue: String?) : Strategy<String?>
+        object Bytes : Strategy<ByteArray?>
         class Enum<T : kotlin.Enum<*>>(val choices: List<T>, val defaultValue: T?) : Strategy<T?>
         class Json<T>(val serializer: KSerializer<T>) : Strategy<T?>
     }
@@ -41,8 +43,11 @@ class PreferenceKey<out T>(
         fun float(name: String, defaultValue: Float): PreferenceKey<Float> =
             PreferenceKey(name, Strategy.PrimitiveFloat(defaultValue))
 
-        fun <T> json(name: String, serializer: KSerializer<T>): PreferenceKey<T?> =
-            PreferenceKey(name, Strategy.Json(serializer))
+        inline fun <reified T> json(name: String): PreferenceKey<T?> =
+            PreferenceKey(name, Strategy.Json(serializer<T>()))
+
+        fun bytes(name: String): PreferenceKey<ByteArray?> =
+            PreferenceKey(name, Strategy.Bytes)
 
         inline fun <reified T : Enum<*>> enum(
             name: String,

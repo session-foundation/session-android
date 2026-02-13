@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
+import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.util.Optional
@@ -48,6 +49,9 @@ class SharedPreferenceStorage @AssistedInject constructor(
                 )
                 is PreferenceKey.Strategy.Enum<*> -> {
                     putString(key.name, if (value == null) null else (value as Enum<*>).name)
+                }
+                is PreferenceKey.Strategy.Bytes -> {
+                    putString(key.name, if (value == null) null else Base64.encodeBytes(value as ByteArray))
                 }
             }
         }
@@ -86,6 +90,7 @@ class SharedPreferenceStorage @AssistedInject constructor(
             is PreferenceKey.Strategy.PrimitiveInt -> prefs.getInt(key.name, strategy.defaultValue)
             is PreferenceKey.Strategy.PrimitiveLong -> prefs.getLong(key.name, strategy.defaultValue)
             is PreferenceKey.Strategy.PrimitiveString -> prefs.getString(key.name, strategy.defaultValue)
+            is PreferenceKey.Strategy.Bytes -> prefs.getString(key.name, null)?.let(Base64::decode)
             is PreferenceKey.Strategy.Enum<*> -> {
                 val name = prefs.getString(key.name, null)
                 if (name != null) {
@@ -93,7 +98,7 @@ class SharedPreferenceStorage @AssistedInject constructor(
                         if (it == null) {
                             Log.w(TAG, "Unable to find enum value for pref key = ${key.name}, name = $name")
                         }
-                    }
+                    } ?: strategy.defaultValue
                 } else {
                     null
                 }

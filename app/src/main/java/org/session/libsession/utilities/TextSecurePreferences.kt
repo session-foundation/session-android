@@ -100,14 +100,6 @@ interface TextSecurePreferences {
     fun setBackupSaveDir(dirUri: String?)
     fun getBackupSaveDir(): String?
     fun getNeedsSqlCipherMigration(): Boolean
-    fun setAttachmentEncryptedSecret(secret: String)
-    fun setAttachmentUnencryptedSecret(secret: String?)
-    fun getAttachmentEncryptedSecret(): String?
-    fun getAttachmentUnencryptedSecret(): String?
-    fun setDatabaseEncryptedSecret(secret: String)
-    fun setDatabaseUnencryptedSecret(secret: String?)
-    fun getDatabaseUnencryptedSecret(): String?
-    fun getDatabaseEncryptedSecret(): String?
     fun isIncognitoKeyboardEnabled(): Boolean
     fun setIncognitoKeyboardEnabled(enabled : Boolean)
     fun isReadReceiptsEnabled(): Boolean
@@ -154,10 +146,6 @@ interface TextSecurePreferences {
     fun getNotificationLedColor(): Int
     fun setThreadLengthTrimmingEnabled(enabled : Boolean)
     fun isThreadLengthTrimmingEnabled(): Boolean
-    fun getLogEncryptedSecret(): String?
-    fun setLogEncryptedSecret(base64Secret: String?)
-    fun getLogUnencryptedSecret(): String?
-    fun setLogUnencryptedSecret(base64Secret: String?)
     fun getNotificationChannelVersion(): Int
     fun setNotificationChannelVersion(version: Int)
     fun getNotificationMessagesChannelVersion(): Int
@@ -297,10 +285,6 @@ interface TextSecurePreferences {
         var pushSuffix = ""
 
 
-        // This is a stop-gap solution for static access to shared preference.
-        val preferenceInstance: TextSecurePreferences
-            get() = MessagingModuleConfiguration.shared.preferences
-
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
         const val LAST_VERSION_CODE_PREF = "last_version_code"
@@ -323,10 +307,6 @@ interface TextSecurePreferences {
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
         const val READ_RECEIPTS_PREF = "pref_read_receipts"
         const val INCOGNITO_KEYBOARD_PREF = "pref_incognito_keyboard"
-        const val DATABASE_ENCRYPTED_SECRET = "pref_database_encrypted_secret"
-        const val DATABASE_UNENCRYPTED_SECRET = "pref_database_unencrypted_secret"
-        const val ATTACHMENT_ENCRYPTED_SECRET = "pref_attachment_encrypted_secret"
-        const val ATTACHMENT_UNENCRYPTED_SECRET = "pref_attachment_unencrypted_secret"
         const val NEEDS_SQLCIPHER_MIGRATION = "pref_needs_sql_cipher_migration"
         const val BACKUP_ENABLED = "pref_backup_enabled_v3"
         const val BACKUP_PASSPHRASE = "pref_backup_passphrase"
@@ -335,8 +315,6 @@ interface TextSecurePreferences {
         const val BACKUP_SAVE_DIR = "pref_save_dir"
         const val SCREEN_LOCK = "pref_android_screen_lock"
         const val SCREEN_LOCK_TIMEOUT = "pref_android_screen_lock_timeout"
-        const val LOG_ENCRYPTED_SECRET = "pref_log_encrypted_secret"
-        const val LOG_UNENCRYPTED_SECRET = "pref_log_unencrypted_secret"
         const val NOTIFICATION_CHANNEL_VERSION = "pref_notification_channel_version"
         const val NOTIFICATION_MESSAGES_CHANNEL_VERSION = "pref_notification_messages_channel_version"
         const val UNIVERSAL_UNIDENTIFIED_ACCESS = "pref_universal_unidentified_access"
@@ -469,46 +447,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun setAttachmentEncryptedSecret(context: Context, secret: String) {
-            setStringPreference(context, ATTACHMENT_ENCRYPTED_SECRET, secret)
-        }
-
-        @JvmStatic
-        fun setAttachmentUnencryptedSecret(context: Context, secret: String?) {
-            setStringPreference(context, ATTACHMENT_UNENCRYPTED_SECRET, secret)
-        }
-
-        @JvmStatic
-        fun getAttachmentEncryptedSecret(context: Context): String? {
-            return getStringPreference(context, ATTACHMENT_ENCRYPTED_SECRET, null)
-        }
-
-        @JvmStatic
-        fun getAttachmentUnencryptedSecret(context: Context): String? {
-            return getStringPreference(context, ATTACHMENT_UNENCRYPTED_SECRET, null)
-        }
-
-        @JvmStatic
-        fun setDatabaseEncryptedSecret(context: Context, secret: String) {
-            setStringPreference(context, DATABASE_ENCRYPTED_SECRET, secret)
-        }
-
-        @JvmStatic
-        fun setDatabaseUnencryptedSecret(context: Context, secret: String?) {
-            setStringPreference(context, DATABASE_UNENCRYPTED_SECRET, secret)
-        }
-
-        @JvmStatic
-        fun getDatabaseUnencryptedSecret(context: Context): String? {
-            return getStringPreference(context, DATABASE_UNENCRYPTED_SECRET, null)
-        }
-
-        @JvmStatic
-        fun getDatabaseEncryptedSecret(context: Context): String? {
-            return getStringPreference(context, DATABASE_ENCRYPTED_SECRET, null)
-        }
-
-        @JvmStatic
         fun isIncognitoKeyboardEnabled(context: Context): Boolean {
             return getBooleanPreference(context, INCOGNITO_KEYBOARD_PREF, true)
         }
@@ -591,21 +529,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun isThreadLengthTrimmingEnabled(context: Context): Boolean {
             return getBooleanPreference(context, THREAD_TRIM_ENABLED, true)
-        }
-
-        @JvmStatic
-        fun getLogEncryptedSecret(context: Context): String? {
-            return getStringPreference(context, LOG_ENCRYPTED_SECRET, null)
-        }
-
-        @JvmStatic
-        fun setLogEncryptedSecret(context: Context, base64Secret: String?) {
-            setStringPreference(context, LOG_ENCRYPTED_SECRET, base64Secret)
-        }
-
-        @JvmStatic
-        fun getLogUnencryptedSecret(context: Context): String? {
-            return getStringPreference(context, LOG_UNENCRYPTED_SECRET, null)
         }
 
         @JvmStatic
@@ -839,38 +762,6 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(TextSecurePreferences.NEEDS_SQLCIPHER_MIGRATION, false)
     }
 
-    override fun setAttachmentEncryptedSecret(secret: String) {
-        setStringPreference(TextSecurePreferences.ATTACHMENT_ENCRYPTED_SECRET, secret)
-    }
-
-    override fun setAttachmentUnencryptedSecret(secret: String?) {
-        setStringPreference(TextSecurePreferences.ATTACHMENT_UNENCRYPTED_SECRET, secret)
-    }
-
-    override fun getAttachmentEncryptedSecret(): String? {
-        return getStringPreference(TextSecurePreferences.ATTACHMENT_ENCRYPTED_SECRET, null)
-    }
-
-    override fun getAttachmentUnencryptedSecret(): String? {
-        return getStringPreference(TextSecurePreferences.ATTACHMENT_UNENCRYPTED_SECRET, null)
-    }
-
-    override fun setDatabaseEncryptedSecret(secret: String) {
-        setStringPreference(TextSecurePreferences.DATABASE_ENCRYPTED_SECRET, secret)
-    }
-
-    override fun setDatabaseUnencryptedSecret(secret: String?) {
-        setStringPreference(TextSecurePreferences.DATABASE_UNENCRYPTED_SECRET, secret)
-    }
-
-    override fun getDatabaseUnencryptedSecret(): String? {
-        return getStringPreference(TextSecurePreferences.DATABASE_UNENCRYPTED_SECRET, null)
-    }
-
-    override fun getDatabaseEncryptedSecret(): String? {
-        return getStringPreference(TextSecurePreferences.DATABASE_ENCRYPTED_SECRET, null)
-    }
-
     override fun isIncognitoKeyboardEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, true)
     }
@@ -1084,22 +975,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isThreadLengthTrimmingEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, true)
-    }
-
-    override fun getLogEncryptedSecret(): String? {
-        return getStringPreference(TextSecurePreferences.LOG_ENCRYPTED_SECRET, null)
-    }
-
-    override fun setLogEncryptedSecret(base64Secret: String?) {
-        setStringPreference(TextSecurePreferences.LOG_ENCRYPTED_SECRET, base64Secret)
-    }
-
-    override fun getLogUnencryptedSecret(): String? {
-        return getStringPreference(TextSecurePreferences.LOG_UNENCRYPTED_SECRET, null)
-    }
-
-    override fun setLogUnencryptedSecret(base64Secret: String?) {
-        setStringPreference(TextSecurePreferences.LOG_UNENCRYPTED_SECRET, base64Secret)
     }
 
     override fun getNotificationChannelVersion(): Int {
