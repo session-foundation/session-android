@@ -54,7 +54,7 @@ public class SignalGlideModule extends AppGlideModule {
 
   @Override
   public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
-    AttachmentSecretProvider secretProvider = AttachmentSecretProvider.getInstance(context);
+    AttachmentSecretProvider secretProvider = ((ApplicationContext) context.getApplicationContext()).getAttachmentSecretProvider();
 
     registry.prepend(File.class, File.class, UnitModelLoader.Factory.getInstance());
     registry.prepend(InputStream.class, new EncryptedCacheEncoder(secretProvider, glide.getArrayPool()));
