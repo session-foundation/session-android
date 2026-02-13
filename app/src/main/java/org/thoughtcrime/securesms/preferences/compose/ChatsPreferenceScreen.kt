@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +55,7 @@ private fun ConversationsPreference(
                     modifier = Modifier.fillMaxWidth(),
                     title = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunities),
                     subtitle = annotatedStringResource(R.string.conversationsMessageTrimmingTrimCommunitiesDescription),
+                    subtitleStyle = LocalType.current.large,
                     checked = uiState.trimThreads,
                     qaTag = R.string.qa_preferences_trim_threads,
                     switchQaTag = R.string.qa_preferences_trim_threads_toggle,
@@ -79,6 +81,7 @@ private fun ConversationsPreference(
                     modifier = Modifier.fillMaxWidth(),
                     title = annotatedStringResource(R.string.conversationsSendWithEnterKey),
                     subtitle = annotatedStringResource(R.string.conversationsSendWithEnterKeyDescription),
+                    subtitleStyle = LocalType.current.large,
                     checked = uiState.sendWithEnter,
                     qaTag = R.string.qa_preferences_send_with_enter,
                     switchQaTag = R.string.qa_preferences_send_with_enter_toggle,
@@ -104,6 +107,7 @@ private fun ConversationsPreference(
                     modifier = Modifier.fillMaxWidth(),
                     title = annotatedStringResource(R.string.conversationsAutoplayAudioMessage),
                     subtitle = annotatedStringResource(R.string.conversationsAutoplayAudioMessageDescription),
+                    subtitleStyle = LocalType.current.large,
                     checked = uiState.autoplayAudioMessage,
                     qaTag = R.string.qa_preferences_autoplay_audio,
                     switchQaTag = R.string.qa_preferences_autoplay_audio_toggle,
@@ -129,6 +133,7 @@ private fun ConversationsPreference(
                     modifier = Modifier.fillMaxWidth(),
                     title = annotatedStringResource(R.string.conversationsBlockedContacts),
                     subtitle = annotatedStringResource(R.string.blockedContactsManageDescription),
+                    subtitleStyle = LocalType.current.large,
                     icon = R.drawable.ic_chevron_right,
                     iconSize = LocalDimensions.current.iconSmall,
                     qaTag = R.string.qa_preferences_option_blocked_contacts,

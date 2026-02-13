@@ -1546,7 +1546,8 @@ fun SwitchActionRowItem(
         endContent = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.xxsSpacing)
             ) {
                 if (switchLeadingContent != null) {
                     switchLeadingContent()

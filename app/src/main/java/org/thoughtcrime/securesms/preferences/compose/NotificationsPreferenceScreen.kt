@@ -41,6 +41,7 @@ import org.thoughtcrime.securesms.ui.openBatteryOptimizationSettings
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 fun NotificationsPreferenceScreen(
@@ -133,6 +134,7 @@ fun NotificationsPreference(
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.useFastMode),
                         subtitle = annotatedStringResource(fastModeDescription),
+                        subtitleStyle = LocalType.current.large,
                         checked = uiState.isPushEnabled,
                         qaTag = R.string.qa_preferences_enable_push,
                         switchQaTag = R.string.qa_preferences_enable_push_toggle,
@@ -215,6 +217,7 @@ fun NotificationsPreference(
                     IconTextActionRowItem(
                         title = annotatedStringResource(R.string.notificationsContent),
                         subtitle = annotatedStringResource(R.string.notificationsContentDescription),
+                        subtitleStyle = LocalType.current.large,
                         qaTag = R.string.qa_pro_settings_action_show_badge,
                         icon = R.drawable.ic_baseline_arrow_drop_down_24,
                         endText = annotatedStringResource(uiState.notificationPrivacy.toString()),
