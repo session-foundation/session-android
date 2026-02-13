@@ -1,4 +1,4 @@
-package org.session.libsession.messaging.sending_receiving.attachments;
+package org.session.libsession.messaging.sending_receiving.attachments
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
