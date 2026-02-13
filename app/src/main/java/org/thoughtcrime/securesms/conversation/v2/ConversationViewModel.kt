@@ -641,7 +641,7 @@ class ConversationViewModel @AssistedInject constructor(
         return when {
             recipient.isGroupV2Recipient -> !repository.isGroupReadOnly(recipient)
             recipient.isLegacyGroupRecipient -> {
-                groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true &&
+                groupDb.getGroup(recipient.address.toGroupString())?.isActive == true &&
                         deprecationState != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
             }
             address.isCommunityInbox && !recipient.acceptsBlindedCommunityMessageRequests -> false
@@ -1138,7 +1138,9 @@ class ConversationViewModel @AssistedInject constructor(
                 showMessage(application.getString(R.string.banUserBanned))
 
                 // ..so we can now delete all their messages in this thread from local storage & remove the views.
-                repository.deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord)
+                withContext(Dispatchers.IO) {
+                    repository.deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord)
+                }
             }
             .onFailure {
                 showMessage(application.getString(R.string.banErrorFailed))
@@ -1434,7 +1436,7 @@ class ConversationViewModel @AssistedInject constructor(
     private fun showDisappearingMessages(recipient: Recipient) {
         recipient.let { convo ->
             if (convo.isLegacyGroupRecipient) {
-                groupDb.getGroup(convo.address.toGroupString()).orNull()?.run {
+                groupDb.getGroup(convo.address.toGroupString())?.run {
                     if (!isActive) return
                 }
             }

@@ -179,16 +179,16 @@ private fun InAppReviewStartPrompt(
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format()
             .toString(),
-        positiveButtonText = Phrase.from(context, R.string.enjoyingSessionButtonPositive)
+        negativeButtonText = Phrase.from(context, R.string.enjoyingSessionButtonPositive)
             .put(EMOJI_KEY, "❤\uFE0F")
             .format()
             .toString(),
-        negativeButtonText = Phrase.from(context, R.string.enjoyingSessionButtonNegative)
+        positiveButtonText = Phrase.from(context, R.string.enjoyingSessionButtonNegative)
             .put(EMOJI_KEY, "\uD83D\uDE15")
             .format()
             .toString(),
-        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_great),
-        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_work),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_great),
+        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_work),
         sendCommands = sendCommands
     )
 }

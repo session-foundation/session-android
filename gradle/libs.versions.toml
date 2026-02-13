@@ -29,7 +29,7 @@ kotlinVersion = "2.3.0"
 kryoVersion = "5.6.2"
 kspVersion = "2.3.5"
 legacySupportV13Version = "1.0.0"
-libsessionUtilAndroidVersion = "1.1.0-4-gcbf7eba"
+libsessionUtilAndroidVersion = "1.1.0-5-gb9061a4"
 media3ExoplayerVersion = "1.9.2"
 mockitoCoreVersion = "5.21.0"
 navVersion = "2.9.6"
@@ -70,6 +70,7 @@ huaweiAnalyticsVersion = "6.12.0.301"
 googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.3.0"
 billingVersion = "8.3.0"
+autolinkVersion = "0.12.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
@@ -175,6 +176,7 @@ android-billing = { module = "com.android.billingclient:billing", version.ref = 
 android-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingVersion" }
 mockk = { module = "io.mockk:mockk", version = "1.14.9" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlinVersion" }
+autolink = { module = "org.nibor.autolink:autolink", version.ref = "autolinkVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

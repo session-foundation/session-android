@@ -74,7 +74,6 @@ import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
-import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -175,8 +174,6 @@ interface TextSecurePreferences {
     fun removePreference(key: String)
     fun getStringSetPreference(key: String, defaultValues: Set<String>): Set<String>?
     fun setStringSetPreference(key: String, value: Set<String>)
-    fun getHasViewedSeed(): Boolean
-    fun setHasViewedSeed(hasViewedSeed: Boolean)
     fun getLastOpenTimeDate(): Long
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
@@ -279,7 +276,6 @@ interface TextSecurePreferences {
     var deprecatingStartTimeOverride: ZonedDateTime?
     var migratedToGroupV2Config: Boolean
     var migratedToDisablingKDF: Boolean
-    var migratedToMultiPartConfig: Boolean
 
     var migratedDisappearingMessagesToMessageContent: Boolean
 
@@ -371,7 +367,6 @@ interface TextSecurePreferences {
         const val ENVIRONMENT = "debug_environment"
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
-        const val MIGRATED_TO_MULTIPART_CONFIG = "migrated_to_multi_part_config"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -686,10 +681,6 @@ interface TextSecurePreferences {
             }
         }
 
-        fun getHasViewedSeed(context: Context): Boolean {
-            return getBooleanPreference(context, "has_viewed_seed", false)
-        }
-
         @Deprecated("We no longer keep the profile expiry in prefs, we write them in the file instead. Keeping it here for migration purposes")
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
@@ -758,10 +749,6 @@ class AppTextSecurePreferences @Inject constructor(
         set(value) = getDefaultSharedPreferences(context).edit(commit = true) {
             putBoolean(TextSecurePreferences.MIGRATED_TO_DISABLING_KDF, value)
         }
-
-    override var migratedToMultiPartConfig: Boolean
-        get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, false)
-        set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, value)
 
     override var migratedDisappearingMessagesToMessageContent: Boolean
         get() = getBooleanPreference("migrated_disappearing_messages_to_message_content", false)
@@ -1189,14 +1176,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setStringSetPreference(key: String, value: Set<String>) {
         getDefaultSharedPreferences(context).edit { putStringSet(key, value) }
-    }
-
-    override fun getHasViewedSeed(): Boolean {
-        return getBooleanPreference("has_viewed_seed", false)
-    }
-
-    override fun setHasViewedSeed(hasViewedSeed: Boolean) {
-        setBooleanPreference("has_viewed_seed", hasViewedSeed)
     }
 
     override fun getLastSnodePoolRefresh(): Long {

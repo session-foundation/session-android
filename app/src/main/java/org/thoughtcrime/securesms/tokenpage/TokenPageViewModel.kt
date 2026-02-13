@@ -37,6 +37,7 @@ import javax.inject.Inject
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class TokenPageViewModel @Inject constructor(
@@ -97,7 +98,7 @@ class TokenPageViewModel @Inject constructor(
         viewModelScope.launch {
             while (true) {
                 updateLastUpdatedText()
-                delay(1.minutes)
+                delay(2.seconds)
             }
         }
     }

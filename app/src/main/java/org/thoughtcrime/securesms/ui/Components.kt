@@ -1518,6 +1518,7 @@ fun SwitchActionRowItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     @StringRes qaTag: Int,
+    @StringRes switchQaTag: Int, // qaTag for the switch
     modifier: Modifier = Modifier,
     subtitle: AnnotatedString? = null,
     titleColor: Color = LocalColors.current.text,
@@ -1545,7 +1546,8 @@ fun SwitchActionRowItem(
         endContent = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.xxsSpacing)
             ) {
                 if (switchLeadingContent != null) {
                     switchLeadingContent()
@@ -1555,7 +1557,8 @@ fun SwitchActionRowItem(
                 SessionSwitch(
                     checked = checked,
                     onCheckedChange = onCheckedChange,
-                    enabled = enabled
+                    enabled = enabled,
+                    qaTag = switchQaTag
                 )
             }
         }
@@ -1660,7 +1663,8 @@ fun PreviewActionRowItems() {
                 subtitle = annotatedStringResource("With a subtitle and a switch"),
                 checked = true,
                 onCheckedChange = {},
-                qaTag = 0
+                qaTag = 0,
+                switchQaTag = 0
             )
         }
     }
