@@ -46,6 +46,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.debugmenu.DebugLogger
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -96,6 +97,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
     @Inject
     lateinit var loginStateRepository: Lazy<LoginStateRepository>
+
+    @Inject
+    lateinit var attachmentSecretProvider: AttachmentSecretProvider
 
 
     @Volatile

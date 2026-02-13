@@ -848,7 +848,8 @@ fun DebugSwitchRow(
     ) {
         SessionSwitch(
             checked = checked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
+            qaTag = R.string.qa_default_debug
         )
     }
 
