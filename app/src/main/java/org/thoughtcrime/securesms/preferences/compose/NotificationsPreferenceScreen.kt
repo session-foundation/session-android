@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.compose
 
+import android.R.attr.onClick
 import android.app.Activity
 import android.media.RingtoneManager
 import android.net.Uri
@@ -218,7 +219,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.notificationsContent),
                         subtitle = annotatedStringResource(R.string.notificationsContentDescription),
                         subtitleStyle = LocalType.current.large,
-                        qaTag = R.string.qa_pro_settings_action_show_badge,
+                        qaTag = R.string.qa_preferences_option_notification_privacy,
                         icon = R.drawable.ic_baseline_arrow_drop_down_24,
                         endText = annotatedStringResource(uiState.notificationPrivacy.toString()),
                         onClick = { sendCommand(ShowNotificationPrivacyDialog) }
