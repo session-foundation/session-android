@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.compose
 
+import android.R.attr.onClick
 import android.app.Activity
 import android.media.RingtoneManager
 import android.net.Uri
@@ -41,6 +42,7 @@ import org.thoughtcrime.securesms.ui.openBatteryOptimizationSettings
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 fun NotificationsPreferenceScreen(
@@ -133,8 +135,10 @@ fun NotificationsPreference(
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.useFastMode),
                         subtitle = annotatedStringResource(fastModeDescription),
+                        subtitleStyle = LocalType.current.large,
                         checked = uiState.isPushEnabled,
                         qaTag = R.string.qa_preferences_enable_push,
+                        switchQaTag = R.string.qa_preferences_enable_push_toggle,
                         onCheckedChange = {isEnabled -> sendCommand(TogglePushEnabled(isEnabled)) }
                     )
 
@@ -144,6 +148,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.runAppBackground),
                         checked = uiState.isWhitelistedFromDoze,
                         qaTag = R.string.qa_preferences_whitelist,
+                        switchQaTag = R.string.qa_preferences_whitelist_toggle,
                         onCheckedChange = { sendCommand(WhiteListClicked) }
                     )
 
@@ -182,6 +187,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.notificationsSoundDescription),
                         checked = uiState.soundWhenAppIsOpen,
                         qaTag = R.string.qa_preferences_sound_when_app_is_open,
+                        switchQaTag = R.string.qa_preferences_sound_when_app_is_open_toggle,
                         onCheckedChange = {isEnabled -> sendCommand(ToggleSoundWhenOpen(isEnabled)) }
                     )
 
@@ -191,6 +197,7 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.notificationsVibrate),
                         checked = uiState.vibrate,
                         qaTag = R.string.qa_preferences_vibrate,
+                        switchQaTag = R.string.qa_preferences_vibrate_toggle,
                         onCheckedChange = {isEnabled -> sendCommand(ToggleVibrate(isEnabled)) }
                     )
                 }
@@ -211,7 +218,8 @@ fun NotificationsPreference(
                     IconTextActionRowItem(
                         title = annotatedStringResource(R.string.notificationsContent),
                         subtitle = annotatedStringResource(R.string.notificationsContentDescription),
-                        qaTag = R.string.qa_pro_settings_action_show_badge,
+                        subtitleStyle = LocalType.current.large,
+                        qaTag = R.string.qa_preferences_option_notification_privacy,
                         icon = R.drawable.ic_baseline_arrow_drop_down_24,
                         endText = annotatedStringResource(uiState.notificationPrivacy.toString()),
                         onClick = { sendCommand(ShowNotificationPrivacyDialog) }

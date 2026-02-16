@@ -39,7 +39,7 @@ fun TypingIndicator(
     isTyping: Boolean,
     modifier: Modifier = Modifier,
     tint: Color = Color.White,
-    dotSize: Dp = LocalDimensions.current.shapeExtraSmall,
+    dotSize: Dp = LocalDimensions.current.shapeXXSmall,
     dotSpacing: Dp = 2.dp,
 ) {
     Row(
@@ -48,7 +48,7 @@ fun TypingIndicator(
                 color = LocalColors.current.backgroundBubbleReceived,
                 shape = RoundedCornerShape(18.dp)
             )
-            .padding( 7.dp),
+            .padding( 6.dp),
         horizontalArrangement = Arrangement.spacedBy(dotSpacing),
     ) {
         TypingDot(
