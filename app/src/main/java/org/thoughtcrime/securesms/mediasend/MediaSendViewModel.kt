@@ -60,8 +60,8 @@ class MediaSendViewModel @Inject constructor(
     val effects: SharedFlow<MediaSendEffect> = _effects.asSharedFlow()
 
     // Legacy LiveData bridges (delete later once all UI is Flow/Compose)
-    private val selectedMediaLiveData: LiveData<List<Media>?> =
-        uiState.map { it.selectedMedia.ifEmpty { null } }.asLiveData()
+    private val selectedMediaLiveData: LiveData<List<Media>> =
+        uiState.map { it.selectedMedia }.asLiveData()
 
     private val bucketIdLiveData: LiveData<String> =
         uiState.map { it.bucketId }.asLiveData()
@@ -158,6 +158,8 @@ class MediaSendViewModel @Inject constructor(
                         countVisibility = newVisibility,
                     )
                 }
+
+                leaveIfNoMediaAvailable()
             }
         }
     }
@@ -192,6 +194,8 @@ class MediaSendViewModel @Inject constructor(
                         countVisibility = CountButtonState.Visibility.FORCED_OFF,
                     )
                 }
+
+                leaveIfNoMediaAvailable()
             }
         }
     }
@@ -260,6 +264,12 @@ class MediaSendViewModel @Inject constructor(
         _uiState.update { it.copy(position = position) }
     }
 
+    private fun leaveIfNoMediaAvailable(){
+        if(selectedMedia.isEmpty()){
+            _effects.tryEmit(MediaSendEffect.NoMediaAvailable)
+        }
+    }
+
     fun onMediaItemRemoved(position: Int) {
         val current = selectedMedia
         if (position < 0 || position >= current.size) {
@@ -283,6 +293,8 @@ class MediaSendViewModel @Inject constructor(
                 else state.position.coerceIn(0, updatedList.lastIndex)
             state.copy(selectedMedia = updatedList, position = newPos)
         }
+
+        leaveIfNoMediaAvailable()
     }
 
     fun onImageCaptured(media: Media) {
@@ -308,6 +320,8 @@ class MediaSendViewModel @Inject constructor(
                 countVisibility = newVisibility
             )
         }
+
+        leaveIfNoMediaAvailable()
     }
 
     fun onImageCaptureUndo() {
@@ -324,6 +338,8 @@ class MediaSendViewModel @Inject constructor(
                 position = -1
             )
         }
+
+        leaveIfNoMediaAvailable()
 
         if (BlobUtils.isAuthority(last.uri)) {
             BlobUtils.getInstance().delete(context, last.uri)
@@ -352,7 +368,7 @@ class MediaSendViewModel @Inject constructor(
     val drawState: Map<Uri, Any>
         get() = savedDrawState
 
-    fun getSelectedMedia(): LiveData<List<Media>?> {
+    fun getSelectedMedia(): LiveData<List<Media>> {
         return selectedMediaLiveData
     }
 
@@ -519,6 +535,7 @@ class MediaSendViewModel @Inject constructor(
         data class ShowError(val error: Error) : MediaSendEffect
         data class Toast(val messageRes: Int) : MediaSendEffect
         data class ToastText(val message: String) : MediaSendEffect
+        data object NoMediaAvailable : MediaSendEffect
     }
 
     companion object {
