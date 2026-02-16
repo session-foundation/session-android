@@ -7,7 +7,9 @@ import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as S
 import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
 
-class Quote @Keep constructor() {
+class Quote
+// R8: Must keep constructor for Kryo to work
+@Keep constructor() {
     var timestamp: Long? = 0
     var publicKey: String? = null
     var text: String? = null
