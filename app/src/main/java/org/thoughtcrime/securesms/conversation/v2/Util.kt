@@ -17,7 +17,6 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.text.Spannable
-import android.text.SpannableString
 import android.text.style.URLSpan
 import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkType
