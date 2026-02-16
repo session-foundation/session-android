@@ -186,7 +186,7 @@ public class BlobUtils {
   @WorkerThread
   @NonNull
   private static CompletableFuture<Uri> writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
-    AttachmentSecret attachmentSecret = ((ApplicationContext) context).getAttachmentSecretProvider().getOrCreateAttachmentSecret();
+    AttachmentSecret attachmentSecret = ((ApplicationContext) context.getApplicationContext()).getAttachmentSecretProvider().getOrCreateAttachmentSecret();
     String           directory        = getDirectory(blobSpec.getStorageType());
     File             outputFile       = new File(getOrCreateCacheDirectory(context, directory), buildFileName(blobSpec.id));
     OutputStream     outputStream     = ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;

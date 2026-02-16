@@ -1,12 +1,13 @@
 package org.session.libsession.messaging.messages.visible
 
+import androidx.annotation.Keep
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
 import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
 
-class Quote() {
+class Quote @Keep constructor() {
     var timestamp: Long? = 0
     var publicKey: String? = null
     var text: String? = null
@@ -17,7 +18,7 @@ class Quote() {
     companion object {
         const val TAG = "Quote"
 
-        fun fromProto(proto: SessionProtos.DataMessage.Quote): Quote? {
+        fun fromProto(proto: SessionProtos.DataMessage.Quote): Quote {
             val timestamp = proto.id
             val publicKey = proto.author
             val text = proto.text
