@@ -8,6 +8,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.utilities.Util
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.Util.addUrlSpansWithAutolink
+import java.net.URI
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -40,11 +41,7 @@ object LinkPreviewUtil {
     @JvmStatic
     fun findWhitelistedUrls(text: String): List<Link> {
         val spannable = SpannableString(text)
-        val found = spannable.addUrlSpansWithAutolink()
-
-        if (!found) {
-            return emptyList()
-        }
+        spannable.addUrlSpansWithAutolink()
 
         val spans = spannable.getSpans(0, spannable.length, URLSpan::class.java)
         val links = ArrayList<Link>(spans.size)
@@ -94,13 +91,17 @@ object LinkPreviewUtil {
 
     @JvmStatic
     fun isValidMimeType(url: String): Boolean {
-        val lower = url.lowercase(Locale.ROOT)
+        val path = try {
+            URI(url).path.lowercase(Locale.ROOT)
+        } catch (e: Exception) {
+            return false
+        }
+
         val validExtensions = arrayOf(".jpg", ".png", ".gif", ".jpeg")
 
-        // If there's no dot at all, allow it.
-        if (!lower.contains('.')) return true
+        if (!path.contains('.')) return true
 
-        return validExtensions.any { lower.endsWith(it) }
+        return validExtensions.any { path.endsWith(it) }
     }
 
     @JvmStatic
