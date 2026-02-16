@@ -3,45 +3,45 @@ package org.thoughtcrime.securesms.mediasend
 import android.app.Application
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.asLiveData
+import androidx.lifecycle.MutableLiveData
+import com.annimon.stream.Stream
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
+import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ApplicationContext
+import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.InputbarViewModel
-import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager.hasFullAccess
-import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager.hasPartialAccess
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.MediaUtil
+import org.thoughtcrime.securesms.util.SingleLiveEvent
+import java.util.LinkedList
 import javax.inject.Inject
 
 /**
  * Manages the observable datasets available in [MediaSendActivity].
  */
 @HiltViewModel
-class MediaSendViewModel @Inject constructor(
+internal class MediaSendViewModel @Inject constructor(
     private val application: Application,
     proStatusManager: ProStatusManager,
     recipientRepository: RecipientRepository,
-    private val context: ApplicationContext,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
     recipientRepository = recipientRepository,
 ) {
+    private val selectedMedia: MutableLiveData<List<Media>?>
+    private val bucketMedia: MutableLiveData<List<Media>>
+    private val position: MutableLiveData<Int>
+    private val bucketId: MutableLiveData<String>
+    private val folders: MutableLiveData<List<MediaFolder>>
+    private val countButtonState: MutableLiveData<CountButtonState>
+    private val cameraButtonVisibility: MutableLiveData<Boolean>
+    private val error: SingleLiveEvent<Error>
     private val savedDrawState: MutableMap<Uri, Any>
 
     private val mediaConstraints: MediaConstraints = MediaConstraints.getPushMediaConstraints()
@@ -49,117 +49,72 @@ class MediaSendViewModel @Inject constructor(
 
     var body: CharSequence
         private set
-
+    private var countButtonVisibility: CountButtonState.Visibility
     private var sentMedia: Boolean = false
-    private var lastImageCapture: Media?
-
-    private val _uiState = MutableStateFlow(MediaSendUiState())
-    val uiState: StateFlow<MediaSendUiState> = _uiState.asStateFlow()
-
-    private val _effects = MutableSharedFlow<MediaSendEffect>(extraBufferCapacity = 1)
-    val effects: SharedFlow<MediaSendEffect> = _effects.asSharedFlow()
-
-    // Legacy LiveData bridges (delete later once all UI is Flow/Compose)
-    private val selectedMediaLiveData: LiveData<List<Media>> =
-        uiState.map { it.selectedMedia }.asLiveData()
-
-    private val bucketIdLiveData: LiveData<String> =
-        uiState.map { it.bucketId }.asLiveData()
-
-    private val positionLiveData: LiveData<Int> =
-        uiState.map { it.position }.asLiveData()
-
-    private val foldersLiveData: LiveData<List<MediaFolder>> =
-        uiState.map { it.folders }.asLiveData()
-
-    private val countButtonStateLiveData: LiveData<CountButtonState> =
-        uiState.map { CountButtonState(it.count, it.countVisibility) }
-            .asLiveData()
-
-    private val cameraButtonVisibilityLiveData: LiveData<Boolean> =
-        uiState.map { it.showCameraButton }.asLiveData()
+    private var lastImageCapture: Optional<Media>
 
     init {
+        this.selectedMedia = MutableLiveData()
+        this.bucketMedia = MutableLiveData()
+        this.position = MutableLiveData()
+        this.bucketId = MutableLiveData()
+        this.folders = MutableLiveData()
+        this.countButtonState = MutableLiveData()
+        this.cameraButtonVisibility = MutableLiveData()
+        this.error = SingleLiveEvent()
         this.savedDrawState = HashMap()
-        this.lastImageCapture = null
+        this.countButtonVisibility = CountButtonState.Visibility.FORCED_OFF
+        this.lastImageCapture = Optional.absent()
         this.body = ""
 
-        _uiState.value = MediaSendUiState(
-            position = -1,
-            countVisibility = CountButtonState.Visibility.FORCED_OFF,
-            showCameraButton = false
-        )
+        position.value = -1
+        countButtonState.value = CountButtonState(0, countButtonVisibility)
+        cameraButtonVisibility.value = false
     }
 
-    fun onMediaSelected(media: Media) {
-        val updatedList = run {
-            val current = uiState.value.selectedMedia
-            val exists = current.any { it.uri == media.uri }
-
-            if (exists) {
-                current.filterNot { it.uri == media.uri }
-            } else {
-                if (current.size >= MAX_SELECTED_FILES) {
-                    _effects.tryEmit(MediaSendEffect.ShowError(Error.TOO_MANY_ITEMS))
-                    current
-                } else {
-                    current + media
-                }
-            }
-        }
-
-        onSelectedMediaChanged(updatedList)
-    }
-
-    fun onSelectedMediaChanged(newMedia: List<Media?>) {
+    fun onSelectedMediaChanged(context: Context, newMedia: List<Media?>) {
         repository.getPopulatedMedia(context, newMedia) { populatedMedia: List<Media> ->
             runOnMain {
                 // Use the new filter function that returns valid items AND errors
-                var (filteredMedia, errors) = getFilteredMedia(
-                    context,
-                    populatedMedia,
-                    mediaConstraints
-                )
+                var (filteredMedia, errors) = getFilteredMedia(context, populatedMedia, mediaConstraints)
 
                 // Report errors if they occurred
                 if (errors.contains(Error.ITEM_TOO_LARGE)) {
-                    _effects.tryEmit(MediaSendEffect.ShowError(Error.ITEM_TOO_LARGE))
+                    error.setValue(Error.ITEM_TOO_LARGE)
                 } else if (errors.contains(Error.INVALID_TYPE_ONLY)) {
-                    _effects.tryEmit(MediaSendEffect.ShowError(Error.INVALID_TYPE_ONLY))
-                } else if (errors.contains(Error.MIXED_TYPE)) {
-                    _effects.tryEmit(MediaSendEffect.ShowError(Error.MIXED_TYPE))
+                    error.setValue(Error.INVALID_TYPE_ONLY)
+                }else if (errors.contains(Error.MIXED_TYPE)) {
+                    error.setValue(Error.MIXED_TYPE)
                 }
 
                 if (filteredMedia.size > MAX_SELECTED_FILES) {
                     filteredMedia = filteredMedia.subList(0, MAX_SELECTED_FILES)
-                    _effects.tryEmit(MediaSendEffect.ShowError(Error.TOO_MANY_ITEMS))
+                    error.setValue(Error.TOO_MANY_ITEMS)
                 }
 
-                val computedId = run {
-                    fun String?.normalize() = this?.ifEmpty { Media.ALL_MEDIA_BUCKET_ID }
-                        ?: Media.ALL_MEDIA_BUCKET_ID
-
-                    filteredMedia
-                        .asSequence()
-                        .drop(1)
-                        .fold(filteredMedia.firstOrNull()?.bucketId.normalize()) { acc, media ->
-                            if (acc == media.bucketId.normalize()) acc else Media.ALL_MEDIA_BUCKET_ID
+                if (filteredMedia.isNotEmpty()) {
+                    val computedId: String = Stream.of(filteredMedia)
+                        .skip(1)
+                        .reduce(filteredMedia[0].bucketId ?: Media.ALL_MEDIA_BUCKET_ID) { id: String?, m: Media ->
+                            if (equals(id, m.bucketId ?: Media.ALL_MEDIA_BUCKET_ID)) {
+                                id
+                            } else {
+                                Media.ALL_MEDIA_BUCKET_ID
+                            }
                         }
+                    bucketId.setValue(computedId)
+                } else {
+                    bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
+                    countButtonVisibility = CountButtonState.Visibility.CONDITIONAL
                 }
 
-                val newVisibility =
-                    if (filteredMedia.isEmpty()) CountButtonState.Visibility.CONDITIONAL
-                    else _uiState.value.countVisibility
-
-                _uiState.update {
-                    it.copy(
-                        selectedMedia = filteredMedia,
-                        bucketId = computedId,
-                        countVisibility = newVisibility,
+                selectedMedia.setValue(filteredMedia)
+                countButtonState.setValue(
+                    CountButtonState(
+                        filteredMedia.size,
+                        countButtonVisibility
                     )
-                }
-
-                leaveIfNoMediaAvailable()
+                )
             }
         }
     }
@@ -167,81 +122,66 @@ class MediaSendViewModel @Inject constructor(
     fun onSingleMediaSelected(context: Context, media: Media) {
         repository.getPopulatedMedia(context, listOf(media)) { populatedMedia: List<Media> ->
             runOnMain {
-                val (filteredMedia, errors) = getFilteredMedia(
-                    context,
-                    populatedMedia,
-                    mediaConstraints
-                )
+                val (filteredMedia, errors) = getFilteredMedia(context, populatedMedia, mediaConstraints)
 
                 if (filteredMedia.isEmpty()) {
                     if (errors.contains(Error.ITEM_TOO_LARGE)) {
-                        _effects.tryEmit(MediaSendEffect.ShowError(Error.ITEM_TOO_LARGE))
+                        error.setValue(Error.ITEM_TOO_LARGE)
                     } else if (errors.contains(Error.INVALID_TYPE_ONLY)) {
-                        _effects.tryEmit(MediaSendEffect.ShowError(Error.INVALID_TYPE_ONLY))
-                    } else if (errors.contains(Error.MIXED_TYPE)) {
-                        _effects.tryEmit(MediaSendEffect.ShowError(Error.MIXED_TYPE))
+                        error.setValue(Error.INVALID_TYPE_ONLY)
+                    }else if (errors.contains(Error.MIXED_TYPE)) {
+                        error.setValue(Error.MIXED_TYPE)
                     }
+                    bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
+                } else {
+                    bucketId.setValue(filteredMedia[0].bucketId ?: Media.ALL_MEDIA_BUCKET_ID)
                 }
 
-                val newBucketId =
-                    if (filteredMedia.isEmpty()) Media.ALL_MEDIA_BUCKET_ID
-                    else (filteredMedia[0].bucketId ?: Media.ALL_MEDIA_BUCKET_ID)
+                countButtonVisibility = CountButtonState.Visibility.FORCED_OFF
 
-                _uiState.update {
-                    it.copy(
-                        selectedMedia = filteredMedia,
-                        bucketId = newBucketId,
-                        countVisibility = CountButtonState.Visibility.FORCED_OFF,
+                selectedMedia.value = filteredMedia
+                countButtonState.setValue(
+                    CountButtonState(
+                        filteredMedia.size,
+                        countButtonVisibility
                     )
-                }
-
-                leaveIfNoMediaAvailable()
+                )
             }
         }
     }
 
     fun onMultiSelectStarted() {
-        _uiState.update {
-            it.copy(
-                countVisibility = CountButtonState.Visibility.FORCED_ON
-            )
-        }
+        countButtonVisibility = CountButtonState.Visibility.FORCED_ON
+        countButtonState.value =
+            CountButtonState(selectedMediaOrDefault.size, countButtonVisibility)
     }
 
     fun onImageEditorStarted() {
-        _uiState.update {
-            it.copy(
-                countVisibility = CountButtonState.Visibility.FORCED_OFF,
-                showCameraButton = false
-            )
-        }
+        countButtonVisibility = CountButtonState.Visibility.FORCED_OFF
+        countButtonState.value =
+            CountButtonState(selectedMediaOrDefault.size, countButtonVisibility)
+        cameraButtonVisibility.value = false
     }
 
     fun onCameraStarted() {
-        _uiState.update {
-            it.copy(
-                countVisibility = CountButtonState.Visibility.CONDITIONAL,
-                showCameraButton = false
-            )
-        }
+        countButtonVisibility = CountButtonState.Visibility.CONDITIONAL
+        countButtonState.value =
+            CountButtonState(selectedMediaOrDefault.size, countButtonVisibility)
+        cameraButtonVisibility.value = false
     }
 
     fun onItemPickerStarted() {
-        _uiState.update {
-            it.copy(
-                countVisibility = CountButtonState.Visibility.CONDITIONAL,
-                showCameraButton = true
-            )
-        }
+        countButtonVisibility = CountButtonState.Visibility.CONDITIONAL
+        countButtonState.value =
+            CountButtonState(selectedMediaOrDefault.size, countButtonVisibility)
+        cameraButtonVisibility.value = true
     }
 
     fun onFolderPickerStarted() {
-        _uiState.update {
-            it.copy(
-                countVisibility = CountButtonState.Visibility.CONDITIONAL,
-                showCameraButton = true
-            )
-        }
+        countButtonVisibility = CountButtonState.Visibility.CONDITIONAL
+        countButtonState.value =
+            CountButtonState(selectedMediaOrDefault.size, countButtonVisibility)
+        cameraButtonVisibility.value = true
     }
 
     fun onBodyChanged(body: CharSequence) {
@@ -249,111 +189,78 @@ class MediaSendViewModel @Inject constructor(
     }
 
     fun onFolderSelected(bucketId: String) {
-        _uiState.update { it.copy(bucketId = bucketId, bucketMedia = emptyList()) }
+        this.bucketId.value = bucketId
+        bucketMedia.value =
+            emptyList()
     }
 
     fun onPageChanged(position: Int) {
-        if (position !in selectedMedia.indices) {
-            Log.w(
-                TAG,
-                "Tried to move to an out-of-bounds item. Size: " + selectedMedia.size + ", position: " + position
+        if (position < 0 || position >= selectedMediaOrDefault.size) {
+            Log.w(TAG,
+                "Tried to move to an out-of-bounds item. Size: " + selectedMediaOrDefault.size + ", position: " + position
             )
             return
         }
 
-        _uiState.update { it.copy(position = position) }
+        this.position.value = position
     }
 
-    private fun leaveIfNoMediaAvailable(){
-        if(selectedMedia.isEmpty()){
-            _effects.tryEmit(MediaSendEffect.NoMediaAvailable)
-        }
-    }
-
-    fun onMediaItemRemoved(position: Int) {
-        val current = selectedMedia
-        if (position < 0 || position >= current.size) {
+    fun onMediaItemRemoved(context: Context, position: Int) {
+        if (position < 0 || position >= selectedMediaOrDefault.size) {
             Log.w(
                 TAG,
-                "Tried to remove an out-of-bounds item. Size: ${current.size}, position: $position"
+                "Tried to remove an out-of-bounds item. Size: " + selectedMediaOrDefault.size + ", position: " + position
             )
             return
         }
 
-        val updatedList = current.toMutableList()
+        val updatedList = selectedMediaOrDefault.toMutableList()
         val removed: Media = updatedList.removeAt(position)
 
         if (BlobUtils.isAuthority(removed.uri)) {
             BlobUtils.getInstance().delete(context, removed.uri)
         }
 
-        _uiState.update { state ->
-            val newPos =
-                if (updatedList.isEmpty()) -1
-                else state.position.coerceIn(0, updatedList.lastIndex)
-            state.copy(selectedMedia = updatedList, position = newPos)
-        }
-
-        leaveIfNoMediaAvailable()
+        selectedMedia.setValue(updatedList)
     }
 
     fun onImageCaptured(media: Media) {
-        val selected: MutableList<Media> = selectedMedia.toMutableList()
+        var selected: MutableList<Media>? = selectedMedia.value?.toMutableList()
+
+        if (selected == null) {
+            selected = LinkedList()
+        }
 
         if (selected.size >= MAX_SELECTED_FILES) {
-            _effects.tryEmit(MediaSendEffect.ShowError(Error.TOO_MANY_ITEMS))
+            error.setValue(Error.TOO_MANY_ITEMS)
             return
         }
 
-        lastImageCapture = media
+        lastImageCapture = Optional.of(media)
 
         selected.add(media)
+        selectedMedia.setValue(selected)
+        position.setValue(selected.size - 1)
+        bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
 
-        val newVisibility =
-            if (selected.size == 1) CountButtonState.Visibility.FORCED_OFF else CountButtonState.Visibility.CONDITIONAL
-
-        _uiState.update {
-            it.copy(
-                selectedMedia = selected,
-                position = selected.size - 1,
-                bucketId = Media.ALL_MEDIA_BUCKET_ID,
-                countVisibility = newVisibility
-            )
+        if (selected.size == 1) {
+            countButtonVisibility = CountButtonState.Visibility.FORCED_OFF
+        } else {
+            countButtonVisibility = CountButtonState.Visibility.CONDITIONAL
         }
 
-        leaveIfNoMediaAvailable()
+        countButtonState.setValue(CountButtonState(selected.size, countButtonVisibility))
     }
 
-    fun onImageCaptureUndo() {
-        val last = if (lastImageCapture != null) lastImageCapture!! else return
-        val current = selectedMedia
+    fun onImageCaptureUndo(context: Context) {
+        val selected: MutableList<Media> = selectedMediaOrDefault.toMutableList()
 
-        if (!(current.size == 1 && current.contains(last))) return
-
-        val updated = current.toMutableList().apply { remove(last) }
-
-        _uiState.update { state ->
-            state.copy(
-                selectedMedia = updated,
-                position = -1
-            )
+        if (lastImageCapture.isPresent && selected.contains(lastImageCapture.get()) && selected.size == 1) {
+            selected.remove(lastImageCapture.get())
+            selectedMedia.value = selected
+            countButtonState.value = CountButtonState(selected.size, countButtonVisibility)
+            BlobUtils.getInstance().delete(context, lastImageCapture.get().uri)
         }
-
-        leaveIfNoMediaAvailable()
-
-        if (BlobUtils.isAuthority(last.uri)) {
-            BlobUtils.getInstance().delete(context, last.uri)
-        }
-
-        lastImageCapture = null
-    }
-
-    fun refreshPhotoAccessUi() {
-        val show = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
-                !hasFullAccess(context) &&
-                hasPartialAccess(context)
-
-        _uiState.update { it.copy(showManagePhotoAccess = show) }
     }
 
     fun saveDrawState(state: Map<Uri, Any>) {
@@ -368,50 +275,43 @@ class MediaSendViewModel @Inject constructor(
     val drawState: Map<Uri, Any>
         get() = savedDrawState
 
-    fun getSelectedMedia(): LiveData<List<Media>> {
-        return selectedMediaLiveData
+    fun getSelectedMedia(): LiveData<List<Media>?> {
+        return selectedMedia
     }
 
-    fun getMediaInBucket(bucketId: String): LiveData<List<Media>> {
-        // refresh data, but state is stored in uiState
-        repository.getMediaInBucket(context, bucketId) { value ->
-            _uiState.update { it.copy(bucketMedia = value) }
-        }
-        return uiState.map { it.bucketMedia }.asLiveData()
+    fun getMediaInBucket(context: Context, bucketId: String): LiveData<List<Media>> {
+        repository.getMediaInBucket(context, bucketId) { value: List<Media> -> bucketMedia.postValue(value) }
+        return bucketMedia
     }
 
-    fun getFolders(): LiveData<List<MediaFolder>> {
-        repository.getFolders(context) { value ->
-            _uiState.update { it.copy(folders = value) }
-        }
-        return foldersLiveData
+    fun getFolders(context: Context): LiveData<List<MediaFolder>> {
+        repository.getFolders(context) { value: List<MediaFolder> -> folders.postValue(value) }
+        return folders
     }
 
     fun getCountButtonState(): LiveData<CountButtonState> {
-        return countButtonStateLiveData
+        return countButtonState
     }
 
     fun getCameraButtonVisibility(): LiveData<Boolean> {
-        return cameraButtonVisibilityLiveData
+        return cameraButtonVisibility
     }
 
     fun getPosition(): LiveData<Int> {
-        return positionLiveData
+        return position
     }
 
     fun getBucketId(): LiveData<String> {
-        return bucketIdLiveData
+        return bucketId
     }
 
-    private val selectedMedia: List<Media>
-        get() = _uiState.value.selectedMedia
-
-    // Same as getFolders but does not return LiveData
-    fun refreshFolders() {
-        repository.getFolders(context) { value ->
-            _uiState.update { it.copy(folders = value) }
-        }
+    fun getError(): LiveData<Error> {
+        return error
     }
+
+    private val selectedMediaOrDefault: List<Media>
+        get() = if (selectedMedia.value == null) emptyList() else
+            selectedMedia.value!!
 
     /**
      * Filters the input list of media.
@@ -424,11 +324,6 @@ class MediaSendViewModel @Inject constructor(
         media: List<Media>,
         mediaConstraints: MediaConstraints
     ): Pair<List<Media>, Set<Error>> {
-
-        if (media.isEmpty()) {
-            return Pair(emptyList(), emptySet())
-        }
-
         val validMedia = ArrayList<Media>()
         val errors = HashSet<Error>()
 
@@ -441,10 +336,11 @@ class MediaSendViewModel @Inject constructor(
         }
 
         // if there are no valid types at all, return early
-        if (validMultiMediaCount == 0) {
+        if(validMultiMediaCount == 0){
             errors.add(Error.INVALID_TYPE_ONLY)
             return Pair(validMedia, errors)
         }
+
 
         for (m in media) {
             val isGif = MediaUtil.isGif(m.mimeType)
@@ -476,20 +372,27 @@ class MediaSendViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        if (sentMedia) return
-
-        selectedMedia
-            .asSequence()
-            .map { it.uri }
-            .filter(BlobUtils::isAuthority)
-            .forEach { BlobUtils.getInstance().delete(context, it) }
+        if (!sentMedia) {
+            Stream.of(selectedMediaOrDefault)
+                .map { obj: Media -> obj.uri }
+                .filter { uri: Uri? ->
+                    BlobUtils.isAuthority(
+                        uri!!
+                    )
+                }
+                .forEach { uri: Uri? ->
+                    BlobUtils.getInstance().delete(
+                        application.applicationContext, uri!!
+                    )
+                }
+        }
     }
 
-    enum class Error {
+    internal enum class Error {
         ITEM_TOO_LARGE, TOO_MANY_ITEMS, INVALID_TYPE_ONLY, MIXED_TYPE
     }
 
-    class CountButtonState(val count: Int, private val visibility: Visibility) {
+    internal class CountButtonState(val count: Int, private val visibility: Visibility) {
         val isVisible: Boolean
             get() {
                 return when (visibility) {
@@ -499,43 +402,9 @@ class MediaSendViewModel @Inject constructor(
                 }
             }
 
-        enum class Visibility {
+        internal enum class Visibility {
             CONDITIONAL, FORCED_ON, FORCED_OFF
         }
-    }
-
-    data class MediaSendUiState(
-        val recipientName: String = "",
-        val folders: List<MediaFolder> = emptyList(),
-        val bucketId: String = Media.ALL_MEDIA_BUCKET_ID,
-        val bucketMedia: List<Media> = emptyList(),
-        val selectedMedia: List<Media> = emptyList(),
-        val position: Int = -1,
-        val countVisibility: CountButtonState.Visibility = CountButtonState.Visibility.FORCED_OFF,
-        val showCameraButton: Boolean = false,
-        val showManagePhotoAccess : Boolean = false
-    ) {
-        val count: Int get() = selectedMedia.size
-
-        val isMultiSelect: Boolean
-            get() = selectedMedia.isNotEmpty() || countVisibility == CountButtonState.Visibility.FORCED_ON
-
-        val canLongPress: Boolean
-            get() = selectedMedia.isEmpty() && !isMultiSelect
-        val showCountButton: Boolean
-            get() =
-                when (countVisibility) {
-                    CountButtonState.Visibility.FORCED_ON -> true
-                    CountButtonState.Visibility.FORCED_OFF -> false
-                    CountButtonState.Visibility.CONDITIONAL -> count > 0
-                }
-    }
-
-    sealed interface MediaSendEffect {
-        data class ShowError(val error: Error) : MediaSendEffect
-        data class Toast(val messageRes: Int) : MediaSendEffect
-        data class ToastText(val message: String) : MediaSendEffect
-        data object NoMediaAvailable : MediaSendEffect
     }
 
     companion object {

@@ -24,6 +24,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -34,6 +35,8 @@ import android.util.Pair;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.RequestManager;
 import com.squareup.phrase.Phrase;
@@ -47,6 +50,7 @@ import org.session.libsession.utilities.Address;
 import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.SettableFuture;
+import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity;
 import org.thoughtcrime.securesms.mediasend.MediaSendActivity;
 import org.thoughtcrime.securesms.mms.AudioSlide;
@@ -74,7 +78,7 @@ public class AttachmentManager {
     private final @NonNull AttachmentListener         attachmentListener;
 
     private @NonNull  List<Uri>       garbage = new LinkedList<>();
-    private @Nullable Slide slide   = null;
+    private @NonNull  Optional<Slide> slide   = Optional.absent();
     private @Nullable Uri             captureUri;
 
     public AttachmentManager(@NonNull Activity activity, @NonNull AttachmentListener listener) {
@@ -84,7 +88,7 @@ public class AttachmentManager {
 
     public void clear() {
         markGarbage(getSlideUri());
-        slide = null;
+        slide = Optional.absent();
         attachmentListener.onAttachmentChanged();
     }
 
@@ -93,7 +97,7 @@ public class AttachmentManager {
         cleanup(getSlideUri());
 
         captureUri = null;
-        slide      = null;
+        slide      = Optional.absent();
 
         Iterator<Uri> iterator = garbage.listIterator();
 
@@ -126,7 +130,7 @@ public class AttachmentManager {
             captureUri = null;
         }
 
-        this.slide = slide;
+        this.slide = Optional.of(slide);
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -229,7 +233,7 @@ public class AttachmentManager {
     public @NonNull
     SlideDeck buildSlideDeck() {
         SlideDeck deck = new SlideDeck();
-        if (slide != null) deck.addSlide(slide);
+        if (slide.isPresent()) deck.addSlide(slide.get());
         return deck;
     }
 
@@ -345,13 +349,13 @@ public class AttachmentManager {
                 .execute();
     }
 
-    public static boolean hasFullAccess(Context c) {
+    public static boolean hasFullAccess(Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return Permissions.hasAll(c,
+            return Permissions.hasAll(activity,
                     Manifest.permission.READ_MEDIA_IMAGES,
                     Manifest.permission.READ_MEDIA_VIDEO);
         } else {
-            return Permissions.hasAll(c, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+            return Permissions.hasAll(activity, android.Manifest.permission.READ_EXTERNAL_STORAGE);
         }
     }
 
@@ -382,9 +386,9 @@ public class AttachmentManager {
         }
     }
 
-    public static boolean shouldShowManagePhoto(@NonNull Context c){
+    public static boolean shouldShowManagePhoto(@NonNull Activity activity){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
-            return !hasFullAccess(c) && hasPartialAccess(c);
+            return !hasFullAccess(activity) && hasPartialAccess(activity);
         }else{
             // No partial access for <= API 33
             return false;
@@ -402,7 +406,7 @@ public class AttachmentManager {
     }
 
     private @Nullable Uri getSlideUri() {
-        return slide != null ? slide.getUri() : null;
+        return slide.isPresent() ? slide.get().getUri() : null;
     }
 
     public @Nullable Uri getCaptureUri() {

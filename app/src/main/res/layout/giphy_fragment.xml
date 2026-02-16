@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/giphy_list"
@@ -9,10 +11,24 @@
         android:layout_height="match_parent"
         android:scrollbars="vertical"/>
 
-    <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/giphy_state_overlay"
+    <ProgressBar
+        android:id="@+id/loading_progress"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clickable="false" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="?colorAccent"
+        android:indeterminate="true"/>
+
+    <TextView
+        android:id="@+id/no_results"
+        android:text="@string/searchMatchesNone"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="?android:textColorPrimary"
+        android:textSize="@dimen/medium_font_size"
+        android:visibility="gone"
+        android:layout_gravity="center"/>
 
 </FrameLayout>

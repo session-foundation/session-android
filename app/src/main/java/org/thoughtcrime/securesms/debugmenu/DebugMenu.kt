@@ -11,15 +11,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -45,13 +41,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
@@ -104,11 +98,11 @@ fun DebugMenu(
     val datePickerState = rememberDatePickerState()
     val timePickerState = rememberTimePickerState()
 
-    var showingDeprecatedDatePicker by retain { mutableStateOf(false) }
-    var showingDeprecatedTimePicker by retain { mutableStateOf(false) }
+    var showingDeprecatedDatePicker by remember { mutableStateOf(false) }
+    var showingDeprecatedTimePicker by remember { mutableStateOf(false) }
 
-    var showingDeprecatingStartDatePicker by retain { mutableStateOf(false) }
-    var showingDeprecatingStartTimePicker by retain { mutableStateOf(false) }
+    var showingDeprecatingStartDatePicker by remember { mutableStateOf(false) }
+    var showingDeprecatingStartTimePicker by remember { mutableStateOf(false) }
 
     val getPickedTime = {
         val localDate = ZonedDateTime.ofInstant(
@@ -127,8 +121,7 @@ fun DebugMenu(
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
-        },
-        contentWindowInsets = WindowInsets.safeDrawing,
+        }
     ) { contentPadding ->
         // display a snackbar when required
         LaunchedEffect(uiState.snackMessage) {
@@ -180,21 +173,13 @@ fun DebugMenu(
             LoadingDialog(title = "Applying changes...")
         }
 
-        val layoutDirection = LocalLayoutDirection.current
-        val safeInsetsPadding = PaddingValues(
-            start = contentPadding.calculateStartPadding(layoutDirection) + LocalDimensions.current.spacing,
-            end = contentPadding.calculateEndPadding(layoutDirection) + LocalDimensions.current.spacing,
-            top = contentPadding.calculateTopPadding(),
-            bottom = contentPadding.calculateBottomPadding(),
-        )
-
         Column(
             modifier = Modifier
                 .background(LocalColors.current.background)
-                .padding(safeInsetsPadding)
+                .padding(horizontal = LocalDimensions.current.spacing)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+            Spacer(modifier = Modifier.height(contentPadding.calculateTopPadding()))
 
             // Info pane
             val clipboardManager = LocalClipboardManager.current
@@ -299,8 +284,7 @@ fun DebugMenu(
                             style = LocalType.current.base
                         )
                         DropDown(
-                            modifier = Modifier
-                                .fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth()
                                 .padding(top = LocalDimensions.current.xxsSpacing),
                             selectedText = uiState.selectedDebugSubscriptionStatus.label,
                             values = uiState.debugSubscriptionStatuses.map { it.label },
@@ -331,8 +315,7 @@ fun DebugMenu(
                     style = LocalType.current.base
                 )
                 DropDown(
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                         .padding(top = LocalDimensions.current.xxsSpacing),
                     selectedText = uiState.selectedDebugProPlanStatus.label,
                     values = uiState.debugProPlanStatus.map { it.label },
@@ -848,8 +831,7 @@ fun DebugSwitchRow(
     ) {
         SessionSwitch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
-            qaTag = R.string.qa_default_debug
+            onCheckedChange = onCheckedChange
         )
     }
 

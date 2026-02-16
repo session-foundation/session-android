@@ -10,8 +10,6 @@ import javax.inject.Inject
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
-import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
-import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.ui.setComposeContent
 
 @AndroidEntryPoint
@@ -24,7 +22,6 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
     private val viewModel: RecoveryPasswordViewModel by viewModels()
 
     @Inject lateinit var prefs: TextSecurePreferences
-    @Inject lateinit var prefsStorage: PreferenceStorage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +45,6 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
 
         // Set the seed as having been viewed when the user has seen this activity, which
         // removes the reminder banner on the HomeActivity.
-        prefsStorage[HAS_VIEWED_SEED] = true
+        prefs.setHasViewedSeed(true)
     }
 }

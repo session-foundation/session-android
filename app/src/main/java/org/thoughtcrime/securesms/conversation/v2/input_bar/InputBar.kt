@@ -142,8 +142,7 @@ class InputBar @JvmOverloads constructor(
 
         // Edit text
         binding.inputBarEditText.setOnEditorActionListener(this)
-        // Prevent some IMEs from switching to fullscreen/extracted text mode in landscape (shows IME-owned text field).
-        binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI
+        binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE
 
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled

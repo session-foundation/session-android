@@ -227,14 +227,14 @@ class AttachmentUploadJob @AssistedInject constructor(
     }
 
     private fun handlePermanentFailure(dispatcherName: String, e: Exception) {
-        Log.w(TAG, "Attachment upload failed permanently due to error:", e)
+        Log.w(TAG, "Attachment upload failed permanently due to error: $this.")
         delegate?.handleJobFailedPermanently(this, dispatcherName, e)
         messageDataProvider.handleFailedAttachmentUpload(attachmentID)
         failAssociatedMessageSendJob(e)
     }
 
     private fun handleFailure(dispatcherName: String, e: Exception) {
-        Log.w(TAG, "Attachment upload failed due to error:", e)
+        Log.w(TAG, "Attachment upload failed due to error: $this.")
         delegate?.handleJobFailed(this, dispatcherName, e)
         if (failureCount + 1 >= maxFailureCount) {
             failAssociatedMessageSendJob(e)

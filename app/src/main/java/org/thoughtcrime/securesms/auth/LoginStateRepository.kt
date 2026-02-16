@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.auth
 
 import android.content.Context
+import android.content.SharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -21,11 +22,7 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyStoreHelper
-import org.thoughtcrime.securesms.crypto.SealedData
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.preferences.PreferenceKey
-import org.thoughtcrime.securesms.preferences.PreferenceStorage
-import org.thoughtcrime.securesms.preferences.SharedPreferenceStorage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -38,20 +35,18 @@ class LoginStateRepository @Inject constructor(
     @ApplicationContext context: Context,
     private val json: Json,
     @param:ManagerScope private val scope: CoroutineScope,
-    prefStorageFactory: SharedPreferenceStorage.Factory,
 ) {
-    private val prefs = prefStorageFactory.create(
-        context.getSharedPreferences("login_state", Context.MODE_PRIVATE)
-    )
+    private val sharedPrefs = context.getSharedPreferences("login_state", Context.MODE_PRIVATE)
 
     private val mutableLoggedInState: MutableStateFlow<LoggedInState?>
 
 
     init {
-        var initialState = prefs[keyState]?.let { serializedState ->
+        var initialState = sharedPrefs.getString(PREF_KEY_STATE, null)?.let { serializedState ->
             runCatching {
                 json.decodeFromString<LoggedInState>(
-                    KeyStoreHelper.unseal(serializedState).toString(Charsets.UTF_8)
+                    KeyStoreHelper.unseal(KeyStoreHelper.SealedData.fromString(serializedState)).toString(
+                        Charsets.UTF_8)
                 )
 
             }.onFailure {
@@ -91,7 +86,7 @@ class LoginStateRepository @Inject constructor(
             if (initialState != null) {
                 // Migrate legacy state to new format
                 Log.i(TAG, "Migrating legacy login state to new format")
-                saveLoggedInState(prefs, initialState, json)
+                saveLoggedInState(sharedPrefs, initialState, json)
 
                 //TODO: Consider removing legacy data here after a grace period
             }
@@ -107,10 +102,12 @@ class LoginStateRepository @Inject constructor(
                 .drop(1) // Skip the initial value
                 .collect { newState ->
                     if (newState != null) {
-                        saveLoggedInState(prefs, newState, json)
+                        saveLoggedInState(sharedPrefs, newState, json)
                         Log.d(TAG, "Persisted new login state: $newState")
                     } else {
-                        prefs.remove(keyState)
+                        sharedPrefs.edit()
+                            .remove(PREF_KEY_STATE)
+                            .apply()
                         Log.d(TAG, "Cleared login state")
                     }
                 }
@@ -192,17 +189,19 @@ class LoginStateRepository @Inject constructor(
     companion object {
         private const val TAG = "LoginStateRepository"
 
-        private val keyState = PreferenceKey.json<SealedData>("state")
-
+        private const val PREF_KEY_STATE = "state"
 
         private fun saveLoggedInState(
-            prefs: PreferenceStorage,
+            prefs: SharedPreferences,
             state: LoggedInState,
             json: Json
         ) {
-            prefs[keyState] = KeyStoreHelper.seal(
-                json.encodeToString(state).toByteArray(Charsets.UTF_8)
-            )
+            prefs.edit()
+                .putString(PREF_KEY_STATE,
+                    KeyStoreHelper.seal(
+                        json.encodeToString(state).toByteArray(Charsets.UTF_8)
+                    ).serialize())
+                .apply()
         }
     }
 }

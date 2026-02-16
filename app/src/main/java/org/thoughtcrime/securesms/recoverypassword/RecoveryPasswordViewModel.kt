@@ -17,15 +17,13 @@ import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
-import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
-import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import javax.inject.Inject
 
 @HiltViewModel
 class RecoveryPasswordViewModel @Inject constructor(
     private val application: Application,
-    private val prefs: PreferenceStorage,
-    loginStateRepository: LoginStateRepository,
+    private val prefs: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
 ): AndroidViewModel(application) {
 
     val seed: StateFlow<String?> = loginStateRepository
@@ -44,7 +42,7 @@ class RecoveryPasswordViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     fun copyMnemonic() {
-        prefs[HAS_VIEWED_SEED] = true
+        prefs.setHasViewedSeed(true)
 
         // Ensure that our mnemonic words are separated by single spaces only without any excessive
         // whitespace or control characters via:

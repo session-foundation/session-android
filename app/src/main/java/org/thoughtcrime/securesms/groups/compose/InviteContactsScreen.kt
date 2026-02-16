@@ -4,12 +4,21 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -35,7 +44,9 @@ import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
+import org.thoughtcrime.securesms.ui.SearchBarWithClose
+import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -79,9 +90,6 @@ fun InviteContacts(
     forCommunity: Boolean = false
 ) {
 
-    val searchFocused = uiState.isSearchFocused
-    val isLandscape = getAdaptiveInfo().isLandscape
-
     val trayItems = listOf(
         CollapsibleFooterItemData(
             label = GetString(LocalResources.current.getString(R.string.membersInvite)),
@@ -96,53 +104,65 @@ fun InviteContacts(
 
     val handleBack: () -> Unit = {
         when {
-            searchFocused -> sendCommand(RemoveSearchState(false))
+            uiState.isSearchFocused -> sendCommand(RemoveSearchState(false))
             else -> onBack()
         }
     }
 
-    val header: @Composable (Modifier) -> Unit = { modifier ->
-        MembersSearchHeader(
-            searchFocused = searchFocused,
-            searchQuery = searchQuery,
-            onQueryChange = { sendCommand(SearchQueryChange(it)) },
-            onClear = { sendCommand(SearchQueryChange("")) },
-            onFocusChanged = { sendCommand(SearchFocusChange(it)) },
-            modifier = modifier
-        )
-    }
-
-
     // Intercept system back
     BackHandler(enabled = true) { handleBack() }
 
-    BaseManageGroupScreen(
-        title = stringResource(id = R.string.membersInvite),
-        onBack = handleBack,
-        enableCollapsingTopBarInLandscape = true,
-        collapseTopBar = searchFocused,
-        bottomBar = {
-            CollapsibleFooterBottomBar(
-                footer = CollapsibleFooterActionData(
-                    title = uiState.footer.footerActionTitle,
-                    collapsed = uiState.footer.collapsed,
-                    visible = uiState.footer.visible,
-                    items = trayItems
-                ),
-                onToggle = { sendCommand(ToggleFooter) },
-                onClose = { sendCommand(CloseFooter) }
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            BackAppBar(
+                title = stringResource(id = R.string.membersInvite),
+                onBack = handleBack,
             )
+        },
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                    .imePadding()
+            ) {
+                CollapsibleFooterAction(
+                    data = CollapsibleFooterActionData(
+                        title = uiState.footer.footerActionTitle,
+                        collapsed = uiState.footer.collapsed,
+                        visible = uiState.footer.visible,
+                        items = trayItems
+                    ),
+                    onCollapsedClicked = { sendCommand(ToggleFooter) },
+                    onClosedClicked = { sendCommand(CloseFooter) }
+                )
+            }
         }
-    ) { paddingValues ->
-
+    ) { paddings ->
         Column(
             modifier = Modifier
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues),
+                .padding(paddings)
+                .consumeWindowInsets(paddings),
         ) {
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-            if (!isLandscape && hasContacts) {
-                header(Modifier)
+            if (hasContacts) {
+                SearchBarWithClose(
+                    query = searchQuery,
+                    onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
+                    onClear = { sendCommand(SearchQueryChange("")) },
+                    placeholder = stringResource(R.string.searchContacts),
+                    modifier = Modifier
+                        .padding(horizontal = LocalDimensions.current.smallSpacing)
+                        .qaTag(R.string.AccessibilityId_groupNameSearch),
+                    backgroundColor = LocalColors.current.backgroundSecondary,
+                    isFocused = uiState.isSearchFocused,
+                    onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) },
+                    enabled = true,
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
             }
 
             val scrollState = rememberLazyListState()
@@ -165,10 +185,6 @@ fun InviteContacts(
                         state = scrollState,
                         contentPadding = PaddingValues(bottom = LocalDimensions.current.spacing),
                     ) {
-                        if (isLandscape && hasContacts) {
-                            stickyHeader { header(Modifier) }
-                        }
-
                         multiSelectMemberList(
                             contacts = contacts,
                             onContactItemClicked = { address -> sendCommand(ContactItemClick(address)) },

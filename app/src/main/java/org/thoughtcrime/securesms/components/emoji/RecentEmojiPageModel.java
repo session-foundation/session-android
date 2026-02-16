@@ -7,6 +7,8 @@ import android.preference.PreferenceManager;
 
 import androidx.annotation.Nullable;
 
+import com.annimon.stream.Stream;
+
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 
@@ -14,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import network.loki.messenger.R;
 
@@ -63,9 +64,9 @@ public class RecentEmojiPageModel implements EmojiPageModel {
     return new ArrayList<>(recentlyUsed);
   }
 
-    @Override public List<Emoji> getDisplayEmoji() {
-        return getEmoji().stream().map(Emoji::new).collect(Collectors.toList());
-    }
+  @Override public List<Emoji> getDisplayEmoji() {
+    return Stream.of(getEmoji()).map(Emoji::new).toList();
+  }
 
   @Override public boolean hasSpriteMap() { return false; }
 

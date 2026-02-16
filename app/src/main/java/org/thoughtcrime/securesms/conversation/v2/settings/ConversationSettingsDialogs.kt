@@ -9,7 +9,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -288,7 +287,7 @@ fun GroupAdminClearMessagesDialog(
     groupName: String,
     sendCommand: (ConversationSettingsViewModel.Commands) -> Unit,
 ){
-    var deleteForEveryone by retain { mutableStateOf(false) }
+    var deleteForEveryone by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 

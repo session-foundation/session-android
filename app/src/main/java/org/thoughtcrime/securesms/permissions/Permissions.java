@@ -19,8 +19,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import java.util.ArrayList;
-import java.util.function.Consumer;
+import com.annimon.stream.Stream;
+import com.annimon.stream.function.Consumer;
 
 import org.session.libsession.utilities.ServiceUtil;
 import org.thoughtcrime.securesms.util.LRUCache;
@@ -186,8 +186,7 @@ public class Permissions {
       }
 
       String[] permissions  = filterNotGranted(permissionObject.getContext(), requestedPermissions);
-      int[] grantResults = new int[permissions.length];
-      Arrays.fill(grantResults, PackageManager.PERMISSION_DENIED);
+      int[]    grantResults = Stream.of(permissions).mapToInt(permission -> PackageManager.PERMISSION_DENIED).toArray();
       boolean[] showDialog   = new boolean[permissions.length];
       Arrays.fill(showDialog, true);
 
@@ -204,24 +203,17 @@ public class Permissions {
     fragment.requestPermissions(filterNotGranted(fragment.getContext(), permissions), requestCode);
   }
 
-    private static String[] filterNotGranted(@NonNull Context context, String... permissions) {
-        List<String> notGranted = new ArrayList<>(permissions.length);
-        for (String permission : permissions) {
-            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                notGranted.add(permission);
-            }
-        }
-        return notGranted.toArray(new String[0]);
-    }
+  private static String[] filterNotGranted(@NonNull Context context, String... permissions) {
+    return Stream.of(permissions)
+                 .filter(permission -> ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED)
+                 .toList()
+                 .toArray(new String[0]);
+  }
 
-    public static boolean hasAll(@NonNull Context context, String... permissions) {
-        for (String permission : permissions) {
-            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                return false;
-            }
-        }
-        return true;
-    }
+  public static boolean hasAll(@NonNull Context context, String... permissions) {
+    return Stream.of(permissions).allMatch(permission -> ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED);
+
+  }
 
   public static void onRequestPermissionsResult(Fragment fragment, int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     onRequestPermissionsResult(new FragmentPermissionObject(fragment), requestCode, permissions, grantResults);

@@ -44,6 +44,12 @@ class OrientationManager(private val context: Context): SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
+            // if auto-rotate is off, bail and send UNKNOWN
+            if (!isAutoRotateOn()) {
+                _orientation.value = Orientation.UNKNOWN
+                return
+            }
+
             // Get the quaternion from the rotation vector sensor
             val quaternion = FloatArray(4)
             SensorManager.getQuaternionFromVector(quaternion, event.values)
@@ -68,7 +74,7 @@ class OrientationManager(private val context: Context): SensorEventListener {
     }
 
     //Function to check if Android System Auto-rotate is on or off
-    fun isAutoRotateOn(): Boolean {
+    private fun isAutoRotateOn(): Boolean {
         return Settings.System.getInt(
             context.contentResolver,
             Settings.System.ACCELEROMETER_ROTATION, 0

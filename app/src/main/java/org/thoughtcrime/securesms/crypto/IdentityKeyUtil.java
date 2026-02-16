@@ -23,10 +23,17 @@ import android.content.SharedPreferences.Editor;
 
 import androidx.annotation.NonNull;
 
+import org.session.libsignal.crypto.IdentityKey;
+import org.session.libsignal.crypto.IdentityKeyPair;
+import org.session.libsignal.crypto.ecc.Curve;
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey;
 import org.session.libsignal.crypto.ecc.DjbECPublicKey;
 import org.session.libsignal.crypto.ecc.ECKeyPair;
+import org.session.libsignal.crypto.ecc.ECPrivateKey;
+import org.session.libsignal.exceptions.InvalidKeyException;
 import org.session.libsignal.utilities.Base64;
+
+import java.io.IOException;
 
 import kotlin.Unit;
 import kotlinx.coroutines.channels.BufferOverflow;
@@ -87,6 +94,30 @@ public class IdentityKeyUtil {
     }
   }
 
+  public static @NonNull IdentityKey getIdentityKey(@NonNull Context context) {
+    if (!hasIdentityKey(context)) throw new AssertionError("There isn't one!");
+
+    try {
+      byte[] publicKeyBytes = Base64.decode(retrieve(context, IDENTITY_PUBLIC_KEY_PREF));
+      return new IdentityKey(publicKeyBytes, 0);
+    } catch (IOException | InvalidKeyException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public static @NonNull IdentityKeyPair getIdentityKeyPair(@NonNull Context context) {
+    if (!hasIdentityKey(context)) throw new AssertionError("There isn't one!");
+
+    try {
+      IdentityKey  publicKey  = getIdentityKey(context);
+      ECPrivateKey privateKey = Curve.decodePrivatePoint(Base64.decode(retrieve(context, IDENTITY_PRIVATE_KEY_PREF)));
+
+      return new IdentityKeyPair(publicKey, privateKey);
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
   public static void generateIdentityKeyPair(@NonNull Context context) {
     KeyPair keyPair = Curve25519.INSTANCE.generateKeyPair();
     ECKeyPair ecKeyPair = new ECKeyPair(
@@ -111,7 +142,7 @@ public class IdentityKeyUtil {
   }
 
   private static String getUnencryptedSecret(String key, String unencryptedSecret, Context context) {
-    SealedData encryptedSecret = KeyStoreHelper.seal(unencryptedSecret.getBytes());
+    KeyStoreHelper.SealedData encryptedSecret = KeyStoreHelper.seal(unencryptedSecret.getBytes());
 
     // save the encrypted suffix secret "key_encrypted"
     save(context,key+ENCRYPTED_SUFFIX,encryptedSecret.serialize());
@@ -122,7 +153,7 @@ public class IdentityKeyUtil {
   }
 
   private static String getEncryptedSecret(String encryptedSecret) {
-    SealedData sealedData = SealedData.fromString(encryptedSecret);
+    KeyStoreHelper.SealedData sealedData = KeyStoreHelper.SealedData.fromString(encryptedSecret);
     return new String(KeyStoreHelper.unseal(sealedData));
   }
 
@@ -135,7 +166,7 @@ public class IdentityKeyUtil {
     if (isEncryptedSuffix) {
       preferencesEditor.putString(key, value);
     } else {
-      SealedData encryptedSecret = KeyStoreHelper.seal(value.getBytes());
+      KeyStoreHelper.SealedData encryptedSecret = KeyStoreHelper.seal(value.getBytes());
       preferencesEditor.putString(key+ENCRYPTED_SUFFIX, encryptedSecret.serialize());
     }
 

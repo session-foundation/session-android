@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:background="@color/core_grey_60"
-    tools:parentTag="android.widget.LinearLayout">
+    tools:parentTag="android.widget.LinearLayout"
+    tools:background="@color/core_grey_60">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -31,78 +32,78 @@
                 android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/ic_trash_2"
-                app:tint="?android:textColorPrimary" />
+                app:tint="?android:textColorPrimary"
+                android:src="@drawable/ic_trash_2" />
 
             <ImageView
                 android:id="@+id/scribble_undo_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/ic_rotate_ccw"
-                app:tint="?android:textColorPrimary" />
+                app:tint="?android:textColorPrimary"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_rotate_ccw" />
 
             <ImageView
                 android:id="@+id/scribble_text_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/ic_case_sensitive"
-                app:tint="?android:textColorPrimary" />
-
+                app:tint="?android:textColorPrimary"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_case_sensitive" />
+                
             <ImageView
                 android:id="@+id/scribble_draw_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/ic_pencil"
-                app:tint="?android:textColorPrimary" />
+                app:tint="?android:textColorPrimary"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_pencil" />
 
             <ImageView
                 android:id="@+id/scribble_highlight_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/ic_brush"
-                app:tint="?android:textColorPrimary" />
+                app:tint="?android:textColorPrimary"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_brush" />
 
             <ImageView
                 android:id="@+id/scribble_sticker_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/ic_emoji_custom"
-                app:tint="?android:textColorPrimary" />
+                app:tint="?android:textColorPrimary"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_emoji_custom" />
 
             <ImageView
                 android:id="@+id/scribble_crop_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/ic_crop"
-                app:tint="?android:textColorPrimary" />
+                app:tint="?android:textColorPrimary"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_crop" />
 
             <ImageView
                 android:id="@+id/scribble_confirm_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_gravity="center_vertical"
+                app:tint="?android:textColorPrimary"
                 android:padding="8dp"
-                android:src="@drawable/ic_circle_check"
-                app:tint="?android:textColorPrimary" />
+                android:src="@drawable/ic_circle_check" />
 
         </LinearLayout>
 
@@ -137,42 +138,42 @@
             android:id="@+id/scribble_crop_flip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginBottom="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="8dp"
+            app:tint="?android:textColorPrimary"
+            android:layout_gravity="center_vertical"
+            android:layout_marginBottom="8dp"
             android:src="@drawable/ic_flip_horizontal_2"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/scribble_crop_rotate"
-            app:tint="?android:textColorPrimary" />
+            app:layout_constraintStart_toEndOf="@+id/scribble_crop_rotate" />
 
         <ImageView
             android:id="@+id/scribble_crop_rotate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginStart="10dp"
+            app:tint="?android:textColorPrimary"
+            android:layout_gravity="center_vertical"
             android:src="@drawable/ic_rotate_ccw_square"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:tint="?android:textColorPrimary" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <ImageView
             android:id="@+id/scribble_crop_aspect_lock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="8dp"
+            app:tint="?android:textColorPrimary"
+            android:layout_gravity="center_vertical"
             android:src="@drawable/ic_crop_lock_custom"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:tint="?android:textColorPrimary" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

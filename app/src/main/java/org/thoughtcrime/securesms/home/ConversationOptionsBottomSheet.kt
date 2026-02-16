@@ -1,18 +1,11 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.Context
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
-import androidx.core.view.updatePadding
 import androidx.core.widget.TextViewCompat
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -27,15 +20,13 @@ import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnClickListener {
+class ConversationOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClickListener {
     private lateinit var binding: FragmentConversationBottomSheetBinding
     //FIXME AC: Supplying a threadRecord directly into the field from an activity
     // is not the best idea. It doesn't survive configuration change.
@@ -52,8 +43,6 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
     @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var groupManager : GroupManagerV2
 
-    @Inject lateinit var threadDatabase: ThreadDatabase
-
     var onViewDetailsTapped: (() -> Unit?)? = null
     var onCopyConversationId: (() -> Unit?)? = null
     var onPinTapped: (() -> Unit)? = null
@@ -68,43 +57,8 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
     var onNotificationTapped: (() -> Unit)? = null
     var onDeleteContactTapped: (() -> Unit)? = null
 
-
-    companion object {
-        const val FRAGMENT_TAG = "ConversationOptionsBottomSheet"
-        private const val ARG_PUBLIC_KEY = "arg_public_key"
-        const val ARG_THREAD_ID = "arg_thread_id"
-        const  val ARG_ADDRESS = "arg_address"
-
-        fun newInstance(publicKey: String, threadId: Long, address: String): ConversationOptionsBottomSheet {
-            return ConversationOptionsBottomSheet().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PUBLIC_KEY, publicKey)
-                    putLong(ARG_THREAD_ID, threadId)
-                    putString(ARG_ADDRESS, address)
-                }
-            }
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val args = requireArguments()
-        publicKey = requireNotNull(args.getString(ARG_PUBLIC_KEY))
-        requireNotNull(args.getLong(ARG_THREAD_ID))
-        val addressString = requireNotNull(args.getString(ARG_ADDRESS))
-        val address = Address.fromSerialized(addressString)
-        thread = requireNotNull(
-            threadDatabase.getThreads(listOf(address)).firstOrNull()
-        ) { "Thread not found for address: $addressString" }
-        group = groupDatabase.getGroup(thread.recipient.address.toString())
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentConversationBottomSheetBinding.inflate(inflater, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        binding = FragmentConversationBottomSheetBinding.inflate(LayoutInflater.from(context), container, false)
         return binding.root
     }
 
@@ -189,10 +143,10 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
             // the text, content description and icon will change depending on the type
             when {
                 recipient.isLegacyGroupRecipient -> {
-                    val group = groupDatabase.getGroup(recipient.address.toString())
+                    val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
 
-                    val isGroupAdmin = group?.admins?.map { it.toString() }
-                        ?.contains(loginStateRepository.requireLocalNumber()) ?: false
+                    val isGroupAdmin = group.admins.map { it.toString() }
+                        .contains(loginStateRepository.requireLocalNumber())
 
                     if (isGroupAdmin) {
                         text = context.getString(R.string.delete)
@@ -285,26 +239,5 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         super.onStart()
         val window = dialog?.window ?: return
         window.setDimAmount(0.6f)
-
-        val dlg = dialog as? BottomSheetDialog ?: return
-        val sheet = dlg.findViewById<android.widget.FrameLayout>(R.id.design_bottom_sheet)
-            ?: return
-
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-            val behavior = BottomSheetBehavior.from(sheet)
-            behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
-        }
-
-        ViewCompat.setOnApplyWindowInsetsListener(sheet) { _, insets ->
-            val cut = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or
-                        WindowInsetsCompat.Type.displayCutout()
-            )
-
-            binding.root.updatePadding(left = cut.left, right = cut.right)
-            insets
-        }
-
-        ViewCompat.requestApplyInsets(sheet)
     }
 }

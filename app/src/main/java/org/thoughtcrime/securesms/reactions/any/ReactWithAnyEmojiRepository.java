@@ -4,8 +4,9 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import com.annimon.stream.Stream;
+
 import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.components.emoji.EmojiPageModel;
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel;
 import org.thoughtcrime.securesms.emoji.EmojiCategory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
@@ -29,18 +30,9 @@ public final class ReactWithAnyEmojiRepository {
     this.recentEmojiPageModel = new RecentEmojiPageModel(context);
     this.emojiPages           = new LinkedList<>();
 
-      for (EmojiPageModel page : EmojiSource.getLatest().getDisplayPages()) {
-          emojiPages.add(
-                  new ReactWithAnyEmojiPage(
-                          Collections.singletonList(
-                                  new ReactWithAnyEmojiPageBlock(
-                                          EmojiCategory.getCategoryLabel(page.getIconAttr()),
-                                          page
-                                  )
-                          )
-                  )
-          );
-      }
+    emojiPages.addAll(Stream.of(EmojiSource.getLatest().getDisplayPages())
+                            .map(page -> new ReactWithAnyEmojiPage(Collections.singletonList(new ReactWithAnyEmojiPageBlock(EmojiCategory.getCategoryLabel(page.getIconAttr()), page))))
+                            .toList());
   }
 
   List<ReactWithAnyEmojiPage> getEmojiPageModels() {

@@ -15,12 +15,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.withMutableUserConfigs
-import org.session.libsignal.utilities.Log
 
 @HiltViewModel(assistedFactory = PickDisplayNameViewModel.Factory::class)
 class PickDisplayNameViewModel @AssistedInject constructor(
@@ -53,7 +51,6 @@ class PickDisplayNameViewModel @AssistedInject constructor(
                     if (loadFailed) {
                         configFactory.withMutableUserConfigs {
                             it.userProfile.setName(displayName)
-                            it.userProfile.setNtsPriority(PRIORITY_HIDDEN) // hide NTS initially
                         }
 
                         _events.emit(Event.LoadAccountComplete)

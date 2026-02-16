@@ -12,6 +12,8 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
+import com.annimon.stream.Stream;
+import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.util.MediaUtil;
 import java.io.IOException;
@@ -47,11 +49,7 @@ class MediaRepository {
      * much data as we have, like width/height.
      */
     void getPopulatedMedia(@NonNull Context context, @NonNull List<Media> media, @NonNull Callback<List<Media>> callback) {
-        boolean allPopulated = true;
-        for (Media m : media) {
-            if (!isPopulated(m)) { allPopulated = false; break; }
-        }
-        if (allPopulated) {
+        if (Stream.of(media).allMatch(this::isPopulated)) {
             callback.onComplete(media);
             return;
         }
@@ -209,21 +207,19 @@ class MediaRepository {
     }
     @WorkerThread
     private List<Media> getPopulatedMedia(@NonNull Context context, @NonNull List<Media> media) {
-        List<Media> result = new ArrayList<>(media.size());
-        for (Media m : media) {
+        return Stream.of(media).map(m -> {
             try {
                 if (isPopulated(m)) {
-                    result.add(m);
+                    return m;
                 } else if (PartAuthority.isLocalUri(m.getUri())) {
-                    result.add(getLocallyPopulatedMedia(context, m));
+                    return getLocallyPopulatedMedia(context, m);
                 } else {
-                    result.add(getContentResolverPopulatedMedia(context, m));
+                    return getContentResolverPopulatedMedia(context, m);
                 }
             } catch (IOException e) {
-                result.add(m);
+                return m;
             }
-        }
-        return result;
+        }).toList();
     }
 
     @SuppressWarnings("SuspiciousNameCombination")
@@ -248,8 +244,8 @@ class MediaRepository {
         long size   = media.getSize();
 
         if (size <= 0) {
-            Long optionalSize = PartAuthority.getAttachmentSize(context, media.getUri());
-            size = optionalSize != null ? optionalSize : 0;
+            Optional<Long> optionalSize = Optional.fromNullable(PartAuthority.getAttachmentSize(context, media.getUri()));
+            size = optionalSize.isPresent() ? optionalSize.get() : 0;
         }
 
         if (size <= 0) {

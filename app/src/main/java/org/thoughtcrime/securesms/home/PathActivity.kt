@@ -21,16 +21,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,7 +35,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.openUrl
@@ -57,7 +49,6 @@ import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.getAccentColor
 import javax.inject.Inject
 
-typealias CountryName = String
 
 @AndroidEntryPoint
 class PathActivity : ScreenLockActionBarActivity() {
@@ -68,23 +59,6 @@ class PathActivity : ScreenLockActionBarActivity() {
 
     @Inject
     lateinit var pathManager: PathManager
-
-    @Inject
-    lateinit var iP2Country: IP2Country
-
-    private val pathState: StateFlow<List<Pair<Snode, CountryName?>>> by lazy {
-        pathManager
-            .paths
-            .mapNotNull { paths ->
-                val path = paths.firstOrNull() ?: return@mapNotNull null
-
-                path.map { snode ->
-                    val countryName = iP2Country.lookupCountry(snode.ip)
-                    snode to countryName
-                }
-            }
-            .stateIn(lifecycleScope, SharingStarted.Lazily, emptyList())
-    }
 
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
@@ -101,7 +75,20 @@ class PathActivity : ScreenLockActionBarActivity() {
         binding.learnMoreButton.setOnClickListener {
             openUrl("https://getsession.org/faq/#onion-routing")
         }
+        update(false)
         registerObservers()
+
+        IP2Country.configureIfNeeded(this)
+
+        lifecycleScope.launch {
+            // Check if the
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                pathManager.paths
+                    .collectLatest {
+                        update(true)
+                    }
+            }
+        }
 
         binding.pathScroll.doOnLayout {
             val child: View = binding.pathScroll.getChildAt(0)
@@ -125,20 +112,7 @@ class PathActivity : ScreenLockActionBarActivity() {
     private fun registerObservers() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                pathState.collectLatest(::update)
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                pathState.map { it.isEmpty() }
-                    .collectLatest { isLoading ->
-                        if (isLoading) {
-                            binding.spinner.fadeIn()
-                        } else {
-                            binding.spinner.fadeOut()
-                        }
-                    }
+                IP2Country.countriesReady.collect { if (it) handleOnionRequestPathCountriesLoaded() }
             }
         }
     }
@@ -146,10 +120,14 @@ class PathActivity : ScreenLockActionBarActivity() {
 
     // region Updating
 
-    private fun update(path: List<Pair<Snode, CountryName?>>) {
+    private fun handleOnionRequestPathCountriesLoaded() { update(false) }
+
+    private fun update(isAnimated: Boolean) {
         binding.pathRowsContainer.removeAllViews()
 
-        if (path.isNotEmpty()) {
+        val paths = pathManager.paths.value
+        if (paths.isNotEmpty()) {
+            val path = paths.firstOrNull() ?: return finish()
             val dotAnimationRepeatInterval = path.count().toLong() * 1000 + 1000
             val pathRows = path.mapIndexed { index, snode ->
                 getPathRow(snode, LineView.Location.Middle, index.toLong() * 1000 + 2000, dotAnimationRepeatInterval, index == 0)
@@ -159,6 +137,17 @@ class PathActivity : ScreenLockActionBarActivity() {
             val rows = listOf( youRow ) + pathRows + listOf( destinationRow )
             for (row in rows) {
                 binding.pathRowsContainer.addView(row)
+            }
+            if (isAnimated) {
+                binding.spinner.fadeOut()
+            } else {
+                binding.spinner.alpha = 0.0f
+            }
+        } else {
+            if (isAnimated) {
+                binding.spinner.fadeIn()
+            } else {
+                binding.spinner.alpha = 1.0f
             }
         }
     }
@@ -199,15 +188,13 @@ class PathActivity : ScreenLockActionBarActivity() {
         return mainContainer
     }
 
-    private fun getPathRow(
-        entry: Pair<Snode, CountryName?>?,
-        location: LineView.Location,
-        dotAnimationStartDelay: Long,
-        dotAnimationRepeatInterval: Long,
-        isGuardSnode: Boolean
-    ): LinearLayout {
+    private fun getPathRow(snode: Snode, location: LineView.Location, dotAnimationStartDelay: Long, dotAnimationRepeatInterval: Long, isGuardSnode: Boolean): LinearLayout {
         val title = if (isGuardSnode) resources.getString(R.string.onionRoutingPathEntryNode) else resources.getString(R.string.onionRoutingPathServiceNode)
-        val subtitle = entry?.second ?:  resources.getString(R.string.resolving)
+        val subtitle = if (IP2Country.isInitialized) {
+            IP2Country.shared.countryNamesCache[snode.ip] ?: resources.getString(R.string.resolving)
+        } else {
+            resources.getString(R.string.resolving)
+        }
         return getPathRow(title, subtitle, location, dotAnimationStartDelay, dotAnimationRepeatInterval)
     }
     // endregion

@@ -2,13 +2,16 @@ package org.thoughtcrime.securesms.reactions;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.annimon.stream.Stream;
+
+import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.model.MessageId;
 
-import java.util.LinkedHashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -16,8 +19,6 @@ import dagger.assisted.AssistedInject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-
-;
 
 @HiltViewModel(assistedFactory = ReactionsViewModel.Factory.class)
 public class ReactionsViewModel extends ViewModel {
@@ -37,24 +38,17 @@ public class ReactionsViewModel extends ViewModel {
 
   public @NonNull
   Observable<List<EmojiCount>> getEmojiCounts() {
-      return repository.getReactions(messageId)
-              .map(reactionList -> reactionList.stream()
-                      .collect(Collectors.groupingBy(
-                              ReactionDetails::getBaseEmoji,
-                              LinkedHashMap::new,
-                              Collectors.toList()
-                      ))
-                      .entrySet().stream()
-                      .sorted(this::compareReactions)
-                      .map(entry -> new EmojiCount(
-                              entry.getKey(),
-                              getCountDisplayEmoji(entry.getValue()),
-                              entry.getValue(),
-                              !fromCommunityThread
-                      ))
-                      .collect(Collectors.toList())
-              )
-              .observeOn(AndroidSchedulers.mainThread());
+    return repository.getReactions(messageId)
+                     .map(reactionList -> Stream.of(reactionList)
+                                                          .groupBy(ReactionDetails::getBaseEmoji)
+                                                          .sorted(this::compareReactions)
+                                                          .map(entry -> new EmojiCount(
+                                                                  entry.getKey(),
+                                                                  getCountDisplayEmoji(entry.getValue()),
+                                                                  entry.getValue(),
+                                                                  !fromCommunityThread))
+                                                          .toList())
+                     .observeOn(AndroidSchedulers.mainThread());
   }
 
   private int compareReactions(@NonNull Map.Entry<String, List<ReactionDetails>> lhs, @NonNull Map.Entry<String, List<ReactionDetails>> rhs) {
@@ -67,12 +61,12 @@ public class ReactionsViewModel extends ViewModel {
     return -Long.compare(latestTimestampLhs, latestTimestampRhs);
   }
 
-    private long getLatestTimestamp(List<ReactionDetails> reactions) {
-        return reactions.stream()
-                .mapToLong(ReactionDetails::getTimestamp)
-                .max()
-                .orElse(-1L);
-    }
+  private long getLatestTimestamp(List<ReactionDetails> reactions) {
+    return Stream.of(reactions)
+                 .max(Comparator.comparingLong(ReactionDetails::getTimestamp))
+                 .map(ReactionDetails::getTimestamp)
+                 .orElse(-1L);
+  }
 
   private @NonNull String getCountDisplayEmoji(@NonNull List<ReactionDetails> reactions) {
     for (ReactionDetails reaction : reactions) {

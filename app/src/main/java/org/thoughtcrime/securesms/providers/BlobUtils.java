@@ -13,8 +13,8 @@ import androidx.annotation.WorkerThread;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.concurrent.SignalExecutors;
 import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
 import org.thoughtcrime.securesms.crypto.ModernEncryptingPartOutputStream;
 
@@ -102,8 +102,7 @@ public class BlobUtils {
         String directory = getDirectory(storageType);
         File   file      = new File(getOrCreateCacheDirectory(context, directory), buildFileName(id));
 
-        return ModernDecryptingPartInputStream.createFor(
-                ((ApplicationContext) context).getAttachmentSecretProvider().getOrCreateAttachmentSecret(), file, 0);
+        return ModernDecryptingPartInputStream.createFor(AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(), file, 0);
       }
     } else {
       throw new IOException("Provided URI does not match this spec. Uri: " + uri);
@@ -186,7 +185,7 @@ public class BlobUtils {
   @WorkerThread
   @NonNull
   private static CompletableFuture<Uri> writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
-    AttachmentSecret attachmentSecret = ((ApplicationContext) context.getApplicationContext()).getAttachmentSecretProvider().getOrCreateAttachmentSecret();
+    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
     String           directory        = getDirectory(blobSpec.getStorageType());
     File             outputFile       = new File(getOrCreateCacheDirectory(context, directory), buildFileName(blobSpec.id));
     OutputStream     outputStream     = ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;

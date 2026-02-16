@@ -3,28 +3,26 @@ package org.thoughtcrime.securesms.home.startconversation
 import android.annotation.SuppressLint
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -65,26 +63,13 @@ fun StartConversationSheet(
         modifier = modifier,
         sheetState = sheetState,
         dragHandle = null,
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = onDismissRequest
     ){
-        BoxWithConstraints {
-            val windowWidthDp = with(LocalDensity.current) {
-                LocalWindowInfo.current.containerSize.width.toDp()
-            }
-
-            val isFullWidth = maxWidth >= windowWidthDp
-
-            val horizontalInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-            val contentMod = if (isFullWidth) {
-                Modifier.windowInsetsPadding(horizontalInsets)
-            } else {
-                Modifier
-            }
-
+        BoxWithConstraints(modifier = modifier) {
             val topInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
             val targetHeight = (this.maxHeight - topInset) * 0.94f // sheet should take up 94% of the height, without the staatus bar
             Box(
-                modifier = contentMod.height(targetHeight),
+                modifier = Modifier.height(targetHeight),
                 contentAlignment = Alignment.TopCenter
             ) {
                 StartConversationNavHost(
@@ -128,7 +113,7 @@ fun StartConversationNavHost(
 ){
     val navController = rememberNavController()
     val navigator: UINavigator<StartConversationDestination> =
-        retain { UINavigator() }
+        remember { UINavigator() }
 
     ObserveAsEvents(flow = navigator.navigationActions) { action ->
         when (action) {

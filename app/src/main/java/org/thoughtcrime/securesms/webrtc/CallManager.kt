@@ -824,9 +824,9 @@ class CallManager @Inject constructor(
 
         // apply the rotation to the streams
         peerConnection?.setDeviceRotation(rotation)
-        remoteRotationSink?.rotation =
-            abs(rotation) // abs as we never need the remote video to be inverted
+        remoteRotationSink?.rotation = abs(rotation) // abs as we never need the remote video to be inverted
     }
+
     fun handleWiredHeadsetChanged(present: Boolean) {
         if (currentConnectionState in arrayOf(CallState.Connected,
                         CallState.LocalRing,

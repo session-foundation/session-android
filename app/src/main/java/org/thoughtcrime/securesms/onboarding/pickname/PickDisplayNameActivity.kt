@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.onboarding.pickname
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -40,15 +39,6 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
 
         setComposeContent { DisplayNameScreen(viewModel) }
 
-        // Predictive back-firendly
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (!viewModel.onBackPressed()) {
-                    finish()
-                }
-            }
-        })
-
         lifecycleScope.launch(Dispatchers.Main) {
             viewModel.events.collect {
                 when (it) {
@@ -68,6 +58,14 @@ class PickDisplayNameActivity : BaseActionBarActivity() {
             viewModel::dismissDialog,
             quit = { viewModel.dismissDialog(); finish() }
         )
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (viewModel.onBackPressed()) return
+
+        @Suppress("DEPRECATION")
+        super.onBackPressed()
     }
 }
 

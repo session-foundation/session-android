@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,7 +52,7 @@ fun <T> DropDown(
     labeler: (T?) -> String,
     allowSelectingNullValue: Boolean
 ) {
-    var expanded by retain { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
         modifier = modifier,

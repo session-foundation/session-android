@@ -12,18 +12,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -111,8 +107,7 @@ fun ConversationAppBar(
                                 if (data.pagerData.isNotEmpty()) {
                                     // Settings content pager
                                     ConversationSettingsPager(
-                                        modifier = Modifier
-                                            .padding(top = 2.dp)
+                                        modifier = Modifier.padding(top = 2.dp)
                                             .fillMaxWidth(0.8f),
                                         pages = data.pagerData,
                                         pagerState = pagerState
@@ -147,18 +142,14 @@ fun ConversationAppBar(
                             // Avatar
                             if (data.showAvatar) {
                                 Avatar(
-                                    modifier = Modifier
-                                        .qaTag(R.string.qa_conversation_avatar)
+                                    modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
                                         .padding(
-                                            start = if (data.showCall) 0.dp else LocalDimensions.current.xsSpacing,
+                                            start = if(data.showCall) 0.dp else LocalDimensions.current.xsSpacing,
                                             end = LocalDimensions.current.xsSpacing
                                         )
                                         .clickable(
                                             interactionSource = remember { MutableInteractionSource() },
-                                            indication = ripple(
-                                                bounded = false,
-                                                radius = LocalDimensions.current.iconLargeAvatar / 2
-                                            ),
+                                            indication = ripple(bounded = false, radius = LocalDimensions.current.iconLargeAvatar/2),
                                             onClick = onAvatarPressed
                                         ),
                                     size = LocalDimensions.current.iconLargeAvatar,
@@ -173,11 +164,7 @@ fun ConversationAppBar(
                 true -> {
                     Row(
                         modifier = Modifier
-                            .windowInsetsPadding(
-                                WindowInsets.safeDrawing.only(
-                                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal
-                                )
-                            )
+                            .statusBarsPadding()
                             .padding(horizontal = LocalDimensions.current.smallSpacing)
                             .heightIn(min = LocalDimensions.current.appBarHeight),
                         verticalAlignment = Alignment.CenterVertically,
@@ -193,8 +180,7 @@ fun ConversationAppBar(
                             onValueChanged = onSearchQueryChanged,
                             onClear = onSearchQueryClear,
                             placeholder = stringResource(R.string.search),
-                            modifier = Modifier
-                                .weight(1f)
+                            modifier = Modifier.weight(1f)
                                 .focusRequester(focusRequester),
                             backgroundColor = LocalColors.current.backgroundSecondary,
                         )
@@ -202,8 +188,7 @@ fun ConversationAppBar(
                         Spacer(Modifier.width(LocalDimensions.current.xsSpacing))
 
                         Text(
-                            modifier = Modifier
-                                .qaTag(R.string.qa_conversation_search_cancel)
+                            modifier = Modifier.qaTag(R.string.qa_conversation_search_cancel)
                                 .clickable {
                                     onSearchCanceled()
                                 },
@@ -255,8 +240,7 @@ private fun ConversationSettingsPager(
         modifier = modifier,
     ) { page ->
         Row (
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
                 .qaTag(pages[page].qaTag ?: pages[page].title)
                 .clickable {
                     pages[page].action()
@@ -297,9 +281,7 @@ private fun ConversationSettingsPager(
             // '>' icon
             if(pages.size > 1) {
                 Image(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .rotate(180f),
+                    modifier = Modifier.size(12.dp).rotate(180f),
                     painter = painterResource(id = R.drawable.ic_chevron_left),
                     colorFilter = ColorFilter.tint(LocalColors.current.text),
                     contentDescription = null,

@@ -30,65 +30,26 @@ private val TITLES = listOf(R.string.sessionRecoveryPassword, R.string.qrScan)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SessionTabRow(
-    pagerState: PagerState,
-    titles: List<Int>
-) {
-    val animationScope = rememberCoroutineScope()
-    BaseSessionTabRow(
-        selectedIndex = pagerState.currentPage,
-        titles = titles,
-        onTabClick = { i ->
-            animationScope.launch { pagerState.animateScrollToPage(i) }
-        }
-    )
-}
-
-/** For ViewPager2 integration
- * I created this initially as a workaround for GiphyTabs,
- * which requires quite a lot of changes to be a fully composable screen.
- *
- * Also marked this for deletion once the screens are fully composable.
- * */
-@Deprecated("To be deleted when screens that use viewpager2 are refactored to HorizontalPager")
-@Composable
-fun SessionTabRow(
-    selectedIndex: Int,
-    titles: List<Int>,
-    onTabSelected: (Int) -> Unit
-) {
-    BaseSessionTabRow(
-        selectedIndex = selectedIndex.coerceIn(0, titles.lastIndex),
-        titles = titles,
-        onTabClick = onTabSelected
-    )
-}
-
-/** Shared implementation */
-@Composable
-private fun BaseSessionTabRow(
-    selectedIndex: Int,
-    titles: List<Int>,
-    onTabClick: (Int) -> Unit
-) {
+fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
     TabRow(
-        containerColor = Color.Unspecified,
-        selectedTabIndex = selectedIndex,
-        contentColor = LocalColors.current.text,
-        indicator = { tabPositions ->
-            TabRowDefaults.SecondaryIndicator(
-                Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
-                color = LocalColors.current.accent,
-                height = LocalDimensions.current.indicatorHeight
-            )
-        },
-        divider = { HorizontalDivider(color = LocalColors.current.borders) }
+            containerColor = Color.Unspecified,
+            selectedTabIndex = pagerState.currentPage,
+            contentColor = LocalColors.current.text,
+            indicator = { tabPositions ->
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                    color = LocalColors.current.accent,
+                    height = LocalDimensions.current.indicatorHeight
+                )
+            },
+            divider = { HorizontalDivider(color = LocalColors.current.borders) }
     ) {
+        val animationScope = rememberCoroutineScope()
         titles.forEachIndexed { i, it ->
             Tab(
                 modifier = Modifier.heightIn(min = 48.dp),
-                selected = i == selectedIndex,
-                onClick = { onTabClick(i) },
+                selected = i == pagerState.currentPage,
+                onClick = { animationScope.launch { pagerState.animateScrollToPage(i) } },
                 selectedContentColor = LocalColors.current.text,
                 unselectedContentColor = LocalColors.current.text,
             ) {

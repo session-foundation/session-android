@@ -14,7 +14,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/mediasend_caption_and_rail"
         android:layout_width="match_parent"
-        android:layout_marginBottom="@dimen/small_spacing"
         android:layout_height="0dp" />
 
     <LinearLayout

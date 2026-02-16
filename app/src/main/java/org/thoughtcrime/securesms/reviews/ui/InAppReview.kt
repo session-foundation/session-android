@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -128,43 +127,34 @@ private fun InAppReviewDialog(
     title: String,
     message: String,
     positiveButtonText: String,
-    negativeButtonText: String? = null,
-    positiveButtonTextColor: Color = LocalColors.current.accentText,
-    negativeButtonTextColor: Color = LocalColors.current.text,
+    negativeButtonText: String,
     positiveButtonQaTag: String,
-    negativeButtonQaTag: String? = null,
+    negativeButtonQaTag: String,
     sendCommands: (InAppReviewViewModel.UiCommand) -> Unit,
 ) {
-    val buttons = mutableListOf(
-        DialogButtonData(
-            text = GetString.FromString(positiveButtonText),
-            color = positiveButtonTextColor,
-            qaTag = positiveButtonQaTag,
-            dismissOnClick = false
-        ) {
-            sendCommands(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
-        },
-    )
+    AlertDialogContent(
+        showCloseButton = true,
+        onDismissRequest = { sendCommands(InAppReviewViewModel.UiCommand.CloseButtonClicked) },
+        title = AnnotatedString(title),
+        text = AnnotatedString(message),
+        buttons = listOf(
+            DialogButtonData(
+                text = GetString.FromString(positiveButtonText),
+                color = LocalColors.current.accentText,
+                qaTag = positiveButtonQaTag,
+                dismissOnClick = false
+            ) {
+                sendCommands(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
+            },
 
-    if (negativeButtonText != null) {
-        buttons.add(
             DialogButtonData(
                 text = GetString.FromString(negativeButtonText),
-                color = negativeButtonTextColor,
                 qaTag = negativeButtonQaTag,
                 dismissOnClick = false
             ) {
                 sendCommands(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
             },
         )
-    }
-
-    AlertDialogContent(
-        showCloseButton = true,
-        onDismissRequest = { sendCommands(InAppReviewViewModel.UiCommand.CloseButtonClicked) },
-        title = AnnotatedString(title),
-        text = AnnotatedString(message),
-        buttons = buttons
     )
 }
 
@@ -183,18 +173,16 @@ private fun InAppReviewStartPrompt(
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format()
             .toString(),
-        negativeButtonText = Phrase.from(context, R.string.enjoyingSessionButtonPositive)
+        positiveButtonText = Phrase.from(context, R.string.enjoyingSessionButtonPositive)
             .put(EMOJI_KEY, "❤\uFE0F")
             .format()
             .toString(),
-        negativeButtonTextColor = LocalColors.current.accentText,
-        positiveButtonText = Phrase.from(context, R.string.enjoyingSessionButtonNegative)
+        negativeButtonText = Phrase.from(context, R.string.enjoyingSessionButtonNegative)
             .put(EMOJI_KEY, "\uD83D\uDE15")
             .format()
             .toString(),
-        positiveButtonTextColor = LocalColors.current.text,
-        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_great),
-        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_work),
+        positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_great),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_work),
         sendCommands = sendCommands
     )
 }
@@ -211,13 +199,15 @@ private fun InAppReviewPositivePrompt(
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format()
             .toString(),
-        message = Phrase.from(context, R.string.rateSessionModalDescriptionUpdated)
+        message = Phrase.from(context, R.string.rateSessionModalDescription)
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .put(STORE_VARIANT_KEY, storeReviewManager?.storeName ?: "Google Play Store")
             .format()
             .toString(),
-        positiveButtonText = context.getString(R.string.rateUs),
+        positiveButtonText = context.getString(R.string.rateSessionApp),
+        negativeButtonText = context.getString(R.string.notNow),
         positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_rate),
+        negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_not_now),
         sendCommands = sendCommands
     )
 }
@@ -250,15 +240,5 @@ fun PreviewInAppReviewPrompt(
 ){
     PreviewTheme(colors = colors) {
         InAppReviewStartPrompt()
-    }
-}
-
-@Composable
-@Preview
-fun PreviewInAppReviewPromptPositive(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
-){
-    PreviewTheme(colors = colors) {
-        InAppReviewPositivePrompt()
     }
 }

@@ -25,6 +25,7 @@ import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -149,27 +150,21 @@ class DatabaseAttachmentProvider @Inject constructor(
 
     override fun handleSuccessfulAttachmentUpload(attachmentId: Long, attachmentStream: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult) {
         val databaseAttachment = getDatabaseAttachment(attachmentId) ?: return
-
         val attachmentPointer = SignalServiceAttachmentPointer(
             // The ID will be non-numeric in the future so we will do our best to convert it to a long,
             // as some old clients still use this value (we should use the url instead).
-            id = uploadResult.id.toLongOrNull() ?: 0L,
-            contentType = attachmentStream.contentType,
-            key = attachmentKey,
-            size = Util.toIntExact(attachmentStream.length),
-            preview = attachmentStream.preview,
-            width = attachmentStream.width,
-            height = attachmentStream.height,
-            digest = uploadResult.digest,
-            filename = attachmentStream.filename,
-            voiceNote = attachmentStream.voiceNote,
-            caption = attachmentStream.caption,
-            url = uploadResult.url
-        )
-
-        val attachment = PointerAttachment
-            .forPointer(attachmentPointer, databaseAttachment.fastPreflightId)
-            ?: return
+            uploadResult.id.toLongOrNull() ?: 0L,
+            attachmentStream.contentType,
+            attachmentKey,
+            Optional.of(Util.toIntExact(attachmentStream.length)),
+            attachmentStream.preview,
+            attachmentStream.width, attachmentStream.height,
+            Optional.fromNullable(uploadResult.digest),
+            attachmentStream.filename,
+            attachmentStream.voiceNote,
+            attachmentStream.caption,
+            uploadResult.url);
+        val attachment = PointerAttachment.forPointer(Optional.of(attachmentPointer), databaseAttachment.fastPreflightId).get()
         attachmentDatabase.updateAttachmentAfterUploadSucceeded(databaseAttachment.attachmentId, attachment)
     }
 
@@ -324,47 +319,25 @@ class DatabaseAttachmentProvider @Inject constructor(
 private const val TAG = "DatabaseAttachmentProvider"
 
 fun DatabaseAttachment.toAttachmentPointer(): SessionServiceAttachmentPointer {
-    return SessionServiceAttachmentPointer(
-        id = attachmentId.rowId,
-        contentType = contentType,
-        key = key?.toByteArray(),
-        size = size.toInt(),
-        preview = null,
-        width = width,
-        height = height,
-        digest = digest,
-        filename = filename,
-        voiceNote = isVoiceNote,
-        caption = caption,
-        url = url
-    )
+    return SessionServiceAttachmentPointer(attachmentId.rowId, contentType, key?.toByteArray(), Optional.fromNullable(size.toInt()), Optional.absent(), width, height, Optional.fromNullable(digest), filename, isVoiceNote, Optional.fromNullable(caption), url)
 }
 
 fun DatabaseAttachment.toAttachmentStream(context: Context): SessionServiceAttachmentStream {
-    val stream = requireNotNull(dataUri) { "DatabaseAttachment has null dataUri" }
-        .let { PartAuthority.getAttachmentStream(context, it) }
+    val stream = PartAuthority.getAttachmentStream(context, this.dataUri!!)
 
-    return SessionServiceAttachmentStream(
-        inputStream = stream,
-        contentType = contentType,
-        length = size,
-        filename = filename,
-        voiceNote = isVoiceNote,
-        preview = null,
-        width = width,
-        height = height,
-        caption = caption
-    ).also { attachmentStream ->
-        attachmentStream.attachmentId = attachmentId.rowId
-        attachmentStream.isAudio = MediaUtil.isAudio(this)
-        attachmentStream.isGif = MediaUtil.isGif(this)
-        attachmentStream.isVideo = MediaUtil.isVideo(this)
-        attachmentStream.isImage = MediaUtil.isImage(this)
+    var attachmentStream = SessionServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption))
+    attachmentStream.attachmentId = this.attachmentId.rowId
+    attachmentStream.isAudio = MediaUtil.isAudio(this)
+    attachmentStream.isGif = MediaUtil.isGif(this)
+    attachmentStream.isVideo = MediaUtil.isVideo(this)
+    attachmentStream.isImage = MediaUtil.isImage(this)
 
-        attachmentStream.key = key?.toByteArray()?.let(ByteString::copyFrom)
-        attachmentStream.digest = digest
-        attachmentStream.url = url
-    }
+    attachmentStream.key = ByteString.copyFrom(this.key?.toByteArray())
+    attachmentStream.digest = Optional.fromNullable(this.digest)
+
+    attachmentStream.url = this.url
+
+    return attachmentStream
 }
 
 fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPointer? {
@@ -377,14 +350,14 @@ fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPoint
             id,
             contentType,
             key,
-            Util.toIntExact(size),
-            null,
+            Optional.of(Util.toIntExact(size)),
+            Optional.absent(),
             width,
             height,
-            digest,
+            Optional.fromNullable(digest),
             filename,
             isVoiceNote,
-            caption,
+            Optional.fromNullable(caption),
             url
         )
     } catch (e: Exception) {
@@ -395,16 +368,6 @@ fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPoint
 fun DatabaseAttachment.toSignalAttachmentStream(context: Context): SignalServiceAttachmentStream {
     val stream = PartAuthority.getAttachmentStream(context, this.dataUri!!)
 
-    return SignalServiceAttachmentStream(
-        inputStream = stream,
-        contentType = contentType,
-        length = size,
-        filename = filename,
-        voiceNote = isVoiceNote,
-        preview = null,
-        width = width,
-        height = height,
-        caption = caption
-    )
+    return SignalServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption))
 }
 

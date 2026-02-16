@@ -5,6 +5,8 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
+import com.annimon.stream.Stream;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.Address;
@@ -12,10 +14,8 @@ import org.session.libsession.utilities.Util;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.inject.Provider;
 
@@ -66,8 +66,6 @@ public class SearchDatabase extends Database {
   // Base query definitions with placeholders for thread filtering
   private static final String MESSAGES_QUERY_BASE =
           "SELECT " +
-                  SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " AS " + MmsSmsColumns.ID + ", " +
-                  "'" + MmsSmsDatabase.SMS_TRANSPORT + "' AS " + MmsSmsDatabase.TRANSPORT + ", " +
                   ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
                   MmsSmsColumns.ADDRESS + " AS " + MESSAGE_ADDRESS + ", " +
                   "snippet(" + SMS_FTS_TABLE_NAME + ", -1, '', '', '...', 7) AS " + SNIPPET + ", " +
@@ -82,8 +80,6 @@ public class SearchDatabase extends Database {
                   " %s " + // placeholder for thread filtering
                   "UNION ALL " +
                   "SELECT " +
-                  MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID + " AS " + MmsSmsColumns.ID + ", " +
-                  "'" + MmsSmsDatabase.MMS_TRANSPORT + "' AS " + MmsSmsDatabase.TRANSPORT + ", " +
                   ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
                   MmsSmsColumns.ADDRESS + " AS " + MESSAGE_ADDRESS + ", " +
                   "snippet(" + MMS_FTS_TABLE_NAME + ", -1, '', '', '...', 7) AS " + SNIPPET + ", " +
@@ -101,8 +97,6 @@ public class SearchDatabase extends Database {
 
   private static final String MESSAGES_FOR_THREAD_QUERY =
           "SELECT " +
-                  SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " AS " + MmsSmsColumns.ID + ", " +
-                  "'" + MmsSmsDatabase.SMS_TRANSPORT + "' AS " + MmsSmsDatabase.TRANSPORT + ", " +
                   ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
                   MmsSmsColumns.ADDRESS + " AS " + MESSAGE_ADDRESS + ", " +
                   "snippet(" + SMS_FTS_TABLE_NAME + ", -1, '', '', '...', 7) AS " + SNIPPET + ", " +
@@ -116,8 +110,6 @@ public class SearchDatabase extends Database {
                   " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE +
                   " UNION ALL " +
                   "SELECT " +
-                  MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID + " AS " + MmsSmsColumns.ID + ", " +
-                  "'" + MmsSmsDatabase.MMS_TRANSPORT + "' AS " + MmsSmsDatabase.TRANSPORT + ", " +
                   ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
                   MmsSmsColumns.ADDRESS + " AS " + MESSAGE_ADDRESS + ", " +
                   "snippet(" + MMS_FTS_TABLE_NAME + ", -1, '', '', '...', 7) AS " + SNIPPET + ", " +
@@ -189,14 +181,12 @@ public class SearchDatabase extends Database {
     );
   }
 
-    private String adjustQuery(@NonNull String query) {
-        List<String> tokens = Arrays.stream(query.split(" "))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
+  private String adjustQuery(@NonNull String query) {
+    List<String> tokens = Stream.of(query.split(" ")).filter(s -> s.trim().length() > 0).toList();
+    String       prefixQuery = Util.join(tokens, "* ");
 
-        String prefixQuery = Util.join(tokens, "* ");
-        prefixQuery += "*";
-        return prefixQuery;
-    }
+    prefixQuery += "*";
+
+    return prefixQuery;
+  }
 }

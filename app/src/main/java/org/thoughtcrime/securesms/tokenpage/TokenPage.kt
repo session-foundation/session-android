@@ -6,7 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -38,11 +36,11 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.TopCenter
@@ -73,7 +71,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_S
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
-import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BlurredImage
@@ -118,7 +115,7 @@ fun TokenPage(
                     .qaTag("Page heading")
             )
         },
-        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { contentPadding ->
 
         PullToRefreshBox(
@@ -182,8 +179,7 @@ fun TokenPage(
                 val hasNoScroll = scrollState.maxValue == 0 || scrollState.maxValue == Int.MAX_VALUE
 
                 Column(
-                    modifier = Modifier
-                        .padding(horizontal = LocalDimensions.current.spacing)
+                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
                         .then(
                             if (hasNoScroll) {
                                 Modifier.weight(1f)
@@ -250,7 +246,7 @@ fun SessionNetworkInfoSection(modifier: Modifier = Modifier) {
         )
 
         // Note: We apply the link to the entire box so the user doesn't have to click exactly on the highlighted text.
-        var showTheOpenUrlModal by retain { mutableStateOf(false) }
+        var showTheOpenUrlModal by remember { mutableStateOf(false) }
         Text(
             modifier = Modifier
                 .clickable { showTheOpenUrlModal = true }
@@ -279,6 +275,7 @@ fun StatsImageBox(
 ) {
     Box(
         modifier = modifier
+            .fillMaxWidth()
             .aspectRatio(1.15f)
             .border(
                 width = 1.dp,
@@ -474,53 +471,32 @@ fun StatsSection(
     priceDataPopupText: String,
     modifier: Modifier = Modifier
 ) {
+    // First row contains the `StatsImageBox` with the number of nodes in your swap and the text
+    // details with that number and the number of nodes securing your messages.
+    Row(modifier = modifier.fillMaxWidth()) {
 
-    val screenInfo = getAdaptiveInfo()
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        // Left pane target width = min(45% of row, height cap * aspect)
-        val leftMaxWidth = maxWidth * 0.45f
-        val aspect = 1.15f
+        // On the left we have the node image showing how many nodes are in the user's swarm..
+        val (linesDrawable, circlesDrawable) = getNodeImageForSwarmSize(currentSessionNodesInSwarm)
+        StatsImageBox(
+            showNodeCountsAsRefreshing = showNodeCountsAsRefreshing,
+            lineDrawableId = linesDrawable,
+            circlesDrawableId = circlesDrawable,
+            modifier = Modifier
+                .fillMaxWidth(0.45f)
+                .qaTag("Swarm image")
+        )
 
-        val heightCap =
-            if (screenInfo.isLandscape) screenInfo.heightDp.dp * 0.40f else screenInfo.heightDp.dp * 0.50f
+        Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
 
-        val targetWidth = leftMaxWidth
-            .coerceAtMost(heightCap * aspect)
-            .coerceIn(
-                LocalDimensions.current.minContentSizeSmall,
-                LocalDimensions.current.maxContentSizeSmall
-            ) // hard cap to keep tidy on very wide screens
-
-
-        // First row contains the `StatsImageBox` with the number of nodes in your swap and the text
-        // details with that number and the number of nodes securing your messages.
-        Row(modifier = modifier.fillMaxWidth()) {
-
-            // On the left we have the node image showing how many nodes are in the user's swarm..
-            val (linesDrawable, circlesDrawable) = getNodeImageForSwarmSize(
-                currentSessionNodesInSwarm
-            )
-            StatsImageBox(
-                showNodeCountsAsRefreshing = showNodeCountsAsRefreshing,
-                lineDrawableId = linesDrawable,
-                circlesDrawableId = circlesDrawable,
-                modifier = Modifier
-                    .width(targetWidth)
-                    .qaTag("Swarm image")
-            )
-
-            Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
-
-            // ..and on the right we have the text details of num nodes in swarm and total nodes securing your messages.
-            NodeDetailsBox(
-                showNodeCountsAsRefreshing = showNodeCountsAsRefreshing,
-                numNodesInSwarm = currentSessionNodesInSwarm.toString(),
-                numNodesSecuringMessages = currentSessionNodesSecuringMessages.toString(),
-                modifier = Modifier
-                    .fillMaxWidth(1.0f)
-                    .align(Alignment.CenterVertically)
-            )
-        }
+        // ..and on the right we have the text details of num nodes in swarm and total nodes securing your messages.
+        NodeDetailsBox(
+            showNodeCountsAsRefreshing = showNodeCountsAsRefreshing,
+            numNodesInSwarm = currentSessionNodesInSwarm.toString(),
+            numNodesSecuringMessages = currentSessionNodesSecuringMessages.toString(),
+            modifier = Modifier
+                .fillMaxWidth(1.0f)
+                .align(Alignment.CenterVertically)
+        )
     }
 
     Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
@@ -601,8 +577,7 @@ fun StatsSection(
             setTwoLineTwo,
             setTwoLineThree,
             qaTag = "Network secured amount",
-            modifier = Modifier
-                .fillMaxWidth(1.0f)
+            modifier = Modifier.fillMaxWidth(1.0f)
                 .onGloballyPositioned { coordinates ->
                     // Calculate this cell's height in dp
                     val heightInDp = with(density) { coordinates.size.height.toDp() }
@@ -727,7 +702,7 @@ fun SessionTokenSection(
         Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
 
         // Finally, add a button that links us to the staging page to learn more
-        var showTheOpenUrlModal by retain { mutableStateOf(false) }
+        var showTheOpenUrlModal by remember { mutableStateOf(false) }
         AccentOutlineButtonRect(
             text = LocalContext.current.getString(R.string.sessionNetworkLearnAboutStaking),
             modifier = Modifier

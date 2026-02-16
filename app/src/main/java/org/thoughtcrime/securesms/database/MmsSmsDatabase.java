@@ -445,6 +445,27 @@ public class MmsSmsDatabase extends Database {
     mmsDatabase.get().incrementReceiptCount(syncMessageId, timestamp, false, true);
   }
 
+  public int getMessagePositionInConversation(long threadId, long sentTimestamp, @NonNull Address address, boolean reverse) {
+    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + (reverse ? " DESC" : " ASC");
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+
+    String projection = MmsSmsColumns.NORMALIZED_DATE_SENT + ", " + MmsSmsColumns.ADDRESS;
+    try (final Cursor cursor = queryTables(projection, selection, true, null, order, null)) {
+      String  serializedAddress = address.toString();
+      boolean isOwnNumber       = serializedAddress.equals(loginStateRepository.getLocalNumber());
+
+      while (cursor != null && cursor.moveToNext()) {
+        boolean timestampMatches = cursor.getLong(0) == sentTimestamp;
+        boolean addressMatches   = serializedAddress.equals(cursor.getString(1));
+
+        if (timestampMatches && (addressMatches || isOwnNumber)) {
+          return cursor.getPosition();
+        }
+      }
+    }
+    return -1;
+  }
+
   // Please note this migration contain a mistake (message_id used as thread_id), it's corrected in the subsequent release,
   // so you shouldn't try to fix it here.
   private static void migrateLegacyCommunityAddresses(final SQLiteDatabase db, final String tableName) {

@@ -28,8 +28,6 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import com.google.android.material.tabs.TabLayoutMediator;
 
-import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
-
 import network.loki.messenger.R;
 import network.loki.messenger.databinding.ScribbleSelectStickerActivityBinding;
 
@@ -53,7 +51,6 @@ public class StickerSelectActivity extends FragmentActivity implements StickerSe
     setContentView(binding.getRoot());
 
     binding.cameraStickerPager.setAdapter(new StickerPagerAdapter(this, this));
-    ViewUtilitiesKt.applySafeInsetsPaddings(binding.getRoot());
 
     new TabLayoutMediator(
             binding.cameraStickerTabs,
@@ -67,7 +64,7 @@ public class StickerSelectActivity extends FragmentActivity implements StickerSe
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     if (item.getItemId() == android.R.id.home) {
-      getOnBackPressedDispatcher().onBackPressed();
+      onBackPressed();
       return true;
     }
     return super.onOptionsItemSelected(item);

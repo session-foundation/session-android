@@ -66,14 +66,7 @@ class ConversationActionModeCallback(
 
 
         // Delete message
-        menu.findItem(R.id.menu_context_delete_message).apply {
-            isVisible = !isDeprecatedLegacyGroup // can always delete since delete logic will be handled by the VM
-
-            setTitle(
-                context.resources.getQuantityString(R.plurals.deleteMessage,
-                    selectedItems.size, selectedItems.size)
-            )
-        }
+        menu.findItem(R.id.menu_context_delete_message).isVisible = !isDeprecatedLegacyGroup // can always delete since delete logic will be handled by the VM
         // Ban user
         val canBan = userCanBanSelectedUsers() && !isDeprecatedLegacyGroup
         menu.findItem(R.id.menu_context_ban_user).isVisible = canBan

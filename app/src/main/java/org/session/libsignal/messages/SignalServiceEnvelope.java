@@ -8,6 +8,7 @@ package org.session.libsignal.messages;
 
 import com.google.protobuf.ByteString;
 
+import org.session.libsignal.utilities.SignalServiceAddress;
 import org.session.protos.SessionProtos.Envelope;
 
 /**
@@ -52,6 +53,10 @@ public class SignalServiceEnvelope {
     this.envelope = builder.build();
   }
 
+  public boolean hasSource() {
+    return envelope.hasSource() && envelope.getSource().length() > 0;
+  }
+
   /**
    * @return The envelope's sender.
    */
@@ -59,11 +64,22 @@ public class SignalServiceEnvelope {
     return envelope.getSource();
   }
 
+  public boolean hasSourceDevice() {
+    return envelope.hasSourceDevice();
+  }
+
   /**
    * @return The envelope's sender device ID.
    */
   public int getSourceDevice() {
     return envelope.getSourceDevice();
+  }
+
+  /**
+   * @return The envelope's sender as a SignalServiceAddress.
+   */
+  public SignalServiceAddress getSourceAddress() {
+    return new SignalServiceAddress(envelope.getSource());
   }
 
   /**

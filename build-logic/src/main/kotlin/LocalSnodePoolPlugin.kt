@@ -30,7 +30,7 @@ class LocalSnodePoolPlugin : Plugin<Project> {
                     GenerateLocalSnodePoolTask::class.java
                 ) {
                     // build/generated/<variant>/snodes/snode_pool.json
-                    outputDir.set(project.layout.buildDirectory.dir("generated/snode-pool-${variant.name}"))
+                    outputDir.set(project.layout.buildDirectory.dir("generated/${variant.name}"))
                     seedUrls.set(
                         listOf(
                             "https://seed1.getsession.org/json_rpc",

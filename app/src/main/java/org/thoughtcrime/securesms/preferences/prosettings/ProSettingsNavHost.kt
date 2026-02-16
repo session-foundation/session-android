@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.retain.retain
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -67,7 +66,7 @@ fun ProSettingsNavHost(
     onBack: () -> Unit
 ){
     val navController = rememberNavController()
-    val navigator: UINavigator<ProSettingsDestination> = retain {
+    val navigator: UINavigator<ProSettingsDestination> = remember {
         UINavigator<ProSettingsDestination>()
     }
 

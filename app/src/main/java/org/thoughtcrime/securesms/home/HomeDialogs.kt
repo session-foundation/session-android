@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -16,17 +16,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.GotoProSettings
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HandleUserProfileCommand
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideDonationCTADialog
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideExpiredCTADialog
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HidePinCTADialog
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideSimpleDialog
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUrlDialog
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUserProfileModal
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.OnLinkCopied
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.OnLinkOpened
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.ShowDonationConfirmation
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.*
 import org.thoughtcrime.securesms.home.startconversation.StartConversationSheet
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.ui.AlertDialog
@@ -118,7 +108,7 @@ fun HomeDialogs(
 
         // we need a delay before displaying this.
         // Setting the delay in the VM does not account for render and it seems to appear immediately
-        var showExpiring by retain { mutableStateOf(false) }
+        var showExpiring by remember { mutableStateOf(false) }
         LaunchedEffect(dialogsState.proExpiringCTA) {
             showExpiring = false
             if (dialogsState.proExpiringCTA != null) {
@@ -159,7 +149,7 @@ fun HomeDialogs(
 
         // we need a delay before displaying this.
         // Setting the delay in the VM does not account for render and it seems to appear immediately
-        var showExpired by retain { mutableStateOf(false) }
+        var showExpired by remember { mutableStateOf(false) }
         LaunchedEffect(dialogsState.proExpiredCTA) {
             showExpired = false
             if (dialogsState.proExpiredCTA) {
@@ -200,7 +190,7 @@ fun HomeDialogs(
 
         // we need a delay before displaying this.
         // Setting the delay in the VM does not account for render and it seems to appear immediately
-        var showDonation by retain { mutableStateOf(false) }
+        var showDonation by remember { mutableStateOf(false) }
         LaunchedEffect(dialogsState.donationCTA) {
             showDonation = false
             if (dialogsState.donationCTA) {

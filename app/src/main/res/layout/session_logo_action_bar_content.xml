@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_margin="@dimen/small_spacing"
-        android:paddingHorizontal="@dimen/small_spacing"
+        android:padding="@dimen/small_spacing"
         android:background="@drawable/circle_touch_highlight_background"
         android:clickable="true"
         android:focusable="true">

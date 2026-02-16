@@ -3,9 +3,7 @@ package org.thoughtcrime.securesms.emoji
 import android.app.Application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
+import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.database.model.EmojiSearchData
@@ -18,18 +16,20 @@ class EmojiIndexLoader @Inject constructor(
     private val application: Application,
     private val emojiSearchDb: EmojiSearchDatabase,
     @param:ManagerScope private val scope: CoroutineScope,
-    private val json: Json,
 ) : OnAppStartupComponent {
-    @OptIn(ExperimentalSerializationApi::class)
     override fun onPostAppStarted() {
         scope.launch {
             if (emojiSearchDb.query("face", 1).isEmpty()) {
                 try {
-                    val searchIndex: List<EmojiSearchData> =
-                        application.assets.open("emoji/emoji_search_index.json")
-                            .use(json::decodeFromStream)
-
-                    emojiSearchDb.setSearchIndex(searchIndex)
+                    application.assets.open("emoji/emoji_search_index.json").use { inputStream ->
+                        val searchIndex = listOf(
+                            *JsonUtil.fromJson(
+                                inputStream,
+                                Array<EmojiSearchData>::class.java
+                            )
+                        )
+                        emojiSearchDb.setSearchIndex(searchIndex)
+                    }
                 } catch (e: IOException) {
                     Log.e(
                         "EmojiIndexLoader",

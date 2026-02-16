@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v2.utilities
 
-import kotlinx.serialization.json.Json
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.visible.LinkPreview
@@ -18,7 +17,6 @@ import javax.inject.Inject
 class ResendMessageUtilities @Inject constructor(
     private val messageSender: MessageSender,
     private val storage: StorageProtocol,
-    private val json: Json,
 ) {
 
     suspend fun resend(accountId: String?, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
@@ -27,7 +25,7 @@ class ResendMessageUtilities @Inject constructor(
         message.id = messageRecord.messageId
         if (messageRecord.isOpenGroupInvitation) {
             val openGroupInvitation = OpenGroupInvitation()
-            UpdateMessageData.fromJSON(json, messageRecord.body)?.let { updateMessageData ->
+            UpdateMessageData.fromJSON(messageRecord.body)?.let { updateMessageData ->
                 val kind = updateMessageData.kind
                 if (kind is UpdateMessageData.Kind.OpenGroupInvitation) {
                     openGroupInvitation.name = kind.groupName

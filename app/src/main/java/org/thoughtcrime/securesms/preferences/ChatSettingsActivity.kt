@@ -1,26 +1,21 @@
 package org.thoughtcrime.securesms.preferences
 
-import android.content.Intent
-import androidx.activity.viewModels
-import androidx.compose.runtime.Composable
-import dagger.hilt.android.AndroidEntryPoint
-import org.thoughtcrime.securesms.FullComposeScreenLockActivity
-import org.thoughtcrime.securesms.preferences.compose.ConversationsPreferenceScreen
-import org.thoughtcrime.securesms.preferences.compose.ChatsPreferenceViewModel
+import android.os.Bundle
+import network.loki.messenger.R
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 
-@AndroidEntryPoint
-class ChatSettingsActivity : FullComposeScreenLockActivity() {
+class ChatSettingsActivity : ScreenLockActionBarActivity() {
 
-    @Composable
-    override fun ComposeContent() {
-        val viewModel: ChatsPreferenceViewModel by viewModels()
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
 
-        ConversationsPreferenceScreen(
-            viewModel = viewModel,
-            onBlockedContactsClicked = {
-                startActivity(Intent(this, BlockedContactsActivity::class.java))
-            },
-            onBackPressed = this::finish
-        )
+    override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
+        super.onCreate(savedInstanceState, ready)
+        setContentView(R.layout.activity_fragment_wrapper)
+        supportActionBar!!.title = resources.getString(R.string.sessionConversations)
+        val fragment = ChatsPreferenceFragment()
+        val transaction = supportFragmentManager.beginTransaction()
+        transaction.replace(R.id.fragmentContainer, fragment)
+        transaction.commit()
     }
 }

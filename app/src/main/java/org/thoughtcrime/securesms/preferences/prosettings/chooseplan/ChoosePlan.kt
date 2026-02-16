@@ -376,7 +376,7 @@ private fun PlanBadge(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = LocalType.current.small.bold().copy(
-                    color = LocalColors.current.textOnAccent
+                    color = LocalColors.current.accentButtonFillText
                 )
             )
 
@@ -391,7 +391,7 @@ private fun PlanBadge(
                     Image(
                         painter = painterResource(id = R.drawable.ic_circle_help),
                         contentDescription = null,
-                        colorFilter = ColorFilter.tint(LocalColors.current.textOnAccent),
+                        colorFilter = ColorFilter.tint(LocalColors.current.accentButtonFillText),
                         modifier = Modifier
                             .size(LocalDimensions.current.iconXXSmall)
                             .clickable {

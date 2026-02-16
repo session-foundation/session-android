@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
@@ -58,8 +57,6 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
-import org.thoughtcrime.securesms.pro.ProDataState
-import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
@@ -91,7 +88,7 @@ class RecipientRepository @Inject constructor(
     @param:ManagerScope private val managerScope: CoroutineScope,
     private val proDatabase: ProDatabase,
     private val snodeClock: Lazy<SnodeClock>,
-    private val proStatusManager: Lazy<ProStatusManager>,
+    private val proStatusManager: Lazy<ProStatusManager> // Only needed temporary to check post-pro
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
 
@@ -303,7 +300,7 @@ class RecipientRepository @Inject constructor(
                 when (address) {
                     is Address.LegacyGroup -> {
                         val group: GroupRecord? =
-                            groupDatabase.getGroup(address.toGroupString())
+                            groupDatabase.getGroup(address.toGroupString()).orNull()
 
                         val groupConfig = configFactory.withUserConfigs {
                             it.userGroups.getLegacyGroupInfo(address.groupPublicKeyHex)
@@ -446,20 +443,10 @@ class RecipientRepository @Inject constructor(
             !it.isExpired(now) && !proDatabase.isRevoked(it.genIndexHash)
         }
 
-        if (changeSources != null) {
-            if (!validProDataList.isNullOrEmpty()) {
-                val earliestProExpiry = validProDataList.minOf { it.expiry }
-                val delayMills = Duration.between(now, earliestProExpiry).toMillis()
-                changeSources.add(flowOf("Pro proof expires").onStart { delay(delayMills) })
-            }
-
-            // For ourselves, also listen to ProStatusManager changes because we source
-            // the pro data from there
-            if (recipient.isSelf) {
-                changeSources += proStatusManager.get().proDataState
-                    .distinctUntilChangedBy { it.type is ProStatus.Active }
-                    .drop(1)
-            }
+        if (changeSources != null && !validProDataList.isNullOrEmpty()) {
+            val earliestProExpiry = validProDataList.minOf { it.expiry }
+            val delayMills = Duration.between(now, earliestProExpiry).toMillis()
+            changeSources.add(flowOf("Pro proof expires").onStart { delay(delayMills) })
         }
 
         changeSources?.add(proStatusManager.get().postProLaunchStatus.drop(1))
@@ -472,9 +459,6 @@ class RecipientRepository @Inject constructor(
      * 1. Filters expired/revoked proofs.
      * 2. Checks Debug preferences overrides.
      * 3. Updates the recipient data with the final result.
-     *
-     * For ourselves, the pro status can be determined more reliably from
-     * [ProStatusManager]
      */
     private fun resolveProStatus(
         recipient: Recipient,
@@ -488,21 +472,11 @@ class RecipientRepository @Inject constructor(
             it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
         }
 
-        // 2. Determine base Pro Data from valid proofs or ProStatusManager
-        var proData = when {
-            // For ourselves, we "trust" ProStatusManager more than the ProProofs
-            recipient.isSelf && proStatusManager.get().proDataState.value.type is ProStatus.Active -> {
-                RecipientData.ProData(
-                    showProBadge = proStatusManager.get().proDataState.value.showProBadge
-                )
-            }
-
-            !proDataList.isNullOrEmpty() -> {
-                RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
-            }
-            else -> {
-                null
-            }
+        // 2. Determine base Pro Data from valid proofs
+        var proData = if (!proDataList.isNullOrEmpty()) {
+            RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
+        } else {
+            null
         }
 
         // 3. Apply Debug Overrides

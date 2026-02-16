@@ -9,16 +9,8 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.LocalActivity
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.offset
@@ -26,8 +18,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
@@ -69,7 +61,6 @@ import org.session.libsession.utilities.updateContact
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
@@ -89,9 +80,7 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
-import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -101,9 +90,7 @@ import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
-import org.thoughtcrime.securesms.ui.LatchedAnimatedVisibility
 import org.thoughtcrime.securesms.ui.PathDot
-import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -113,7 +100,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
-import org.thoughtcrime.securesms.util.applyBottomInsetMargin
+import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.fadeIn
@@ -159,7 +146,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var messageFormatter: MessageFormatter
     @Inject lateinit var pathManager: PathManager
-    @Inject lateinit var prefs: PreferenceStorage
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -186,7 +172,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         .createIntent(
                             this,
                             address = model.messageResult.conversationRecipient.address as Address.Conversable,
-                            scrollToMessage = model.messageResult.messageId
+                            scrollToMessage = model.messageResult.sentTimestampMs to model.messageResult.messageRecipient.address
                         )
 
                     is GlobalSearchAdapter.Model.SavedMessages -> ConversationActivityV2
@@ -284,23 +270,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
         binding.sessionToolbar.disableClipping()
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                val searchHandled = homeViewModel.isSearchOpen.value &&
-                        binding.globalSearchInputLayout.handleBackPressed()
-                if (searchHandled) return
-
-                if (homeViewModel.onBackPressed()) {
-                    return
-                }
-
-                finish()
-            }
-        })
-
         lifecycleScope.launch {
-            homeViewModel.uiState.collectLatest {
-                    binding.sessionHeaderProBadge.isVisible = it.showCurrentUserProBadge
+            homeViewModel.shouldShowCurrentUserProBadge
+                .collectLatest {
+                    binding.sessionHeaderProBadge.isVisible = it
                 }
         }
 
@@ -328,8 +301,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
             binding.seedReminderView.setThemedContent {
-                val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
-                if (uiState.showRecoveryPhraseBackupBanner) SeedReminder { start<RecoveryPasswordActivity>() }
+                if (!textSecurePreferences.getHasViewedSeed()) SeedReminder { start<RecoveryPasswordActivity>() }
             }
         }
 
@@ -353,40 +325,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up empty state view
         binding.emptyStateContainer.setThemedContent {
             EmptyView(isNewAccount)
-        }
-
-        // setup the compose content for the mini player
-        binding.miniPlayer.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setThemedContent {
-                val playbackState by homeViewModel.audioPlaybackState.collectAsStateWithLifecycle()
-                val active = playbackState as? AudioPlaybackState.Active
-
-                LatchedAnimatedVisibility(
-                    value = active,
-                    enter = EnterTransition.None,
-                    exit = slideOutVertically(
-                        targetOffsetY = { -it },
-                        animationSpec = tween(durationMillis = 200, easing = FastOutLinearInEasing)
-                    )
-                ) { audio ->
-                    val context = LocalContext.current
-
-                    AudioMiniPlayer(
-                        audio = audio,
-                        onPlayerTap = {
-                            push(ConversationActivityV2.createIntent(
-                                context,
-                                address = audio.playable.thread,
-                                scrollToMessage = audio.playable.messageId
-                            ))
-                        },
-                        onPlayPause = homeViewModel::togglePlayPause,
-                        onPlaybackSpeedToggle = homeViewModel::cyclePlaybackSpeed,
-                        onClose = homeViewModel::stopAudio
-                    )
-                }
-            }
         }
 
         // set the compose dialog content
@@ -527,8 +465,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
             )
         }
 
-        rewireConversationOptionsCallbacksIfPresent()
-
         applyViewInsets()
     }
 
@@ -622,7 +558,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         binding.searchToolbar.isVisible = isSearchShown
         binding.sessionToolbar.isVisible = !isSearchShown
-        binding.seedReminderView.isVisible = !prefs[HAS_VIEWED_SEED] && !isSearchShown
+        binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isSearchShown
         binding.globalSearchRecycler.isVisible = isSearchShown
 
 
@@ -647,7 +583,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         messageNotifier.setHomeScreenVisible(true)
         if (loginStateRepository.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
-        if (prefs[HAS_VIEWED_SEED]) {
+        if (textSecurePreferences.getHasViewedSeed()) {
             binding.seedReminderView.isVisible = false
         }
 
@@ -666,109 +602,95 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // endregion
 
     // region Interaction
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (homeViewModel.isSearchOpen.value && binding.globalSearchInputLayout.handleBackPressed()) {
+            return
+        }
+
+        if (!homeViewModel.onBackPressed()) {
+            super.onBackPressed()
+        }
+    }
 
     override fun onConversationClick(thread: ThreadRecord) {
         push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {
+        val bottomSheet = ConversationOptionsBottomSheet()
+        bottomSheet.publicKey = publicKey
+        bottomSheet.thread = thread
         val threadRecipient = thread.recipient
-        val bottomSheet = ConversationOptionsBottomSheet.newInstance(
-            publicKey = publicKey,
-            threadId = thread.threadId,
-            address = threadRecipient.address.toString()
-        )
-        attachConversationOptionsCallbacks(bottomSheet, thread)
-        bottomSheet.show(supportFragmentManager, ConversationOptionsBottomSheet.FRAGMENT_TAG)
-    }
-
-    /**
-     * If a ConversationOptionsBottomSheet was restored by FragmentManager after a
-     * configuration change, re-attach its callbacks and refresh the ThreadRecord.
-     */
-    private fun rewireConversationOptionsCallbacksIfPresent() {
-        val sheet = supportFragmentManager
-            .findFragmentByTag(ConversationOptionsBottomSheet.FRAGMENT_TAG)
-                as? ConversationOptionsBottomSheet ?: return
-
-        val threadId = sheet.requireArguments()
-            .getLong(ConversationOptionsBottomSheet.ARG_THREAD_ID)
-
-        val threadRecord = homeViewModel.data.value?.items?.asSequence()
-            ?.filterIsInstance<HomeViewModel.Item.Thread>()
-            ?.firstOrNull { it.thread.threadId == threadId }?.thread
-
-        threadRecord?.let {
-            attachConversationOptionsCallbacks(sheet, it)
-        }
-    }
-
-    private fun attachConversationOptionsCallbacks(
-        sheet: ConversationOptionsBottomSheet,
-        thread: ThreadRecord
-    ) {
-        val threadRecipient = thread.recipient
-        sheet.onViewDetailsTapped = {
-            sheet.dismiss()
+        bottomSheet.group = groupDatabase.getGroup(threadRecipient.address.toString()).orNull()
+        bottomSheet.onViewDetailsTapped = {
+            bottomSheet.dismiss()
             homeViewModel.showUserProfileModal(thread)
         }
-        sheet.onCopyConversationId = {
-            sheet.dismiss()
+        bottomSheet.onCopyConversationId = onCopyConversationId@{
+            bottomSheet.dismiss()
             if (threadRecipient.address is Address.WithAccountId && !threadRecipient.isSelf) {
-                val clip = ClipData.newPlainText(
-                    "Account ID",
-                    threadRecipient.address.accountId.hexString
-                )
-                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(clip)
-                Toast.makeText(this@HomeActivity, R.string.copied, Toast.LENGTH_SHORT).show()
-            } else if (threadRecipient.data is RecipientData.Community) {
+                val clip = ClipData.newPlainText("Account ID", threadRecipient.address.accountId.hexString)
+                val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                manager.setPrimaryClip(clip)
+                Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
+            }
+            else if (threadRecipient.data is RecipientData.Community) {
                 val clip = ClipData.newPlainText("Community URL", threadRecipient.data.joinURL)
-                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(clip)
-                Toast.makeText(this@HomeActivity, R.string.copied, Toast.LENGTH_SHORT).show()
+                val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                manager.setPrimaryClip(clip)
+                Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
             }
         }
-        sheet.onBlockTapped = {
-            sheet.dismiss()
-            if (!threadRecipient.blocked) blockConversation(thread)
+        bottomSheet.onBlockTapped = {
+            bottomSheet.dismiss()
+            if (!threadRecipient.blocked) {
+                blockConversation(thread)
+            }
         }
-        sheet.onUnblockTapped = {
-            sheet.dismiss()
-            if (threadRecipient.blocked) unblockConversation(thread)
+        bottomSheet.onUnblockTapped = {
+            bottomSheet.dismiss()
+            if (threadRecipient.blocked) {
+                unblockConversation(thread)
+            }
         }
-        sheet.onAdminLeaveTapped = {
-            sheet.dismiss()
+        bottomSheet.onAdminLeaveTapped = {
+            bottomSheet.dismiss()
             deleteConversation(thread, false)
         }
-        sheet.onDeleteTapped = {
-            sheet.dismiss()
+        bottomSheet.onDeleteTapped = {
+            bottomSheet.dismiss()
             deleteConversation(thread, true)
         }
-        sheet.onNotificationTapped = {
-            sheet.dismiss()
-            startActivity(Intent(this, NotificationSettingsActivity::class.java).apply {
+        bottomSheet.onNotificationTapped = {
+            bottomSheet.dismiss()
+            // go to the notification settings
+            val intent = Intent(this, NotificationSettingsActivity::class.java).apply {
                 putExtra(NotificationSettingsActivity.ARG_ADDRESS, threadRecipient.address)
-            })
+            }
+            startActivity(intent)
         }
-        sheet.onPinTapped = {
-            sheet.dismiss()
+        bottomSheet.onPinTapped = {
+            bottomSheet.dismiss()
             setConversationPinned(threadRecipient.address, true)
         }
-        sheet.onUnpinTapped = {
-            sheet.dismiss()
+        bottomSheet.onUnpinTapped = {
+            bottomSheet.dismiss()
             setConversationPinned(threadRecipient.address, false)
         }
-        sheet.onMarkAllAsReadTapped = {
-            sheet.dismiss()
+        bottomSheet.onMarkAllAsReadTapped = {
+            bottomSheet.dismiss()
             markAllAsRead(thread)
         }
-        sheet.onMarkAsUnreadTapped = {
-            sheet.dismiss()
+        bottomSheet.onMarkAsUnreadTapped = {
+            bottomSheet.dismiss()
             markAsUnread(thread)
         }
-        sheet.onDeleteContactTapped = {
-            sheet.dismiss()
+        bottomSheet.onDeleteContactTapped = {
+            bottomSheet.dismiss()
             confirmDeleteContact(thread)
         }
+        bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
     private fun blockConversation(thread: ThreadRecord) {
@@ -1025,9 +947,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         )
 
-        binding.newConversationButton.applyBottomInsetMargin(
+        binding.newConversationButton.applySafeInsetsMargins(
             typeMask = WindowInsetsCompat.Type.navigationBars(),
-            extraBottom = resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+            additionalInsets = Insets.of(0,0,0, resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset))
         )
     }
 }

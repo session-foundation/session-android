@@ -16,7 +16,7 @@ buildscript {
 //        classpath(files("libs/gradle-witness.jar"))
 //        classpath("com.squareup:javapoet:1.13.0")
         if (project.hasProperty("huawei")) {
-            classpath("com.huawei.agconnect:agcp:1.9.5.300")
+            classpath("com.huawei.agconnect:agcp:1.9.4.300")
         }
     }
 }
@@ -24,6 +24,7 @@ buildscript {
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.plugin.serialization) apply false
     alias(libs.plugins.kotlin.plugin.parcelize) apply false
     alias(libs.plugins.kotlin.plugin.compose) apply false

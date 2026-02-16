@@ -21,7 +21,6 @@
     <dimen name="very_small_profile_picture_size">26dp</dimen>
     <dimen name="medium_profile_picture_size">46dp</dimen>
     <dimen name="extra_large_profile_picture_size">128dp</dimen>
-    <dimen name="large_profile_picture_size">80dp</dimen>
     <dimen name="xxl_profile_picture_size">190dp</dimen>
     <dimen name="conversation_view_status_indicator_size">14dp</dimen>
     <dimen name="border_thickness">1dp</dimen>
@@ -62,6 +61,9 @@
     <dimen name="message_corner_collapse_radius">4dp</dimen>
     <dimen name="media_bubble_default_dimens">210dp</dimen>
     <dimen name="media_bubble_min_width">150dp</dimen>
+
+    <dimen name="media_picker_folder_width">175dp</dimen>
+    <dimen name="media_picker_item_width">85dp</dimen>
 
     <integer name="media_overview_cols">4</integer>
 

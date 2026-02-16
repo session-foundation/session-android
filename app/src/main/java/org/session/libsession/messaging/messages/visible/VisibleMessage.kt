@@ -2,12 +2,17 @@ package org.session.libsession.messaging.messages.visible
 
 import androidx.annotation.Keep
 import network.loki.messenger.BuildConfig
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.pro.toProMessageBitSetValue
+import org.thoughtcrime.securesms.pro.toProProfileBitSetValue
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment as SignalAttachment
 
 /**

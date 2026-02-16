@@ -5,6 +5,8 @@
  */
 package org.session.libsession.messaging.sending_receiving.attachments
 
+import org.session.libsignal.utilities.guava.Optional
+
 /**
  * Represents a received SignalServiceAttachment "handle."  This
  * is a pointer to the actual attachment content, which needs to be
@@ -12,21 +14,19 @@ package org.session.libsession.messaging.sending_receiving.attachments
  *
  * @author Moxie Marlinspike
  */
-class SessionServiceAttachmentPointer(
-    val id: Long,
-    contentType: String?,
-    key: ByteArray?,
-    val size: Int?,
-    val preview: ByteArray?,
-    val width: Int,
-    val height: Int,
-    val digest: ByteArray?,
-    val filename: String?,
-    val voiceNote: Boolean,
-    val caption: String?,
-    url: String
+class SessionServiceAttachmentPointer(val id: Long, contentType: String?,
+                                      key: ByteArray?,
+                                      val size: Optional<Int>,
+                                      val preview: Optional<ByteArray>,
+                                      val width: Int,
+                                      val height: Int,
+                                      val digest: Optional<ByteArray>,
+                                      val filename: String,
+                                      val voiceNote: Boolean,
+                                      val caption: Optional<String>,
+                                      url: String
 ) : SessionServiceAttachment(contentType) {
 
-    override fun isStream(): Boolean = false
-    override fun isPointer(): Boolean = true
+    override fun isStream():  Boolean { return false }
+    override fun isPointer(): Boolean { return true  }
 }

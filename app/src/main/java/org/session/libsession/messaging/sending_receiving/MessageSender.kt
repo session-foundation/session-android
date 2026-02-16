@@ -18,7 +18,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
-import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.UnsendRequest
@@ -493,10 +492,10 @@ class MessageSender @Inject constructor(
             storage.updateReactionIfNeeded(message, message.sender?:userPublicKey, openGroupSentTimestamp)
         }
         // Sync the message if:
+        // • it's a visible message
         // • the destination was a contact
         // • we didn't sync it already
-        // • the message is NOT a DataExtractionNotification
-        if (destination is Destination.Contact && !isSyncMessage && message !is DataExtractionNotification) {
+        if (destination is Destination.Contact && !isSyncMessage) {
             if (message is VisibleMessage) message.syncTarget = destination.publicKey
             if (message is ExpirationTimerUpdate) message.syncTarget = destination.publicKey
 

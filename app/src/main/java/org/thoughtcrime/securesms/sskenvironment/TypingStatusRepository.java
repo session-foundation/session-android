@@ -6,6 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
+
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.SSKEnvironment;
@@ -17,7 +20,6 @@ import org.thoughtcrime.securesms.database.RecipientRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -153,14 +155,8 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
 
     notifier.postValue(new TypingState(new ArrayList<>(uniqueTypists), isReplacedByIncomingMessage));
 
-      Set<Long> activeThreads = new HashSet<>();
-      for (Map.Entry<Long, Set<Typist>> entry : typistMap.entrySet()) {
-          Set<Typist> value = entry.getValue();
-          if (value != null && !value.isEmpty()) {
-              activeThreads.add(entry.getKey());
-          }
-      }
-      threadsNotifier.postValue(activeThreads);
+    Set<Long> activeThreads = Stream.of(typistMap.keySet()).filter(t -> !typistMap.get(t).isEmpty()).collect(Collectors.toSet());
+    threadsNotifier.postValue(activeThreads);
   }
 
   public static class TypingState {

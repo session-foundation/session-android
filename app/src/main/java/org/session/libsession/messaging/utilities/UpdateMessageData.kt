@@ -1,113 +1,115 @@
 package org.session.libsession.messaging.utilities
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonClassDiscriminator
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.core.JsonParseException
 import org.session.libsession.messaging.messages.control.GroupUpdated
-import org.session.libsignal.utilities.Log
+import org.session.libsignal.messages.SignalServiceGroup
 import org.session.protos.SessionProtos.GroupUpdateInfoChangeMessage
 import org.session.protos.SessionProtos.GroupUpdateMemberChangeMessage.Type
+import org.session.libsignal.utilities.JsonUtil
+import org.session.libsignal.utilities.Log
+import java.util.Collections
 
-/**
- * Represents certain type of message.
- *
- * This class is an afterthought to save "rich message" into a message's body as JSON text.
- * We've since moved away from this setup, a dedicated
- * [org.thoughtcrime.securesms.database.model.content.MessageContent] is now used for rich
- * message types.
- *
- * If you want to store a new message type, you should use the new setup instead.
- *
- * We'll look into migrating this class into the new setup in the future.
- */
-@Serializable
-class UpdateMessageData(val kind: Kind) {
+// class used to save update messages details
+class UpdateMessageData () {
 
-    @OptIn(ExperimentalSerializationApi::class)
-    @Serializable
-    @JsonClassDiscriminator("@type")
-    sealed interface Kind {
-        @Serializable
-        @SerialName("GroupCreation")
-        data object GroupCreation: Kind
+    var kind: Kind? = null
 
-        @Serializable
-        @SerialName("GroupNameChange")
-        class GroupNameChange(val name: String): Kind
-
-        @Serializable
-        @SerialName("GroupMemberAdded")
-        class GroupMemberAdded(val updatedMembers: Collection<String>, val groupName: String): Kind
-
-        @Serializable
-        @SerialName("GroupMemberRemoved")
-        class GroupMemberRemoved(val updatedMembers: Collection<String>, val groupName:String): Kind
-
-        @Serializable
-        @SerialName("GroupMemberLeft")
-        class GroupMemberLeft(val updatedMembers: Collection<String>, val groupName:String): Kind
-
-        @Serializable
-        @SerialName("GroupMemberUpdated")
+    //the annotations below are required for serialization. Any new Kind class MUST be declared as JsonSubTypes as well
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    @JsonSubTypes(
+        JsonSubTypes.Type(Kind.GroupCreation::class, name = "GroupCreation"),
+        JsonSubTypes.Type(Kind.GroupNameChange::class, name = "GroupNameChange"),
+        JsonSubTypes.Type(Kind.GroupMemberAdded::class, name = "GroupMemberAdded"),
+        JsonSubTypes.Type(Kind.GroupMemberRemoved::class, name = "GroupMemberRemoved"),
+        JsonSubTypes.Type(Kind.GroupMemberLeft::class, name = "GroupMemberLeft"),
+        JsonSubTypes.Type(Kind.OpenGroupInvitation::class, name = "OpenGroupInvitation"),
+        JsonSubTypes.Type(Kind.GroupAvatarUpdated::class, name = "GroupAvatarUpdated"),
+        JsonSubTypes.Type(Kind.GroupMemberUpdated::class, name = "GroupMemberUpdated"),
+        JsonSubTypes.Type(Kind.GroupExpirationUpdated::class, name = "GroupExpirationUpdated"),
+        JsonSubTypes.Type(Kind.GroupInvitation::class, name = "GroupInvitation"),
+        JsonSubTypes.Type(Kind.GroupLeaving::class, name = "GroupLeaving"),
+        JsonSubTypes.Type(Kind.GroupErrorQuit::class, name = "GroupErrorQuit"),
+    )
+    sealed class Kind {
+        data object GroupCreation: Kind()
+        class GroupNameChange(val name: String): Kind() {
+            constructor(): this("") //default constructor required for json serialization
+        }
+        class GroupMemberAdded(val updatedMembers: Collection<String>, val groupName: String): Kind() {
+            constructor(): this(Collections.emptyList(), "")
+        }
+        class GroupMemberRemoved(val updatedMembers: Collection<String>, val groupName:String): Kind() {
+            constructor(): this(Collections.emptyList(), "")
+        }
+        class GroupMemberLeft(val updatedMembers: Collection<String>, val groupName:String): Kind() {
+            constructor(): this(Collections.emptyList(), "")
+        }
         class GroupMemberUpdated(
             val sessionIds: List<String>,
             val type: MemberUpdateType?,
             val groupName: String,
             val historyShared: Boolean
-        ): Kind
-
-        @Serializable
-        @SerialName("GroupAvatarUpdated")
-        data object GroupAvatarUpdated: Kind
-
-        @Serializable
-        @SerialName("GroupExpirationUpdated")
-        class GroupExpirationUpdated(val updatedExpiration: Long, val updatingAdmin: String): Kind
-
-        @Serializable
-        @SerialName("OpenGroupInvitation")
-        class OpenGroupInvitation(val groupUrl: String, val groupName: String): Kind
-
-        @Serializable
-        @SerialName("GroupLeaving")
-        data object GroupLeaving: Kind
-
-        @Serializable
-        @SerialName("GroupErrorQuit")
-        data class GroupErrorQuit(val groupName: String): Kind
-
-        @Serializable
-        @SerialName("GroupInvitation")
+        ): Kind() {
+            constructor(): this(emptyList(), null, "", false)
+        }
+        data object GroupAvatarUpdated: Kind()
+        class GroupExpirationUpdated(val updatedExpiration: Long, val updatingAdmin: String): Kind() {
+            constructor(): this(0L, "")
+        }
+        class OpenGroupInvitation(val groupUrl: String, val groupName: String): Kind() {
+            constructor(): this("", "")
+        }
+        data object GroupLeaving: Kind()
+        data class GroupErrorQuit(val groupName: String): Kind() {
+            constructor(): this("")
+        }
         class GroupInvitation(
             val groupAccountId: String,
             val invitingAdminId: String,
             val invitingAdminName: String?,
             val groupName: String
-        ) : Kind
+        ) : Kind() {
+            constructor(): this("", "", null, "")
+        }
     }
 
-    @Serializable
-    @JsonClassDiscriminator("@type")
-    sealed interface MemberUpdateType {
-        @Serializable
-        @SerialName("ADDED")
-        data object ADDED: MemberUpdateType
-
-        @Serializable
-        @SerialName("REMOVED")
-        data object REMOVED: MemberUpdateType
-
-        @Serializable
-        @SerialName("PROMOTED")
-        data object PROMOTED: MemberUpdateType
-
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    @JsonSubTypes(
+        JsonSubTypes.Type(MemberUpdateType.ADDED::class, name = "ADDED"),
+        JsonSubTypes.Type(MemberUpdateType.REMOVED::class, name = "REMOVED"),
+        JsonSubTypes.Type(MemberUpdateType.PROMOTED::class, name = "PROMOTED"),
+    )
+    sealed class MemberUpdateType {
+        data object ADDED: MemberUpdateType()
+        data object REMOVED: MemberUpdateType()
+        data object PROMOTED: MemberUpdateType()
     }
 
+    constructor(kind: Kind): this() {
+        this.kind = kind
+    }
 
     companion object {
         val TAG = UpdateMessageData::class.simpleName
+
+        fun buildGroupUpdate(type: SignalServiceGroup.Type, name: String, members: Collection<String>): UpdateMessageData? {
+            return when(type) {
+                SignalServiceGroup.Type.CREATION -> UpdateMessageData(Kind.GroupCreation)
+                SignalServiceGroup.Type.NAME_CHANGE -> UpdateMessageData(Kind.GroupNameChange(name))
+                SignalServiceGroup.Type.MEMBER_ADDED -> UpdateMessageData(Kind.GroupMemberAdded(members, name))
+                SignalServiceGroup.Type.MEMBER_REMOVED -> UpdateMessageData(Kind.GroupMemberRemoved(members, name))
+                SignalServiceGroup.Type.QUIT -> UpdateMessageData(Kind.GroupMemberLeft(members, name))
+                SignalServiceGroup.Type.LEAVING -> UpdateMessageData(Kind.GroupLeaving)
+                SignalServiceGroup.Type.ERROR_QUIT -> UpdateMessageData(Kind.GroupErrorQuit(groupName = name))
+                SignalServiceGroup.Type.UNKNOWN,
+                SignalServiceGroup.Type.UPDATE,
+                SignalServiceGroup.Type.DELIVER,
+                SignalServiceGroup.Type.REQUEST_INFO -> null
+            }
+        }
 
         fun buildGroupUpdate(groupUpdated: GroupUpdated, groupName: String): UpdateMessageData? {
             val inner = groupUpdated.inner
@@ -153,17 +155,19 @@ class UpdateMessageData(val kind: Kind) {
         }
 
         @JvmStatic
-        fun fromJSON(json: Json, value: String): UpdateMessageData? {
-             return runCatching {
-                 json.decodeFromString<UpdateMessageData>(value)
-             }.onFailure { Log.e(TAG, "Error decoding updateMessageData", it) }
-                 .getOrNull()
+        fun fromJSON(json: String): UpdateMessageData? {
+             return try {
+                JsonUtil.fromJson(json, UpdateMessageData::class.java)
+            } catch (e: JsonParseException) {
+                Log.e(TAG, "${e.message}")
+                null
+            }
         }
 
     }
 
-    fun toJSON(json: Json): String {
-        return json.encodeToString(this)
+    fun toJSON(): String {
+        return JsonUtil.toJson(this)
     }
 
     fun isGroupLeavingKind(): Boolean {

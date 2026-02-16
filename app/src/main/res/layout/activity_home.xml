@@ -155,12 +155,6 @@
                     android:text="@string/callsInProgress"
                     tools:visibility="visible" />
 
-                <androidx.compose.ui.platform.ComposeView
-                    android:id="@+id/miniPlayer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-
-
             </LinearLayout>
 
         </androidx.appcompat.widget.Toolbar>

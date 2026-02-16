@@ -12,13 +12,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
@@ -40,7 +37,6 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -109,24 +105,20 @@ fun BaseProSettingsScreen(
                     onBack = onBack,
                 )
             }} else {{}},
-        contentWindowInsets = WindowInsets.safeDrawing,
+        contentWindowInsets = WindowInsets.systemBars,
     ) { paddings ->
-
-        val layoutDirection = LocalLayoutDirection.current
-        val safeInsetsPadding = PaddingValues(
-            start = paddings.calculateStartPadding(layoutDirection) + LocalDimensions.current.spacing,
-            end = paddings.calculateEndPadding(layoutDirection)+ LocalDimensions.current.spacing,
-            top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
-                    .coerceAtLeast(0.dp) + 46.dp,
-            bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing
-        )
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .consumeWindowInsets(paddings),
             state = listState,
-            contentPadding = safeInsetsPadding,
+            contentPadding = PaddingValues(
+                start = LocalDimensions.current.spacing,
+                end = LocalDimensions.current.spacing,
+                top = (paddings.calculateTopPadding() - LocalDimensions.current.appBarHeight)
+                    .coerceAtLeast(0.dp) + 46.dp,
+                bottom = paddings.calculateBottomPadding() + LocalDimensions.current.spacing
+            ),
             horizontalAlignment = CenterHorizontally
         ) {
             item {

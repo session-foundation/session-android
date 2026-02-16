@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -51,7 +50,8 @@ fun ExportLogsDialog(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var exportingLogs by retain { mutableStateOf(false) }
+    //todo use retain once in the dev branch
+    var exportingLogs by remember { mutableStateOf(false) }
 
     if(exportingLogs){
         LoadingDialog()

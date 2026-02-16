@@ -8,7 +8,6 @@ import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewOpenGroupInvitationBinding
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.OpenGroupUrlParser
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -24,7 +23,7 @@ class OpenGroupInvitationView : LinearLayout {
 
     fun bind(message: MessageRecord, @ColorInt textColor: Int) {
         // FIXME: This is a really weird approach...
-        val umd = UpdateMessageData.fromJSON(MessagingModuleConfiguration.shared.json, message.body)!!
+        val umd = UpdateMessageData.fromJSON(message.body)!!
         val data = umd.kind as UpdateMessageData.Kind.OpenGroupInvitation
         this.data = data
         val iconID = if (message.isOutgoing) R.drawable.ic_globe else R.drawable.ic_plus

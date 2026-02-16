@@ -52,7 +52,7 @@ interface ButtonType {
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.background,
             containerColor = containerColor,
-            disabledContentColor = LocalColors.current.textOnAccent,
+            disabledContentColor = LocalColors.current.accentButtonFillText,
             disabledContainerColor = LocalColors.current.disabled
         )
     }
@@ -62,9 +62,9 @@ interface ButtonType {
         override fun border(enabled: Boolean) = null
         @Composable
         override fun buttonColors() = ButtonDefaults.buttonColors(
-            contentColor = LocalColors.current.textOnAccent,
+            contentColor = LocalColors.current.accentButtonFillText,
             containerColor = LocalColors.current.accent,
-            disabledContentColor = LocalColors.current.textOnAccent,
+            disabledContentColor = LocalColors.current.accentButtonFillText,
             disabledContainerColor = LocalColors.current.disabled
         )
     }
@@ -76,7 +76,7 @@ interface ButtonType {
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = LocalColors.current.text,
             containerColor = LocalColors.current.backgroundTertiary,
-            disabledContentColor = LocalColors.current.textOnAccent,
+            disabledContentColor = LocalColors.current.accentButtonFillText,
             disabledContainerColor = LocalColors.current.disabled
         )
     }
@@ -88,7 +88,7 @@ interface ButtonType {
         override fun buttonColors() = ButtonDefaults.buttonColors(
             contentColor = Color.Black,
             containerColor = dangerDark,
-            disabledContentColor = LocalColors.current.textOnAccent,
+            disabledContentColor = LocalColors.current.accentButtonFillText,
             disabledContainerColor = LocalColors.current.disabled
         )
     }

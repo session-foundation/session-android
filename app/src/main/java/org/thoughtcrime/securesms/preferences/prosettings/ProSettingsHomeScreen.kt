@@ -625,7 +625,6 @@ fun ProSettings(
                 ),
                 checked = showProBadge,
                 qaTag = R.string.qa_pro_settings_action_show_badge,
-                switchQaTag = R.string.qa_pro_settings_action_show_badge_toggle,
                 onCheckedChange = { sendCommand(SetShowProBadge(it)) }
             )
         }

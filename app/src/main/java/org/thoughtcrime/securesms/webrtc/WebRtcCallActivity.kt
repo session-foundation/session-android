@@ -1,13 +1,10 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
-import android.content.res.Configuration
 import android.graphics.Outline
 import android.media.AudioManager
 import android.os.Build
@@ -18,12 +15,9 @@ import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.IntentCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.transition.TransitionManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -85,10 +79,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
      */
     private var orientationManager = OrientationManager(this)
 
-    private val portraitConstraints = ConstraintSet()
-    private val landscapeConstraints = ConstraintSet()
-    private lateinit var rootConstraintLayout: ConstraintLayout
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             finish()
@@ -102,19 +92,11 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         handleIntent(intent)
     }
 
-    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
         binding = ActivityWebrtcBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        rootConstraintLayout = binding.root
-
-        // 1) Portrait constraints: from a portrait layout
-        portraitConstraints.clone(this, R.layout.activity_webrtc_portrait_template)
-        // 2) Landscape constraints: cloned from a template XML
-        landscapeConstraints.clone(this, R.layout.activity_webrtc_landscape_template)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -172,11 +154,8 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
         lifecycleScope.launch {
             orientationManager.orientation.collect { orientation ->
-                viewModel.setDeviceOrientation(orientation, orientationManager.isAutoRotateOn())
-                if(!orientationManager.isAutoRotateOn()){
-                    // let system handle it
-                    updateControlsRotation()
-                }
+                viewModel.deviceOrientation = orientation
+                updateControlsRotation()
             }
         }
 
@@ -264,13 +243,12 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     }
 
     private fun updateControlsRotation() {
-        with(binding) {
-            val rotation =
-                when (viewModel.deviceOrientation) {
-                    Orientation.LANDSCAPE -> -90f
-                    Orientation.REVERSED_LANDSCAPE -> 90f
-                    else -> 0f
-                }
+        with (binding) {
+            val rotation = when(viewModel.deviceOrientation){
+                Orientation.LANDSCAPE -> -90f
+                Orientation.REVERSED_LANDSCAPE -> 90f
+                else -> 0f
+            }
 
             userAvatar.animate().cancel()
             userAvatar.animate().rotation(rotation).start()
@@ -291,9 +269,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
             endCallButton.animate().cancel()
             endCallButton.animate().rotation(rotation).start()
-
-            backArrow.animate().cancel()
-            backArrow.animate().rotation(rotation).start()
         }
     }
 
@@ -383,58 +358,54 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
             // handle video state
             launch {
                 viewModel.videoState.collect { state ->
-                    renderVideoState(state)
+                    binding.floatingRenderer.removeAllViews()
+                    binding.fullscreenRenderer.removeAllViews()
+
+                    // handle fullscreen video window
+                    if(state.showFullscreenVideo()){
+                        viewModel.fullscreenRenderer?.let { surfaceView ->
+                            binding.fullscreenRenderer.addView(surfaceView)
+                            binding.fullscreenRenderer.isVisible = true
+                            hideAvatar()
+                        }
+                    } else {
+                        binding.fullscreenRenderer.isVisible = false
+                        showAvatar(state.swapped)
+                    }
+
+                    // handle floating video window
+                    if(state.showFloatingVideo()){
+                        viewModel.floatingRenderer?.let { surfaceView ->
+                            binding.floatingRenderer.addView(surfaceView)
+                            binding.floatingRenderer.isVisible = true
+                            binding.swapViewIcon.bringToFront()
+                        }
+                    } else {
+                        binding.floatingRenderer.isVisible = false
+                    }
+
+                    // the floating video inset (empty or not) should be shown
+                    // the moment we have either of the video streams
+                    val showFloatingContainer = state.userVideoEnabled || state.remoteVideoEnabled
+                    binding.floatingRendererContainer.isVisible = showFloatingContainer
+                    binding.swapViewIcon.isVisible = showFloatingContainer
+
+                    // make sure to default to the contact's avatar if the floating container is not visible
+                    if (!showFloatingContainer) showAvatar(false)
+
+                    // handle buttons
+                    binding.enableCameraButton.isSelected = state.userVideoEnabled
+                    binding.switchCameraButton.isEnabled = state.userVideoEnabled
+                    binding.switchCameraButton.imageTintList =
+                        ColorStateList.valueOf(
+                            if(state.userVideoEnabled) buttonColorEnabled
+                            else buttonColorDisabled
+                        )
                 }
             }
         }
     }
 
-    private fun renderVideoState(state : VideoState){
-        binding.floatingRenderer.removeAllViews()
-        binding.fullscreenRenderer.removeAllViews()
-
-        // handle fullscreen video window
-        if(state.showFullscreenVideo()){
-            viewModel.fullscreenRenderer?.let { surfaceView ->
-                binding.fullscreenRenderer.addView(surfaceView)
-                binding.fullscreenRenderer.isVisible = true
-                hideAvatar()
-            }
-        } else {
-            binding.fullscreenRenderer.isVisible = false
-            showAvatar(state.swapped)
-        }
-
-        // handle floating video window
-        if(state.showFloatingVideo()){
-            viewModel.floatingRenderer?.let { surfaceView ->
-                binding.floatingRenderer.addView(surfaceView)
-                binding.floatingRenderer.isVisible = true
-                binding.swapViewIcon.bringToFront()
-            }
-        } else {
-            binding.floatingRenderer.isVisible = false
-        }
-
-        // the floating video inset (empty or not) should be shown
-        // the moment we have either of the video streams
-        val showFloatingContainer = state.userVideoEnabled || state.remoteVideoEnabled
-        binding.floatingRendererContainer.isVisible = showFloatingContainer
-        binding.swapViewIcon.isVisible = showFloatingContainer
-
-        // make sure to default to the contact's avatar if the floating container is not visible
-        if (!showFloatingContainer) showAvatar(false)
-
-        // handle buttons
-        binding.enableCameraButton.isSelected = state.userVideoEnabled
-        binding.switchCameraButton.isEnabled = state.userVideoEnabled
-        binding.switchCameraButton.imageTintList =
-            ColorStateList.valueOf(
-                if(state.userVideoEnabled) buttonColorEnabled
-                else buttonColorDisabled
-            )
-    }
-    
     /**
      * Shows the avatar image.
      * If @showUserAvatar is true, the user's avatar is shown, otherwise the contact's avatar is shown.
@@ -454,22 +425,5 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         uiJob?.cancel()
         binding.fullscreenRenderer.removeAllViews()
         binding.floatingRenderer.removeAllViews()
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        if (!::rootConstraintLayout.isInitialized) return
-
-        val isLandscape = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-
-        if (isLandscape) {
-            landscapeConstraints.applyTo(rootConstraintLayout)
-        } else {
-            portraitConstraints.applyTo(rootConstraintLayout)
-        }
-
-        updateControls(viewModel.callState.value)
-        renderVideoState(viewModel.videoState.value)
     }
 }

@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.reviews.ui
 
 import android.content.Context
 import app.cash.turbine.test
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -54,8 +53,8 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
             manager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
             assertEquals(InAppReviewViewModel.UiState.StartPrompt, awaitItem())
 
-            // Click on negative button -- should show the positive prompt
-            vm.sendUiCommand(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
+            // Click on positive button -- should show the positive prompt
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
             assertEquals(InAppReviewViewModel.UiState.PositivePrompt, awaitItem())
 
             // Click on the positive button again - should request review flow
@@ -89,8 +88,8 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
             manager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
             assertEquals(InAppReviewViewModel.UiState.StartPrompt, awaitItem())
 
-            // Click on negative button - should show the positive prompt
-            vm.sendUiCommand(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
+            // Click on positive button - should show the positive prompt
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
             assertEquals(InAppReviewViewModel.UiState.PositivePrompt, awaitItem())
 
             // Click on the positive button again - should request review flow
@@ -127,8 +126,8 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
             manager.onEvent(InAppReviewManager.Event.PathScreenVisited)
             assertEquals(InAppReviewViewModel.UiState.StartPrompt, awaitItem())
 
-            // Click on positive button - should have negative prompt
-            vm.sendUiCommand(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
+            // Click on negative button - should have negative prompt
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
             assertEquals(InAppReviewViewModel.UiState.NegativePrompt, awaitItem())
 
             // Click on the positive button - should open survey
@@ -141,7 +140,6 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `should reappear after dismissing mid-positive flow`() = runTest {
         val manager = createManager(isFreshInstall = true, supportInAppReviewFlow = true)
@@ -164,8 +162,8 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
             manager.onEvent(InAppReviewManager.Event.ThemeChanged)
             assertEquals(InAppReviewViewModel.UiState.StartPrompt, awaitItem())
 
-            // Click on negative button - should have positive prompt
-            vm.sendUiCommand(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
+            // Click on positive button - should have positive prompt
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
             assertEquals(InAppReviewViewModel.UiState.PositivePrompt, awaitItem())
 
             // Dismiss the dialog - should hide the prompt
@@ -203,7 +201,7 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
             assertEquals(InAppReviewViewModel.UiState.StartPrompt, awaitItem())
 
             // Click on positive button - should have positive prompt
-            vm.sendUiCommand(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
             assertEquals(InAppReviewViewModel.UiState.NegativePrompt, awaitItem())
 
             // Dismiss the dialog - should hide the prompt
