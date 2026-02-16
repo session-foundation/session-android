@@ -222,7 +222,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(
-            TitledText(R.string.attachmentsFileId, filename),
+            TitledText(R.string.attachmentsFileId, asAttachment().location), //File ID isn't the filename but the ID on the file server
             TitledText(R.string.attachmentsFileType, asAttachment().contentType),
             TitledText(R.string.attachmentsFileSize, Formatter.formatFileSize(context, fileSize)),
             takeIf { it is ImageSlide }
@@ -235,7 +235,10 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private fun AttachmentDatabase.duration(slide: Slide): String? =
         slide.takeIf { it.hasAudio() }
             ?.run { asAttachment() as? DatabaseAttachment }
-            ?.run { getAttachmentAudioExtras(attachmentId)?.durationMs }
+            ?.run {
+                getAttachmentAudioExtras(attachmentId)?.durationMs
+                    ?: this.audioDurationMs
+            }
             ?.takeIf { it > 0 }
             ?.let {
                 String.format(

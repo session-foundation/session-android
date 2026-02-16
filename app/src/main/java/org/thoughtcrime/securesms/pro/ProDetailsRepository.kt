@@ -103,7 +103,7 @@ class ProDetailsRepository @Inject constructor(
         }
 
         Log.d(DebugLogGroup.PRO_DATA.label, "Scheduling fetch of Pro details from server")
-        FetchProDetailsWorker.schedule(application, ExistingWorkPolicy.KEEP)
+        FetchProDetailsWorker.schedule(application, ExistingWorkPolicy.REPLACE)
     }
 
 

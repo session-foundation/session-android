@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.MessageDataProvider
@@ -95,6 +96,7 @@ class DefaultConversationRepository @Inject constructor(
     private val banUserApiFactory: BanUserApi.Factory,
     private val unbanUserApiFactory: UnbanUserApi.Factory,
     private val deleteUserMessageApiFactory: DeleteUserMessagesApi.Factory,
+    private val json: Json,
 ) : ConversationRepository {
 
     override val conversationListAddressesFlow get() = loginStateRepository.flowWithLoggedInState {
@@ -227,6 +229,7 @@ class DefaultConversationRepository @Inject constructor(
             val expirationConfig = recipientRepository.getRecipientSync(contact).expiryMode
             val expireStartedAt = if (expirationConfig is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.Companion.fromOpenGroupInvitation(
+                json,
                 openGroupInvitation,
                 contact,
                 message.sentTimestamp!!,

@@ -21,8 +21,10 @@ import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.CursorList
 import org.thoughtcrime.securesms.database.MmsSmsColumns
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SearchDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
@@ -191,6 +193,10 @@ class SearchRepository @Inject constructor(
 
     private inner class MessageModelBuilder() : CursorList.ModelBuilder<MessageResult> {
         override fun build(cursor: Cursor): MessageResult {
+            val messageId = MessageId(
+                id = cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID)),
+                mms = cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsDatabase.TRANSPORT)) == MmsSmsDatabase.MMS_TRANSPORT
+            )
             val conversationAddress =
                 fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS)))
             val messageAddress =
@@ -202,7 +208,14 @@ class SearchRepository @Inject constructor(
                 cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))
             val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.THREAD_ID))
 
-            return MessageResult(conversationRecipient, messageRecipient, body, threadId, sentMs)
+            return MessageResult(
+                messageId = messageId,
+                conversationRecipient = conversationRecipient,
+                messageRecipient = messageRecipient,
+                bodySnippet = body,
+                threadId = threadId,
+                sentTimestampMs = sentMs
+            )
         }
     }
 

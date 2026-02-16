@@ -26,8 +26,6 @@ import android.database.Cursor;
 import androidx.collection.ArraySet;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.json.JSONArray;
@@ -41,7 +39,6 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
@@ -433,7 +430,7 @@ public class SmsDatabase extends MessagingDatabase {
             "WHERE " + ID + " = ?", newTimestamp, messageId);
   }
 
-  protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runThreadUpdate) {
+  protected @Nullable InsertResult insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runThreadUpdate) {
     Address recipient = message.getSender();
     Address groupRecipient = message.getGroup();
 
@@ -479,7 +476,7 @@ public class SmsDatabase extends MessagingDatabase {
 
     if (message.getPush() && isDuplicate(message, threadId)) {
       Log.w(TAG, "Duplicate message (" + message.getSentTimestampMillis() + "), ignoring...");
-      return Optional.absent();
+      return null;
     } else {
       SQLiteDatabase db        = getWritableDatabase();
       long           messageId = db.insert(TABLE_NAME, null, values);
@@ -488,7 +485,7 @@ public class SmsDatabase extends MessagingDatabase {
         threadDatabase.get().update(threadId, true);
       }
 
-      return Optional.of(new InsertResult(messageId, threadId));
+      return new InsertResult(messageId, threadId);
     }
   }
 
@@ -507,28 +504,28 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
-  public Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, boolean runThreadUpdate) {
+  public @Nullable InsertResult insertMessageInbox(IncomingTextMessage message, boolean runThreadUpdate) {
     return insertMessageInbox(message, Types.BASE_INBOX_TYPE, 0, runThreadUpdate);
   }
 
-  public Optional<InsertResult> insertCallMessage(IncomingTextMessage message) {
+  public @Nullable InsertResult insertCallMessage(IncomingTextMessage message) {
     return insertMessageInbox(message, 0, 0, true);
   }
 
-  public Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long serverTimestamp, boolean runThreadUpdate) {
+  public @Nullable InsertResult insertMessageInbox(IncomingTextMessage message, long serverTimestamp, boolean runThreadUpdate) {
     return insertMessageInbox(message, Types.BASE_INBOX_TYPE, serverTimestamp, runThreadUpdate);
   }
 
-  public Optional<InsertResult> insertMessageOutbox(long threadId, OutgoingTextMessage message, long serverTimestamp, boolean runThreadUpdate) {
+  public @Nullable InsertResult insertMessageOutbox(long threadId, OutgoingTextMessage message, long serverTimestamp, boolean runThreadUpdate) {
     if (threadId == -1) {
       threadId = threadDatabase.get().getOrCreateThreadIdFor(message.getRecipient());
     }
     long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, runThreadUpdate);
     if (messageId == -1) {
-      return Optional.absent();
+      return null;
     }
     markAsSent(messageId, true);
-    return Optional.fromNullable(new InsertResult(messageId, threadId));
+    return new InsertResult(messageId, threadId);
   }
 
   public long insertMessageOutbox(long threadId, OutgoingTextMessage message,
@@ -554,8 +551,8 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(TYPE, type);
     contentValues.put(EXPIRES_IN, message.getExpiresInMillis());
     contentValues.put(EXPIRE_STARTED, message.getExpireStartedAtMillis());
-    contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());
-    contentValues.put(READ_RECEIPT_COUNT, Stream.of(earlyReadReceipts.values()).mapToLong(Long::longValue).sum());
+    contentValues.put(DELIVERY_RECEIPT_COUNT, earlyDeliveryReceipts.values().stream().mapToLong(Long::longValue).sum());
+    contentValues.put(READ_RECEIPT_COUNT, earlyReadReceipts.values().stream().mapToLong(Long::longValue).sum());
     contentValues.put(PRO_MESSAGE_FEATURES, ProFeatureExtKt.toProMessageBitSetValue(message.getProFeatures()));
     contentValues.put(PRO_PROFILE_FEATURES, ProFeatureExtKt.toProProfileBitSetValue(message.getProFeatures()));
 

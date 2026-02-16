@@ -18,7 +18,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord;
 import org.thoughtcrime.securesms.mediasend.Media;
 import org.thoughtcrime.securesms.util.FilenameUtils;

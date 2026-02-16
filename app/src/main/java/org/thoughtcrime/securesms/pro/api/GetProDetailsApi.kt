@@ -67,7 +67,7 @@ class ProDetails(
     val paymentItems: List<Item> = emptyList(),
 
     @SerialName("refund_requested_unix_ts_ms")
-    val refundRequestedAtMs: Int = 0,
+    val refundRequestedAtMs: Long = 0,
 
 
 
