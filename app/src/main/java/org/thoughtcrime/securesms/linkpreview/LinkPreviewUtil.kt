@@ -38,7 +38,6 @@ object LinkPreviewUtil {
     /**
      * @return All whitelisted URLs in the source text.
      */
-    @JvmStatic
     fun findWhitelistedUrls(text: String): List<Link> {
         val spannable = SpannableString(text)
         spannable.addUrlSpansWithAutolink()
@@ -59,7 +58,6 @@ object LinkPreviewUtil {
     /**
      * @return True if the host is valid.
      */
-    @JvmStatic
     fun isValidLinkUrl(linkUrl: String?): Boolean {
         if (linkUrl.isNullOrEmpty()) return false
 
@@ -70,7 +68,6 @@ object LinkPreviewUtil {
     /**
      * @return True if the top-level domain is valid.
      */
-    @JvmStatic
     fun isValidMediaUrl(mediaUrl: String?): Boolean {
         if (mediaUrl.isNullOrEmpty()) return false
 
@@ -78,7 +75,6 @@ object LinkPreviewUtil {
         return url.scheme == "https" && isLegalUrl(mediaUrl)
     }
 
-    @JvmStatic
     fun isLegalUrl(url: String): Boolean {
         val match = DOMAIN_PATTERN.matchEntire(url) ?: return false
         val domain = match.groupValues.getOrNull(2) ?: return false
@@ -89,7 +85,6 @@ object LinkPreviewUtil {
         )
     }
 
-    @JvmStatic
     fun isValidMimeType(url: String): Boolean {
         val path = try {
             URI(url).path.lowercase(Locale.ROOT)
@@ -104,7 +99,6 @@ object LinkPreviewUtil {
         return validExtensions.any { path.endsWith(it) }
     }
 
-    @JvmStatic
     fun parseOpenGraphFields(html: String?): OpenGraph {
         return parseOpenGraphFields(html) { encoded ->
             HtmlCompat.fromHtml(encoded, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
