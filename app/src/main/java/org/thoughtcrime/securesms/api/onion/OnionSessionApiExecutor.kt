@@ -6,6 +6,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.IOException
@@ -111,9 +113,9 @@ class OnionSessionApiExecutor @Inject constructor(
         val body = try {
             onionRequestEncryption.encode(
                 ciphertext = builtOnion.ciphertext,
-                json = mapOf(
-                    "ephemeral_key" to builtOnion.ephemeralPublicKey.toHexString(),
-                )
+                payload = JsonObject(mapOf(
+                    "ephemeral_key" to JsonPrimitive(builtOnion.ephemeralPublicKey.toHexString()),
+                ))
             )
         } catch (e: Exception) {
             throw OnionError.EncodingError(
