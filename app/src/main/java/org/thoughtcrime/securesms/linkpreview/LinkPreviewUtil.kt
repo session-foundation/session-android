@@ -154,8 +154,8 @@ object LinkPreviewUtil {
 
     class OpenGraph(
         private val values: Map<String, String>,
-        private val title: String?,
-        private val imageUrl: String?
+        private val htmlTitle: String?,
+        private val faviconUrl: String?
     ) {
 
         companion object {
@@ -167,13 +167,11 @@ object LinkPreviewUtil {
             private const val KEY_MODIFIED_TIME_2 = "article:modified_time"
         }
 
-        fun getTitle(): String? {
-            return Util.getFirstNonEmpty(values[KEY_TITLE], title)
-        }
+        val title: String?
+            get() = Util.getFirstNonEmpty(values[KEY_TITLE], htmlTitle)
 
-        fun getImageUrl(): String? {
-            return Util.getFirstNonEmpty(values[KEY_IMAGE_URL], imageUrl)
-        }
+        val imageUrl: String?
+            get() = Util.getFirstNonEmpty(values[KEY_IMAGE_URL], faviconUrl)
 
         private fun parseISO8601(date: String?): Long {
             if (date.isNullOrEmpty()) return -1L
