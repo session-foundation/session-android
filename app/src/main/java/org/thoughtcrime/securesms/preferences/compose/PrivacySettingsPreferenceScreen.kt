@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.util.IntentUtils
 
 @Composable
@@ -133,8 +134,10 @@ fun PrivacySettingsPreference(
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.callsVoiceAndVideo),
                         subtitle = annotatedStringResource(R.string.callsVoiceAndVideoToggleDescription),
+                        subtitleStyle = LocalType.current.large,
                         checked = uiState.callNotificationsEnabled,
                         qaTag = R.string.qa_preferences_voice_calls,
+                        switchQaTag = R.string.qa_preferences_voice_calls_toggle,
                         onCheckedChange = { isChecked ->
                             if (isChecked) {
                                 sendCommand(ShowCallsWarningDialog)
@@ -163,9 +166,11 @@ fun PrivacySettingsPreference(
                                 .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                 .format()
                         ),
+                        subtitleStyle = LocalType.current.large,
                         enabled = uiState.screenLockEnabled,
                         checked = uiState.screenLockChecked,
                         qaTag = R.string.qa_preferences_lock_app,
+                        switchQaTag = R.string.qa_preferences_lock_app_toggle,
                         onCheckedChange = { isEnabled -> sendCommand(ToggleLockApp(isEnabled)) }
                     )
                 }
@@ -185,8 +190,10 @@ fun PrivacySettingsPreference(
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.messageRequestsCommunities),
                         subtitle = annotatedStringResource(R.string.messageRequestsCommunitiesDescription),
+                        subtitleStyle = LocalType.current.large,
                         checked = uiState.allowCommunityMessageRequests,
                         qaTag = R.string.qa_preferences_message_requests,
+                        switchQaTag = R.string.qa_preferences_message_requests_toggle,
                         onCheckedChange = { sendCommand(ToggleCommunityRequests) }
                     )
                 }
@@ -206,8 +213,10 @@ fun PrivacySettingsPreference(
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.readReceipts),
                         subtitle = annotatedStringResource(R.string.readReceiptsDescription),
+                        subtitleStyle = LocalType.current.large,
                         checked = uiState.readReceiptsEnabled,
                         qaTag = R.string.qa_preferences_read_receipt,
+                        switchQaTag = R.string.qa_preferences_read_receipt_toggle,
                         onCheckedChange = { isEnabled -> sendCommand(ToggleReadReceipts(isEnabled)) }
                     )
                 }
@@ -227,8 +236,10 @@ fun PrivacySettingsPreference(
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.typingIndicators),
                         subtitle = annotatedStringResource(R.string.typingIndicatorsDescription),
+                        subtitleStyle = LocalType.current.large,
                         checked = uiState.typingIndicators,
                         qaTag = R.string.qa_preferences_typing_indicator,
+                        switchQaTag = R.string.qa_preferences_typing_indicator_toggle,
                         switchLeadingContent = {
                             TypingIndicator(isTyping = true)
                         },
@@ -257,8 +268,10 @@ fun PrivacySettingsPreference(
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.linkPreviewsSend),
                         subtitle = annotatedStringResource(R.string.linkPreviewsDescription),
+                        subtitleStyle = LocalType.current.large,
                         checked = uiState.linkPreviewEnabled,
                         qaTag = R.string.qa_preferences_link_previews,
+                        switchQaTag = R.string.qa_preferences_link_previews_toggle,
                         onCheckedChange = { isEnabled -> sendCommand(ToggleLinkPreviews(isEnabled)) }
                     )
                 }
@@ -278,8 +291,10 @@ fun PrivacySettingsPreference(
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.incognitoKeyboard),
                         subtitle = annotatedStringResource(R.string.incognitoKeyboardDescription),
+                        subtitleStyle = LocalType.current.large,
                         checked = uiState.incognitoKeyboardEnabled,
                         qaTag = R.string.qa_preferences_incognito_keyboard,
+                        switchQaTag = R.string.qa_preferences_incognito_keyboard_toggle,
                         onCheckedChange = { isEnabled ->
                             sendCommand(
                                 ToggleIncognitoKeyboard(
@@ -306,7 +321,7 @@ fun PrivacySettingsPreference(
             buttons = listOf(
                 DialogButtonData(
                     text = GetString(stringResource(R.string.enable)),
-                    qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_enable),
                     onClick = {
                         sendCommand(AskMicPermission)
                     }
@@ -334,7 +349,7 @@ fun PrivacySettingsPreference(
             buttons = listOf(
                 DialogButtonData(
                     text = GetString(stringResource(R.string.enable)),
-                    qaTag = stringResource(R.string.qa_preferences_dialog_cancel),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_enable),
                     onClick = {
                         sendCommand(NavigateToAppNotificationsSettings)
                     }

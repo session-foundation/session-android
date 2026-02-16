@@ -32,6 +32,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class PersistentLogger @Inject constructor(
     @param:ApplicationContext private val context: Context,
     @ManagerScope scope: CoroutineScope,
+    logSecretProvider: LogSecretProvider,
 ) : Logger(), OnAppStartupComponent {
     private val freeLogEntryPool = LogEntryPool()
     private val logEntryChannel: SendChannel<LogEntry>
@@ -40,7 +41,7 @@ class PersistentLogger @Inject constructor(
     private val logDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS zzz", Locale.ENGLISH)
 
     private val secret by lazy {
-        LogSecretProvider.getOrCreateAttachmentSecret(context)
+        logSecretProvider.getOrCreateAttachmentSecret()
     }
 
     private val logFolder by lazy {

@@ -18,6 +18,8 @@ class AutoRetryApiExecutor<Req, Res>(
     private val actualExecutor: ApiExecutor<Req, Res>,
 ) : ApiExecutor<Req, Res> {
     override suspend fun send(ctx: ApiExecutorContext, req: Req): Res {
+        val initStack = Throwable().stackTrace
+
         var numRetried = 0
         while (true) {
             try {
@@ -32,7 +34,16 @@ class AutoRetryApiExecutor<Req, Res>(
                     Log.e(TAG, "Retrying $req $numRetried times due to error", e)
                     delay(numRetried * 2000L)
                 } else {
-                    throw e
+                    // If we know the error is ErrorWithFailureDecision, we can
+                    // safely modify its stacktrace as we know that exception contains
+                    // a cause where it can pinpoint to the direct trace of the error.
+                    // Otherwise, we'll create a new exception to modify the stacktrace, so to
+                    // preserve the original error's stacktrace which may contain important
+                    // information about the error.
+
+                    val errorToUpdateStack = e.takeIf { it is ErrorWithFailureDecision } ?: RuntimeException(e)
+                    errorToUpdateStack.stackTrace = initStack
+                    throw errorToUpdateStack
                 }
             }
         }

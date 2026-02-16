@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.protobuf.ByteString
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filter
@@ -1225,7 +1226,12 @@ class GroupManagerV2Impl @Inject constructor(
 
     override fun onBlocked(groupAccountId: AccountId) {
         scope.launch(groupAccountId, "On blocked") {
-            respondToInvitation(groupAccountId, false)
+            try {
+                respondToInvitation(groupAccountId, false)
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+                Log.e(TAG, "Failed to unapprove invitation for group", e)
+            }
 
             // Remove this group from config regardless
             configFactory.removeGroup(groupAccountId)

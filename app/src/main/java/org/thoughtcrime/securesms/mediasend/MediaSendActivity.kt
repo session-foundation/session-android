@@ -252,7 +252,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderCompos
         overridePendingTransition(R.anim.stationary, R.anim.camera_slide_to_bottom)
     }
 
-    override fun onNoMediaAvailable() {
+    private fun onNoMediaAvailable() {
         setResult(RESULT_CANCELED)
         finish()
     }
@@ -323,6 +323,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderCompos
                                 effect.message,
                                 Toast.LENGTH_LONG
                             ).show()
+
+                        is MediaSendViewModel.MediaSendEffect.NoMediaAvailable -> onNoMediaAvailable()
                     }
                 }
             }
