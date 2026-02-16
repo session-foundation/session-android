@@ -17,6 +17,7 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.text.Spannable
+import android.text.SpannableString
 import android.text.style.URLSpan
 import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkType
@@ -42,8 +43,10 @@ object Util {
     /**
      * Uses autolink-java to detect URLs with better boundaries than Android Linkify,
      * and applies standard URLSpan spans only.
+     *
+     * Also returns TRUE if any links were created
      */
-    fun Spannable.addUrlSpansWithAutolink() {
+    fun Spannable.addUrlSpansWithAutolink() : Boolean {
         // Remove any existing URLSpans first so we don't get overlapping links
         getSpans(0, length, URLSpan::class.java).forEach { removeSpan(it) }
 
@@ -65,5 +68,7 @@ object Util {
 
             setSpan(URLSpan(url), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
+
+        return links.any()
     }
 }

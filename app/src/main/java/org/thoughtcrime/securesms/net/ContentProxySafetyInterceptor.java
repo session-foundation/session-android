@@ -3,8 +3,8 @@ package org.thoughtcrime.securesms.net;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil;
 
 import java.io.IOException;
 
