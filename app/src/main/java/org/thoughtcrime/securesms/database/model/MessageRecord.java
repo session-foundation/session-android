@@ -117,8 +117,9 @@ public abstract class MessageRecord extends DisplayRecord {
   }
 
   public boolean isGroupExpirationTimerUpdate() {
-    return getGroupUpdateMessage() != null &&
-            getGroupUpdateMessage().getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
+    UpdateMessageData message = getGroupUpdateMessage();
+    return message != null &&
+            message.getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
   }
 
     @Override
