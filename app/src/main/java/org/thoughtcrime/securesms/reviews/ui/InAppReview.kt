@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -128,6 +129,8 @@ private fun InAppReviewDialog(
     message: String,
     positiveButtonText: String,
     negativeButtonText: String? = null,
+    positiveButtonTextColor: Color = LocalColors.current.accentText,
+    negativeButtonTextColor: Color = LocalColors.current.text,
     positiveButtonQaTag: String,
     negativeButtonQaTag: String? = null,
     sendCommands: (InAppReviewViewModel.UiCommand) -> Unit,
@@ -135,7 +138,7 @@ private fun InAppReviewDialog(
     val buttons = mutableListOf(
         DialogButtonData(
             text = GetString.FromString(positiveButtonText),
-            color = LocalColors.current.accentText,
+            color = positiveButtonTextColor,
             qaTag = positiveButtonQaTag,
             dismissOnClick = false
         ) {
@@ -147,6 +150,7 @@ private fun InAppReviewDialog(
         buttons.add(
             DialogButtonData(
                 text = GetString.FromString(negativeButtonText),
+                color = negativeButtonTextColor,
                 qaTag = negativeButtonQaTag,
                 dismissOnClick = false
             ) {
@@ -183,10 +187,12 @@ private fun InAppReviewStartPrompt(
             .put(EMOJI_KEY, "❤\uFE0F")
             .format()
             .toString(),
+        negativeButtonTextColor = LocalColors.current.accentText,
         positiveButtonText = Phrase.from(context, R.string.enjoyingSessionButtonNegative)
             .put(EMOJI_KEY, "\uD83D\uDE15")
             .format()
             .toString(),
+        positiveButtonTextColor = LocalColors.current.text,
         negativeButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_great),
         positiveButtonQaTag = stringResource(R.string.qa_inapp_review_dialog_button_work),
         sendCommands = sendCommands
