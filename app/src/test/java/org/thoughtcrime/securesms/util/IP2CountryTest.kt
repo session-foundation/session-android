@@ -1,40 +1,42 @@
 package org.thoughtcrime.securesms.util
 
-import android.content.Context
+import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.mockito.Mockito.mock
+import org.robolectric.RobolectricTestRunner
+import java.util.Locale
 
-@RunWith(Parameterized::class)
-class IP2CountryTest(
-    private val ip: String,
-    private val country: String
-) {
-    private val context: Context = mock(Context::class.java)
-    private val ip2Country = IP2Country(context, this::class.java.classLoader!!::getResourceAsStream)
+@RunWith(RobolectricTestRunner::class)
+class IP2CountryTest {
+    @get:Rule
+    val logRule = MockLoggingRule()
+
+    private val ip2Country = IP2Country(InstrumentationRegistry.getInstrumentation().context)
 
     @Test
-    fun getCountryNamesCache() {
-        assertEquals(country, ip2Country.cacheCountryForIP(ip))
+    fun getCountryNamesCache() = runTest {
+        for ((ip, country) in data()) {
+            assertEquals(country, ip2Country.lookupCountry(ip, Locale.ENGLISH))
+        }
     }
 
     companion object {
-        @JvmStatic
-        @Parameterized.Parameters
-        fun data(): Collection<Array<Any>> = listOf(
-            arrayOf("223.121.64.0", "Hong Kong"),
-            arrayOf("223.121.64.1", "Hong Kong"),
-            arrayOf("223.121.127.0", "Hong Kong"),
-            arrayOf("223.121.128.0", "China"),
-            arrayOf("223.121.129.0", "China"),
-            arrayOf("223.122.0.0", "Hong Kong"),
-            arrayOf("223.123.0.0", "Pakistan"),
-            arrayOf("223.123.128.0", "China"),
-            arrayOf("223.124.0.0", "China"),
-            arrayOf("223.128.0.0", "China"),
-            arrayOf("223.130.0.0", "Singapore")
+        fun data(): Collection<Pair<String, String>> = listOf(
+            "223.121.64.0" to "Hong Kong SAR China",
+            "223.121.64.1" to "Hong Kong SAR China",
+            "223.121.127.0" to "Hong Kong SAR China",
+            "223.121.128.0" to "China",
+            "223.121.129.0" to "China",
+            "223.122.0.0" to "Hong Kong SAR China",
+            "223.123.0.0" to "Pakistan",
+            "223.123.128.0" to "Hong Kong SAR China",
+            "223.124.0.0" to "China",
+            "223.128.0.0" to "China",
+            "223.130.0.0" to "Singapore",
         )
     }
 }

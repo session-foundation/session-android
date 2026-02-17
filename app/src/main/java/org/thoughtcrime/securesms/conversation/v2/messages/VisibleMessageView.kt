@@ -106,7 +106,6 @@ class VisibleMessageView : FrameLayout {
     private var onDoubleTap: (() -> Unit)? = null
     private var isOutgoing: Boolean = false
 
-    var indexInAdapter: Int = -1
     var isMessageSelected = false
         set(value) {
             field = value
@@ -272,8 +271,9 @@ class VisibleMessageView : FrameLayout {
         // Update message status indicator
         showStatusMessage(message, lastSentMessageId)
 
-        // Emoji Reactions
-        if (!message.isDeleted && message.reactions.isNotEmpty()) {
+        // Emoji Reactions // we hide the emoji reactions if the contact isn't approved, nor approved us
+        if (!message.isDeleted && message.reactions.isNotEmpty()
+            && threadRecipient.approvedMe && threadRecipient.approved) {
             val capabilities = (threadRecipient.address as? Address.Community)?.serverUrl?.let { lokiApiDb.getServerCapabilities(it) }
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
@@ -298,7 +298,6 @@ class VisibleMessageView : FrameLayout {
         }
 
         // Populate content view
-        binding.messageContentView.root.indexInAdapter = indexInAdapter
         binding.messageContentView.root.bind(
             message,
             isStartOfMessageCluster,
@@ -368,8 +367,8 @@ class VisibleMessageView : FrameLayout {
 
         // ----- Case i..) Message is incoming and scheduled to disappear -----
         if (message.isIncoming && scheduledToDisappear) {
-            // Display the status ('Read') and the show the timer only (no delivery icon)
-            binding.messageStatusTextView.isVisible  = true
+            // show the timer only (no delivery icon)
+            binding.messageStatusTextView.isVisible  = false
             binding.expirationTimerView.isVisible    = true
             binding.expirationTimerView.bringToFront()
             updateExpirationTimer(message)

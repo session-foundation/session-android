@@ -1,10 +1,8 @@
 package org.session.libsignal.utilities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -27,41 +25,10 @@ public class JsonUtil {
     objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
   }
 
-  public static <T> T fromJson(byte[] serialized, Class<T> clazz) throws IOException {
-    return fromJson(new String(serialized), clazz);
-  }
-
-  public static <T> T fromJson(ByteArraySlice serialized, Class<T> clazz) throws IOException {
-    return objectMapper.readValue(serialized.getData(), serialized.getOffset(), serialized.getLen(), clazz);
-  }
-
-  public static <T> T fromJson(String serialized, TypeReference<T> typeReference) throws IOException {
-    return objectMapper.readValue(serialized, typeReference);
-  }
-
   public static <T> T fromJson(String serialized, Class<T> clazz) throws IOException {
     return objectMapper.readValue(serialized, clazz);
   }
 
-  public static<T> T fromJson(String serialized, JavaType clazz) throws IOException {
-    return objectMapper.readValue(serialized, clazz);
-  }
-
-  public static <T> T fromJson(InputStream serialized, Class<T> clazz) throws IOException {
-    return objectMapper.readValue(serialized, clazz);
-  }
-
-  public static <T> T fromJson(Reader serialized, Class<T> clazz) throws IOException {
-    return objectMapper.readValue(serialized, clazz);
-  }
-
-  public static <T> T fromJson(JsonNode serialized, Class<T> clazz) throws IOException {
-    return objectMapper.treeToValue(serialized, clazz);
-  }
-
-  public  static JsonNode fromJson(String serialized) throws IOException {
-    return objectMapper.readTree(serialized);
-  }
 
   public static String toJsonThrows(Object object) throws IOException {
     return objectMapper.writeValueAsString(object);
@@ -76,9 +43,6 @@ public class JsonUtil {
     }
   }
 
-  public static ObjectMapper getMapper() {
-    return objectMapper;
-  }
 
   public static class SaneJSONObject {
     private final JSONObject delegate;

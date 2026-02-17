@@ -72,7 +72,7 @@ class CreateGroupViewModel @AssistedInject constructor(
             mutableIsLoading.value = true
             viewModelScope.launch(Dispatchers.Default) {
                 try {
-                    groupDatabase.getGroup(id).orNull()?.let { group ->
+                    groupDatabase.getGroup(id)?.let { group ->
                         mutableGroupName.value = group.title
                         val myPublicKey = storage.getUserPublicKey()
 

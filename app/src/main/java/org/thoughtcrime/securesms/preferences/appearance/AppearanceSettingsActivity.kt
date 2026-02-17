@@ -132,7 +132,8 @@ class AppearanceSettingsActivity: ScreenLockActionBarActivity(), View.OnClickLis
                 SessionSwitch(
                     checked = viewModel.uiState.collectAsState().value.followSystem,
                     onCheckedChange = viewModel::setNewFollowSystemSettings,
-                    enabled = true
+                    enabled = true,
+                    qaTag = R.string.qa_preferences_appearance_follow_system
                 )
             }
 

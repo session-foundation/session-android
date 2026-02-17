@@ -4,13 +4,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.session.libsignal.utilities.Log;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.session.libsignal.utilities.Base64;
-import org.session.libsignal.utilities.guava.Optional;
 import org.session.libsignal.messages.SignalServiceEnvelope;
 import org.session.libsignal.utilities.Util;
 
@@ -42,11 +43,11 @@ public class PushDatabase extends Database {
   }
 
   public long insert(@NonNull SignalServiceEnvelope envelope) {
-    Optional<Long> messageId = find(envelope);
+      Long messageId = find(envelope);
 
-    if (messageId.isPresent()) {
-      return messageId.get();
-    } else {
+      if (messageId != null) {
+          return messageId;
+      } else {
       ContentValues values = new ContentValues();
       values.put(TYPE, envelope.getType());
       values.put(SOURCE, envelope.getSource());
@@ -98,11 +99,7 @@ public class PushDatabase extends Database {
     getWritableDatabase().delete(TABLE_NAME, ID_WHERE, new String[] {id+""});
   }
 
-  public Reader readerFor(Cursor cursor) {
-    return new Reader(cursor);
-  }
-
-  private Optional<Long> find(SignalServiceEnvelope envelope) {
+    private @Nullable Long find(@NonNull SignalServiceEnvelope envelope) {
     SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = null;
 
@@ -118,45 +115,13 @@ public class PushDatabase extends Database {
                                             String.valueOf(envelope.getTimestamp())},
                               null, null, null);
 
-      if (cursor != null && cursor.moveToFirst()) {
-        return Optional.of(cursor.getLong(cursor.getColumnIndexOrThrow(ID)));
-      } else {
-        return Optional.absent();
-      }
+        if (cursor != null && cursor.moveToFirst()) {
+            return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        } else {
+            return null;
+        }
     } finally {
-      if (cursor != null) cursor.close();
-    }
-  }
-
-  public static class Reader {
-    private final Cursor cursor;
-
-    public Reader(Cursor cursor) {
-      this.cursor = cursor;
-    }
-
-    public SignalServiceEnvelope getNext() {
-      try {
-        if (cursor == null || !cursor.moveToNext())
-          return null;
-
-        int    type            = cursor.getInt(cursor.getColumnIndexOrThrow(TYPE));
-        String source          = cursor.getString(cursor.getColumnIndexOrThrow(SOURCE));
-        int    deviceId        = cursor.getInt(cursor.getColumnIndexOrThrow(DEVICE_ID));
-        String content         = cursor.getString(cursor.getColumnIndexOrThrow(CONTENT));
-        long   timestamp       = cursor.getLong(cursor.getColumnIndexOrThrow(TIMESTAMP));
-        long   serverTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow(SERVER_TIMESTAMP));
-
-        return new SignalServiceEnvelope(type, source, deviceId, timestamp,
-                                         content != null ? Base64.decode(content) : null,
-                                         serverTimestamp);
-      } catch (IOException e) {
-        throw new AssertionError(e);
-      }
-    }
-
-    public void close() {
-      this.cursor.close();
+        if (cursor != null) cursor.close();
     }
   }
 }

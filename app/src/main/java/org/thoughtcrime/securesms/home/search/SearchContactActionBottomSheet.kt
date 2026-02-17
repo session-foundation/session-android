@@ -61,7 +61,11 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View = createThemedComposeView {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                )
         ) {
             // Only standard address can be blocked
             if (address is Address.Standard) {
@@ -122,6 +126,18 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
                 callbacks = null
             }
             cancelButton()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        val dlg = dialog as? BottomSheetDialog ?: return
+        val sheet = dlg.findViewById<FrameLayout>(R.id.design_bottom_sheet) ?: return
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            val behavior = BottomSheetBehavior.from(sheet)
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
     }
 

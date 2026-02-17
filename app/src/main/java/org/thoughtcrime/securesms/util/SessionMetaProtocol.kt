@@ -1,9 +1,6 @@
 package org.thoughtcrime.securesms.util
 
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.messages.SignalServiceDataMessage
 
 object SessionMetaProtocol {
 
@@ -38,16 +35,6 @@ object SessionMetaProtocol {
         // TODO return !recipient.address.isRSSFeed
         return true
     }
-
-    @JvmStatic
-    fun shouldSendDeliveryReceipt(message: SignalServiceDataMessage, address: Address): Boolean {
-        if (address.isGroupOrCommunity) { return false }
-        val hasBody = message.body.isPresent && message.body.get().isNotEmpty()
-        val hasAttachment = message.attachments.isPresent && message.attachments.get().isNotEmpty()
-        val hasLinkPreview = message.previews.isPresent && message.previews.get().isNotEmpty()
-        return hasBody || hasAttachment || hasLinkPreview
-    }
-
 
     @JvmStatic
     fun shouldSendTypingIndicator(recipient: Recipient): Boolean {

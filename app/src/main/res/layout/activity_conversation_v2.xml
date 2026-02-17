@@ -1,88 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:focusable="false"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/contentView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:focusable="false"
     android:orientation="vertical">
 
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/conversationAppBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintVertical_bias="0"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/conversation_header"
+        app:layout_constraintBottom_toTopOf="@+id/contentContainer"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0" />
 
-    <com.google.android.material.progressindicator.LinearProgressIndicator
-        android:id="@+id/conversationLoader"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/conversationAppBar"
-        android:indeterminate="true"
-        android:visibility="gone"
-        app:indicatorColor="?colorAccent"
-        app:trackThickness="4dp"/>
-
-    <org.thoughtcrime.securesms.conversation.v2.ConversationRecyclerView
-        android:focusable="false"
-        android:id="@+id/conversationRecyclerView"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/contentContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        tools:visibility="gone"
-        app:layout_constraintVertical_weight="1"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/typingIndicatorViewContainer"
-        app:layout_constraintTop_toBottomOf="@id/conversation_header" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/conversationAppBar">
 
-    <org.thoughtcrime.securesms.conversation.v2.components.TypingIndicatorViewContainer
-        android:focusable="false"
-        android:id="@+id/typingIndicatorViewContainer"
-        android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:visibility="gone"
-        tools:visibility="visible"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/conversationRecyclerView"
-        app:layout_constraintBottom_toTopOf="@+id/textSendAfterApproval"
-        />
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/conversationLoader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="?colorAccent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:trackThickness="4dp" />
 
-    <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBar
-        android:id="@+id/inputBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:layout_height="60dp"
-        android:background="?backgroundSecondary"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/recreateGroupButtonContainer"
-        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
-        app:layout_constraintVertical_bias="1"
-        />
+        <org.thoughtcrime.securesms.conversation.v2.ConversationRecyclerView
+            android:id="@+id/conversationRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:focusable="false"
+            app:layout_constraintBottom_toTopOf="@+id/typingIndicatorViewContainer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/conversation_header"
+            app:layout_constraintVertical_weight="1"
+            tools:visibility="gone" />
 
-    <org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
-        android:id="@+id/searchBottomBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
-        android:visibility="gone"/>
+        <org.thoughtcrime.securesms.conversation.v2.components.TypingIndicatorViewContainer
+            android:id="@+id/typingIndicatorViewContainer"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:focusable="false"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/textSendAfterApproval"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/conversationRecyclerView"
+            tools:visibility="visible" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/conversation_mention_candidates"
-        android:clipToOutline="true"
-        android:contentDescription="@string/AccessibilityId_mentions_list"
-        tools:listitem="@layout/view_mention_candidate_v2"
-        android:background="@drawable/mention_candidate_view_background"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:visibility="gone"
-        app:layout_constraintHeight_max="176dp"
-        app:layout_constraintBottom_toBottomOf="@+id/conversationRecyclerView" />
+        <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBar
+            android:id="@+id/inputBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?backgroundSecondary"
+            app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/recreateGroupButtonContainer"
+            app:layout_constraintVertical_bias="1"
+            tools:layout_height="60dp" />
+
+        <org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
+            android:id="@+id/searchBottomBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/bottomSpacer" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/conversation_mention_candidates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/mention_candidate_view_background"
+            android:clipToOutline="true"
+            android:contentDescription="@string/AccessibilityId_mentions_list"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="@+id/conversationRecyclerView"
+            app:layout_constraintHeight_max="176dp"
+            tools:listitem="@layout/view_mention_candidate_v2"
+            tools:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/attachmentOptionsContainer"
@@ -95,218 +99,225 @@
         android:layout_marginBottom="8dp"
         android:orientation="vertical">
 
-        <FrameLayout
-            android:id="@+id/gifButtonContainer"
-            android:layout_width="@dimen/input_bar_button_expanded_size"
-            android:layout_height="@dimen/input_bar_button_expanded_size"
-            android:contentDescription="@string/AccessibilityId_gif"
-            android:alpha="0" />
+            <FrameLayout
+                android:id="@+id/gifButtonContainer"
+                android:layout_width="@dimen/input_bar_button_expanded_size"
+                android:layout_height="@dimen/input_bar_button_expanded_size"
+                android:alpha="0"
+                android:contentDescription="@string/AccessibilityId_gif" />
 
-        <FrameLayout
-            android:id="@+id/documentButtonContainer"
-            android:layout_marginTop="8dp"
-            android:layout_width="@dimen/input_bar_button_expanded_size"
-            android:layout_height="@dimen/input_bar_button_expanded_size"
-            android:contentDescription="@string/AccessibilityId_files"
-            android:alpha="0" />
+            <FrameLayout
+                android:id="@+id/documentButtonContainer"
+                android:layout_width="@dimen/input_bar_button_expanded_size"
+                android:layout_height="@dimen/input_bar_button_expanded_size"
+                android:layout_marginTop="8dp"
+                android:alpha="0"
+                android:contentDescription="@string/AccessibilityId_files" />
 
-        <FrameLayout
-            android:id="@+id/libraryButtonContainer"
-            android:layout_marginTop="8dp"
-            android:layout_width="@dimen/input_bar_button_expanded_size"
-            android:layout_height="@dimen/input_bar_button_expanded_size"
-            android:contentDescription="@string/AccessibilityId_image"
-            android:alpha="0" />
+            <FrameLayout
+                android:id="@+id/libraryButtonContainer"
+                android:layout_width="@dimen/input_bar_button_expanded_size"
+                android:layout_height="@dimen/input_bar_button_expanded_size"
+                android:layout_marginTop="8dp"
+                android:alpha="0"
+                android:contentDescription="@string/AccessibilityId_image" />
 
-        <FrameLayout
-            android:id="@+id/cameraButtonContainer"
-            android:layout_marginTop="8dp"
-            android:layout_width="@dimen/input_bar_button_expanded_size"
-            android:layout_height="@dimen/input_bar_button_expanded_size"
-            android:contentDescription="@string/AccessibilityId_camera"
-            android:alpha="0" />
+            <FrameLayout
+                android:id="@+id/cameraButtonContainer"
+                android:layout_width="@dimen/input_bar_button_expanded_size"
+                android:layout_height="@dimen/input_bar_button_expanded_size"
+                android:layout_marginTop="8dp"
+                android:alpha="0"
+                android:contentDescription="@string/AccessibilityId_camera" />
 
-    </LinearLayout>
+        </LinearLayout>
 
-    <TextView
-        android:id="@+id/textSendAfterApproval"
-        android:text="@string/messageRequestPendingDescription"
-        android:visibility="gone"
-        tools:visibility="visible"
-        android:textAlignment="center"
-        android:textColor="@color/classic_light_2"
-        android:padding="22dp"
-        android:textSize="12sp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:text="You'll be able to send"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/typingIndicatorViewContainer"
-        app:layout_constraintBottom_toTopOf="@+id/messageRequestBar" />
-
-    <RelativeLayout
-        android:id="@+id/scrollToBottomButton"
-        tools:visibility="visible"
-        android:visibility="gone"
-        android:layout_width="40dp"
-        android:layout_height="50dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/messageRequestBar"
-        android:layout_alignWithParentIfMissing="true"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="32dp">
-
-        <RelativeLayout
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:background="@drawable/view_scroll_to_bottom_button_background">
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_centerInParent="true"
-                android:src="@drawable/ic_chevron_down"
-                app:tint="?android:textColorPrimary" />
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/unreadCountIndicator"
-            android:layout_width="wrap_content"
-            android:maxWidth="40dp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
-            android:layout_height="20dp"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentTop="true"
-            android:background="@drawable/rounded_rectangle"
-            android:backgroundTint="?backgroundSecondary">
-
-            <TextView
-                android:id="@+id/unreadCountTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:textSize="@dimen/very_small_font_size"
-                android:textColor="?android:textColorPrimary"
-                tools:text="8" />
-
-        </RelativeLayout>
-
-    </RelativeLayout>
-
-    <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingView
-        android:id="@+id/inputBarRecordingView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="-12dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer" />
-
-    <include
-        android:id="@+id/conversation_header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/conversationAppBar"
-        layout="@layout/view_conversation_header" />
-
-    <TextView
-        android:padding="@dimen/medium_spacing"
-        style="@style/Signal.Text.Preview"
-        android:textColor="?android:textColorTertiary"
-        android:textAlignment="center"
-        android:id="@+id/placeholderText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/large_spacing"
-        app:layout_constraintTop_toBottomOf="@+id/conversation_header"
-        android:contentDescription="@string/AccessibilityId_empty_conversation"
-        android:visibility="gone"
-        tools:visibility="visible"
-        tools:text="Some Control Message Text"
-        />
-
-    <include
-        android:id="@+id/messageRequestBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/recreateGroupButtonContainer"
-        app:layout_constraintTop_toBottomOf="@+id/textSendAfterApproval"
-        layout="@layout/view_conversation_message_request_bar"
-        android:layout_marginBottom="@dimen/large_spacing"
-        tools:visibility="visible"
-        android:visibility="gone" />
-
-    <androidx.constraintlayout.widget.Barrier
-        android:id="@+id/bottomWidgetBarrier"
-        app:barrierDirection="top"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:constraint_referenced_ids="inputBar, searchBottomBar"
-        />
-
-    <FrameLayout
-        android:id="@+id/recreateGroupButtonContainer"
-        app:layout_constraintBottom_toTopOf="@+id/bottomWidgetBarrier"
-        app:layout_constraintTop_toBottomOf="@+id/messageRequestBar"
-        android:padding="@dimen/medium_spacing"
-        android:visibility="gone"
-        tools:visibility="visible"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <Button
-            android:id="@+id/recreateGroupButton"
+        <TextView
+            android:id="@+id/textSendAfterApproval"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Widget.Session.Button.Common.ProminentOutline"
-            android:contentDescription="@string/AccessibilityId_recreate_legacy_group"
-            android:text="@string/recreateGroup" />
+            android:padding="22dp"
+            android:text="@string/messageRequestPendingDescription"
+            android:textAlignment="center"
+            android:textColor="@color/classic_light_2"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/messageRequestBar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/typingIndicatorViewContainer"
+            tools:text="You'll be able to send"
+            tools:visibility="visible" />
 
-    </FrameLayout>
+        <RelativeLayout
+            android:id="@+id/scrollToBottomButton"
+            android:layout_width="40dp"
+            android:layout_height="50dp"
+            android:layout_alignWithParentIfMissing="true"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="32dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/messageRequestBar"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:visibility="visible">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="?backgroundSecondary"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:id="@+id/bottomSpacer" />
+            <RelativeLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/view_scroll_to_bottom_button_background">
 
-    <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/dialog_open_url"
-        tools:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/ic_chevron_down"
+                    app:tint="?android:textColorPrimary" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/unreadCountIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/rounded_rectangle"
+                android:backgroundTint="?backgroundSecondary"
+                android:maxWidth="40dp"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp">
+
+                <TextView
+                    android:id="@+id/unreadCountTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/very_small_font_size"
+                    tools:text="8" />
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+        <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingView
+            android:id="@+id/inputBarRecordingView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="-12dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/bottomSpacer" />
+
+        <include
+            android:id="@+id/conversation_header"
+            layout="@layout/view_conversation_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/placeholderText"
+            style="@style/Signal.Text.Preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/large_spacing"
+            android:contentDescription="@string/AccessibilityId_empty_conversation"
+            android:padding="@dimen/medium_spacing"
+            android:textAlignment="center"
+            android:textColor="?android:textColorTertiary"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@+id/conversation_header"
+            tools:text="Some Control Message Text"
+            tools:visibility="visible" />
+
+        <include
+            android:id="@+id/messageRequestBar"
+            layout="@layout/view_conversation_message_request_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/large_spacing"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/recreateGroupButtonContainer"
+            app:layout_constraintTop_toBottomOf="@+id/textSendAfterApproval"
+            tools:visibility="visible" />
+
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/bottomWidgetBarrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:barrierDirection="top"
+            app:constraint_referenced_ids="inputBar, searchBottomBar" />
+
+        <FrameLayout
+            android:id="@+id/recreateGroupButtonContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/medium_spacing"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/bottomWidgetBarrier"
+            app:layout_constraintTop_toBottomOf="@+id/messageRequestBar"
+            tools:visibility="visible">
+
+            <Button
+                android:id="@+id/recreateGroupButton"
+                style="@style/Widget.Session.Button.Common.ProminentOutline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/AccessibilityId_recreate_legacy_group"
+                android:text="@string/recreateGroup" />
+
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/bottomSpacer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="?backgroundSecondary"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/dialog_open_url"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:visibility="gone" />
+
+        <FrameLayout
+            android:id="@+id/loader"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#A4000000"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"
+                android:indeterminate="true"
+                android:indeterminateTint="?colorAccent" />
+
+        </FrameLayout>
+
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/miniPlayer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/conversation_header"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ViewStub
-        android:focusable="false"
         android:id="@+id/conversation_reaction_scrubber_stub"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:focusable="false"
         android:inflatedId="@+id/conversation_reaction_scrubber"
-        android:layout="@layout/conversation_reaction_scrubber"/>
-
-    <FrameLayout
-        android:id="@+id/loader"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#A4000000"
-        android:focusable="true"
-        android:clickable="true"
-        android:visibility="gone">
-
-        <ProgressBar
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_gravity="center"
-            android:indeterminateTint="?colorAccent"
-            android:indeterminate="true"/>
-
-    </FrameLayout>
+        android:layout="@layout/conversation_reaction_scrubber" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
