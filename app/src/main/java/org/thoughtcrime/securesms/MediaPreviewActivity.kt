@@ -479,6 +479,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                 this,
                 ShareActivity::class.java
             )
+            composeIntent.setAction(Intent.ACTION_SEND)
             composeIntent.putExtra(Intent.EXTRA_STREAM, mediaItem.uri)
             composeIntent.setType(mediaItem.mimeType)
             startActivity(composeIntent)
