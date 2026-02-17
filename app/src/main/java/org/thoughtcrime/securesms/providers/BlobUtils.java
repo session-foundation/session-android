@@ -103,7 +103,7 @@ public class BlobUtils {
         File   file      = new File(getOrCreateCacheDirectory(context, directory), buildFileName(id));
 
         return ModernDecryptingPartInputStream.createFor(
-                ((ApplicationContext) context).getAttachmentSecretProvider().getOrCreateAttachmentSecret(), file, 0);
+                ((ApplicationContext) context.getApplicationContext()).getAttachmentSecretProvider().getOrCreateAttachmentSecret(), file, 0);
       }
     } else {
       throw new IOException("Provided URI does not match this spec. Uri: " + uri);
