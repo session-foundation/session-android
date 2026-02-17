@@ -35,8 +35,6 @@ import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -78,7 +76,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
-                        val expected = sha256Hex(loginStateRepository.requireLocalNumber())
+                        val expected = obfuscatedProId()
                         val purchaseAccountId = it.accountIdentifiers?.obfuscatedAccountId
 
                         if (purchaseAccountId != expected) {
@@ -139,10 +137,9 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             // Check for existing subscription
             val existingPurchase = getExistingSubscription()
-            val obfuscatedId = sha256Hex(loginStateRepository.requireLocalNumber())
 
             val billingFlowParamsBuilder = BillingFlowParams.newBuilder()
-                .setObfuscatedAccountId(obfuscatedId)
+                .setObfuscatedAccountId(obfuscatedProId())
                 .setProductDetailsParamsList(
                     listOf(
                         BillingFlowParams.ProductDetailsParams.newBuilder()
@@ -190,7 +187,10 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
     }
 
-    private fun sha256Hex(input: String): String {
+    private fun obfuscatedProId(): String {
+        val input = requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey?.toHexString()) {
+            "User must be logged in to access Pro"
+        }
         val md = java.security.MessageDigest.getInstance("SHA-256")
         val digest = md.digest(input.toByteArray(Charsets.UTF_8))
         return Hex.toStringCondensed(digest)
