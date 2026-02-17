@@ -132,7 +132,6 @@ class MarkReadProcessor @Inject constructor(
     private val Recipient.shouldSendReadReceipt: Boolean
         get() = when (data) {
             is RecipientData.Contact -> approved && !blocked
-            is RecipientData.Generic -> !isGroupOrCommunityRecipient && !blocked
             else -> false
         }
 
