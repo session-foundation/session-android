@@ -10,7 +10,6 @@ import kotlinx.serialization.json.encodeToStream
 import org.session.libsession.network.model.OnionDestination
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
-import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.toHexString
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
