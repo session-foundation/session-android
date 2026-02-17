@@ -28,7 +28,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -46,6 +48,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
     private val currentActivityObserver: CurrentActivityObserver,
     private val prefs: TextSecurePreferences,
+    private val loginStateRepository: LoginStateRepository,
     proStatusManager: ProStatusManager,
     @param:ManagerScope scope: CoroutineScope,
 ) : SubscriptionManager(proStatusManager, scope) {
@@ -75,6 +78,14 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
+                        val expected = sha256Hex(loginStateRepository.requireLocalNumber())
+                        val purchaseAccountId = it.accountIdentifiers?.obfuscatedAccountId
+
+                        if (purchaseAccountId != expected) {
+                            Log.w(TAG, "Ignoring purchase: Belongs to different accountID (with this same playstore account)")
+                            return@setListener
+                        }
+
                         Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label,
                             "Billing callback. We have a purchase [${it.orderId}]. Acknowledged? ${it.isAcknowledged}")
 
@@ -128,8 +139,10 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             // Check for existing subscription
             val existingPurchase = getExistingSubscription()
+            val obfuscatedId = sha256Hex(loginStateRepository.requireLocalNumber())
 
             val billingFlowParamsBuilder = BillingFlowParams.newBuilder()
+                .setObfuscatedAccountId(obfuscatedId)
                 .setProductDetailsParamsList(
                     listOf(
                         BillingFlowParams.ProductDetailsParams.newBuilder()
@@ -175,6 +188,12 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
             return Result.failure(e)
         }
+    }
+
+    private fun sha256Hex(input: String): String {
+        val md = java.security.MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(input.toByteArray(Charsets.UTF_8))
+        return Hex.toStringCondensed(digest)
     }
 
     private suspend fun getProductDetails(): ProductDetailsResult? {
