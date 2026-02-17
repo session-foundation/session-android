@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
@@ -13,7 +14,6 @@ import org.session.libsession.messaging.jobs.SessionJobInstantiator
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
-import org.thoughtcrime.securesms.jobmanager.impl.JsonDataSerializer
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -22,7 +22,8 @@ import javax.inject.Singleton
 class SessionJobDatabase @Inject constructor(
     @ApplicationContext context: Context,
     helper: Provider<SQLCipherOpenHelper>,
-    private val jobInstantiator: SessionJobInstantiator
+    private val jobInstantiator: SessionJobInstantiator,
+    private val json: Json,
 ) : Database(context, helper) {
 
     companion object {
@@ -44,7 +45,7 @@ class SessionJobDatabase @Inject constructor(
         contentValues.put(jobID, job.id!!)
         contentValues.put(jobType, job.getFactoryKey())
         contentValues.put(failureCount, job.failureCount)
-        contentValues.put(serializedData, SessionJobHelper.dataSerializer.serialize(job.serialize()))
+        contentValues.put(serializedData, json.encodeToString(job.serialize()))
         database.insertOrUpdate(sessionJobTable, contentValues, "$jobID = ?", arrayOf( job.id!! ))
     }
 
@@ -135,14 +136,10 @@ class SessionJobDatabase @Inject constructor(
 
     private fun jobFromCursor(cursor: Cursor): Job? {
         val type = cursor.getString(jobType)
-        val data = SessionJobHelper.dataSerializer.deserialize(cursor.getString(serializedData))
+        val data = json.decodeFromString<Data>(cursor.getString(serializedData))
         val job = jobInstantiator.instantiate(type, data) ?: return null
         job.id = cursor.getString(jobID)
         job.failureCount = cursor.getInt(failureCount)
         return job
     }
-}
-
-object SessionJobHelper {
-    val dataSerializer: Data.Serializer = JsonDataSerializer()
 }

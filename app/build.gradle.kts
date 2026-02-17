@@ -25,8 +25,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 438
-val canonicalVersionName = "1.31.1"
+val canonicalVersionCode = 439
+val canonicalVersionName = "1.31.2"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -398,7 +398,6 @@ dependencies {
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.jackson.databind)
     implementation(libs.okhttp)
     implementation(libs.phrase)
     implementation(libs.copper.flow)
