@@ -1,10 +1,12 @@
 package org.session.libsession.messaging.messages.visible
 
+import androidx.annotation.Keep
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreiview
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos
 
+@Keep
 class LinkPreview() {
     var title: String? = null
     var url: String? = null

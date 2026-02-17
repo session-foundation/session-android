@@ -3,6 +3,7 @@ package org.session.libsession.messaging.messages.visible
 import android.util.Log
 import android.util.Size
 import android.webkit.MimeTypeMap
+import androidx.annotation.Keep
 import com.google.protobuf.ByteString
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -10,6 +11,8 @@ import org.session.protos.SessionProtos
 import java.io.File
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment as SignalAttachment
 
+// R8: Must keep constructor for Kryo to work
+@Keep
 class Attachment {
     var filename: String? = null
     var contentType: String? = null
