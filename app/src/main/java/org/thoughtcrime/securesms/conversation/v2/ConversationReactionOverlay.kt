@@ -74,7 +74,6 @@ class ConversationReactionOverlay : FrameLayout {
     lateinit var threadRecipient: Recipient
     private lateinit var selectedConversationModel: SelectedConversationModel
     private var overlayState = OverlayState.HIDDEN
-    private lateinit var recentEmojiPageModel: RecentEmojiPageModel
     private var downIsOurs = false
     private var selected = -1
     private var customEmojiIndex = 0
@@ -106,6 +105,7 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var snodeClock: SnodeClock
+    @Inject lateinit var recentEmojiPageModel: RecentEmojiPageModel
 
     private var job: Job? = null
 
@@ -172,7 +172,6 @@ class ConversationReactionOverlay : FrameLayout {
         this.selectedConversationModel = selectedConversationModel
         overlayState = OverlayState.UNINITAILIZED
         selected = -1
-        recentEmojiPageModel = RecentEmojiPageModel(activity)
         setupSelectedEmoji()
         val statusBarBackground = activity.findViewById<View>(android.R.id.statusBarBackground)
         statusBarHeight = statusBarBackground?.height ?: 0

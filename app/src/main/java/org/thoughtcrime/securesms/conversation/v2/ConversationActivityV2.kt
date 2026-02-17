@@ -201,7 +201,6 @@ import org.thoughtcrime.securesms.mms.GifSlide
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.MmsException
-import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -299,6 +298,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     @Inject
     lateinit var deleteReactionApiFactory: DeleteReactionApi.Factory
+
+    @Inject
+    lateinit var recentEmojiPageModel: RecentEmojiPageModel
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -1911,7 +1913,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             sendEmojiRemoval(emoji, messageRecord)
         } else {
             sendEmojiReaction(emoji, messageRecord)
-            RecentEmojiPageModel.onCodePointSelected(emoji) // Save to recently used reaction emojis
+            recentEmojiPageModel.onEmojiUsed(emoji) // Save to recently used reaction emojis
         }
     }
 
