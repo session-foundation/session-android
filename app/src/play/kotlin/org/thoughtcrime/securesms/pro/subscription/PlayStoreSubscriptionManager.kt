@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
@@ -192,7 +193,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     private fun sha256Hex(input: String): String {
         val md = java.security.MessageDigest.getInstance("SHA-256")
         val digest = md.digest(input.toByteArray(Charsets.UTF_8))
-        return digest.joinToString("") { "%02x".format(it) }
+        return Hex.toStringCondensed(digest)
     }
 
     private suspend fun getProductDetails(): ProductDetailsResult? {
