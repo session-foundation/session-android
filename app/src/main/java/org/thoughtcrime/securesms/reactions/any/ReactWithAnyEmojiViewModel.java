@@ -39,9 +39,10 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
           @Assisted @NonNull MessageId messageId,
           @ApplicationContext Context context,
           @NonNull EmojiSearchRepository emojiSearchRepository,
-          @NonNull ReactionsRepository reactionsRepository)
+          @NonNull ReactionsRepository reactionsRepository,
+          @NonNull ReactWithAnyEmojiRepository repository)
   {
-    this.repository            = new ReactWithAnyEmojiRepository(context);
+    this.repository            = repository;
     this.emojiSearchRepository = emojiSearchRepository;
     this.searchResults         = BehaviorSubject.createDefault(new EmojiSearchResult());
 
