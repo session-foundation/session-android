@@ -138,7 +138,7 @@ class Data(
 
 
     fun hasDoubleArray(key: String): Boolean {
-        return floatArrays.containsKey(key)
+        return doubleArrays.containsKey(key)
     }
 
     fun getDoubleArray(key: String): DoubleArray? {

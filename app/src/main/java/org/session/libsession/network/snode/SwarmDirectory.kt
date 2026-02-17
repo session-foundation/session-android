@@ -97,7 +97,7 @@ class SwarmDirectory @Inject constructor(
             )
         }
 
-        if (response.snodes.isEmpty()) return false
+        if (snodes.isEmpty()) return false
 
         storage.setSwarm(swarmPublicKey, snodes)
         return true

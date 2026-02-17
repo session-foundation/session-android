@@ -15,7 +15,7 @@ class StringAsHexUtf16Serializer : KSerializer<String> {
     override val descriptor = PrimitiveSerialDescriptor("StringAsHexUtf16", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: String) {
-        encoder.encodeString(value.toByteArray(Charsets.UTF_16).toHexString())
+        encoder.encodeString(value.toByteArray(Charsets.UTF_16BE).toHexString())
     }
 
     override fun deserialize(decoder: Decoder): String {
