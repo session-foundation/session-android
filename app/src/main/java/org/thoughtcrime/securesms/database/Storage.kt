@@ -6,6 +6,7 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
@@ -108,6 +109,7 @@ open class Storage @Inject constructor(
     private val openGroupManager: Lazy<OpenGroupManager>,
     private val recipientRepository: RecipientRepository,
     private val loginStateRepository: LoginStateRepository,
+    private val json: Json,
 ) : Database(context, helper), StorageProtocol {
 
     override fun getUserPublicKey(): String? { return loginStateRepository.peekLoginState()?.accountId?.hexString }
@@ -368,6 +370,7 @@ open class Storage @Inject constructor(
 
             val insertResult = if (isUserSender || isUserBlindedSender) {
                 val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(
+                    json = json,
                     invitation = message.openGroupInvitation!!,
                     recipient = targetAddress,
                     sentTimestampMillis = message.sentTimestamp!!,
@@ -385,6 +388,7 @@ open class Storage @Inject constructor(
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(
+                    json = json,
                     invitation = message.openGroupInvitation!!,
                     sender = senderAddress,
                     sentTimestampMillis = message.sentTimestamp!!,
@@ -797,7 +801,7 @@ open class Storage @Inject constructor(
         val expiryMode = recipient.expiryMode
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
-        val inviteJson = updateData.toJSON()
+        val inviteJson = updateData.toJSON(json)
 
         if (senderPublicKey == null || senderPublicKey == userPublicKey) {
             val infoMessage = OutgoingMediaMessage(
