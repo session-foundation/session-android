@@ -1,7 +1,5 @@
 package org.session.libsession.messaging.open_groups
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.session.libsession.utilities.serializable.InstantAsSecondDoubleSerializer
@@ -104,7 +102,6 @@ object OpenGroupApi {
         val details: RoomInfoDetails = RoomInfoDetails()
     )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
     @Serializable
     data class DirectMessage(
         val id: Long = 0,
@@ -119,7 +116,6 @@ object OpenGroupApi {
         val message: String = "",
     )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
     @Serializable
     data class Message(
         val id : Long = 0,
