@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.home
 
 import android.content.Context
 import androidx.recyclerview.widget.DiffUtil
-import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 
 class HomeDiffUtil(

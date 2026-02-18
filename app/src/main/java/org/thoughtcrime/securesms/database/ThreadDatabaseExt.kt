@@ -199,15 +199,16 @@ fun ThreadDatabase.threadContainsOutgoingMessage(threadId: Long): Boolean {
           AND ${SmsDatabase.IS_OUTGOING}
           AND NOT ${MmsSmsColumns.IS_DELETED}
         LIMIT 1
-    """).use { it.count > 0 }
+    """, threadId).use { it.count > 0 }
 
     if (hasOutgoingSms) return true
 
+    //language=roomsql
     return readableDatabase.rawQuery("""
         SELECT 1 FROM ${MmsDatabase.TABLE_NAME}
         WHERE ${MmsSmsColumns.THREAD_ID} = ?
           AND ${MmsSmsColumns.IS_OUTGOING}
           AND NOT ${MmsSmsColumns.IS_DELETED}
         LIMIT 1
-    """).use { it.count > 0 }
+    """, threadId).use { it.count > 0 }
 }

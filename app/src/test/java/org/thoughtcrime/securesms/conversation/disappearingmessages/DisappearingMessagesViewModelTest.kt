@@ -28,7 +28,6 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsD
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.UINavigator
-import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
