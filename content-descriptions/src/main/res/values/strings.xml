@@ -330,6 +330,9 @@
     <string name="qa_help_settings_support">preferences-option-help</string>
     <string name="qa_help_settings_faq">preferences-option-faq</string>
 
+    <!-- Media send -->
+    <string name="qa_mediapicker_folder_item">mediapicker-folder-item-thumbnail</string>
+    <string name="qa_mediapicker_image_item">mediapicker-image-item-thumbnail</string>
 
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>

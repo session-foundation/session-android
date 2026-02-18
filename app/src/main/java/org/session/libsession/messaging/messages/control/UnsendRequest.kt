@@ -4,7 +4,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.protos.SessionProtos
 
-class UnsendRequest(var timestamp: Long? = null, var author: String? = null): ControlMessage() {
+class UnsendRequest @JvmOverloads constructor(var timestamp: Long? = null, var author: String? = null): ControlMessage() {
 
     override val isSelfSendValid: Boolean = true
 

@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
@@ -67,7 +68,7 @@ private fun MediaPickerFolder(
     title: String,
     handleBack: () -> Unit,
     showManageMediaAccess: Boolean,
-    manageMediaAccess : () -> Unit
+    manageMediaAccess: () -> Unit
 ) {
 
     // span logic: screenWidth / media_picker_folder_width
@@ -107,15 +108,16 @@ private fun MediaPickerFolder(
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.tinySpacing),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.tinySpacing)
             ) {
-                items(
+                itemsIndexed(
                     items = folders,
-                    key = { folder -> folder.bucketId }
-                ) { folder ->
+                    key = { index, folder -> folder.bucketId }
+                ) { index, folder ->
                     MediaFolderCell(
                         title = folder.title,
                         count = folder.itemCount,
                         thumbnailUri = folder.thumbnailUri,
                         onClick = { onFolderClick(folder) },
+                        qaTag = stringResource( R.string.qa_mediapicker_folder_item) +"-$index"
                     )
                 }
             }
