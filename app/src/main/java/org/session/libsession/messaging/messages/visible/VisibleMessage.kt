@@ -15,6 +15,8 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
  *
  * **Note:** `nil` if this isn't a sync message.
  */
+// R8: Must keep constructor for Kryo to work
+@Keep
 data class VisibleMessage(
     var syncTarget: String? = null,
     var text: String? = null,
@@ -27,8 +29,6 @@ data class VisibleMessage(
     var blocksMessageRequests: Boolean = false,
 ) : Message()  {
 
-    // This empty constructor is needed for kryo serialization
-    @Keep
     constructor(): this(text = null)
 
     override val isSelfSendValid: Boolean = true

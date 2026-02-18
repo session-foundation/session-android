@@ -1,9 +1,12 @@
 package org.session.libsession.messaging.messages.visible
 
+import androidx.annotation.Keep
 import org.session.protos.SessionProtos
 import org.session.protos.SessionProtos.DataMessage.Reaction.Action
 import org.session.libsignal.utilities.Log
 
+// R8: Must keep constructor for Kryo to work
+@Keep
 class Reaction() {
     var timestamp: Long? = 0
     var publicKey: String? = null

@@ -10,7 +10,7 @@ import org.session.protos.SessionProtos.DataMessage.Flags.EXPIRATION_TIMER_UPDAT
  *
  * **Note:** `nil` if this isn't a sync message.
  */
-data class ExpirationTimerUpdate(var syncTarget: String? = null, val isGroup: Boolean = false) : ControlMessage() {
+data class ExpirationTimerUpdate @JvmOverloads constructor(var syncTarget: String? = null, val isGroup: Boolean = false) : ControlMessage() {
     override val isSelfSendValid: Boolean = true
 
     override fun shouldDiscardIfBlocked(): Boolean = true

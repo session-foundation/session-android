@@ -111,6 +111,10 @@
 -keep class org.thoughtcrime.securesms.database.model.EmojiSearchData { *; }
 -keep class org.thoughtcrime.securesms.database.model.EmojiSearchData$* { *; }
 
+# Models
+-keep class org.session.libsession.messaging.messages.** { *; }
+-keep class org.session.libsession.messaging.messages.Destination$** { *; }
+
 ########## KRYO (SERIALIZATION OF DESTINATIONS) ##########
 # No-arg contructors required at runtime for these sealed subclasses
 -keepclassmembers class org.session.libsession.messaging.messages.Destination$ClosedGroup { <init>(); }
