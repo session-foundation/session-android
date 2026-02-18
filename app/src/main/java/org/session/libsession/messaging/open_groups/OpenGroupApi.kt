@@ -100,7 +100,24 @@ object OpenGroupApi {
         @SerialName("default_upload")
         val defaultUpload: Boolean = false,
         val details: RoomInfoDetails = RoomInfoDetails()
-    )
+    ) {
+        constructor(details: RoomInfoDetails): this(
+            token = details.token,
+            activeUsers = details.activeUsers,
+            admin = details.admin,
+            globalAdmin = details.globalAdmin,
+            moderator = details.moderator,
+            globalModerator = details.globalModerator,
+            read = details.read,
+            defaultRead = details.defaultRead,
+            defaultAccessible = details.defaultAccessible,
+            write = details.write,
+            defaultWrite = details.defaultWrite,
+            upload = details.upload,
+            defaultUpload = details.defaultUpload,
+            details = details
+        )
+    }
 
     @Serializable
     data class DirectMessage(
