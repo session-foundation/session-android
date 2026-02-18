@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.crypto
 
 import kotlinx.serialization.Serializable
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import kotlinx.serialization.json.Json
 import org.session.libsession.utilities.serializable.BytesAsCompactB64Serializer
 
 @Serializable
@@ -14,14 +14,14 @@ class SealedData(
 ) {
     @Deprecated("Use dependency injected json instead")
     fun serialize(): String {
-        return MessagingModuleConfiguration.shared.json.encodeToString(this)
+        return Json.encodeToString(this)
     }
 
     companion object {
         @JvmStatic
         @Deprecated("Use dependency injected json instead")
         fun fromString(serialized: String): SealedData {
-            return MessagingModuleConfiguration.shared.json.decodeFromString(serialized)
+            return Json.decodeFromString(serialized)
         }
 
     }

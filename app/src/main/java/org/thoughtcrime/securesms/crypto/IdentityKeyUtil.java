@@ -37,7 +37,10 @@ import network.loki.messenger.libsession_util.util.KeyPair;
 
 /**
  * Utility class for working with identity keys.
- * 
+ *
+ * Note: this class is due to be removed from March 2026 since we will have a few months
+ * of time to migrate the majority of users to the new key management system.
+ *
  * @author Moxie Marlinspike
  */
 @Deprecated(forRemoval = true)
