@@ -6,14 +6,11 @@ import org.session.libsession.utilities.withUserConfigs
 
 sealed class Destination {
 
-    data class Contact(var publicKey: String) : Destination() {
-        internal constructor(): this("")
-    }
-    data class ClosedGroup(var publicKey: String): Destination() {
-        internal constructor(): this("")
-    }
+    data class Contact @JvmOverloads constructor(var publicKey: String = "") : Destination()
 
-    class OpenGroup(
+    data class ClosedGroup @JvmOverloads constructor(var publicKey: String = ""): Destination()
+
+    class OpenGroup @JvmOverloads constructor(
         var roomToken: String = "",
         var server: String = "",
         var whisperTo: List<String> = emptyList(),
@@ -21,7 +18,7 @@ sealed class Destination {
         var fileIds: List<String> = emptyList()
     ) : Destination()
 
-    class OpenGroupInbox(
+    class OpenGroupInbox @JvmOverloads constructor(
         var server: String = "",
         var serverPublicKey: String = "",
         var blindedPublicKey: String = ""
