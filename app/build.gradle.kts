@@ -79,6 +79,14 @@ fun VariantDimension.setAuthorityPostfix(postfix: String) {
     buildConfigField("String", "AUTHORITY_POSTFIX", "\"$postfix\"")
 }
 
+fun VariantDimension.enableClientVersionCheck(enable: Boolean) {
+    buildConfigField(
+        "boolean",
+        "CHECK_VERSION",
+        if (enable) "true" else "false"
+    )
+}
+
 kotlin {
     compilerOptions {
         jvmToolchain(21)
@@ -158,6 +166,7 @@ android {
                 file("proguard-rules.pro")
             )
             devNetDefaultOn(false)
+            enableClientVersionCheck(true)
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
             setAuthorityPostfix("")
@@ -178,6 +187,7 @@ android {
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
+            enableClientVersionCheck(true)
 
             setAlternativeAppName("Session QA")
             setAuthorityPostfix("")
@@ -187,6 +197,7 @@ android {
             initWith(getByName("qa"))
 
             devNetDefaultOn(true)
+            enableClientVersionCheck(false)
             setAlternativeAppName("Session AQA")
         }
 
@@ -198,6 +209,7 @@ android {
             applicationIdSuffix = ".${name}"
             enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
+            enableClientVersionCheck(true)
             setAlternativeAppName("Session Debug")
             setAuthorityPostfix(".debug")
         }
