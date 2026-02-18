@@ -187,7 +187,7 @@ android {
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
-            enableClientVersionCheck(true)
+            enableClientVersionCheck(false)
 
             setAlternativeAppName("Session QA")
             setAuthorityPostfix("")
@@ -209,7 +209,7 @@ android {
             applicationIdSuffix = ".${name}"
             enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
-            enableClientVersionCheck(true)
+            enableClientVersionCheck(false)
             setAlternativeAppName("Session Debug")
             setAuthorityPostfix(".debug")
         }
