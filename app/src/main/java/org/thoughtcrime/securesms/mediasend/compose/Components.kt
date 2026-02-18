@@ -1,13 +1,7 @@
 package org.thoughtcrime.securesms.mediasend.compose
 
 import android.net.Uri
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,6 +44,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.mediasend.Media
 import org.thoughtcrime.securesms.ui.AnimateFade
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -60,12 +55,14 @@ fun MediaFolderCell(
     title: String,
     count: Int,
     thumbnailUri: Uri?,
+    qaTag : String,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
+            .qaTag(qaTag)
             .clickable(onClick = onClick)
     ) {
         AsyncImage(
@@ -137,6 +134,7 @@ fun MediaPickerItemCell(
     isSelected: Boolean = false,
     selectedIndex: Int = 1,
     isMultiSelect: Boolean,
+    qaTag : String,
     onMediaChosen: (Media) -> Unit,
     onSelectionStarted: () -> Unit,
     onSelectionChanged: (selectedMedia: Media) -> Unit,
@@ -147,6 +145,7 @@ fun MediaPickerItemCell(
     Box(
         modifier = modifier
             .aspectRatio(1f)
+            .qaTag(qaTag)
             .combinedClickable(
                 onClick = {
                     if (!isMultiSelect) {
@@ -272,7 +271,8 @@ private fun PreviewMediaFolderCell() {
     MediaFolderCell(
         title = "Test Title",
         count = 100,
-        thumbnailUri = null
+        thumbnailUri = null,
+        qaTag = ""
     ) { }
 }
 
@@ -288,6 +288,7 @@ private fun Preview_MediaPickerItemCell_NotSelected() {
         onMediaChosen = {},
         onSelectionStarted = {},
         onSelectionChanged = {},
+        qaTag = ""
     )
 }
 
@@ -303,6 +304,7 @@ private fun Preview_MediaPickerItemCell_Selected() {
         onMediaChosen = {},
         onSelectionStarted = {},
         onSelectionChanged = {},
+        qaTag = ""
     )
 }
 

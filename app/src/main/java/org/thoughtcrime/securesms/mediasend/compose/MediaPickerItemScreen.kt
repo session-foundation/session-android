@@ -2,12 +2,11 @@ package org.thoughtcrime.securesms.mediasend.compose
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -108,31 +108,35 @@ private fun MediaPickerItem(
             )
         },
     ) { padding ->
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                modifier = Modifier
-                    .padding(padding)
-                    .padding(LocalDimensions.current.tinySpacing)
-                    .fillMaxSize()
-                    .background(LocalColors.current.background),
-                horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.tinySpacing),
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.tinySpacing)
-            ) {
-                items(media, key = { it.uri }) { item ->
-                    val isSelected = selectedMedia.any { it.uri == item.uri }
-                    MediaPickerItemCell(
-                        media = item,
-                        isSelected = isSelected,
-                        selectedIndex = selectedMedia.indexOfFirst { it.uri == item.uri },
-                        isMultiSelect = isMultiSelect,
-                        canLongPress = canLongPress,
-                        showSelectionOn = isSelected,
-                        onMediaChosen = { onSinglePick(it) },
-                        onSelectionStarted = onStartMultiSelect,
-                        onSelectionChanged = onToggleSelection,
-                    )
-                }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            modifier = Modifier
+                .padding(padding)
+                .padding(LocalDimensions.current.tinySpacing)
+                .fillMaxSize()
+                .background(LocalColors.current.background),
+            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.tinySpacing),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.tinySpacing)
+        ) {
+            itemsIndexed(
+                items = media,
+                key = { _, item -> item.uri }   // ignore index for stable key
+            ) { index, item ->
+                val isSelected = selectedMedia.any { it.uri == item.uri }
+                MediaPickerItemCell(
+                    media = item,
+                    isSelected = isSelected,
+                    selectedIndex = selectedMedia.indexOfFirst { it.uri == item.uri },
+                    isMultiSelect = isMultiSelect,
+                    canLongPress = canLongPress,
+                    showSelectionOn = isSelected,
+                    onMediaChosen = { onSinglePick(it) },
+                    onSelectionStarted = onStartMultiSelect,
+                    onSelectionChanged = onToggleSelection,
+                    qaTag = stringResource(R.string.qa_mediapicker_image_item) + "-${index}"
+                )
             }
+        }
     }
 }
 
