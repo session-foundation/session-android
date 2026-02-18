@@ -68,7 +68,6 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.P
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.ProPlanBadge
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
-import org.thoughtcrime.securesms.pro.subscription.expiryFromNow
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
@@ -111,7 +110,7 @@ fun ChoosePlan(
         val title = when (planData.proStatus) {
             is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                .put(DATE_KEY, planData.proStatus.duration.expiryFromNow())
+                .put(DATE_KEY, planData.proStatus.renewingAtFormatted())
                 .format()
 
             is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
@@ -123,7 +122,7 @@ fun ChoosePlan(
                         unit = MeasureUnit.MONTH
                     )
                 )
-                .put(DATE_KEY, planData.proStatus.duration.expiryFromNow())
+                .put(DATE_KEY, planData.proStatus.renewingAtFormatted())
                 .format()
 
             else ->
@@ -377,7 +376,7 @@ private fun PlanBadge(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = LocalType.current.small.bold().copy(
-                    color = LocalColors.current.accentButtonFillText
+                    color = LocalColors.current.textOnAccent
                 )
             )
 
@@ -392,7 +391,7 @@ private fun PlanBadge(
                     Image(
                         painter = painterResource(id = R.drawable.ic_circle_help),
                         contentDescription = null,
-                        colorFilter = ColorFilter.tint(LocalColors.current.accentButtonFillText),
+                        colorFilter = ColorFilter.tint(LocalColors.current.textOnAccent),
                         modifier = Modifier
                             .size(LocalDimensions.current.iconXXSmall)
                             .clickable {

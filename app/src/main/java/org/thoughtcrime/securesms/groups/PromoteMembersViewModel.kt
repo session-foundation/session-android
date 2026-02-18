@@ -9,16 +9,13 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
@@ -34,7 +31,6 @@ class PromoteMembersViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
-    private val groupManager: GroupManagerV2,
     private val recipientRepository: RecipientRepository,
     avatarUtils: AvatarUtils,
 ) : BaseGroupMembersViewModel(
@@ -45,7 +41,6 @@ class PromoteMembersViewModel @AssistedInject constructor(
     avatarUtils = avatarUtils,
     recipientRepository = recipientRepository
 ) {
-    private val groupId = groupAddress.accountId
 
     private val _mutableSelectedMembers = MutableStateFlow(emptySet<GroupMemberState>())
     val selectedMembers: StateFlow<Set<GroupMemberState>> = _mutableSelectedMembers
@@ -142,7 +137,8 @@ class PromoteMembersViewModel @AssistedInject constructor(
         selected: Set<GroupMemberState>
     ): String {
         val count = selected.size
-        val firstMember = selected.firstOrNull()
+        val sortedMembers = selected.sortedBy { it.accountId }
+        val firstMember = sortedMembers.firstOrNull()
 
         val body: CharSequence = when (count) {
             1 -> {
@@ -152,7 +148,7 @@ class PromoteMembersViewModel @AssistedInject constructor(
             }
 
             2 -> {
-                val secondMember = selected.elementAtOrNull(1)?.name
+                val secondMember = sortedMembers.elementAtOrNull(1)?.name
                 Phrase.from(context, R.string.adminPromoteTwoDescription)
                     .put(NAME_KEY, firstMember?.name)
                     .put(OTHER_NAME_KEY, secondMember)

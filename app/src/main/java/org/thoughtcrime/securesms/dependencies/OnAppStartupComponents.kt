@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.dependencies
 
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.thoughtcrime.securesms.auth.AuthAwareComponentsHandler
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
 import org.thoughtcrime.securesms.emoji.EmojiIndexLoader
@@ -13,9 +13,7 @@ import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.tokenpage.TokenDataManager
-import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
-import org.thoughtcrime.securesms.util.VersionDataFetcher
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge
 import javax.inject.Inject
 
@@ -27,8 +25,6 @@ class OnAppStartupComponents private constructor(
     }
 
     @Inject constructor(
-        snodeClock: SnodeClock,
-        appVisibilityManager: AppVisibilityManager,
         groupPollerManager: GroupPollerManager,
         expiredGroupManager: ExpiredGroupManager,
         openGroupPollerManager: OpenGroupPollerManager,
@@ -43,11 +39,10 @@ class OnAppStartupComponents private constructor(
         emojiIndexLoader: EmojiIndexLoader,
         subscriptionCoordinator: SubscriptionCoordinator,
         authAwareHandler: AuthAwareComponentsHandler,
+        snodeClock: SnodeClock,
         subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
     ): this(
         components = listOf(
-            snodeClock,
-            appVisibilityManager,
             groupPollerManager,
             expiredGroupManager,
             openGroupPollerManager,
@@ -62,6 +57,7 @@ class OnAppStartupComponents private constructor(
             emojiIndexLoader,
             subscriptionCoordinator,
             authAwareHandler,
+            snodeClock
         ) + subscriptionManagers
     )
 }

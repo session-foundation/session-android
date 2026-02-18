@@ -267,7 +267,9 @@ private fun PreviewCommunityChip(
                 group = OpenGroupApi.DefaultGroup(
                     id = "id",
                     name = "Session community",
-                    image = null
+                    image = null,
+                    serverUrl = "url",
+                    publicKey = "publicKey"
                 ),
                 onClick = {}
             )

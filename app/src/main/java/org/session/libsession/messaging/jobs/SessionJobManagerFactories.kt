@@ -16,7 +16,6 @@ class SessionJobManagerFactories @Inject constructor(
             AttachmentDownloadJob.KEY to attachmentDownloadJobFactory,
             AttachmentUploadJob.KEY to attachmentUploadJobFactory,
             MessageSendJob.KEY to messageSendJobFactory,
-            NotifyPNServerJob.KEY to NotifyPNServerJob.DeserializeFactory(),
             TrimThreadJob.KEY to trimThreadFactory,
             OpenGroupDeleteJob.KEY to deleteJobFactory,
             InviteContactsJob.KEY to inviteContactsJobFactory,

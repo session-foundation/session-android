@@ -33,10 +33,12 @@ import okio.buffer
 import okio.source
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.await
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteAllInboxMessagesApi
+import org.session.libsession.messaging.open_groups.api.execute
+import org.session.libsession.network.model.PathStatus
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
@@ -46,6 +48,10 @@ import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
+import org.thoughtcrime.securesms.api.snode.DeleteAllMessageApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
@@ -54,6 +60,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProDetailsRepository
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
@@ -69,6 +76,7 @@ import org.thoughtcrime.securesms.util.mapToStateFlow
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Provider
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -87,6 +95,11 @@ class SettingsViewModel @Inject constructor(
     private val attachmentProcessor: AttachmentProcessor,
     private val proDetailsRepository: ProDetailsRepository,
     private val donationManager: DonationManager,
+    private val pathManager: PathManager,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val deleteAllMessageApiFactory: DeleteAllMessageApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val deleteAllInboxMessagesApi: Provider<DeleteAllInboxMessagesApi>,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -98,7 +111,7 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UIState(
         username = "",
         accountID = selfRecipient.value.address.address,
-        pathStatus = OnionRequestAPI.PathStatus.BUILDING,
+        pathStatus = PathStatus.BUILDING,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPostPro = proStatusManager.isPostPro(),
@@ -145,7 +158,7 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            OnionRequestAPI.pathStatus.collect { status ->
+            pathManager.status.collect { status ->
                 _uiState.update { it.copy(pathStatus = status) }
             }
         }
@@ -308,6 +321,7 @@ class SettingsViewModel @Inject constructor(
             return
         }
 
+        // close avatar dialog when removing picture
         onAvatarDialogDismissed()
 
         // otherwise this action is for removing the existing avatar
@@ -336,6 +350,7 @@ class SettingsViewModel @Inject constructor(
                 if (profilePicture.isEmpty()) {
                     configFactory.withMutableUserConfigs {
                         it.userProfile.setPic(UserPic.DEFAULT)
+                        it.userProfile.setAnimatedAvatar(false)
                     }
 
                     // update dialog state
@@ -373,11 +388,21 @@ class SettingsViewModel @Inject constructor(
             && AnimatedImageUtils.isAnimated(rawImageData)
 
     private fun showAnimatedProCTA() {
-        _uiState.update { it.copy(showAnimatedProCTA = true) }
+        // show the right CTA based on pro state
+        _uiState.update {
+            it.copy(
+                avatarCTAState =
+                    if(it.proDataState.type is ProStatus.Active) AvatarCTAState.Pro
+                    else AvatarCTAState.NonPro(
+                        expired = it.proDataState.type is ProStatus.Expired
+                    ))
+        }
     }
 
     private fun hideAnimatedProCTA() {
-        _uiState.update { it.copy(showAnimatedProCTA = false) }
+        _uiState.update { it.copy(
+            avatarCTAState = AvatarCTAState.Hidden
+        ) }
     }
 
     fun showAvatarDialog() {
@@ -460,13 +485,26 @@ class SettingsViewModel @Inject constructor(
             coroutineScope {
                 allCommunityServers.map { server ->
                     launch {
-                        runCatching { OpenGroupApi.deleteAllInboxMessages(server) }
-                            .onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
+                        runCatching {
+                            communityApiExecutor.execute(
+                                CommunityApiRequest(
+                                    serverBaseUrl = server,
+                                    api = deleteAllInboxMessagesApi.get()
+                                )
+                            )
+                        }.onFailure { Log.e(TAG, "Error deleting messages for $server", it) }
                     }
                 }.joinAll()
             }
 
-            SnodeAPI.deleteAllMessages(checkNotNull(storage.userAuth)).await()
+            val userAuth = checkNotNull(storage.userAuth)
+
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = userAuth.accountId.hexString,
+                    api = deleteAllMessageApiFactory.create(userAuth)
+                )
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete network messages - offering user option to delete local data only.", e)
             null
@@ -659,7 +697,7 @@ class SettingsViewModel @Inject constructor(
     data class UIState(
         val username: String,
         val accountID: String,
-        val pathStatus: OnionRequestAPI.PathStatus,
+        val pathStatus: PathStatus,
         val version: CharSequence = "",
         val showLoader: Boolean = false,
         val avatarDialogState: AvatarDialogState = AvatarDialogState.NoAvatar,
@@ -670,12 +708,18 @@ class SettingsViewModel @Inject constructor(
         val showAvatarDialog: Boolean = false,
         val showAvatarPickerOptionCamera: Boolean = false,
         val showAvatarPickerOptions: Boolean = false,
-        val showAnimatedProCTA: Boolean = false,
+        val avatarCTAState: AvatarCTAState = AvatarCTAState.Hidden,
         val usernameDialog: UsernameDialogData? = null,
         val showSimpleDialog: SimpleDialogData? = null,
         val isPostPro: Boolean,
         val proDataState: ProDataState,
     )
+
+    sealed interface AvatarCTAState {
+        data object Hidden : AvatarCTAState
+        data object Pro : AvatarCTAState
+        data class NonPro(val expired: Boolean) : AvatarCTAState
+    }
 
     sealed interface Commands {
         data object ShowClearDataDialog: Commands

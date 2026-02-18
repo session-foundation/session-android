@@ -21,18 +21,23 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.BufferedSource
 import okio.buffer
 import okio.source
-import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.messaging.file_server.FileRenewApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.ImageUtils
+import org.thoughtcrime.securesms.util.findCause
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -52,7 +57,8 @@ class AvatarReuploadWorker @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUploadManager: Lazy<AvatarUploadManager>,
     private val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
-    private val fileServerApi: FileServerApi
+    private val serverApiExecutor: ServerApiExecutor,
+    private val renewApiFactory: FileRenewApi.Factory,
 ) : CoroutineWorker(context, params) {
 
     /**
@@ -120,21 +126,22 @@ class AvatarReuploadWorker @AssistedInject constructor(
         }
 
         // Otherwise, we only need to renew the same avatar on the server
-        val parsed = fileServerApi.parseAttachmentUrl(profile.url.toHttpUrl())
+        val parsed = FileServerApis.parseAttachmentUrl(profile.url.toHttpUrl())
 
         log("Renewing user avatar on ${parsed.fileServer}")
         try {
-            fileServerApi.renew(
-                fileId = parsed.fileId,
-                fileServer = parsed.fileServer,
-            )
+            serverApiExecutor.execute(ServerApiRequest(
+                serverBaseUrl = parsed.fileServer.url.toString(),
+                serverX25519PubKeyHex = parsed.fileServer.x25519PubKeyHex,
+                api = renewApiFactory.create(fileId = parsed.fileId)
+            ))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             // When renew fails, we will try to re-upload the avatar if:
             // 1. The file is expired (we have the record of this file's expiry time), or
             // 2. The last update was more than 12 days ago.
-            if ((e is NonRetryableException || e is OnionRequestAPI.HTTPRequestFailedAtDestinationException)) {
+            if ((e is NonRetryableException || e.findCause<UnhandledStatusCodeException>() != null)) {
                 val now = Instant.now()
                 if (fileExpiry?.isBefore(now) == true ||
                     (lastUpdated?.isBefore(now.minus(Duration.ofDays(12)))) == true) {

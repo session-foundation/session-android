@@ -1,5 +1,11 @@
 package org.session.libsignal.utilities
 
+import okhttp3.MediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody
+import okio.BufferedSource
+import okio.buffer
+import okio.source
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -13,8 +19,15 @@ class ByteArraySlice private constructor(
     val len: Int,
 ) {
     init {
-        check(offset in 0..data.size) { "Offset $offset is not within [0..${data.size}]" }
-        check(len in 0..data.size) { "Length $len is not within [0..${data.size}]" }
+         // Check negatives first
+        require(offset >= 0 && len >= 0) {
+            "Offset ($offset) and length ($len) must be non-negative"
+        }
+
+        // Check bounds using subtraction to avoid overflow
+        require(offset <= data.size - len) {
+            "Slice [$offset..${offset + len}) is out of bounds for size ${data.size}"
+        }
     }
 
     fun view(range: IntRange): ByteArraySlice {
@@ -44,8 +57,12 @@ class ByteArraySlice private constructor(
         }
     }
 
-    fun decodeToString(): String {
-        return data.decodeToString(offset, offset + len)
+    fun decodeToString(throwOnInvalidSequence: Boolean = false): String {
+        return data.decodeToString(
+            startIndex = offset,
+            endIndex = offset + len,
+            throwOnInvalidSequence = throwOnInvalidSequence
+        )
     }
 
     fun inputStream(): InputStream {
@@ -89,6 +106,24 @@ class ByteArraySlice private constructor(
 
         fun OutputStream.write(view: ByteArraySlice) {
             write(view.data, view.offset, view.len)
+        }
+
+        fun ByteArraySlice.toResponseBody(
+            contentType: MediaType? = null
+        ): ResponseBody {
+            return object : ResponseBody() {
+                override fun contentLength(): Long = len.toLong()
+                override fun contentType() = contentType
+                override fun source(): BufferedSource {
+                    return inputStream().source().buffer()
+                }
+            }
+        }
+
+        fun ByteArraySlice.toRequestBody(
+            contentType: MediaType? = null
+        ): okhttp3.RequestBody {
+            return data.toRequestBody(contentType, offset, len)
         }
     }
 }

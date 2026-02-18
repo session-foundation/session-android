@@ -73,7 +73,7 @@ import org.session.libsession.messaging.messages.control.DataExtractionNotificat
 import org.session.libsession.messaging.messages.control.DataExtractionNotification.Kind.MediaSaved
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
@@ -100,6 +100,7 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils.getFilenameFromUri
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Companion.showOneTimeWarningDialogOrSave
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import java.io.IOException
 import java.util.WeakHashMap
 import javax.inject.Inject
@@ -139,6 +140,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     @Inject
     lateinit var messageSender: MessageSender
 
+    @Inject
+    lateinit var snodeClock: SnodeClock
+
     override val applyDefaultWindowInsets: Boolean
         get() = false
 
@@ -172,8 +176,12 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { view, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
             windowInsetBottom = insets.bottom
-
-            binding.toolbar.updatePadding(top = insets.top)
+            
+            binding.toolbar.updatePadding(
+                left = insets.left,
+                top = insets.top,
+                right = insets.right
+            )
             binding.mediaPreviewAlbumRailContainer.updatePadding(bottom = insets.bottom)
 
             updateControlsPosition()
@@ -258,9 +266,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     }
 
     private fun showAlbumRail() {
-        // never show the rail in landscape
-        if(isLandscape()) return
-
         val rail = binding.mediaPreviewAlbumRailContainer
         rail.animate().cancel()
         rail.visibility = View.VISIBLE
@@ -389,13 +394,11 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // always hide the rail in landscape
-        if (isLandscape()) {
-            hideAlbumRail()
+
+        if (!isFullscreen) {
+            showAlbumRail()
         } else {
-            if (!isFullscreen) {
-                showAlbumRail()
-            }
+            hideAlbumRail()
         }
 
         // Re-apply fullscreen if we were already in it
@@ -476,6 +479,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                 this,
                 ShareActivity::class.java
             )
+            composeIntent.setAction(Intent.ACTION_SEND)
             composeIntent.putExtra(Intent.EXTRA_STREAM, mediaItem.uri)
             composeIntent.setType(mediaItem.mimeType)
             startActivity(composeIntent)
@@ -521,7 +525,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                 }
                 .onAllGranted {
                     val saveTask = SaveAttachmentTask(this@MediaPreviewActivity)
-                    val saveDate = if (mediaItem.date > 0) mediaItem.date else nowWithOffset
+                    val saveDate = if (mediaItem.date > 0) mediaItem.date else snodeClock.currentTimeMillis()
                     saveTask.executeOnExecutor(
                         AsyncTask.THREAD_POOL_EXECUTOR,
                         SaveAttachmentTask.Attachment(
@@ -552,7 +556,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
         if (conversationAddress == null || conversationAddress?.isGroupOrCommunity == true) return
         val message = DataExtractionNotification(
             MediaSaved(
-                nowWithOffset
+                snodeClock.currentTimeMillis()
             )
         )
         messageSender.send(message, conversationAddress!!)
@@ -891,7 +895,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
                     .putExtra(OUTGOING_EXTRA, mms.isOutgoing)
                     .putExtra(DATE_EXTRA, mms.timestamp)
                     .putExtra(SIZE_EXTRA, slide.asAttachment().size)
-                    .putExtra(CAPTION_EXTRA, slide.caption.orNull())
+                    .putExtra(CAPTION_EXTRA, slide.caption)
                     .putExtra(LEFT_IS_RECENT_EXTRA, false)
             }
             return previewIntent

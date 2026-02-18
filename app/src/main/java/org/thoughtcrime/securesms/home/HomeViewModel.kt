@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
@@ -37,21 +38,22 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
-import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
-import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.DonationManager
 import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
@@ -68,6 +70,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
+    private val prefStorage: PreferenceStorage,
     private val loginStateRepository: LoginStateRepository,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
@@ -79,7 +82,8 @@ class HomeViewModel @Inject constructor(
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
     private val dateUtils: DateUtils,
-    private val donationManager: DonationManager
+    private val donationManager: DonationManager,
+    private val audioPlaybackManager: AudioPlaybackManager,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -107,6 +111,8 @@ class HomeViewModel @Inject constructor(
         extraBufferCapacity = 1
     )
     val uiEvents: SharedFlow<UiEvent> = _uiEvents
+
+    val audioPlaybackState = audioPlaybackManager.playbackState
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -141,6 +147,15 @@ class HomeViewModel @Inject constructor(
             .onStart { emit(Unit) }
             .map { prefs.hasHiddenMessageRequests() }
     ) { (unapproveConvoCount, convoList), typingStatus, hiddenMessageRequest ->
+        // check if we should show the recovery phrase backup banner:
+        // - if the user has not yet seen the warning
+        // - if the user has at least 3 conversations
+        if (!prefStorage[HAS_VIEWED_SEED] && convoList.size >= 3){
+            _uiState.update {
+                it.copy(showRecoveryPhraseBackupBanner = true)
+            }
+        }
+
         Data(
             items = buildList {
                 if (unapproveConvoCount > 0 && !hiddenMessageRequest) {
@@ -160,10 +175,8 @@ class HomeViewModel @Inject constructor(
         emit(null)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val shouldShowCurrentUserProBadge: StateFlow<Boolean> = recipientRepository
-        .observeSelf()
-        .map { it.shouldShowProBadge }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val _uiState = MutableStateFlow<UIState>(UIState())
+    val uiState: StateFlow<UIState> = _uiState
 
     private var userProfileModalJob: Job? = null
     private var userProfileModalUtils: UserProfileUtils? = null
@@ -218,7 +231,7 @@ class HomeViewModel @Inject constructor(
                 if(subscription.type is ProStatus.Active.Expiring
                     && !prefs.hasSeenProExpiring()
                 ){
-                    val validUntil = subscription.type.validUntil
+                    val validUntil = subscription.type.renewingAt
                     showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
                     Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $showExpiring")
                     if (showExpiring) {
@@ -249,6 +262,17 @@ class HomeViewModel @Inject constructor(
                 // check if we should display the donation CTA - unless we have a pro CTA already
                 if(!showExpiring && !showExpired && donationManager.shouldShowDonationCTA()){
                     showDonationCTA()
+                }
+            }
+        }
+
+        // observe current user's recipient data change
+        viewModelScope.launch {
+            recipientRepository.observeSelf().collect {
+                _uiState.update { state ->
+                    state.copy(
+                        showCurrentUserProBadge = it.isPro
+                    )
                 }
             }
         }
@@ -304,9 +328,9 @@ class HomeViewModel @Inject constructor(
         configFactory.removeContactOrBlindedContact(address)
     }
 
-    fun leaveGroup(accountId: AccountId) {
+    fun leaveGroup(accountId: AccountId, deleteGroup : Boolean) {
         viewModelScope.launch(Dispatchers.Default) {
-            groupManager.leaveGroup(accountId)
+            groupManager.leaveGroup(accountId, deleteGroup)
         }
     }
 
@@ -433,6 +457,44 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun getLeaveGroupConfirmationDialog(thread: ThreadRecord, isDeleteGroup : Boolean): GroupManagerV2.ConfirmDialogData? {
+        val recipient = thread.recipient
+        if (recipient.address is Address.Group) {
+            val accountId = recipient.address.accountId
+            // Admin will delete the group
+            return if (isDeleteGroup) {
+                groupManager.getDeleteGroupConfirmationDialogData(
+                    accountId,
+                    recipient.displayName()
+                )
+            } else {
+                // more than 1 admin will leave
+                groupManager.getLeaveGroupConfirmationDialogData(
+                    accountId,
+                    recipient.displayName()
+                )
+            }
+        }
+
+        return null
+    }
+
+    fun isCurrentUserLastAdmin(groupId : AccountId) : Boolean{
+        return groupManager.isCurrentUserLastAdmin(groupId)
+    }
+
+    fun stopAudio(){
+        audioPlaybackManager.stop()
+    }
+
+    fun togglePlayPause(){
+        audioPlaybackManager.togglePlayPause()
+    }
+
+    fun cyclePlaybackSpeed(){
+        audioPlaybackManager.cyclePlaybackSpeed()
+    }
+
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
         val userProfileModal: UserProfileModalData? = null,
@@ -462,6 +524,11 @@ class HomeViewModel @Inject constructor(
         data object ShowWhiteListSystemDialog: UiEvent // once confirmed, this is for the system whitelist dialog
     }
 
+    data class UIState(
+        val showCurrentUserProBadge: Boolean = false,
+        val showRecoveryPhraseBackupBanner: Boolean = false
+    )
+
     sealed interface Commands {
         data object HidePinCTADialog : Commands
         data object HideExpiringCTADialog : Commands
@@ -489,8 +556,8 @@ class HomeViewModel @Inject constructor(
     companion object {
         private val CONVERSATION_COMPARATOR = compareByDescending<ThreadRecord> { it.recipient.isPinned }
             .thenByDescending { it.recipient.priority }
-            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenByDescending { it.date }
+            .thenByDescending { it.lastMessage?.timestamp ?: 0L }
             .thenBy { it.recipient.displayName() }
     }
 }

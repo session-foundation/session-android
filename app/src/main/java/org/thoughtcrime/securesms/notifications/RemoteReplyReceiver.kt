@@ -29,7 +29,7 @@ import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -94,7 +94,7 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                 override fun doInBackground(vararg params: Void?): Void? {
                     val threadId = threadDatabase.getOrCreateThreadIdFor(address)
                     val message = VisibleMessage()
-                    message.sentTimestamp = clock.currentTimeMills()
+                    message.sentTimestamp = clock.currentTimeMillis()
                     message.text = responseText.toString()
                     proStatusManager.addProFeatures(message)
                     val expiryMode = recipientRepository.getRecipientSync(address).expiryMode

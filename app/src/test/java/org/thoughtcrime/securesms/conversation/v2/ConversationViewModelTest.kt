@@ -89,11 +89,12 @@ class ConversationViewModelTest : BaseViewModelTest() {
     private fun createViewModel(recipient: Recipient): ConversationViewModel {
         return ConversationViewModel(
             repository = repository,
-            storage = storage,
+            storage = mock{
+                on { getThreadId(recipient.address) } doReturn threadId
+            },
             groupDb = mock(),
             threadDb = mock {
                 on { getOrCreateThreadIdFor(recipient.address) } doReturn threadId
-                on { getThreadIdIfExistsFor(recipient.address) } doReturn threadId
                 on { updateNotifications } doAnswer {
                     emptyFlow()
                 }
@@ -112,7 +113,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
             },
             expiredGroupManager = mock(),
             avatarUtils = avatarUtils,
-            lokiAPIDb = mock(),
             dateUtils = mock(),
             proStatusManager = mock(),
             upmFactory = mock(),
@@ -132,7 +132,11 @@ class ConversationViewModelTest : BaseViewModelTest() {
                 on { changesNotification } doReturn MutableSharedFlow()
             },
             openGroupManager = mock(),
-            attachmentDownloadJobFactory = mock()
+            attachmentDownloadJobFactory = mock(),
+            communityApiExecutor = mock(),
+            deleteAllReactionsApiFactory = mock(),
+            loginStateRepository = mock(),
+            audioPlaybackManager = mock(),
         )
     }
 

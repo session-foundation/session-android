@@ -57,9 +57,8 @@ interface StorageProtocol {
     // Servers
     fun setServerCapabilities(server: String, capabilities: List<String>)
     fun getServerCapabilities(server: String): List<String>?
+    fun clearServerCapabilities(server: String)
 
-    // Open Groups
-    suspend fun addOpenGroup(urlAsString: String)
     fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long)
 
     // Open Group Public Keys

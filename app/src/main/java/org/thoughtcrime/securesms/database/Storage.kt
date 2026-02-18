@@ -6,6 +6,7 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
@@ -43,8 +44,7 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -66,7 +66,7 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -79,6 +79,9 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import org.thoughtcrime.securesms.util.get
 import org.thoughtcrime.securesms.util.getOrConstructConvo
+import org.thoughtcrime.securesms.util.findCause
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -108,6 +111,7 @@ open class Storage @Inject constructor(
     private val openGroupManager: Lazy<OpenGroupManager>,
     private val recipientRepository: RecipientRepository,
     private val loginStateRepository: LoginStateRepository,
+    private val json: Json,
 ) : Database(context, helper), StorageProtocol {
 
     override fun getUserPublicKey(): String? { return loginStateRepository.peekLoginState()?.accountId?.hexString }
@@ -320,7 +324,6 @@ open class Storage @Inject constructor(
                 attachment.filename = FilenameUtils.getFilenameFromUri(context, Uri.parse(attachment.url), attachment.contentType, signalAttachment)
             }
 
-            val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
             val linkPreviews = linkPreview.mapNotNull { it }
             val insertResult = if (isUserSender || isUserBlindedSender) {
                 val pointers = attachments.mapNotNull {
@@ -331,7 +334,7 @@ open class Storage @Inject constructor(
                     message = message,
                     recipient = targetAddress,
                     attachments = pointers,
-                    outgoingQuote = quote.orNull(),
+                    outgoingQuote = quotes,
                     linkPreview = linkPreviews.firstOrNull(),
                     expiresInMillis = expiresInMillis,
                     expireStartedAt = expireStartedAt
@@ -348,20 +351,21 @@ open class Storage @Inject constructor(
                     expiresIn = expiresInMillis,
                     expireStartedAt = expireStartedAt,
                     group = threadRecipient.address as? Address.GroupLike,
-                    attachments = PointerAttachment.forPointers(Optional.of(signalServiceAttachments)),
+                    attachments = PointerAttachment.forPointers(signalServiceAttachments),
                     quote = quotes,
                     linkPreviews = linkPreviews
                 )
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
 
-            messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = true) }
+            messageID = insertResult?.messageId?.let { MessageId(it, mms = true) }
 
         } else {
             val isOpenGroupInvitation = (message.openGroupInvitation != null)
 
             val insertResult = if (isUserSender || isUserBlindedSender) {
                 val textMessage = if (isOpenGroupInvitation) OutgoingTextMessage.fromOpenGroupInvitation(
+                    json = json,
                     invitation = message.openGroupInvitation!!,
                     recipient = targetAddress,
                     sentTimestampMillis = message.sentTimestamp!!,
@@ -379,6 +383,7 @@ open class Storage @Inject constructor(
                 smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(
+                    json = json,
                     invitation = message.openGroupInvitation!!,
                     sender = senderAddress,
                     sentTimestampMillis = message.sentTimestamp!!,
@@ -394,7 +399,7 @@ open class Storage @Inject constructor(
                 )
                 smsDatabase.insertMessageInbox(textMessage.copy(isSecureMessage = true), message.receivedTimestamp ?: 0, runThreadUpdate)
             }
-            messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
+            messageID = insertResult?.messageId?.let { MessageId(it, mms = false) }
         }
 
         message.serverHash?.let { serverHash ->
@@ -582,7 +587,7 @@ open class Storage @Inject constructor(
         }
         if (error.localizedMessage != null) {
             val message: String
-            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+            if (error.findCause<UnhandledStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -598,7 +603,7 @@ open class Storage @Inject constructor(
 
         if (error.localizedMessage != null) {
             val message: String
-            if (error is OnionRequestAPI.HTTPRequestFailedAtDestinationException && error.statusCode == 429) {
+            if (error.findCause<UnhandledStatusCodeException>()?.code == 429) {
                 message = "429: Rate limited."
             } else {
                 message = error.localizedMessage!!
@@ -617,10 +622,7 @@ open class Storage @Inject constructor(
         lokiMessageDatabase.setMessageServerHash(messageId, serverHash)
     }
 
-    override fun getGroup(groupID: String): GroupRecord? {
-        val group = groupDatabase.getGroup(groupID)
-        return if (group.isPresent) { group.get() } else null
-    }
+    override fun getGroup(groupID: String): GroupRecord? = groupDatabase.getGroup(groupID)
 
     override fun createGroup(groupID: String, title: String?, members: List<Address>, avatar: SignalServiceAttachmentPointer?, relay: String?, admins: List<Address>, formationTimestamp: Long) {
         groupDatabase.create(groupID, title, members, avatar, relay, admins, formationTimestamp)
@@ -652,9 +654,9 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun isGroupActive(groupPublicKey: String): Boolean {
-        return groupDatabase.getGroup(GroupUtil.doubleEncodeGroupID(groupPublicKey)).orNull()?.isActive == true
-    }
+    override fun isGroupActive(groupPublicKey: String): Boolean =
+        groupDatabase.getGroup(GroupUtil.doubleEncodeGroupID(groupPublicKey))?.isActive == true
+
 
     override fun setActive(groupID: String, value: Boolean) {
         groupDatabase.setActive(groupID, value)
@@ -743,7 +745,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId) {
-        val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMills()
+        val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMillis()
         val senderPublicKey = message.sender
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
             ?: configFactory.getGroup(closedGroup)?.name
@@ -754,7 +756,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoLeaving(closedGroup: AccountId) {
-        val sentTimestamp = clock.currentTimeMills()
+        val sentTimestamp = clock.currentTimeMillis()
         val senderPublicKey = getUserPublicKey() ?: return
         val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupLeaving)
 
@@ -762,7 +764,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoErrorQuit(closedGroup: AccountId) {
-        val sentTimestamp = clock.currentTimeMills()
+        val sentTimestamp = clock.currentTimeMillis()
         val senderPublicKey = getUserPublicKey() ?: return
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
             ?: configFactory.getGroup(closedGroup)?.name
@@ -790,12 +792,11 @@ open class Storage @Inject constructor(
         val address = Address.Group(closedGroup)
         val recipient = recipientRepository.getRecipientSync(address)
         val threadDb = threadDatabase
-        val threadID = threadDb.getThreadIdIfExistsFor(address)
+        val threadID = threadDb.getOrCreateThreadIdFor(address)
         val expiryMode = recipient.expiryMode
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
-        val inviteJson = updateData.toJSON()
-
+        val inviteJson = updateData.toJSON(json)
 
         if (senderPublicKey == null || senderPublicKey == userPublicKey) {
             val infoMessage = OutgoingMediaMessage(
@@ -845,7 +846,7 @@ open class Storage @Inject constructor(
                 isGroupUpdateMessage = true,
                 message = inviteJson
             ),  true)
-            return insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
+            return insertResult?.messageId?.let { MessageId(it, mms = false) }
         }
     }
 
@@ -857,12 +858,12 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getServerCapabilities(server)
     }
 
-    override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
-        return groupDatabase.getAllGroups(includeInactive)
+    override fun clearServerCapabilities(server: String) {
+        lokiAPIDatabase.clearServerCapabilities(server)
     }
 
-    override suspend fun addOpenGroup(urlAsString: String) {
-        return openGroupManager.get().addOpenGroup(urlAsString)
+    override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
+        return groupDatabase.getAllGroups(includeInactive)
     }
 
     override fun getOrCreateThreadIdFor(address: Address): Long {
@@ -870,7 +871,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadId(address: Address): Long? {
-        val threadID = threadDatabase.getThreadIdIfExistsFor(address)
+        val threadID = threadDatabase.getThreadIdIfExistsFor(address.address)
         return if (threadID < 0) null else threadID
     }
 
@@ -1077,7 +1078,7 @@ open class Storage @Inject constructor(
 
         val message = IncomingMediaMessage(
             from = fromSerialized(userPublicKey),
-            sentTimeMillis = clock.currentTimeMills(),
+            sentTimeMillis = clock.currentTimeMillis(),
             expiresIn = 0,
             expireStartedAt = 0,
             isMessageRequestResponse = true,
@@ -1099,7 +1100,7 @@ open class Storage @Inject constructor(
         val recipient = recipientRepository.getRecipientSync(address)
         val expiryMode = recipient.expiryMode.coerceSendToRead()
         val expiresInMillis = expiryMode.expiryMillis
-        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
+        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMillis() else 0
         val callMessage = IncomingTextMessage(
             callMessageType = callMessageType,
             sender = address,

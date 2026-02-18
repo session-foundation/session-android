@@ -21,20 +21,20 @@ import android.content.Context
 import android.database.Cursor
 import androidx.collection.MutableLongSet
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.annimon.stream.Stream
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
@@ -43,7 +43,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.toGroupString
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
@@ -61,7 +60,6 @@ import org.thoughtcrime.securesms.pro.toProProfileBitSetValue
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import org.thoughtcrime.securesms.util.asSequence
 import java.io.Closeable
-import java.io.IOException
 import java.util.LinkedList
 import javax.inject.Inject
 import javax.inject.Provider
@@ -79,6 +77,7 @@ class MmsDatabase @Inject constructor(
     private val reactionDatabase: ReactionDatabase,
     private val mmsSmsDatabase: Lazy<MmsSmsDatabase>,
     private val groupDatabase: GroupDatabase,
+    private val snodeClock: SnodeClock
 ) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
@@ -284,7 +283,7 @@ class MmsDatabase @Inject constructor(
         id: Long,
         maskOff: Long,
         maskOn: Long,
-        threadId: Optional<Long>
+        threadId: Long?
     ) {
         val db = writableDatabase
         db.execSQL(
@@ -292,9 +291,8 @@ class MmsDatabase @Inject constructor(
                     " SET " + MESSAGE_BOX + " = (" + MESSAGE_BOX + " & " + (MmsSmsColumns.Types.TOTAL_MASK - maskOff) + " | " + maskOn + " )" +
                     " WHERE " + ID + " = ?", arrayOf(id.toString() + "")
         )
-        if (threadId.isPresent) {
-            threadDatabase.notifyThreadUpdated(threadId.get())
-        }
+
+        threadId?.let { threadDatabase.notifyThreadUpdated(it) }
     }
 
     private fun markAs(
@@ -306,7 +304,7 @@ class MmsDatabase @Inject constructor(
             messageId,
             MmsSmsColumns.Types.BASE_TYPE_MASK,
             baseType,
-            Optional.of(threadId)
+            threadId
         )
     }
 
@@ -413,7 +411,6 @@ class MmsDatabase @Inject constructor(
         return messages
     }
 
-
     private fun getLinkPreviews(
         cursor: Cursor,
         attachments: List<DatabaseAttachment>
@@ -426,27 +423,22 @@ class MmsDatabase @Inject constructor(
         for (attachment in attachments) {
             attachmentIdMap[attachment.attachmentId] = attachment
         }
-        try {
-            val previews: MutableList<LinkPreview> = LinkedList()
-            val jsonPreviews = JSONArray(serializedPreviews)
-            for (i in 0 until jsonPreviews.length()) {
-                val preview = LinkPreview.deserialize(jsonPreviews.getJSONObject(i).toString())
-                if (preview.attachmentId != null) {
-                    val attachment = attachmentIdMap[preview.attachmentId]
-                    if (attachment != null) {
-                        previews.add(LinkPreview(preview.url, preview.title, attachment))
+
+        return runCatching {
+            json.decodeFromString<List<LinkPreview>>(serializedPreviews)
+                .mapNotNull { preview ->
+                    if (preview.attachmentId != null) {
+                        attachmentIdMap[preview.attachmentId]?.let { attachment ->
+                            preview.copy(thumbnail = attachment)
+                        }
+                    } else {
+                        preview
                     }
-                } else {
-                    previews.add(preview)
                 }
-            }
-            return previews
-        } catch (e: JSONException) {
-            Log.w(TAG, "Failed to parse shared contacts.", e)
-        } catch (e: IOException) {
-            Log.w(TAG, "Failed to parse shared contacts.", e)
-        }
-        return emptyList()
+        }.onFailure { err ->
+            Log.w(TAG, "Failed to decode link preview", err)
+        }.getOrNull()
+            .orEmpty()
     }
 
     @Throws(MmsException::class)
@@ -455,7 +447,7 @@ class MmsDatabase @Inject constructor(
         threadId: Long,
         mailbox: Long, serverTimestamp: Long,
         runThreadUpdate: Boolean
-    ): Optional<InsertResult> {
+    ): InsertResult? {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
         if (retrieved.messageContent is DisappearingMessageUpdate)
             deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.group != null })
@@ -494,7 +486,7 @@ class MmsDatabase @Inject constructor(
             )
         ) {
             Log.w(TAG, "Ignoring duplicate media message (" + retrieved.sentTimeMillis + ")")
-            return Optional.absent()
+            return null
         }
         val messageId = insertMediaMessage(
             body = retrieved.body,
@@ -507,7 +499,7 @@ class MmsDatabase @Inject constructor(
         if (runThreadUpdate) {
             threadDatabase.notifyThreadUpdated(threadId)
         }
-        return Optional.of(InsertResult(messageId, threadId))
+        return InsertResult(messageId, threadId)
     }
 
     @Throws(MmsException::class)
@@ -516,7 +508,7 @@ class MmsDatabase @Inject constructor(
         threadId: Long,
         serverTimestamp: Long,
         runThreadUpdate: Boolean
-    ): Optional<InsertResult> {
+    ): InsertResult? {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
         if (retrieved.messageContent is DisappearingMessageUpdate) deleteExpirationTimerMessages(threadId, true.takeUnless { retrieved.isGroup })
         val messageId = insertMessageOutbox(
@@ -528,10 +520,10 @@ class MmsDatabase @Inject constructor(
         )
         if (messageId == -1L) {
             Log.w(TAG, "insertSecureDecryptedMessageOutbox believes the MmsDatabase insertion failed.")
-            return Optional.absent()
+            return null
         }
         markAsSent(messageId, true)
-        return Optional.fromNullable(InsertResult(messageId, threadId))
+        return InsertResult(messageId, threadId)
     }
 
     @JvmOverloads
@@ -541,7 +533,7 @@ class MmsDatabase @Inject constructor(
         threadId: Long,
         serverTimestamp: Long = 0,
         runThreadUpdate: Boolean
-    ): Optional<InsertResult> {
+    ): InsertResult? {
         var type = MmsSmsColumns.Types.BASE_INBOX_TYPE or MmsSmsColumns.Types.SECURE_MESSAGE_BIT or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
         if (retrieved.isMediaSavedDataExtraction) {
             type = type or MmsSmsColumns.Types.MEDIA_SAVED_EXTRACTION_BIT
@@ -577,7 +569,7 @@ class MmsDatabase @Inject constructor(
         // In open groups messages should be sorted by their server timestamp
         var receivedTimestamp = serverTimestamp
         if (serverTimestamp == 0L) {
-            receivedTimestamp = SnodeAPI.nowWithOffset
+            receivedTimestamp = snodeClock.currentTimeMillis()
         }
         contentValues.put(DATE_RECEIVED, receivedTimestamp)
         contentValues.put(EXPIRES_IN, message.expiresInMillis)
@@ -585,14 +577,8 @@ class MmsDatabase @Inject constructor(
         contentValues.put(ADDRESS, message.recipient.toString())
         contentValues.put(PRO_PROFILE_FEATURES, message.proFeatures.toProProfileBitSetValue())
         contentValues.put(PRO_MESSAGE_FEATURES, message.proFeatures.toProMessageBitSetValue())
-        contentValues.put(
-            DELIVERY_RECEIPT_COUNT,
-            Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }
-                .sum())
-        contentValues.put(
-            READ_RECEIPT_COUNT,
-            Stream.of(earlyReadReceipts.values).mapToLong { obj: Long -> obj }
-                .sum())
+        contentValues.put(DELIVERY_RECEIPT_COUNT, earlyDeliveryReceipts.values.sum())
+        contentValues.put(READ_RECEIPT_COUNT, earlyReadReceipts.values.sum())
         val quoteAttachments: MutableList<Attachment?> = LinkedList()
         if (message.outgoingQuote != null) {
             contentValues.put(QUOTE_ID, message.outgoingQuote.id)
@@ -653,10 +639,9 @@ class MmsDatabase @Inject constructor(
         val allAttachments: MutableList<Attachment?> = LinkedList()
         val thumbnailJobs: MutableList<AttachmentId> = ArrayList()  // Collector for thumbnail jobs
 
-        val previewAttachments =
-            Stream.of(linkPreviews).filter { lp: LinkPreview -> lp.getThumbnail().isPresent }
-                .map { lp: LinkPreview -> lp.getThumbnail().get() }
-                .toList()
+        val previewAttachments: List<Attachment> =
+            linkPreviews
+                .mapNotNull { lp -> lp.thumbnail }
 
         allAttachments.addAll(attachments)
         allAttachments.addAll(previewAttachments)
@@ -805,24 +790,19 @@ class MmsDatabase @Inject constructor(
         previews: List<LinkPreview?>
     ): String? {
         if (previews.isEmpty()) return null
-        val linkPreviewJson = JSONArray()
+        val normalisedPreviews = arrayListOf<LinkPreview>()
         for (preview in previews) {
-            try {
-                var attachmentId: AttachmentId? = null
-                if (preview!!.getThumbnail().isPresent) {
-                    attachmentId = insertedAttachmentIds[preview.getThumbnail().get()]
-                }
-                val updatedPreview = LinkPreview(
-                    preview.url, preview.title, attachmentId
-                )
-                linkPreviewJson.put(JSONObject(updatedPreview.serialize()))
-            } catch (e: JSONException) {
-                Log.w(TAG, "Failed to serialize shared contact. Skipping it.", e)
-            } catch (e: IOException) {
-                Log.w(TAG, "Failed to serialize shared contact. Skipping it.", e)
+            var attachmentId: AttachmentId? = null
+            val thumb = preview!!.thumbnail
+            if (thumb != null) {
+                attachmentId = insertedAttachmentIds[thumb]
             }
+
+            normalisedPreviews += LinkPreview(
+                preview.url, preview.title, attachmentId
+            )
         }
-        return linkPreviewJson.toString()
+        return json.encodeToString(normalisedPreviews)
     }
 
     private fun isDuplicateMessageRequestResponse(
@@ -999,7 +979,7 @@ class MmsDatabase @Inject constructor(
             )
             val previews: List<LinkPreview?> = getLinkPreviews(cursor, attachments)
             val previewAttachments: Set<Attachment?> =
-                previews.mapNotNull { it?.getThumbnail()?.orNull() }.toSet()
+                previews.mapNotNull { it?.thumbnail }.toSet()
             val slideDeck = getSlideDeck(
                 attachments
                     .filterNot { o: DatabaseAttachment? -> o in previewAttachments }
@@ -1040,11 +1020,10 @@ class MmsDatabase @Inject constructor(
             return recipientRepository.getRecipientSync(serialized.toAddress())
         }
 
-        private fun getSlideDeck(attachments: List<DatabaseAttachment?>): SlideDeck? {
-            val messageAttachments: List<Attachment?>? = Stream.of(attachments)
-                .filterNot { obj: DatabaseAttachment? -> obj!!.isQuote }
-                .toList()
-            return SlideDeck(context, messageAttachments!!)
+        private fun getSlideDeck(attachments: List<DatabaseAttachment?>): SlideDeck {
+            val messageAttachments: List<Attachment?> =
+                attachments.filterNot { it?.isQuote == true }
+            return SlideDeck(context, messageAttachments)
         }
 
         private fun getQuote(cursor: Cursor): Quote? {
@@ -1056,11 +1035,10 @@ class MmsDatabase @Inject constructor(
             val quoteText = retrievedQuote?.body
             val quoteMissing = retrievedQuote == null
             val quoteDeck = (
-                    (retrievedQuote as? MmsMessageRecord)?.slideDeck ?:
-                    Stream.of(attachmentDatabase.getAttachment(cursor))
-                        .filter { obj: DatabaseAttachment? -> obj!!.isQuote }
-                        .toList()
-                        .let { SlideDeck(context, it) }
+                    (retrievedQuote as? MmsMessageRecord)?.slideDeck
+                        ?: attachmentDatabase.getAttachment(cursor)
+                            .filter { it?.isQuote == true }
+                            .let { SlideDeck(context, it) }
                     )
             return Quote(
                 quoteId,

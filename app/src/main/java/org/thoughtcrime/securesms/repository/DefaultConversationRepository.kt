@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.MessageDataProvider
@@ -22,10 +23,14 @@ import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.BanUserApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteUserMessagesApi
+import org.session.libsession.messaging.open_groups.api.UnbanUserApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
@@ -41,6 +46,9 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
@@ -60,6 +68,8 @@ import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.session.libsession.messaging.open_groups.api.DeleteMessageApi as DeleteCommunityMessageApi
+import org.thoughtcrime.securesms.api.snode.DeleteMessageApi as DeleteSnodeMessageApi
 
 @Singleton
 class DefaultConversationRepository @Inject constructor(
@@ -79,6 +89,14 @@ class DefaultConversationRepository @Inject constructor(
     private val messageSender: MessageSender,
     private val loginStateRepository: LoginStateRepository,
     private val proStatusManager: ProStatusManager,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val deleteSwarmMessageApiFactory: DeleteSnodeMessageApi.Factory,
+    private val deleteCommunityMessageApiFactory: DeleteCommunityMessageApi.Factory,
+    private val banUserApiFactory: BanUserApi.Factory,
+    private val unbanUserApiFactory: UnbanUserApi.Factory,
+    private val deleteUserMessageApiFactory: DeleteUserMessagesApi.Factory,
+    private val json: Json,
 ) : ConversationRepository {
 
     override val conversationListAddressesFlow get() = loginStateRepository.flowWithLoggedInState {
@@ -200,7 +218,7 @@ class DefaultConversationRepository @Inject constructor(
         val info = community?.roomInfo ?: return
         for (contact in contacts) {
             val message = VisibleMessage()
-            message.sentTimestamp = clock.currentTimeMills()
+            message.sentTimestamp = clock.currentTimeMillis()
             val openGroupInvitation = OpenGroupInvitation().apply {
                 name = info.details.name
                 url = community.joinURL
@@ -211,6 +229,7 @@ class DefaultConversationRepository @Inject constructor(
             val expirationConfig = recipientRepository.getRecipientSync(contact).expiryMode
             val expireStartedAt = if (expirationConfig is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.Companion.fromOpenGroupInvitation(
+                json,
                 openGroupInvitation,
                 contact,
                 message.sentTimestamp!!,
@@ -335,7 +354,15 @@ class DefaultConversationRepository @Inject constructor(
     ) {
         messages.forEach { message ->
             lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
-                OpenGroupApi.deleteMessage(messageServerID, community.room, community.serverUrl)
+                communityApiExecutor.execute(
+                    CommunityApiRequest(
+                        serverBaseUrl = community.serverUrl,
+                        api = deleteCommunityMessageApiFactory.create(
+                            room = community.room,
+                            messageId = messageServerID
+                        )
+                    )
+                )
             }
         }
     }
@@ -354,7 +381,15 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    SnodeAPI.deleteMessage(recipient.address, userAuth, listOf(serverHash))
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = deleteSwarmMessageApiFactory.create(
+                                messageHashes = listOf(serverHash),
+                                swarmAuth = userAuth
+                            )
+                        )
+                    )
                 }
 
             // send an UnsendRequest to user's swarm
@@ -411,7 +446,15 @@ class DefaultConversationRepository @Inject constructor(
             // delete from swarm
             messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
-                    SnodeAPI.deleteMessage(recipient.address, userAuth, listOf(serverHash))
+                    swarmApiExecutor.execute(
+                        SwarmApiRequest(
+                            swarmPubKeyHex = userAuth.accountId.hexString,
+                            api = deleteSwarmMessageApiFactory.create(
+                                messageHashes = listOf(serverHash),
+                                swarmAuth = userAuth
+                            )
+                        )
+                    )
                 }
 
             // send an UnsendRequest to user's swarm
@@ -431,19 +474,48 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override suspend fun banUser(community: Address.Community, userId: AccountId): Result<Unit> = runCatching {
-        OpenGroupApi.ban(
-            publicKey = userId.hexString,
-            room = community.room,
-            server = community.serverUrl,
+        communityApiExecutor.execute(
+            CommunityApiRequest(
+                serverBaseUrl = community.serverUrl,
+                api = banUserApiFactory.create(
+                    userToBan = userId.hexString,
+                    room = community.room
+                )
+            )
+        )
+    }
+
+    override suspend fun unbanUser(community: Address.Community, userId: AccountId): Result<Unit> = runCatching {
+        communityApiExecutor.execute(
+            CommunityApiRequest(
+                serverBaseUrl = community.serverUrl,
+                api = unbanUserApiFactory.create(
+                    userToBan = userId.hexString,
+                    room = community.room
+                )
+            )
         )
     }
 
     override suspend fun banAndDeleteAll(community: Address.Community, userId: AccountId) = runCatching {
-        // Note: This accountId could be the blinded Id
-        OpenGroupApi.banAndDeleteAll(
-            publicKey = userId.hexString,
-            room = community.room,
-            server = community.serverUrl
+        communityApiExecutor.execute(
+            CommunityApiRequest(
+                serverBaseUrl = community.serverUrl,
+                api = banUserApiFactory.create(
+                    userToBan = userId.hexString,
+                    room = community.room
+                )
+            )
+        )
+
+        communityApiExecutor.execute(
+            CommunityApiRequest(
+                serverBaseUrl = community.serverUrl,
+                api = deleteUserMessageApiFactory.create(
+                    userToDelete = userId.hexString,
+                    room = community.room
+                )
+            )
         )
     }
 
@@ -502,7 +574,11 @@ class DefaultConversationRepository @Inject constructor(
                 }
 
                 withContext(Dispatchers.Default) {
-                    messageSender.send(message = MessageRequestResponse(true), address = recipient)
+                    messageSender.send(
+                        message = MessageRequestResponse(true)
+                            .also(proStatusManager::addProFeatures),
+                        address = recipient
+                    )
 
                     // add a control message for our user
                     storage.insertMessageRequestResponseFromYou(

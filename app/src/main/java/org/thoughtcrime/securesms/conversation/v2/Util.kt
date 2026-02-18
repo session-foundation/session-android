@@ -16,116 +16,19 @@
  */
 package org.thoughtcrime.securesms.conversation.v2
 
-import android.content.Context
-import android.net.Uri
-import android.text.TextUtils
-import android.view.View
-import com.annimon.stream.Stream
-import java.util.Collections
+import android.text.Spannable
+import android.text.style.URLSpan
+import org.nibor.autolink.LinkExtractor
+import org.nibor.autolink.LinkType
 import org.session.libsignal.utilities.Log
+import java.util.EnumSet
 
 object Util {
     private val TAG: String = Log.tag(Util::class.java)
 
-    fun <T> asList(vararg elements: T): List<T> {
-        val result = mutableListOf<T>() // LinkedList()
-        Collections.addAll(result, *elements)
-        return result
-    }
-
-    fun join(list: Array<String?>, delimiter: String?): String {
-        return join(listOf(*list), delimiter)
-    }
-
-    fun <T> join(list: Collection<T>, delimiter: String?): String {
-        val result = StringBuilder()
-        var i = 0
-
-        for (item in list) {
-            result.append(item)
-            if (++i < list.size) result.append(delimiter)
-        }
-
-        return result.toString()
-    }
-
-    fun join(list: LongArray, delimeter: String?): String {
-        val boxed: MutableList<Long> = ArrayList(list.size)
-
-        for (i in list.indices) {
-            boxed.add(list[i])
-        }
-
-        return join(boxed, delimeter)
-    }
-
-    @SafeVarargs
-    fun <E> join(vararg lists: List<E>): List<E> {
-        val totalSize = Stream.of(*lists).reduce(0) { sum: Int, list: List<E> -> sum + list.size }
-        val joined: MutableList<E> = ArrayList(totalSize)
-
-        for (list in lists) {
-            joined.addAll(list)
-        }
-
-        return joined
-    }
-
-    fun join(list: List<Long>, delimeter: String?): String {
-        val sb = StringBuilder()
-
-        for (j in list.indices) {
-            if (j != 0) sb.append(delimeter)
-            sb.append(list[j])
-        }
-
-        return sb.toString()
-    }
-
-    fun wait(lock: Any, timeout: Long) {
-        try {
-            (lock as Object).wait(timeout)
-        } catch (ie: InterruptedException) {
-            throw AssertionError(ie)
-        }
-    }
-
-    fun split(source: String, delimiter: String): List<String> {
-        val results = mutableListOf<String>()
-
-        if (TextUtils.isEmpty(source)) {
-            return results
-        }
-
-        val elements = source.split(delimiter.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        Collections.addAll(results, *elements)
-
-        return results
-    }
-
-    fun split(input: ByteArray?, firstLength: Int, secondLength: Int): Array<ByteArray?> {
-        val parts = arrayOfNulls<ByteArray>(2)
-
-        parts[0] = ByteArray(firstLength)
-        System.arraycopy(input, 0, parts[0], 0, firstLength)
-
-        parts[1] = ByteArray(secondLength)
-        System.arraycopy(input, firstLength, parts[1], 0, secondLength)
-
-        return parts
-    }
-
-    fun trim(input: ByteArray?, length: Int): ByteArray {
-        val result = ByteArray(length)
-        System.arraycopy(input, 0, result, 0, result.size)
-
-        return result
-    }
-
-    fun uri(uri: String?): Uri? {
-        return if (uri == null) null
-        else Uri.parse(uri)
-    }
+    private val autoLinkExtractor: LinkExtractor = LinkExtractor.builder()
+        .linkTypes(EnumSet.of(LinkType.URL, LinkType.WWW))
+        .build()
 
     /**
      * Returns half of the difference between the given length, and the length when scaled by the
@@ -136,9 +39,31 @@ object Util {
         return (length - scaledLength) / 2
     }
 
-    // Method to determine if we're currently in a left-to-right or right-to-left language like Arabic
-    fun usingLeftToRightLanguage(context: Context): Boolean {
-        val config = context.resources.configuration
-        return config.layoutDirection == View.LAYOUT_DIRECTION_LTR
+    /**
+     * Uses autolink-java to detect URLs with better boundaries than Android Linkify,
+     * and applies standard URLSpan spans only.
+     */
+    fun Spannable.addUrlSpansWithAutolink() {
+        // Remove any existing URLSpans first so we don't get overlapping links
+        getSpans(0, length, URLSpan::class.java).forEach { removeSpan(it) }
+
+        // extract the links
+        val text = toString()
+        val links = autoLinkExtractor.extractLinks(text)
+
+        // iterate detected links and keep only those that represent real links
+        for (link in links) {
+            // This is the exact range autolink detected
+            val start = link.beginIndex
+            val end = link.endIndex
+            val raw = text.substring(start, end)
+
+            val url = when (link.type) {
+                LinkType.WWW -> "https://$raw"
+                else -> raw
+            }
+
+            setSpan(URLSpan(url), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
     }
 }

@@ -10,7 +10,7 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
@@ -99,12 +99,7 @@ class ExpiringMessageManager @Inject constructor(
                 dataExtractionNotification = null
             )
             //insert the timer update message
-            mmsDatabase.insertSecureDecryptedMessageInbox(
-                mediaMessage,
-                threadId,
-                runThreadUpdate = true
-            )
-                .orNull()
+            mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
                 ?.let { MessageId(it.messageId, mms = true) }
         } catch (ioe: IOException) {
             Log.e("Loki", "Failed to insert expiration update message.")
@@ -158,7 +153,7 @@ class ExpiringMessageManager @Inject constructor(
                 message.threadID!!,
                 sentTimestamp,
                 true
-            ).orNull()?.messageId?.let { MessageId(it, mms = true) }
+            )?.messageId?.let { MessageId(it, mms = true) }
         } catch (ioe: MmsException) {
             Log.e("Loki", "Failed to insert expiration update message.", ioe)
             return null
@@ -190,7 +185,7 @@ class ExpiringMessageManager @Inject constructor(
         val messageId = message.id
         if (message.expiryMode != ExpiryMode.NONE && messageId != null) {
             getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, clock.currentTimeMills())
+                .markExpireStarted(messageId.id, clock.currentTimeMillis())
         }
     }
 
@@ -205,13 +200,13 @@ class ExpiringMessageManager @Inject constructor(
             (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)
         ) {
             getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, clock.currentTimeMills())
+                .markExpireStarted(messageId.id, message.sentTimestamp!!)
         }
     }
 
     private suspend fun processDatabase(db: MessagingDatabase) {
         while (true) {
-            val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMills())
+            val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMillis())
 
             if (expiredMessages.isNotEmpty()) {
                 Log.d(
@@ -228,7 +223,7 @@ class ExpiringMessageManager @Inject constructor(
             }
 
             val nextExpiration = db.nextExpiringTimestamp
-            val now = clock.currentTimeMills()
+            val now = clock.currentTimeMillis()
 
             if (nextExpiration > 0 && nextExpiration <= now) {
                 continue // Proceed to the next iteration if the next expiration is already or about go to in the past

@@ -15,7 +15,7 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
@@ -30,6 +30,10 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
+import org.thoughtcrime.securesms.api.snode.AlterTtlApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
@@ -39,9 +43,9 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
-import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -58,6 +62,8 @@ class MarkReadProcessor @Inject constructor(
     private val snodeClock: SnodeClock,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val configFactory: ConfigFactoryProtocol,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    private val alterTtyFactory: AlterTtlApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
 
@@ -191,24 +197,38 @@ class MarkReadProcessor @Inject constructor(
     private fun shortenExpiryOfDisappearingAfterRead(
         hashToMessage: Map<String, MarkedMessageInfo>
     ) {
-        hashToMessage.entries
-            .groupBy(
-                keySelector =  { it.value.expirationInfo.expiresIn },
-                valueTransform = { it.key }
-            ).forEach { (expiresIn, hashes) ->
-                SnodeAPI.alterTtl(
-                    messageHashes = hashes,
-                    newExpiry = snodeClock.currentTimeMills() + expiresIn,
-                    auth = checkNotNull(storage.userAuth) { "No authorized user" },
-                    shorten = true
-                )
-            }
+        coroutineScope.launch {
+            val userAuth = checkNotNull(storage.userAuth) { "No authorized user" }
+
+            hashToMessage.entries
+                .groupBy(
+                    keySelector = { it.value.expirationInfo.expiresIn },
+                    valueTransform = { it.key }
+                ).forEach { (expiresIn, hashes) ->
+                    try {
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = userAuth.accountId.hexString,
+                                api = alterTtyFactory.create(
+                                    messageHashes = hashes,
+                                    auth = userAuth,
+                                    alterType = AlterTtlApi.AlterType.Shorten,
+                                    newExpiry = snodeClock.currentTimeMillis() + expiresIn
+                                )
+                            )
+                        )
+                    } catch (e: Throwable) {
+                        if (e is CancellationException) throw e
+
+                        Log.e(TAG, "Failed to shorten expiry for messages with hashes $hashes", e)
+                    }
+                }
+        }
     }
 
     private val Recipient.shouldSendReadReceipt: Boolean
         get() = when (data) {
             is RecipientData.Contact -> approved && !blocked
-            is RecipientData.Generic -> !isGroupOrCommunityRecipient && !blocked
             else -> false
         }
 
@@ -223,7 +243,7 @@ class MarkReadProcessor @Inject constructor(
             .forEach { (address, messages) ->
                 messages.map { it.timetamp }
                     .let(::ReadReceipt)
-                    .apply { sentTimestamp = snodeClock.currentTimeMills() }
+                    .apply { sentTimestamp = snodeClock.currentTimeMillis() }
                     .let { messageSender.send(it, address) }
             }
     }

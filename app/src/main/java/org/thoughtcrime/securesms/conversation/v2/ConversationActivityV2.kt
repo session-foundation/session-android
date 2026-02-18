@@ -9,13 +9,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.database.Cursor
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -34,8 +34,18 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -43,10 +53,13 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -55,7 +68,6 @@ import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
-import com.annimon.stream.Stream
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
@@ -74,7 +86,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -91,13 +102,17 @@ import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.AddReactionApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.DeleteReactionApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
@@ -108,7 +123,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
-import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
@@ -120,7 +134,9 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
+import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.recordAudio
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.components.TypingStatusSender
@@ -184,7 +200,6 @@ import org.thoughtcrime.securesms.mms.GifSlide
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.MmsException
-import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -194,6 +209,8 @@ import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.ui.LatchedAnimatedVisibility
+import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.ConversationAppBar
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -203,7 +220,6 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
-import org.thoughtcrime.securesms.util.adapter.handleScrollToBottom
 import org.thoughtcrime.securesms.util.adapter.runWhenLaidOut
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
@@ -219,8 +235,6 @@ import java.io.File
 import java.util.LinkedList
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.min
@@ -263,6 +277,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var proStatusManager: ProStatusManager
+    @Inject lateinit var snodeClock: SnodeClock
+    @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
 
@@ -271,6 +287,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     @Inject
     lateinit var conversationLoaderFactory: ConversationLoader.Factory
+
+    @Inject
+    lateinit var communityApiExecutor: CommunityApiExecutor
+
+    @Inject
+    lateinit var addReactionApiFactory: AddReactionApi.Factory
+
+    @Inject
+    lateinit var deleteReactionApiFactory: DeleteReactionApi.Factory
+
+    @Inject
+    lateinit var recentEmojiPageModel: RecentEmojiPageModel
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -420,11 +448,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val libraryButton  by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
     private val cameraButton   by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
 
-    private val messageToScrollTimestamp = AtomicLong(-1)
-    private val messageToScrollAuthor = AtomicReference<Address?>(null)
+    private var messageToScrollTo: MessageToScrollTo? = null
+    data class MessageToScrollTo(
+        val id: MessageId,
+        val smoothScroll: Boolean
+    )
+
     private val firstLoad = AtomicBoolean(true)
 
     private var isKeyboardVisible = false
+
+    private var pendingRecyclerViewScrollState: Parcelable? = null
+    private var hasRestoredRecyclerViewScrollState: Boolean = false
 
     private lateinit var reactionDelegate: ConversationReactionDelegate
     private val reactWithAnyEmojiStartPage = -1
@@ -485,17 +520,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // message. To do this we keep track of the replied-to message's location in the recycler view.
     private var pendingHighlightMessagePosition: Int? = null
 
-    // Used to target a specific message and scroll to it with some breathing room above (offset) for all messages but the first
     private var currentTargetedScrollOffsetPx: Int = 0
-    private val nonFirstMessageOffsetPx by lazy { resources.getDimensionPixelSize(R.dimen.massive_spacing) * -1 }
-    private val linearSmoothScroller by lazy {
-        object : LinearSmoothScroller(binding.conversationRecyclerView.context) {
-            override fun getVerticalSnapPreference(): Int = SNAP_TO_START
-            override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
-                return super.calculateDyToMakeVisible(view, snapPreference) - currentTargetedScrollOffsetPx
-            }
-        }
-    }
+    private val scrollingBreathingRoom by lazy { resources.getDimensionPixelSize(R.dimen.massive_spacing) }
 
     // The coroutine job that was used to submit a message approval response to the snode
     private var conversationApprovalJob: Job? = null
@@ -505,7 +531,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Extras
         private const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
-        private const val SCROLL_MESSAGE_AUTHOR = "scroll_message_author"
+        private const val CONVERSATION_SCROLL_STATE = "conversation_scroll_state"
 
         const val SHOW_SEARCH = "show_search"
 
@@ -519,8 +545,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         fun createIntent(
             context: Context,
             address: Address.Conversable,
-            // If provided, this will scroll to the message with the given timestamp and author (TODO: use message id instead)
-            scrollToMessage: Pair<Long, Address>? = null
+            // If provided, this will scroll to the message with the given message id
+            scrollToMessage: MessageId? = null
         ): Intent {
             require(!address.isBlinded) {
                 "Cannot create a conversation for a blinded address. Use a \"Community inbox\" address instead."
@@ -528,9 +554,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             return Intent(context, ConversationActivityV2::class.java).apply {
                 putExtra(ADDRESS, address)
-                scrollToMessage?.let { (timestamp, author) ->
-                    putExtra(SCROLL_MESSAGE_ID, timestamp)
-                    putExtra(SCROLL_MESSAGE_AUTHOR, author)
+                scrollToMessage?.let {
+                    putExtra(SCROLL_MESSAGE_ID, it)
                 }
             }
         }
@@ -547,6 +572,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
+
+        pendingRecyclerViewScrollState = savedInstanceState?.getParcelable(CONVERSATION_SCROLL_STATE)
+        hasRestoredRecyclerViewScrollState = false
 
         // Check if address is null before proceeding with initialization
         if (
@@ -594,9 +622,68 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
+        // setup the compose content for the mini player
+        binding.miniPlayer.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setThemedContent {
+                val playbackState by viewModel.audioPlaybackState.collectAsStateWithLifecycle()
+                val active = playbackState as? AudioPlaybackState.Active
+
+                // We need to calculate the player's height to make up for it with padding
+                // in the conversation's content (so that nothing is hidden behind the player)
+                var miniPlayerHeightPx by remember { mutableIntStateOf(0) }
+                val baseTopPaddingPx = remember { binding.conversationRecyclerView.paddingTop }
+
+                LaunchedEffect(active != null, miniPlayerHeightPx) {
+                    val inset = if (active != null) miniPlayerHeightPx else 0
+                    val recycler = binding.conversationRecyclerView
+                    recycler.updatePadding(top = baseTopPaddingPx + inset)
+                }
+
+                LatchedAnimatedVisibility(
+                    value = active,
+                    enter = slideInVertically { -it },
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = tween(durationMillis = 100, easing = FastOutLinearInEasing)
+                    ),
+                    animateEnterOnFirstAttach = false
+                ) { audio ->
+                    AudioMiniPlayer(
+                        modifier = Modifier.onSizeChanged { miniPlayerHeightPx = it.height },
+                        audio = audio,
+                        onPlayerTap = {
+                            // if we are in the conversation where the audio is from, scroll to it
+                            if(viewModel.address == audio.playable.thread) {
+                                gotoMessageById(audio.playable.messageId, smoothScroll = true, highlight = true)
+                            } else {
+                                // otherwise we go to the right conversation first
+                                val intent = ConversationActivityV2.createIntent(
+                                    this@ConversationActivityV2,
+                                    address = audio.playable.thread,
+                                    scrollToMessage = audio.playable.messageId
+                                )
+
+                                startActivity(intent)
+                                finish()
+                            }
+                        },
+                        onPlayPause = viewModel::togglePlayPause,
+                        onPlaybackSpeedToggle = viewModel::cyclePlaybackSpeed,
+                        onClose = viewModel::stopAudio
+                    )
+                }
+            }
+        }
+
         // messageIdToScroll
-        messageToScrollTimestamp.set(intent.getLongExtra(SCROLL_MESSAGE_ID, -1))
-        messageToScrollAuthor.set(intent.getParcelableExtra(SCROLL_MESSAGE_AUTHOR))
+        IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)?.let{
+            messageToScrollTo = MessageToScrollTo(
+                id = it,
+                smoothScroll = false
+            )
+        }
+
         setUpToolBar()
         setUpInputBar()
         setUpLinkPreviewObserver()
@@ -604,7 +691,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         setUpUiStateObserver()
 
         binding.scrollToBottomButton.setOnClickListener {
-            binding.conversationRecyclerView.handleScrollToBottom()
+            gotoConversationEnd()
         }
 
         // in case a phone call is in progress, this banner is visible and should bring the user back to the call
@@ -656,15 +743,34 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         lifecycleScope.launch {
-            viewModel.conversationReloadNotification
-                .collect {
-                    LoaderManager.getInstance(this@ConversationActivityV2)
-                        .restartLoader(0, null, this@ConversationActivityV2)
-                }
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.conversationReloadNotification
+                    .collect {
+                        if (!firstLoad.get()) {
+                            restartConversationLoader()
+                        }
+                    }
+            }
         }
 
         setupMentionView()
         setupUiEventsObserver()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+
+        // Make sure we scroll on new intent
+        // This is used, for example, in the case of an audio notification tap
+        val messageId = IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)
+        if (messageId != null) {
+            gotoMessageById(messageId, smoothScroll = false, highlight = true)
+        }
+    }
+
+    private fun restartConversationLoader() {
+        LoaderManager.getInstance(this).restartLoader(0, null, this)
     }
 
     private fun startConversationLoaderWithDelay() {
@@ -687,6 +793,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             val navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
             val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
 
+            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+
             val keyboardVisible = imeInsets.bottom > 0
 
             if (keyboardVisible != isKeyboardVisible) {
@@ -695,7 +803,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     // when showing the keyboard, we should auto scroll the conversation recyclerview
                     // if we are near the bottom (within 50dp of bottom)
                     if (binding.conversationRecyclerView.isNearBottom) {
-                        binding.conversationRecyclerView.handleScrollToBottom()
+                        gotoConversationEnd()
                     }
                 }
             }
@@ -703,6 +811,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             binding.bottomSpacer.updateLayoutParams<LayoutParams> {
                 height = if (keyboardVisible) imeInsets.bottom else navInsets.bottom
             }
+
+            binding.contentContainer.updatePadding(
+                left = systemBarsInsets.left,
+                right = systemBarsInsets.right
+            )
 
             windowInsets
         }
@@ -777,7 +890,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onResume() {
         super.onResume()
-        messageNotifier.setVisibleThread(viewModel.threadId)
+        viewModel.threadId?.let { threadId ->
+            messageNotifier.setVisibleThread(threadId)
+        }
     }
 
     override fun onPause() {
@@ -807,35 +922,41 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onLoadFinished(loader: Loader<ConversationLoader.Data>, data: ConversationLoader.Data?) {
         val cursor = data?.messageCursor
-        val oldCount = adapter.itemCount
-        val newCount = cursor?.count ?: 0
         adapter.changeCursor(cursor)
 
         if (cursor != null) {
-            val messageTimestamp = messageToScrollTimestamp.getAndSet(-1)
-            val author = messageToScrollAuthor.getAndSet(null)
-            val newUnreadCount = data.threadUnreadCount
+            val firstLoad = firstLoad.getAndSet(false)
 
-            // Update the unreadCount value to be loaded from the database since we got a new message
-            if (firstLoad.get() || oldCount != newCount || newUnreadCount != unreadCount) {
-                // Update the unreadCount value to be loaded from the database since we got a new
-                // message (we need to store it in a local variable as it can get overwritten on
-                // another thread before the 'firstLoad.getAndSet(false)' case below)
-                unreadCount = newUnreadCount
-                updateUnreadCountIndicator()
+            unreadCount = data.threadUnreadCount
+            updateUnreadCountIndicator()
+
+            // If we have a saved RecyclerView scroll state (after rotation), restore it and skip first-load autoscroll.
+            if (!hasRestoredRecyclerViewScrollState && pendingRecyclerViewScrollState != null) {
+                val lm = binding.conversationRecyclerView.layoutManager
+                binding.conversationRecyclerView.runWhenLaidOut {
+                    lm?.onRestoreInstanceState(pendingRecyclerViewScrollState)
+                    hasRestoredRecyclerViewScrollState = true
+                    pendingRecyclerViewScrollState = null
+                }
             }
 
-            if (author != null && messageTimestamp >= 0) {
-                jumpToMessage(author, messageTimestamp, firstLoad.get(), null)
+            if (messageToScrollTo != null) {
+                if(gotoMessageById(messageToScrollTo!!.id, smoothScroll = messageToScrollTo!!.smoothScroll, highlight = firstLoad)){
+                    messageToScrollTo = null
+                }
             } else {
-                if (firstLoad.getAndSet(false)) {
+                val shouldAutoScrollOnFirstLoad = firstLoad &&
+                    pendingRecyclerViewScrollState == null &&
+                    !hasRestoredRecyclerViewScrollState
+
+                if (shouldAutoScrollOnFirstLoad) {
                     scrollToFirstUnreadMessageOrBottom()
                 } else {
                     // If there are new data updated, we'll try to stay scrolled at the bottom (if we were at the bottom).
                     // scrolled to bottom has a leniency of 50dp, so if we are within the 50dp but not fully at the bottom, scroll down
                     if (binding.conversationRecyclerView.isNearBottom &&
                         !binding.conversationRecyclerView.isFullyScrolled) {
-                        binding.conversationRecyclerView.handleScrollToBottom()
+                        gotoConversationEnd()
                     }
                 }
 
@@ -852,6 +973,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        // Persist the current scroll position so rotations (e.g., portrait <-> landscape) don't jump to bottom.
+        val lm = binding.conversationRecyclerView.layoutManager
+        val state = lm?.onSaveInstanceState()
+        if (state != null) {
+            outState.putParcelable(CONVERSATION_SCROLL_STATE, state)
+        }
+    }
+
     override fun onLoaderReset(cursor: Loader<ConversationLoader.Data>) = adapter.changeCursor(null)
 
     // called from onCreate
@@ -860,7 +992,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.conversationRecyclerView.layoutManager = layoutManager
         // Workaround for the fact that CursorRecyclerViewAdapter doesn't auto-update automatically (even though it says it will)
-        LoaderManager.getInstance(this).restartLoader(0, null, this)
+        restartConversationLoader()
         binding.conversationRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -1004,19 +1136,45 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     // called from onCreate
+    private var typistsLiveData: LiveData<TypingStatusRepository.TypingState>? = null
     private fun setUpTypingObserver() {
-        typingStatusRepository.getTypists(viewModel.threadId).observe(this) { state ->
-            val recipients = if (state != null) state.typists else listOf()
-            // FIXME: Also checking isScrolledToBottom is a quick fix for an issue where the
-            //        typing indicator overlays the recycler view when scrolled up
-            val viewContainer = binding.typingIndicatorViewContainer
-            viewContainer.isVisible = recipients.isNotEmpty() && isScrolledToBottom
-            viewContainer.setTypists(recipients)
+        // Observe typists only when we have a real threadId,
+        // and swap if it changes, example: message request was created then accepted
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.threadIdFlow
+                    .collect { threadId ->
+                        // Detach any previous observer
+                        typistsLiveData?.removeObservers(this@ConversationActivityV2)
+                        typistsLiveData = null
+
+                        if (threadId == null) {
+                            binding.typingIndicatorViewContainer.isVisible = false
+                            return@collect
+                        }
+
+                        // Attach observer for the real threadId
+                        typistsLiveData =
+                            typingStatusRepository.getTypists(threadId).also { liveData ->
+                                liveData.observe(this@ConversationActivityV2) { state ->
+                                    val recipients = state?.typists ?: emptyList()
+
+                                    // Quick-fix behavior kept as-is
+                                    val viewContainer = binding.typingIndicatorViewContainer
+                                    viewContainer.isVisible =
+                                        recipients.isNotEmpty() && isScrolledToBottom
+                                    viewContainer.setTypists(recipients)
+                                }
+                            }
+                    }
+            }
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
             binding.inputBar.addTextChangedListener {
-                if(it.isNotEmpty()) {
-                    typingStatusSender.onTypingStarted(viewModel.threadId)
+                if (it.isNotEmpty()) {
+                    viewModel.threadId?.let { threadId ->
+                        typingStatusSender.onTypingStarted(threadId)
+                    }
                 }
             }
         }
@@ -1108,8 +1266,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 previewState.isLoading -> {
                     binding.inputBar.draftLinkPreview()
                 }
-                previewState.linkPreview.isPresent -> {
-                    binding.inputBar.updateLinkPreviewDraft(glide, previewState.linkPreview.get())
+                previewState.linkPreview != null -> {
+                    binding.inputBar.updateLinkPreviewDraft(glide, previewState.linkPreview)
                 }
                 else -> {
                     binding.inputBar.cancelLinkPreviewDraft()
@@ -1153,17 +1311,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 viewModel.inputBarState.collectLatest(binding.inputBar::setState)
             }
         }
-
-        // React to input bar state changes
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.inputBarState
-                    .map { it.charLimitState }
-                    .distinctUntilChanged()
-                    .collectLatest(binding.inputBar::setCharLimitState)
-            }
-        }
-
 
         // React to loader visibility changes
         lifecycleScope.launch {
@@ -1218,6 +1365,21 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
             }
         }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                audioPlaybackManager.events.collectLatest { event ->
+                    when (event){
+                        is AudioPlaybackManager.AudioPlaybackEvent.Ended -> {
+                            // safety to wait until player is back to idle before doing anything else
+                            audioPlaybackManager.playbackState.first { it is AudioPlaybackState.Idle }
+                            // now try to play the next message in the conversation, if it is a voice note
+                            playVoiceMessageAtIndexIfPossible(event.playable.messageId)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun scrollToFirstUnreadMessageOrBottom() {
@@ -1237,13 +1399,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 lastSeenItemPosition,
                 ((layoutManager?.height ?: 0) / 2)
             )
-        }
-
-    }
-
-    private fun highlightViewAtPosition(position: Int) {
-        binding.conversationRecyclerView.post {
-            (layoutManager?.findViewByPosition(position) as? VisibleMessageView)?.playHighlight()
         }
     }
 
@@ -1305,7 +1460,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
         val inputBarText = binding.inputBar.text
         if (textSecurePreferences.isLinkPreviewsEnabled()) {
-            linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
+            linkPreviewViewModel.onTextChanged(this, inputBarText)
         }
 
         // use the normalised version of the text's body to get the characters amount with the
@@ -1321,7 +1476,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 textSecurePreferences.setLinkPreviewsEnabled(true)
                 setUpLinkPreviewObserver()
                 linkPreviewViewModel.onEnabled()
-                linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
+                linkPreviewViewModel.onTextChanged(this, inputBarText)
             }
             textSecurePreferences.setHasSeenLinkPreviewSuggestionDialog()
         }
@@ -1731,7 +1886,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             sendEmojiRemoval(emoji, messageRecord)
         } else {
             sendEmojiReaction(emoji, messageRecord)
-            RecentEmojiPageModel.onCodePointSelected(emoji) // Save to recently used reaction emojis
+            recentEmojiPageModel.onEmojiUsed(emoji) // Save to recently used reaction emojis
         }
     }
 
@@ -1776,7 +1931,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Create the message
         val recipient = viewModel.recipient
         val reactionMessage = VisibleMessage()
-        val emojiTimestamp = SnodeAPI.nowWithOffset
+        val emojiTimestamp = snodeClock.currentTimeMillis()
         reactionMessage.sentTimestamp = emojiTimestamp
         val author = loginStateRepository.getLocalNumber()
 
@@ -1823,19 +1978,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 scope.launch {
                     runCatching {
-                        OpenGroupApi.addReaction(
-                            room = recipient.address.room,
-                            server = recipient.address.serverUrl,
-                            messageId = messageServerId,
-                            emoji = emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = recipient.address.serverUrl,
+                                api = addReactionApiFactory.create(
+                                    room = recipient.address.room,
+                                    messageId = messageServerId,
+                                    emoji = emoji
+                                )
+                            )
                         )
+                    }.onFailure {
+                        Log.e(TAG, "Failed to send emoji reaction to community message", it)
                     }
                 }
             } else {
                 messageSender.send(reactionMessage, recipient.address)
             }
 
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
+            restartConversationLoader()
         }
     }
 
@@ -1844,7 +2005,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendEmojiRemoval(emoji: String, originalMessage: MessageRecord) {
         val recipient = viewModel.recipient
         val message = VisibleMessage()
-        val emojiTimestamp = SnodeAPI.nowWithOffset
+        val emojiTimestamp = snodeClock.currentTimeMillis()
         message.sentTimestamp = emojiTimestamp
         val author = loginStateRepository.getLocalNumber()
 
@@ -1880,18 +2041,23 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 scope.launch {
                     runCatching {
-                        OpenGroupApi.deleteReaction(
-                            recipient.address.room,
-                            recipient.address.serverUrl,
-                            messageServerId,
-                            emoji
+                        communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = recipient.address.serverUrl,
+                                api = deleteReactionApiFactory.create(
+                                    room = recipient.address.room,
+                                    messageId = messageServerId,
+                                    emoji = emoji
+                                )
+                            )
                         )
                     }
                 }
             } else {
                 messageSender.send(message, recipient.address)
             }
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
+
+            restartConversationLoader()
         }
     }
 
@@ -1906,7 +2072,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             ReactWithAnyEmojiDialogFragment
                 .createForMessageRecord(messageRecord, reactWithAnyEmojiStartPage)
-                .show(supportFragmentManager, "BOTTOM");
+                .show(supportFragmentManager, "BOTTOM")
         }
     }
 
@@ -2023,27 +2189,108 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         return hitRect.contains(x, y)
     }
 
-    override fun highlightMessageFromTimestamp(timestamp: Long) {
+    override fun gotoMessageByTimestamp(timestamp: Long, smoothScroll: Boolean, highlight: Boolean) {
         // Try to find the message with the given timestamp
-        adapter.getItemPositionForTimestamp(timestamp)?.let { targetMessagePosition ->
+        val targetMessagePosition = adapter.getItemPositionForTimestamp(timestamp)
 
-            // If the view is already visible then we don't have to scroll before highlighting it..
-            binding.conversationRecyclerView.findViewHolderForLayoutPosition(targetMessagePosition)?.let { viewHolder ->
-                if (viewHolder.itemView is VisibleMessageView) {
-                    (viewHolder.itemView as VisibleMessageView).playHighlight()
-                    return
+        if(targetMessagePosition != null){
+            gotoMessage(targetMessagePosition, smoothScroll = smoothScroll, highlight = highlight)
+        } else {
+            Log.i(TAG, "Could not find message with timestamp: $timestamp")
+        }
+    }
+
+    private fun gotoMessageById(messageId: MessageId, smoothScroll: Boolean, highlight: Boolean): Boolean {
+        // Try to find the message with the given id
+        val targetMessagePosition = adapter.getItemPositionForId(messageId)
+
+        if(targetMessagePosition != null){
+            gotoMessage(targetMessagePosition, smoothScroll = smoothScroll, highlight = highlight)
+            return true
+        } else {
+            Log.i(TAG, "Could not find message with id: $messageId")
+            return false
+        }
+    }
+
+    private fun gotoConversationEnd(smoothScroll: Boolean = true, highlight: Boolean = false){
+        val lastIndex = adapter.itemCount - 1
+        if (lastIndex >= 0) {
+            gotoMessage(lastIndex, smoothScroll = smoothScroll, highlight = highlight)
+        }
+    }
+
+    private fun gotoMessage(position: Int, smoothScroll: Boolean, highlight: Boolean) {
+        val rv = binding.conversationRecyclerView
+        val lm = rv.layoutManager as? LinearLayoutManager ?: return
+
+        // Unified offset calculation
+        val offset = if (position > 0) scrollingBreathingRoom else 0
+
+        if (smoothScroll) {
+            rv.stopScroll()
+
+            // if we are trying to smooth scroll somewhere really far away
+            // the animation feels too long. So if the target is far enough away
+            // we can first jump closish and then smooth scroll from there
+            val firstVisible = lm.findFirstVisibleItemPosition()
+            val distance = position - firstVisible
+
+            // Directional Proximity Jump
+            if (abs(distance) > 20) {
+                // If moving DOWN (distance > 0), jump to 10 items ABOVE target
+                // If moving UP (distance < 0), jump to 10 items BELOW target
+                val jumpToProxy = if (distance > 0) (position - 10).coerceAtLeast(0)
+                else (position + 10).coerceAtMost(adapter.itemCount - 1)
+
+                // Jump instantly
+                lm.scrollToPositionWithOffset(jumpToProxy, 0)
+
+                // We must wait for the jump to finish before smooth scrolling
+                rv.post {
+                    startSmoothScroll(position, offset, highlight)
+                }
+            } else {
+                // Target is close, just scroll
+                startSmoothScroll(position, offset, highlight)
+            }
+        } else {
+            // Instant
+            lm.scrollToPositionWithOffset(position, offset)
+            if (highlight) {
+                // Since we aren't scrolling, the idle state won't trigger,
+                // so we can't rely on `pendingHighlightMessagePosition`
+                // Trigger highlight manually after layout.
+                rv.post {
+                    (rv.findViewHolderForAdapterPosition(position)?.itemView as? VisibleMessageView)
+                        ?.playHighlight()
+                    pendingHighlightMessagePosition = null
                 }
             }
+        }
+    }
 
-            // ..otherwise, set the pending highlight target and trigger a scroll.
-            // Note: If the targeted message isn't the very first one then we scroll slightly past it to give it some breathing room.
-            // Also: The offset must be negative to provide room above it.
-            pendingHighlightMessagePosition = targetMessagePosition
-            currentTargetedScrollOffsetPx = if (targetMessagePosition > 0) nonFirstMessageOffsetPx else 0
-            linearSmoothScroller.targetPosition = targetMessagePosition
-            (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)?.startSmoothScroll(linearSmoothScroller)
+    private fun startSmoothScroll(position: Int, offset: Int, highlight: Boolean) {
+        val rv = binding.conversationRecyclerView
+        val lm = rv.layoutManager as? LinearLayoutManager ?: return
 
-        } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
+        currentTargetedScrollOffsetPx = offset
+        pendingHighlightMessagePosition = if (highlight) position else null
+
+        val lastIndex = adapter.itemCount - 1
+        val snapToEnd = (position == lastIndex)
+
+        val scroller = object : LinearSmoothScroller(rv.context) {
+            override fun getVerticalSnapPreference(): Int =
+                if (snapToEnd) SNAP_TO_END else SNAP_TO_START
+
+            override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
+                val dy = super.calculateDyToMakeVisible(view, snapPreference)
+                return if (snapToEnd) dy else dy + currentTargetedScrollOffsetPx
+            }
+        }
+        scroller.targetPosition = position
+        lm.startSmoothScroll(scroller)
     }
 
     override fun onReactionClicked(emoji: String, messageId: MessageId, userWasSender: Boolean) {
@@ -2074,11 +2321,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         fragment?.dismissAllowingStateLoss()
     }
 
-    override fun playVoiceMessageAtIndexIfPossible(indexInAdapter: Int) {
-        if (!textSecurePreferences.autoplayAudioMessages()) return
+    private fun playVoiceMessageAtIndexIfPossible(messageId: MessageId) {
+        if (!textSecurePreferences.isAutoplayAudioMessagesEnabled()) return
 
-        if (indexInAdapter < 0 || indexInAdapter >= adapter.itemCount) { return }
-        val viewHolder = binding.conversationRecyclerView.findViewHolderForAdapterPosition(indexInAdapter) as? ConversationAdapter.VisibleMessageViewHolder ?: return
+        val finishedMessageIndex = adapter.getItemPositionForId(messageId) ?: return
+        val nextIndex = finishedMessageIndex + 1
+
+        if (nextIndex < 0 || nextIndex >= adapter.itemCount) { return }
+        val viewHolder = binding.conversationRecyclerView.findViewHolderForAdapterPosition(nextIndex) as? ConversationAdapter.VisibleMessageViewHolder ?: return
         viewHolder.view.playVoiceMessage()
     }
 
@@ -2102,16 +2352,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         viewModel.beforeSendMessage()
 
-        val sentMessageInfo = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
+        if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
             sendAttachments(listOf(), getMessageBody(), binding.inputBar.quote, binding.inputBar.linkPreview)
         } else {
             sendTextOnlyMessage()
-        }
-
-        // Jump to the newly sent message once it gets added
-        if (sentMessageInfo != null) {
-            messageToScrollAuthor.set(sentMessageInfo.first)
-            messageToScrollTimestamp.set(sentMessageInfo.second)
         }
     }
 
@@ -2137,9 +2381,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): Pair<Address, Long>? {
+    private fun sendTextOnlyMessage(hasPermissionToSendSeed: Boolean = false): MessageId? {
         val recipient = viewModel.recipient
-        val sentTimestamp = SnodeAPI.nowWithOffset
+        val sentTimestamp = snodeClock.currentTimeMillis()
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
         val text = getMessageBody()
         val isNoteToSelf = recipient.isLocalNumber
@@ -2172,6 +2416,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
+
         lifecycleScope.launch(Dispatchers.Default) {
             // Put the message in the database and send it
             message.id = MessageId(smsDb.insertMessageOutbox(
@@ -2182,12 +2427,19 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 true
             ), false)
 
+            message.id?.let{
+                messageToScrollTo = MessageToScrollTo(
+                    id = it,
+                    smoothScroll = true
+                )
+            }
+
             waitForApprovalJobToBeSubmitted()
             messageSender.send(message, recipient.address)
         }
-        // Send a typing stopped message
-        typingStatusSender.onTypingStopped(viewModel.threadId)
-        return Pair(recipient.address, sentTimestamp)
+
+        stopTyping()
+        return message.id
     }
 
     private fun sendAttachments(
@@ -2196,9 +2448,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         quotedMessage: MessageRecord? = binding.inputBar.quote,
         linkPreview: LinkPreview? = null,
         deleteAttachmentFilesAfterSave: Boolean = false,
-    ): Pair<Address, Long>? {
+    ): MessageId? {
         val recipient = viewModel.recipient
-        val sentTimestamp = SnodeAPI.nowWithOffset
+        val sentTimestamp = snodeClock.currentTimeMillis()
         viewModel.implicitlyApproveRecipient()?.let { conversationApprovalJob = it }
 
         // Create the message
@@ -2206,9 +2458,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         message.sentTimestamp = sentTimestamp
         message.text = body
         val quote = quotedMessage?.let {
-            val quotedAttachments = (it as? MmsMessageRecord)?.slideDeck?.asAttachments() ?: listOf()
+            val quotedAttachments =
+                (it as? MmsMessageRecord)?.slideDeck?.asAttachments() ?: listOf()
             val sender = if (it.isOutgoing) {
-                fromSerialized(viewModel.blindedPublicKey ?: loginStateRepository.requireLocalNumber())
+                fromSerialized(
+                    viewModel.blindedPublicKey ?: loginStateRepository.requireLocalNumber()
+                )
             } else it.individualRecipient.address
             QuoteModel(it.dateSent, sender, it.body, false, quotedAttachments)
         }
@@ -2243,10 +2498,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         attachmentManager.clear()
 
         // Reset attachments button if needed
-        if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
-
-        // Keep it fixed on the bottom right away
-        binding.conversationRecyclerView.handleScrollToBottom(true)
+        if (isShowingAttachmentOptions) {
+            toggleAttachmentOptions()
+        }
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
@@ -2260,6 +2514,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         runThreadUpdate = true
                     ), mms = true
                 )
+
+                message.id?.let{
+                    messageToScrollTo = MessageToScrollTo(
+                        id = it,
+                        smoothScroll = true
+                    )
+                }
 
                 if (deleteAttachmentFilesAfterSave) {
                     attachments
@@ -2282,9 +2543,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
+        stopTyping()
+        return message.id
+    }
+
+    private fun stopTyping(){
         // Send a typing stopped message
-        typingStatusSender.onTypingStopped(viewModel.threadId)
-        return Pair(recipient.address, sentTimestamp)
+        viewModel.threadId?.let { threadId ->
+            typingStatusSender.onTypingStopped(threadId)
+        }
     }
 
     private fun showGIFPicker() {
@@ -2548,8 +2815,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun banUser(messages: Set<MessageRecord>) {
         showSessionDialog {
             title(R.string.banUser)
-            text(R.string.communityBanDescription)
+            text(
+                Phrase.from(applicationContext, R.string.communityBanUserDescription)
+                    .put(NAME_KEY, messages.first().individualRecipient.displayName())
+                    .format()
+            )
             dangerButton(R.string.theContinue) { viewModel.banUser(messages.first().individualRecipient.address); endActionMode() }
+            cancelButton(::endActionMode)
+        }
+    }
+
+    override fun unbanUser(messages: Set<MessageRecord>) {
+        showSessionDialog {
+            title(R.string.banUnbanUser)
+            text(
+                Phrase.from(applicationContext, R.string.communityUnbanUserDescription)
+                    .put(NAME_KEY, messages.first().individualRecipient.displayName())
+                    .format()
+            )
+            dangerButton(R.string.theContinue) { viewModel.unbanUser(messages.first().individualRecipient.address); endActionMode() }
             cancelButton(::endActionMode)
         }
     }
@@ -2674,14 +2958,21 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun saveAttachments(message: MmsMessageRecord) {
-        val attachments: List<SaveAttachmentTask.Attachment?> = Stream.of(message.slideDeck.slides)
-            .filter { s: Slide -> s.uri != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument()) }
-            .map { s: Slide -> SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.filename) }
-            .toList()
+        val attachments: List<SaveAttachmentTask.Attachment> =
+            message.slideDeck.slides
+                .asSequence()
+                .filter { s ->
+                    s.uri != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument())
+                }
+                .map { s ->
+                    SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.filename)
+                }
+                .toList()
+
         if (attachments.isNotEmpty()) {
             val saveTask = SaveAttachmentTask(this)
             saveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, *attachments.toTypedArray())
-            if (!message.isOutgoing) { sendMediaSavedNotification() }
+            if (!message.isOutgoing) sendMediaSavedNotification()
             return
         }
         // Implied else that there were no attachment(s)
@@ -2784,7 +3075,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendMediaSavedNotification() {
         val recipient = viewModel.recipient
         if (recipient.isGroupOrCommunityRecipient) { return }
-        val timestamp = SnodeAPI.nowWithOffset
+        val timestamp = snodeClock.currentTimeMillis()
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
         val message = DataExtractionNotification(kind)
         messageSender.send(message, recipient.address)
@@ -2808,7 +3099,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (result == null) return@Observer
             if (result.getResults().isNotEmpty()) {
                 result.getResults()[result.position]?.let {
-                    jumpToMessage(it.messageRecipient.address, it.sentTimestampMs, true) {
+                    if(!gotoMessageById(it.messageId, smoothScroll = false, highlight = true)) {
                         searchViewModel.onMissingResult()
                     }
                 }
@@ -2837,9 +3128,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     fun onSearchQueryUpdated(query: String) {
-        binding.searchBottomBar.showLoading()
-        searchViewModel.onQueryUpdated(query, viewModel.threadId)
-        adapter.onSearchQueryUpdated(query.takeUnless { it.length < 2 })
+        viewModel.threadId?.let {  threadId ->
+            binding.searchBottomBar.showLoading()
+            searchViewModel.onQueryUpdated(query, threadId)
+            adapter.onSearchQueryUpdated(query.takeUnless { it.length < 2 })
+        }
     }
 
     override fun onSearchMoveUpPressed() {
@@ -2850,23 +3143,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         this.searchViewModel.onMoveDown()
     }
 
-    private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {
-        SimpleTask.run(lifecycle, {
-            mmsSmsDb.getMessagePositionInConversation(viewModel.threadId, timestamp, author, false)
-        }) { p: Int -> moveToMessagePosition(p, highlight, onMessageNotFound) }
-    }
-
-    private fun moveToMessagePosition(position: Int, highlight: Boolean, onMessageNotFound: Runnable?) {
-        if (position >= 0) {
-            binding.conversationRecyclerView.scrollToPosition(position)
-
-            if (highlight) {
-                runOnUiThread { highlightViewAtPosition(position) }
-            }
-        } else {
-            onMessageNotFound?.run()
-        }
-    }
     // endregion
 
     inner class ReactionsToolbarListener constructor(val message: MessageRecord) : OnActionSelectedListener {
@@ -2884,6 +3160,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 ConversationReactionOverlay.Action.DELETE -> deleteMessages(selectedItems)
                 ConversationReactionOverlay.Action.BAN_AND_DELETE_ALL -> banAndDeleteAll(selectedItems)
                 ConversationReactionOverlay.Action.BAN_USER -> banUser(selectedItems)
+                ConversationReactionOverlay.Action.UNBAN_USER -> unbanUser(selectedItems)
                 ConversationReactionOverlay.Action.COPY_ACCOUNT_ID -> copyAccountID(selectedItems)
             }
         }

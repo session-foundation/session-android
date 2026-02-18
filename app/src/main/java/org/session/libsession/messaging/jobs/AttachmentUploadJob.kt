@@ -9,10 +9,14 @@ import dagger.assisted.AssistedInject
 import network.loki.messenger.libsession_util.encrypt.Attachments
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
+import org.session.libsession.messaging.file_server.FileUploadApi
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
+import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
+import org.session.libsession.messaging.open_groups.api.CommunityFileUploadApi
+import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.Address
@@ -22,6 +26,10 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UploadResult
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.http.HttpBody
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.ThreadDatabase
 
@@ -36,8 +44,11 @@ class AttachmentUploadJob @AssistedInject constructor(
     private val threadDatabase: ThreadDatabase,
     private val attachmentProcessor: AttachmentProcessor,
     private val preferences: TextSecurePreferences,
-    private val fileServerApi: FileServerApi,
     private val messageSender: MessageSender,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val fileUploadApiFactory: FileUploadApi.Factory,
+    private val communityApiExecutor: CommunityApiExecutor,
+    private val communityFileUploadApiFactory: CommunityFileUploadApi.Factory,
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -75,20 +86,33 @@ class AttachmentUploadJob @AssistedInject constructor(
                     attachment = attachment,
                     encrypt = false
                 ) { data, _ ->
-                    val id = OpenGroupApi.upload(data, threadAddress.room, threadAddress.serverUrl)
+                    val id = communityApiExecutor.execute(
+                        CommunityApiRequest(
+                            serverBaseUrl = threadAddress.serverUrl,
+                            api = communityFileUploadApiFactory.create(
+                                file = HttpBody.Bytes(data),
+                                room = threadAddress.room,
+                            )
+                        )
+                    )
                     id to "${threadAddress.serverUrl}/file/$id"
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
-                val fileServer = preferences.alternativeFileServer ?: FileServerApi.DEFAULT_FILE_SERVER
+                val fileServer = preferences.alternativeFileServer ?: FileServerApis.DEFAULT_FILE_SERVER
                 val keyAndResult = upload(
                     attachment = attachment,
                     encrypt = true
                 ) { data, isDeterministicallyEncrypted ->
-                    val result = fileServerApi.upload(
-                        file = data,
-                        usedDeterministicEncryption = isDeterministicallyEncrypted,
-                        fileServer = fileServer
+                    val result = serverApiExecutor.execute(
+                        ServerApiRequest(
+                            fileServer = fileServer,
+                            api = fileUploadApiFactory.create(
+                                data = data,
+                                usedDeterministicEncryption = isDeterministicallyEncrypted,
+                                fileServer = fileServer,
+                            )
+                        )
                     )
 
                     result.fileId to result.fileUrl
@@ -203,14 +227,14 @@ class AttachmentUploadJob @AssistedInject constructor(
     }
 
     private fun handlePermanentFailure(dispatcherName: String, e: Exception) {
-        Log.w(TAG, "Attachment upload failed permanently due to error: $this.")
+        Log.w(TAG, "Attachment upload failed permanently due to error:", e)
         delegate?.handleJobFailedPermanently(this, dispatcherName, e)
         messageDataProvider.handleFailedAttachmentUpload(attachmentID)
         failAssociatedMessageSendJob(e)
     }
 
     private fun handleFailure(dispatcherName: String, e: Exception) {
-        Log.w(TAG, "Attachment upload failed due to error: $this.")
+        Log.w(TAG, "Attachment upload failed due to error:", e)
         delegate?.handleJobFailed(this, dispatcherName, e)
         if (failureCount + 1 >= maxFailureCount) {
             failAssociatedMessageSendJob(e)

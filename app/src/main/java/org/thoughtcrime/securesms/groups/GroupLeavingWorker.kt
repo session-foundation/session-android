@@ -17,6 +17,7 @@ import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.messaging.sending_receiving.notifications.NotificationServer
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.getGroup
@@ -28,9 +29,12 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos
 import org.session.protos.SessionProtos.GroupUpdateMessage
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.notifications.PushRegistryV2
+import org.thoughtcrime.securesms.notifications.PushUnregisterApi
 
 @HiltWorker
 class GroupLeavingWorker @AssistedInject constructor(
@@ -40,7 +44,8 @@ class GroupLeavingWorker @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val groupScope: GroupScope,
     private val tokenFetcher: TokenFetcher,
-    private val pushRegistryV2: PushRegistryV2,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val pushUnregisterApiFactory: PushUnregisterApi.Factory,
     private val messageSender: MessageSender,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
@@ -69,13 +74,17 @@ class GroupLeavingWorker @AssistedInject constructor(
                     val groupAuth = configFactory.getGroupAuth(groupId)
 
                     if (groupAuth != null) {
-                        val resp = pushRegistryV2.unregister(listOf(
-                            pushRegistryV2.buildUnregisterRequest(currentToken, groupAuth)
-                        )).firstOrNull()
+                        serverApiExecutor.execute(
+                            ServerApiRequest(
+                                serverBaseUrl = NotificationServer.LATEST.url,
+                                serverX25519PubKeyHex = NotificationServer.LATEST.publicKey,
+                                api = pushUnregisterApiFactory.create(
+                                    token = currentToken,
+                                    swarmAuth = groupAuth,
+                                )
+                            )
+                        )
 
-                        check(resp?.success == true) {
-                            "Unsubscription failed: code = ${resp?.error}, message = ${resp?.message}"
-                        }
                         Log.d(TAG, "Unsubscribed from group $groupId successfully")
                     }
 
@@ -131,15 +140,24 @@ class GroupLeavingWorker @AssistedInject constructor(
 
                     // We now have an admin option to leave group so we need a way of Deleting the group
                     // even if there are more admins
-                    if (weAreTheOnlyAdmin || deleteGroup) {
-                        configFactory.withMutableGroupConfigs(groupId) { configs ->
-                            configs.groupInfo.destroyGroup()
-                        }
+                    if ((weAreTheOnlyAdmin || deleteGroup)) {
+                        try {
+                            configFactory.withMutableGroupConfigs(groupId) { configs ->
+                                configs.groupInfo.destroyGroup()
+                            }
 
-                        // Must wait until the config is pushed, otherwise if we go through the rest
-                        // of the code it will destroy the conversation, destroying the necessary configs
-                        // along the way, we won't be able to push the "destroyed" state anymore.
-                        configFactory.waitUntilGroupConfigsPushed(groupId, timeoutMills = 0L)
+                            // Must wait until the config is pushed, otherwise if we go through the rest
+                            // of the code it will destroy the conversation, destroying the necessary configs
+                            // along the way, we won't be able to push the "destroyed" state anymore.
+                            configFactory.waitUntilGroupConfigsPushed(groupId, timeoutMills = 0L)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Throwable) {
+                            // If the destruction of group can't be done, there's nothing
+                            // else we can do. So we will proceed with the rest where
+                            // we remove the group entry from the database.
+                            Log.e(TAG, "Error while destroying group $groupId. Proceeding...", e)
+                        }
                     }
                 }
 

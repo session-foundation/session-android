@@ -109,7 +109,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     destroyed = false,
                     joinedAtSecs = System.currentTimeMillis() / 1000L,
                 ),
-                proData = null,
+                //todo LARGE GROUP hiding group pro status until we enable large groups
+                //proData = null,
                 members = listOf(),
                 description = null,
                 firstMember = Recipient(
@@ -184,7 +185,8 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
                     destroyed = false,
                     joinedAtSecs = System.currentTimeMillis() / 1000L,
                 ),
-                proData = null,
+                //todo LARGE GROUP hiding group pro status until we enable large groups
+                //proData = null,
                 members = listOf(),
                 description = null,
                 firstMember = Recipient(

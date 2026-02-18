@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -42,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -65,7 +67,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.network.model.PathStatus
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -212,7 +214,7 @@ fun Settings(
                 }
             )
         },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
         // MAIN SCREEN CONTENT
         Column(
@@ -347,7 +349,7 @@ fun Settings(
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
 
         // DIALOGS AND SHEETS
@@ -408,11 +410,52 @@ fun Settings(
         }
 
         // Animated avatar CTA
-        if(uiState.showAnimatedProCTA){
-            AnimatedProCTA(
-                proSubscription = uiState.proDataState.type,
-                sendCommand = sendCommand
-            )
+        when(uiState.avatarCTAState){
+            is SettingsViewModel.AvatarCTAState.Pro -> {
+                SessionProCTA (
+                    title = stringResource(R.string.proActivated),
+                    badgeAtStart = true,
+                    textContent = {
+                        ProBadgeText(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.proAlreadyPurchased),
+                            textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                        )
+
+                        Spacer(Modifier.height(2.dp))
+
+                        // main message
+                        Text(
+                            modifier = Modifier
+                                .qaTag(R.string.qa_cta_body)
+                                .align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.proAnimatedDisplayPicture),
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+                    },
+                    content = {
+                        CTAAnimatedImages(
+                            heroImageBg = R.drawable.cta_hero_animated_bg,
+                            heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                        )
+                    },
+                    positiveButtonText = null,
+                    negativeButtonText = stringResource(R.string.close),
+                    onCancel = { sendCommand(HideAnimatedProCTA) }
+                )
+            }
+
+            is SettingsViewModel.AvatarCTAState.NonPro -> {
+                AnimatedProfilePicProCTA(
+                    expired = uiState.avatarCTAState.expired,
+                    onDismissRequest = { sendCommand(HideAnimatedProCTA) },
+                )
+            }
+
+            else -> {}
         }
 
         // donate confirmation
@@ -498,7 +541,7 @@ fun Settings(
 @Composable
 fun Buttons(
     recoveryHidden: Boolean,
-    pathStatus: OnionRequestAPI.PathStatus,
+    pathStatus: PathStatus,
     postPro: Boolean,
     proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
@@ -610,8 +653,8 @@ fun Buttons(
                 Divider()
 
                 Crossfade(when (pathStatus){
-                        OnionRequestAPI.PathStatus.BUILDING -> LocalColors.current.warning
-                        OnionRequestAPI.PathStatus.ERROR -> LocalColors.current.danger
+                        PathStatus.BUILDING -> LocalColors.current.warning
+                        PathStatus.ERROR -> LocalColors.current.danger
                         else -> primaryGreen
                     }, label = "path") {
                     ItemButton(
@@ -699,7 +742,7 @@ fun ShowClearDataDialog(
     modifier: Modifier = Modifier,
     sendCommand: (SettingsViewModel.Commands) -> Unit
 ) {
-    var deleteOnNetwork by remember { mutableStateOf(false)}
+    var deleteOnNetwork by retain { mutableStateOf(false)}
     val context = LocalContext.current
 
     AlertDialog(
@@ -1014,54 +1057,6 @@ fun AvatarDialog(
     )
 }
 
-@Composable
-fun AnimatedProCTA(
-    proSubscription: ProStatus,
-    sendCommand: (SettingsViewModel.Commands) -> Unit,
-){
-    if(proSubscription is ProStatus.Active) {
-        SessionProCTA (
-            title = stringResource(R.string.proActivated),
-            badgeAtStart = true,
-            textContent = {
-                ProBadgeText(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = stringResource(R.string.proAlreadyPurchased),
-                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                )
-
-                Spacer(Modifier.height(2.dp))
-
-                // main message
-                Text(
-                    modifier = Modifier
-                        .qaTag(R.string.qa_cta_body)
-                        .align(Alignment.CenterHorizontally),
-                    text = stringResource(R.string.proAnimatedDisplayPicture),
-                    textAlign = TextAlign.Center,
-                    style = LocalType.current.base.copy(
-                        color = LocalColors.current.textSecondary
-                    )
-                )
-            },
-            content = {
-                CTAAnimatedImages(
-                    heroImageBg = R.drawable.cta_hero_animated_bg,
-                    heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-                )
-            },
-            positiveButtonText = null,
-            negativeButtonText = stringResource(R.string.close),
-            onCancel = { sendCommand(HideAnimatedProCTA) }
-        )
-    } else {
-        AnimatedProfilePicProCTA(
-            proSubscription = proSubscription,
-            onDismissRequest = { sendCommand(HideAnimatedProCTA) },
-        )
-    }
-}
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @SuppressLint("UnusedContentLambdaTargetStateParameter")
 @Preview
@@ -1077,7 +1072,7 @@ private fun SettingsScreenPreview() {
                 showAvatarDialog = false,
                 showAvatarPickerOptionCamera = false,
                 showAvatarPickerOptions = false,
-                showAnimatedProCTA = false,
+                avatarCTAState = SettingsViewModel.AvatarCTAState.Hidden,
                 avatarData = AvatarUIData(
                     listOf(
                         AvatarUIElement(
@@ -1094,7 +1089,7 @@ private fun SettingsScreenPreview() {
                 ),
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
-                pathStatus = OnionRequestAPI.PathStatus.READY,
+                pathStatus = PathStatus.READY,
                 version = "1.26.0",
             ),
             sendCommand = {},

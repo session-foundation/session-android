@@ -213,7 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name}でQRコードをスキャンするにはカメラへのアクセスが必要です</string>
     <string name="cancel">キャンセル</string>
     <string name="cancelAccess">{pro} をキャンセル</string>
-    <string name="cancelProPlan">{pro} プランをキャンセル</string>
     <string name="cancelProPlatform">{platform} のウェブサイトで、{pro} に登録した {platform_account} を使用してキャンセルしてください。</string>
     <string name="cancelProPlatformStore">{platform_store} のウェブサイトで、{pro} に登録した {platform_account} を使用してキャンセルしてください。</string>
     <string name="change">変更</string>
@@ -1075,7 +1074,6 @@
     <string name="proRenewPinFiveConversations">{limit} 件以上の会話を再びピン留めしたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewPinMoreConversations">さらに多くの会話を再びピン留めしたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewTosPrivacy">更新することで、{app_pro} の<b>利用規約</b> {icon} および <b>プライバシーポリシー</b> {icon} に同意したことになります</string>
-    <string name="proRenewalUnsuccessful">Pro の更新に失敗しました。まもなく再試行します。</string>
     <string name="proRenewingAction">更新中</string>
     <string name="proRenewingNoAccessBilling">現在、{pro} へのアクセスの購入および更新は、{platform_store} または {platform_store_other} を通じてのみ可能です。{build_variant} を使用して {app_name} をインストールしたため、ここでは更新できません。\n\n{app_name} の開発者は、{platform_store} および {platform_store_other} 以外からも {pro} アクセスを購入できるよう、代替支払い方法の提供に向けて取り組んでいます。<b>{pro} のロードマップ</b> {icon}</string>
     <string name="proRequestedRefund">返金をリクエストしました</string>
@@ -1352,7 +1350,6 @@
     <string name="useFastMode">高速モードを使用する</string>
     <string name="viaPlatformWebsiteDescription"><b><font color="0">{platform} のウェブサイト</font></b> を通じて、登録時に使用した {platform_account} を使用してプランを変更してください。</string>
     <string name="viaStoreWebsite">{platform} のウェブサイト経由</string>
-    <string name="viaStoreWebsiteDescription">登録時に使用した {platform_account} を使って、<b><font color="0">{platform_store}</font></b> ウェブサイト経由で {pro} アクセスを更新してください。</string>
     <string name="video">動画</string>
     <string name="videoErrorPlay">動画を再生できません。</string>
     <string name="view">見る</string>

@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.emoji
 
 import android.net.Uri
 import androidx.annotation.WorkerThread
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.emoji.Emoji
@@ -107,7 +109,12 @@ class EmojiSource(
       val emojiData: InputStream = ApplicationContext.getInstance(context).assets.open("emoji/emoji_data.json")
 
       emojiData.use {
-        val parsedData: ParsedEmojiData = EmojiJsonParser.parse(it, ::getAssetsUri).getOrThrow()
+        val parsedData: ParsedEmojiData = EmojiJsonParser.parse(
+            json = MessagingModuleConfiguration.shared.json,
+            body = it,
+            uriFactory = ::getAssetsUri
+        ).getOrThrow()
+
         return EmojiSource(
           ScreenDensity.xhdpiRelativeDensityScaleFactor("xhdpi"),
 
@@ -134,8 +141,25 @@ interface EmojiData {
   val obsolete: List<ObsoleteEmoji>
 }
 
-data class ObsoleteEmoji(val obsolete: String, val replaceWith: String)
+@Serializable
+data class ObsoleteEmoji(
+  @Serializable(with = StringAsHexUtf16Serializer::class)
+  val obsolete: String,
 
-data class EmojiMetrics(val rawHeight: Int, val rawWidth: Int, val perRow: Int)
+  @Serializable(with = StringAsHexUtf16Serializer::class)
+  @SerialName("replace_with")
+  val replaceWith: String
+)
+
+@Serializable
+data class EmojiMetrics(
+  @SerialName("raw_height")
+  val rawHeight: Int,
+
+  @SerialName("raw_width")
+  val rawWidth: Int,
+
+  @SerialName("per_row")
+  val perRow: Int)
 
 private fun getAssetsUri(name: String, format: String): Uri = Uri.parse("file:///android_asset/emoji/$name.$format")

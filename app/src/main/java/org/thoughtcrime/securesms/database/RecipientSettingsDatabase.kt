@@ -43,7 +43,7 @@ class RecipientSettingsDatabase @Inject constructor(
 
         // If nothing is updated, return early
         if (oldSettings == newSettings) {
-            Log.d(TAG, "No changes to settings for ${address.debugString}, old: $oldSettings, new: $newSettings")
+            Log.d(TAG, "No changes to settings for ${address.debugString}")
             return
         }
 

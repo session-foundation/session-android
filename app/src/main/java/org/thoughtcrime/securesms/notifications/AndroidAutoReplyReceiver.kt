@@ -29,8 +29,7 @@ import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsignal.utilities.Log
@@ -73,7 +72,8 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
     lateinit var proStatusManager: ProStatusManager
 
     @Inject
-    lateinit var clock: SnodeClock
+    lateinit var snodeClock: SnodeClock
+
 
     @SuppressLint("StaticFieldLeak")
     override fun onReceive(context: Context, intent: Intent) {
@@ -101,7 +101,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                     val message = VisibleMessage()
                     message.text = responseText.toString()
                     proStatusManager.addProFeatures(message)
-                    message.sentTimestamp = clock.currentTimeMills()
+                    message.sentTimestamp = snodeClock.currentTimeMillis()
                     messageSender.send(message, address!!)
                     val expiryMode = recipientRepository.getRecipientSync(address).expiryMode
                     val expiresInMillis = expiryMode.expiryMillis
@@ -141,7 +141,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             replyThreadId,
                             reply,
                             false,
-                            nowWithOffset,
+                            snodeClock.currentTimeMillis(),
                             true
                         )
                     }

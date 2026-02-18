@@ -213,7 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name}需要相机访问权限才能扫描二维码</string>
     <string name="cancel">取消</string>
     <string name="cancelAccess">取消 {pro}</string>
-    <string name="cancelProPlan">取消 {pro} 套餐</string>
     <string name="cancelProPlatform">请使用您注册 {pro} 所用的 {platform_account}，前往 {platform} 网站进行取消。</string>
     <string name="cancelProPlatformStore">请使用您注册 {pro} 所用的 {platform_account}，前往 {platform_store} 网站进行取消。</string>
     <string name="change">更改</string>
@@ -1075,7 +1074,6 @@
     <string name="proRenewPinFiveConversations">想再次固定超过 {limit} 个对话吗？\n请续费您的 {pro} 访问权限以解锁您错过的功能。</string>
     <string name="proRenewPinMoreConversations">想再次固定更多对话吗？\n请续费您的 {pro} 访问权限以解锁您错过的功能。</string>
     <string name="proRenewTosPrivacy">通过续费，即表示您同意 {app_pro} 的<b>服务条款</b>{icon} 和 <b>隐私政策</b>{icon}</string>
-    <string name="proRenewalUnsuccessful">Pro 续费失败，即将重试</string>
     <string name="proRenewingAction">正在续订</string>
     <string name="proRenewingNoAccessBilling">目前，{pro} 访问只能通过 {platform_store} 或 {platform_store_other} 进行购买和续订。由于您是使用 {build_variant} 安装的 {app_name}，因此无法在此进行续订。\n\n{app_name} 的开发者正在积极开发其他付款选项，以便用户可在不使用 {platform_store} 和 {platform_store_other} 的情况下购买 {pro} 访问。<b> {pro} 路线图</b> {icon}</string>
     <string name="proRequestedRefund">已申请退款</string>
@@ -1179,6 +1177,9 @@
     <string name="remindMeLater">稍后提醒我</string>
     <string name="remove">移除</string>
     <plurals name="removeMember">
+        <item quantity="other">移除成员</item>
+    </plurals>
+    <plurals name="removeMemberLowercase">
         <item quantity="other">移除成员</item>
     </plurals>
     <plurals name="removeMemberMessages">
@@ -1352,7 +1353,6 @@
     <string name="useFastMode">使用快速模式</string>
     <string name="viaPlatformWebsiteDescription">请使用您注册所用的 {platform_account}，通过 <b><font color="0">{platform} 网站</font></b> 更改套餐。</string>
     <string name="viaStoreWebsite">通过 {platform} 网站</string>
-    <string name="viaStoreWebsiteDescription">使用您注册时使用的 {platform_account}，通过 <b><font color="0">{platform_store}</font></b> 网站更新您的 {pro} 访问权限。</string>
     <string name="video">视频</string>
     <string name="videoErrorPlay">无法播放视频。</string>
     <string name="view">查看</string>

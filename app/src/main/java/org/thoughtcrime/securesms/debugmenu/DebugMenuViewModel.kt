@@ -30,7 +30,7 @@ import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
-import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
@@ -191,7 +191,7 @@ class DebugMenuViewModel @AssistedInject constructor(
 
             is Commands.Copy07PrefixedBlindedPublicKey -> {
                 val secretKey = storage.getUserED25519KeyPair()?.secretKey?.data
-                    ?: throw (FileServerApi.Error.NoEd25519KeyPair)
+                    ?: throw (FileServerApis.Error.NoEd25519KeyPair)
                 val userBlindedKeys = BlindKeyAPI.blindVersionKeyPair(secretKey)
 
                 val clip = ClipData.newPlainText("07-prefixed Version Blinded Public Key",

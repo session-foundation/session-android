@@ -25,14 +25,13 @@ import android.database.Cursor;
 
 import androidx.collection.ArrayMap;
 
-import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
+import org.session.libsession.network.SnodeClock;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.GroupUtil;
@@ -44,11 +43,13 @@ import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.notifications.MarkReadProcessor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -132,9 +133,10 @@ public class ThreadDatabase extends Database {
       SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED, SNIPPET_CONTENT,
   };
 
-  private static final List<String> TYPED_THREAD_PROJECTION = Stream.of(THREAD_PROJECTION)
-                                                                    .map(columnName -> TABLE_NAME + "." + columnName)
-                                                                    .toList();
+  private static final List<String> TYPED_THREAD_PROJECTION =
+            Arrays.stream(THREAD_PROJECTION)
+                    .map(columnName -> TABLE_NAME + "." + columnName)
+                    .collect(Collectors.toList());
 
   private static final List<String> COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION =
           CollectionsKt.plus(
@@ -391,10 +393,6 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public long getThreadIdIfExistsFor(Address address) {
-    return getThreadIdIfExistsFor(address.getAddress());
-  }
-
   public long getOrCreateThreadIdFor(Address address) {
     boolean created = false;
 
@@ -403,7 +401,7 @@ public class ThreadDatabase extends Database {
     long threadId = getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
 
     if (threadId < 0) {
-      threadId = getThreadIdIfExistsFor(address);
+      threadId = getThreadIdIfExistsFor(address.getAddress());
     } else {
       created = true;
     }

@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.ThemeUtil
@@ -53,7 +53,6 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
@@ -75,7 +74,6 @@ class ConversationReactionOverlay : FrameLayout {
     lateinit var threadRecipient: Recipient
     private lateinit var selectedConversationModel: SelectedConversationModel
     private var overlayState = OverlayState.HIDDEN
-    private lateinit var recentEmojiPageModel: RecentEmojiPageModel
     private var downIsOurs = false
     private var selected = -1
     private var customEmojiIndex = 0
@@ -106,6 +104,8 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var snodeClock: SnodeClock
+    @Inject lateinit var recentEmojiPageModel: RecentEmojiPageModel
 
     private var job: Job? = null
 
@@ -140,7 +140,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Use your existing utility to handle insets
         applySafeInsetsPaddings(
-            typeMask = WindowInsetsCompat.Type.systemBars(),
+            typeMask = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout(),
             consumeInsets = false, // Don't consume so children can also access them
             applyTop = false,      // Don't apply as padding, just capture the values
             applyBottom = false
@@ -172,7 +172,6 @@ class ConversationReactionOverlay : FrameLayout {
         this.selectedConversationModel = selectedConversationModel
         overlayState = OverlayState.UNINITAILIZED
         selected = -1
-        recentEmojiPageModel = RecentEmojiPageModel(activity)
         setupSelectedEmoji()
         val statusBarBackground = activity.findViewById<View>(android.R.id.statusBarBackground)
         statusBarHeight = statusBarBackground?.height ?: 0
@@ -211,7 +210,17 @@ class ConversationReactionOverlay : FrameLayout {
         val contextMenu = ConversationContextMenu(dropdownAnchor, recipient?.let { getMenuActionItems(messageRecord, it) }.orEmpty())
         this.contextMenu = contextMenu
 
-        var endX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX - conversationItem.width + selectedConversationModel.bubbleWidth
+        // Visual left/right edges that account for system insets and configured margin.
+        val leftEdge = (systemInsets.left + scrubberHorizontalMargin).toFloat()
+        val rightEdge = (width - systemInsets.right - scrubberHorizontalMargin).toFloat()
+
+        // Start the bubble aligned to the same visual edge as the scrubber.
+        var endX = if (isMessageOnLeft) {
+            leftEdge
+        } else {
+            rightEdge - conversationItem.width
+        }
+
         var endY = selectedConversationModel.bubbleY - statusBarHeight
         conversationItem.x = endX
         conversationItem.y = endY
@@ -312,13 +321,23 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Adjust for system insets
         reactionBarBackgroundY = maxOf(reactionBarBackgroundY, systemInsets.top.toFloat() - statusBarHeight)
+
+        // Now that endScale is final, clamp the bubble X so it stays fully within the visual edges.
+        val minBubbleX = leftEdge
+        val maxBubbleX = rightEdge
+        endX = endX.coerceIn(minBubbleX, maxBubbleX)
+        // Ensure initial position is corrected before making the overlay visible.
+        conversationItem.x = endX
+        conversationItem.y = endY
+
         hideAnimatorSet.end()
         visibility = VISIBLE
 
+        // Place the scrubber on the same visual edges (accounting for its own width on the right).
         val scrubberX = if (isMessageOnLeft) {
-            scrubberHorizontalMargin.toFloat()
+            leftEdge
         } else {
-            (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
+            (rightEdge - scrubberWidth)
         }
 
         foregroundView.x = scrubberX
@@ -332,22 +351,37 @@ class ConversationReactionOverlay : FrameLayout {
         revealAnimatorSet.start()
 
         if (isWideLayout) {
-            val scrubberRight = scrubberX + scrubberWidth
-            val offsetX = when {
-                isMessageOnLeft -> scrubberRight + menuPadding
-                else -> scrubberX - contextMenu.getMaxWidth() - menuPadding
+            val menuXInOverlay = if (isMessageOnLeft) {
+                // Menu to the RIGHT of the scrubber
+                scrubberX + scrubberWidth + menuPadding
+            } else {
+                // Menu to the LEFT of the scrubber - use MENU width here, not scrubber width
+                scrubberX - contextMenu.getMaxWidth() - menuPadding
             }
-            // Adjust Y position to account for insets
-            val adjustedY = minOf(backgroundView.y, (availableHeight - actualMenuHeight).toFloat()).toInt()
-            contextMenu.show(offsetX.toInt(), adjustedY)
+
+            val maxMenuYInOverlay = (height - systemInsets.bottom - actualMenuHeight).toFloat()
+            val menuYInOverlay = minOf(backgroundView.y, maxMenuYInOverlay)
+
+            // Convert overlay-local to anchor relative as expected by ConversationContextMenu.show()
+            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
+            contextMenu.show(xOffset, yOffset)
+
         } else {
-            val contentX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX
-            val offsetX = when {
-                isMessageOnLeft -> contentX
-                else -> -contextMenu.getMaxWidth() + contentX + bubbleWidth
+            val menuXInOverlay = if (isMessageOnLeft) {
+                leftEdge
+            } else {
+                rightEdge - contextMenu.getMaxWidth()
             }
+
             val menuTop = endApparentTop + conversationItemSnapshot.height * endScale
-            contextMenu.show(offsetX.toInt(), (menuTop + menuPadding).toInt())
+            val menuYInOverlay = (menuTop + menuPadding)
+                .coerceIn(
+                    systemInsets.top.toFloat(),
+                    (height - systemInsets.bottom - actualMenuHeight).toFloat()
+                )
+
+            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
+            contextMenu.show(xOffset, yOffset)
         }
 
         val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
@@ -359,6 +393,12 @@ class ConversationReactionOverlay : FrameLayout {
             .x(endX)
             .y(endY)
             .setDuration(revealDuration.toLong())
+    }
+
+    private fun toAnchorOffsets(xInOverlay: Float, yInOverlay: Float): Pair<Int, Int> {
+        val xOffset = (xInOverlay - dropdownAnchor.x).toInt()
+        val yOffset = (yInOverlay - dropdownAnchor.y).toInt()
+        return xOffset to yOffset
     }
 
     private fun getReactionBarOffsetForTouch(itemY: Float,
@@ -593,6 +633,49 @@ class ConversationReactionOverlay : FrameLayout {
         // control messages and "marked as deleted" messages can only delete
         val isDeleteOnly = message.isDeleted || containsControlMessage
 
+        // Resend
+        if (message.isFailed && !isDeprecatedLegacyGroup) {
+            items += ActionItem(R.attr.menu_reply_icon, R.string.resend, { handleActionItemClicked(Action.RESEND) })
+        }
+
+        // Resync
+        if (message.isSyncFailed && !isDeprecatedLegacyGroup) {
+            items += ActionItem(R.attr.menu_reply_icon, R.string.resync, { handleActionItemClicked(Action.RESYNC) })
+        }
+
+        // Save media..
+        if (message.isMms  && !isDeleteOnly) {
+            // ..but only provide the save option if the there is a media attachment which has finished downloading.
+            val mmsMessage = message as MediaMmsMessageRecord
+            if (mmsMessage.containsMediaSlide() && !mmsMessage.isMediaPending) {
+                items += ActionItem(R.attr.menu_save_icon,
+                    R.string.save,
+                    { handleActionItemClicked(Action.DOWNLOAD) },
+                    R.string.AccessibilityId_saveAttachment
+                )
+            }
+        }
+
+        // Reply
+        val canWrite = openGroup == null || openGroup.write
+        if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly
+            && !isDeprecatedLegacyGroup) {
+            items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, R.string.AccessibilityId_reply)
+        }
+
+        // Copy message text
+        if (!containsControlMessage && hasText && !isDeleteOnly) {
+            items += ActionItem(R.attr.menu_copy_icon, R.string.copy, { handleActionItemClicked(Action.COPY_MESSAGE) })
+        }
+
+        // Message detail
+        if(!isDeleteOnly) {
+            items += ActionItem(
+                R.attr.menu_info_icon,
+                R.string.info,
+                { handleActionItemClicked(Action.VIEW_INFO) })
+        }
+
         // Select message
         if(!isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(
@@ -603,20 +686,11 @@ class ConversationReactionOverlay : FrameLayout {
             )
         }
 
-        // Reply
-        val canWrite = openGroup == null || openGroup.write
-        if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly
-            && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, R.string.AccessibilityId_reply)
-        }
-        // Copy message text
-        if (!containsControlMessage && hasText && !isDeleteOnly) {
-            items += ActionItem(R.attr.menu_copy_icon, R.string.copy, { handleActionItemClicked(Action.COPY_MESSAGE) })
-        }
         // Copy Account ID
         if (!recipient.isCommunity && message.isIncoming && !isDeleteOnly) {
             items += ActionItem(R.attr.menu_copy_icon, R.string.accountIDCopy, { handleActionItemClicked(Action.COPY_ACCOUNT_ID) })
         }
+
         // Delete message
         if (!isDeprecatedLegacyGroup) {
             items += ActionItem(
@@ -624,7 +698,7 @@ class ConversationReactionOverlay : FrameLayout {
                 R.string.delete,
                 { handleActionItemClicked(Action.DELETE) },
                 R.string.AccessibilityId_deleteMessage,
-                message.subtitle,
+                message.subtitle(snodeClock.currentTimeMillis()),
                 ThemeUtil.getThemedColor(context, R.attr.danger)
             )
         }
@@ -632,42 +706,15 @@ class ConversationReactionOverlay : FrameLayout {
         // Ban user
         if (userCanBanSelectedUsers(message) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_ban_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
-        }
-        // Ban and delete all
-        if (userCanBanSelectedUsers(message) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_trash_icon, R.string.banDeleteAll, { handleActionItemClicked(Action.BAN_AND_DELETE_ALL) })
-        }
-        // Message detail
-        if(!isDeleteOnly) {
-            items += ActionItem(
-                R.attr.menu_info_icon,
-                R.string.messageInfo,
-                { handleActionItemClicked(Action.VIEW_INFO) })
-        }
-        // Resend
-        if (message.isFailed && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_reply_icon, R.string.resend, { handleActionItemClicked(Action.RESEND) })
-        }
-        // Resync
-        if (message.isSyncFailed && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_reply_icon, R.string.resync, { handleActionItemClicked(Action.RESYNC) })
-        }
-        // Save media..
-        if (message.isMms  && !isDeleteOnly) {
-            // ..but only provide the save option if the there is a media attachment which has finished downloading.
-            val mmsMessage = message as MediaMmsMessageRecord
-            if (mmsMessage.containsMediaSlide() && !mmsMessage.isMediaPending) {
-                items += ActionItem(R.attr.menu_save_icon,
-                            R.string.save,
-                            { handleActionItemClicked(Action.DOWNLOAD) },
-                            R.string.AccessibilityId_saveAttachment
-                )
-            }
+            items += ActionItem(R.attr.menu_unban_icon, R.string.banUnbanUser, { handleActionItemClicked(Action.UNBAN_USER) })
         }
 
-        // deleted messages have  no emoji reactions
-        backgroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
-        foregroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
+        // deleted messages, legacy groups, or non approved message requests have no emoji reactions
+        val showEmojiReactions = !isDeleteOnly && !isDeprecatedLegacyGroup
+                && threadRecipient.approved && threadRecipient.approvedMe
+        backgroundView.isVisible = showEmojiReactions
+        foregroundView.isVisible = showEmojiReactions
         return items
     }
 
@@ -792,6 +839,7 @@ class ConversationReactionOverlay : FrameLayout {
         SELECT,
         DELETE,
         BAN_USER,
+        UNBAN_USER,
         BAN_AND_DELETE_ALL
     }
 
@@ -801,11 +849,11 @@ class ConversationReactionOverlay : FrameLayout {
     }
 }
 
-private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
-    get() = if (expiresIn <= 0 || expireStarted <= 0) {
+private fun MessageRecord.subtitle(timeMilli: Long): ((Context) -> CharSequence?)? {
+    return if (expiresIn <= 0 || expireStarted <= 0) {
         null
     } else { context ->
-        (expiresIn - (SnodeAPI.nowWithOffset - expireStarted))
+        (expiresIn - (timeMilli - expireStarted))
             .coerceAtLeast(0L)
             .milliseconds
             .toShortTwoPartString()
@@ -815,3 +863,4 @@ private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
                     .format().toString()
             }
     }
+}

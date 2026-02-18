@@ -10,6 +10,7 @@ import com.bumptech.glide.RequestManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
@@ -19,11 +20,12 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
 class ConversationAdapter(
     context: Context,
-    originalLastSeen: Long,
+    originalLastSeen: Long?,
     private val isReversed: Boolean,
     private val onItemPress: (MessageRecord, Int, VisibleMessageView, MotionEvent) -> Unit,
     private val onItemSwipeToReply: (MessageRecord, Int) -> Unit,
@@ -42,7 +44,7 @@ class ConversationAdapter(
     private var searchQuery: String? = null
     var visibleMessageViewDelegate: VisibleMessageViewDelegate? = null
 
-    private val lastSeen = AtomicLong(originalLastSeen)
+    private val lastSeen :  AtomicReference<Long?> = AtomicReference(originalLastSeen)
 
     var lastSentMessageId: MessageId? = null
         set(value) {
@@ -94,7 +96,6 @@ class ConversationAdapter(
                 val visibleMessageView = viewHolder.view
                 val isSelected = selectedItems.contains(message)
                 visibleMessageView.isMessageSelected = isSelected
-                visibleMessageView.indexInAdapter = position
                 val isExpanded = expandedMessageIds.contains(message.messageId)
 
                 visibleMessageView.bind(
@@ -150,7 +151,7 @@ class ConversationAdapter(
         }
     }
 
-    private fun getItemPositionForId(target: MessageId): Int? {
+    fun getItemPositionForId(target: MessageId): Int? {
         val c = cursor ?: return null
         for (i in 0 until itemCount) {
             if (!c.moveToPosition(i)) break

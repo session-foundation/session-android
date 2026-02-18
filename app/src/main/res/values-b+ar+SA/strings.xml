@@ -228,7 +228,6 @@
     <string name="cameraGrantAccessQr">{app_name} يحتاج إذن الوصول إلى الكاميرا لمسح رموز QR</string>
     <string name="cancel">إلغاء</string>
     <string name="cancelAccess">إلغاء {pro}</string>
-    <string name="cancelProPlan">إلغاء خطة {pro}</string>
     <string name="cancelProPlatform">قم بالإلغاء على موقع {platform} باستخدام الحساب {platform_account} الذي استخدمته للتسجيل في {pro}.</string>
     <string name="cancelProPlatformStore">قم بالإلغاء على موقع {platform_store} باستخدام الحساب {platform_account} الذي استخدمته للتسجيل في {pro}.</string>
     <string name="change">تغيير</string>
@@ -1233,7 +1232,6 @@
     <string name="proRenewPinFiveConversations">هل تريد تثبيت أكثر من {limit} محادثة مجددًا؟\nقم بتجديد وصول {pro} الخاص بك لفتح الميزات التي فاتتك.</string>
     <string name="proRenewPinMoreConversations">هل تريد تثبيت المزيد من المحادثات مجددًا؟\nقم بتجديد وصول {pro} الخاص بك لفتح الميزات التي فاتتك.</string>
     <string name="proRenewTosPrivacy">من خلال التجديد، فإنك توافق على <b>شروط الخدمة</b> {icon} و<b>سياسة الخصوصية</b> {icon} الخاصة بـ {app_pro}</string>
-    <string name="proRenewalUnsuccessful">فشل تجديد Pro، سيتم إعادة المحاولة قريبًا</string>
     <string name="proRenewingAction">تجديد</string>
     <string name="proRenewingNoAccessBilling">في الوقت الحالي، يمكن شراء وتجديد الوصول إلى {pro} فقط عبر {platform_store} أو {platform_store_other}. نظرًا لأنك قمت بتثبيت {app_name} باستخدام {build_variant}، لا يمكنك التجديد من هنا.\n\nيعمل مطورو {app_name} بجهد على توفير خيارات دفع بديلة للسماح للمستخدمين بشراء الوصول إلى {pro} خارج {platform_store} و {platform_store_other}.<b> خارطة طريق {pro}</b> {icon}</string>
     <string name="proRequestedRefund">تم طلب الاسترداد</string>
@@ -1569,7 +1567,6 @@
     <string name="useFastMode">استخدم الوضع السريع</string>
     <string name="viaPlatformWebsiteDescription">غيّر خطتك باستخدام {platform_account} الذي استخدمته عند التسجيل، عبر <b><font color="0">موقع {platform}</font></b>.</string>
     <string name="viaStoreWebsite">عبر موقع {platform} الإلكتروني</string>
-    <string name="viaStoreWebsiteDescription">حدّث وصولك إلى {pro} باستخدام {platform_account} الذي استخدمته عند التسجيل، وذلك عبر موقع <b><font color="0">{platform_store}</font></b> الإلكتروني.</string>
     <string name="video">فيديو</string>
     <string name="videoErrorPlay">تعذر تشغيل الفيديو</string>
     <string name="view">عرض</string>

@@ -219,7 +219,6 @@
     <string name="cameraGrantAccessQr">{app_name} are nevoie de acces la cameră pentru a scana coduri QR</string>
     <string name="cancel">Anulare</string>
     <string name="cancelAccess">Anulează {pro}</string>
-    <string name="cancelProPlan">Anulează planul {pro}</string>
     <string name="cancelProPlatform">Anulează pe site-ul {platform}, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
     <string name="cancelProPlatformStore">Anulează pe site-ul {platform_store}, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
     <string name="change">Schimba</string>
@@ -1145,7 +1144,6 @@
     <string name="proRenewPinFiveConversations">Vrei să fixezi din nou mai mult de {limit} conversații?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
     <string name="proRenewPinMoreConversations">Vrei să fixezi din nou mai multe conversații?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
     <string name="proRenewTosPrivacy">Prin reînnoire, ești de acord cu <b>Termenii de utilizare</b> {icon} și <b>Politica de confidențialitate</b> {icon} ale {app_pro}</string>
-    <string name="proRenewalUnsuccessful">Reînnoirea Pro a eșuat, se va reîncerca în curând</string>
     <string name="proRenewingAction">reînnoire</string>
     <string name="proRenewingNoAccessBilling">În prezent, accesul {pro} poate fi achiziționat și reînnoit doar prin intermediul {platform_store} sau {platform_store_other}. Deoarece ai instalat {app_name} folosind {build_variant}, nu poți reînnoi de aici.\n\nDezvoltatorii {app_name} lucrează intens la opțiuni alternative de plată, pentru a permite utilizatorilor să cumpere accesul {pro} în afara {platform_store} și {platform_store_other}.<b> Planul {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Rambursare solicitată</string>
@@ -1449,7 +1447,6 @@
     <string name="useFastMode">Folosește modul rapid</string>
     <string name="viaPlatformWebsiteDescription">Schimbă-ți planul utilizând contul {platform_account} cu care te-ai înregistrat, prin intermediul <b><font color="0">site-ului {platform}</font></b>.</string>
     <string name="viaStoreWebsite">Prin intermediul site-ului {platform}</string>
-    <string name="viaStoreWebsiteDescription">Actualizează-ți accesul {pro} folosind {platform_account} pe care l-ai utilizat la înregistrare, prin intermediul site-ului <b><font color="0">{platform_store}</font></b>.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videoclipul nu poate fi redat.</string>
     <string name="view">Vizualizare</string>

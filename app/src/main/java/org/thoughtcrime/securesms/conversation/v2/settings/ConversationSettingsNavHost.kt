@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -162,7 +163,7 @@ fun ConversationSettingsNavHost(
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
-        val navigator: UINavigator<ConversationSettingsDestination> = remember { UINavigator() }
+        val navigator: UINavigator<ConversationSettingsDestination> = retain { UINavigator() }
 
         val handleBack: () -> Unit = {
             if (navController.previousBackStackEntry != null) {

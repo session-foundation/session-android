@@ -208,7 +208,7 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
     fun clearErrorMessage(messageID: MessageId) {
         val database = writableDatabase
         database.delete(errorMessageTable, "${Companion.messageID} = ? AND $messageType = ?",
-            arrayOf(messageID.id.toString(), messageID.asMessageType))
+            arrayOf<Any>(messageID.id.toString(), messageID.asMessageType))
     }
 
     fun deleteThread(threadId: Long) {
@@ -263,7 +263,7 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
              WHERE hash IN (SELECT value FROM json_each(:hashes))
         """.trimIndent()
 
-        val result = readableDatabase.query(query, arrayOf(threadId, JSONArray(hashes).toString()))
+        val result = readableDatabase.query(query, arrayOf<Any>(threadId, JSONArray(hashes).toString()))
             .use { cursor ->
                 cursor.asSequence()
                     .map {
