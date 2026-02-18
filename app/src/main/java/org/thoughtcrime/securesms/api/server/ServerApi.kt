@@ -47,7 +47,7 @@ abstract class ServerApi<ResponseType>(
         )
 
 
-        Log.d("ServerApi", "Network error from ${this.javaClass.simpleName} for a Server endpoint ($baseUrl ${(this as? CommunityApi)?.let { " Room: ${it.room}" }}), with status:${response.statusCode} - error: $error")
+        Log.e("ServerApi", "Network error for a Server endpoint (${debugInfo()}), with status:${response.statusCode} - error: $error")
 
         executorContext.set(
             key = ServerClientFailureContextKey,
@@ -62,6 +62,10 @@ abstract class ServerApi<ResponseType>(
         } else {
             throw error
         }
+    }
+
+    open fun debugInfo(): String {
+        return this.javaClass.simpleName
     }
 
 
