@@ -46,7 +46,7 @@ abstract class ServerApi<ResponseType>(
         )
 
 
-        Log.e("ServerApi", "Network error for a Server endpoint (${debugInfo()}), with status:${response.statusCode} - error: $error")
+        Log.e("ServerApi", "Network error for a Server endpoint: \"$baseUrl\" (${debugInfo()}), with status:${response.statusCode} - error: $error")
 
         executorContext.set(
             key = ServerClientFailureContextKey,
