@@ -13,6 +13,7 @@ import androidx.work.WorkerParameters
 import androidx.work.await
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import network.loki.messenger.BuildConfig
 import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.file_server.GetClientVersionApi
 import org.session.libsignal.utilities.Log
@@ -69,6 +70,10 @@ class VersionDataFetcher @Inject constructor(
         @Assisted params: WorkerParameters,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
+            if(!BuildConfig.CHECK_VERSION){
+                Log.d(TAG, "Worker skipped version check - BuildConfig.CHECK_VERSION: ${BuildConfig.CHECK_VERSION}")
+                return Result.success()
+            }
             val clientVersion = serverApiExecutor.execute(
                 ServerApiRequest(
                     fileServer = FileServerApis.DEFAULT_FILE_SERVER,
