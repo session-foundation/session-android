@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.api.server
 
+import org.session.libsession.messaging.open_groups.api.CommunityApi
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
@@ -45,7 +46,8 @@ abstract class ServerApi<ResponseType>(
             ctx = failureContext,
         )
 
-        Log.d("ServerApi", "Network error from ${this.javaClass.simpleName} for a Server endpoint ($baseUrl), with status:${response.statusCode} - error: $error")
+
+        Log.d("ServerApi", "Network error from ${this.javaClass.simpleName} for a Server endpoint ($baseUrl ${(this as? CommunityApi)?.let { " Room: ${it.room}" }}), with status:${response.statusCode} - error: $error")
 
         executorContext.set(
             key = ServerClientFailureContextKey,

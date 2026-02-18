@@ -399,7 +399,6 @@ public class AttachmentDatabase extends Database {
     }
 
     values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
-    values.put(CONTENT_LOCATION, (String)null);
     values.put(CONTENT_DISPOSITION, (String)null);
     values.put(DIGEST, (byte[])null);
     values.put(NAME, (String) null);
