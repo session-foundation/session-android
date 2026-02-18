@@ -45,7 +45,7 @@ abstract class ServerApi<ResponseType>(
             ctx = failureContext,
         )
 
-        Log.d("ServerApi", "Network error for a Server endpoint ($baseUrl), with status:${response.statusCode} - error: $error")
+        Log.d("ServerApi", "Network error from ${this.javaClass.simpleName} for a Server endpoint ($baseUrl), with status:${response.statusCode} - error: $error")
 
         executorContext.set(
             key = ServerClientFailureContextKey,
