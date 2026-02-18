@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -31,7 +30,6 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -92,7 +90,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         publicKey = requireNotNull(args.getString(ARG_PUBLIC_KEY))
         requireNotNull(args.getLong(ARG_THREAD_ID))
         val addressString = requireNotNull(args.getString(ARG_ADDRESS))
-        val address = Address.fromSerialized(addressString)
+        val address = Address.fromSerialized(addressString) as Address.Conversable
         thread = requireNotNull(
             threadDatabase.getThreads(listOf(address)).firstOrNull()
         ) { "Thread not found for address: $addressString" }

@@ -27,7 +27,6 @@ import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.toBitSet
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
@@ -670,10 +669,6 @@ class AppTextSecurePreferences @Inject constructor(
         set(value) = getDefaultSharedPreferences(context).edit(commit = true) {
             putBoolean(TextSecurePreferences.MIGRATED_TO_DISABLING_KDF, value)
         }
-
-    override var migratedDisappearingMessagesToMessageContent: Boolean
-        get() = getBooleanPreference("migrated_disappearing_messages_to_message_content", false)
-        set(value) = setBooleanPreference("migrated_disappearing_messages_to_message_content", value)
 
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)

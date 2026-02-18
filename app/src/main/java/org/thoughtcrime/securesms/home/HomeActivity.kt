@@ -10,14 +10,11 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.LocalActivity
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -835,7 +832,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         lifecycleScope.launch(Dispatchers.Default) {
             storage.updateConversationLastSeenIfNeeded(
                 thread.recipient.address as Address.Conversable,
-                clock.currentTimeMills()
+                clock.currentTimeMillis()
             )
         }
     }

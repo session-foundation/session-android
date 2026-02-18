@@ -37,7 +37,7 @@ class MarkReadReceiver : BroadcastReceiver() {
         NotificationManagerCompat.from(context).cancel(intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1))
 
         scope.launch {
-            val currentTime = clock.currentTimeMills()
+            val currentTime = clock.currentTimeMillis()
             threadIds.forEach {
                 Log.i(TAG, "Marking as read: $it")
                 storage.updateConversationLastSeenIfNeeded(

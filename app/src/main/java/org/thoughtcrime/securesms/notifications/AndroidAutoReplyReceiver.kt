@@ -149,7 +149,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                     if (address is Address.Conversable) {
                         storage.updateConversationLastSeenIfNeeded(
                             threadAddress = address,
-                            lastSeenTime = clock.currentTimeMills()
+                            lastSeenTime = snodeClock.currentTimeMillis()
                         )
                     }
 

@@ -26,7 +26,7 @@ import android.os.AsyncTask;
 import androidx.core.app.NotificationManagerCompat;
 
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsession.snode.SnodeClock;
+import org.session.libsession.network.SnodeClock;
 import org.thoughtcrime.securesms.database.Storage;
 
 import javax.inject.Inject;
@@ -64,7 +64,7 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
       new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... params) {
-            long now = clock.currentTimeMills();
+            long now = clock.currentTimeMillis();
             for (long threadId : threadIds) {
                 storage.updateConversationLastSeenIfNeeded(threadId, now);
             }

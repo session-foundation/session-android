@@ -14,7 +14,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -28,12 +27,12 @@ import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.auth.AuthAwareComponent
-import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
+import org.thoughtcrime.securesms.auth.AuthAwareComponent
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
@@ -43,11 +42,12 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
-import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 
 @Singleton
 class MarkReadProcessor @Inject constructor(
@@ -129,7 +129,7 @@ class MarkReadProcessor @Inject constructor(
                             previousSeen[key] != value
                         }
                         .forEach { changed ->
-                            val threadId = threadDb.getThreadIdIfExistsFor(changed.key)
+                            val threadId = threadDb.getThreadIdIfExistsFor(changed.key.toString())
                             if (threadId != -1L) {
                                 val allUnreadMessages = buildList {
                                     addAll(smsDatabase.setMessagesRead(threadId, changed.value))
@@ -171,7 +171,7 @@ class MarkReadProcessor @Inject constructor(
                 }
 
                 Log.d(TAG, "Marking message ${it.expirationInfo.id.id} as started for disappear after read")
-                db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMills())
+                db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMillis())
             }
 
         hashToDisappearAfterReadMessage(markedReadMessages)?.let { hashToMessages ->
@@ -197,7 +197,7 @@ class MarkReadProcessor @Inject constructor(
     private fun shortenExpiryOfDisappearingAfterRead(
         hashToMessage: Map<String, MarkedMessageInfo>
     ) {
-        coroutineScope.launch {
+        scope.launch {
             val userAuth = checkNotNull(storage.userAuth) { "No authorized user" }
 
             hashToMessage.entries

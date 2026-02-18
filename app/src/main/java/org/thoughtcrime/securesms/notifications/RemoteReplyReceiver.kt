@@ -151,7 +151,7 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                     if (address is Address.Conversable) {
                         storage.updateConversationLastSeenIfNeeded(
                             threadAddress = address,
-                            lastSeenTime = clock.currentTimeMills()
+                            lastSeenTime = clock.currentTimeMillis()
                         )
                     }
 
