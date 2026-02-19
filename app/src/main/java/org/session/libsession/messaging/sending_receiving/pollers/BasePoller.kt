@@ -119,10 +119,10 @@ abstract class BasePoller<T>(
             // At this point, the criteria for routine poll are all satisfied.
 
             // If we are told we can only start executing from a time, wait until that.
-            val delayDuration = minStartAt?.elapsedNow()?.let { -it.inWholeMilliseconds }
-            if (delayDuration != null && delayDuration > 0) {
-                Log.d(logTag, "Delay next poll for ${delayDuration}ms")
-                delay(delayDuration)
+            val delayMillis = minStartAt?.elapsedNow()?.let { -it.inWholeMilliseconds }
+            if (delayMillis != null && delayMillis > 0) {
+                Log.d(logTag, "Delay next poll for ${delayMillis}ms")
+                delay(delayMillis)
             }
         }
     }
