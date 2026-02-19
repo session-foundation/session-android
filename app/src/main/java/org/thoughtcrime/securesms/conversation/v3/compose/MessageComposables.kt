@@ -900,7 +900,7 @@ fun AudioMessagePreview(
                 type = PreviewMessageData.audio(
                     outgoing = false,
                     state = MessageAudioState.Loading,
-                    name = "Audio with a really long name that should ellepsize once it reaches the max width"
+                    name = "Audio with a really long name that should ellipsize once it reaches the max width"
                 )
             ))
 
