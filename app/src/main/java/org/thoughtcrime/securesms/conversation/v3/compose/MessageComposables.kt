@@ -328,7 +328,7 @@ fun MessageQuote(
                     modifier = Modifier.fillMaxHeight()
                         .background(
                             color = blackAlpha06,
-                            shape = RoundedCornerShape(LocalDimensions.current.shapeXXS)
+                            shape = RoundedCornerShape(LocalDimensions.current.shapeXXSmall)
                         )
                         .size(LocalDimensions.current.quoteIconSize),
                     contentAlignment = Alignment.Center
@@ -347,7 +347,7 @@ fun MessageQuote(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.background(
                         color = blackAlpha06,
-                        shape = RoundedCornerShape(LocalDimensions.current.shapeXXS)
+                        shape = RoundedCornerShape(LocalDimensions.current.shapeXXSmall)
                     ).size(LocalDimensions.current.quoteIconSize),
                     model = DecryptableStreamUriLoader.DecryptableUri(quote.icon.uri),
                     contentDescription = quote.icon.filename
