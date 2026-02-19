@@ -89,7 +89,7 @@ abstract class BasePoller<T>(
         }
     }
 
-    private fun waitForRoutinePoll(minDelay: TimeMark?): Deferred<Unit> {
+    private fun waitForRoutinePoll(minStartAt: TimeMark?): Deferred<Unit> {
         return scope.async {
             combine(
                 appVisibilityManager.isAppVisible.filter { visible ->
@@ -114,7 +114,7 @@ abstract class BasePoller<T>(
             // At this point, the criteria for routine poll are all satisfied.
 
             // If we are told we can only start executing from a time, wait until that.
-            val delayDuration = minDelay?.elapsedNow()?.let { -it.inWholeMilliseconds }
+            val delayDuration = minStartAt?.elapsedNow()?.let { -it.inWholeMilliseconds }
             if (delayDuration != null && delayDuration > 0) {
                 Log.d(logTag, "Delay next poll for ${delayDuration}ms")
                 delay(delayDuration)
