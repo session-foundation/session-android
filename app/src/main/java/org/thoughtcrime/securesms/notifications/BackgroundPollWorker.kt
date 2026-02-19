@@ -48,7 +48,7 @@ class BackgroundPollWorker @AssistedInject constructor(
         private const val TAG = "BackgroundPollWorker"
         private const val REQUEST_TARGETS = "REQUEST_TARGETS"
 
-        fun schedulePeriodic(context: Context, targets: Collection<Target> = Target.entries) {
+        fun schedulePeriodic(context: Context, policy: ExistingPeriodicWorkPolicy, targets: Collection<Target> = Target.entries) {
             Log.v(TAG, "Scheduling periodic work.")
             val interval = 15.minutes
             val builder = PeriodicWorkRequestBuilder<BackgroundPollWorker>(interval.inWholeSeconds, TimeUnit.SECONDS)
@@ -62,7 +62,7 @@ class BackgroundPollWorker @AssistedInject constructor(
             val workRequest = builder.build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 TAG,
-                ExistingPeriodicWorkPolicy.REPLACE,
+                policy,
                 workRequest
             )
         }
