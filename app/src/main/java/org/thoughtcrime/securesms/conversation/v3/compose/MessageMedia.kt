@@ -325,7 +325,7 @@ fun MediaMessagePreviewLocal(
     }
 }
 
-sealed class MessageMediaItem(){
+sealed class MessageMediaItem {
     abstract val uri: Uri
     abstract val filename: String
     abstract val loading: Boolean
