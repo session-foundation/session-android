@@ -54,9 +54,9 @@ public class NotificationState {
     notificationCount = notifications.size();
   }
 
-  public @Nullable Uri getRingtone(@NonNull Context context) {
+  public @Nullable Uri getRingtone(@NonNull NotificationChannels notificationChannels) {
     if (!notifications.isEmpty()) {
-      return NotificationChannels.getMessageRingtone(context);
+      return notificationChannels.getMessageRingtone();
     }
 
     return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);

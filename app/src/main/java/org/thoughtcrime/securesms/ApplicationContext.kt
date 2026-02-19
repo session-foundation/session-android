@@ -87,6 +87,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
     @Inject lateinit var debugLogger: Lazy<DebugLogger>
     @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
+    @Inject lateinit var notificationChannels: Lazy<NotificationChannels>
     @Inject lateinit var preferenceStorage: Lazy<org.thoughtcrime.securesms.preferences.PreferenceStorage>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
 
@@ -140,7 +141,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         initializeSecurityProvider()
         initializeLogging()
         initializeCrashHandling()
-        NotificationChannels.create(this)
+        notificationChannels.get().create()
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         SSKEnvironment.sharedLazy = sskEnvironment
 

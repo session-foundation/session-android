@@ -78,6 +78,7 @@ class DefaultMessageNotifier @Inject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val messageFormatter: Lazy<MessageFormatter>,
     private val preferenceStorage: PreferenceStorage,
+    private val notificationChannels: NotificationChannels,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -338,6 +339,7 @@ class DefaultMessageNotifier @Inject constructor(
             NotificationPrivacyPreference(preferenceStorage[NotificationPreferences.NOTIFICATION_PRIVACY]),
             avatarUtils,
             imageLoader,
+            notificationChannels
         )
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
@@ -425,7 +427,7 @@ class DefaultMessageNotifier @Inject constructor(
         }
 
         if (signal && contentChanged) {
-            builder.setAlarms(notificationState.getRingtone(context))
+            builder.setAlarms(notificationState.getRingtone(notificationChannels))
             builder.setTicker(
                 notificationItem.individualRecipient,
                 notificationItem.text
@@ -481,7 +483,7 @@ class DefaultMessageNotifier @Inject constructor(
             return
         }
 
-        val builder = GroupSummaryNotificationBuilder(context, NotificationPrivacyPreference(preferenceStorage[NotificationPreferences.NOTIFICATION_PRIVACY]))
+        val builder = GroupSummaryNotificationBuilder(context, NotificationPrivacyPreference(preferenceStorage[NotificationPreferences.NOTIFICATION_PRIVACY]), notificationChannels)
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
         builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
@@ -526,7 +528,7 @@ class DefaultMessageNotifier @Inject constructor(
         }
 
         if (signal) {
-            builder.setAlarms(notificationState.getRingtone(context))
+            builder.setAlarms(notificationState.getRingtone(notificationChannels))
             val text = notifications[0].text
             builder.setTicker(
                 notifications[0].individualRecipient,

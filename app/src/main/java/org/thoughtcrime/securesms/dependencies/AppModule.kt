@@ -90,4 +90,5 @@ class ToasterModule {
 @InstallIn(SingletonComponent::class)
 interface AppComponent {
     fun getPreferenceStorage(): PreferenceStorage
+    fun getNotificationChannels(): org.thoughtcrime.securesms.notifications.NotificationChannels
 }

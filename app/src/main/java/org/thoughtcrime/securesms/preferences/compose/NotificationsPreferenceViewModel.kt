@@ -31,6 +31,7 @@ import kotlin.Boolean
 class NotificationsPreferenceViewModel @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val preferenceStorage: PreferenceStorage,
+    private val notificationChannels: NotificationChannels,
     val application: Application,
 ) : ViewModel() {
 
@@ -172,11 +173,11 @@ class NotificationsPreferenceViewModel @Inject constructor(
             is Commands.SetRingtone -> {
                 var ringtoneUri = command.uri
                 if (Settings.System.DEFAULT_NOTIFICATION_URI == ringtoneUri) {
-                    NotificationChannels.updateMessageRingtone(application, ringtoneUri)
+                    notificationChannels.updateMessageRingtone(ringtoneUri)
                     preferenceStorage.remove(NotificationPreferences.RINGTONE)
                 } else {
                     ringtoneUri = command.uri ?: Uri.EMPTY
-                    NotificationChannels.updateMessageRingtone(application, ringtoneUri)
+                    notificationChannels.updateMessageRingtone(ringtoneUri)
                     preferenceStorage[NotificationPreferences.RINGTONE] = ringtoneUri.toString()
                 }
             }
@@ -187,6 +188,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
 
             is Commands.ToggleVibrate -> {
                 preferenceStorage[NotificationPreferences.VIBRATE_ENABLED] = command.isEnabled
+                notificationChannels.updateMessageVibrate(command.isEnabled)
             }
 
             Commands.OpenSystemBgWhitelist -> {
@@ -205,7 +207,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                 intent.putExtra(
                     Settings.EXTRA_CHANNEL_ID,
-                    NotificationChannels.getMessagesChannel(application)
+                    notificationChannels.getMessagesChannel()
                 )
                 intent.putExtra(Settings.EXTRA_APP_PACKAGE, application.packageName)
 

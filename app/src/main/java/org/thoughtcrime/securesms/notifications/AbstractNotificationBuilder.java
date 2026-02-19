@@ -29,14 +29,16 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
   protected Context                       context;
   protected NotificationPrivacyPreference privacy;
   protected final Bundle                  extras;
+  protected final NotificationChannels    notificationChannels;
 
-  public AbstractNotificationBuilder(Context context, NotificationPrivacyPreference privacy) {
+  public AbstractNotificationBuilder(Context context, NotificationPrivacyPreference privacy, NotificationChannels notificationChannels) {
     super(context);
     extras = new Bundle();
     this.context = context;
     this.privacy = privacy;
+    this.notificationChannels = notificationChannels;
 
-    setChannelId(NotificationChannels.getMessagesChannel(context));
+    setChannelId(notificationChannels.getMessagesChannel());
     setLed();
   }
 
@@ -50,8 +52,8 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
   }
 
   public void setAlarms(@Nullable Uri ringtone) {
-    Uri     defaultRingtone = NotificationChannels.getMessageRingtone(context);
-    boolean defaultVibrate  = NotificationChannels.getMessageVibrate(context);
+    Uri     defaultRingtone = notificationChannels.getMessageRingtone();
+    boolean defaultVibrate  = notificationChannels.getMessageVibrate();
 
     if      (ringtone == null && !TextUtils.isEmpty(defaultRingtone.toString())) setSound(defaultRingtone);
     else if (ringtone != null && !ringtone.toString().isEmpty())                 setSound(ringtone);

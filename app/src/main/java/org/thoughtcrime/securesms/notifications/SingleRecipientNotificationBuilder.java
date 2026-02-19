@@ -70,9 +70,10 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
           @NonNull Context context,
           @NonNull NotificationPrivacyPreference privacy,
           @NonNull AvatarUtils avatarUtils,
-          Provider<ImageLoader> imageLoaderProvider
+          Provider<ImageLoader> imageLoaderProvider,
+          @NonNull NotificationChannels notificationChannels
   ) {
-    super(context, privacy);
+    super(context, privacy, notificationChannels);
 
     this.avatarUtils = avatarUtils;
     this.imageLoaderProvider = imageLoaderProvider;
@@ -82,7 +83,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   }
 
   public void setThread(@NonNull Recipient recipient) {
-    setChannelId(NotificationChannels.getMessagesChannel(context));
+    setChannelId(notificationChannels.getMessagesChannel());
 
     Bitmap largeIconBitmap;
     boolean recycleBitmap;

@@ -19,7 +19,7 @@ import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import java.util.LinkedList
 
-class GroupSummaryNotificationBuilder(context: Context, privacy: NotificationPrivacyPreference?) : AbstractNotificationBuilder(context, privacy) {
+class GroupSummaryNotificationBuilder(context: Context, privacy: NotificationPrivacyPreference?, notificationChannels: NotificationChannels) : AbstractNotificationBuilder(context, privacy, notificationChannels) {
     private val messageBodies: MutableList<CharSequence> = LinkedList()
 
     init {
