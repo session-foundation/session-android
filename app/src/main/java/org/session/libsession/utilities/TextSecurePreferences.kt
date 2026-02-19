@@ -161,9 +161,6 @@ interface TextSecurePreferences {
         internal val _events = MutableSharedFlow<String>(0, 64, BufferOverflow.DROP_OLDEST)
         val events get() = _events.asSharedFlow()
 
-        @JvmStatic
-        var pushSuffix = ""
-
 
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"

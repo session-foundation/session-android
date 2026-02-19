@@ -43,7 +43,6 @@ import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.c
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
@@ -132,8 +131,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
 
     override fun onCreate() {
-        pushSuffix = BuildConfig.PUSH_KEY_SUFFIX
-
         init(this)
         configure(this)
         super<Application>.onCreate()

@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.PushPreferences
 import org.session.libsession.utilities.UserConfigType
@@ -23,6 +22,7 @@ import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,14 +36,13 @@ import javax.inject.Singleton
 @Singleton
 class PushRegistrationHandler @Inject constructor(
     private val configFactory: ConfigFactory,
-    private val textSecurePreferences: TextSecurePreferences,
     private val preferenceStorage: PreferenceStorage,
     private val tokenFetcher: TokenFetcher,
     @param:ApplicationContext private val context: Context,
     @param:PushNotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
-    @org.thoughtcrime.securesms.dependencies.ManagerScope private val scope: kotlinx.coroutines.CoroutineScope
+    @param:ManagerScope private val scope: kotlinx.coroutines.CoroutineScope
 ) : AuthAwareComponent {
 
     private val firstRun = AtomicBoolean(true)
@@ -56,7 +55,7 @@ class PushRegistrationHandler @Inject constructor(
             )
                 .castAwayType()
                 .onStart { emit(Unit) },
-            preferenceStorage.watch(scope = scope, key = PushPreferences.isPushEnabled(TextSecurePreferences.pushSuffix)),
+            preferenceStorage.watch(scope = scope, key = PushPreferences.IS_PUSH_ENABLED),
             tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
         ) { _, enabled, token ->
             if (enabled) {

@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.preferences
 
-import org.thoughtcrime.securesms.preferences.PreferenceKey
+import network.loki.messenger.BuildConfig
 
 object PushPreferences {
-    fun isPushEnabled(pushSuffix: String) = PreferenceKey.boolean("pref_is_using_fcm$pushSuffix", false)
+    val IS_PUSH_ENABLED = PreferenceKey.boolean("pref_is_using_fcm${BuildConfig.PUSH_KEY_SUFFIX}", false)
 }
