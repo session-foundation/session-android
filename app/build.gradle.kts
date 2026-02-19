@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.plugin.parcelize)
@@ -80,6 +79,14 @@ fun VariantDimension.setAuthorityPostfix(postfix: String) {
     buildConfigField("String", "AUTHORITY_POSTFIX", "\"$postfix\"")
 }
 
+fun VariantDimension.enableClientVersionCheck(enable: Boolean) {
+    buildConfigField(
+        "boolean",
+        "CHECK_VERSION",
+        if (enable) "true" else "false"
+    )
+}
+
 kotlin {
     compilerOptions {
         jvmToolchain(21)
@@ -152,9 +159,14 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                file("proguard-rules.pro")
+            )
             devNetDefaultOn(false)
+            enableClientVersionCheck(true)
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
             setAuthorityPostfix("")
@@ -175,6 +187,7 @@ android {
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
+            enableClientVersionCheck(false)
 
             setAlternativeAppName("Session QA")
             setAuthorityPostfix("")
@@ -184,51 +197,48 @@ android {
             initWith(getByName("qa"))
 
             devNetDefaultOn(true)
+            enableClientVersionCheck(false)
             setAlternativeAppName("Session AQA")
         }
 
         getByName("debug") {
             isDefault = true
-            isMinifyEnabled = false
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
             applicationIdSuffix = ".${name}"
             enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
+            enableClientVersionCheck(false)
             setAlternativeAppName("Session Debug")
             setAuthorityPostfix(".debug")
         }
     }
 
-    sourceSets {
-        getByName("test").apply {
-            java.srcDirs("$projectDir/src/sharedTest/java")
-            resources.srcDirs("$projectDir/src/main/assets")
-        }
+    testBuildType = "debug"
 
+    sourceSets {
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
-            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+            maybeCreate(variant).kotlin.directories += "$firebaseCommonDir/kotlin"
         }
 
         val nonPlayCommonDir = "src/nonPlayCommon"
         nonPlayVariants.forEach { variant ->
             maybeCreate(variant).apply {
-                java.srcDirs("$nonPlayCommonDir/kotlin")
-                resources.srcDirs("$nonPlayCommonDir/resources")
+                kotlin.directories += "$nonPlayCommonDir/kotlin"
+                resources.directories += "$nonPlayCommonDir/resources"
             }
         }
 
         val nonDebugDir = "src/nonDebug"
         nonDebugBuildTypes.forEach { buildType ->
             maybeCreate(buildType).apply {
-                java.srcDirs("$nonDebugDir/kotlin")
-                resources.srcDirs("$nonDebugDir/resources")
+                kotlin.directories += "$nonDebugDir/kotlin"
+                resources.directories += "$nonDebugDir/resources"
             }
         }
     }
-
 
     signingConfigs {
         create("play") {
@@ -372,10 +382,20 @@ dependencies {
     if (huaweiEnabled) {
         val huaweiImplementation = configurations.maybeCreate("huaweiImplementation")
         huaweiImplementation(libs.huawei.push)
+
+        // These are compileOnly on the Huawei flavor so R8 can resolve optional HMS classes
+        // referenced by HMS Push during minification.
+        compileOnly(libs.huawei.hianalytics)
+        compileOnly(libs.huawei.availableupdate)
     }
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.media3.ui.compose)
+    implementation(libs.androidx.media3.ui.compose.material3)
+
     implementation(libs.conscrypt.android)
     implementation(libs.android)
     implementation(libs.photoview)
@@ -387,11 +407,9 @@ dependencies {
     implementation(libs.subsampling.scale.image.view) {
         exclude(group = "com.android.support", module = "support-annotations")
     }
-    implementation(libs.stream)
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.jackson.databind)
     implementation(libs.okhttp)
     implementation(libs.phrase)
     implementation(libs.copper.flow)
@@ -470,6 +488,7 @@ dependencies {
     implementation(libs.zxing.core)
 
     implementation(libs.androidx.biometric)
+    implementation(libs.autolink)
 
     playImplementation(libs.android.billing)
     playImplementation(libs.android.billing.ktx)

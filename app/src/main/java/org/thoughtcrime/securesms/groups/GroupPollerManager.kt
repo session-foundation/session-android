@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.groups
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
@@ -110,7 +111,7 @@ class GroupPollerManager @Inject constructor(
 
                     if (poller == null) {
                         Log.d(TAG, "Starting poller for $groupId")
-                        val scope = CoroutineScope(Dispatchers.Default)
+                        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
                         poller = GroupPollerHandle(
                             poller = pollFactory.create(
                                 scope = scope,

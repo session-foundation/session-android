@@ -29,7 +29,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.hashCode
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 
@@ -43,18 +42,18 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
     open val thumbnailUri: Uri?
         get() = attachment.thumbnailUri
 
-    val body: Optional<String>
+    val body: String?
         get() {
             return if (MediaUtil.isAudio(attachment) && attachment.isVoiceNote) {
-                 val voiceTxt = Phrase.from(context, R.string.messageVoiceSnippet)
+                Phrase.from(context, R.string.messageVoiceSnippet)
                     .put(EMOJI_KEY, "🎙")
-                    .format().toString()
-                Optional.fromNullable(voiceTxt)
+                    .format()
+                    .toString()
             } else {
-                val txt = Phrase.from(context, R.string.attachmentsNotification)
+                Phrase.from(context, R.string.attachmentsNotification)
                     .put(EMOJI_KEY, emojiForMimeType())
-                    .format().toString()
-                Optional.fromNullable(txt)
+                    .format()
+                    .toString()
             }
         }
 
@@ -68,8 +67,8 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
             else -> "" // We don't provide emojis for other mime-types such as VCARD
         }
 
-    val caption: Optional<String?>
-        get() = Optional.fromNullable(attachment.caption)
+    val caption: String?
+        get() = attachment.caption
 
     val filename: String by lazy {
         if (attachment.filename.isNullOrEmpty()) generateSuitableFilenameFromUri(context, attachment.dataUri) else attachment.filename
@@ -162,7 +161,7 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
             quote: Boolean,
             audioDurationMills: Long = -1L,
         ): Attachment {
-            val resolvedType = Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime)
+            val resolvedType = MediaUtil.getMimeType(context, uri) ?: defaultMime
             val fastPreflightId = SECURE_RANDOM.nextLong().toString()
 
             return UriAttachment(

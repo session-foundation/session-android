@@ -6,32 +6,27 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.GroupRecord;
-import org.session.libsession.utilities.TextSecurePreferences;
-import org.session.libsession.utilities.Util;
 import org.session.libsignal.database.LokiOpenGroupDatabaseProtocol;
 import org.session.libsignal.messages.SignalServiceAttachmentPointer;
-import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-import org.thoughtcrime.securesms.util.BitmapUtil;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Provider;
 
@@ -100,7 +95,10 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       TIMESTAMP, ACTIVE, MMS, AVATAR_URL, ADMINS, UPDATED
   };
 
-  static final List<String> TYPED_GROUP_PROJECTION = Stream.of(GROUP_PROJECTION).map(columnName -> TABLE_NAME + "." + columnName).toList();
+  static final List<String> TYPED_GROUP_PROJECTION =
+            Arrays.stream(GROUP_PROJECTION)
+                    .map(columnName -> TABLE_NAME + "." + columnName)
+                    .collect(Collectors.toList());
 
   public static String getCreateUpdatedTimestampCommand() {
     return "ALTER TABLE "+ TABLE_NAME + " " +
@@ -122,36 +120,27 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     return updateNotification;
   }
 
-  public Optional<GroupRecord> getGroup(String groupId) {
-    try (Cursor cursor = getReadableDatabase().query(TABLE_NAME, null, GROUP_ID + " = ?",
-                                                                    new String[] {groupId},
-                                                                    null, null, null))
-    {
-      if (cursor != null && cursor.moveToNext()) {
-        return getGroup(cursor);
-      }
-
-      return Optional.absent();
+    @Nullable
+    public GroupRecord getGroup(@NonNull String groupId) {
+        try (Cursor cursor = getReadableDatabase().query(
+                TABLE_NAME,
+                null,
+                GROUP_ID + " = ?",
+                new String[] { groupId },
+                null, null, null
+        )) {
+            if (cursor != null && cursor.moveToNext()) {
+                return getGroup(cursor);
+            }
+            return null;
+        }
     }
-  }
 
-  public Optional<GroupRecord> getGroup(Cursor cursor) {
-    Reader reader = new Reader(cursor);
-    return Optional.fromNullable(reader.getCurrent());
-  }
-
-  public boolean isUnknownGroup(String groupId) {
-    return !getGroup(groupId).isPresent();
-  }
-
-  public Reader getGroupsFilteredByTitle(String constraint) {
-    @SuppressLint("Recycle")
-    Cursor cursor = getReadableDatabase().query(TABLE_NAME, null, TITLE + " LIKE ?",
-                                                                                        new String[]{"%" + constraint + "%"},
-                                                                                        null, null, null);
-
-    return new Reader(cursor);
-  }
+    @Nullable
+    public GroupRecord getGroup(@NonNull Cursor cursor) {
+        Reader reader = new Reader(cursor);
+        return reader.getCurrent();
+    }
 
   public Reader getGroups() {
     @SuppressLint("Recycle")
@@ -214,7 +203,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       contentValues.put(AVATAR_ID, avatar.getId());
       contentValues.put(AVATAR_KEY, avatar.getKey());
       contentValues.put(AVATAR_CONTENT_TYPE, avatar.getContentType());
-      contentValues.put(AVATAR_DIGEST, avatar.getDigest().orNull());
+      contentValues.put(AVATAR_DIGEST, avatar.getDigest());
       contentValues.put(AVATAR_URL, avatar.getUrl());
     }
 
@@ -251,7 +240,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       contentValues.put(AVATAR_ID, avatar.getId());
       contentValues.put(AVATAR_CONTENT_TYPE, avatar.getContentType());
       contentValues.put(AVATAR_KEY, avatar.getKey());
-      contentValues.put(AVATAR_DIGEST, avatar.getDigest().orNull());
+      contentValues.put(AVATAR_DIGEST, avatar.getDigest());
       contentValues.put(AVATAR_URL, avatar.getUrl());
     }
 
@@ -273,10 +262,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
                                                 new String[] {groupID, newValue}) > 0) {
       updateNotification.tryEmit(groupID);
     }
-  }
-
-  public void updateProfilePicture(String groupID, Bitmap newValue) {
-    updateProfilePicture(groupID, BitmapUtil.toByteArray(newValue));
   }
 
   @Override
@@ -400,10 +385,10 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     return getCurrentMembers(groupId, true);
   }
 
-  public boolean isActive(String groupId) {
-    Optional<GroupRecord> record = getGroup(groupId);
-    return record.isPresent() && record.get().isActive();
-  }
+    public boolean isActive(@NonNull String groupId) {
+        GroupRecord record = getGroup(groupId);
+        return record != null && record.isActive();
+    }
 
   public void setActive(String groupId, boolean active) {
     SQLiteDatabase database = getWritableDatabase();

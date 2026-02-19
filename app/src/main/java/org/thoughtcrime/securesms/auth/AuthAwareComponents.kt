@@ -13,6 +13,7 @@ import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
+import org.thoughtcrime.securesms.util.VersionDataFetcher
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor
 import javax.inject.Inject
 
@@ -41,6 +42,7 @@ class AuthAwareComponents(
         proStatusManager: Lazy<ProStatusManager>,
         pollerManager: Lazy<PollerManager>,
         backgroundPollManager: Lazy<BackgroundPollManager>,
+        versionDataFetcher: Lazy<VersionDataFetcher>,
     ): this(
         components = listOf<Lazy<out AuthAwareComponent>>(
             expiringMessageManager,
@@ -56,6 +58,7 @@ class AuthAwareComponents(
             proStatusManager,
             pollerManager,
             backgroundPollManager,
+            versionDataFetcher,
         )
     )
 }

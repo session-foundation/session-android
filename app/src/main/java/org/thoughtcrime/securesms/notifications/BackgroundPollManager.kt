@@ -5,10 +5,12 @@ import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.work.ExistingPeriodicWorkPolicy
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
@@ -27,16 +29,17 @@ class BackgroundPollManager @Inject constructor(
     private val appVisibilityManager: AppVisibilityManager,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        Log.i(TAG, "Scheduling background polling work (As we are logged in).")
+        BackgroundPollWorker.schedulePeriodic(application, ExistingPeriodicWorkPolicy.KEEP)
+
         appVisibilityManager.isAppVisible
+            .drop(1)
             .debounce(1_000L)
             .distinctUntilChanged()
             .collectLatest { isAppVisible ->
                 if (!isAppVisible) {
-                    Log.i(TAG, "Scheduling background polling work.")
-                    BackgroundPollWorker.schedulePeriodic(application)
-                } else {
-                    Log.i(TAG, "Cancelling background polling work.")
-                    BackgroundPollWorker.cancelPeriodic(application)
+                    Log.i(TAG, "Scheduling background polling work (from app visibility > replacing existing one).")
+                    BackgroundPollWorker.schedulePeriodic(application, ExistingPeriodicWorkPolicy.REPLACE)
                 }
             }
     }

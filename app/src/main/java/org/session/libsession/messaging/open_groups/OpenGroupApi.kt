@@ -1,7 +1,5 @@
 package org.session.libsession.messaging.open_groups
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.session.libsession.utilities.serializable.InstantAsSecondDoubleSerializer
@@ -102,9 +100,25 @@ object OpenGroupApi {
         @SerialName("default_upload")
         val defaultUpload: Boolean = false,
         val details: RoomInfoDetails = RoomInfoDetails()
-    )
+    ) {
+        constructor(details: RoomInfoDetails): this(
+            token = details.token,
+            activeUsers = details.activeUsers,
+            admin = details.admin,
+            globalAdmin = details.globalAdmin,
+            moderator = details.moderator,
+            globalModerator = details.globalModerator,
+            read = details.read,
+            defaultRead = details.defaultRead,
+            defaultAccessible = details.defaultAccessible,
+            write = details.write,
+            defaultWrite = details.defaultWrite,
+            upload = details.upload,
+            defaultUpload = details.defaultUpload,
+            details = details
+        )
+    }
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
     @Serializable
     data class DirectMessage(
         val id: Long = 0,
@@ -119,7 +133,6 @@ object OpenGroupApi {
         val message: String = "",
     )
 
-    @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy::class)
     @Serializable
     data class Message(
         val id : Long = 0,

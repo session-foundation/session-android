@@ -48,7 +48,7 @@ abstract class AbstractSnodeApi<RespType : SnodeApiResponse>(
                 ctx = failureContext
             )
 
-            Log.d("SnodeApi", "Network error for a Snode endpoint ($snode), with status:${code} - error: $error")
+            Log.e("SnodeApi", "Network error for a Snode endpoint ($snode), with status:${code} - error: $error")
 
             ctx.set(SnodeClientFailureKey, failureContext.copy(previousErrorCode = code))
 

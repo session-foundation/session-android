@@ -108,7 +108,7 @@ data class Recipient(
     }
 
     val showCallMenu: Boolean
-        get() = !isGroupOrCommunityRecipient && approvedMe && approved
+        get() = !isGroupOrCommunityRecipient && approvedMe && approved && !isSelf
 
     val mutedUntilMills: Long?
         get() = mutedUntil?.toEpochMilli()
