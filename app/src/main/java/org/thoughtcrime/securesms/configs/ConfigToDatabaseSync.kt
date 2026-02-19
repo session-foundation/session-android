@@ -7,12 +7,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
+import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.open_groups.OpenGroup.Companion.toAddress
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -51,13 +55,16 @@ import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.database.updateThreadLastReads
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.castAwayType
 import org.thoughtcrime.securesms.util.erase
 import org.thoughtcrime.securesms.util.get
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.Instant
 
 private const val TAG = "ConfigToDatabaseSync"
 
@@ -91,15 +98,52 @@ class ConfigToDatabaseSync @Inject constructor(
     private val deleteMessageApiFactory: DeleteMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
-    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
-        conversationRepository.conversationListAddressesFlow
-            .collectLatest { conversations ->
-                try {
-                    ensureConversations(conversations, loggedInState.accountId)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error updating conversations from config", e)
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
+        launch {
+            conversationRepository.conversationListAddressesFlow
+                .collectLatest { conversations ->
+                    try {
+                        ensureConversations(conversations, loggedInState.accountId)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error updating conversations from config", e)
+                    }
                 }
+        }
+
+        launch {
+            configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.CONVO_INFO_VOLATILE))
+                .castAwayType()
+                .onStart { emit(Unit) }
+                .collectLatest {
+                    try {
+                        ensureThreadLastReads()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error updating thread last reads from config", e)
+                    }
+                }
+        }
+    }
+
+    // Read conversation last reads from config system then sync to local db.
+    private fun ensureThreadLastReads() {
+        val lastReads = configFactory.withUserConfigs { it.convoInfoVolatile.all() }
+            .asSequence()
+            .mapNotNull { convo ->
+                val address = when (convo) {
+                    is Conversation.ClosedGroup -> convo.accountId.toAddress() as Address.Group
+                    is Conversation.Community -> Address.Community(
+                        convo.baseCommunityInfo.baseUrl,
+                        convo.baseCommunityInfo.room,
+                    )
+                    is Conversation.LegacyGroup -> Address.LegacyGroup(convo.groupId)
+                    is Conversation.OneToOne -> convo.accountId.toAddress() as Address.Standard
+                    is Conversation.BlindedOneToOne, null -> return@mapNotNull null
+                }
+
+                address to Instant.fromEpochMilliseconds(convo.lastRead)
             }
+
+        threadDatabase.updateThreadLastReads(lastReads)
     }
 
     private fun ensureConversations(addresses: Set<Address.Conversable>, myAccountId: AccountId) {

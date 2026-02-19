@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import androidx.collection.SimpleArrayMap
 import androidx.core.database.getStringOrNull
+import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.transaction
 import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.utilities.Address
@@ -11,6 +12,7 @@ import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.util.asSequence
 import org.thoughtcrime.securesms.util.get
+import kotlin.time.Instant
 
 fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): List<ThreadRecord> {
     val convoInfo = configFactory.get().withUserConfigs { configs ->
@@ -211,4 +213,13 @@ fun ThreadDatabase.threadContainsOutgoingMessage(threadId: Long): Boolean {
           AND NOT ${MmsSmsColumns.IS_DELETED}
         LIMIT 1
     """, threadId).use { it.count > 0 }
+}
+
+fun ThreadDatabase.updateThreadLastReads(lastRead: Sequence<Pair<Address.Conversable, Instant>>) {
+    writableDatabase.compileStatement("""
+        INSERT INTO ${ThreadDatabase.TABLE_NAME} (${ThreadDatabase.ADDRESS}, ${ThreadDatabase.LAST_SEEN})
+        VALUES (?, ?)
+        ON CONFLICT (${ThreadDatabase.ADDRESS}) DO UPDATE ${ThreadDatabase.LAST_SEEN} = EXCLUDED.${ThreadDatabase.LAST_SEEN}
+    """)
+    TODO()
 }
