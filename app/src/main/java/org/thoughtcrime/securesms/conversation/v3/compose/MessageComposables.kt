@@ -1162,8 +1162,7 @@ object PreviewMessageData {
         icon: MessageQuoteIcon = MessageQuoteIcon.Bar
     ) = MessageQuote(
         title = title,
-        subtitle = subtitle
-        ,
+        subtitle = subtitle,
         icon = icon
     )
 
