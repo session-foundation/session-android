@@ -585,7 +585,7 @@ data class MessageQuote(
     val icon: MessageQuoteIcon
 )
 
-sealed class MessageQuoteIcon(){
+sealed class MessageQuoteIcon {
     data object Bar: MessageQuoteIcon()
     data class Icon(@DrawableRes val icon: Int): MessageQuoteIcon()
     data class Image(
