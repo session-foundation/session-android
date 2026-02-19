@@ -145,7 +145,7 @@ class PointerAttachment private constructor(
                 AttachmentState.PENDING.value,
                 attachment.sizeInBytes?.toLong() ?: 0L,
                 attachment.filename,
-                "",
+                attachment.id.toString(),
                 attachment.key?.let{ Base64.encodeBytes(it) },
                 null,
                 attachment.digest,

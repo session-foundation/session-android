@@ -23,6 +23,7 @@ class Attachment {
     var size: Size? = null
     var sizeInBytes: Int? = 0
     var url: String? = null
+    var id: Long = 0L
 
     companion object {
 
@@ -62,6 +63,8 @@ class Attachment {
 
             result.sizeInBytes = if (proto.size > 0) proto.size else null
             result.url = proto.url
+
+            result.id = proto.id
 
             return result
         }
@@ -121,7 +124,7 @@ class Attachment {
         val file = filename
 
         return SignalServiceAttachmentPointer(
-            id = 0L,
+            id = id,
             contentType = ct,
             key = k,
             size = sizeInBytes,

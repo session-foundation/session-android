@@ -162,6 +162,10 @@ abstract class CommunityApi<ResponseType: Any>(
         super.handleErrorResponse(executorContext, baseUrl, response)
     }
 
+    override fun debugInfo(): String {
+        return "${this.javaClass.simpleName} for room \"$room\""
+    }
+
     class CommunityApiDependencies @Inject constructor(
         val errorManager: ServerApiErrorManager,
         val json: Json,
