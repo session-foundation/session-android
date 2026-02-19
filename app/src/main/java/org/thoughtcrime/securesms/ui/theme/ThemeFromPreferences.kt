@@ -8,6 +8,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.PINK_ACC
 import org.session.libsession.utilities.TextSecurePreferences.Companion.PURPLE_ACCENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.RED_ACCENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_ACCENT
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ThemingPreferences
 
 
 /**
@@ -15,11 +17,11 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_A
  * Some behaviour is hardcoded to cater for legacy usage of people with themes already set
  * But future themes will be picked and set directly from the "Appearance" screen
  */
-fun TextSecurePreferences.getColorsProvider(): ThemeColorsProvider {
-    val selectedTheme = getThemeStyle()
+fun getColorsProvider(textSecurePreferences: TextSecurePreferences, preferenceStorage: PreferenceStorage): ThemeColorsProvider {
+    val selectedTheme = textSecurePreferences.getThemeStyle()
 
     // get the chosen accent color from the preferences
-    val selectedAccent = accentColor()
+    val selectedAccent = accentColor(preferenceStorage)
 
     val isOcean = "ocean" in selectedTheme
 
@@ -27,7 +29,7 @@ fun TextSecurePreferences.getColorsProvider(): ThemeColorsProvider {
     val createDark = if (isOcean) ::OceanDark else ::ClassicDark
 
     return when {
-        getFollowSystemSettings() -> FollowSystemThemeColorsProvider(
+        textSecurePreferences.getFollowSystemSettings() -> FollowSystemThemeColorsProvider(
             light = createLight(selectedAccent),
             dark = createDark(selectedAccent)
         )
@@ -36,7 +38,7 @@ fun TextSecurePreferences.getColorsProvider(): ThemeColorsProvider {
     }
 }
 
-fun TextSecurePreferences.accentColor(): Color = when(getSelectedAccentColor()) {
+fun accentColor(preferenceStorage: PreferenceStorage): Color = when(preferenceStorage[ThemingPreferences.SELECTED_ACCENT_COLOR]) {
     BLUE_ACCENT -> primaryBlue
     PURPLE_ACCENT -> primaryPurple
     PINK_ACCENT -> primaryPink

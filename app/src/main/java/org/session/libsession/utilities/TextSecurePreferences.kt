@@ -79,16 +79,9 @@ import javax.inject.Singleton
 
 interface TextSecurePreferences {
 
-    fun getConfigurationMessageSynced(): Boolean
-    fun setConfigurationMessageSynced(value: Boolean)
-
     fun setPushEnabled(value: Boolean)
     val pushEnabled: StateFlow<Boolean>
 
-    fun isScreenLockEnabled(): Boolean
-    fun setScreenLockEnabled(value: Boolean)
-    fun getScreenLockTimeout(): Long
-    fun setScreenLockTimeout(value: Long)
     fun setBackupPassphrase(passphrase: String?)
     fun getBackupPassphrase(): String?
     fun setEncryptedBackupPassphrase(encryptedPassphrase: String?)
@@ -99,57 +92,12 @@ interface TextSecurePreferences {
     fun getNextBackupTime(): Long
     fun setBackupSaveDir(dirUri: String?)
     fun getBackupSaveDir(): String?
-    fun getNeedsSqlCipherMigration(): Boolean
-    fun isIncognitoKeyboardEnabled(): Boolean
-    fun setIncognitoKeyboardEnabled(enabled : Boolean)
-    fun isReadReceiptsEnabled(): Boolean
-    fun setReadReceiptsEnabled(enabled: Boolean)
-    fun isTypingIndicatorsEnabled(): Boolean
-    fun setTypingIndicatorsEnabled(enabled: Boolean)
-    fun isLinkPreviewsEnabled(): Boolean
-    fun setLinkPreviewsEnabled(enabled: Boolean)
-    fun hasSeenGIFMetaDataWarning(): Boolean
-    fun setHasSeenGIFMetaDataWarning()
-    fun isGifSearchInGridLayout(): Boolean
-    fun setIsGifSearchInGridLayout(isGrid: Boolean)
-    fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
-    fun setNotificationPrivacy(string : String)
-    fun getNotificationPrivacy(): NotificationPrivacyPreference
-    fun getRepeatAlertsCount(): Int
-    fun isInThreadNotifications(): Boolean
-    fun isUniversalUnidentifiedAccess(): Boolean
-    fun getUpdateApkRefreshTime(): Long
-    fun setUpdateApkRefreshTime(value: Long)
-    fun setUpdateApkDownloadId(value: Long)
-    fun getUpdateApkDownloadId(): Long
-    fun setUpdateApkDigest(value: String?)
-    fun getUpdateApkDigest(): String?
-    fun getHasLegacyConfig(): Boolean
-    fun setHasLegacyConfig(newValue: Boolean)
-    fun isPasswordDisabled(): Boolean
-    fun setPasswordDisabled(disabled: Boolean)
-    fun getLastVersionCode(): Int
-    fun setLastVersionCode(versionCode: Int)
-    fun isPassphraseTimeoutEnabled(): Boolean
-    fun getPassphraseTimeoutInterval(): Int
-    fun getLanguage(): String?
-    fun isNotificationsEnabled(): Boolean
     fun getNotificationRingtone(): Uri
     fun removeNotificationRingtone()
     fun setNotificationRingtone(ringtone: String?)
-    fun setNotificationVibrateEnabled(enabled: Boolean)
-    fun isNotificationVibrateEnabled(): Boolean
-    fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
-    fun isSoundWhenAppIsOpenEnabled(): Boolean
     fun getNotificationLedColor(): Int
-    fun setThreadLengthTrimmingEnabled(enabled : Boolean)
-    fun isThreadLengthTrimmingEnabled(): Boolean
-    fun getNotificationChannelVersion(): Int
-    fun setNotificationChannelVersion(version: Int)
-    fun getNotificationMessagesChannelVersion(): Int
-    fun setNotificationMessagesChannelVersion(version: Int)
     fun getBooleanPreference(key: String?, defaultValue: Boolean): Boolean
     fun setBooleanPreference(key: String?, value: Boolean)
     fun getStringPreference(key: String, defaultValue: String?): String?
@@ -162,56 +110,24 @@ interface TextSecurePreferences {
     fun removePreference(key: String)
     fun getStringSetPreference(key: String, defaultValues: Set<String>): Set<String>?
     fun setStringSetPreference(key: String, value: Set<String>)
-    fun getLastOpenTimeDate(): Long
-    fun setLastOpenDate()
-    fun hasSeenLinkPreviewSuggestionDialog(): Boolean
-    fun setHasSeenLinkPreviewSuggestionDialog()
-    fun hasHiddenMessageRequests(): Boolean
-    fun setHasHiddenMessageRequests(hidden: Boolean)
-    fun forceCurrentUserAsPro(): Boolean
-    fun setForceCurrentUserAsPro(isPro: Boolean)
-    fun forceOtherUsersAsPro(): Boolean
-    fun setForceOtherUsersAsPro(isPro: Boolean)
-    fun forceIncomingMessagesAsPro(): Boolean
-    fun setForceIncomingMessagesAsPro(isPro: Boolean)
-    fun forcePostPro(): Boolean
-    fun setForcePostPro(postPro: Boolean)
-    fun hasSeenProExpiring(): Boolean
-    fun setHasSeenProExpiring()
-    fun hasSeenProExpired(): Boolean
-    fun setHasSeenProExpired()
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
-    fun setCallNotificationsEnabled(enabled : Boolean)
-    fun isCallNotificationsEnabled(): Boolean
-    fun getLastVacuum(): Long
-    fun setLastVacuumNow()
     fun getFingerprintKeyGenerated(): Boolean
     fun setFingerprintKeyGenerated()
-    fun getSelectedAccentColor(): String?
     @StyleRes fun getAccentColorStyle(): Int?
     fun setAccentColorStyle(@StyleRes newColorStyle: Int?)
     fun getThemeStyle(): String
     fun getFollowSystemSettings(): Boolean
     fun setThemeStyle(themeStyle: String)
     fun setFollowSystemSettings(followSystemSettings: Boolean)
-    fun setAutoplayAudioMessages(enabled : Boolean)
-    fun isAutoplayAudioMessagesEnabled(): Boolean
-    fun hasForcedNewConfig(): Boolean
     fun hasPreference(key: String): Boolean
     fun clearAll()
     fun getHidePassword(): Boolean
     fun setHidePassword(value: Boolean)
     fun watchHidePassword(): StateFlow<Boolean>
-    fun getLastVersionCheck(): Long
-    fun setLastVersionCheck()
     fun getEnvironment(): Environment
     fun setEnvironment(value: Environment)
-    fun hasSeenTokenPageNotification(): Boolean
-    fun setHasSeenTokenPageNotification(value: Boolean)
-    fun forcedShortTTL(): Boolean
-    fun setForcedShortTTL(value: Boolean)
 
     fun  getDebugMessageFeatures(): Set<ProFeature>
     fun  setDebugMessageFeatures(features: Set<ProFeature>)
@@ -220,26 +136,6 @@ interface TextSecurePreferences {
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
     fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
     fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
-    fun getDebugForceNoBilling(): Boolean
-    fun setDebugForceNoBilling(hasBilling: Boolean)
-    fun getDebugIsWithinQuickRefund(): Boolean
-    fun setDebugIsWithinQuickRefund(isWithin: Boolean)
-
-    fun setSubscriptionProvider(provider: String)
-    fun getSubscriptionProvider(): String?
-
-    fun hasCheckedDozeWhitelist(): Boolean
-    fun setHasCheckedDozeWhitelist(hasChecked: Boolean)
-    fun hasDonated(): Boolean
-    fun setHasDonated(hasDonated: Boolean)
-    fun hasCopiedDonationURL(): Boolean
-    fun setHasCopiedDonationURL(hasCopied: Boolean)
-    fun seenDonationCTAAmount(): Int
-    fun setSeenDonationCTAAmount(amount: Int)
-    fun lastSeenDonationCTA(): Long
-    fun setLastSeenDonationCTA(timestamp: Long)
-    fun showDonationCTAFromPositiveReview(): Boolean
-    fun setShowDonationCTAFromPositiveReview(show: Boolean)
 
     fun hasDonatedDebug(): String?
     fun setHasDonatedDebug(hasDonated: String?)
@@ -250,29 +146,13 @@ interface TextSecurePreferences {
     fun showDonationCTAFromPositiveReviewDebug(): String?
     fun setShowDonationCTAFromPositiveReviewDebug(show: String?)
 
-    fun getLastSnodePoolRefresh(): Long
-    fun setLastSnodePoolRefresh(epochMs: Long)
-    fun getLastPathRotation(): Long
-    fun setLastPathRotation(epochMs: Long)
-
-    fun setSendWithEnterEnabled(enabled: Boolean)
-    fun isSendWithEnterEnabled() : Boolean
     fun updateBooleanFromKey(key : String, value : Boolean)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
-    var migratedToGroupV2Config: Boolean
-    var migratedToDisablingKDF: Boolean
 
     var migratedDisappearingMessagesToMessageContent: Boolean
-
-    var selectedActivityAliasName: String?
-
-    var inAppReviewState: String?
-    var forcesDeterministicAttachmentEncryption: Boolean
-    var debugAvatarReupload: Boolean
-    var alternativeFileServer: FileServer?
 
 
     companion object {
@@ -425,62 +305,6 @@ interface TextSecurePreferences {
             return getBooleanPreference(context, IS_PUSH_ENABLED, false)
         }
 
-        // endregion
-        @JvmStatic
-        fun isScreenLockEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, SCREEN_LOCK, false)
-        }
-
-        @JvmStatic
-        fun setScreenLockEnabled(context: Context, value: Boolean) {
-            setBooleanPreference(context, SCREEN_LOCK, value)
-        }
-
-        @JvmStatic
-        fun getScreenLockTimeout(context: Context): Long {
-            return getLongPreference(context, SCREEN_LOCK_TIMEOUT, 0)
-        }
-
-        @JvmStatic
-        fun setScreenLockTimeout(context: Context, value: Long) {
-            setLongPreference(context, SCREEN_LOCK_TIMEOUT, value)
-        }
-
-        @JvmStatic
-        fun isIncognitoKeyboardEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, INCOGNITO_KEYBOARD_PREF, true)
-        }
-
-        @JvmStatic
-        fun isReadReceiptsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, READ_RECEIPTS_PREF, false)
-        }
-
-        @JvmStatic
-        fun isGifSearchInGridLayout(context: Context): Boolean {
-            return getBooleanPreference(context, GIF_GRID_LAYOUT, false)
-        }
-
-        @JvmStatic
-        fun setIsGifSearchInGridLayout(context: Context, isGrid: Boolean) {
-            setBooleanPreference(context, GIF_GRID_LAYOUT, isGrid)
-        }
-
-        @JvmStatic
-        fun getNotificationPrivacy(context: Context): NotificationPrivacyPreference {
-            return NotificationPrivacyPreference(getStringPreference(context, NOTIFICATION_PRIVACY_PREF, "all"))
-        }
-
-        @JvmStatic
-        fun isPasswordDisabled(context: Context): Boolean {
-            return getBooleanPreference(context, DISABLE_PASSPHRASE_PREF, true)
-        }
-
-        fun setPasswordDisabled(context: Context, disabled: Boolean) {
-            setBooleanPreference(context, DISABLE_PASSPHRASE_PREF, disabled)
-            _events.tryEmit(DISABLE_PASSPHRASE_PREF)
-        }
-
         fun getLastVersionCode(context: Context): Int {
             return getIntegerPreference(context, LAST_VERSION_CODE_PREF, 0)
         }
@@ -493,21 +317,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun isPassphraseTimeoutEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, PASSPHRASE_TIMEOUT_PREF, false)
-        }
-
-        @JvmStatic
-        fun getPassphraseTimeoutInterval(context: Context): Int {
-            return getIntegerPreference(context, PASSPHRASE_TIMEOUT_INTERVAL_PREF, 5 * 60)
-        }
-
-        @JvmStatic
-        fun isNotificationsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, NOTIFICATION_PREF, true)
-        }
-
-        @JvmStatic
         fun getNotificationRingtone(context: Context): Uri {
             var result = getStringPreference(context, RINGTONE_PREF, Settings.System.DEFAULT_NOTIFICATION_URI.toString())
             if (result != null && result.startsWith("file:")) {
@@ -517,38 +326,8 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun isNotificationVibrateEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, VIBRATE_PREF, true)
-        }
-
-        @JvmStatic
         fun getNotificationLedColor(context: Context): Int {
             return getIntegerPreference(context, LED_COLOR_PREF_PRIMARY, ThemeUtil.getThemedColor(context, R.attr.colorAccent))
-        }
-
-        @JvmStatic
-        fun isThreadLengthTrimmingEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, THREAD_TRIM_ENABLED, true)
-        }
-
-        @JvmStatic
-        fun getNotificationChannelVersion(context: Context): Int {
-            return getIntegerPreference(context, NOTIFICATION_CHANNEL_VERSION, 1)
-        }
-
-        @JvmStatic
-        fun setNotificationChannelVersion(context: Context, version: Int) {
-            setIntegerPreference(context, NOTIFICATION_CHANNEL_VERSION, version)
-        }
-
-        @JvmStatic
-        fun getNotificationMessagesChannelVersion(context: Context): Int {
-            return getIntegerPreference(context, NOTIFICATION_MESSAGES_CHANNEL_VERSION, 1)
-        }
-
-        @JvmStatic
-        fun setNotificationMessagesChannelVersion(context: Context, version: Int) {
-            setIntegerPreference(context, NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
         }
 
         @JvmStatic
@@ -611,17 +390,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun removeHasHiddenMessageRequests(context: Context) {
-            removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
-            _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
-        }
-
-        @JvmStatic
-        fun isCallNotificationsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, CALL_NOTIFICATIONS_ENABLED, false)
-        }
-
-        @JvmStatic
         fun getLastVacuumTime(context: Context): Long {
             return getLongPreference(context, LAST_VACUUM_TIME, 0)
         }
@@ -663,34 +431,9 @@ class AppTextSecurePreferences @Inject constructor(
     private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, if (BuildConfig.BUILD_TYPE != "release") true else false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
-    override var migratedToGroupV2Config: Boolean
-        get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, false)
-        set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, value)
-
-    override var migratedToDisablingKDF: Boolean
-        get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_DISABLING_KDF, false)
-        set(value) = getDefaultSharedPreferences(context).edit(commit = true) {
-            putBoolean(TextSecurePreferences.MIGRATED_TO_DISABLING_KDF, value)
-        }
-
     override var migratedDisappearingMessagesToMessageContent: Boolean
         get() = getBooleanPreference("migrated_disappearing_messages_to_message_content", false)
         set(value) = setBooleanPreference("migrated_disappearing_messages_to_message_content", value)
-
-    override fun getConfigurationMessageSynced(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)
-    }
-
-    override var selectedActivityAliasName: String?
-        get() = getStringPreference("selected_activity_alias_name", null)
-        set(value) {
-            setStringPreference("selected_activity_alias_name", value)
-        }
-
-    override fun setConfigurationMessageSynced(value: Boolean) {
-        setBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, value)
-        _events.tryEmit(TextSecurePreferences.CONFIGURATION_SYNCED)
-    }
 
     override val pushEnabled: MutableStateFlow<Boolean> = MutableStateFlow(
         getBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, false)
@@ -699,23 +442,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setPushEnabled(value: Boolean) {
         setBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, value)
         pushEnabled.value = value
-    }
-
-    override fun isScreenLockEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.SCREEN_LOCK, false)
-    }
-
-    override fun setScreenLockEnabled(value: Boolean) {
-        setBooleanPreference(TextSecurePreferences.SCREEN_LOCK, value)
-        _events.tryEmit(TextSecurePreferences.SCREEN_LOCK,)
-    }
-
-    override fun getScreenLockTimeout(): Long {
-        return getLongPreference(TextSecurePreferences.SCREEN_LOCK_TIMEOUT, 0)
-    }
-
-    override fun setScreenLockTimeout(value: Long) {
-        setLongPreference(TextSecurePreferences.SCREEN_LOCK_TIMEOUT, value)
     }
 
     override fun setBackupPassphrase(passphrase: String?) {
@@ -758,66 +484,6 @@ class AppTextSecurePreferences @Inject constructor(
         return getStringPreference(TextSecurePreferences.BACKUP_SAVE_DIR, null)
     }
 
-    override fun getNeedsSqlCipherMigration(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.NEEDS_SQLCIPHER_MIGRATION, false)
-    }
-
-    override fun isIncognitoKeyboardEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, true)
-    }
-
-    override fun setIncognitoKeyboardEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, enabled)
-        _events.tryEmit(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF)
-    }
-
-    override fun isReadReceiptsEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.READ_RECEIPTS_PREF, false)
-    }
-
-    override fun setReadReceiptsEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.READ_RECEIPTS_PREF, enabled)
-        _events.tryEmit(TextSecurePreferences.READ_RECEIPTS_PREF)
-    }
-
-    override fun isTypingIndicatorsEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.TYPING_INDICATORS, false)
-    }
-
-    override fun setTypingIndicatorsEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.TYPING_INDICATORS, enabled)
-        _events.tryEmit(TextSecurePreferences.TYPING_INDICATORS)
-    }
-
-    override fun isLinkPreviewsEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.LINK_PREVIEWS, false)
-    }
-
-    override fun setLinkPreviewsEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.LINK_PREVIEWS, enabled)
-        _events.tryEmit(TextSecurePreferences.LINK_PREVIEWS)
-    }
-
-    override fun hasSeenGIFMetaDataWarning(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.GIF_METADATA_WARNING, false)
-    }
-
-    override fun setHasSeenGIFMetaDataWarning() {
-        setBooleanPreference(TextSecurePreferences.GIF_METADATA_WARNING, true)
-    }
-
-    override fun isGifSearchInGridLayout(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, false)
-    }
-
-    override fun setIsGifSearchInGridLayout(isGrid: Boolean) {
-        setBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, isGrid)
-    }
-
-    override fun getMessageBodyTextSize(): Int {
-        return getStringPreference(TextSecurePreferences.MESSAGE_BODY_TEXT_SIZE_PREF, "16")!!.toInt()
-    }
-
     override fun setPreferredCameraDirection(value: CameraSelector) {
         setIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID,
             when(value){
@@ -831,101 +497,6 @@ class AppTextSecurePreferences @Inject constructor(
             Camera.CameraInfo.CAMERA_FACING_FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
             else -> CameraSelector.DEFAULT_BACK_CAMERA
         }
-    }
-
-    override fun setNotificationPrivacy(string: String) {
-        setStringPreference(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, string)
-        _events.tryEmit(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF)
-    }
-
-    override fun getNotificationPrivacy(): NotificationPrivacyPreference {
-        return NotificationPrivacyPreference(getStringPreference(
-            TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, "all"))
-    }
-
-    override fun getRepeatAlertsCount(): Int {
-        return try {
-            getStringPreference(TextSecurePreferences.REPEAT_ALERTS_PREF, "0")!!.toInt()
-        } catch (e: NumberFormatException) {
-            Log.w(TextSecurePreferences.TAG, e)
-            0
-        }
-    }
-
-    override fun isInThreadNotifications(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.IN_THREAD_NOTIFICATION_PREF, true)
-    }
-
-    override fun isUniversalUnidentifiedAccess(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.UNIVERSAL_UNIDENTIFIED_ACCESS, false)
-    }
-
-    override fun getUpdateApkRefreshTime(): Long {
-        return getLongPreference(TextSecurePreferences.UPDATE_APK_REFRESH_TIME_PREF, 0L)
-    }
-
-    override fun setUpdateApkRefreshTime(value: Long) {
-        setLongPreference(TextSecurePreferences.UPDATE_APK_REFRESH_TIME_PREF, value)
-    }
-
-    override fun setUpdateApkDownloadId(value: Long) {
-        setLongPreference(TextSecurePreferences.UPDATE_APK_DOWNLOAD_ID, value)
-    }
-
-    override fun getUpdateApkDownloadId(): Long {
-        return getLongPreference(TextSecurePreferences.UPDATE_APK_DOWNLOAD_ID, -1)
-    }
-
-    override fun setUpdateApkDigest(value: String?) {
-        setStringPreference(TextSecurePreferences.UPDATE_APK_DIGEST, value)
-    }
-
-    override fun getUpdateApkDigest(): String? {
-        return getStringPreference(TextSecurePreferences.UPDATE_APK_DIGEST, null)
-    }
-
-    override fun getHasLegacyConfig(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, false)
-    }
-
-    override fun setHasLegacyConfig(newValue: Boolean) {
-        setBooleanPreference(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG, newValue)
-        _events.tryEmit(TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG)
-    }
-
-    override fun isPasswordDisabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.DISABLE_PASSPHRASE_PREF, true)
-    }
-
-    override fun setPasswordDisabled(disabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.DISABLE_PASSPHRASE_PREF, disabled)
-    }
-
-    override fun getLastVersionCode(): Int {
-        return getIntegerPreference(TextSecurePreferences.LAST_VERSION_CODE_PREF, 0)
-    }
-
-    @Throws(IOException::class)
-    override fun setLastVersionCode(versionCode: Int) {
-        if (!setIntegerPreferenceBlocking(TextSecurePreferences.LAST_VERSION_CODE_PREF, versionCode)) {
-            throw IOException("couldn't write version code to sharedpreferences")
-        }
-    }
-
-    override fun isPassphraseTimeoutEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.PASSPHRASE_TIMEOUT_PREF, false)
-    }
-
-    override fun getPassphraseTimeoutInterval(): Int {
-        return getIntegerPreference(TextSecurePreferences.PASSPHRASE_TIMEOUT_INTERVAL_PREF, 5 * 60)
-    }
-
-    override fun getLanguage(): String? {
-        return getStringPreference(TextSecurePreferences.LANGUAGE_PREF, "zz")
-    }
-
-    override fun isNotificationsEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.NOTIFICATION_PREF, true)
     }
 
     override fun getNotificationRingtone(): Uri {
@@ -946,55 +517,9 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
     }
 
-    override fun setNotificationVibrateEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.VIBRATE_PREF, enabled)
-        _events.tryEmit(TextSecurePreferences.VIBRATE_PREF)
-    }
-
-    override fun isNotificationVibrateEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.VIBRATE_PREF, true)
-    }
-
-    override fun setSoundWhenAppIsOpenEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, enabled)
-        _events.tryEmit(TextSecurePreferences.SOUND_WHEN_OPEN)
-    }
-
-    override fun isSoundWhenAppIsOpenEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, false)
-    }
-
     override fun getNotificationLedColor(): Int {
         return getIntegerPreference(TextSecurePreferences.LED_COLOR_PREF_PRIMARY, context.getColor(R.color.accent_green))
     }
-
-    override fun setThreadLengthTrimmingEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, enabled)
-        _events.tryEmit(TextSecurePreferences.THREAD_TRIM_ENABLED)
-    }
-
-    override fun isThreadLengthTrimmingEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, true)
-    }
-
-    override fun getNotificationChannelVersion(): Int {
-        return getIntegerPreference(TextSecurePreferences.NOTIFICATION_CHANNEL_VERSION, 1)
-    }
-
-    override fun setNotificationChannelVersion(version: Int) {
-        setIntegerPreference(TextSecurePreferences.NOTIFICATION_CHANNEL_VERSION, version)
-    }
-
-    override fun getNotificationMessagesChannelVersion(): Int {
-        return getIntegerPreference(TextSecurePreferences.NOTIFICATION_MESSAGES_CHANNEL_VERSION, 1)
-    }
-
-    override fun setNotificationMessagesChannelVersion(version: Int) {
-        setIntegerPreference(TextSecurePreferences.NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
-    }
-
-    override fun hasForcedNewConfig(): Boolean =
-        getBooleanPreference(TextSecurePreferences.HAS_FORCED_NEW_CONFIG, false)
 
     override fun getBooleanPreference(key: String?, defaultValue: Boolean): Boolean {
         return getDefaultSharedPreferences(context).getBoolean(key, defaultValue)
@@ -1053,157 +578,6 @@ class AppTextSecurePreferences @Inject constructor(
         getDefaultSharedPreferences(context).edit { putStringSet(key, value) }
     }
 
-    override fun getLastSnodePoolRefresh(): Long {
-        return getLongPreference(LAST_SNODE_POOL_REFRESH, 0)
-    }
-
-    override fun setLastSnodePoolRefresh(epochMs: Long) {
-        setLongPreference(LAST_SNODE_POOL_REFRESH, epochMs)
-    }
-
-    override fun getLastPathRotation(): Long {
-        return getLongPreference(LAST_PATH_ROTATION, 0)
-    }
-
-    override fun setLastPathRotation(epochMs: Long) {
-        setLongPreference(LAST_PATH_ROTATION, epochMs)
-    }
-
-    override fun getLastOpenTimeDate(): Long {
-        return getLongPreference(TextSecurePreferences.LAST_OPEN_DATE, 0)
-    }
-
-    override fun setLastOpenDate() {
-        setLongPreference(TextSecurePreferences.LAST_OPEN_DATE, System.currentTimeMillis())
-    }
-
-    override fun hasSeenLinkPreviewSuggestionDialog(): Boolean {
-        return getBooleanPreference("has_seen_link_preview_suggestion_dialog", false)
-    }
-
-    override fun setHasSeenLinkPreviewSuggestionDialog() {
-        setBooleanPreference("has_seen_link_preview_suggestion_dialog", true)
-    }
-
-    override fun setCallNotificationsEnabled(enabled: Boolean) {
-        setBooleanPreference(CALL_NOTIFICATIONS_ENABLED, enabled)
-        _events.tryEmit(CALL_NOTIFICATIONS_ENABLED)
-    }
-
-    override fun isCallNotificationsEnabled(): Boolean {
-        return getBooleanPreference(CALL_NOTIFICATIONS_ENABLED, false)
-    }
-
-    override fun getLastVacuum(): Long {
-        return getLongPreference(LAST_VACUUM_TIME, 0)
-    }
-
-    override fun setLastVacuumNow() {
-        setLongPreference(LAST_VACUUM_TIME, System.currentTimeMillis())
-    }
-
-    override fun getLastVersionCheck(): Long {
-        return getLongPreference(LAST_VERSION_CHECK, 0)
-    }
-
-    override fun setLastVersionCheck() {
-        setLongPreference(LAST_VERSION_CHECK, System.currentTimeMillis())
-    }
-
-    override fun getEnvironment(): Environment {
-        val environment = getStringPreference(ENVIRONMENT, null)
-        return if (environment != null) {
-            Environment.valueOf(environment)
-        } else BuildConfig.DEFAULT_ENVIRONMENT
-    }
-
-    override fun setEnvironment(value: Environment) {
-        setStringPreference(ENVIRONMENT, value.name)
-    }
-
-    override fun setShownCallNotification(): Boolean {
-        val previousValue = getBooleanPreference(SHOWN_CALL_NOTIFICATION, false)
-        if (previousValue) return false
-        val setValue = true
-        setBooleanPreference(SHOWN_CALL_NOTIFICATION, setValue)
-        return previousValue != setValue
-    }
-
-
-    /**
-     * Set the SHOWN_CALL_WARNING preference to `true`
-     * Return `true` if the value did update (it was previously unset)
-     */
-    override fun setShownCallWarning() : Boolean {
-        val previousValue = getBooleanPreference(SHOWN_CALL_WARNING, false)
-        if (previousValue) {
-            return false
-        }
-        val setValue = true
-        setBooleanPreference(SHOWN_CALL_WARNING, setValue)
-        return previousValue != setValue
-    }
-
-    override fun hasHiddenMessageRequests(): Boolean {
-        return getBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, false)
-    }
-
-    override fun setHasHiddenMessageRequests(hidden: Boolean) {
-        setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
-        _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
-    }
-    override fun forceCurrentUserAsPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
-    }
-
-    override fun setForceCurrentUserAsPro(isPro: Boolean) {
-        setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, isPro)
-        _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
-    }
-
-    override fun forceOtherUsersAsPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_OTHER_USERS_PRO, false)
-    }
-
-    override fun setForceOtherUsersAsPro(isPro: Boolean) {
-        setBooleanPreference(SET_FORCE_OTHER_USERS_PRO, isPro)
-        _events.tryEmit(SET_FORCE_OTHER_USERS_PRO)
-    }
-
-    override fun forceIncomingMessagesAsPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, false)
-    }
-
-    override fun setForceIncomingMessagesAsPro(isPro: Boolean) {
-        setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, isPro)
-    }
-
-    override fun forcePostPro(): Boolean {
-        return postProLaunchState.value
-    }
-
-    override fun setForcePostPro(postPro: Boolean) {
-        setBooleanPreference(SET_FORCE_POST_PRO, postPro)
-        postProLaunchState.update { postPro }
-        _events.tryEmit(SET_FORCE_POST_PRO)
-    }
-
-    override fun hasSeenProExpiring(): Boolean {
-        return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
-    }
-
-    override fun setHasSeenProExpiring() {
-        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, true)
-    }
-
-    override fun hasSeenProExpired(): Boolean {
-        return getBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
-    }
-
-    override fun setHasSeenProExpired() {
-        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
-    }
-
     override fun watchPostProStatus(): StateFlow<Boolean> {
         return postProLaunchState
     }
@@ -1216,12 +590,10 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(TextSecurePreferences.FINGERPRINT_KEY_GENERATED, true)
     }
 
-    override fun getSelectedAccentColor(): String? =
-        getStringPreference(SELECTED_ACCENT_COLOR, null)
-
     @StyleRes
     override fun getAccentColorStyle(): Int? {
-        return when (getSelectedAccentColor()) {
+        val selectedAccentColor = getStringPreference(TextSecurePreferences.SELECTED_ACCENT_COLOR, null)
+        return when (selectedAccentColor) {
             TextSecurePreferences.GREEN_ACCENT -> R.style.PrimaryGreen
             TextSecurePreferences.BLUE_ACCENT -> R.style.PrimaryBlue
             TextSecurePreferences.PURPLE_ACCENT -> R.style.PrimaryPurple
@@ -1235,7 +607,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setAccentColorStyle(@StyleRes newColorStyle: Int?) {
         setStringPreference(
-            SELECTED_ACCENT_COLOR, when (newColorStyle) {
+            TextSecurePreferences.SELECTED_ACCENT_COLOR, when (newColorStyle) {
                 R.style.PrimaryGreen -> TextSecurePreferences.GREEN_ACCENT
                 R.style.PrimaryBlue -> TextSecurePreferences.BLUE_ACCENT
                 R.style.PrimaryPurple -> TextSecurePreferences.PURPLE_ACCENT
@@ -1249,62 +621,53 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun getThemeStyle(): String {
-        val hasLegacy = getStringPreference(LEGACY_PREF_KEY_SELECTED_UI_MODE, null)
+        val hasLegacy = getStringPreference(TextSecurePreferences.LEGACY_PREF_KEY_SELECTED_UI_MODE, null)
         if (!hasLegacy.isNullOrEmpty()) {
             migrateLegacyUiPref()
         }
 
-        return getStringPreference(SELECTED_STYLE, CLASSIC_DARK)!!
+        return getStringPreference(TextSecurePreferences.SELECTED_STYLE, TextSecurePreferences.CLASSIC_DARK)!!
     }
 
     override fun setThemeStyle(themeStyle: String) {
-        val safeTheme = if (themeStyle !in listOf(CLASSIC_DARK, CLASSIC_LIGHT, OCEAN_DARK, OCEAN_LIGHT)) CLASSIC_DARK else themeStyle
-        setStringPreference(SELECTED_STYLE, safeTheme)
+        val safeTheme = if (themeStyle !in listOf(TextSecurePreferences.CLASSIC_DARK, TextSecurePreferences.CLASSIC_LIGHT, TextSecurePreferences.OCEAN_DARK, TextSecurePreferences.OCEAN_LIGHT)) TextSecurePreferences.CLASSIC_DARK else themeStyle
+        setStringPreference(TextSecurePreferences.SELECTED_STYLE, safeTheme)
     }
 
     override fun getFollowSystemSettings(): Boolean {
-        val hasLegacy = getStringPreference(LEGACY_PREF_KEY_SELECTED_UI_MODE, null)
+        val hasLegacy = getStringPreference(TextSecurePreferences.LEGACY_PREF_KEY_SELECTED_UI_MODE, null)
         if (!hasLegacy.isNullOrEmpty()) {
             migrateLegacyUiPref()
         }
 
-        return getBooleanPreference(FOLLOW_SYSTEM_SETTINGS, false)
+        return getBooleanPreference(TextSecurePreferences.FOLLOW_SYSTEM_SETTINGS, false)
     }
 
     private fun migrateLegacyUiPref() {
-        val legacy = getStringPreference(LEGACY_PREF_KEY_SELECTED_UI_MODE, null) ?: return
+        val legacy = getStringPreference(TextSecurePreferences.LEGACY_PREF_KEY_SELECTED_UI_MODE, null) ?: return
         val (mode, followSystem) = when (legacy) {
             "DAY" -> {
-                CLASSIC_LIGHT to false
+                TextSecurePreferences.CLASSIC_LIGHT to false
             }
             "NIGHT" -> {
-                CLASSIC_DARK to false
+                TextSecurePreferences.CLASSIC_DARK to false
             }
             "SYSTEM_DEFAULT" -> {
-                CLASSIC_DARK to true
+                TextSecurePreferences.CLASSIC_DARK to true
             }
             else -> {
-                CLASSIC_DARK to false
+                TextSecurePreferences.CLASSIC_DARK to false
             }
         }
-        if (!hasPreference(FOLLOW_SYSTEM_SETTINGS) && !hasPreference(SELECTED_STYLE)) {
+        if (!hasPreference(TextSecurePreferences.FOLLOW_SYSTEM_SETTINGS) && !hasPreference(TextSecurePreferences.SELECTED_STYLE)) {
             setThemeStyle(mode)
             setFollowSystemSettings(followSystem)
         }
-        removePreference(LEGACY_PREF_KEY_SELECTED_UI_MODE)
+        removePreference(TextSecurePreferences.LEGACY_PREF_KEY_SELECTED_UI_MODE)
     }
 
     override fun setFollowSystemSettings(followSystemSettings: Boolean) {
-        setBooleanPreference(FOLLOW_SYSTEM_SETTINGS, followSystemSettings)
-    }
-
-    override fun setAutoplayAudioMessages(enabled: Boolean) {
-        setBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, enabled)
-        _events.tryEmit(AUTOPLAY_AUDIO_MESSAGES)
-    }
-
-    override fun isAutoplayAudioMessagesEnabled(): Boolean {
-        return getBooleanPreference(AUTOPLAY_AUDIO_MESSAGES, false)
+        setBooleanPreference(TextSecurePreferences.FOLLOW_SYSTEM_SETTINGS, followSystemSettings)
     }
 
     /**
@@ -1318,10 +681,10 @@ class AppTextSecurePreferences @Inject constructor(
         getDefaultSharedPreferences(context).edit(commit = true) { clear() }
     }
 
-    override fun getHidePassword() = getBooleanPreference(HIDE_PASSWORD, false)
+    override fun getHidePassword() = getBooleanPreference(TextSecurePreferences.HIDE_PASSWORD, false)
 
     override fun setHidePassword(value: Boolean) {
-        setBooleanPreference(HIDE_PASSWORD, value)
+        setBooleanPreference(TextSecurePreferences.HIDE_PASSWORD, value)
         hiddenPasswordState.update { value }
     }
 
@@ -1329,55 +692,40 @@ class AppTextSecurePreferences @Inject constructor(
         return hiddenPasswordState
     }
 
-    override fun hasSeenTokenPageNotification(): Boolean {
-        return getBooleanPreference(HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE, false)
+    override fun getEnvironment(): Environment {
+        val environment = getStringPreference(TextSecurePreferences.ENVIRONMENT, null)
+        return if (environment != null) {
+            Environment.valueOf(environment)
+        } else BuildConfig.DEFAULT_ENVIRONMENT
     }
 
-    override fun setHasSeenTokenPageNotification(value: Boolean) {
-        setBooleanPreference(HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE, value)
+    override fun setEnvironment(value: Environment) {
+        setStringPreference(TextSecurePreferences.ENVIRONMENT, value.name)
     }
 
-    override fun forcedShortTTL(): Boolean {
-        return getBooleanPreference(FORCED_SHORT_TTL, false)
+    override fun setShownCallNotification(): Boolean {
+        val previousValue = getBooleanPreference(TextSecurePreferences.SHOWN_CALL_NOTIFICATION, false)
+        if (previousValue) return false
+        val setValue = true
+        setBooleanPreference(TextSecurePreferences.SHOWN_CALL_NOTIFICATION, setValue)
+        return previousValue != setValue
     }
 
-    override fun setForcedShortTTL(value: Boolean) {
-        setBooleanPreference(FORCED_SHORT_TTL, value)
-    }
 
-    override var inAppReviewState: String?
-        get() = getStringPreference(TextSecurePreferences.IN_APP_REVIEW_STATE, null)
-        set(value) = setStringPreference(TextSecurePreferences.IN_APP_REVIEW_STATE, value)
-
-    override var deprecationStateOverride: String?
-        get() = getStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, null)
-        set(value) {
-            if (value == null) {
-                removePreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE)
-            } else {
-                setStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, value)
-            }
+    /**
+     * Set the SHOWN_CALL_WARNING preference to `true`
+     * Return `true` if the value did update (it was previously unset)
+     */
+    override fun setShownCallWarning() : Boolean {
+        val previousValue = getBooleanPreference(TextSecurePreferences.SHOWN_CALL_WARNING, false)
+        if (previousValue) {
+            return false
         }
+        val setValue = true
+        setBooleanPreference(TextSecurePreferences.SHOWN_CALL_WARNING, setValue)
+        return previousValue != setValue
+    }
 
-    override var deprecatedTimeOverride: ZonedDateTime?
-        get() = getStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
-        set(value) {
-            if (value == null) {
-                removePreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE)
-            } else {
-                setStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, value.toString())
-            }
-        }
-
-    override var deprecatingStartTimeOverride: ZonedDateTime?
-        get() = getStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
-        set(value) {
-            if (value == null) {
-                removePreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE)
-            } else {
-                setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
-            }
-        }
     override fun getDebugMessageFeatures(): Set<ProFeature> {
         return buildSet {
             getLongPreference(TextSecurePreferences.DEBUG_PRO_MESSAGE_FEATURES, 0L).toProMessageFeatures(this)
@@ -1412,141 +760,68 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
     }
 
-    override fun getDebugForceNoBilling(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, false)
-    }
-
-    override fun setDebugForceNoBilling(hasBilling: Boolean) {
-        setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
-        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
-    }
-
-    override fun getDebugIsWithinQuickRefund(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, false)
-    }
-
-    override fun setDebugIsWithinQuickRefund(isWithin: Boolean) {
-        setBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin)
-        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
-    }
-
-    override fun getSubscriptionProvider(): String? {
-        return getStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, null)
-    }
-
-    override fun setSubscriptionProvider(provider: String) {
-        setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
-    }
-
-    override var forcesDeterministicAttachmentEncryption: Boolean
-        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
-        set(value) {
-            setBooleanPreference("forces_deterministic_attachment_upload", value)
-        }
-
-    override var debugAvatarReupload: Boolean
-        get() = getBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, false)
-        set(value) {
-            setBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, value)
-            _events.tryEmit(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD)
-        }
-
-    override var alternativeFileServer: FileServer?
-        get() = getStringPreference("alternative_file_server", null)?.let {
-            json.decodeFromString(it)
-        }
-
-        set(value) {
-            setStringPreference("alternative_file_server", value?.let {
-                json.encodeToString(it)
-            })
-        }
-
-    override fun hasCheckedDozeWhitelist(): Boolean {
-        return getBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, false)
-    }
-
-    override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
-        setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
-        _events.tryEmit(HAS_CHECKED_DOZE_WHITELIST)
-    }
-
-    override fun hasDonated(): Boolean {
-        return getBooleanPreference(HAS_DONATED, false)
-    }
-    override fun setHasDonated(hasDonated: Boolean) {
-        setBooleanPreference(HAS_DONATED, hasDonated)
-    }
-
-    override fun hasCopiedDonationURL(): Boolean {
-        return getBooleanPreference(HAS_COPIED_DONATION_URL, false)
-    }
-    override fun setHasCopiedDonationURL(hasCopied: Boolean) {
-        setBooleanPreference(HAS_COPIED_DONATION_URL, hasCopied)
-    }
-
-    override fun seenDonationCTAAmount(): Int {
-        return getIntegerPreference(SEEN_DONATION_CTA_AMOUNT, 0)
-    }
-    override fun setSeenDonationCTAAmount(amount: Int) {
-        setIntegerPreference(SEEN_DONATION_CTA_AMOUNT, amount)
-    }
-
-    override fun lastSeenDonationCTA(): Long {
-        return getLongPreference(LAST_SEEN_DONATION_CTA, 0)
-    }
-    override fun setLastSeenDonationCTA(timestamp: Long) {
-        setLongPreference(LAST_SEEN_DONATION_CTA, timestamp)
-    }
-
-    override fun showDonationCTAFromPositiveReview(): Boolean {
-        return getBooleanPreference(SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, false)
-    }
-    override fun setShowDonationCTAFromPositiveReview(show: Boolean) {
-        setBooleanPreference(SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
-    }
-
     override fun hasDonatedDebug(): String? {
-        return getStringPreference(DEBUG_HAS_DONATED, null)
+        return getStringPreference(TextSecurePreferences.DEBUG_HAS_DONATED, null)
     }
     override fun setHasDonatedDebug(hasDonated: String?) {
-        setStringPreference(DEBUG_HAS_DONATED, hasDonated)
+        setStringPreference(TextSecurePreferences.DEBUG_HAS_DONATED, hasDonated)
     }
 
     override fun hasCopiedDonationURLDebug(): String? {
-        return getStringPreference(DEBUG_HAS_COPIED_DONATION_URL, null)
+        return getStringPreference(TextSecurePreferences.DEBUG_HAS_COPIED_DONATION_URL, null)
     }
     override fun setHasCopiedDonationURLDebug(hasCopied: String?) {
-        setStringPreference(DEBUG_HAS_COPIED_DONATION_URL, hasCopied)
+        setStringPreference(TextSecurePreferences.DEBUG_HAS_COPIED_DONATION_URL, hasCopied)
     }
 
     override fun seenDonationCTAAmountDebug(): String? {
-        return getStringPreference(DEBUG_SEEN_DONATION_CTA_AMOUNT, null)
+        return getStringPreference(TextSecurePreferences.DEBUG_SEEN_DONATION_CTA_AMOUNT, null)
     }
     override fun setSeenDonationCTAAmountDebug(amount: String?) {
-        setStringPreference(DEBUG_SEEN_DONATION_CTA_AMOUNT, amount)
+        setStringPreference(TextSecurePreferences.DEBUG_SEEN_DONATION_CTA_AMOUNT, amount)
     }
 
     override fun showDonationCTAFromPositiveReviewDebug(): String? {
-        return getStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, null)
+        return getStringPreference(TextSecurePreferences.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, null)
     }
     override fun setShowDonationCTAFromPositiveReviewDebug(show: String?) {
-        setStringPreference(DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
-    }
-
-    override fun setSendWithEnterEnabled(enabled: Boolean) {
-        setBooleanPreference(SEND_WITH_ENTER, enabled)
-        _events.tryEmit(SEND_WITH_ENTER)
-    }
-
-    override fun isSendWithEnterEnabled(): Boolean {
-        return getBooleanPreference(SEND_WITH_ENTER, false)
+        setStringPreference(TextSecurePreferences.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW, show)
     }
 
     override fun updateBooleanFromKey(key: String, value: Boolean) {
         setBooleanPreference(key, value)
         _events.tryEmit(key)
     }
+
+    override var deprecationStateOverride: String?
+        get() = getStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, null)
+        set(value) {
+            if (value == null) {
+                removePreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE)
+            } else {
+                setStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, value)
+            }
+        }
+
+    override var deprecatedTimeOverride: ZonedDateTime?
+        get() = getStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
+        set(value) {
+            if (value == null) {
+                removePreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE)
+            } else {
+                setStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, value.toString())
+            }
+        }
+
+    override var deprecatingStartTimeOverride: ZonedDateTime?
+        get() = getStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
+        set(value) {
+            if (value == null) {
+                removePreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE)
+            } else {
+                setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
+            }
+        }
 }
 
 fun TextSecurePreferences.observeBooleanKey(

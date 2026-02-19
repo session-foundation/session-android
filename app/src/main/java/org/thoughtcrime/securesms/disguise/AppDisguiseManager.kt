@@ -27,6 +27,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ThemingPreferences
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -38,7 +40,8 @@ import javax.inject.Singleton
 @Singleton
 class AppDisguiseManager @Inject constructor(
     application: Application,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val currentActivityObserver: CurrentActivityObserver,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : OnAppStartupComponent {
@@ -80,11 +83,11 @@ class AppDisguiseManager @Inject constructor(
      * The currently selected app alias name. This doesn't equate to if the app disguise is on or off.
      */
     val selectedAppAliasName: StateFlow<String?> = prefChangeNotification
-            .mapLatest { prefs.selectedActivityAliasName }
+            .mapLatest { preferenceStorage[ThemingPreferences.SELECTED_ACTIVITY_ALIAS_NAME] }
             .stateIn(
                 scope = scope,
                 started = SharingStarted.Eagerly,
-                initialValue = prefs.selectedActivityAliasName
+                initialValue = preferenceStorage[ThemingPreferences.SELECTED_ACTIVITY_ALIAS_NAME]
             )
 
     init {
@@ -150,7 +153,7 @@ class AppDisguiseManager @Inject constructor(
 
     fun setSelectedAliasName(name: String?) {
         Log.d(TAG, "setSelectedAliasName: $name")
-        prefs.selectedActivityAliasName = name
+        preferenceStorage[ThemingPreferences.SELECTED_ACTIVITY_ALIAS_NAME] = name
         prefChangeNotification.tryEmit(Unit)
     }
 

@@ -38,6 +38,8 @@ import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.AccountId;
@@ -233,6 +235,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
   private final Json json;
   private final TextSecurePreferences prefs;
   private final SnodeClock snodeClock;
+  private final PreferenceStorage preferenceStorage;
 
   private final Lazy<@NonNull RecipientRepository> recipientRepository;
   private final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
@@ -254,7 +257,8 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
                         Lazy<@NonNull MarkReadProcessor> markReadProcessor,
                         TextSecurePreferences prefs,
                         SnodeClock snodeClock,
-                        Json json) {
+                        Json json,
+                        PreferenceStorage preferenceStorage) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.mmsSmsDatabase = mmsSmsDatabase;
@@ -264,6 +268,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
     this.smsDatabase = smsDatabase;
     this.markReadProcessor = markReadProcessor;
     this.snodeClock = snodeClock;
+    this.preferenceStorage = preferenceStorage;
 
     this.json = json;
     this.prefs = prefs;
@@ -840,7 +845,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       String             invitingAdmin       = cursor.getString(cursor.getColumnIndexOrThrow(LokiMessageDatabase.invitingSessionId));
       String messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_CONTENT));
 
-      if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
+      if (!preferenceStorage.get(PrivacyPreferences.INSTANCE.getREAD_RECEIPTS())) {
         readReceiptCount = 0;
       }
 

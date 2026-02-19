@@ -24,7 +24,8 @@ import okio.source
 import org.session.libsession.messaging.file_server.FileRenewApi
 import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
@@ -202,10 +203,10 @@ class AvatarReuploadWorker @AssistedInject constructor(
             return IntSize(r.first, r.second)
         }
 
-        suspend fun schedule(context: Context, prefs: TextSecurePreferences) {
+        suspend fun schedule(context: Context, preferenceStorage: PreferenceStorage) {
             Log.d(TAG, "Scheduling avatar reupload worker.")
 
-            val request = if (BuildConfig.DEBUG || prefs.debugAvatarReupload) {
+            val request = if (BuildConfig.DEBUG || preferenceStorage[MessagingPreferences.DEBUG_AVATAR_REUPLOAD]) {
                 PeriodicWorkRequestBuilder<AvatarReuploadWorker>(
                     Duration.ofMinutes(15)
                 ).setInitialDelay(0L, TimeUnit.MILLISECONDS)

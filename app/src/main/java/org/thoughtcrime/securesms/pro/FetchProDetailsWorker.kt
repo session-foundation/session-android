@@ -21,6 +21,10 @@ import kotlinx.coroutines.flow.mapNotNull
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.dependencies.AppComponent
+import dagger.hilt.EntryPoints
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ProPreferences
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
@@ -58,7 +62,8 @@ class FetchProDetailsWorker @AssistedInject constructor(
     private val prefs: TextSecurePreferences,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        if (!prefs.forcePostPro()) {
+        val preferenceStorage = EntryPoints.get(context.applicationContext, AppComponent::class.java).getPreferenceStorage()
+        if (!preferenceStorage[ProPreferences.FORCE_POST_PRO]) {
             Log.d(TAG, "Pro details fetch skipped because pro is not enabled")
             return Result.success()
         }

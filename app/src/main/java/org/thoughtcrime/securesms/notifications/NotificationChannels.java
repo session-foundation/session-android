@@ -15,6 +15,9 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.ApplicationContext;
+import org.thoughtcrime.securesms.preferences.NotificationPreferences;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
 
 import java.util.Arrays;
 
@@ -47,11 +50,12 @@ public class NotificationChannels {
    */
   public static synchronized void create(@NonNull Context context) {
     NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
+    PreferenceStorage preferenceStorage = ApplicationContext.getInstance(context).getPreferenceStorage().get();
 
-    int oldVersion = TextSecurePreferences.getNotificationChannelVersion(context);
+    int oldVersion = preferenceStorage.get(NotificationPreferences.CHANNEL_VERSION);
     if (oldVersion != VERSION) {
       onUpgrade(notificationManager, oldVersion, VERSION);
-      TextSecurePreferences.setNotificationChannelVersion(context, VERSION);
+      preferenceStorage.set(NotificationPreferences.CHANNEL_VERSION, VERSION);
     }
 
     onCreate(context, notificationManager);
@@ -61,7 +65,8 @@ public class NotificationChannels {
    * @return The channel ID for the default messages channel.
    */
   public static synchronized @NonNull String getMessagesChannel(@NonNull Context context) {
-    return getMessagesChannelId(TextSecurePreferences.getNotificationMessagesChannelVersion(context));
+    PreferenceStorage preferenceStorage = ApplicationContext.getInstance(context).getPreferenceStorage().get();
+    return getMessagesChannelId(preferenceStorage.get(NotificationPreferences.MESSAGES_CHANNEL_VERSION));
   }
 
 
@@ -113,9 +118,11 @@ public class NotificationChannels {
     NotificationChannel other        = new NotificationChannel(OTHER, context.getString(R.string.other), NotificationManager.IMPORTANCE_LOW);
 
     messages.setGroup(CATEGORY_MESSAGES);
-    messages.enableVibration(TextSecurePreferences.isNotificationVibrateEnabled(context));
-    messages.setSound(TextSecurePreferences.getNotificationRingtone(context), getRingtoneAudioAttributes());
-    setLedPreference(messages, TextSecurePreferences.getNotificationLedColor(context));
+
+    PreferenceStorage preferenceStorage = ApplicationContext.getInstance(context).getPreferenceStorage().get();
+    messages.enableVibration(preferenceStorage.get(NotificationPreferences.VIBRATE_ENABLED));
+    messages.setSound(Uri.parse(preferenceStorage.get(NotificationPreferences.RINGTONE)), getRingtoneAudioAttributes());
+    setLedPreference(messages, preferenceStorage.get(NotificationPreferences.LED_COLOR));
 
     calls.setShowBadge(false);
     calls.setSound(null, null);
@@ -183,12 +190,13 @@ public class NotificationChannels {
 
   private static void updateMessageChannel(@NonNull Context context, @NonNull ChannelUpdater updater) {
     NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
-    int existingVersion                     = TextSecurePreferences.getNotificationMessagesChannelVersion(context);
+    PreferenceStorage preferenceStorage = ApplicationContext.getInstance(context).getPreferenceStorage().get();
+    int existingVersion                     = preferenceStorage.get(NotificationPreferences.MESSAGES_CHANNEL_VERSION);
     int newVersion                          = existingVersion + 1;
 
     Log.i(TAG, "Updating message channel from version " + existingVersion + " to " + newVersion);
     if (updateExistingChannel(notificationManager, getMessagesChannelId(existingVersion), getMessagesChannelId(newVersion), updater)) {
-      TextSecurePreferences.setNotificationMessagesChannelVersion(context, newVersion);
+      preferenceStorage.set(NotificationPreferences.MESSAGES_CHANNEL_VERSION, newVersion);
     } else {
       onCreate(context, notificationManager);
     }

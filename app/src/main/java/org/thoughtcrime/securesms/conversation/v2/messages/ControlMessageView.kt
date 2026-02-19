@@ -24,7 +24,8 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
+import org.thoughtcrime.securesms.preferences.NotificationPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isGroup
@@ -78,6 +79,7 @@ class ControlMessageView : LinearLayout {
     @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var messageFormatter: MessageFormatter
+    @Inject lateinit var preferenceStorage: PreferenceStorage
 
     val controlContentView: View get() = binding.controlContentView
 
@@ -188,7 +190,7 @@ class ControlMessageView : LinearLayout {
                     when {
                         // when the call toggle is disabled in the privacy screen,
                         // show a dedicated privacy dialog
-                        !TextSecurePreferences.isCallNotificationsEnabled(context) -> {
+                        !preferenceStorage[NotificationPreferences.CALL_NOTIFICATIONS_ENABLED] -> {
                             showInfo()
                             binding.controlContentView.setOnClickListener {
                                 context.showSessionDialog {
@@ -207,7 +209,7 @@ class ControlMessageView : LinearLayout {
                                     button(R.string.sessionSettings) {
                                         val intent = Intent(context, PrivacySettingsActivity::class.java)
                                         // allow the screen to auto scroll to the appropriate toggle
-                                        intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
+                                        intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, NotificationPreferences.CALL_NOTIFICATIONS_ENABLED.name)
                                         context.startActivity(intent)
                                     }
                                     cancelButton()

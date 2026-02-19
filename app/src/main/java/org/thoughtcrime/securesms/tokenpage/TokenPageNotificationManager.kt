@@ -7,6 +7,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.NotificationPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,7 +19,8 @@ import kotlin.time.Duration.Companion.seconds
 class TokenPageNotificationManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val tokenDataManager: TokenDataManager,
-    private val prefs: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage
 ) {
 
     companion object {
@@ -32,7 +35,7 @@ class TokenPageNotificationManager @Inject constructor(
     // the notification once - which is what we want for production.
     fun scheduleTokenPageNotification(constructDebugNotification: Boolean) {
         // Bail early if we are this isn't a debug notification and we've already shown the notification
-        if (prefs.hasSeenTokenPageNotification() && !constructDebugNotification) return
+        if (preferenceStorage[NotificationPreferences.HAVE_SHOWN_TOKEN_PAGE_NOTIFICATION] && !constructDebugNotification) return
 
         // The notification is scheduled for 10 seconds after opening for debug notifications & 1 hour after opening for production
         val scheduleDelayMS = if (constructDebugNotification) {

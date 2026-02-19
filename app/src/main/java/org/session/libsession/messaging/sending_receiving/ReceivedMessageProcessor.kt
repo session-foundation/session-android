@@ -33,7 +33,8 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment
-import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -69,7 +70,7 @@ class ReceivedMessageProcessor @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val readReceiptManager: Provider<ReadReceiptManager>,
     private val typingIndicators: Provider<SSKEnvironment.TypingIndicatorsProtocol>,
-    private val prefs: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val groupMessageHandler: Provider<GroupMessageHandler>,
     private val messageExpirationManager: Provider<SSKEnvironment.MessageExpirationManagerProtocol>,
     private val messageDataProvider: MessageDataProvider,
@@ -377,7 +378,7 @@ class ReceivedMessageProcessor @Inject constructor(
 
     private fun showTypingIndicatorIfNeeded(senderPublicKey: String) {
         // We don't want to show other people's indicators if the toggle is off
-        if (!prefs.isTypingIndicatorsEnabled()) return
+        if (!preferenceStorage[PrivacyPreferences.TYPING_INDICATORS]) return
 
         val address = Address.fromSerialized(senderPublicKey)
         val threadID = storage.getThreadId(address) ?: return

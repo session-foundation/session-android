@@ -19,7 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.session.libsession.utilities.ViewUtil
 import org.thoughtcrime.securesms.giph.model.GiphyImage
 import org.thoughtcrime.securesms.giph.net.GiphyLoader
@@ -28,14 +29,19 @@ import org.thoughtcrime.securesms.giph.ui.compose.bindGiphyOverlay
 import org.thoughtcrime.securesms.giph.util.InfiniteScrollListener
 import java.util.LinkedList
 import java.util.List
+import javax.inject.Inject
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Base fragment for both GIF and Sticker tabs.
  * Subclasses (Gif/Sticker) only implement onCreateLoader(...).
  */
+@AndroidEntryPoint
 abstract class GiphyFragment :
     Fragment(),
     LoaderManager.LoaderCallbacks<List<GiphyImage>> {
+
+    @Inject lateinit var preferenceStorage: PreferenceStorage
 
     private lateinit var giphyAdapter: GiphyAdapter
     private lateinit var recyclerView: RecyclerView
@@ -69,7 +75,7 @@ abstract class GiphyFragment :
             setLayoutManager(it)
             pendingGridLayout = null
         } ?: run {
-            setLayoutManager(TextSecurePreferences.isGifSearchInGridLayout(requireContext()))
+            setLayoutManager(preferenceStorage[MessagingPreferences.GIF_SEARCH_IN_GRID_LAYOUT])
         }
 
         overlayState.value = GiphyOverlayState.Loading

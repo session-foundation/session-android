@@ -8,19 +8,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.observeBooleanKey
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import javax.inject.Inject
 
 @HiltViewModel
 class ChatsPreferenceViewModel @Inject constructor(
-    var prefs: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage
 ) : ViewModel() {
 
     val uiState: StateFlow<UIState> =
         combine(
-            prefs.observeBooleanKey(TextSecurePreferences.THREAD_TRIM_ENABLED, default = false),
-            prefs.observeBooleanKey(TextSecurePreferences.SEND_WITH_ENTER, default = false),
-            prefs.observeBooleanKey(TextSecurePreferences.AUTOPLAY_AUDIO_MESSAGES, default = false),
+            preferenceStorage.watch(viewModelScope, MessagingPreferences.THREAD_TRIM_ENABLED),
+            preferenceStorage.watch(viewModelScope, MessagingPreferences.SEND_WITH_ENTER),
+            preferenceStorage.watch(viewModelScope, MessagingPreferences.AUTOPLAY_AUDIO_MESSAGES),
         ) { trim, enter, autoplay ->
             UIState(
                 trimThreads = trim,
@@ -31,17 +33,17 @@ class ChatsPreferenceViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = UIState(
-                trimThreads = prefs.isThreadLengthTrimmingEnabled(),
-                sendWithEnter = prefs.isSendWithEnterEnabled(),
-                autoplayAudioMessage = prefs.isAutoplayAudioMessagesEnabled(),
+                trimThreads = preferenceStorage[MessagingPreferences.THREAD_TRIM_ENABLED],
+                sendWithEnter = preferenceStorage[MessagingPreferences.SEND_WITH_ENTER],
+                autoplayAudioMessage = preferenceStorage[MessagingPreferences.AUTOPLAY_AUDIO_MESSAGES],
             )
         )
 
     fun onCommand(command: Commands) {
         when (command) {
-            is Commands.ToggleTrimThreads -> prefs.setThreadLengthTrimmingEnabled(command.isEnabled)
-            is Commands.ToggleSendWithEnter -> prefs.setSendWithEnterEnabled(command.isEnabled)
-            is Commands.ToggleAutoplayAudioMessages -> prefs.setAutoplayAudioMessages(command.isEnabled)
+            is Commands.ToggleTrimThreads -> preferenceStorage[MessagingPreferences.THREAD_TRIM_ENABLED] = command.isEnabled
+            is Commands.ToggleSendWithEnter -> preferenceStorage[MessagingPreferences.SEND_WITH_ENTER] = command.isEnabled
+            is Commands.ToggleAutoplayAudioMessages -> preferenceStorage[MessagingPreferences.AUTOPLAY_AUDIO_MESSAGES] = command.isEnabled
         }
     }
 

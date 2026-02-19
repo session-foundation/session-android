@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.onboarding.landing
 import android.os.Bundle
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SecurityPreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.onboarding.loadaccount.LoadAccountActivity
@@ -18,6 +20,9 @@ class LandingActivity: BaseActionBarActivity() {
 
     @Inject
     internal lateinit var prefs: TextSecurePreferences
+
+    @Inject
+    lateinit var preferenceStorage: PreferenceStorage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +41,7 @@ class LandingActivity: BaseActionBarActivity() {
         }
 
         IdentityKeyUtil.generateIdentityKeyPair(this)
-        TextSecurePreferences.setPasswordDisabled(this, true)
+        preferenceStorage[SecurityPreferences.PASSWORD_DISABLED] = true
         // AC: This is a temporary workaround to trick the old code that the screen is unlocked.
         KeyCachingService.setMasterSecret(applicationContext, Object())
     }

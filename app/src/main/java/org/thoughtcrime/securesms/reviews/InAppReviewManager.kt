@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import java.util.EnumSet
@@ -35,7 +37,8 @@ import kotlin.time.Duration.Companion.days
 @Singleton
 class InAppReviewManager @Inject constructor(
     @param:ApplicationContext val context: Context,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val json: Json,
     private val storeReviewManager: StoreReviewManager,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -46,7 +49,7 @@ class InAppReviewManager @Inject constructor(
     @Suppress("OPT_IN_USAGE")
     val shouldShowPrompt: StateFlow<Boolean> = stateChangeNotification
         .onStart { emit(Unit) }
-        .map { prefs.reviewState }
+        .map { reviewState }
         .flatMapLatest { state ->
             when (state) {
                 InAppReviewState.DismissedForever, is InAppReviewState.WaitingForTrigger, null -> flowOf(false)
@@ -74,7 +77,7 @@ class InAppReviewManager @Inject constructor(
         eventsChannel = channel
 
         scope.launch {
-            val startState = prefs.reviewState ?: run {
+            val startState = reviewState ?: run {
                 if (storeReviewManager.supportsReviewFlow) {
                     val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
                     InAppReviewState.WaitingForTrigger(
@@ -131,7 +134,7 @@ class InAppReviewManager @Inject constructor(
                 }
                 .distinctUntilChanged()
                 .collectLatest {
-                    prefs.reviewState = it
+                    reviewState = it
                     Log.d(TAG, "New review state is: $it")
                 }
         }
@@ -149,14 +152,14 @@ class InAppReviewManager @Inject constructor(
         Dismiss,
     }
 
-    private var TextSecurePreferences.reviewState
-        get() = prefs.inAppReviewState?.let {
+    private var reviewState: InAppReviewState?
+        get() = preferenceStorage[SystemPreferences.IN_APP_REVIEW_STATE]?.let {
             runCatching { json.decodeFromString<InAppReviewState>(it) }
                 .onFailure { Log.w(TAG, "Failed to decode review state", it) }
                 .getOrNull()
         }
         set(value) {
-            prefs.inAppReviewState =
+            preferenceStorage[SystemPreferences.IN_APP_REVIEW_STATE] =
                 value?.let { json.encodeToString(InAppReviewState.serializer(), it) }
             stateChangeNotification.tryEmit(Unit)
         }

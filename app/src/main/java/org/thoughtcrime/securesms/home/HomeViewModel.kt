@@ -46,7 +46,11 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ProPreferences
+import org.thoughtcrime.securesms.preferences.PushPreferences
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -143,9 +147,10 @@ class HomeViewModel @Inject constructor(
         observeTypingStatus(),
 
         // Third flow: whether the user has marked message requests as hidden
-        (TextSecurePreferences.events.filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS } as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { prefs.hasHiddenMessageRequests() }
+        prefStorage.changes()
+            .filter { it.name == MessagingPreferences.HAS_HIDDEN_MESSAGE_REQUESTS.name }
+            .onStart { emit(MessagingPreferences.HAS_HIDDEN_MESSAGE_REQUESTS) }
+            .map { prefStorage[MessagingPreferences.HAS_HIDDEN_MESSAGE_REQUESTS] }
     ) { (unapproveConvoCount, convoList), typingStatus, hiddenMessageRequest ->
         // check if we should show the recovery phrase backup banner:
         // - if the user has not yet seen the warning
@@ -183,11 +188,11 @@ class HomeViewModel @Inject constructor(
 
     init {
         // check for white list status in case of slow mode
-        if(!prefs.hasCheckedDozeWhitelist() // the user has not yet seen the dialog
-            && !prefs.pushEnabled.value // the user is in slow mode
+        if(!prefStorage[SystemPreferences.HAS_CHECKED_DOZE_WHITELIST] // the user has not yet seen the dialog
+            && !prefStorage[PushPreferences.isPushEnabled(TextSecurePreferences.pushSuffix)] // the user is in slow mode
             && !context.isWhitelistedFromDoze() // the user isn't yet whitelisted
         ){
-            prefs.setHasCheckedDozeWhitelist(true)
+            prefStorage[SystemPreferences.HAS_CHECKED_DOZE_WHITELIST] = true
             viewModelScope.launch {
                 delay(1500)
                 _dialogsState.update {
@@ -229,7 +234,7 @@ class HomeViewModel @Inject constructor(
                 var showExpired: Boolean = false
 
                 if(subscription.type is ProStatus.Active.Expiring
-                    && !prefs.hasSeenProExpiring()
+                    && !prefStorage[ProPreferences.HAS_SEEN_PRO_EXPIRING]
                 ){
                     val validUntil = subscription.type.renewingAt
                     showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
@@ -245,7 +250,7 @@ class HomeViewModel @Inject constructor(
                     }
                 }
                 else if(subscription.type is ProStatus.Expired
-                    && !prefs.hasSeenProExpired()) {
+                    && !prefStorage[ProPreferences.HAS_SEEN_PRO_EXPIRED]) {
                     val validUntil = subscription.type.expiredAt
                     showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
 
@@ -383,12 +388,12 @@ class HomeViewModel @Inject constructor(
             }
 
             is Commands.HideExpiringCTADialog -> {
-                prefs.setHasSeenProExpiring()
+                prefStorage[ProPreferences.HAS_SEEN_PRO_EXPIRING] = true
                 _dialogsState.update { it.copy(proExpiringCTA = null) }
             }
 
             is Commands.HideExpiredCTADialog -> {
-                prefs.setHasSeenProExpired()
+                prefStorage[ProPreferences.HAS_SEEN_PRO_EXPIRED] = true
                 _dialogsState.update { it.copy(proExpiredCTA = false) }
             }
 

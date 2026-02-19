@@ -21,7 +21,8 @@ import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePathStorage
 import org.session.libsession.network.snode.SnodePoolStorage
-import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
@@ -44,7 +45,7 @@ open class PathManager @Inject constructor(
     private val directory: SnodeDirectory,
     private val storage: SnodePathStorage,
     private val snodePoolStorage: SnodePoolStorage,
-    private val prefs: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val snodeApiExecutor: Provider<SnodeApiExecutor>,
     private val getInfoApi: Provider<GetInfoApi>,
 ) {
@@ -129,12 +130,12 @@ open class PathManager @Inject constructor(
 
     private fun rotatePathsIfStale() {
         val now = System.currentTimeMillis()
-        val last = prefs.getLastPathRotation()
+        val last = preferenceStorage[SystemPreferences.LAST_PATH_ROTATION]
 
         // if we have never done a path rotation, mark now as the starting time
         // so we can rotate on the next tick
         if (last == 0L){
-            prefs.setLastPathRotation(now)
+            preferenceStorage[SystemPreferences.LAST_PATH_ROTATION] = now
             return
         }
 
@@ -187,7 +188,7 @@ open class PathManager @Inject constructor(
         // Phase 1: decide + build candidates under lock
         val candidates: List<Path> = buildMutex.withLock {
             val now = System.currentTimeMillis()
-            val last = prefs.getLastPathRotation()
+            val last = preferenceStorage[SystemPreferences.LAST_PATH_ROTATION]
             if (now - last < PATH_ROTATE_INTERVAL_MS) return@withLock emptyList()
 
             val current = _paths.value
@@ -258,7 +259,7 @@ open class PathManager @Inject constructor(
 
             val committed = sanitizePaths(working.take(targetPathCount))
             _paths.value = committed
-            prefs.setLastPathRotation(System.currentTimeMillis())
+            preferenceStorage[SystemPreferences.LAST_PATH_ROTATION] = System.currentTimeMillis()
         }
     }
 

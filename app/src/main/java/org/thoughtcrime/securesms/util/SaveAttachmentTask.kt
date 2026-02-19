@@ -17,6 +17,9 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.TimeUnit
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.dependencies.AppComponent
+import dagger.hilt.EntryPoints
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences
 import org.session.libsession.utilities.task.ProgressDialogAsyncTask
 import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
@@ -47,7 +50,8 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
         fun showOneTimeWarningDialogOrSave(context: Context, count: Int = 1, onAcceptListener: () -> Unit = {}) {
             // If we've already warned the user that saved attachments can be accessed by other apps
             // then we'll just perform the save..
-            val haveWarned = TextSecurePreferences.getHaveWarnedUserAboutSavingAttachments(context)
+            val preferenceStorage = EntryPoints.get(context.applicationContext, AppComponent::class.java).getPreferenceStorage()
+            val haveWarned = preferenceStorage[PrivacyPreferences.HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS]
             if (haveWarned) {
                 onAcceptListener()
             } else {
@@ -58,7 +62,7 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                     text(context.getString(R.string.attachmentsWarning))
                     dangerButton(R.string.save) {
                         // Set our 'haveWarned' SharedPref and perform the save on accept
-                        TextSecurePreferences.setHaveWarnedUserAboutSavingAttachments(context)
+                        preferenceStorage[PrivacyPreferences.HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS] = true
                         onAcceptListener()
                     }
                     button(R.string.cancel)

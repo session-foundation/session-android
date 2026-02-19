@@ -63,6 +63,8 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ProPreferences
 import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
 import org.thoughtcrime.securesms.pro.api.AddProPaymentApi
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
@@ -84,7 +86,8 @@ import kotlin.time.Duration.Companion.milliseconds
 @Singleton
 class ProStatusManager @Inject constructor(
     private val application: Application,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     @param:ManagerScope private val scope: CoroutineScope,
     private val serverApiExecutor: ServerApiExecutor,
     private val addProPaymentApiFactory: AddProPaymentApi.Factory,
@@ -108,15 +111,18 @@ class ProStatusManager @Inject constructor(
                 }
                 .distinctUntilChanged(),
             proDetailsRepository.get().loadState,
-            (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
-                .onStart { emit(Unit) }
-                .map { prefs.getDebugSubscriptionType() },
-            (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
-                .onStart { emit(Unit) }
-                .map { prefs.getDebugProPlanStatus() },
-            (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
-                .onStart { emit(Unit) }
-                .map { prefs.forceCurrentUserAsPro() },
+            preferenceStorage.changes()
+                .filter { it.name == ProPreferences.DEBUG_SUBSCRIPTION_STATUS.name }
+                .onStart { emit(ProPreferences.DEBUG_SUBSCRIPTION_STATUS) }
+                .map { preferenceStorage[ProPreferences.DEBUG_SUBSCRIPTION_STATUS] },
+            preferenceStorage.changes()
+                .filter { it.name == ProPreferences.DEBUG_PRO_PLAN_STATUS.name }
+                .onStart { emit(ProPreferences.DEBUG_PRO_PLAN_STATUS) }
+                .map { preferenceStorage[ProPreferences.DEBUG_PRO_PLAN_STATUS] },
+            preferenceStorage.changes()
+                .filter { it.name == ProPreferences.FORCE_CURRENT_USER_AS_PRO.name }
+                .onStart { emit(ProPreferences.FORCE_CURRENT_USER_AS_PRO) }
+                .map { preferenceStorage[ProPreferences.FORCE_CURRENT_USER_AS_PRO] },
         ){ showProBadgePreference, proDetailsState,
            debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
@@ -231,9 +237,12 @@ class ProStatusManager @Inject constructor(
 
     init {
         scope.launch {
-            prefs.watchPostProStatus().collect {
-                _postProLaunchStatus.update { isPostPro() }
-            }
+            preferenceStorage.changes()
+                .filter { it.name == ProPreferences.FORCE_POST_PRO.name }
+                .onStart { emit(ProPreferences.FORCE_POST_PRO) }
+                .collect {
+                    _postProLaunchStatus.update { isPostPro() }
+                }
         }
     }
 
@@ -412,7 +421,7 @@ class ProStatusManager @Inject constructor(
     fun getIncomingMessageMaxLength(message: VisibleMessage): Int {
         // if the debug is set, return that
         // of if we are in pre-pro world
-        if (prefs.forceIncomingMessagesAsPro() || !isPostPro()) return MAX_CHARACTER_PRO
+        if (preferenceStorage[ProPreferences.FORCE_INCOMING_MESSAGES_AS_PRO] || !isPostPro()) return MAX_CHARACTER_PRO
 
         if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
             return MAX_CHARACTER_PRO
@@ -423,7 +432,7 @@ class ProStatusManager @Inject constructor(
 
     // Temporary method and concept that we should remove once Pro is out
     fun isPostPro(): Boolean {
-        return prefs.forcePostPro()
+        return preferenceStorage[ProPreferences.FORCE_POST_PRO]
     }
 
     fun getCharacterLimit(isPro: Boolean): Int {
@@ -441,8 +450,8 @@ class ProStatusManager @Inject constructor(
      */
     fun getMessageProFeatures(message: MessageRecord): Set<ProFeature> {
         // use debug values if any
-        if(prefs.forceIncomingMessagesAsPro()){
-            return prefs.getDebugMessageFeatures()
+        if(preferenceStorage[ProPreferences.FORCE_INCOMING_MESSAGES_AS_PRO]){
+            return textSecurePreferences.getDebugMessageFeatures()
         }
 
         return message.proFeatures
@@ -563,6 +572,14 @@ class ProStatusManager @Inject constructor(
         // All attempts failed - throw our custom exception
         Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' - Al retries attempted, throwing our custom `PaymentServerException`")
         throw SubscriptionManager.PaymentServerException()
+    }
+
+    private fun getDefaultSubscriptionStateData(): ProDataState {
+        return ProDataState(
+            type = ProStatus.NeverSubscribed,
+            showProBadge = false,
+            refreshState = State.Success(Unit)
+        )
     }
 
     companion object {

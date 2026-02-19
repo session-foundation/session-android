@@ -38,16 +38,20 @@ import java.lang.Exception
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
-import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
-import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockTimeout
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SecurityPreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.BiometricSecretProvider
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.service.KeyCachingService.KeySetBinder
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ScreenLockActivity : BaseActionBarActivity() {
+
+    @Inject lateinit var preferenceStorage: PreferenceStorage
     private val TAG: String = ScreenLockActivity::class.java.simpleName
 
     private lateinit var fingerprintPrompt: ImageView
@@ -178,7 +182,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
     override fun onResume() {
         super.onResume()
         setLockTypeVisibility()
-        if (isScreenLockEnabled(this) && !authenticated && !failure) { resumeScreenLock() }
+        if (preferenceStorage[SecurityPreferences.SCREEN_LOCK] && !authenticated && !failure) { resumeScreenLock() }
         failure = false
     }
 
@@ -195,8 +199,8 @@ class ScreenLockActivity : BaseActionBarActivity() {
         // to authenticate against! (we use the system authentication - not our own custom auth.).
         if (!keyguardManager.isKeyguardSecure) {
             Log.w(TAG, "Keyguard not secure...")
-            setScreenLockEnabled(applicationContext, false)
-            setScreenLockTimeout(applicationContext, 0)
+            preferenceStorage[SecurityPreferences.SCREEN_LOCK] = false
+            preferenceStorage[SecurityPreferences.SCREEN_LOCK_TIMEOUT] = 0L
             handleAuthenticated()
             return
         }
@@ -294,7 +298,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
     }
 
     private fun setLockTypeVisibility() {
-        val screenLockEnabled = TextSecurePreferences.isScreenLockEnabled(this)
+        val screenLockEnabled = preferenceStorage[SecurityPreferences.SCREEN_LOCK]
         val biometricManager = BiometricManager.from(this)
         val authenticationPossible = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
         fingerprintPrompt.visibility = if (screenLockEnabled && authenticationPossible) View.VISIBLE else View.GONE

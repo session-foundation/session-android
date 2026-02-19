@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ProPreferences
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -45,7 +47,8 @@ import javax.inject.Singleton
 class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
     private val currentActivityObserver: CurrentActivityObserver,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val loginStateRepository: LoginStateRepository,
     proStatusManager: ProStatusManager,
     @param:ManagerScope scope: CoroutineScope,
@@ -61,9 +64,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     // generic billing support method. Uses the property above and also checks the debug pref
     override val supportsBilling: StateFlow<Boolean> = combine(
         _playBillingAvailable,
-        (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_FORCE_NO_BILLING } as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { prefs.getDebugForceNoBilling() },
+        preferenceStorage.watch(scope, ProPreferences.DEBUG_FORCE_NO_BILLING),
         ){ available, forceNoBilling ->
             !forceNoBilling && available
         }
@@ -280,7 +281,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
     override suspend fun hasValidSubscription(): Boolean {
         // if in debug mode, always return true
-        return if(prefs.forceCurrentUserAsPro()) true
+        return if(preferenceStorage[ProPreferences.FORCE_CURRENT_USER_AS_PRO]) true
         else getExistingSubscription() != null
     }
 

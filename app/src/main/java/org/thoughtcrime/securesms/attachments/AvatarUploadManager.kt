@@ -14,6 +14,8 @@ import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Util
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.withMutableUserConfigs
@@ -39,18 +41,19 @@ import kotlin.time.Duration.Companion.seconds
 class AvatarUploadManager @Inject constructor(
     private val application: Application,
     private val configFactory: ConfigFactoryProtocol,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val localEncryptedFileOutputStreamFactory: LocalEncryptedFileOutputStream.Factory,
     private val attachmentProcessor: AttachmentProcessor,
     private val serverApiExecutor: ServerApiExecutor,
     private val fileUploadApiFactory: FileUploadApi.Factory,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
-        TextSecurePreferences._events.filter { it == TextSecurePreferences.DEBUG_AVATAR_REUPLOAD }
+        preferenceStorage.changes().filter { it.name == MessagingPreferences.DEBUG_AVATAR_REUPLOAD.name }
             .castAwayType()
             .onStart { emit(Unit) }
             .collectLatest {
-                AvatarReuploadWorker.schedule(application, prefs)
+                AvatarReuploadWorker.schedule(application, preferenceStorage)
             }
     }
 
@@ -73,7 +76,7 @@ class AvatarUploadManager @Inject constructor(
             "Should not upload an empty avatar"
         }
 
-        val usesDeterministicEncryption = prefs.forcesDeterministicAttachmentEncryption
+        val usesDeterministicEncryption = preferenceStorage[MessagingPreferences.FORCES_DETERMINISTIC_ATTACHMENT_ENCRYPTION]
         val result = if (usesDeterministicEncryption) {
             attachmentProcessor.encryptDeterministically(
                 plaintext = pictureData,
@@ -85,7 +88,7 @@ class AvatarUploadManager @Inject constructor(
             AttachmentProcessor.EncryptResult(ciphertext = ciphertext, key = key)
         }
 
-        val fileServer = prefs.alternativeFileServer ?: FileServerApis.DEFAULT_FILE_SERVER
+        val fileServer = preferenceStorage[MessagingPreferences.ALTERNATIVE_FILE_SERVER] ?: FileServerApis.DEFAULT_FILE_SERVER
         val uploadResult = serverApiExecutor.execute(
             ServerApiRequest(
                 fileServer = fileServer,
@@ -93,7 +96,7 @@ class AvatarUploadManager @Inject constructor(
                     fileServer = fileServer,
                     data = result.ciphertext,
                     usedDeterministicEncryption = usesDeterministicEncryption,
-                    customExpiresSeconds = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }?.inWholeSeconds
+                    customExpiresSeconds = DEBUG_AVATAR_TTL.takeIf { preferenceStorage[MessagingPreferences.FORCED_SHORT_TTL] }?.inWholeSeconds
                 )
             )
         )

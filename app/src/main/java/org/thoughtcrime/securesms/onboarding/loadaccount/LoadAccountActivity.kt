@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.manager.LoadAccountManager
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
@@ -27,6 +29,8 @@ class LoadAccountActivity : BaseActionBarActivity() {
 
     @Inject
     internal lateinit var prefs: TextSecurePreferences
+    @Inject
+    lateinit var preferenceStorage: PreferenceStorage
     @Inject
     internal lateinit var loadAccountManager: LoadAccountManager
 
@@ -45,7 +49,7 @@ class LoadAccountActivity : BaseActionBarActivity() {
         )
 
         supportActionBar?.setTitle(R.string.loadAccount)
-        prefs.setConfigurationMessageSynced(false)
+        preferenceStorage[MessagingPreferences.CONFIGURATION_SYNCED] = false
 
 
         lifecycleScope.launch {

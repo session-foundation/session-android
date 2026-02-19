@@ -21,6 +21,8 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.InputbarViewModel
@@ -98,6 +100,9 @@ class InputBar @JvmOverloads constructor(
     @Inject
     lateinit var recipientRepository: RecipientRepository
 
+    @Inject
+    lateinit var preferenceStorage: PreferenceStorage
+
     private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply {
         contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)
     }
@@ -145,7 +150,7 @@ class InputBar @JvmOverloads constructor(
         // Prevent some IMEs from switching to fullscreen/extracted text mode in landscape (shows IME-owned text field).
         binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI
 
-        val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
+        val incognitoFlag = if (preferenceStorage[PrivacyPreferences.INCOGNITO_KEYBOARD]) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled
         binding.inputBarEditText.delegate = this
 

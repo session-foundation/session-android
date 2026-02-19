@@ -25,13 +25,22 @@ import org.thoughtcrime.securesms.mms.PushMediaConstraints;
 import org.thoughtcrime.securesms.scribbles.widget.VerticalSlideColorPicker;
 import org.thoughtcrime.securesms.util.ParcelUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences;
 import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import static android.app.Activity.RESULT_OK;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public final class ImageEditorFragment extends Fragment implements ImageEditorHud.EventListener,
                                                                    VerticalSlideColorPicker.OnColorChangeListener,
                                                                    MediaSendPageFragment {
+
+  @Inject PreferenceStorage preferenceStorage;
 
   private static final String TAG = Log.tag(ImageEditorFragment.class);
 
@@ -204,7 +213,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   }
 
   private void startTextEntityEditing(@NonNull EditorElement textElement, boolean selectAll) {
-    imageEditorView.startTextEditing(textElement, TextSecurePreferences.isIncognitoKeyboardEnabled(requireContext()), selectAll);
+    imageEditorView.startTextEditing(textElement, preferenceStorage.get(PrivacyPreferences.INSTANCE.getINCOGNITO_KEYBOARD()), selectAll);
   }
 
   protected void addText() {

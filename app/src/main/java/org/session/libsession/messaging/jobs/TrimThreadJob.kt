@@ -9,7 +9,8 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 
@@ -18,6 +19,7 @@ class TrimThreadJob @AssistedInject constructor(
     private val storage: StorageProtocol,
     @param:ApplicationContext private val context: Context,
     threadDatabase: ThreadDatabase,
+    private val preferenceStorage: PreferenceStorage
 ) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
@@ -36,7 +38,7 @@ class TrimThreadJob @AssistedInject constructor(
     val communityAddress: Address.Community? = threadDatabase.getRecipientForThreadId(threadId) as? Address.Community
 
     override suspend fun execute(dispatcherName: String) {
-        val trimmingEnabled = TextSecurePreferences.isThreadLengthTrimmingEnabled(context)
+        val trimmingEnabled = preferenceStorage[MessagingPreferences.THREAD_TRIM_ENABLED]
         val messageCount = storage.getMessageCount(threadId)
         if (trimmingEnabled && messageCount >= THREAD_LENGTH_TRIGGER_SIZE) {
             val oldestMessageTime = System.currentTimeMillis() - TRIM_TIME_LIMIT

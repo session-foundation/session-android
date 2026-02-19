@@ -91,7 +91,10 @@ import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SecurityPreferences
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -341,7 +344,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
         binding.configOutdatedView.setOnClickListener {
-            textSecurePreferences.setHasLegacyConfig(false)
+            preferenceStorage[SystemPreferences.HAS_RECEIVED_LEGACY_CONFIG] = false
             updateLegacyConfigView()
         }
 
@@ -639,7 +642,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     private fun updateLegacyConfigView() {
-        binding.configOutdatedView.isVisible = textSecurePreferences.getHasLegacyConfig()
+        binding.configOutdatedView.isVisible = preferenceStorage[SystemPreferences.HAS_RECEIVED_LEGACY_CONFIG]
     }
 
     override fun onResume() {
@@ -1005,7 +1008,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             text(getString(R.string.hide))
             button(R.string.yes) {
-                textSecurePreferences.setHasHiddenMessageRequests(true)
+                preferenceStorage[MessagingPreferences.HAS_HIDDEN_MESSAGE_REQUESTS] = true
                 homeViewModel.tryReload()
             }
             button(R.string.no)

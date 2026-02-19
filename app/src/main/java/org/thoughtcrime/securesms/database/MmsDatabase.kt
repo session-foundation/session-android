@@ -34,7 +34,8 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.toGroupString
@@ -74,7 +75,8 @@ class MmsDatabase @Inject constructor(
     private val reactionDatabase: ReactionDatabase,
     private val mmsSmsDatabase: Lazy<MmsSmsDatabase>,
     private val groupDatabase: GroupDatabase,
-    private val snodeClock: SnodeClock
+    private val snodeClock: SnodeClock,
+    private val preferenceStorage: PreferenceStorage
 ) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
@@ -992,7 +994,7 @@ class MmsDatabase @Inject constructor(
                 cursor.getLong(cursor.getColumnIndexOrThrow(PRO_PROFILE_FEATURES)).toProProfileFeatures(this)
             }
 
-            if (!isReadReceiptsEnabled(context)) {
+            if (!preferenceStorage[PrivacyPreferences.READ_RECEIPTS]) {
                 readReceiptCount = 0
             }
             val recipient = getRecipientFor(address)

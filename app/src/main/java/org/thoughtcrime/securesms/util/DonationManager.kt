@@ -3,8 +3,9 @@ package org.thoughtcrime.securesms.util
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_1
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.TRUE
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,7 +13,8 @@ import javax.inject.Singleton
 @Singleton
 class DonationManager @Inject constructor(
     @param:ApplicationContext val context: Context,
-    val prefs: TextSecurePreferences
+    val textSecurePreferences: TextSecurePreferences,
+    val preferenceStorage: PreferenceStorage
 ){
     companion object {
         const val URL_DONATE = "https://getsession.org/donate#app"
@@ -34,7 +36,7 @@ class DonationManager @Inject constructor(
 
         // if we gave a positive review and never donated, then show the donate CTA
         if(getShowFromReview()) {
-            prefs.setShowDonationCTAFromPositiveReview(false) // reset flag
+            preferenceStorage[SystemPreferences.SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW] = false // reset flag
             return true
         }
 
@@ -42,7 +44,7 @@ class DonationManager @Inject constructor(
         // the comparison point is either the last time the CTA was seen,
         // or if it was never seen we check the app's install date
         val comparisonDate = if(seenAmount > 0)
-            prefs.lastSeenDonationCTA()
+            preferenceStorage[SystemPreferences.LAST_SEEN_DONATION_CTA]
         else
             context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime
 
@@ -55,53 +57,53 @@ class DonationManager @Inject constructor(
 
     fun onDonationCTAViewed(){
         // increment seen amount
-        prefs.setSeenDonationCTAAmount(prefs.seenDonationCTAAmount() + 1)
+        preferenceStorage[SystemPreferences.SEEN_DONATION_CTA_AMOUNT] = preferenceStorage[SystemPreferences.SEEN_DONATION_CTA_AMOUNT] + 1
         // set seen time
-        prefs.setLastSeenDonationCTA(System.currentTimeMillis())
+        preferenceStorage[SystemPreferences.LAST_SEEN_DONATION_CTA] = System.currentTimeMillis()
     }
 
     fun onDonationSeen(){
-        prefs.setHasDonated(true)
+        preferenceStorage[SystemPreferences.HAS_DONATED] = true
     }
 
     fun onDonationCopied(){
-        prefs.setHasCopiedDonationURL(true)
+        preferenceStorage[SystemPreferences.HAS_COPIED_DONATION_URL] = true
     }
 
     private fun getHasDonated(): Boolean{
-        val debug = prefs.hasDonatedDebug()
+        val debug = textSecurePreferences.hasDonatedDebug()
         return if(debug != null){
             when(debug){
                 TRUE -> true
                 else -> false
             }
-        } else prefs.hasDonated()
+        } else preferenceStorage[SystemPreferences.HAS_DONATED]
     }
 
     private fun getHasCopiedLink(): Boolean{
-        val debug = prefs.hasCopiedDonationURLDebug()
+        val debug = textSecurePreferences.hasCopiedDonationURLDebug()
         return if(debug != null){
             when(debug){
                 TRUE -> true
                 else -> false
             }
-        } else prefs.hasCopiedDonationURL()
+        } else preferenceStorage[SystemPreferences.HAS_COPIED_DONATION_URL]
     }
 
     private fun getSeenCTAAmount(): Int{
-        val debug = prefs.seenDonationCTAAmountDebug()
+        val debug = textSecurePreferences.seenDonationCTAAmountDebug()
         return if(debug != null){
             debug.toInt()
-        } else prefs.seenDonationCTAAmount()
+        } else preferenceStorage[SystemPreferences.SEEN_DONATION_CTA_AMOUNT]
     }
 
     private fun getShowFromReview(): Boolean{
-        val debug = prefs.showDonationCTAFromPositiveReviewDebug()
+        val debug = textSecurePreferences.showDonationCTAFromPositiveReviewDebug()
         return if(debug != null){
             when(debug){
                 TRUE -> true
                 else -> false
             }
-        } else prefs.showDonationCTAFromPositiveReview()
+        } else preferenceStorage[SystemPreferences.SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW]
     }
 }

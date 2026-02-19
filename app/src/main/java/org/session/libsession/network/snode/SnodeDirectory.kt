@@ -16,6 +16,8 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.crypto.shuffledSequence
 import org.session.libsignal.utilities.Log
@@ -41,7 +43,8 @@ import javax.inject.Singleton
 @Singleton
 class SnodeDirectory @Inject constructor(
     private val storage: SnodePoolStorage,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val httpExecutor: Provider<HttpApiExecutor>,
     private val snodeAPiExecutor: Provider<SnodeApiExecutor>,
     private val listSnodeApi: Provider<ListSnodeApi>,
@@ -83,10 +86,11 @@ class SnodeDirectory @Inject constructor(
     // Refresh state (non-blocking trigger + real exclusion inside mutex)
     @Volatile private var snodePoolRefreshing = false
 
-    val seedNodePool: Set<HttpUrl> get() = when (prefs.getEnvironment()) {
+    val seedNodePool: Set<HttpUrl> get() = when (textSecurePreferences.getEnvironment()) {
         Environment.DEV_NET -> DEV_NET_SEED_NODES
         Environment.TEST_NET -> TEST_NET_SEED_NODES
         Environment.MAIN_NET -> MAIN_NET_SEED_NODES
+        else -> MAIN_NET_SEED_NODES
     }
 
     override fun onPostAppStarted() {
@@ -105,7 +109,7 @@ class SnodeDirectory @Inject constructor(
 
     private fun persistSnodePool(newPool: List<Snode>) {
         storage.setSnodePool(newPool)
-        prefs.setLastSnodePoolRefresh(System.currentTimeMillis())
+        preferenceStorage[SystemPreferences.LAST_SNODE_POOL_REFRESH] = System.currentTimeMillis()
     }
 
     /**
@@ -126,9 +130,9 @@ class SnodeDirectory @Inject constructor(
         if (current.size >= minCount) {
             // ensure we set the refresh timestamp in case we are starting the app
             // with already cached snodes - set the timestamp to stale to enforce a refresh soon
-            if (prefs.getLastSnodePoolRefresh() == 0L) {
+            if (preferenceStorage[SystemPreferences.LAST_SNODE_POOL_REFRESH] == 0L) {
                 // Force a refresh on next opportunity
-                prefs.setLastSnodePoolRefresh(System.currentTimeMillis() - POOL_REFRESH_INTERVAL_MS - 1)
+                preferenceStorage[SystemPreferences.LAST_SNODE_POOL_REFRESH] = System.currentTimeMillis() - POOL_REFRESH_INTERVAL_MS - 1
             }
 
             return current
@@ -272,7 +276,7 @@ class SnodeDirectory @Inject constructor(
      */
     fun refreshPoolIfStaleAsync() {
         // Don’t refresh until we’ve successfully seeded at least once
-        val last = prefs.getLastSnodePoolRefresh()
+        val last = preferenceStorage[SystemPreferences.LAST_SNODE_POOL_REFRESH]
         if (last == 0L) return
 
         val now = System.currentTimeMillis()
@@ -304,7 +308,7 @@ class SnodeDirectory @Inject constructor(
 
         poolWriteMutex.withLock {
             // Re-check staleness INSIDE the lock to avoid “double refresh” races
-            val last = prefs.getLastSnodePoolRefresh()
+            val last = preferenceStorage[SystemPreferences.LAST_SNODE_POOL_REFRESH]
             if (last == 0L) return// still not seeded
             val now = System.currentTimeMillis()
             if (now >= last && now - last < POOL_REFRESH_INTERVAL_MS) return

@@ -44,12 +44,19 @@ import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.thoughtcrime.securesms.dependencies.AppComponent;
+import dagger.hilt.EntryPoints;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
+import org.thoughtcrime.securesms.preferences.SecurityPreferences;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.DatabaseUpgradeActivity;
 import org.thoughtcrime.securesms.DummyActivity;
 import org.thoughtcrime.securesms.home.HomeActivity;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
+
+import javax.inject.Inject;
+import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * Small service that stays running to keep a key cached in memory.
@@ -58,6 +65,7 @@ import org.thoughtcrime.securesms.notifications.NotificationChannels;
  */
 // TODO: This service does only serve one purpose now - to track the screen lock state and handle the timer.
 // We need to refactor it and cleanup from all the old Signal code.
+@AndroidEntryPoint
 public class KeyCachingService extends Service {
 
   private static final String TAG = KeyCachingService.class.getSimpleName();
@@ -102,7 +110,8 @@ public class KeyCachingService extends Service {
   public KeyCachingService() {}
 
   public static synchronized boolean isLocked(Context context) {
-    boolean enabled = !TextSecurePreferences.isPasswordDisabled(context) || TextSecurePreferences.isScreenLockEnabled(context);
+    PreferenceStorage preferenceStorage = ApplicationContext.getInstance(context).getPreferenceStorage().get();
+    boolean enabled = !preferenceStorage.get(SecurityPreferences.PASSWORD_DISABLED) || preferenceStorage.get(SecurityPreferences.SCREEN_LOCK);
     return getMasterSecret(context) == null && enabled;
   }
 
@@ -158,7 +167,8 @@ public class KeyCachingService extends Service {
     Log.i(TAG, "onCreate()");
     super.onCreate();
 
-    if (TextSecurePreferences.isPasswordDisabled(this) && !TextSecurePreferences.isScreenLockEnabled(this)) {
+    PreferenceStorage preferenceStorage = ApplicationContext.getInstance(this).getPreferenceStorage().get();
+    if (preferenceStorage.get(SecurityPreferences.PASSWORD_DISABLED) && !preferenceStorage.get(SecurityPreferences.SCREEN_LOCK)) {
         setMasterSecret(new Object());
     }
   }
@@ -210,19 +220,20 @@ public class KeyCachingService extends Service {
     boolean appVisible       = ApplicationContext.getInstance(context).isAppVisible();
     boolean secretSet        = KeyCachingService.masterSecret != null;
 
-    boolean timeoutEnabled   = TextSecurePreferences.isPassphraseTimeoutEnabled(context);
-    boolean passLockActive   = timeoutEnabled && !TextSecurePreferences.isPasswordDisabled(context);
+    PreferenceStorage preferenceStorage = ApplicationContext.getInstance(context).getPreferenceStorage().get();
+    boolean timeoutEnabled   = preferenceStorage.get(SecurityPreferences.PASSPHRASE_TIMEOUT_ENABLED);
+    boolean passLockActive   = timeoutEnabled && !preferenceStorage.get(SecurityPreferences.PASSWORD_DISABLED);
 
-    long    screenTimeout    = TextSecurePreferences.getScreenLockTimeout(context);
-    boolean screenLockActive = screenTimeout >= 0 && TextSecurePreferences.isScreenLockEnabled(context);
+    long    screenTimeout    = preferenceStorage.get(SecurityPreferences.SCREEN_LOCK_TIMEOUT);
+    boolean screenLockActive = screenTimeout >= 0 && preferenceStorage.get(SecurityPreferences.SCREEN_LOCK);
 
     if (!appVisible && secretSet && (passLockActive || screenLockActive)) {
-      long passphraseTimeoutMinutes = TextSecurePreferences.getPassphraseTimeoutInterval(context);
-      long screenLockTimeoutSeconds = TextSecurePreferences.getScreenLockTimeout(context);
+      long passphraseTimeoutMinutes = preferenceStorage.get(SecurityPreferences.PASSPHRASE_TIMEOUT_INTERVAL);
+      long screenLockTimeoutSeconds = preferenceStorage.get(SecurityPreferences.SCREEN_LOCK_TIMEOUT);
 
       long timeoutMillis;
 
-      if (!TextSecurePreferences.isPasswordDisabled(context)) timeoutMillis = TimeUnit.MINUTES.toMillis(passphraseTimeoutMinutes);
+      if (!preferenceStorage.get(SecurityPreferences.PASSWORD_DISABLED)) timeoutMillis = TimeUnit.MINUTES.toMillis(passphraseTimeoutMinutes);
       else                                                    timeoutMillis = TimeUnit.SECONDS.toMillis(screenLockTimeoutSeconds);
 
       Log.i(TAG, "Starting timeout: " + timeoutMillis);
@@ -236,7 +247,8 @@ public class KeyCachingService extends Service {
   }
 
   private void foregroundService() {
-    if (TextSecurePreferences.isPasswordDisabled(this) && !TextSecurePreferences.isScreenLockEnabled(this)) {
+    PreferenceStorage preferenceStorage = ApplicationContext.getInstance(this).getPreferenceStorage().get();
+    if (preferenceStorage.get(SecurityPreferences.PASSWORD_DISABLED) && !preferenceStorage.get(SecurityPreferences.SCREEN_LOCK)) {
       stopForeground(true);
       return;
     }

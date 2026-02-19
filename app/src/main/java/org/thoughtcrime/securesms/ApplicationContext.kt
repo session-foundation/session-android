@@ -87,6 +87,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
     @Inject lateinit var debugLogger: Lazy<DebugLogger>
     @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
+    @Inject lateinit var preferenceStorage: Lazy<org.thoughtcrime.securesms.preferences.PreferenceStorage>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
 
     @Inject lateinit var imageLoaderProvider: Provider<ImageLoader>

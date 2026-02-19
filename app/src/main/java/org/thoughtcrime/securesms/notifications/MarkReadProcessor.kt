@@ -11,7 +11,8 @@ import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences
 import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
@@ -46,6 +47,7 @@ class MarkReadProcessor @Inject constructor(
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val alterTtyFactory: AlterTtlApi.Factory,
+    private val preferenceStorage: PreferenceStorage,
     @param:ManagerScope private val coroutineScope: CoroutineScope,
 ) {
     fun process(
@@ -138,7 +140,7 @@ class MarkReadProcessor @Inject constructor(
     private fun sendReadReceipts(
         markedReadMessages: List<MarkedMessageInfo>
     ) {
-        if (!isReadReceiptsEnabled(context)) return
+        if (!preferenceStorage[PrivacyPreferences.READ_RECEIPTS]) return
 
         markedReadMessages.map { it.syncMessageId }
             .filter { recipientRepository.getRecipientSync(it.address).shouldSendReadReceipt }

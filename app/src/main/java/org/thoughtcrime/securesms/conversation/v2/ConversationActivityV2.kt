@@ -124,6 +124,10 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.NotificationPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
@@ -260,6 +264,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private lateinit var binding: ActivityConversationV2Binding
 
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
+    @Inject override lateinit var preferenceStorage: PreferenceStorage
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var groupDb: GroupDatabase
@@ -1192,7 +1197,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     }
             }
         }
-        if (textSecurePreferences.isTypingIndicatorsEnabled()) {
+        if (preferenceStorage[PrivacyPreferences.TYPING_INDICATORS]) {
             binding.inputBar.addTextChangedListener {
                 if (it.isNotEmpty()) {
                     viewModel.threadId?.let { threadId ->
@@ -1281,7 +1286,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun setUpLinkPreviewObserver() {
-        if (!textSecurePreferences.isLinkPreviewsEnabled()) {
+        if (!preferenceStorage[PrivacyPreferences.LINK_PREVIEWS]) {
             linkPreviewViewModel.onUserCancel(); return
         }
         linkPreviewViewModel.linkPreviewState.observe(this) { previewState: LinkPreviewState? ->
@@ -1486,7 +1491,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
         val inputBarText = binding.inputBar.text
-        if (textSecurePreferences.isLinkPreviewsEnabled()) {
+        if (preferenceStorage[PrivacyPreferences.LINK_PREVIEWS]) {
             linkPreviewViewModel.onTextChanged(this, inputBarText)
         }
 
@@ -1497,15 +1502,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onInputBarEditTextPasted() {
         val inputBarText = binding.inputBar.text
-        if ( !textSecurePreferences.isLinkPreviewsEnabled() && !textSecurePreferences.hasSeenLinkPreviewSuggestionDialog()
+        if (!preferenceStorage[PrivacyPreferences.LINK_PREVIEWS] && !preferenceStorage[PrivacyPreferences.HAS_SEEN_LINK_PREVIEW_SUGGESTION_DIALOG]
                 && LinkPreviewUtil.findWhitelistedUrls(inputBarText).isNotEmpty()) {
             viewModel.showLinkDownloadDialog {
-                textSecurePreferences.setLinkPreviewsEnabled(true)
+                preferenceStorage[PrivacyPreferences.LINK_PREVIEWS] = true
                 setUpLinkPreviewObserver()
                 linkPreviewViewModel.onEnabled()
                 linkPreviewViewModel.onTextChanged(this, inputBarText)
             }
-            textSecurePreferences.setHasSeenLinkPreviewSuggestionDialog()
+            preferenceStorage[PrivacyPreferences.HAS_SEEN_LINK_PREVIEW_SUGGESTION_DIALOG] = true
         }
     }
 
@@ -1718,7 +1723,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         // if the user has not enabled voice/video calls
-        if (!TextSecurePreferences.isCallNotificationsEnabled(this)) {
+        if (!preferenceStorage[NotificationPreferences.CALL_NOTIFICATIONS_ENABLED]) {
             showSessionDialog {
                 title(R.string.callsPermissionsRequired)
                 text(R.string.callsPermissionsRequiredDescription)
@@ -2349,7 +2354,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun playVoiceMessageAtIndexIfPossible(messageId: MessageId) {
-        if (!textSecurePreferences.isAutoplayAudioMessagesEnabled()) return
+        if (!preferenceStorage[MessagingPreferences.AUTOPLAY_AUDIO_MESSAGES]) return
 
         val finishedMessageIndex = adapter.getItemPositionForId(messageId) ?: return
         val nextIndex = finishedMessageIndex + 1
@@ -2582,13 +2587,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun showGIFPicker() {
-        val hasSeenGIFMetaDataWarning: Boolean = textSecurePreferences.hasSeenGIFMetaDataWarning()
+        val hasSeenGIFMetaDataWarning: Boolean = preferenceStorage[PrivacyPreferences.HAS_SEEN_GIF_METADATA_WARNING]
         if (!hasSeenGIFMetaDataWarning) {
             showSessionDialog {
                 title(R.string.giphyWarning)
                 text(Phrase.from(context, R.string.giphyWarningDescription).put(APP_NAME_KEY, getString(R.string.app_name)).format())
                 button(R.string.theContinue) {
-                    textSecurePreferences.setHasSeenGIFMetaDataWarning()
+                    preferenceStorage[PrivacyPreferences.HAS_SEEN_GIF_METADATA_WARNING] = true
                     selectGif()
                 }
                 cancelButton()
@@ -3024,7 +3029,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // Before saving an attachment, regardless of Android API version or permissions, we always want to ensure
         // that we've warned the user just _once_ that any attachments they save can be accessed by other apps.
-        val haveWarned = TextSecurePreferences.getHaveWarnedUserAboutSavingAttachments(this)
+        val haveWarned = preferenceStorage[PrivacyPreferences.HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS]
         if (haveWarned) {
             // On Android versions below 29 we require the WRITE_EXTERNAL_STORAGE permission to save attachments.
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {

@@ -23,6 +23,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_LONG_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.preferences.NotificationPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 
 @HiltWorker
@@ -30,7 +32,8 @@ class TokenDropNotificationWorker
 @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted private val workerParams: WorkerParameters,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val tokenDataManager: TokenDataManager
 ) : CoroutineWorker(context, workerParams) {
 
@@ -41,7 +44,7 @@ class TokenDropNotificationWorker
     override suspend fun doWork(): Result {
         val isDebugNotification =
             workerParams.tags.contains(TokenPageNotificationManager.debugNotificationWorkName)
-        val alreadyShownTokenPageNotification = prefs.hasSeenTokenPageNotification()
+        val alreadyShownTokenPageNotification = preferenceStorage[NotificationPreferences.HAVE_SHOWN_TOKEN_PAGE_NOTIFICATION]
 
         tokenDataManager.fetchInfoDataIfNeeded()
 
@@ -132,7 +135,7 @@ class TokenDropNotificationWorker
 
         // Update our preference data to indicate we've now shown the notification if this isn't a debug / test notification
         if (!isDebugNotification) {
-            prefs.setHasSeenTokenPageNotification(true)
+            preferenceStorage[NotificationPreferences.HAVE_SHOWN_TOKEN_PAGE_NOTIFICATION] = true
         }
 
         return Result.success()

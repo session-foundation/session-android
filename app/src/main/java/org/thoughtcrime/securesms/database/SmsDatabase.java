@@ -37,6 +37,8 @@ import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.network.SnodeClock;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
+import org.thoughtcrime.securesms.preferences.PrivacyPreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -142,6 +144,7 @@ public class SmsDatabase extends MessagingDatabase {
   private final SnodeClock snodeClock;
   private final Lazy<@NonNull ThreadDatabase> threadDatabase;
   private final Lazy<@NonNull ReactionDatabase> reactionDatabase;
+  private final PreferenceStorage preferenceStorage;
 
   @Inject
   public SmsDatabase(@ApplicationContext Context context,
@@ -149,12 +152,14 @@ public class SmsDatabase extends MessagingDatabase {
                      RecipientRepository recipientRepository,
                      SnodeClock snodeClock,
                      Lazy<@NonNull ThreadDatabase> threadDatabase,
-                     Lazy<@NonNull ReactionDatabase> reactionDatabase) {
+                     Lazy<@NonNull ReactionDatabase> reactionDatabase,
+                     PreferenceStorage preferenceStorage) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.snodeClock = snodeClock;
     this.threadDatabase = threadDatabase;
     this.reactionDatabase = reactionDatabase;
+    this.preferenceStorage = preferenceStorage;
   }
 
   protected String getTableName() {
@@ -747,7 +752,7 @@ public class SmsDatabase extends MessagingDatabase {
       ProFeatureExtKt.toProMessageFeatures(cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.PRO_MESSAGE_FEATURES)), proFeatures);
       ProFeatureExtKt.toProProfileFeatures(cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.PRO_PROFILE_FEATURES)), proFeatures);
 
-      if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
+      if (!preferenceStorage.get(PrivacyPreferences.INSTANCE.getREAD_RECEIPTS())) {
         readReceiptCount = 0;
       }
 

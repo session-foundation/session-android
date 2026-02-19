@@ -58,6 +58,8 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ProPreferences
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -92,6 +94,7 @@ class RecipientRepository @Inject constructor(
     private val proDatabase: ProDatabase,
     private val snodeClock: Lazy<SnodeClock>,
     private val proStatusManager: Lazy<ProStatusManager>,
+    private val preferenceStorage: PreferenceStorage
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
 
@@ -506,12 +509,12 @@ class RecipientRepository @Inject constructor(
         }
 
         // 3. Apply Debug Overrides
-        if (recipient.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
+        if (recipient.isSelf && proData == null && preferenceStorage[ProPreferences.FORCE_CURRENT_USER_AS_PRO]) {
             proData = RecipientData.ProData(showProBadge = true)
         } else if (!recipient.isSelf
             && (recipient.address is Address.Standard)
             && proData == null
-            && prefs.forceOtherUsersAsPro()
+            && preferenceStorage[ProPreferences.FORCE_OTHER_USERS_PRO]
         ) {
             proData = RecipientData.ProData(showProBadge = true)
         }
@@ -660,7 +663,7 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         val pro = configs.userProfile.getProConfig()
 
-                        if (prefs.forceCurrentUserAsPro()) {
+                        if (preferenceStorage[ProPreferences.FORCE_CURRENT_USER_AS_PRO]) {
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(

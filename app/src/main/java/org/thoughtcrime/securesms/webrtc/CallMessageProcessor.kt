@@ -9,7 +9,8 @@ import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.NotificationPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos.CallMessage.Type.ANSWER
 import org.session.protos.SessionProtos.CallMessage.Type.END_CALL
@@ -28,7 +29,7 @@ import javax.inject.Singleton
 @Singleton
 class CallMessageProcessor @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val storage: StorageProtocol,
     private val webRtcBridge: WebRtcCallBridge,
     private val recipientRepository: RecipientRepository,
@@ -51,7 +52,7 @@ class CallMessageProcessor @Inject constructor(
 
             // If the user has not enabled voice/video calls or if the user has not granted audio/microphone permissions
             if (
-                !textSecurePreferences.isCallNotificationsEnabled() ||
+                !preferenceStorage[NotificationPreferences.CALL_NOTIFICATIONS_ENABLED] ||
                 !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)
             ) {
                 Log.d("Loki","Dropping call message if call notifications disabled")

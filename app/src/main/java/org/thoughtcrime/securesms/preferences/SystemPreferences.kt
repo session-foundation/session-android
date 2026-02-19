@@ -1,0 +1,25 @@
+package org.thoughtcrime.securesms.preferences
+
+object SystemPreferences {
+    val UPDATE_APK_REFRESH_TIME = PreferenceKey.long("pref_update_apk_refresh_time", 0L)
+    val UPDATE_APK_DOWNLOAD_ID = PreferenceKey.long("pref_update_apk_download_id", -1L)
+    val UPDATE_APK_DIGEST = PreferenceKey.string("pref_update_apk_digest", null)
+    val HAS_RECEIVED_LEGACY_CONFIG = PreferenceKey.boolean("has_received_legacy_config", false)
+    val LAST_VERSION_CODE = PreferenceKey.int("last_version_code", 0)
+    val LANGUAGE = PreferenceKey.string("pref_language", "zz")
+    val LAST_OPEN_DATE = PreferenceKey.long("pref_last_open_date", 0L)
+    val LAST_VACUUM_TIME = PreferenceKey.long("pref_last_vacuum_time", 0L)
+    val HAS_FORCED_NEW_CONFIG = PreferenceKey.boolean("has_forced_new_config", false)
+    val LAST_VERSION_CHECK = PreferenceKey.long("pref_last_version_check", 0L)
+    val HAS_CHECKED_DOZE_WHITELIST = PreferenceKey.boolean("has_checked_doze_whitelist", false)
+    val HAS_DONATED = PreferenceKey.boolean("has_donated", false)
+    val HAS_COPIED_DONATION_URL = PreferenceKey.boolean("has_copied_donation_url", false)
+    val SEEN_DONATION_CTA_AMOUNT = PreferenceKey.int("seen_donation_cta_amount", 0)
+    val LAST_SEEN_DONATION_CTA = PreferenceKey.long("last_seen_donation_cta", 0L)
+    val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = PreferenceKey.boolean("show_donation_cta_from_positive_review", false)
+    val LAST_SNODE_POOL_REFRESH = PreferenceKey.long("last_snode_pool_refresh", 0L)
+    val LAST_PATH_ROTATION = PreferenceKey.long("last_path_rotation", 0L)
+    val IN_APP_REVIEW_STATE = PreferenceKey.string("in_app_review_state", null)
+    val MIGRATED_TO_GROUP_V2_CONFIG = PreferenceKey.boolean("migrated_to_group_v2_config", false)
+    val MIGRATED_TO_DISABLING_KDF = PreferenceKey.boolean("migrated_to_disabling_kdf", false)
+}

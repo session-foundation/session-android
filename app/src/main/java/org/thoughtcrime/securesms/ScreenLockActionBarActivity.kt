@@ -16,8 +16,9 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SecurityPreferences
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity
@@ -28,8 +29,13 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
+
+    @Inject open lateinit var preferenceStorage: PreferenceStorage
 
     private val migrationManager: DatabaseMigrationManager
         get() = (applicationContext as ApplicationContext).migrationManager.get()
@@ -83,7 +89,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
 
-        val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) &&
+        val locked = KeyCachingService.isLocked(this) && preferenceStorage[SecurityPreferences.SCREEN_LOCK] &&
                 (applicationContext as ApplicationContext).loginStateRepository.get().peekLoginState() != null
         routeApplicationState(locked)
 

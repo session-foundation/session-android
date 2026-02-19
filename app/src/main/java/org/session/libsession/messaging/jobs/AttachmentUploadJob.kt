@@ -24,6 +24,8 @@ import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.InputStreamMediaDataSource
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UploadResult
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.http.HttpBody
@@ -43,7 +45,8 @@ class AttachmentUploadJob @AssistedInject constructor(
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val threadDatabase: ThreadDatabase,
     private val attachmentProcessor: AttachmentProcessor,
-    private val preferences: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val messageSender: MessageSender,
     private val serverApiExecutor: ServerApiExecutor,
     private val fileUploadApiFactory: FileUploadApi.Factory,
@@ -99,7 +102,7 @@ class AttachmentUploadJob @AssistedInject constructor(
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
-                val fileServer = preferences.alternativeFileServer ?: FileServerApis.DEFAULT_FILE_SERVER
+                val fileServer = preferenceStorage[MessagingPreferences.ALTERNATIVE_FILE_SERVER] ?: FileServerApis.DEFAULT_FILE_SERVER
                 val keyAndResult = upload(
                     attachment = attachment,
                     encrypt = true
@@ -147,7 +150,7 @@ class AttachmentUploadJob @AssistedInject constructor(
         val deterministicallyEncrypted: Boolean
 
         when {
-            encrypt && preferences.forcesDeterministicAttachmentEncryption -> {
+            encrypt && preferenceStorage[MessagingPreferences.FORCES_DETERMINISTIC_ATTACHMENT_ENCRYPTION] -> {
                 deterministicallyEncrypted = true
                 val result = attachmentProcessor.encryptDeterministically(
                     plaintext = input,

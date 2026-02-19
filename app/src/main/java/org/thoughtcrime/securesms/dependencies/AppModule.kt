@@ -19,6 +19,7 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -88,6 +89,5 @@ class ToasterModule {
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface AppComponent {
-    fun getPrefs(): TextSecurePreferences
-
+    fun getPreferenceStorage(): PreferenceStorage
 }

@@ -31,9 +31,10 @@ import org.session.libsession.messaging.sending_receiving.notifications.MessageN
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
-import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
-import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
+import org.session.libsession.utilities.NotificationPrivacyPreference
+import org.thoughtcrime.securesms.preferences.MessagingPreferences
+import org.thoughtcrime.securesms.preferences.NotificationPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -76,6 +77,7 @@ class DefaultMessageNotifier @Inject constructor(
     private val imageLoader: Provider<ImageLoader>,
     private val loginStateRepository: LoginStateRepository,
     private val messageFormatter: Lazy<MessageFormatter>,
+    private val preferenceStorage: PreferenceStorage,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
@@ -147,7 +149,7 @@ class DefaultMessageNotifier @Inject constructor(
     }
 
     override fun updateNotification(context: Context) {
-        if (!isNotificationsEnabled(context)) {
+        if (!preferenceStorage[NotificationPreferences.NOTIFICATIONS_ENABLED]) {
             return
         }
 
@@ -169,10 +171,10 @@ class DefaultMessageNotifier @Inject constructor(
             ) == 1 &&
             !(recipient.approved || threadDatabase.getLastSeenAndHasSent(threadId).second())
         ) {
-            removeHasHiddenMessageRequests(context)
+            preferenceStorage.remove(MessagingPreferences.HAS_HIDDEN_MESSAGE_REQUESTS)
         }
 
-        if (!isNotificationsEnabled(context) ||
+        if (!preferenceStorage[NotificationPreferences.NOTIFICATIONS_ENABLED] ||
             (recipient != null && recipient.isMuted())
         ) {
             return
@@ -333,7 +335,7 @@ class DefaultMessageNotifier @Inject constructor(
 
         val builder = SingleRecipientNotificationBuilder(
             context,
-            getNotificationPrivacy(context),
+            NotificationPrivacyPreference(preferenceStorage[NotificationPreferences.NOTIFICATION_PRIVACY]),
             avatarUtils,
             imageLoader,
         )
@@ -479,7 +481,7 @@ class DefaultMessageNotifier @Inject constructor(
             return
         }
 
-        val builder = GroupSummaryNotificationBuilder(context, getNotificationPrivacy(context))
+        val builder = GroupSummaryNotificationBuilder(context, NotificationPrivacyPreference(preferenceStorage[NotificationPreferences.NOTIFICATION_PRIVACY]))
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
         builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)

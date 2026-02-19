@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
@@ -26,7 +28,8 @@ private const val TAG = "InAppReviewViewModel"
 class InAppReviewViewModel @Inject constructor(
     private val manager: InAppReviewManager,
     private val storeReviewManager: StoreReviewManager,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
 ) : ViewModel() {
     private val commands = MutableSharedFlow<UiCommand>(extraBufferCapacity = 1)
 
@@ -51,7 +54,7 @@ class InAppReviewViewModel @Inject constructor(
                         // "It's Great" button clicked
                         UiCommand.NegativeButtonClicked -> {
                             // mark the app as needing to display the donation post positive review
-                            prefs.setShowDonationCTAFromPositiveReview(true)
+                            preferenceStorage[SystemPreferences.SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW] = true
 
                             UiState.PositivePrompt
                         }

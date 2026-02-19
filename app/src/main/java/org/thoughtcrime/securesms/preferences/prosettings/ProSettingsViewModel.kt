@@ -50,6 +50,8 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ProPreferences
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProDetailsRepository
@@ -79,7 +81,8 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val proStatusManager: ProStatusManager,
     private val subscriptionCoordinator: SubscriptionCoordinator,
     private val dateUtils: DateUtils,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val proDetailsRepository: ProDetailsRepository,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
     private val storage: StorageProtocol,
@@ -392,7 +395,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
         viewModelScope.launch {
             _refundPlanState.update {
-                val isQuickRefund = if(prefs.forceCurrentUserAsPro()) prefs.getDebugIsWithinQuickRefund()// debug mode
+                val isQuickRefund = if(preferenceStorage[ProPreferences.FORCE_CURRENT_USER_AS_PRO]) preferenceStorage[ProPreferences.DEBUG_IS_WITHIN_QUICK_REFUND] ?: false// debug mode
                 else sub.isWithinQuickRefundWindow()
 
                 State.Success(
@@ -942,7 +945,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     private fun refreshProStats(){
         viewModelScope.launch {
             // if we have a debug toggle for the loading state, respect it
-            val currentDebugState = prefs.getDebugProPlanStatus()
+            val currentDebugState = preferenceStorage[ProPreferences.DEBUG_PRO_PLAN_STATUS]
             val debugState = when(currentDebugState) {
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())

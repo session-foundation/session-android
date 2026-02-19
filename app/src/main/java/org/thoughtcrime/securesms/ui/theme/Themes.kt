@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 
 // Globally accessible composition local objects
 val LocalColors = staticCompositionLocalOf <ThemeColors> { ClassicDark() }
@@ -37,9 +38,11 @@ fun invalidateComposeThemeColors() {
 fun SessionMaterialTheme(
     preferences: TextSecurePreferences =
         (LocalContext.current.applicationContext as ApplicationContext).textSecurePreferences.get(),
+    preferenceStorage: PreferenceStorage =
+        (LocalContext.current.applicationContext as ApplicationContext).preferenceStorage.get(),
     content: @Composable () -> Unit
 ) {
-    val cachedColors = cachedColorsProvider ?: preferences.getColorsProvider().also { cachedColorsProvider = it }
+    val cachedColors = cachedColorsProvider ?: getColorsProvider(preferences, preferenceStorage).also { cachedColorsProvider = it }
 
     SessionMaterialTheme(
         colors = cachedColors.get(),

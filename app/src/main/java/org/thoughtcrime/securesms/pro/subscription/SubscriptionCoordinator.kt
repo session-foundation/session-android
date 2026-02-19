@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.pro.subscription
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ProPreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 
@@ -13,7 +15,8 @@ import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 class SubscriptionCoordinator @Inject constructor(
     private val availableManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
     private val noopSubManager: NoOpSubscriptionManager,
-    private val prefs: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage
 ): OnAppStartupComponent {
 
     private var currentManager: SubscriptionManager? = null
@@ -29,7 +32,7 @@ class SubscriptionCoordinator @Inject constructor(
                 currentManager = managers.first()
             }
             else -> {
-                val savedProviderId = prefs.getSubscriptionProvider()
+                val savedProviderId = preferenceStorage[ProPreferences.SUBSCRIPTION_PROVIDER]
                 currentManager = managers.find { it.id == savedProviderId }
                 // If null, user needs to choose
             }
@@ -44,7 +47,7 @@ class SubscriptionCoordinator @Inject constructor(
         currentManager = availableManagers.find { it.id == providerId }
             ?: throw IllegalArgumentException("Provider not found: $providerId")
 
-        prefs.setSubscriptionProvider(providerId)
+        preferenceStorage[ProPreferences.SUBSCRIPTION_PROVIDER] = providerId
     }
 
     fun getCurrentManager(): SubscriptionManager {

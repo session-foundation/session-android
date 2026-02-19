@@ -16,6 +16,8 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.DatabaseSecretProvider
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -28,7 +30,8 @@ import javax.inject.Singleton
 @Singleton
 class DatabaseMigrationManager @Inject constructor(
     private val application: Application,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val databaseSecretProvider: DatabaseSecretProvider,
     jsonProvider: Provider<Json>,
     @param:ManagerScope private val scope: CoroutineScope,
@@ -114,7 +117,7 @@ class DatabaseMigrationManager @Inject constructor(
     }
 
     private fun migrateCipherSettings(fromRetry: Boolean) {
-        if (prefs.migratedToDisablingKDF) {
+        if (preferenceStorage[SystemPreferences.MIGRATED_TO_DISABLING_KDF]) {
             Log.i(TAG, "Already migrated to latest cipher settings")
             return
         }
@@ -152,7 +155,7 @@ class DatabaseMigrationManager @Inject constructor(
             }
         } ?: run {
             Log.i(TAG, "No database to migrate")
-            prefs.migratedToDisablingKDF = true
+            preferenceStorage[SystemPreferences.MIGRATED_TO_DISABLING_KDF] = true
             return
         }
 
@@ -212,7 +215,7 @@ class DatabaseMigrationManager @Inject constructor(
         }
 
         check(newDb.exists()) { "New database was not created" }
-        prefs.migratedToDisablingKDF = true
+        preferenceStorage[SystemPreferences.MIGRATED_TO_DISABLING_KDF] = true
     }
 
     fun requestMigration(fromRetry: Boolean) {

@@ -19,16 +19,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.observeBooleanKey
-import org.session.libsession.utilities.observeStringKey
 import org.thoughtcrime.securesms.notifications.NotificationChannels
+import org.thoughtcrime.securesms.preferences.NotificationPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.SystemPreferences
 import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
 import javax.inject.Inject
 import kotlin.Boolean
 
 @HiltViewModel
 class NotificationsPreferenceViewModel @Inject constructor(
-    var prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     val application: Application,
 ) : ViewModel() {
 
@@ -46,11 +48,11 @@ class NotificationsPreferenceViewModel @Inject constructor(
 
     private val notifPrefsFlow =
         combine(
-            prefs.observeBooleanKey(TextSecurePreferences.HAS_CHECKED_DOZE_WHITELIST, default = false),
-            prefs.observeStringKey(TextSecurePreferences.RINGTONE_PREF, default = null),
-            prefs.observeBooleanKey(TextSecurePreferences.SOUND_WHEN_OPEN, default = false),
-            prefs.observeBooleanKey(TextSecurePreferences.VIBRATE_PREF, default = true),
-            prefs.observeStringKey(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, default = "all"),
+            preferenceStorage.watch(viewModelScope, SystemPreferences.HAS_CHECKED_DOZE_WHITELIST),
+            preferenceStorage.watch(viewModelScope, NotificationPreferences.RINGTONE),
+            preferenceStorage.watch(viewModelScope, NotificationPreferences.SOUND_WHEN_OPEN),
+            preferenceStorage.watch(viewModelScope, NotificationPreferences.VIBRATE_ENABLED),
+            preferenceStorage.watch(viewModelScope, NotificationPreferences.NOTIFICATION_PRIVACY),
         ) { checkedDozeWhitelist, ringtonePrefString, soundWhenOpen, vibrate, notificationPrivacy ->
             NotifPrefsData(
                 checkedDozeWhitelist = checkedDozeWhitelist,
@@ -62,7 +64,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
         }
 
     init {
-        combine(prefs.pushEnabled, notifPrefsFlow) { strategy, notif ->
+        combine(textSecurePreferences.pushEnabled, notifPrefsFlow) { strategy, notif ->
             strategy to notif
         }.onEach { (isPushEnabled, notif) ->
             _uiState.update { old ->
@@ -122,11 +124,11 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 val currentState = uiState.value
                 val isEnabled = command.isEnabled
 
-                prefs.setPushEnabled(isEnabled)
+                textSecurePreferences.setPushEnabled(isEnabled)
 
                 if (!isEnabled && !currentState.checkedDozeWhitelist) {
                     _uiState.update { it.copy(showWhitelistEnableDialog = true) }
-                    prefs.setHasCheckedDozeWhitelist(true)
+                    preferenceStorage[SystemPreferences.HAS_CHECKED_DOZE_WHITELIST] = true
                 }
             }
 
@@ -144,7 +146,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
             }
 
             Commands.RingtoneClicked -> {
-                val current = prefs.getNotificationRingtone()
+                val current = textSecurePreferences.getNotificationRingtone()
                 val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
                 intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
                 intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
@@ -171,20 +173,20 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 var ringtoneUri = command.uri
                 if (Settings.System.DEFAULT_NOTIFICATION_URI == ringtoneUri) {
                     NotificationChannels.updateMessageRingtone(application, ringtoneUri)
-                    prefs.removeNotificationRingtone()
+                    preferenceStorage.remove(NotificationPreferences.RINGTONE)
                 } else {
                     ringtoneUri = command.uri ?: Uri.EMPTY
                     NotificationChannels.updateMessageRingtone(application, ringtoneUri)
-                    prefs.setNotificationRingtone(ringtoneUri.toString())
+                    preferenceStorage[NotificationPreferences.RINGTONE] = ringtoneUri.toString()
                 }
             }
 
             is Commands.ToggleSoundWhenOpen -> {
-                prefs.setSoundWhenAppIsOpenEnabled(command.isEnabled)
+                preferenceStorage[NotificationPreferences.SOUND_WHEN_OPEN] = command.isEnabled
             }
 
             is Commands.ToggleVibrate -> {
-                prefs.setNotificationVibrateEnabled(command.isEnabled)
+                preferenceStorage[NotificationPreferences.VIBRATE_ENABLED] = command.isEnabled
             }
 
             Commands.OpenSystemBgWhitelist -> {
@@ -213,7 +215,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
             }
 
             is Commands.SelectNotificationPrivacyOption -> {
-                prefs.setNotificationPrivacy(command.option)
+                preferenceStorage[NotificationPreferences.NOTIFICATION_PRIVACY] = command.option
                 hideNotificationPrivacyDialog()
             }
         }

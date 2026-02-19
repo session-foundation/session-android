@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.ProPreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
@@ -31,7 +33,8 @@ class ProDetailsRepository @Inject constructor(
     private val snodeClock: SnodeClock,
     @ManagerScope scope: CoroutineScope,
     loginStateRepository: LoginStateRepository,
-    private val prefs: TextSecurePreferences,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val networkConnectivity: NetworkConnectivity,
 ) {
     sealed interface LoadState {
@@ -89,7 +92,7 @@ class ProDetailsRepository @Inject constructor(
      * made regardless of the freshness of the last update.
      */
     fun requestRefresh(force: Boolean = false) {
-        if (!prefs.forcePostPro()) {
+        if (!preferenceStorage[ProPreferences.FORCE_POST_PRO]) {
             Log.d(DebugLogGroup.PRO_DATA.label, "Pro hasn't been enabled, skipping refresh")
             return
         }
