@@ -25,7 +25,6 @@ import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -35,6 +34,7 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.MediaStream
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -108,7 +108,8 @@ class DatabaseAttachmentProvider @Inject constructor(
     }
 
     override fun getLinkPreviewAttachmentIDFor(mmsMessageId: Long): Long? {
-        val message = mmsDatabase.getOutgoingMessage(mmsMessageId)
+        val message = mmsSmsDatabase.getMessageById(MessageId(mmsMessageId, true))
+                as? MmsMessageRecord ?: return null
         return message.linkPreviews.firstOrNull()?.attachmentId?.rowId
     }
 
@@ -148,21 +149,27 @@ class DatabaseAttachmentProvider @Inject constructor(
 
     override fun handleSuccessfulAttachmentUpload(attachmentId: Long, attachmentStream: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult) {
         val databaseAttachment = getDatabaseAttachment(attachmentId) ?: return
+
         val attachmentPointer = SignalServiceAttachmentPointer(
             // The ID will be non-numeric in the future so we will do our best to convert it to a long,
             // as some old clients still use this value (we should use the url instead).
-            uploadResult.id.toLongOrNull() ?: 0L,
-            attachmentStream.contentType,
-            attachmentKey,
-            Optional.of(Util.toIntExact(attachmentStream.length)),
-            attachmentStream.preview,
-            attachmentStream.width, attachmentStream.height,
-            Optional.fromNullable(uploadResult.digest),
-            attachmentStream.filename,
-            attachmentStream.voiceNote,
-            attachmentStream.caption,
-            uploadResult.url);
-        val attachment = PointerAttachment.forPointer(Optional.of(attachmentPointer), databaseAttachment.fastPreflightId).get()
+            id = uploadResult.id.toLongOrNull() ?: 0L,
+            contentType = attachmentStream.contentType,
+            key = attachmentKey,
+            size = Util.toIntExact(attachmentStream.length),
+            preview = attachmentStream.preview,
+            width = attachmentStream.width,
+            height = attachmentStream.height,
+            digest = uploadResult.digest,
+            filename = attachmentStream.filename,
+            voiceNote = attachmentStream.voiceNote,
+            caption = attachmentStream.caption,
+            url = uploadResult.url
+        )
+
+        val attachment = PointerAttachment
+            .forPointer(attachmentPointer, databaseAttachment.fastPreflightId)
+            ?: return
         attachmentDatabase.updateAttachmentAfterUploadSucceeded(databaseAttachment.attachmentId, attachment)
     }
 
@@ -317,25 +324,47 @@ class DatabaseAttachmentProvider @Inject constructor(
 private const val TAG = "DatabaseAttachmentProvider"
 
 fun DatabaseAttachment.toAttachmentPointer(): SessionServiceAttachmentPointer {
-    return SessionServiceAttachmentPointer(attachmentId.rowId, contentType, key?.toByteArray(), Optional.fromNullable(size.toInt()), Optional.absent(), width, height, Optional.fromNullable(digest), filename, isVoiceNote, Optional.fromNullable(caption), url)
+    return SessionServiceAttachmentPointer(
+        id = attachmentId.rowId,
+        contentType = contentType,
+        key = key?.toByteArray(),
+        size = size.toInt(),
+        preview = null,
+        width = width,
+        height = height,
+        digest = digest,
+        filename = filename,
+        voiceNote = isVoiceNote,
+        caption = caption,
+        url = url
+    )
 }
 
 fun DatabaseAttachment.toAttachmentStream(context: Context): SessionServiceAttachmentStream {
-    val stream = PartAuthority.getAttachmentStream(context, this.dataUri!!)
+    val stream = requireNotNull(dataUri) { "DatabaseAttachment has null dataUri" }
+        .let { PartAuthority.getAttachmentStream(context, it) }
 
-    var attachmentStream = SessionServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption))
-    attachmentStream.attachmentId = this.attachmentId.rowId
-    attachmentStream.isAudio = MediaUtil.isAudio(this)
-    attachmentStream.isGif = MediaUtil.isGif(this)
-    attachmentStream.isVideo = MediaUtil.isVideo(this)
-    attachmentStream.isImage = MediaUtil.isImage(this)
+    return SessionServiceAttachmentStream(
+        inputStream = stream,
+        contentType = contentType,
+        length = size,
+        filename = filename,
+        voiceNote = isVoiceNote,
+        preview = null,
+        width = width,
+        height = height,
+        caption = caption
+    ).also { attachmentStream ->
+        attachmentStream.attachmentId = attachmentId.rowId
+        attachmentStream.isAudio = MediaUtil.isAudio(this)
+        attachmentStream.isGif = MediaUtil.isGif(this)
+        attachmentStream.isVideo = MediaUtil.isVideo(this)
+        attachmentStream.isImage = MediaUtil.isImage(this)
 
-    attachmentStream.key = ByteString.copyFrom(this.key?.toByteArray())
-    attachmentStream.digest = Optional.fromNullable(this.digest)
-
-    attachmentStream.url = this.url
-
-    return attachmentStream
+        attachmentStream.key = key?.toByteArray()?.let(ByteString::copyFrom)
+        attachmentStream.digest = digest
+        attachmentStream.url = url
+    }
 }
 
 fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPointer? {
@@ -348,14 +377,14 @@ fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPoint
             id,
             contentType,
             key,
-            Optional.of(Util.toIntExact(size)),
-            Optional.absent(),
+            Util.toIntExact(size),
+            null,
             width,
             height,
-            Optional.fromNullable(digest),
+            digest,
             filename,
             isVoiceNote,
-            Optional.fromNullable(caption),
+            caption,
             url
         )
     } catch (e: Exception) {
@@ -366,6 +395,16 @@ fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPoint
 fun DatabaseAttachment.toSignalAttachmentStream(context: Context): SignalServiceAttachmentStream {
     val stream = PartAuthority.getAttachmentStream(context, this.dataUri!!)
 
-    return SignalServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption))
+    return SignalServiceAttachmentStream(
+        inputStream = stream,
+        contentType = contentType,
+        length = size,
+        filename = filename,
+        voiceNote = isVoiceNote,
+        preview = null,
+        width = width,
+        height = height,
+        caption = caption
+    )
 }
 

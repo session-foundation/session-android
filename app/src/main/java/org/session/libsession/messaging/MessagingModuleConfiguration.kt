@@ -7,9 +7,9 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
@@ -28,14 +28,14 @@ class MessagingModuleConfiguration @Inject constructor(
     val configFactory: ConfigFactoryProtocol,
     val tokenFetcher: TokenFetcher,
     val groupManagerV2: GroupManagerV2,
-    val clock: SnodeClock,
     val preferences: TextSecurePreferences,
     val deprecationManager: LegacyGroupDeprecationManager,
     val recipientRepository: RecipientRepository,
     val avatarUtils: AvatarUtils,
     val proStatusManager: ProStatusManager,
-    val messageSendJobFactory: MessageSendJob.Factory,
     val json: Json,
+    val snodeClock: SnodeClock,
+    val pathManager: PathManager
 ) {
 
     companion object {

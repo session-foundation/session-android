@@ -17,10 +17,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,7 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +42,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.BasicSessionAlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
@@ -63,8 +63,8 @@ fun MediaOverviewScreen(
     val selectionMode by viewModel.inSelectionMode.collectAsState()
     val conversationName by viewModel.conversationName.collectAsState()
     val topAppBarState = rememberTopAppBarState()
-    var showingDeleteConfirmation by remember { mutableStateOf(false) }
-    var showingSaveAttachmentWarning by remember { mutableStateOf(false) }
+    var showingDeleteConfirmation by retain { mutableStateOf(false) }
+    var showingSaveAttachmentWarning by retain { mutableStateOf(false) }
     val context = LocalContext.current
     val requestStoragePermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -137,7 +137,7 @@ fun MediaOverviewScreen(
                 appBarScrollBehavior = appBarScrollBehavior
             )
         },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
     ) { paddings ->
         Column(
             modifier = Modifier
@@ -266,7 +266,7 @@ private fun DeleteConfirmationDialog(
 private fun ActionProgressDialog(
     text: String
 ) {
-    BasicAlertDialog(
+    BasicSessionAlertDialog(
         onDismissRequest = {},
     ) {
         Row(

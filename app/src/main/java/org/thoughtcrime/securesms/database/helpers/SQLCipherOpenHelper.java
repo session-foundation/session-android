@@ -33,13 +33,16 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase;
 import org.thoughtcrime.securesms.database.PushDatabase;
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase;
 import org.thoughtcrime.securesms.database.ReactionDatabase;
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase;
 import org.thoughtcrime.securesms.database.RecipientDatabase;
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase;
 import org.thoughtcrime.securesms.database.SearchDatabase;
 import org.thoughtcrime.securesms.database.SessionContactDatabase;
 import org.thoughtcrime.securesms.database.SessionJobDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.database.SnodeDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
+import org.thoughtcrime.securesms.pro.db.ProDatabase;
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
 
 import javax.inject.Provider;
@@ -102,9 +105,12 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV53                          = 74;
   private static final int lokiV54                          = 75;
   private static final int lokiV55                          = 76;
+  private static final int lokiV56                          = 77;
+  private static final int lokiV57                          = 78;
+  private static final int lokiV58                          = 79;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV55;
+  private static final int    DATABASE_VERSION         = lokiV58;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -146,8 +152,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     );
 
     this.jsonProvider = jsonProvider;
-
-    Log.d(TAG, "SQLCipherOpenHelper created with database secret: " + databaseSecret.asString());
   }
 
   @Override
@@ -266,6 +270,15 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(MmsDatabase.ADD_LAST_MESSAGE_INDEX);
 
     executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
+
+    ReceivedMessageHashDatabase.Companion.createAndMigrateTable(db);
+
+    ProDatabase.Companion.createTable(db);
+    MmsDatabase.Companion.addProFeatureColumns(db);
+    SmsDatabase.addProFeatureColumns(db);
+    RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
+
+    SnodeDatabase.Companion.createTableAndMigrateData(db, true);
   }
 
   @Override
@@ -273,6 +286,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     super.onConfigure(db);
 
     db.execSQL("PRAGMA cache_size = 10000");
+    db.setForeignKeyConstraintsEnabled(true);
   }
 
   @Override
@@ -602,6 +616,21 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < lokiV55) {
         executeStatements(db, PushRegistrationDatabase.Companion.createTableStatements());
+      }
+
+      if (oldVersion < lokiV56) {
+        ReceivedMessageHashDatabase.Companion.createAndMigrateTable(db);
+      }
+
+      if (oldVersion < lokiV57) {
+          ProDatabase.Companion.createTable(db);
+          MmsDatabase.Companion.addProFeatureColumns(db);
+          SmsDatabase.addProFeatureColumns(db);
+          RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
+      }
+
+      if (oldVersion < lokiV58) {
+          SnodeDatabase.Companion.createTableAndMigrateData(db, true);
       }
 
       db.setTransactionSuccessful();

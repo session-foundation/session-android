@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -102,7 +103,7 @@ internal fun LandingScreen(
         )
     }
 
-    var isUrlDialogVisible by remember { mutableStateOf(false) }
+    var isUrlDialogVisible by retain { mutableStateOf(false) }
 
     if (isUrlDialogVisible) {
         TCPolicyDialog(
@@ -190,7 +191,8 @@ internal fun LandingScreen(
 
 @Composable
 private fun AnimateMessageText(data: MessageViewData, modifier: Modifier = Modifier) {
-    var visible by remember { mutableStateOf(false) }
+    var visible by retain { mutableStateOf(false) }
+
     LaunchedEffect(Unit) { visible = true }
 
     AnimatedVisibility(

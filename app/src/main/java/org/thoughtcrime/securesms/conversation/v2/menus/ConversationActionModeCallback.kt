@@ -66,9 +66,18 @@ class ConversationActionModeCallback(
 
 
         // Delete message
-        menu.findItem(R.id.menu_context_delete_message).isVisible = !isDeprecatedLegacyGroup // can always delete since delete logic will be handled by the VM
+        menu.findItem(R.id.menu_context_delete_message).apply {
+            isVisible = !isDeprecatedLegacyGroup // can always delete since delete logic will be handled by the VM
+
+            setTitle(
+                context.resources.getQuantityString(R.plurals.deleteMessage,
+                    selectedItems.size, selectedItems.size)
+            )
+        }
         // Ban user
-        menu.findItem(R.id.menu_context_ban_user).isVisible = userCanBanSelectedUsers() && !isDeprecatedLegacyGroup
+        val canBan = userCanBanSelectedUsers() && !isDeprecatedLegacyGroup
+        menu.findItem(R.id.menu_context_ban_user).isVisible = canBan
+        menu.findItem(R.id.menu_context_unban_user).isVisible = canBan
         // Ban and delete all
         menu.findItem(R.id.menu_context_ban_and_delete_all).isVisible = userCanBanSelectedUsers() && !isDeprecatedLegacyGroup
         // Copy message text
@@ -99,6 +108,7 @@ class ConversationActionModeCallback(
         when (item.itemId) {
             R.id.menu_context_delete_message -> delegate?.deleteMessages(selectedItems)
             R.id.menu_context_ban_user -> delegate?.banUser(selectedItems)
+            R.id.menu_context_unban_user -> delegate?.unbanUser(selectedItems)
             R.id.menu_context_ban_and_delete_all -> delegate?.banAndDeleteAll(selectedItems)
             R.id.menu_context_copy -> delegate?.copyMessages(selectedItems)
             R.id.menu_context_resync -> delegate?.resyncMessage(selectedItems)
@@ -122,6 +132,7 @@ interface ConversationActionModeCallbackDelegate {
     fun selectMessages(messages: Set<MessageRecord>)
     fun deleteMessages(messages: Set<MessageRecord>)
     fun banUser(messages: Set<MessageRecord>)
+    fun unbanUser(messages: Set<MessageRecord>)
     fun banAndDeleteAll(messages: Set<MessageRecord>)
     fun copyMessages(messages: Set<MessageRecord>)
     fun resyncMessage(messages: Set<MessageRecord>)

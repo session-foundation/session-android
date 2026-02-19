@@ -1,12 +1,13 @@
 package org.session.libsession.messaging.messages.visible
 
+import androidx.annotation.Keep
 import network.loki.messenger.BuildConfig
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment as SignalAttachment
 
 /**
@@ -14,18 +15,21 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
  *
  * **Note:** `nil` if this isn't a sync message.
  */
+// R8: Must keep constructor for Kryo to work
+@Keep
 data class VisibleMessage(
     var syncTarget: String? = null,
     var text: String? = null,
     val attachmentIDs: MutableList<Long> = mutableListOf(),
     var quote: Quote? = null,
     var linkPreview: LinkPreview? = null,
-    var profile: Profile? = null,
     var openGroupInvitation: OpenGroupInvitation? = null,
     var reaction: Reaction? = null,
     var hasMention: Boolean = false,
-    var blocksMessageRequests: Boolean = false
+    var blocksMessageRequests: Boolean = false,
 ) : Message()  {
+
+    constructor(): this(text = null)
 
     override val isSelfSendValid: Boolean = true
 
@@ -46,7 +50,7 @@ data class VisibleMessage(
     companion object {
         const val TAG = "VisibleMessage"
 
-        fun fromProto(proto: SignalServiceProtos.Content): VisibleMessage? =
+        fun fromProto(proto: SessionProtos.Content): VisibleMessage? =
             proto.dataMessage?.let { VisibleMessage().apply {
                 if (it.hasSyncTarget()) syncTarget = it.syncTarget
                 text = it.body
@@ -54,18 +58,19 @@ data class VisibleMessage(
                 if (it.hasQuote()) quote = Quote.fromProto(it.quote)
                 linkPreview = it.previewList.firstOrNull()?.let(LinkPreview::fromProto)
                 if (it.hasOpenGroupInvitation()) openGroupInvitation = it.openGroupInvitation?.let(OpenGroupInvitation::fromProto)
-                // TODO Contact
-                profile = Profile.fromProto(it)
                 if (it.hasReaction()) reaction = it.reaction?.let(Reaction::fromProto)
                 blocksMessageRequests = it.hasBlocksCommunityMessageRequests() && it.blocksCommunityMessageRequests
             }.copyExpiration(proto)
         }
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val proto = SignalServiceProtos.Content.newBuilder()
-        // Profile
-        val dataMessage = profile?.toProto()?.toBuilder() ?: SignalServiceProtos.DataMessage.newBuilder()
+    protected override fun buildProto(
+        builder: SessionProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        val dataMessage = builder.dataMessageBuilder
+
+
         // Text
         if (text != null) { dataMessage.body = text }
         // Quote
@@ -89,8 +94,7 @@ data class VisibleMessage(
             dataMessage.openGroupInvitation = openGroupInvitationProto
         }
         // Attachments
-        val database = MessagingModuleConfiguration.shared.messageDataProvider
-        val attachments = attachmentIDs.mapNotNull { database.getSignalAttachmentPointer(it) }
+        val attachments = attachmentIDs.mapNotNull { messageDataProvider.getSignalAttachmentPointer(it) }
         if (attachments.any { it.url.isNullOrEmpty() }) {
             if (BuildConfig.DEBUG) {
                 Log.w(TAG, "Sending a message before all associated attachments have been uploaded.")
@@ -98,23 +102,12 @@ data class VisibleMessage(
         }
         val pointers = attachments.mapNotNull { Attachment.createAttachmentPointer(it) }
         dataMessage.addAllAttachments(pointers)
-        // TODO: Contact
-        // Expiration timer on the message
-        proto.applyExpiryMode()
 
         // Community blocked message requests flag
         dataMessage.blocksCommunityMessageRequests = blocksMessageRequests
         // Sync target
         if (syncTarget != null) {
             dataMessage.syncTarget = syncTarget
-        }
-        // Build
-        return try {
-            proto.dataMessage = dataMessage.build()
-            proto.build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct visible message proto from: $this")
-            null
         }
     }
     // endregion

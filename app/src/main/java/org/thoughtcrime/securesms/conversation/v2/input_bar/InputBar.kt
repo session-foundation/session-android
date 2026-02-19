@@ -20,7 +20,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
@@ -143,11 +142,9 @@ class InputBar @JvmOverloads constructor(
 
         // Edit text
         binding.inputBarEditText.setOnEditorActionListener(this)
-        if (TextSecurePreferences.isEnterSendsEnabled(context)) {
-            binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_SEND
-        } else {
-            binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE
-        }
+        // Prevent some IMEs from switching to fullscreen/extracted text mode in landscape (shows IME-owned text field).
+        binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI
+
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled
         binding.inputBarEditText.delegate = this
@@ -208,12 +205,23 @@ class InputBar @JvmOverloads constructor(
     }
 
     override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
-        if (v === binding.inputBarEditText && actionId == EditorInfo.IME_ACTION_SEND) {
-            // same as pressing send button
-            delegate?.sendMessage()
-            return true
+        if (v !== binding.inputBarEditText) return false
+
+        return when (actionId) {
+            EditorInfo.IME_ACTION_SEND -> {
+                delegate?.sendMessage()
+                true
+            }
+
+            // Prevent TextView default focus navigation from ever running.
+            EditorInfo.IME_ACTION_NEXT,
+            EditorInfo.IME_ACTION_DONE,
+            EditorInfo.IME_ACTION_GO,
+            EditorInfo.IME_ACTION_SEARCH,
+            EditorInfo.IME_ACTION_PREVIOUS -> true
+
+            else -> false // allow normal multiline behavior
         }
-        return false
     }
 
     override fun inputBarEditTextContentChanged(text: CharSequence) {
@@ -249,7 +257,7 @@ class InputBar @JvmOverloads constructor(
             binding.inputBarAdditionalContentContainer.addView(layout)
             val attachments = (message as? MmsMessageRecord)?.slideDeck
             val sender =
-                if (message.isOutgoing) recipientRepository.getRecipientSync(Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!))
+                if (message.isOutgoing) recipientRepository.getSelf()
                 else message.individualRecipient
             it.bind(sender, message.body, attachments, thread, true, message.isOpenGroupInvitation, message.threadId, false, glide)
         }
@@ -298,6 +306,10 @@ class InputBar @JvmOverloads constructor(
         linkPreview = null
         linkPreviewDraftView = null
         requestLayout()
+    }
+
+    override fun onPaste() {
+        delegate?.onInputBarEditTextPasted()
     }
 
     private fun showOrHideInputIfNeeded() {
@@ -360,12 +372,15 @@ class InputBar @JvmOverloads constructor(
 
         // handle buttons state
         allowAttachMultimediaButtons = state.enableAttachMediaControls
+
+        // handle character limit
+        setCharLimitState(state.charLimitState)
     }
 
-    fun setCharLimitState(state: InputbarViewModel.InputBarCharLimitState?) {
+    private fun setCharLimitState(state: InputbarViewModel.InputBarCharLimitState?) {
         // handle char limit
         if(state != null){
-            binding.characterLimitText.text = state.count.toString()
+            binding.characterLimitText.text = state.countFormatted
             binding.characterLimitText.setTextColor(if(state.danger) dangerColor else textColor)
             binding.characterLimitContainer.setOnClickListener {
                 delegate?.onCharLimitTapped()
@@ -383,6 +398,7 @@ class InputBar @JvmOverloads constructor(
 
 interface InputBarDelegate {
     fun inputBarEditTextContentChanged(newContent: CharSequence)
+    fun onInputBarEditTextPasted() {} // no-op by default
     fun toggleAttachmentOptions()
     fun showVoiceMessageUI()
     fun startRecordingVoiceMessage()

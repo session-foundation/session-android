@@ -6,8 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModel;
 
-import com.annimon.stream.Stream;
-
 import org.thoughtcrime.securesms.components.emoji.EmojiPageModel;
 import org.thoughtcrime.securesms.components.emoji.EmojiPageViewGridAdapter;
 import org.thoughtcrime.securesms.database.model.MessageId;
@@ -41,9 +39,10 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
           @Assisted @NonNull MessageId messageId,
           @ApplicationContext Context context,
           @NonNull EmojiSearchRepository emojiSearchRepository,
-          @NonNull ReactionsRepository reactionsRepository)
+          @NonNull ReactionsRepository reactionsRepository,
+          @NonNull ReactWithAnyEmojiRepository repository)
   {
-    this.repository            = new ReactWithAnyEmojiRepository(context);
+    this.repository            = repository;
     this.emojiSearchRepository = emojiSearchRepository;
     this.searchResults         = BehaviorSubject.createDefault(new EmojiSearchResult());
 
@@ -88,11 +87,16 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
     emojiSearchRepository.submitQuery(query, SEARCH_LIMIT, m -> searchResults.onNext(new EmojiSearchResult(query, m)));
   }
 
-  private static @NonNull MappingModelList toMappingModels(@NonNull EmojiPageModel model) {
-    return Stream.of(model.getDisplayEmoji())
-                .map(e -> new EmojiPageViewGridAdapter.EmojiModel(model.getKey(), e))
-                .collect(MappingModelList.collect());
-  }
+    private static @NonNull MappingModelList toMappingModels(@NonNull EmojiPageModel model) {
+        MappingModelList out = new MappingModelList();
+        String key = model.getKey();
+
+        for (var e : model.getDisplayEmoji()) {
+            out.add(new EmojiPageViewGridAdapter.EmojiModel(key, e));
+        }
+
+        return out;
+    }
 
   private static class EmojiSearchResult {
     private final String         query;

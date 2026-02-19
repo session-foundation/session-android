@@ -6,6 +6,10 @@ pluginManagement {
     }
 }
 
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
 rootProject.name = "session-android"
 
 includeBuild("build-logic")
@@ -13,7 +17,8 @@ includeBuild("build-logic")
 // If libsession_util_project_path is set, include it as a build dependency
 val libSessionUtilProjectPath: String = System.getProperty("session.libsession_util.project.path", "")
 if (libSessionUtilProjectPath.isNotBlank()) {
-    includeBuild(libSessionUtilProjectPath)
+    include(":libsession-util-android")
+    project(":libsession-util-android").projectDir = file(libSessionUtilProjectPath).resolve("library")
 }
 
 include(":app")

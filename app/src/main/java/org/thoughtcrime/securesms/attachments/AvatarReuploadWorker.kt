@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.attachments
 
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.ui.unit.IntSize
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
@@ -17,24 +16,28 @@ import dagger.Lazy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.BufferedSource
 import okio.buffer
 import okio.source
-import org.session.libsession.messaging.file_server.FileServerApi
-import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.messaging.file_server.FileRenewApi
+import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
+import org.thoughtcrime.securesms.api.server.ServerApiExecutor
+import org.thoughtcrime.securesms.api.server.ServerApiRequest
+import org.thoughtcrime.securesms.api.server.execute
+import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.util.BitmapUtil
-import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.ImageUtils
+import org.thoughtcrime.securesms.util.findCause
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -54,23 +57,15 @@ class AvatarReuploadWorker @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val avatarUploadManager: Lazy<AvatarUploadManager>,
     private val localEncryptedFileInputStreamFactory: LocalEncryptedFileInputStream.Factory,
-    private val fileServerApi: FileServerApi,
-    private val prefs: TextSecurePreferences,
-    private val currentActivityObserver: CurrentActivityObserver,
+    private val serverApiExecutor: ServerApiExecutor,
+    private val renewApiFactory: FileRenewApi.Factory,
 ) : CoroutineWorker(context, params) {
 
     /**
      * Log the given message and show a toast if in debug mode
      */
-    private suspend inline fun logAndToast(message: String, e: Throwable? = null) {
-        Log.d(TAG, message, e)
-
-        val context = currentActivityObserver.currentActivity.value ?: return
-        if (prefs.debugAvatarReupload || BuildConfig.DEBUG) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "AvatarReupload[debug only]: $message", Toast.LENGTH_SHORT).show()
-            }
-        }
+    private fun log(message: String, e: Throwable? = null) {
+        Log.d(DebugLogGroup.AVATAR.label, "Avatar Reupload: $message", e)
     }
 
     override suspend fun doWork(): Result {
@@ -79,13 +74,13 @@ class AvatarReuploadWorker @AssistedInject constructor(
         }
 
         if (profile == null) {
-            logAndToast("No profile picture set; nothing to do.")
+            log("No profile picture set; nothing to do.")
             return Result.success()
         }
 
         val localFile = AvatarDownloadManager.computeFileName(context, profile)
         if (!localFile.exists()) {
-            logAndToast("Avatar file is missing locally; nothing to do.")
+            log("Avatar file is missing locally; nothing to do.")
             return Result.success()
         }
 
@@ -94,7 +89,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
         // Check if the file exists and whether we need to do reprocessing, if we do, we reprocess and re-upload
         localEncryptedFileInputStreamFactory.create(localFile).use { stream ->
             if (stream.meta.hasPermanentDownloadError) {
-                logAndToast("Permanent download error for current avatar; nothing to do.")
+                log("Permanent download error for current avatar; nothing to do.")
                 return Result.success()
             }
 
@@ -103,7 +98,7 @@ class AvatarReuploadWorker @AssistedInject constructor(
             val source = stream.source().buffer()
 
             if ((lastUpdated != null && needsReProcessing(source)) || lastUpdated == null) {
-                logAndToast("About to start reuploading avatar.")
+                log("About to start reuploading avatar.")
                 val attachment = attachmentProcessor.processAvatar(
                     data = source.use { it.readByteArray() },
                 ) ?: return Result.failure()
@@ -118,38 +113,39 @@ class AvatarReuploadWorker @AssistedInject constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: NonRetryableException) {
-                    logAndToast("Non-retryable error while reuploading avatar.", e)
+                    log("Non-retryable error while reuploading avatar.", e)
                     return Result.failure()
                 } catch (e: Exception) {
-                    logAndToast("Error while reuploading avatar.", e)
+                    log("Error while reuploading avatar.", e)
                     return Result.retry()
                 }
 
-                logAndToast("Successfully reuploaded avatar.")
+                log("Successfully reuploaded avatar.")
                 return Result.success()
             }
         }
 
         // Otherwise, we only need to renew the same avatar on the server
-        val parsed = fileServerApi.parseAttachmentUrl(profile.url.toHttpUrl())
+        val parsed = FileServerApis.parseAttachmentUrl(profile.url.toHttpUrl())
 
-        logAndToast("Renewing user avatar on ${parsed.fileServer}")
+        log("Renewing user avatar on ${parsed.fileServer}")
         try {
-            fileServerApi.renew(
-                fileId = parsed.fileId,
-                fileServer = parsed.fileServer,
-            )
+            serverApiExecutor.execute(ServerApiRequest(
+                serverBaseUrl = parsed.fileServer.url.toString(),
+                serverX25519PubKeyHex = parsed.fileServer.x25519PubKeyHex,
+                api = renewApiFactory.create(fileId = parsed.fileId)
+            ))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             // When renew fails, we will try to re-upload the avatar if:
             // 1. The file is expired (we have the record of this file's expiry time), or
             // 2. The last update was more than 12 days ago.
-            if ((e is NonRetryableException || e is OnionRequestAPI.HTTPRequestFailedAtDestinationException)) {
+            if ((e is NonRetryableException || e.findCause<UnhandledStatusCodeException>() != null)) {
                 val now = Instant.now()
                 if (fileExpiry?.isBefore(now) == true ||
                     (lastUpdated?.isBefore(now.minus(Duration.ofDays(12)))) == true) {
-                    logAndToast("FileServer renew failed, trying to upload", e)
+                    log("FileServer renew failed, trying to upload", e)
                     val pictureData =
                         localEncryptedFileInputStreamFactory.create(localFile).use { stream ->
                             check(!stream.meta.hasPermanentDownloadError) {
@@ -166,18 +162,18 @@ class AvatarReuploadWorker @AssistedInject constructor(
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
-                        logAndToast("Error while reuploading avatar after renew failed.", e)
+                        log("Error while reuploading avatar after renew failed.", e)
                         return Result.failure()
                     }
 
-                    logAndToast("Successfully reuploaded avatar after renew failed.")
+                    log("Successfully reuploaded avatar after renew failed.")
                 } else {
-                    logAndToast( "Not reuploading avatar after renew failed; last updated too recent.")
+                    log( "Not reuploading avatar after renew failed; last updated too recent.")
                 }
 
                 return Result.success()
             } else {
-                logAndToast("Error while renewing avatar. Retrying...", e)
+                log("Error while renewing avatar. Retrying...", e)
                 return Result.retry()
             }
         }

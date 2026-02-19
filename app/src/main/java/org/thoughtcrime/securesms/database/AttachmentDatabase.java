@@ -26,17 +26,16 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Pair;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.bumptech.glide.Glide;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId;
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState;
@@ -45,8 +44,8 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.ExternalStorageUtil;
-import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
+import org.session.libsignal.utilities.SaneJSONObject;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
 import org.thoughtcrime.securesms.crypto.ClassicDecryptingPartInputStream;
 import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
@@ -80,14 +79,19 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
+import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
+import dagger.Lazy;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.jvm.Synchronized;
 import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
 import kotlinx.coroutines.flow.SharedFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
 
+@Singleton
 public class AttachmentDatabase extends Database {
   
   private static final String TAG = AttachmentDatabase.class.getSimpleName();
@@ -161,13 +165,18 @@ public class AttachmentDatabase extends Database {
 
   final ExecutorService thumbnailExecutor = Util.newSingleThreadedLifoExecutor();
 
-  private final AttachmentSecret attachmentSecret;
+  private final Lazy<@NonNull AttachmentSecret> attachmentSecret;
 
   private final MutableSharedFlow<Object> mutableChangesNotification = SharedFlowKt.MutableSharedFlow(
           0, 100, BufferOverflow.DROP_OLDEST
   );
 
-  public AttachmentDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper, AttachmentSecret attachmentSecret) {
+  @Inject
+  public AttachmentDatabase(
+          @ApplicationContext Context context,
+          Provider<SQLCipherOpenHelper> databaseHelper,
+          Lazy<@NonNull AttachmentSecret> attachmentSecret
+  ) {
     super(context, databaseHelper);
     this.attachmentSecret = attachmentSecret;
   }
@@ -390,7 +399,6 @@ public class AttachmentDatabase extends Database {
     }
 
     values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
-    values.put(CONTENT_LOCATION, (String)null);
     values.put(CONTENT_DISPOSITION, (String)null);
     values.put(DIGEST, (byte[])null);
     values.put(NAME, (String) null);
@@ -535,9 +543,9 @@ public class AttachmentDatabase extends Database {
 
     try {
       if (dataInfo.random != null && dataInfo.random.length == 32) {
-        return ModernDecryptingPartInputStream.createFor(attachmentSecret, dataInfo.random, dataInfo.file, offset);
+        return ModernDecryptingPartInputStream.createFor(attachmentSecret.get(), dataInfo.random, dataInfo.file, offset);
       } else {
-        InputStream stream  = ClassicDecryptingPartInputStream.createFor(attachmentSecret, dataInfo.file);
+        InputStream stream  = ClassicDecryptingPartInputStream.createFor(attachmentSecret.get(), dataInfo.file);
         long        skipped = stream.skip(offset);
 
         if (skipped != offset) {
@@ -607,7 +615,7 @@ public class AttachmentDatabase extends Database {
       File dataFile       = File.createTempFile("part", ".mms", partsDirectory);
 
       Log.d("AttachmentDatabase", "Writing attachment data to: " + dataFile.getAbsolutePath());
-      Pair<byte[], OutputStream> out    = ModernEncryptingPartOutputStream.createFor(attachmentSecret, dataFile, false);
+      Pair<byte[], OutputStream> out    = ModernEncryptingPartOutputStream.createFor(attachmentSecret.get(), dataFile, false);
       long                       length = Util.copy(in, out.second);
 
       return new DataInfo(dataFile, length, out.first);
@@ -627,7 +635,7 @@ public class AttachmentDatabase extends Database {
         JSONArray                array  = new JSONArray(cursor.getString(cursor.getColumnIndexOrThrow(ATTACHMENT_JSON_ALIAS)));
 
         for (int i=0;i<array.length();i++) {
-          JsonUtil.SaneJSONObject object = new JsonUtil.SaneJSONObject(array.getJSONObject(i));
+          SaneJSONObject object = new SaneJSONObject(array.getJSONObject(i));
 
           if (!object.isNull(ROW_ID)) {
             result.add(new DatabaseAttachment(new AttachmentId(object.getLong(ROW_ID), object.getLong(UNIQUE_ID)),
@@ -894,7 +902,7 @@ public class AttachmentDatabase extends Database {
         return null;
       }
 
-      EncryptedMediaDataSource dataSource = new EncryptedMediaDataSource(attachmentSecret, dataInfo.file, dataInfo.random, dataInfo.length);
+      EncryptedMediaDataSource dataSource = new EncryptedMediaDataSource(attachmentSecret.get(), dataInfo.file, dataInfo.random, dataInfo.length);
       MediaMetadataRetriever   retriever  = new MediaMetadataRetriever();
       retriever.setDataSource(dataSource);
 

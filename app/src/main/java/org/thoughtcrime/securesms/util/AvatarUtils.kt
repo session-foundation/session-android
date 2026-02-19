@@ -11,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.text.TextPaint
 import android.text.TextUtils
 import androidx.annotation.DrawableRes
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
@@ -69,6 +70,11 @@ class AvatarUtils @Inject constructor(
 
         val elements = buildList {
             when {
+                // if we know we have a custom image, including for groups, use that
+                recipient.avatar != null -> {
+                    add(getUIElementForRecipient(recipient))
+                }
+
                 // The recipient is group like and have two members, use both images
                 firstMember != null && secondMember != null -> {
                     add(getUIElementForRecipient(firstMember))
@@ -229,10 +235,17 @@ data class AvatarUIElement(
     val freezeFrame: Boolean = true,
 )
 
-sealed class AvatarBadge(@DrawableRes val icon: Int){
-    data object None: AvatarBadge(0)
-    data object Admin: AvatarBadge(R.drawable.ic_crown_custom_enlarged)
-    data class Custom(@DrawableRes val iconRes: Int): AvatarBadge(iconRes)
+sealed class AvatarBadge{
+    data object None: AvatarBadge()
+
+    sealed class ResourceBadge(@DrawableRes val icon: Int): AvatarBadge() {
+        data object Admin: ResourceBadge(R.drawable.ic_crown_custom_enlarged_no_padding)
+        data class Custom(@DrawableRes val iconRes: Int): ResourceBadge(iconRes)
+    }
+
+    data class ComposeBadge(
+        val content: @Composable () -> Unit
+    ): AvatarBadge()
 }
 
 fun ImageRequest.Builder.avatarOptions(
@@ -241,6 +254,7 @@ fun ImageRequest.Builder.avatarOptions(
 ): ImageRequest.Builder = this.size(sizePx, sizePx)
     .precision(Precision.INEXACT)
     .apply {
+        memoryCacheKeyExtra("freezeFrame", freezeFrame.toString())
         if (freezeFrame) {
             decoderFactory(BitmapFactoryDecoder.Factory())
         }

@@ -1,8 +1,11 @@
 package org.session.libsession.messaging.messages.visible
 
-import org.session.libsignal.protos.SignalServiceProtos
+import androidx.annotation.Keep
+import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
 
+// R8: Must keep constructor for Kryo to work
+@Keep
 class OpenGroupInvitation() {
     var url: String? = null
     var name: String? = null
@@ -14,7 +17,7 @@ class OpenGroupInvitation() {
     companion object {
         const val TAG = "OpenGroupInvitation"
 
-        fun fromProto(proto: SignalServiceProtos.DataMessage.OpenGroupInvitation): OpenGroupInvitation {
+        fun fromProto(proto: SessionProtos.DataMessage.OpenGroupInvitation): OpenGroupInvitation {
             return OpenGroupInvitation(proto.url, proto.name)
         }
     }
@@ -24,8 +27,8 @@ class OpenGroupInvitation() {
         this.name = serverName
     }
 
-    fun toProto(): SignalServiceProtos.DataMessage.OpenGroupInvitation? {
-        val openGroupInvitationProto = SignalServiceProtos.DataMessage.OpenGroupInvitation.newBuilder()
+    fun toProto(): SessionProtos.DataMessage.OpenGroupInvitation? {
+        val openGroupInvitationProto = SessionProtos.DataMessage.OpenGroupInvitation.newBuilder()
         openGroupInvitationProto.url = url
         openGroupInvitationProto.name = name
         return try {

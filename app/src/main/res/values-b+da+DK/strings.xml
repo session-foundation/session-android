@@ -14,7 +14,6 @@
     <string name="accountIdYoursDescription">Dette er din kontoid. Andre brugere kan scanne den for at starte en samtale med dig.</string>
     <string name="actualSize">Faktisk størrelse</string>
     <string name="add">Tilføj</string>
-    <string name="addAdmins">Tilføj administratorer</string>
     <string name="adminCannotBeRemoved">Admins kan ikke fjernes.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> og <b>{count} andre</b> blev forfremmet til Admin.</string>
     <string name="adminPromote">Forfrem administratorer</string>
@@ -49,6 +48,7 @@
     <string name="anonymous">Anonym</string>
     <string name="appIcon">App-ikon</string>
     <string name="appIconAndNameDescription">Alternativ ikon og app-navn vises på hjemmeskærmen og i app-skuffen.</string>
+    <string name="appIconAndNameSelectionDescription">Det valgte app-ikon og navn vises på hjemmeskærmen og i app-skuffen.</string>
     <string name="appIconAndNameSelectionTitle">Ikon og navn</string>
     <string name="appIconDescription">Alternativ ikon vises på hjemmeskærmen og i biblioteket. App-navnet vil stadig være \'{app_name}\'.</string>
     <string name="appIconEnableIcon">Brug alternativ app-ikon</string>
@@ -807,6 +807,7 @@
     <string name="qrYoursDescription">Venner kan sende beskeder til dig ved at scanne din QR-kode.</string>
     <string name="quit">Afslut {app_name}</string>
     <string name="quitButton">Afslut</string>
+    <string name="rateSession">Vurdér {app_name}?</string>
     <string name="read">Læst</string>
     <string name="readReceipts">Læsekvitteringer</string>
     <string name="readReceiptsDescription">Vis læsekvitteringer for alle beskeder du sender og modtager.</string>

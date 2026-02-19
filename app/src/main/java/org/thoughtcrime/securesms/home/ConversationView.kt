@@ -15,12 +15,11 @@ import network.loki.messenger.databinding.ViewConversationBinding
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
+import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -37,6 +36,7 @@ class ConversationView : LinearLayout {
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var avatarUtils: AvatarUtils
     @Inject lateinit var recipientRepository: RecipientRepository
+    @Inject lateinit var messageFormatter: MessageFormatter
 
     private val binding: ViewConversationBinding by lazy { ViewConversationBinding.bind(this) }
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
@@ -49,7 +49,7 @@ class ConversationView : LinearLayout {
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-        layoutParams = RecyclerView.LayoutParams(screenWidth, RecyclerView.LayoutParams.WRAP_CONTENT)
+        (layoutParams as? RecyclerView.LayoutParams)?.width = RecyclerView.LayoutParams.MATCH_PARENT
     }
     // endregion
 
@@ -88,7 +88,7 @@ class ConversationView : LinearLayout {
 
         // Thread name and pro badge
         binding.conversationViewDisplayName.text = senderDisplayName
-        binding.iconPro.isVisible = thread.recipient.proStatus.shouldShowProBadge()
+        binding.iconPro.isVisible = thread.recipient.shouldShowProBadge
                 && !thread.recipient.isLocalNumber
 
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { dateUtils.getDisplayFormattedTimeSpanString(
@@ -107,7 +107,10 @@ class ConversationView : LinearLayout {
         binding.muteIndicatorImageView.setImageResource(drawableRes)
 
         val snippet =  highlightMentions(
-            text = thread.getDisplayBody(context),
+            text = messageFormatter.formatThreadSnippet(
+                context = context,
+                thread = thread,
+            ),
             formatOnly = true, // no styling here, only text formatting
             recipientRepository = recipientRepository,
             context = context

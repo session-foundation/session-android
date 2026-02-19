@@ -2,23 +2,15 @@ package org.session.libsession.messaging.messages
 
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.withUserConfigs
 
 sealed class Destination {
 
-    data class Contact(var publicKey: String) : Destination() {
-        internal constructor(): this("")
-    }
-    data class LegacyClosedGroup(var groupPublicKey: String) : Destination() {
-        internal constructor(): this("")
-    }
-    data class LegacyOpenGroup(var roomToken: String, var server: String) : Destination() {
-        internal constructor(): this("", "")
-    }
-    data class ClosedGroup(var publicKey: String): Destination() {
-        internal constructor(): this("")
-    }
+    data class Contact @JvmOverloads constructor(var publicKey: String = "") : Destination()
 
-    class OpenGroup(
+    data class ClosedGroup @JvmOverloads constructor(var publicKey: String = ""): Destination()
+
+    class OpenGroup @JvmOverloads constructor(
         var roomToken: String = "",
         var server: String = "",
         var whisperTo: List<String> = emptyList(),
@@ -26,10 +18,10 @@ sealed class Destination {
         var fileIds: List<String> = emptyList()
     ) : Destination()
 
-    class OpenGroupInbox(
-        var server: String,
-        var serverPublicKey: String,
-        var blindedPublicKey: String
+    class OpenGroupInbox @JvmOverloads constructor(
+        var server: String = "",
+        var serverPublicKey: String = "",
+        var blindedPublicKey: String = ""
     ) : Destination()
 
     companion object {
@@ -38,9 +30,6 @@ sealed class Destination {
             return when (address) {
                 is Address.Standard -> {
                     Contact(address.address)
-                }
-                is Address.LegacyGroup -> {
-                    LegacyClosedGroup(address.groupPublicKeyHex)
                 }
                 is Address.Community -> {
                     OpenGroup(roomToken = address.room, server = address.serverUrl, fileIds = fileIds)
@@ -63,9 +52,10 @@ sealed class Destination {
                 is Address.Group -> {
                     ClosedGroup(address.accountId.hexString)
                 }
-                else -> {
-                    throw Exception("TODO: Handle legacy closed groups.")
-                }
+
+                is Address.Blinded,
+                is Address.LegacyGroup,
+                is Address.Unknown -> error("Unsupported address as destination: $address")
             }
         }
     }

@@ -25,7 +25,9 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import javax.inject.Inject
@@ -50,6 +52,7 @@ private val REFRESH_TIME = 50.milliseconds
 internal class LoadingViewModel @Inject constructor(
     val prefs: TextSecurePreferences,
     val configFactory: ConfigFactoryProtocol,
+    private val loginStateRepository: LoginStateRepository,
 ): ViewModel() {
 
     private val state = MutableStateFlow(State.LOADING)
@@ -73,18 +76,19 @@ internal class LoadingViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE))
-                    .filter { it.fromMerge }
-                    .castAwayType()
-                    .onStart { emit(Unit) }
-                    .filter {
-                        prefs.getLocalNumber() != null &&
-                                configFactory.withUserConfigs { configs ->
-                            !configs.userProfile.getName().isNullOrEmpty()
+                loginStateRepository.flowWithLoggedInState {
+                    configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE))
+                        .filter { it.fromMerge }
+                        .castAwayType()
+                        .onStart { emit(Unit) }
+                        .filter {
+                            configFactory.withUserConfigs { configs ->
+                                !configs.userProfile.getName().isNullOrEmpty()
+                            }
                         }
-                    }
-                    .timeout(TIMEOUT_TIME)
+                }.timeout(TIMEOUT_TIME)
                     .first()
+
                 onSuccess()
             } catch (e: Exception) {
                 Log.d("LoadingViewModel", "Failed to load user configs", e)

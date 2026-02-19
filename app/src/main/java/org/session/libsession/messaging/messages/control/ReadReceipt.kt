@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
-import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 
 class ReadReceipt() : ControlMessage() {
     var timestamps: List<Long>? = null
@@ -19,10 +19,10 @@ class ReadReceipt() : ControlMessage() {
     companion object {
         const val TAG = "ReadReceipt"
 
-        fun fromProto(proto: SignalServiceProtos.Content): ReadReceipt? {
+        fun fromProto(proto: SessionProtos.Content): ReadReceipt? {
             val receiptProto = if (proto.hasReceiptMessage()) proto.receiptMessage else return null
-            if (receiptProto.type != SignalServiceProtos.ReceiptMessage.Type.READ) return null
-            val timestamps = receiptProto.timestampMsList
+            if (receiptProto.type != SessionProtos.ReceiptMessage.Type.READ) return null
+            val timestamps = receiptProto.timestampList
             if (timestamps.isEmpty()) return null
             return ReadReceipt(timestamps = timestamps)
                     .copyExpiration(proto)
@@ -33,24 +33,15 @@ class ReadReceipt() : ControlMessage() {
         this.timestamps = timestamps
     }
 
-    override fun toProto(): SignalServiceProtos.Content? {
-        val timestamps = timestamps
-        if (timestamps == null) {
-            Log.w(TAG, "Couldn't construct read receipt proto from: $this")
-            return null
-        }
-
-        return try {
-            SignalServiceProtos.Content.newBuilder()
-                .setReceiptMessage(
-                    SignalServiceProtos.ReceiptMessage.newBuilder()
-                        .setType(SignalServiceProtos.ReceiptMessage.Type.READ)
-                        .addAllTimestampMs(timestamps.asIterable()).build()
-                ).applyExpiryMode()
-                .build()
-        } catch (e: Exception) {
-            Log.w(TAG, "Couldn't construct read receipt proto from: $this")
-            null
-        }
+    override fun buildProto(
+        builder: SessionProtos.Content.Builder,
+        messageDataProvider: MessageDataProvider
+    ) {
+        builder
+            .receiptMessageBuilder
+            .setType(SessionProtos.ReceiptMessage.Type.READ)
+            .addAllTimestamp(requireNotNull(timestamps) {
+                "Timestamps is null"
+            })
     }
 }

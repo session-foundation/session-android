@@ -1,51 +1,43 @@
 package org.thoughtcrime.securesms.onboarding.manager
 
-import android.app.Application
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import org.session.libsession.snode.SnodeModule
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.utilities.KeyHelper
-import org.session.libsignal.utilities.hexEncodedPublicKey
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
-import org.thoughtcrime.securesms.util.VersionDataFetcher
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoggedInState
+import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class CreateAccountManager @Inject constructor(
-    private val application: Application,
-    private val prefs: TextSecurePreferences,
-    private val versionDataFetcher: VersionDataFetcher,
-    private val configFactory: ConfigFactoryProtocol
+    private val configFactory: ConfigFactoryProtocol,
+    private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
+    private val loginStateRepository: LoginStateRepository,
+    private val database: LokiAPIDatabaseProtocol,
 ) {
-    private val database: LokiAPIDatabaseProtocol
-        get() = SnodeModule.shared.storage
+    suspend fun createAccount(displayName: String) {
+        withContext(Dispatchers.Default) {
+            // This is here to resolve a case where the app restarts before a user completes onboarding
+            // which can result in an invalid database state
+            database.clearAllLastMessageHashes()
+            receivedMessageHashDatabase.removeAll()
 
-    fun createAccount(displayName: String) {
-        // This is here to resolve a case where the app restarts before a user completes onboarding
-        // which can result in an invalid database state
-        database.clearAllLastMessageHashes()
-        database.clearReceivedMessageHashValues()
+            loginStateRepository.update { oldState ->
+                if (oldState != null) {
+                    Log.wtf("CreateAccountManager", "Tried to create account when already logged in!")
+                    return@update oldState
+                }
 
-        val keyPairGenerationResult = KeyPairUtilities.generate()
-        val seed = keyPairGenerationResult.seed
-        val ed25519KeyPair = keyPairGenerationResult.ed25519KeyPair
-        val x25519KeyPair = keyPairGenerationResult.x25519KeyPair
+                LoggedInState.generate(seed = null)
+            }
 
-        KeyPairUtilities.store(application, seed, ed25519KeyPair, x25519KeyPair)
-        val userHexEncodedPublicKey = x25519KeyPair.hexEncodedPublicKey
-        val registrationID = KeyHelper.generateRegistrationId(false)
-        prefs.setLocalRegistrationId(registrationID)
-        prefs.setLocalNumber(userHexEncodedPublicKey)
-        prefs.setRestorationTime(0)
-
-        configFactory.withMutableUserConfigs {
-            it.userProfile.setName(displayName)
-            it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+            configFactory.withMutableUserConfigs {
+                it.userProfile.setName(displayName)
+                it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+            }
         }
-
-        versionDataFetcher.startTimedVersionCheck()
     }
 }

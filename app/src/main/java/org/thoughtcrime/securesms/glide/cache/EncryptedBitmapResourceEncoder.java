@@ -4,6 +4,7 @@ package org.thoughtcrime.securesms.glide.cache;
 import android.graphics.Bitmap;
 import androidx.annotation.NonNull;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 
 import com.bumptech.glide.load.EncodeStrategy;
 import com.bumptech.glide.load.Options;
@@ -19,10 +20,10 @@ public class EncryptedBitmapResourceEncoder extends EncryptedCoder implements Re
 
   private static final String TAG = EncryptedBitmapResourceEncoder.class.getSimpleName();
 
-  private final byte[] secret;
+  private final AttachmentSecretProvider secretProvider;
 
-  public EncryptedBitmapResourceEncoder(@NonNull byte[] secret) {
-    this.secret = secret;
+  public EncryptedBitmapResourceEncoder(@NonNull AttachmentSecretProvider secretProvider) {
+    this.secretProvider = secretProvider;
   }
 
   @Override
@@ -39,7 +40,7 @@ public class EncryptedBitmapResourceEncoder extends EncryptedCoder implements Re
     Bitmap.CompressFormat format  = getFormat(bitmap, options);
     int                   quality = options.get(BitmapEncoder.COMPRESSION_QUALITY);
 
-    try (OutputStream os = createEncryptedOutputStream(secret, file)) {
+    try (OutputStream os = createEncryptedOutputStream(secretProvider.getOrCreateAttachmentSecret().getModernKey(), file)) {
       bitmap.compress(format, quality, os);
       os.close();
       return true;

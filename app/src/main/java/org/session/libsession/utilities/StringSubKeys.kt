@@ -62,4 +62,7 @@ object StringSubstitutionConstants {
     const val PERCENT_KEY: StringSubKey                    = "percent"
     const val DEVICE_TYPE_KEY: StringSubKey                = "device_type"
     const val SESSION_FOUNDATION_KEY: StringSubKey         = "session_foundation"
+    const val ACTION_TYPE_KEY: StringSubKey                = "action_type"
+    const val ACTIVATION_TYPE_KEY: StringSubKey            = "activation_type"
+    const val ENTITY_KEY: StringSubKey                     = "entity"
 }

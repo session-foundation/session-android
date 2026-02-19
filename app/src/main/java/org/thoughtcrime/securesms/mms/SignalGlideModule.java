@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.mms;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -24,7 +23,6 @@ import com.bumptech.glide.module.AppGlideModule;
 
 import org.session.libsession.utilities.recipients.RemoteFile;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.crypto.AttachmentSecret;
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.giph.model.ChunkedImageUrl;
 import org.thoughtcrime.securesms.glide.ChunkedImageUrlLoader;
@@ -35,7 +33,6 @@ import org.thoughtcrime.securesms.glide.cache.EncryptedBitmapResourceEncoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedCacheEncoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedGifCacheDecoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedGifDrawableResourceEncoder;
-import org.thoughtcrime.securesms.mms.AttachmentStreamUriLoader.AttachmentModel;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 
 import java.io.File;
@@ -57,22 +54,20 @@ public class SignalGlideModule extends AppGlideModule {
 
   @Override
   public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
-    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
-    byte[]           secret           = attachmentSecret.getModernKey();
+    AttachmentSecretProvider secretProvider = ((ApplicationContext) context.getApplicationContext()).getAttachmentSecretProvider();
 
     registry.prepend(File.class, File.class, UnitModelLoader.Factory.getInstance());
-    registry.prepend(InputStream.class, new EncryptedCacheEncoder(secret, glide.getArrayPool()));
-    registry.prepend(File.class, Bitmap.class, new EncryptedBitmapCacheDecoder(secret, new StreamBitmapDecoder(new Downsampler(registry.getImageHeaderParsers(), context.getResources().getDisplayMetrics(), glide.getBitmapPool(), glide.getArrayPool()), glide.getArrayPool())));
-    registry.prepend(File.class, GifDrawable.class, new EncryptedGifCacheDecoder(secret, new StreamGifDecoder(registry.getImageHeaderParsers(), new ByteBufferGifDecoder(context, registry.getImageHeaderParsers(), glide.getBitmapPool(), glide.getArrayPool()), glide.getArrayPool())));
+    registry.prepend(InputStream.class, new EncryptedCacheEncoder(secretProvider, glide.getArrayPool()));
+    registry.prepend(File.class, Bitmap.class, new EncryptedBitmapCacheDecoder(secretProvider, new StreamBitmapDecoder(new Downsampler(registry.getImageHeaderParsers(), context.getResources().getDisplayMetrics(), glide.getBitmapPool(), glide.getArrayPool()), glide.getArrayPool())));
+    registry.prepend(File.class, GifDrawable.class, new EncryptedGifCacheDecoder(secretProvider, new StreamGifDecoder(registry.getImageHeaderParsers(), new ByteBufferGifDecoder(context, registry.getImageHeaderParsers(), glide.getBitmapPool(), glide.getArrayPool()), glide.getArrayPool())));
 
-    registry.prepend(Bitmap.class, new EncryptedBitmapResourceEncoder(secret));
-    registry.prepend(GifDrawable.class, new EncryptedGifDrawableResourceEncoder(secret));
+    registry.prepend(Bitmap.class, new EncryptedBitmapResourceEncoder(secretProvider));
+    registry.prepend(GifDrawable.class, new EncryptedGifDrawableResourceEncoder(secretProvider));
 
     registry.append(RemoteFile.class, InputStream.class, new RemoteFileLoader.Factory(
             ((ApplicationContext) (context.getApplicationContext())).getRemoteFileLoader()
     ));
     registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
-    registry.append(AttachmentModel.class, InputStream.class, new AttachmentStreamUriLoader.Factory());
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
   }

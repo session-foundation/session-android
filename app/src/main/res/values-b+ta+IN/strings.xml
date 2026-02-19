@@ -487,8 +487,8 @@
     <string name="loadAccountProgressMessage">உங்கள் கணக்கை ஏற்றுகின்றன</string>
     <string name="loading">ஏற்றப்பட்டுள்ளன...</string>
     <string name="lockApp">பயன்பாட்டு பூட்டு</string>
-    <string name="lockAppDescription">{app_name}யை திறக்க { ஒப்பந்த இனிய சக்தையுடன்} உடன் அடைவுகளிருந்து வேண்டுகின்றேன்.</string>
-    <string name="lockAppDescriptionIos">{app_name}க்கு திறிட { குறியீடு } பதுக்குகடைதிறன் ஒப்புகக வேண்டும்..</string>
+    <string name="lockAppDescription">{app_name} ஐ திறக்க கைரேகை, பின், பேட்டர்ன் அல்லது கடவுச்சொல் தேவை.</string>
+    <string name="lockAppDescriptionIos">{app_name} ஐத் திறக்க, Touch ID, Face ID அல்லது உங்கள் கடவுக்குறியீட்டை தேவை.</string>
     <string name="lockAppEnablePasscode">ஸ்க்ரீன் லாக்கைப் பயன்படுத்த iOS அமைப்புகளில் கடவுச்சொல் வைப்பது தேவை.</string>
     <string name="lockAppLocked">{app_name} பாதுகாத்து உள்ளது</string>
     <string name="lockAppQuickResponse">Quick response unavailable when {app_name} is locked!</string>
@@ -726,7 +726,7 @@
     <string name="scan">ஸ்கான்</string>
     <string name="screenSecurity">திரை பாதுகாப்பு</string>
     <string name="screenshotNotifications">ஸ்கிரீன்ஷாட் அறிவிப்புகள்</string>
-    <string name="screenshotNotificationsDescription">ஆரா எச்சரிக்கையை { சிலை வகையான } குவைத்தால் சேப தீங்கு பிண்ட</string>
+    <string name="screenshotNotificationsDescription">ஒரு தொடர்பு ஒன்றுக்கு ஒன்று அரட்டையின் ஸ்கிரீன் ஷாட்டை எடுக்கும்போது அறிவிப்பைக் கோருங்கள்.</string>
     <string name="screenshotTaken"><b>{name}</b> திரைப் பிடிப்பு எடுத்தார்.</string>
     <string name="search">தேடு</string>
     <string name="searchContacts">தொடர்புகளை தேடு</string>

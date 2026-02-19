@@ -7,7 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.junit.Before
 import org.junit.Rule
@@ -20,11 +20,9 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.robolectric.RobolectricTestRunner
 import org.session.libsession.messaging.open_groups.GroupMemberRole
-import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.ProStatus
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
@@ -89,13 +87,13 @@ class MentionViewModelTest : BaseViewModelTest() {
         mentionViewModel = MentionViewModel(
             threadDatabase = mock {
                 on { getRecipientForThreadId(threadID) } doReturn communityRecipient.address
-                on { getThreadIdIfExistsFor(communityRecipient.address) } doReturn threadID
             },
             groupDatabase = mock {
             },
             storage = mock {
                 on { getUserBlindedAccountId(any()) } doReturn myId
                 on { getUserPublicKey() } doReturn myId.hexString
+                on { getThreadId(communityRecipient.address) } doReturn threadID
             },
             application = InstrumentationRegistry.getInstrumentation().context as android.app.Application,
             mmsSmsDatabase = mock {
@@ -131,7 +129,7 @@ class MentionViewModelTest : BaseViewModelTest() {
                         avatar = null,
                         expiryMode = ExpiryMode.NONE,
                         priority = 0,
-                        proStatus = ProStatus.None,
+                        proData = null,
                         profileUpdatedAt = null,
                     )
                 )

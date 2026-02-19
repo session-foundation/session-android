@@ -1,26 +1,23 @@
 package org.thoughtcrime.securesms.sskenvironment;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
-
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.SSKEnvironment;
-import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.RecipientRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +26,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import dagger.hilt.android.qualifiers.ApplicationContext;
 
 @SuppressLint("UseSparseArrays")
 @Singleton
@@ -44,27 +39,24 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
   private final Map<Typist, Runnable>                   timers;
   private final Map<Long, MutableLiveData<TypingState>> notifiers;
   private final MutableLiveData<Set<Long>>              threadsNotifier;
-  private final TextSecurePreferences                   preferences;
   private final RecipientRepository recipientRepository;
-  private final Context appContext;
+  private final LoginStateRepository loginStateRepository;
 
   @Inject
   public TypingStatusRepository(
-          @ApplicationContext Context appContext,
-          TextSecurePreferences preferences,
-          RecipientRepository recipientRepository) {
+          RecipientRepository recipientRepository,
+          LoginStateRepository loginStateRepository){
     this.recipientRepository = recipientRepository;
     this.typistMap       = new HashMap<>();
     this.timers          = new HashMap<>();
     this.notifiers       = new HashMap<>();
     this.threadsNotifier = new MutableLiveData<>();
-    this.preferences     = preferences;
-    this.appContext = appContext;
+    this.loginStateRepository = loginStateRepository;
   }
 
   @Override
   public synchronized void didReceiveTypingStartedMessage(long threadId, @NotNull Address author, int device) {
-    if (author.toString().equals(preferences.getLocalNumber())) {
+    if (author.toString().equals(loginStateRepository.getLocalNumber())) {
       return;
     }
 
@@ -93,7 +85,7 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
 
   @Override
   public synchronized void didReceiveTypingStoppedMessage(long threadId, @NotNull Address author, int device, boolean isReplacedByIncomingMessage) {
-    if (author.toString().equals(preferences.getLocalNumber())) {
+    if (author.toString().equals(loginStateRepository.getLocalNumber())) {
       return;
     }
 
@@ -161,8 +153,14 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
 
     notifier.postValue(new TypingState(new ArrayList<>(uniqueTypists), isReplacedByIncomingMessage));
 
-    Set<Long> activeThreads = Stream.of(typistMap.keySet()).filter(t -> !typistMap.get(t).isEmpty()).collect(Collectors.toSet());
-    threadsNotifier.postValue(activeThreads);
+      Set<Long> activeThreads = new HashSet<>();
+      for (Map.Entry<Long, Set<Typist>> entry : typistMap.entrySet()) {
+          Set<Typist> value = entry.getValue();
+          if (value != null && !value.isEmpty()) {
+              activeThreads.add(entry.getKey());
+          }
+      }
+      threadsNotifier.postValue(activeThreads);
   }
 
   public static class TypingState {

@@ -18,11 +18,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,32 +55,49 @@ private val TITLES = listOf(R.string.accountIdEnter, R.string.qrScan)
 internal fun NewMessage(
     state: State,
     qrErrors: Flow<String> = emptyFlow(),
-    callbacks: Callbacks = object: Callbacks {},
+    callbacks: Callbacks = object : Callbacks {},
     onClose: () -> Unit = {},
     onBack: () -> Unit = {},
     onHelp: () -> Unit = {},
+    isInvite: Boolean = false,
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column(modifier = Modifier.background(
-        LocalColors.current.backgroundSecondary,
-        shape = MaterialTheme.shapes.small
-    )) {
+    LaunchedEffect(state.validIdFromQr) {
+        if (state.validIdFromQr.isNotBlank()) {
+            if (isInvite) {
+                // switch back to the 1st tab and proceed with invite flow
+                pagerState.animateScrollToPage(0)
+            } else {
+                // auto-run the normal flow ()
+                callbacks.onContinue()
+            }
+
+            callbacks.onClearQrCode()
+        }
+    }
+
+    Column(
+        modifier = Modifier.background(
+            if (isInvite) LocalColors.current.background else LocalColors.current.backgroundSecondary,
+            shape = MaterialTheme.shapes.small
+        )
+    ) {
         // `messageNew` is now a plurals string so get the singular version
-        val context = LocalContext.current
-        val newMessageTitleTxt:String = context.resources.getQuantityString(R.plurals.messageNew, 1, 1)
+        val newMessageTitleTxt: String = if(isInvite) LocalResources.current.getString(R.string.membersInviteTitle) else
+            LocalResources.current.getQuantityString(R.plurals.messageNew, 1, 1)
 
         BackAppBar(
             title = newMessageTitleTxt,
             backgroundColor = Color.Transparent, // transparent to show the rounded shape of the container
             onBack = onBack,
-            actions = { AppBarCloseIcon(onClose = onClose) },
+            actions = { if(!isInvite) AppBarCloseIcon(onClose = onClose) },
             windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled by the dialog
         )
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {
             when (TITLES[it]) {
-                R.string.accountIdEnter -> EnterAccountId(state, callbacks, onHelp)
+                R.string.accountIdEnter -> EnterAccountId(state, callbacks, onHelp, isInvite)
                 R.string.qrScan -> QRScannerScreen(qrErrors, onScan = callbacks::onScanQrCode)
             }
         }
@@ -89,9 +108,10 @@ internal fun NewMessage(
 private fun EnterAccountId(
     state: State,
     callbacks: Callbacks,
-    onHelp: () -> Unit = {}
+    onHelp: () -> Unit = {},
+    isInvite: Boolean = false,
 ) {
-    Surface(color = LocalColors.current.backgroundSecondary) {
+    Surface(color = if (isInvite) LocalColors.current.background else LocalColors.current.backgroundSecondary) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -117,7 +137,7 @@ private fun EnterAccountId(
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
 
                 BorderlessButtonWithIcon(
-                    text = stringResource(R.string.messageNewDescriptionMobile),
+                    text = stringResource(if(isInvite) R.string.inviteNewMemberGroupNoLink else R.string.messageNewDescriptionMobile),
                     modifier = Modifier
                         .qaTag(R.string.AccessibilityId_messageNewDescriptionMobile)
                         .padding(horizontal = LocalDimensions.current.mediumSpacing)
@@ -129,7 +149,9 @@ private fun EnterAccountId(
                 )
             }
 
-            Spacer(Modifier.weight(1f).heightIn(min = LocalDimensions.current.smallSpacing))
+            Spacer(Modifier
+                .weight(1f)
+                .heightIn(min = LocalDimensions.current.smallSpacing))
 
             AccentOutlineButton(
                 modifier = Modifier
@@ -143,12 +165,11 @@ private fun EnterAccountId(
                 onClick = callbacks::onContinue
             ) {
                 LoadingArcOr(state.loading) {
-                    Text(stringResource(R.string.next))
+                    Text(stringResource(if(isInvite) R.string.membersInviteTitle else R.string.next))
                 }
             }
         }
     }
-
 }
 
 @Preview

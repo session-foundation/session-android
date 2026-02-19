@@ -6,12 +6,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import org.session.libsession.database.MessageDataProvider
-import org.thoughtcrime.securesms.attachments.DatabaseAttachmentProvider
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.AttachmentSecret
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
-import org.thoughtcrime.securesms.database.AttachmentDatabase
-import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase
@@ -22,14 +19,10 @@ import org.thoughtcrime.securesms.database.GroupReceiptDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiBackupFilesDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
-import org.thoughtcrime.securesms.database.LokiUserDatabase
 import org.thoughtcrime.securesms.database.MediaDatabase
-import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.PushDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.SearchDatabase
-import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import javax.inject.Provider
@@ -46,7 +39,9 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAttachmentSecret(@ApplicationContext context: Context) = AttachmentSecretProvider.getInstance(context).orCreateAttachmentSecret
+    fun provideAttachmentSecret(attachmentSecretProvider: AttachmentSecretProvider): AttachmentSecret {
+        return attachmentSecretProvider.getOrCreateAttachmentSecret()
+    }
 
     @Provides
     @Singleton
@@ -56,21 +51,13 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAttachmentDatabase(@ApplicationContext context: Context,
-                                  openHelper: Provider<SQLCipherOpenHelper>,
-                                  attachmentSecret: AttachmentSecret) = AttachmentDatabase(context, openHelper, attachmentSecret)
-    @Provides
-    @Singleton
     fun provideMediaDatbase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MediaDatabase(context, openHelper)
 
 
     @Provides
     @Singleton
-    fun provideMmsSms(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MmsSmsDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
     fun provideDraftDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = DraftDatabase(context, openHelper)
+
 
     @Provides
     @Singleton
@@ -78,11 +65,8 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideGroupDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = GroupDatabase(context,openHelper)
-
-    @Provides
-    @Singleton
-    fun provideRecipientDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = RecipientDatabase(context,openHelper)
+    fun provideGroupDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>, loginStateRepository: LoginStateRepository)
+        = GroupDatabase(context,openHelper, loginStateRepository)
 
     @Provides
     @Singleton
@@ -100,22 +84,11 @@ object DatabaseModule {
     @Singleton
     fun provideLokiMessageDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiMessageDatabase(context,openHelper)
 
-    @Provides
-    @Singleton
-    fun provideLokiUserDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiUserDatabase(context,openHelper)
 
     @Provides
     @Singleton
     fun provideLokiBackupFilesDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiBackupFilesDatabase(context,openHelper)
 
-
-    @Provides
-    @Singleton
-    fun provideSessionContactDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = SessionContactDatabase(context,openHelper)
-
-    @Provides
-    @Singleton
-    fun provideBlindedIdMappingDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = BlindedIdMappingDatabase(context, openHelper)
 
     @Provides
     @Singleton

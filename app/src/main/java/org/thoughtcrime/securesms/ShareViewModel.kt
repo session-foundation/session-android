@@ -23,17 +23,15 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.home.search.searchName
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -45,15 +43,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ShareViewModel @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    @ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
-    private val proStatusManager: ProStatusManager,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val conversationRepository: ConversationRepository,
+    conversationRepository: ConversationRepository,
 ): ViewModel(){
+
     private val TAG = ShareViewModel::class.java.simpleName
 
-    private var resolvedExtra: Uri? = null
+    private var resolvedExtras: List<Uri> = emptyList()
     private var resolvedPlaintext: CharSequence? = null
     private var mimeType: String? = null
     private var isPassingAlongMedia = false
@@ -67,8 +65,8 @@ class ShareViewModel @Inject constructor(
     @OptIn(FlowPreview::class)
     val contacts: StateFlow<List<ConversationItem>> = combine(
         conversationRepository.observeConversationList(),
-         mutableSearchQuery.debounce(100L),
-         ::filterContacts
+        mutableSearchQuery.debounce(100L),
+        ::filterContacts
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val hasAnyConversations: StateFlow<Boolean?> =
@@ -81,8 +79,6 @@ class ShareViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(UIState(false))
     val uiState: StateFlow<UIState> get() = _uiState
-
-
 
     private fun filterContacts(
         threads: List<ThreadRecord>,
@@ -117,13 +113,12 @@ class ShareViewModel @Inject constructor(
                     .thenByDescending { it.lastMessage?.timestamp } // then order by last message time
             ).map { thread ->
                 val recipient = thread.recipient
-
                 ConversationItem(
                     name = if(recipient.isSelf) context.getString(R.string.noteToSelf)
-                            else recipient.searchName,
+                    else recipient.searchName,
                     address = recipient.address,
                     avatarUIData = avatarUtils.getUIDataFromRecipient(recipient),
-                    showProBadge = recipient.proStatus.shouldShowProBadge()
+                    showProBadge = recipient.shouldShowProBadge
                 )
             }.toList()
     }
@@ -133,35 +128,75 @@ class ShareViewModel @Inject constructor(
     }
 
     fun onPause(): Boolean{
-        if (!isPassingAlongMedia && resolvedExtra != null) {
-            BlobUtils.getInstance().delete(context, resolvedExtra!!)
+        if (!isPassingAlongMedia && resolvedExtras.isNotEmpty()) {
+            resolvedExtras.forEach { uri ->
+                BlobUtils.getInstance().delete(context, uri)
+            }
             return true
         }
-
         return false
     }
 
-    fun initialiseMedia(streamExtra: Uri?, charSequenceExtra: CharSequence?, intent: Intent){
+    fun initialiseMedia(intent: Intent){
+        // Reset previous state
+        resolvedExtras = emptyList()
+        resolvedPlaintext = null
+        mimeType = null
         isPassingAlongMedia = false
 
-        mimeType = getMimeType(streamExtra, intent.type)
+        val action = intent.action
+        val type = intent.type
+        val incomingUris = ArrayList<Uri>()
 
-        if (streamExtra != null && PartAuthority.isLocalUri(streamExtra)) {
+        val clipUris = intent.clipData?.let { cd ->
+            (0 until cd.itemCount).mapNotNull { cd.getItemAt(it).uri }
+        }.orEmpty()
+
+        if (clipUris.isNotEmpty()) {
+            incomingUris.addAll(clipUris)
+        } else {
+            if (Intent.ACTION_SEND == action) {
+                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let(incomingUris::add)
+            } else if (Intent.ACTION_SEND_MULTIPLE == action) {
+                intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.let(incomingUris::addAll)
+            }
+            intent.data?.let(incomingUris::add)
+        }
+
+        val uris = incomingUris.distinct()
+
+        var charSequenceExtra: CharSequence? = null
+        try {
+            charSequenceExtra = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
+        }
+        catch (e: Exception) {
+            // Ignore
+        }
+
+        isPassingAlongMedia = false
+        mimeType = getMimeType(uris.firstOrNull(), type)
+
+        if (uris.isNotEmpty() && uris.all { PartAuthority.isLocalUri(it) }) {
             isPassingAlongMedia = true
-            resolvedExtra = streamExtra
+            resolvedExtras = uris
             handleResolvedMedia(intent)
-        } else if (charSequenceExtra != null && mimeType != null && mimeType!!.startsWith("text/")) {
+        } else if (
+            uris.isEmpty() &&
+            charSequenceExtra != null &&
+            (mimeType?.startsWith("text/") == true)
+        ) {
             resolvedPlaintext = charSequenceExtra
             handleResolvedMedia(intent)
-        } else {
+        } else if (uris.isNotEmpty()) {
             _uiState.update { it.copy(showLoader = true) }
-            resolveMedia(intent, streamExtra)
+            resolveMedia(intent, uris)
+        } else {
+            _uiState.update { it.copy(showLoader = false) }
         }
     }
 
     private fun handleResolvedMedia(intent: Intent) {
         val address = IntentCompat.getParcelableExtra(intent, ShareActivity.EXTRA_ADDRESS, Address::class.java)
-
         if (address is Address.Conversable) {
             createConversation(address)
         } else {
@@ -169,26 +204,21 @@ class ShareViewModel @Inject constructor(
         }
     }
 
-    private fun resolveMedia(intent: Intent, vararg uris: Uri?){
+    private fun resolveMedia(intent: Intent, uris: List<Uri>){
         viewModelScope.launch(Dispatchers.Default){
-            resolvedExtra = getUri(*uris)
+            resolvedExtras = uris.mapNotNull { processSingleUri(it) }
             handleResolvedMedia(intent)
         }
     }
 
-    private fun getUri(vararg uris: Uri?): Uri? {
+    private fun processSingleUri(uri: Uri): Uri? {
         try {
-            if (uris.size != 1 || uris[0] == null) {
-                Log.w(TAG, "Invalid URI passed to ResolveMediaTask - bailing.")
-                return null
-            } else {
-                Log.i(TAG, "Resolved URI: " + uris[0]!!.toString() + " - " + uris[0]!!.path)
-            }
+            Log.i(TAG, "Resolving URI: " + uri.toString() + " - " + uri.path)
 
-            var inputStream = if ("file" == uris[0]!!.scheme) {
-                FileInputStream(uris[0]!!.path)
+            val inputStream = if ("file" == uri.scheme) {
+                FileInputStream(uri.path)
             } else {
-                context.contentResolver.openInputStream(uris[0]!!)
+                context.contentResolver.openInputStream(uri)
             }
 
             if (inputStream == null) {
@@ -196,10 +226,9 @@ class ShareViewModel @Inject constructor(
                 return null
             }
 
-            val cursor = context.contentResolver.query(uris[0]!!, arrayOf<String>(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)
+            val cursor = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)
             var fileName: String? = null
             var fileSize: Long? = null
-
             try {
                 if (cursor != null && cursor.moveToFirst()) {
                     try {
@@ -213,10 +242,12 @@ class ShareViewModel @Inject constructor(
                 cursor?.close()
             }
 
+            val specificMime = MediaUtil.getMimeType(context, uri) ?: mimeType ?: "application/octet-stream"
+
             return BlobUtils.getInstance()
                 .forData(inputStream, if (fileSize == null) 0 else fileSize)
-                .withMimeType(mimeType!!)
-                .withFileName(fileName!!)
+                .withMimeType(specificMime)
+                .withFileName(fileName ?: "unknown")
                 .createForMultipleSessionsOnDisk(context, BlobUtils.ErrorListener { e: IOException? -> Log.w(TAG, "Failed to write to disk.", e) })
                 .get()
         } catch (ioe: Exception) {
@@ -239,22 +270,26 @@ class ShareViewModel @Inject constructor(
         }
     }
 
-
     private fun createConversation(address: Address.Conversable) {
         val intent = ConversationActivityV2.createIntent(
             context = context,
             address = address,
         )
-
         intent.applyBaseShare()
-
         isPassingAlongMedia = true
         _uiEvents.tryEmit(ShareUIEvent.GoToScreen(intent))
     }
 
     private fun Intent.applyBaseShare() {
-        if (resolvedExtra != null) {
-            setDataAndType(resolvedExtra, mimeType)
+        if (resolvedExtras.isNotEmpty()) {
+            if (resolvedExtras.size == 1) {
+                action = Intent.ACTION_SEND
+                setDataAndType(resolvedExtras.first(), mimeType)
+            } else {
+                action = Intent.ACTION_SEND_MULTIPLE
+                type = mimeType ?: "*/*"
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(resolvedExtras))
+            }
         } else if (resolvedPlaintext != null) {
             putExtra(Intent.EXTRA_TEXT, resolvedPlaintext)
             setType("text/plain")

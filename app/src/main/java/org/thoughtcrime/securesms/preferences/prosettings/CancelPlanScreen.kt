@@ -1,31 +1,34 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
-import android.widget.Toast
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
-import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OpenSubscriptionPage
-import org.thoughtcrime.securesms.pro.SubscriptionType
-import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
+import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OpenCancelSubscriptionPage
+import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -34,7 +37,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
-import org.thoughtcrime.securesms.util.State
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -43,22 +45,28 @@ fun CancelPlanScreen(
     viewModel: ProSettingsViewModel,
     onBack: () -> Unit,
 ) {
+    LaunchedEffect(Unit) {
+        // ensuring we get the latest data here
+        // since we can deep link to this screen without going through the pro home screen
+        viewModel.ensureCancelState()
+    }
+
     val state by viewModel.cancelPlanState.collectAsState()
 
     BaseStateProScreen(
         state = state,
         onBack = onBack
     ){ planData ->
-        val activePlan = planData.subscriptionType
+        val activePlan = planData.proStatus
 
         // there are different UI depending on the state
         when {
             // there is an active subscription but from a different platform or from the
             // same platform but a different account
-            activePlan.subscriptionDetails.isFromAnotherPlatform()
+            activePlan.providerData.isFromAnotherPlatform()
                     || !planData.hasValidSubscription ->
                 CancelPlanNonOriginating(
-                    subscriptionDetails = activePlan.subscriptionDetails,
+                    providerData = activePlan.providerData,
                     sendCommand = viewModel::onCommand,
                     onBack = onBack,
                 )
@@ -79,16 +87,28 @@ fun CancelPlan(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // to track if the user came back from the cancel screen in the subscriber's page
+    var waitingForReturn by rememberSaveable { mutableStateOf(false) }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (waitingForReturn) {
+            waitingForReturn = false
+            sendCommand(ProSettingsViewModel.Commands.OnUserBackFromCancellation)
+        }
+    }
 
     BaseCellButtonProSettingsScreen(
         disabled = true,
         onBack = onBack,
-        buttonText = Phrase.from(context.getText(R.string.cancelProPlan))
+        buttonText = Phrase.from(context.getText(R.string.cancelAccess))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(OpenSubscriptionPage)
+            waitingForReturn = true
+            sendCommand(OpenCancelSubscriptionPage)
         },
         title = Phrase.from(context.getText(R.string.proCancelSorry))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)

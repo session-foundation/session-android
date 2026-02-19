@@ -20,36 +20,30 @@ package org.thoughtcrime.securesms.crypto;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsignal.crypto.IdentityKey;
-import org.session.libsignal.crypto.IdentityKeyPair;
-import org.session.libsignal.crypto.ecc.Curve;
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey;
 import org.session.libsignal.crypto.ecc.DjbECPublicKey;
 import org.session.libsignal.crypto.ecc.ECKeyPair;
-import org.session.libsignal.crypto.ecc.ECPrivateKey;
-import org.session.libsignal.crypto.ecc.ECPublicKey;
-import org.session.libsignal.exceptions.InvalidKeyException;
 import org.session.libsignal.utilities.Base64;
-
-import java.io.IOException;
 
 import kotlin.Unit;
 import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
-import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
 import network.loki.messenger.libsession_util.Curve25519;
 import network.loki.messenger.libsession_util.util.KeyPair;
 
 /**
  * Utility class for working with identity keys.
- * 
+ *
+ * Note: this class is due to be removed from March 2026 since we will have a few months
+ * of time to migrate the majority of users to the new key management system.
+ *
  * @author Moxie Marlinspike
  */
+@Deprecated(forRemoval = true)
 public class IdentityKeyUtil {
 
   private static final String MASTER_SECRET_UTIL_PREFERENCES_NAME = "SecureSMS-Preferences";
@@ -63,7 +57,7 @@ public class IdentityKeyUtil {
   public static final String ED25519_PUBLIC_KEY                          = "pref_ed25519_public_key";
   public static final String ED25519_SECRET_KEY                          = "pref_ed25519_secret_key";
   public static final String NOTIFICATION_KEY                            = "pref_notification_key";
-  public static final String LOKI_SEED                                   = "loki_seed";
+  private static final String LOKI_SEED                                   = "loki_seed";
   public static final String HAS_MIGRATED_KEY                            = "has_migrated_keys";
 
   public static final MutableSharedFlow<Unit> CHANGES = SharedFlowKt.MutableSharedFlow(0, 1, BufferOverflow.DROP_LATEST);
@@ -96,30 +90,6 @@ public class IdentityKeyUtil {
     }
   }
 
-  public static @NonNull IdentityKey getIdentityKey(@NonNull Context context) {
-    if (!hasIdentityKey(context)) throw new AssertionError("There isn't one!");
-
-    try {
-      byte[] publicKeyBytes = Base64.decode(retrieve(context, IDENTITY_PUBLIC_KEY_PREF));
-      return new IdentityKey(publicKeyBytes, 0);
-    } catch (IOException | InvalidKeyException e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  public static @NonNull IdentityKeyPair getIdentityKeyPair(@NonNull Context context) {
-    if (!hasIdentityKey(context)) throw new AssertionError("There isn't one!");
-
-    try {
-      IdentityKey  publicKey  = getIdentityKey(context);
-      ECPrivateKey privateKey = Curve.decodePrivatePoint(Base64.decode(retrieve(context, IDENTITY_PRIVATE_KEY_PREF)));
-
-      return new IdentityKeyPair(publicKey, privateKey);
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
-  }
-
   public static void generateIdentityKeyPair(@NonNull Context context) {
     KeyPair keyPair = Curve25519.INSTANCE.generateKeyPair();
     ECKeyPair ecKeyPair = new ECKeyPair(
@@ -144,7 +114,7 @@ public class IdentityKeyUtil {
   }
 
   private static String getUnencryptedSecret(String key, String unencryptedSecret, Context context) {
-    KeyStoreHelper.SealedData encryptedSecret = KeyStoreHelper.seal(unencryptedSecret.getBytes());
+    SealedData encryptedSecret = KeyStoreHelper.seal(unencryptedSecret.getBytes());
 
     // save the encrypted suffix secret "key_encrypted"
     save(context,key+ENCRYPTED_SUFFIX,encryptedSecret.serialize());
@@ -155,7 +125,7 @@ public class IdentityKeyUtil {
   }
 
   private static String getEncryptedSecret(String encryptedSecret) {
-    KeyStoreHelper.SealedData sealedData = KeyStoreHelper.SealedData.fromString(encryptedSecret);
+    SealedData sealedData = SealedData.fromString(encryptedSecret);
     return new String(KeyStoreHelper.unseal(sealedData));
   }
 
@@ -168,7 +138,7 @@ public class IdentityKeyUtil {
     if (isEncryptedSuffix) {
       preferencesEditor.putString(key, value);
     } else {
-      KeyStoreHelper.SealedData encryptedSecret = KeyStoreHelper.seal(value.getBytes());
+      SealedData encryptedSecret = KeyStoreHelper.seal(value.getBytes());
       preferencesEditor.putString(key+ENCRYPTED_SUFFIX, encryptedSecret.serialize());
     }
 

@@ -4,6 +4,7 @@ import network.loki.messenger.libsession_util.util.MultiEncrypt
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log

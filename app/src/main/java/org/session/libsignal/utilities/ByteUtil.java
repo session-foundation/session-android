@@ -5,27 +5,9 @@
  */
 package org.session.libsignal.utilities;
 
-import org.session.libsignal.utilities.Hex;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.text.ParseException;
 
 public class ByteUtil {
-
-  public static byte[] combine(byte[]... elements) {
-    try {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-      for (byte[] element : elements) {
-        baos.write(element);
-      }
-
-      return baos.toByteArray();
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
-  }
 
   public static byte[][] split(byte[] input, int firstLength, int secondLength) {
     byte[][] parts = new byte[2][];

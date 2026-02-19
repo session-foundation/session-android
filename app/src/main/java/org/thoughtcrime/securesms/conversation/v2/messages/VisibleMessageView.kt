@@ -47,7 +47,6 @@ import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -61,6 +60,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
@@ -106,7 +106,6 @@ class VisibleMessageView : FrameLayout {
     private var onDoubleTap: (() -> Unit)? = null
     private var isOutgoing: Boolean = false
 
-    var indexInAdapter: Int = -1
     var isMessageSelected = false
         set(value) {
             field = value
@@ -159,11 +158,13 @@ class VisibleMessageView : FrameLayout {
         next: MessageRecord? = null,
         glide: RequestManager = Glide.with(this),
         searchQuery: String? = null,
-        lastSeen: Long,
+        lastSeen: Long?,
         lastSentMessageId: MessageId?,
         delegate: VisibleMessageViewDelegate? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
+        confirmCommunityJoin: (String, String) -> Unit,
+        confirmAttachmentDownload: (DatabaseAttachment)->Unit,
         isTextExpanded: Boolean = false,
         onTextExpanded: ((MessageId) -> Unit)? = null
     ) {
@@ -176,7 +177,6 @@ class VisibleMessageView : FrameLayout {
         val isStartOfMessageCluster = isStartOfMessageCluster(message, previous, isGroupThread)
         val isEndOfMessageCluster = isEndOfMessageCluster(message, next, isGroupThread)
         // Show profile picture and sender name if this is a group thread AND the message is incoming
-        binding.moderatorIconImageView.isVisible = false
         binding.profilePictureView.visibility = when {
             threadRecipient.isGroupOrCommunityRecipient && !message.isOutgoing && isEndOfMessageCluster -> View.VISIBLE
             threadRecipient.isGroupOrCommunityRecipient -> View.INVISIBLE
@@ -200,21 +200,21 @@ class VisibleMessageView : FrameLayout {
 
         if (isGroupThread && !message.isOutgoing) {
             if (isEndOfMessageCluster) {
-                binding.profilePictureView.setThemedContent {
-                    Avatar(
-                        size = LocalDimensions.current.iconMediumAvatar,
-                        data = avatarUtils.getUIDataFromRecipient(sender),
-                        modifier = Modifier.clickable {
-                            delegate?.showUserProfileModal(message.recipient)
-                        }
-                    )
-                }
-
-                binding.moderatorIconImageView.isVisible = if (sender.address is Address.WithAccountId) {
+                val showProBadge = if (sender.address is Address.WithAccountId) {
                     (threadRecipient.data as? RecipientData.GroupLike)
                         ?.shouldShowAdminCrown(sender.address.accountId) == true
                 } else {
                     false
+                }
+                binding.profilePictureView.setThemedContent {
+                    Avatar(
+                        size = LocalDimensions.current.iconMediumAvatar,
+                        data = avatarUtils.getUIDataFromRecipient(sender),
+                        badge = if(showProBadge) AvatarBadge.ResourceBadge.Admin else AvatarBadge.None,
+                        modifier = Modifier.clickable {
+                            delegate?.showUserProfileModal(message.recipient)
+                        }
+                    )
                 }
             }
         }
@@ -231,7 +231,7 @@ class VisibleMessageView : FrameLayout {
                         text = sender.displayName(),
                         textStyle = LocalType.current.base.bold()
                             .copy(color = LocalColors.current.text),
-                        showBadge = message.recipient.proStatus.shouldShowProBadge(),
+                        showBadge = message.recipient.shouldShowProBadge,
                     )
 
                     if (sender.address is Address.Blinded) {
@@ -253,7 +253,7 @@ class VisibleMessageView : FrameLayout {
         }
 
         // Unread marker
-        val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
+        val shouldShowUnreadMarker = lastSeen != null && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
         if (shouldShowUnreadMarker) {
             markerContainerBinding.value.root.isVisible = true
         } else if (markerContainerBinding.isInitialized()) {
@@ -271,12 +271,19 @@ class VisibleMessageView : FrameLayout {
         // Update message status indicator
         showStatusMessage(message, lastSentMessageId)
 
-        // Emoji Reactions
-        if (!message.isDeleted && message.reactions.isNotEmpty()) {
+        // Emoji Reactions // we hide the emoji reactions if the contact isn't approved, nor approved us
+        if (!message.isDeleted && message.reactions.isNotEmpty()
+            && threadRecipient.approvedMe && threadRecipient.approved) {
             val capabilities = (threadRecipient.address as? Address.Community)?.serverUrl?.let { lokiApiDb.getServerCapabilities(it) }
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
-                    root.setReactions(message.messageId, message.reactions, message.isOutgoing, delegate)
+                    root.setReactions(
+                        messageId = message.messageId,
+                        threadRecipient = threadRecipient,
+                        records = message.reactions,
+                        outgoing = message.isOutgoing,
+                        delegate = delegate
+                    )
                     root.layoutParams = (root.layoutParams as ConstraintLayout.LayoutParams).apply {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }
@@ -291,7 +298,6 @@ class VisibleMessageView : FrameLayout {
         }
 
         // Populate content view
-        binding.messageContentView.root.indexInAdapter = indexInAdapter
         binding.messageContentView.root.bind(
             message,
             isStartOfMessageCluster,
@@ -301,6 +307,8 @@ class VisibleMessageView : FrameLayout {
             searchQuery,
             downloadPendingAttachment = downloadPendingAttachment,
             retryFailedAttachments = retryFailedAttachments,
+            confirmCommunityJoin = confirmCommunityJoin,
+            confirmAttachmentDownload = confirmAttachmentDownload,
             isTextExpanded = isTextExpanded,
             onTextExpanded = onTextExpanded
         )
@@ -359,8 +367,8 @@ class VisibleMessageView : FrameLayout {
 
         // ----- Case i..) Message is incoming and scheduled to disappear -----
         if (message.isIncoming && scheduledToDisappear) {
-            // Display the status ('Read') and the show the timer only (no delivery icon)
-            binding.messageStatusTextView.isVisible  = true
+            // show the timer only (no delivery icon)
+            binding.messageStatusTextView.isVisible  = false
             binding.expirationTimerView.isVisible    = true
             binding.expirationTimerView.bringToFront()
             updateExpirationTimer(message)

@@ -17,33 +17,21 @@
  */
 package org.thoughtcrime.securesms.database.model;
 
-import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.AUTHOR_KEY;
-import static org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_SNIPPET_KEY;
-import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY;
 
 import android.content.Context;
-import android.text.SpannableString;
-import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.squareup.phrase.Phrase;
 
-import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.AddressKt;
-import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientNamesKt;
-import org.thoughtcrime.securesms.database.MmsSmsColumns;
-import org.thoughtcrime.securesms.database.SmsDatabase;
-import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
-import org.thoughtcrime.securesms.ui.UtilKt;
 
-import kotlin.Pair;
 import network.loki.messenger.R;
 
 /**
@@ -53,172 +41,37 @@ import network.loki.messenger.R;
  *
  */
 public class ThreadRecord extends DisplayRecord {
+    public @Nullable  final MessageRecord lastMessage;
+    private           final long    count;
+    private           final int     unreadCount;
+    private           final int     unreadMentionCount;
+    private           final long    lastSeen;
+    private           final String invitingAdminId;
+    private           final boolean isUnread;
 
-  public @Nullable  final MessageRecord lastMessage;
-  private           final long    count;
-  private           final int     unreadCount;
-  private           final int     unreadMentionCount;
-  private           final long    lastSeen;
-  private           final String invitingAdminId;
-  private           final boolean isUnread;
+    @NonNull
+    public            final GroupThreadStatus groupThreadStatus;
 
-  @NonNull
-  private           final GroupThreadStatus groupThreadStatus;
-
-  public ThreadRecord(@NonNull String body,
-                      @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
-                      int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
-                      long snippetType,
-                      long lastSeen, int readReceiptCount, String invitingAdminId,
-                      @NonNull GroupThreadStatus groupThreadStatus,
-                      @Nullable MessageContent messageContent,
-                      boolean isUnread)
-  {
-    super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount, messageContent);
-    this.lastMessage        = lastMessage;
-    this.count              = count;
-    this.unreadCount        = unreadCount;
-    this.unreadMentionCount = unreadMentionCount;
-    this.lastSeen           = lastSeen;
-    this.invitingAdminId    = invitingAdminId;
-    this.groupThreadStatus  = groupThreadStatus;
-    this.isUnread = isUnread;
-  }
-
-    private String getName() {
-        return RecipientNamesKt.displayName(getRecipient());
+    public ThreadRecord(@NonNull String body,
+                        @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
+                        int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
+                        long snippetType,
+                        long lastSeen, int readReceiptCount, String invitingAdminId,
+                        @NonNull GroupThreadStatus groupThreadStatus,
+                        @Nullable MessageContent messageContent,
+                        boolean isUnread)
+    {
+        super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount, messageContent);
+        this.lastMessage        = lastMessage;
+        this.count              = count;
+        this.unreadCount        = unreadCount;
+        this.unreadMentionCount = unreadMentionCount;
+        this.lastSeen           = lastSeen;
+        this.invitingAdminId    = invitingAdminId;
+        this.groupThreadStatus  = groupThreadStatus;
+        this.isUnread = isUnread;
     }
 
-    @Override
-    public CharSequence getDisplayBody(@NonNull Context context) {
-        if (groupThreadStatus == GroupThreadStatus.Kicked) {
-            return Phrase.from(context, R.string.groupRemovedYou)
-                    .put(GROUP_NAME_KEY, getName())
-                    .format()
-                    .toString();
-        } else if (groupThreadStatus == GroupThreadStatus.Destroyed) {
-            return Phrase.from(context, R.string.groupDeletedMemberDescription)
-                    .put(GROUP_NAME_KEY, getName())
-                    .format()
-                    .toString();
-        } else if (lastMessage == null){
-            // no need to display anything if there are no messages
-            return "";
-        }
-        else if (isGroupUpdateMessage()) {
-            CharSequence body = lastMessage.getDisplayBody(context);
-            UpdateMessageData updatedMessage = lastMessage.getGroupUpdateMessage();
-
-            // For group leaving and error quit messages, we will leave the message as formatted
-            if (updatedMessage != null && (updatedMessage.isGroupLeavingKind() || updatedMessage.isGroupErrorQuitKind())) {
-                return body;
-            }
-
-            // Otherwise we'll need to remove all the formatting and just display the text
-            return body.toString();
-        } else if (isOpenGroupInvitation()) {
-            return context.getString(R.string.communityInvitation);
-        } else if (MmsSmsColumns.Types.isLegacyType(type)) {
-            return Phrase.from(context, R.string.messageErrorOld)
-                    .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                    .format().toString();
-        } else if (MmsSmsColumns.Types.isDraftMessageType(type)) {
-            String draftText = context.getString(R.string.draft);
-            return draftText + " " + getBody();
-        } else if (SmsDatabase.Types.isOutgoingCall(type)) {
-            return Phrase.from(context, R.string.callsYouCalled)
-                    .put(NAME_KEY, getName())
-                    .format().toString();
-        } else if (SmsDatabase.Types.isIncomingCall(type)) {
-            return Phrase.from(context, R.string.callsCalledYou)
-                    .put(NAME_KEY, getName())
-                    .format().toString();
-        } else if (SmsDatabase.Types.isMissedCall(type)) {
-            return Phrase.from(context, R.string.callsMissedCallFrom)
-                    .put(NAME_KEY, getName())
-                    .format().toString();
-        } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
-            // Use the same message as we would for displaying on the conversation screen.
-            // lastMessage shouldn't be null here, but we'll check just in case.
-            if (lastMessage != null) {
-                return lastMessage.getDisplayBody(context).toString();
-            } else {
-                return "";
-            }
-        }
-        else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
-            return Phrase.from(context, R.string.attachmentsMediaSaved)
-                    .put(NAME_KEY, getName())
-                    .format().toString();
-
-        } else if (MmsSmsColumns.Types.isScreenshotExtraction(type)) {
-            return Phrase.from(context, R.string.screenshotTaken)
-                    .put(NAME_KEY, getName())
-                    .format().toString();
-
-        } else if (MmsSmsColumns.Types.isMessageRequestResponse(type)) {
-            try {
-                if (lastMessage.getRecipient().getAddress().toString().equals(
-                        TextSecurePreferences.getLocalNumber(context))) {
-                    return UtilKt.getSubbedCharSequence(
-                            context,
-                            R.string.messageRequestYouHaveAccepted,
-                            new Pair<>(NAME_KEY, getName())
-                    );
-                }
-            }
-            catch (Exception e){} // the above can throw a null exception
-
-            return context.getString(R.string.messageRequestsAccepted);
-        } else if (getCount() == 0) {
-            return new SpannableString(context.getString(R.string.messageEmpty));
-        } else {
-            // This block hits when we receive a media message from an unaccepted contact - however,
-            // unaccepted contacts aren't allowed to send us media - so we'll return an empty string
-            // if it's JUST an image, or the body text that accompanied the image should any exist.
-            // We could return null here - but then we have to find all the usages of this
-            // `getDisplayBody` method and make sure it doesn't fall over if it has a null result.
-            if (TextUtils.isEmpty(getBody())) {
-                return new SpannableString("");
-                // Old behaviour was: return new SpannableString(emphasisAdded(context.getString(R.string.mediaMessage)));
-            } else {
-                return getNonControlMessageDisplayBody(context);
-            }
-        }
-    }
-
-    /**
-     * Logic to get the body for non control messages
-     */
-    public CharSequence getNonControlMessageDisplayBody(@NonNull Context context) {
-        Recipient recipient = getRecipient();
-        // The logic will differ depending on the type.
-        // 1-1, note to self and control messages (we shouldn't have any in here, but leaving the
-        // logic to be safe) do not need author details
-        if (recipient.isLocalNumber() || !AddressKt.isGroupOrCommunity(recipient.getAddress()) ||
-                (lastMessage != null && lastMessage.isControlMessage())
-        ) {
-            return getBody();
-        } else { // for groups (new, legacy, communities) show either 'You' or the contact's name
-            String prefix = "";
-            if (lastMessage != null && lastMessage.isOutgoing()) {
-                prefix = context.getString(R.string.you);
-            }
-            else if(lastMessage != null){
-                prefix = RecipientNamesKt.displayName(lastMessage.getIndividualRecipient());
-            }
-
-            return Phrase.from(context.getString(R.string.messageSnippetGroup))
-                    .put(AUTHOR_KEY, prefix)
-                    .put(MESSAGE_SNIPPET_KEY, getBody())
-                    .format().toString();
-        }
-    }
-
-    @Override
-    public boolean isGroupUpdateMessage() {
-        return lastMessage != null && lastMessage.isGroupUpdateMessage();
-    }
 
     public long getCount()               { return count; }
 

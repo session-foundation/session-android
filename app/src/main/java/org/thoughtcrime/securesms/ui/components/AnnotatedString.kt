@@ -61,7 +61,7 @@ private fun resources(): Resources {
 @Composable
 fun annotatedStringResource(
     @StringRes id: Int,
-    highlightColor: Color = LocalColors.current.accent
+    highlightColor: Color = LocalColors.current.accentText
 ): AnnotatedString {
     val resources = resources()
     val density = LocalDensity.current
@@ -74,7 +74,7 @@ fun annotatedStringResource(
 @Composable
 fun annotatedStringResource(
     text: CharSequence,
-    highlightColor: Color = LocalColors.current.accent
+    highlightColor: Color = LocalColors.current.accentText
 ): AnnotatedString {
     val density = LocalDensity.current
     return remember(text.hashCode()) {

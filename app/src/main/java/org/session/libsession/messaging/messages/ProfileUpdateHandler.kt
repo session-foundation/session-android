@@ -1,17 +1,25 @@
 package org.session.libsession.messaging.messages
 
+import com.google.protobuf.ByteString
+import network.loki.messenger.libsession_util.pro.ProProof
+import network.loki.messenger.libsession_util.protocol.DecodedPro
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.BitSet
+import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.updateContact
+import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
+import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import org.thoughtcrime.securesms.util.DateUtils.Companion.toEpochSeconds
 import java.time.Instant
@@ -56,11 +64,14 @@ class ProfileUpdateHandler @Inject constructor(
         val standardSender = unblinded ?: (senderAddress as? Address.Standard)
         if (standardSender != null && (!updates.name.isNullOrBlank() || updates.pic != null)) {
             configFactory.withMutableUserConfigs { configs ->
+                var shouldUpdate = false
                 configs.contacts.updateContact(standardSender) {
-                    if (shouldUpdateProfile(
+                    shouldUpdate = shouldUpdateProfile(
                         lastUpdated = profileUpdatedEpochSeconds.secondsToInstant(),
                         newUpdateTime = updates.profileUpdateTime
-                    )) {
+                    )
+
+                    if (shouldUpdate) {
                         if (updates.name != null) {
                             name = updates.name
                         }
@@ -68,6 +79,8 @@ class ProfileUpdateHandler @Inject constructor(
                         if (updates.pic != null) {
                             profilePicture = updates.pic
                         }
+
+                        proFeatures = updates.proFeatures
 
                         if (updates.profileUpdateTime != null) {
                             profileUpdatedEpochSeconds = updates.profileUpdateTime.toEpochSeconds()
@@ -77,13 +90,20 @@ class ProfileUpdateHandler @Inject constructor(
                         Log.d(TAG, "Ignoring contact profile update for ${standardSender.debugString}, no changes detected")
                     }
                 }
+
+                if (shouldUpdate) {
+                    configs.convoInfoVolatile.set(
+                        configs.convoInfoVolatile.getOrConstructOneToOne(standardSender.accountId.hexString)
+                            .copy(proProofInfo = updates.proProof)
+                    )
+                }
             }
         }
 
         // If we have a blinded address, we need to look at if we have a blinded contact to update
         if (senderAddress is Address.Blinded && (updates.pic != null || !updates.name.isNullOrBlank())) {
             configFactory.withMutableUserConfigs { configs ->
-                configs.contacts.getBlinded(senderAddress.blindedId.hexString)?.let { c ->
+                val shouldUpdate = configs.contacts.getBlinded(senderAddress.blindedId.hexString)?.let { c ->
                     if (shouldUpdateProfile(
                         lastUpdated = c.profileUpdatedEpochSeconds.secondsToInstant(),
                         newUpdateTime = updates.profileUpdateTime
@@ -96,12 +116,24 @@ class ProfileUpdateHandler @Inject constructor(
                             c.name = updates.name
                         }
 
+                        c.proFeatures = updates.proFeatures
+
                         if (updates.profileUpdateTime != null) {
                             c.profileUpdatedEpochSeconds = updates.profileUpdateTime.toEpochSeconds()
                         }
 
                         configs.contacts.setBlinded(c)
+                        true
+                    } else {
+                        false
                     }
+                } == true
+
+                if (shouldUpdate) {
+                    configs.convoInfoVolatile.set(
+                        configs.convoInfoVolatile.getOrConstructedBlindedOneToOne(senderAddress.blindedId.hexString)
+                            .copy(proProofInfo = updates.proProof)
+                    )
                 }
             }
         }
@@ -121,10 +153,15 @@ class ProfileUpdateHandler @Inject constructor(
                         r.copy(
                             name = updates.name ?: r.name,
                             profilePic = updates.pic ?: r.profilePic,
-                            blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests ?: r.blocksCommunityMessagesRequests
+                            blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests,
+                            proData = updates.proProof?.let {
+                                RecipientSettings.ProData(
+                                    info = it,
+                                    features = updates.proFeatures,
+                                )
+                            },
                         )
-                    } else if (updates.blocksCommunityMessageRequests != null &&
-                            r.blocksCommunityMessagesRequests != updates.blocksCommunityMessageRequests) {
+                    } else if (r.blocksCommunityMessagesRequests != updates.blocksCommunityMessageRequests) {
                         r.copy(blocksCommunityMessagesRequests = updates.blocksCommunityMessageRequests)
                     } else {
                         r
@@ -151,57 +188,92 @@ class ProfileUpdateHandler @Inject constructor(
     }
 
     class Updates private constructor(
-        // Name to update, must be non-blank if provided.
-        val name: String? = null,
-        val pic: UserPic? = null,
-        val blocksCommunityMessageRequests: Boolean? = null,
+        val name: String?,
+        val pic: UserPic?,
+        val proProof: Conversation.ProProofInfo?,
+        val proFeatures: BitSet<ProProfileFeature>,
+        val blocksCommunityMessageRequests: Boolean,
         val profileUpdateTime: Instant?,
     ) {
-        init {
-            check(name == null || name.isNotBlank()) {
-                "Name must be non-blank if provided"
-            }
-        }
-
         companion object {
-            fun create(
-                name: String? = null,
-                picUrl: String?,
-                picKey: ByteArray?,
-                blocksCommunityMessageRequests: Boolean? = null,
-                proStatus: Boolean? = null,
-                profileUpdateTime: Instant?
-            ): Updates? {
-                val hasNameUpdate = !name.isNullOrBlank()
-                val pic = when {
-                    picUrl == null -> null
-                    picUrl.isBlank() || picKey == null || picKey.size !in VALID_PROFILE_KEY_LENGTH -> UserPic.DEFAULT
-                    else -> UserPic(picUrl, picKey)
+            fun create(content: SessionProtos.Content,
+                       nowMills: Long,
+                       pro: DecodedPro?): Updates? {
+                val profile: SessionProtos.LokiProfile
+                val profilePicKey: ByteString?
+
+                when {
+                    content.hasDataMessage() && content.dataMessage.hasProfile() -> {
+                        profile = content.dataMessage.profile
+                        profilePicKey =
+                            if (content.dataMessage.hasProfileKey()) content.dataMessage.profileKey else null
+                    }
+
+                    content.hasMessageRequestResponse() && content.messageRequestResponse.hasProfile() -> {
+                        profile = content.messageRequestResponse.profile
+                        profilePicKey =
+                            if (content.messageRequestResponse.hasProfileKey()) content.messageRequestResponse.profileKey else null
+                    }
+
+                    else -> {
+                        // No profile found, not updating.
+                        // This is different from having an empty profile, which is a valid update.
+                        return null
+                    }
                 }
 
-                if (!hasNameUpdate && pic == null && blocksCommunityMessageRequests == null && proStatus == null) {
-                    return null
+                val pic = if (profile.hasProfilePicture()) {
+                    if (!profile.profilePicture.isNullOrBlank() && profilePicKey != null &&
+                        profilePicKey.size() in VALID_PROFILE_KEY_LENGTH) {
+                        UserPic(
+                            url = profile.profilePicture,
+                            key = profilePicKey.toByteArray()
+                        )
+                    } else {
+                        UserPic.DEFAULT // Clear the profile picture
+                    }
+                } else {
+                    null // No update to profile picture
+                }
+
+                val name = if (profile.hasDisplayName()) profile.displayName else null
+                val blocksCommunityMessageRequests = if (content.hasDataMessage() &&
+                    content.dataMessage.hasBlocksCommunityMessageRequests()) {
+                    content.dataMessage.blocksCommunityMessageRequests
+                } else {
+                    true
+                }
+
+                val proProofInfo: Conversation.ProProofInfo?
+                val proFeatures: BitSet<ProProfileFeature>
+
+                if (pro?.status == ProProof.STATUS_VALID &&
+                    pro.proof != null &&
+                    pro.proof!!.expiryMs > nowMills) {
+                    proProofInfo = Conversation.ProProofInfo(
+                        genIndexHash = pro.proof!!.genIndexHashHex.hexToByteArray(),
+                        expiryMs = pro.proof!!.expiryMs,
+                    )
+                    proFeatures = pro.proProfileFeatures
+                } else {
+                    proProofInfo = null
+                    proFeatures = BitSet()
                 }
 
                 return Updates(
-                    name = if (hasNameUpdate) name else null,
+                    name = name,
                     pic = pic,
                     blocksCommunityMessageRequests = blocksCommunityMessageRequests,
-                    profileUpdateTime = profileUpdateTime
+                    proProof = proProofInfo,
+                    proFeatures = proFeatures,
+                    profileUpdateTime = if (profile.hasLastUpdateSeconds()) {
+                        Instant.ofEpochSecond(profile.lastUpdateSeconds)
+                    } else {
+                        null
+                    }
                 )
             }
 
-            fun Profile.toUpdates(
-                blocksCommunityMessageRequests: Boolean? = null,
-            ): Updates? {
-                return create(
-                    name = this.displayName,
-                    picUrl = this.profilePictureURL,
-                    picKey = this.profileKey,
-                    blocksCommunityMessageRequests = blocksCommunityMessageRequests,
-                    profileUpdateTime = this.profileUpdated
-                )
-            }
         }
     }
 

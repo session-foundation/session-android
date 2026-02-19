@@ -18,19 +18,17 @@ import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.functional.bind
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Debouncer
 import org.session.libsession.utilities.Util
-import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ICE_CANDIDATES
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos.CallMessage.Type.ICE_CANDIDATES
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioDeviceUpdate
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioEnabled
@@ -74,6 +72,8 @@ class CallManager @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     audioManager: AudioManagerCompat,
     private val storage: StorageProtocol,
+    private val messageSender: MessageSender,
+    private val snodeClock: SnodeClock
 ): PeerConnection.Observer,
     SignalAudioManager.EventListener, CameraEventListener, DataChannel.Observer {
 
@@ -340,7 +340,7 @@ class CallManager @Inject constructor(
                     .also {
                         scope.launch {
                             runCatching {
-                                MessageSender.sendNonDurably(
+                                messageSender.sendNonDurably(
                                     it,
                                     currentRecipient,
                                     isSyncMessage = currentRecipient.isLocalNumber
@@ -491,7 +491,7 @@ class CallManager @Inject constructor(
             Log.i("Loki", "Posting new answer")
 
             runCatching {
-                MessageSender.sendNonDurably(
+                messageSender.sendNonDurably(
                     answerMessage,
                     recipient,
                     isSyncMessage = recipient.isLocalNumber
@@ -545,7 +545,7 @@ class CallManager @Inject constructor(
         val userAddress = storage.getUserPublicKey() ?: throw NullPointerException("No user public key")
 
         runCatching {
-            MessageSender.sendNonDurably(
+            messageSender.sendNonDurably(
                 answerMessage,
                 Address.fromSerialized(userAddress),
                 isSyncMessage = true
@@ -553,7 +553,7 @@ class CallManager @Inject constructor(
         }
 
         runCatching {
-            MessageSender.sendNonDurably(
+            messageSender.sendNonDurably(
                 CallMessage.answer(
                     answer.description,
                     callId
@@ -609,7 +609,7 @@ class CallManager @Inject constructor(
 
             Log.d("Loki", "Sending pre-offer")
             try {
-                MessageSender.sendNonDurably(
+                messageSender.sendNonDurably(
                     CallMessage.preOffer(
                         callId
                     ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber
@@ -619,7 +619,7 @@ class CallManager @Inject constructor(
                 Log.d("Loki", "Sending offer")
                 postViewModelState(CallViewModel.State.CALL_OFFER_OUTGOING)
 
-                MessageSender.sendNonDurably(CallMessage.offer(
+                messageSender.sendNonDurably(CallMessage.offer(
                     offer.description,
                     callId
                 ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber)
@@ -639,7 +639,7 @@ class CallManager @Inject constructor(
         stateProcessor.processEvent(Event.DeclineCall) {
             scope.launch {
                 runCatching {
-                    MessageSender.sendNonDurably(
+                    messageSender.sendNonDurably(
                         CallMessage.endCall(callId).applyExpiryMode(recipient),
                         Address.fromSerialized(userAddress),
                         isSyncMessage = true
@@ -648,7 +648,7 @@ class CallManager @Inject constructor(
             }
             scope.launch {
                 runCatching {
-                    MessageSender.sendNonDurably(
+                    messageSender.sendNonDurably(
                         CallMessage.endCall(callId).applyExpiryMode(recipient),
                         recipient,
                         isSyncMessage = recipient.isLocalNumber
@@ -680,7 +680,7 @@ class CallManager @Inject constructor(
 
             scope.launch {
                 runCatching {
-                    MessageSender.sendNonDurably(
+                    messageSender.sendNonDurably(
                         CallMessage.endCall(callId).applyExpiryMode(recipient),
                         recipient,
                         isSyncMessage = recipient.isLocalNumber
@@ -690,7 +690,7 @@ class CallManager @Inject constructor(
         }
     }
 
-    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = SnodeAPI.nowWithOffset) {
+    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = snodeClock.currentTimeMillis()) {
         storage.insertCallMessage(threadPublicKey, callMessageType, sentTimestamp)
     }
 
@@ -824,9 +824,9 @@ class CallManager @Inject constructor(
 
         // apply the rotation to the streams
         peerConnection?.setDeviceRotation(rotation)
-        remoteRotationSink?.rotation = abs(rotation) // abs as we never need the remote video to be inverted
+        remoteRotationSink?.rotation =
+            abs(rotation) // abs as we never need the remote video to be inverted
     }
-
     fun handleWiredHeadsetChanged(present: Boolean) {
         if (currentConnectionState in arrayOf(CallState.Connected,
                         CallState.LocalRing,
@@ -919,7 +919,7 @@ class CallManager @Inject constructor(
             connection.setLocalDescription(offer)
             scope.launch {
                 runCatching {
-                    MessageSender.sendNonDurably(
+                    messageSender.sendNonDurably(
                         CallMessage.offer(offer.description, callId).applyExpiryMode(recipient),
                         recipient,
                         isSyncMessage = recipient.isLocalNumber

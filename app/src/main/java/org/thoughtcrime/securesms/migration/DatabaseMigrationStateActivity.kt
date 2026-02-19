@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import org.thoughtcrime.securesms.FullComposeActivity
+import org.thoughtcrime.securesms.ui.components.LogExporter
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import javax.inject.Inject
 
@@ -18,11 +19,15 @@ class DatabaseMigrationStateActivity : FullComposeActivity() {
     @Inject
     lateinit var clearDataUtils: ClearDataUtils
 
+    @Inject
+    lateinit var exporter: LogExporter
+
     @Composable
     override fun ComposeContent() {
         DatabaseMigrationScreen(
             migrationManager = migrationManager,
             fm = supportFragmentManager,
+            exporter = exporter,
             clearDataUtils = clearDataUtils,
         )
 

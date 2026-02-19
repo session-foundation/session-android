@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.json.JSONArray
 import org.json.JSONException
-import org.session.libsignal.utilities.JsonUtil.SaneJSONObject
+import org.session.libsignal.utilities.SaneJSONObject
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -262,6 +262,30 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
         query = query,
         args = args.toTypedArray()
       )
+  }
+
+    /**
+     * Update the count for all reactions with the given emoji on the specified message.
+     * Note this should ONLY be used on community reactions as each reaction record contains the
+     * same count for that particular emoji/messageId, so it makes sense to update them all at once.
+     *
+     * For other type of messages, this will likely result to errors in the reaction counts!
+     */
+  fun updateAllCountFor(messageId: MessageId, emoji: String, countDiff: Int) {
+      val changed = writableDatabase.compileStatement("""
+          UPDATE $TABLE_NAME SET $COUNT = $COUNT + ? 
+          WHERE $MESSAGE_ID = ? AND $IS_MMS = ? AND $EMOJI = ?
+      """).use { statement ->
+          statement.bindLong(1, countDiff.toLong())
+          statement.bindLong(2, messageId.id)
+          statement.bindLong(3, if (messageId.mms) 1 else 0)
+          statement.bindString(4, emoji)
+          statement.executeUpdateDelete() > 0
+      }
+
+      if (changed) {
+          mutableChangeNotification.tryEmit(messageId)
+      }
   }
 
   private fun deleteReactions(query: String, args: Array<String>) {

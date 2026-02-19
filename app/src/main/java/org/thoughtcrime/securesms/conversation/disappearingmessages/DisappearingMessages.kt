@@ -8,27 +8,28 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeClock
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.DISAPPEARING_MESSAGES_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import javax.inject.Inject
 
 class DisappearingMessages @Inject constructor(
-    private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
     private val clock: SnodeClock,
+    private val messageSender: MessageSender,
+    private val loginStateRepository: LoginStateRepository,
 ) {
     fun set(address: Address, mode: ExpiryMode, isGroup: Boolean) {
         storage.setExpirationConfiguration(address, mode)
@@ -38,14 +39,14 @@ class DisappearingMessages @Inject constructor(
         } else {
             val message = ExpirationTimerUpdate(isGroup = isGroup).apply {
                 expiryMode = mode
-                sender = textSecurePreferences.getLocalNumber()
+                sender = loginStateRepository.getLocalNumber()
                 isSenderSelf = true
                 recipient = address.toString()
-                sentTimestamp = clock.currentTimeMills()
+                sentTimestamp = clock.currentTimeMillis()
             }
 
             messageExpirationManager.insertExpirationTimerMessage(message)
-            MessageSender.send(message, address)
+            messageSender.send(message, address)
         }
     }
 

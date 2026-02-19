@@ -8,8 +8,7 @@ package org.session.libsignal.messages;
 
 import com.google.protobuf.ByteString;
 
-import org.session.libsignal.utilities.SignalServiceAddress;
-import org.session.libsignal.protos.SignalServiceProtos.Envelope;
+import org.session.protos.SessionProtos.Envelope;
 
 /**
  * This class represents an encrypted Signal Service envelope.
@@ -32,8 +31,8 @@ public class SignalServiceEnvelope {
     if (proto.getSourceDevice() > 0) {
       builder.setSourceDevice(proto.getSourceDevice());
     }
-    builder.setTimestampMs(proto.getTimestampMs());
-    builder.setServerTimestampMs(proto.getServerTimestampMs());
+    builder.setTimestamp(proto.getTimestamp());
+    builder.setServerTimestamp(proto.getServerTimestamp());
     if (proto.getContent() != null) {
       builder.setContent(ByteString.copyFrom(proto.getContent().toByteArray()));
     }
@@ -45,16 +44,12 @@ public class SignalServiceEnvelope {
                                        .setType(Envelope.Type.valueOf(type))
                                        .setSource(sender)
                                        .setSourceDevice(senderDevice)
-                                       .setTimestampMs(timestamp)
-                                       .setServerTimestampMs(serverTimestamp);
+                                       .setTimestamp(timestamp)
+                                       .setServerTimestamp(serverTimestamp);
 
     if (content != null)       builder.setContent(ByteString.copyFrom(content));
 
     this.envelope = builder.build();
-  }
-
-  public boolean hasSource() {
-    return envelope.hasSource() && envelope.getSource().length() > 0;
   }
 
   /**
@@ -64,22 +59,11 @@ public class SignalServiceEnvelope {
     return envelope.getSource();
   }
 
-  public boolean hasSourceDevice() {
-    return envelope.hasSourceDevice();
-  }
-
   /**
    * @return The envelope's sender device ID.
    */
   public int getSourceDevice() {
     return envelope.getSourceDevice();
-  }
-
-  /**
-   * @return The envelope's sender as a SignalServiceAddress.
-   */
-  public SignalServiceAddress getSourceAddress() {
-    return new SignalServiceAddress(envelope.getSource());
   }
 
   /**
@@ -93,11 +77,11 @@ public class SignalServiceEnvelope {
    * @return The timestamp this envelope was sent.
    */
   public long getTimestamp() {
-    return envelope.getTimestampMs();
+    return envelope.getTimestamp();
   }
 
   public long getServerTimestamp() {
-    return envelope.getServerTimestampMs();
+    return envelope.getServerTimestamp();
   }
 
   /**

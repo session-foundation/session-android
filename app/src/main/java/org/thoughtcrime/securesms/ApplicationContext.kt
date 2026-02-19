@@ -37,26 +37,23 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.LogLevel
 import network.loki.messenger.libsession_util.util.Logger
-import nl.komponents.kovenant.android.startKovenant
-import nl.komponents.kovenant.android.stopKovenant
 import org.conscrypt.Conscrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
-import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.AppContext.configureKovenant
+import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
+import org.thoughtcrime.securesms.debugmenu.DebugLogger
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponents
 import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.glide.RemoteFileLoader
-import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger
@@ -84,11 +81,11 @@ import kotlin.concurrent.Volatile
 class ApplicationContext : Application(), DefaultLifecycleObserver, Configuration.Provider, SingletonImageLoader.Factory {
     @Inject lateinit var messagingModuleConfiguration: Lazy<MessagingModuleConfiguration>
     @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
-    @Inject lateinit var snodeModule: Lazy<SnodeModule>
     @Inject lateinit var sskEnvironment: Lazy<SSKEnvironment>
 
     @Inject lateinit var startupComponents: Lazy<OnAppStartupComponents>
     @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
+    @Inject lateinit var debugLogger: Lazy<DebugLogger>
     @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
 
@@ -97,6 +94,12 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     // Exist purely because Glide doesn't support Hilt injection
     @Inject
     lateinit var remoteFileLoader: Provider<RemoteFileLoader>
+
+    @Inject
+    lateinit var loginStateRepository: Lazy<LoginStateRepository>
+
+    @Inject
+    lateinit var attachmentSecretProvider: AttachmentSecretProvider
 
 
     @Volatile
@@ -133,22 +136,16 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         configure(this)
         super<Application>.onCreate()
 
-        startKovenant()
         initializeSecurityProvider()
         initializeLogging()
         initializeCrashHandling()
         NotificationChannels.create(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
-        configureKovenant()
-        SnodeModule.sharedLazy = snodeModule
         SSKEnvironment.sharedLazy = sskEnvironment
 
         initializeWebRtc()
         initializeBlobProvider()
         refresh()
-
-        val networkConstraint = NetworkConstraint.Factory(this).create()
-        isConnectedToNetwork = { networkConstraint.isMet }
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
@@ -188,11 +185,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         messageNotifier.setVisibleThread(-1)
     }
 
-    override fun onTerminate() {
-        stopKovenant() // Loki
-        super.onTerminate()
-    }
-
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         return imageLoaderProvider.get()
     }
@@ -208,7 +200,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     }
 
     private fun initializeLogging() {
-        Log.initialize(AndroidLogger(), persistentLogger.get())
+        Log.initialize(AndroidLogger(), persistentLogger.get(), debugLogger.get())
         Logger.addLogger(object : Logger {
             private val tag = "LibSession"
 

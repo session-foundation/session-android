@@ -22,9 +22,10 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 
 class MessageSendJob @AssistedInject constructor(
     @Assisted val message: Message,
@@ -34,6 +35,7 @@ class MessageSendJob @AssistedInject constructor(
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
+    private val messageSender: MessageSender,
 ) : Job {
 
     object AwaitingAttachmentUploadException : Exception("Awaiting attachment upload.")
@@ -97,12 +99,12 @@ class MessageSendJob @AssistedInject constructor(
                 }
             }
 
-            MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
+            messageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
 
             this.handleSuccess(dispatcherName)
             statusCallback?.trySend(Result.success(Unit))
-        } catch (e: HTTP.HTTPRequestFailedException) {
-            if (e.statusCode == 429) { this.handlePermanentFailure(dispatcherName, e) }
+        } catch (e: UnhandledStatusCodeException) {
+            if (e.code == 429) { this.handlePermanentFailure(dispatcherName, e) }
             else { this.handleFailure(dispatcherName, e) }
 
             statusCallback?.trySend(Result.failure(e))
@@ -173,7 +175,14 @@ class MessageSendJob @AssistedInject constructor(
         return KEY
     }
 
-    class DeserializeFactory(private val factory: Factory) : Job.DeserializeFactory<MessageSendJob> {
+
+    @AssistedFactory
+    abstract class Factory : Job.DeserializeFactory<MessageSendJob> {
+        abstract fun create(
+            message: Message,
+            destination: Destination,
+            statusCallback: SendChannel<Result<Unit>>? = null
+        ): MessageSendJob
 
         override fun create(data: Data): MessageSendJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
@@ -201,20 +210,11 @@ class MessageSendJob @AssistedInject constructor(
             }
             destinationInput.close()
             // Return
-            return factory.create(
+            return create(
                 message = message,
                 destination = destination,
                 statusCallback = null
             )
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(
-            message: Message,
-            destination: Destination,
-            statusCallback: SendChannel<Result<Unit>>? = null
-        ): MessageSendJob
     }
 }

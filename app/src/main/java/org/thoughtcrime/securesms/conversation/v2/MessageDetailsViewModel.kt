@@ -25,16 +25,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
+import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.recipients.isPro
-import org.session.libsession.utilities.recipients.shouldShowProBadge
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
@@ -48,10 +49,8 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
+import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.AnimatedAvatar
-import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.LongMessage
-import org.thoughtcrime.securesms.pro.SubscriptionType
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -67,7 +66,6 @@ import kotlin.text.Typography.ellipsis
 @HiltViewModel(assistedFactory = MessageDetailsViewModel.Factory::class)
 class MessageDetailsViewModel @AssistedInject constructor(
     @Assisted val messageId: MessageId,
-    private val prefs: TextSecurePreferences,
     private val attachmentDb: AttachmentDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
@@ -149,7 +147,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 }
 
                 val sender = if(messageRecord.isOutgoing){
-                    recipientRepository.getRecipient(Address.fromSerialized(prefs.getLocalNumber()!!))
+                    recipientRepository.getSelf()
                 } else individualRecipient
 
                 val attachments = slides.map(::Attachment)
@@ -200,13 +198,13 @@ class MessageDetailsViewModel @AssistedInject constructor(
                         )
                     },
                     senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
-                    senderShowProBadge = sender.proStatus.shouldShowProBadge(),
+                    senderShowProBadge = sender.shouldShowProBadge,
                     senderHasAdminCrown = shouldShowAdminCrown,
                     senderIsBlinded = IdPrefix.fromValue(sender.address.toString())?.isBlinded() ?: false,
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
-                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord.messageId),
-                    proBadgeClickable = !recipientRepository.getSelf().proStatus.isPro() // no badge click if the current user is pro
+                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord),
+                    proBadgeClickable = !recipientRepository.getSelf().isPro // no badge click if the current user is pro
                 )
             }
         }
@@ -223,21 +221,27 @@ class MessageDetailsViewModel @AssistedInject constructor(
     }
 
     private val Slide.details: List<TitledText>
-        get() = listOfNotNull(
-            TitledText(R.string.attachmentsFileId, filename),
-            TitledText(R.string.attachmentsFileType, asAttachment().contentType),
-            TitledText(R.string.attachmentsFileSize, Formatter.formatFileSize(context, fileSize)),
-            takeIf { it is ImageSlide }
-                ?.let(Slide::asAttachment)
-                ?.run { "${width}x$height" }
-                ?.let { TitledText(R.string.attachmentsResolution, it) },
-            attachmentDb.duration(this)?.let { TitledText(R.string.attachmentsDuration, it) },
-        )
+        get() {
+            val fileId = asAttachment().location //File ID isn't the filename but the ID on the file server
+            return listOfNotNull(
+                if(!fileId.isNullOrEmpty()) TitledText(R.string.attachmentsFileId, fileId) else null,
+                TitledText(R.string.attachmentsFileType, asAttachment().contentType),
+                TitledText(R.string.attachmentsFileSize, Formatter.formatFileSize(context, fileSize)),
+                takeIf { it is ImageSlide }
+                    ?.let(Slide::asAttachment)
+                    ?.run { "${width}x$height" }
+                    ?.let { TitledText(R.string.attachmentsResolution, it) },
+                attachmentDb.duration(this)?.let { TitledText(R.string.attachmentsDuration, it) },
+            )
+        }
 
     private fun AttachmentDatabase.duration(slide: Slide): String? =
         slide.takeIf { it.hasAudio() }
             ?.run { asAttachment() as? DatabaseAttachment }
-            ?.run { getAttachmentAudioExtras(attachmentId)?.durationMs }
+            ?.run {
+                getAttachmentAudioExtras(attachmentId)?.durationMs
+                    ?: this.audioDurationMs
+            }
             ?.takeIf { it > 0 }
             ?.let {
                 String.format(
@@ -284,13 +288,13 @@ class MessageDetailsViewModel @AssistedInject constructor(
             is Commands.ShowProBadgeCTA -> {
                 val features = state.value.proFeatures
                 _dialogState.update {
-                    val proSubscription = proStatusManager.subscriptionState.value.type
+                    val proSubscription = proStatusManager.proDataState.value.type
                     it.copy(
                         proBadgeCTA = when{
                             features.size > 1 -> ProBadgeCTA.Generic(proSubscription) // always show the generic cta when there are more than 1 feature
 
-                            features.contains(LongMessage) -> ProBadgeCTA.LongMessage(proSubscription)
-                            features.contains(AnimatedAvatar) -> ProBadgeCTA.AnimatedProfile(proSubscription)
+                            features.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT) -> ProBadgeCTA.LongMessage(proSubscription)
+                            features.contains(ProProfileFeature.ANIMATED_AVATAR) -> ProBadgeCTA.AnimatedProfile(proSubscription)
                             else -> ProBadgeCTA.Generic(proSubscription)
                         }
                     )
@@ -354,7 +358,7 @@ data class MessageDetailsState(
     val senderIsBlinded: Boolean = false,
     val thread: Recipient? = null,
     val readOnly: Boolean = false,
-    val proFeatures: Set<ProStatusManager.MessageProFeature> = emptySet(),
+    val proFeatures: Set<ProFeature> = emptySet(),
     val proBadgeClickable: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)
@@ -371,10 +375,10 @@ data class MessageDetailsState(
     val canDelete: Boolean get() = !readOnly
 }
 
-sealed class ProBadgeCTA(open val proSubscription: SubscriptionType) {
-    data class Generic(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
-    data class LongMessage(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
-    data class AnimatedProfile(override val proSubscription: SubscriptionType): ProBadgeCTA(proSubscription)
+sealed class ProBadgeCTA(open val proSubscription: ProStatus) {
+    data class Generic(override val proSubscription: ProStatus): ProBadgeCTA(proSubscription)
+    data class LongMessage(override val proSubscription: ProStatus): ProBadgeCTA(proSubscription)
+    data class AnimatedProfile(override val proSubscription: ProStatus): ProBadgeCTA(proSubscription)
 }
 
 data class DialogsState(
