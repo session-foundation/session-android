@@ -3,6 +3,7 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -67,7 +68,7 @@ class OpenGroupPollerManager @Inject constructor(
                 } else {
                     val newPollerStates = value.associateWith { baseUrl ->
                         acc[baseUrl] ?: run {
-                            val scope = CoroutineScope(Dispatchers.Default)
+                            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
                             Log.d(TAG, "Creating new poller for $baseUrl")
                             PollerHandle(
                                 poller = pollerFactory.create(baseUrl, scope, pollerSemaphore),

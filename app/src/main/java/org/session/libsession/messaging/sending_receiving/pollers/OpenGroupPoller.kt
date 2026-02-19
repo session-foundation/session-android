@@ -4,8 +4,8 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
@@ -97,7 +97,7 @@ class OpenGroupPoller @AssistedInject constructor(
             return
         }
 
-        coroutineScope {
+        supervisorScope {
             var caps = storage.getServerCapabilities(server)
             if (caps == null) {
                 val fetched = communityApiExecutor.execute(
