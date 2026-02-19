@@ -1063,7 +1063,6 @@
     <string name="proRefundNextSteps">{platform} 正在处理您的退款请求。通常需要 24 到 48 小时。根据其决定，您在 {app_name} 中的 {pro} 状态可能会发生变化。</string>
     <string name="proRefundRequestSessionSupport">您的退款请求将由 {app_name} 支持团队处理。\n\n点击下面的按钮并填写退款请求表格以申请退款。\n\n{app_name} 支持团队会尽力在 24-72 小时内处理您的请求，但在请求量大的时期，处理时间可能会延长。</string>
     <string name="proRefundRequestStorePolicies">您的退款请求将由 {platform} 独家通过 <b>{platform} 网站</b> 处理。\n\n根据 {platform} 的退款政策，{app_name} 开发者无法影响退款请求的结果。这包括请求是被批准还是被拒绝，以及是否发放全额或部分退款。</string>
-    <string name="proRefundSupport">如需获取退款请求的进一步更新，请联系 {platform}。由于 {platform} 的退款政策，{app_name} 开发者无法影响退款请求的结果。\n\n<font color="0">{platform} 退款支持</font></string>
     <string name="proRefunding">正在退款 {pro}</string>
     <string name="proRefundingDescription">{app_pro} 的退款处理仅由 {platform} 通过 {platform_store} 进行。\n\n由于 {platform} 的退款政策，{app_name} 开发者无法影响退款请求的处理结果。这包括请求是否被批准或拒绝，以及是否发放全额或部分退款。</string>
     <string name="proRenewAnimatedDisplayPicture">想再次使用动态头像吗？\n请续费您的 {pro} 访问权限以解锁您错过的功能。</string>
