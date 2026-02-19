@@ -66,9 +66,9 @@ class Poller @AssistedInject constructor(
         fun create(scope: CoroutineScope): Poller
     }
 
-    override suspend fun doPollOnce(isFirstPollSinceApoStarted: Boolean) {
+    override suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean) {
         // Migrate to multipart config when needed
-        if (isFirstPollSinceApoStarted && !preferences.migratedToMultiPartConfig) {
+        if (isFirstPollSinceAppStarted && !preferences.migratedToMultiPartConfig) {
             val allConfigNamespaces = intArrayOf(Namespace.USER_PROFILE(),
                 Namespace.USER_GROUPS(),
                 Namespace.CONTACTS(),
@@ -88,7 +88,7 @@ class Poller @AssistedInject constructor(
         // When we are only just starting to set up the account, we want to poll only the user
         // profile config so the user can see their name/avatar ASAP. Once this is done, we
         // will do a full poll immediately.
-        val pollOnlyUserProfileConfig = isFirstPollSinceApoStarted &&
+        val pollOnlyUserProfileConfig = isFirstPollSinceAppStarted &&
                 configFactory.withUserConfigs { it.userProfile.activeHashes().isEmpty() }
 
         poll(
