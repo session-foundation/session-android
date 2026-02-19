@@ -52,7 +52,7 @@ abstract class BasePoller<T>(
     val pollState: StateFlow<PollState<T>> get() = mutablePollState
 
     init {
-        val manualPollRequestChannel = Channel<PollRequestCallback<T>>(capacity = 1)
+        val manualPollRequestChannel = Channel<PollRequestCallback<T>>()
 
         manualPollRequestSender = manualPollRequestChannel
 
@@ -61,15 +61,20 @@ abstract class BasePoller<T>(
             var nextRoutinePollAt: TimeMark? = null
 
             while (true) {
+                val waitForRoutinePollDeferred = waitForRoutinePoll(nextRoutinePollAt)
+
                 val (pollReason, callback) = selectUnbiased {
                     manualPollRequestChannel.onReceive { callback ->
                         "manual" to callback
                     }
 
-                    waitForRoutinePoll(nextRoutinePollAt).onAwait {
+                    waitForRoutinePollDeferred.onAwait {
                         "routine" to null
                     }
                 }
+
+                // Clean up the deferred
+                waitForRoutinePollDeferred.cancel()
 
                 val result = runCatching {
                     pollOnce(pollReason)
