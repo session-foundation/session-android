@@ -725,7 +725,7 @@ fun DocumentMessagePreview(
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.document(
                     outgoing = false,
-                    name = "Document with a really long name that should ellepsize once it reaches the max width"
+                    name = "Document with a really long name that should ellipsize once it reaches the max width"
                 )
             ))
 
