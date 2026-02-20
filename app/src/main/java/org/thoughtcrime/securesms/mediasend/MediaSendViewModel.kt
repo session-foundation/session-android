@@ -158,8 +158,6 @@ class MediaSendViewModel @Inject constructor(
                         countVisibility = newVisibility,
                     )
                 }
-
-                leaveIfNoMediaAvailable()
             }
         }
     }
