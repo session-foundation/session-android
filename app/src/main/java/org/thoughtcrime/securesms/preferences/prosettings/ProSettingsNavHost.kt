@@ -48,6 +48,10 @@ sealed interface ProSettingsDestination: Parcelable {
     @Serializable
     @Parcelize
     data object RefundSubscription: ProSettingsDestination
+
+    @Serializable
+    @Parcelize
+    data object RefundInProgress: ProSettingsDestination
 }
 
 enum class ProNavHostCustomActions {
@@ -179,6 +183,15 @@ fun ProSettingsNavHost(
             horizontalSlideComposable<RefundSubscription> { entry ->
                 val viewModel = navController.proGraphViewModel(entry, navigator)
                 RefundPlanScreen(
+                    viewModel = viewModel,
+                    onBack = handleBack,
+                )
+            }
+
+            // Refund In Progress
+            horizontalSlideComposable<ProSettingsDestination.RefundInProgress> { entry ->
+                val viewModel = navController.proGraphViewModel(entry, navigator)
+                RefundInProgressScreen(
                     viewModel = viewModel,
                     onBack = handleBack,
                 )
