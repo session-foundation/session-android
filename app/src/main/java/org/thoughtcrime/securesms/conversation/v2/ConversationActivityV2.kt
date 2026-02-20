@@ -1392,7 +1392,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         val lastSeenTimestamp = storage.getLastSeen(viewModel.address)
-        val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return
+        val lastSeenItemPosition = lastSeenTimestamp?.let(adapter::findLastSeenItemPosition) ?: return
 
         binding.conversationRecyclerView.runWhenLaidOut {
             layoutManager?.scrollToPositionWithOffset(
@@ -1619,8 +1619,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     .put(GROUP_NAME_KEY, recipient.displayName())
                     .format()
                     .toString()
-
-                else -> ""
             }
             return
         }

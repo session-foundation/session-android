@@ -185,7 +185,7 @@ interface StorageProtocol {
      */
     fun markConversationAsReadUpToMessage(messageId: MessageId)
     fun markConversationAsUnread(threadId: Long)
-    fun getLastSeen(threadAddress: Address.Conversable): Long
+    fun getLastSeen(threadAddress: Address.Conversable): Long?
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
     fun insertMessageRequestResponseFromYou(threadId: Long)

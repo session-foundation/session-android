@@ -30,6 +30,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -50,7 +51,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
     @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var groupManager : GroupManagerV2
 
-    @Inject lateinit var threadDatabase: ThreadDatabase
+    @Inject lateinit var conversationRepository: ConversationRepository
 
     var onViewDetailsTapped: (() -> Unit?)? = null
     var onCopyConversationId: (() -> Unit?)? = null
@@ -92,7 +93,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         val addressString = requireNotNull(args.getString(ARG_ADDRESS))
         val address = Address.fromSerialized(addressString) as Address.Conversable
         thread = requireNotNull(
-            threadDatabase.getThreads(listOf(address)).firstOrNull()
+            conversationRepository.getConversationList().firstOrNull { it.recipient.address == address }
         ) { "Thread not found for address: $addressString" }
         group = groupDatabase.getGroup(thread.recipient.address.toString())
     }

@@ -1,5 +1,8 @@
 package org.thoughtcrime.securesms.repository
 
+import androidx.collection.MutableIntList
+import androidx.collection.arraySetOf
+import androidx.collection.mutableIntListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -65,6 +68,7 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.castAwayType
+import org.thoughtcrime.securesms.util.get
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -185,13 +189,44 @@ class DefaultConversationRepository @Inject constructor(
             }
             .map { addresses ->
                 withContext(Dispatchers.Default) {
-                    threadDb.getThreads(addresses)
+                    threadDb.getThreads(addresses).populateUnreadStatus()
                 }
             }
     }
 
     override fun getConversationList(): List<ThreadRecord> {
-        return threadDb.getThreads(getConversationListAddresses())
+        return threadDb.getThreads(getConversationListAddresses()).populateUnreadStatus()
+    }
+
+    /**
+     *
+     */
+    private fun List<ThreadRecord>.populateUnreadStatus(): List<ThreadRecord> {
+        var recordIndicesWithUnreadStatus: MutableIntList? = null
+
+        configFactory.withUserConfigs { configs ->
+            forEachIndexed { index, record ->
+                if (configs.convoInfoVolatile.get(record.recipient.address as Address.Conversable)?.unread == true) {
+                    if (recordIndicesWithUnreadStatus == null) {
+                        recordIndicesWithUnreadStatus = mutableIntListOf(index)
+                    } else {
+                        recordIndicesWithUnreadStatus.add(index)
+                    }
+                }
+            }
+        }
+
+        // No record has unread status, no need to change anything
+        if (recordIndicesWithUnreadStatus == null) {
+            return this
+        }
+
+        // Some record have unread status, make a copy of the list and copy of those items
+        val copied = this.toMutableList()
+        recordIndicesWithUnreadStatus.forEach { index ->
+            copied[index] = copied[index].copy(isUnread = true)
+        }
+        return copied
     }
 
     override fun saveDraft(threadId: Long, text: String) {

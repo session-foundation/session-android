@@ -133,8 +133,8 @@ open class Storage @Inject constructor(
         return attachmentDatabase.getAttachmentsForMessage(mmsMessageId)
     }
 
-    override fun getLastSeen(threadAddress: Address.Conversable): Long {
-        return configFactory.withUserConfigs { it.convoInfoVolatile.get(threadAddress) }?.lastRead ?: 0L
+    override fun getLastSeen(threadAddress: Address.Conversable): Long? {
+        return threadDatabase.getLastSeen(threadAddress)?.toEpochMilliseconds()
     }
 
     override fun ensureMessageHashesAreSender(
@@ -187,6 +187,8 @@ open class Storage @Inject constructor(
         threadAddress: Address.Conversable,
         lastSeenTime: Long
     ) {
+        var shouldUpdateLastRead = false
+
         configFactory.withMutableUserConfigs { configs ->
             val convo = configs.getOrConstructConvo(threadAddress)
             val currentLastRead = convo.lastRead
@@ -195,11 +197,22 @@ open class Storage @Inject constructor(
                 convo.unread = lastSeenTime < currentLastRead
             }
 
-            if (lastSeenTime > currentLastRead) {
+            shouldUpdateLastRead = lastSeenTime > currentLastRead
+            if (shouldUpdateLastRead) {
                 convo.lastRead = lastSeenTime
             }
 
             configs.convoInfoVolatile.set(convo)
+        }
+
+        // Normally, the config will be synced to db automatically.
+        // But there are cases the config reject our request, mainly due to lastSeenTime
+        // being too ancient.
+        // So we manually update the db here also to protect against this case
+        if (shouldUpdateLastRead) {
+            threadDatabase.upsertThreadLastSeen(
+                listOf(threadAddress to kotlin.time.Instant.fromEpochMilliseconds(lastSeenTime))
+            )
         }
     }
 

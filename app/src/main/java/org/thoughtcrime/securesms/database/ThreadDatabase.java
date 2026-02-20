@@ -17,8 +17,6 @@
  */
 package org.thoughtcrime.securesms.database;
 
-import static org.thoughtcrime.securesms.database.GroupDatabase.TYPED_GROUP_PROJECTION;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -31,9 +29,7 @@ import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsession.network.SnodeClock;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
@@ -43,13 +39,10 @@ import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.notifications.MarkReadProcessor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -62,6 +55,7 @@ import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
+import kotlinx.serialization.json.Json;
 
 @Singleton
 public class ThreadDatabase extends Database {
@@ -127,24 +121,6 @@ public class ThreadDatabase extends Database {
      // Then create an index on the address column
      "CREATE UNIQUE INDEX thread_addresses ON " + TABLE_NAME + " (" + ADDRESS + ");"
   };
-
-  private static final String[] THREAD_PROJECTION = {
-      ID, THREAD_CREATION_DATE, MESSAGE_COUNT, ADDRESS, SNIPPET, SNIPPET_CHARSET, READ, UNREAD_COUNT, UNREAD_MENTION_COUNT, DISTRIBUTION_TYPE, ERROR, SNIPPET_TYPE,
-      SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED, SNIPPET_CONTENT,
-  };
-
-  private static final List<String> TYPED_THREAD_PROJECTION =
-            Arrays.stream(THREAD_PROJECTION)
-                    .map(columnName -> TABLE_NAME + "." + columnName)
-                    .collect(Collectors.toList());
-
-  private static final List<String> COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION =
-          CollectionsKt.plus(
-          CollectionsKt.plus(
-                  TYPED_THREAD_PROJECTION,
-                  TYPED_GROUP_PROJECTION
-          ), LokiMessageDatabase.groupInviteTable+"."+LokiMessageDatabase.invitingSessionId);
-
 
   public static String getCreatePinnedCommand() {
     return "ALTER TABLE "+ TABLE_NAME + " " +
@@ -214,30 +190,30 @@ public class ThreadDatabase extends Database {
 
   final Lazy<@NonNull RecipientRepository> recipientRepository;
   final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
-  final Lazy<@NonNull ConfigFactoryProtocol> configFactory;
   private final Lazy<@NonNull MessageNotifier> messageNotifier;
   private final Lazy<@NonNull MmsDatabase> mmsDatabase;
   private final Lazy<@NonNull SmsDatabase> smsDatabase;
   private final Lazy<@NonNull MarkReadProcessor> markReadProcessor;
+  @NonNull final Json json;
 
   @Inject
   public ThreadDatabase(@dagger.hilt.android.qualifiers.ApplicationContext Context context,
                         Provider<SQLCipherOpenHelper> databaseHelper,
                         Lazy<@NonNull RecipientRepository> recipientRepository,
                         Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase,
-                        Lazy<@NonNull ConfigFactoryProtocol> configFactory,
                         Lazy<@NonNull MessageNotifier> messageNotifier,
                         Lazy<@NonNull MmsDatabase> mmsDatabase,
                         Lazy<@NonNull SmsDatabase> smsDatabase,
-                        Lazy<@NonNull MarkReadProcessor> markReadProcessor) {
+                        Lazy<@NonNull MarkReadProcessor> markReadProcessor,
+                        @NonNull Json json) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.mmsSmsDatabase = mmsSmsDatabase;
-    this.configFactory = configFactory;
     this.messageNotifier = messageNotifier;
     this.mmsDatabase = mmsDatabase;
     this.smsDatabase = smsDatabase;
     this.markReadProcessor = markReadProcessor;
+    this.json = json;
   }
 
   @NonNull

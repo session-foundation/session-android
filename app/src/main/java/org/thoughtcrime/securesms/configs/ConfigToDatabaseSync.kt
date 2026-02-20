@@ -16,7 +16,6 @@ import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.open_groups.OpenGroup.Companion.toAddress
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -55,13 +54,12 @@ import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.database.updateThreadLastReads
+import org.thoughtcrime.securesms.database.upsertThreadLastSeen
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import org.thoughtcrime.securesms.util.castAwayType
 import org.thoughtcrime.securesms.util.erase
-import org.thoughtcrime.securesms.util.get
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Instant
@@ -142,8 +140,11 @@ class ConfigToDatabaseSync @Inject constructor(
 
                 address to Instant.fromEpochMilliseconds(convo.lastRead)
             }
+            .toList()
 
-        threadDatabase.updateThreadLastReads(lastReads)
+        if (lastReads.isNotEmpty()) {
+            threadDatabase.upsertThreadLastSeen(lastReads)
+        }
     }
 
     private fun ensureConversations(addresses: Set<Address.Conversable>, myAccountId: AccountId) {
