@@ -3,6 +3,7 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -267,6 +268,8 @@ class Poller @AssistedInject constructor(
                         )
                     )
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+
                     Log.e(logTag, "Error while extending TTL for hashes", e)
                 }
             }

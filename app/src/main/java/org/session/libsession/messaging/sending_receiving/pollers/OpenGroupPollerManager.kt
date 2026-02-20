@@ -1,9 +1,10 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -12,8 +13,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -98,17 +97,11 @@ class OpenGroupPollerManager @Inject constructor(
     suspend fun pollAllOpenGroupsOnce() {
         Log.d(TAG, "Polling all open groups once")
         supervisorScope {
-            pollers.value.map { (server, handle) ->
-                handle.pollerScope.launch {
-                    runCatching {
-                        handle.poller.manualPollOnce()
-                    }.onFailure {
-                        if (it !is CancellationException) {
-                            Log.e(TAG, "Error polling open group $server", it)
-                        }
-                    }
+            pollers.value.map { (_, handle) ->
+                async {
+                    handle.poller.manualPollOnce()
                 }
-            }.joinAll()
+            }.awaitAll()
         }
     }
 
