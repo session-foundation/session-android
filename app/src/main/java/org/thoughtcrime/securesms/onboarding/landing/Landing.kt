@@ -70,7 +70,7 @@ internal fun LandingScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
 
-    val messages = remember {
+    val messages = remember(context) {
         listOf(
             MessageViewData(
                 type = MessageType.Text(text = AnnotatedString(

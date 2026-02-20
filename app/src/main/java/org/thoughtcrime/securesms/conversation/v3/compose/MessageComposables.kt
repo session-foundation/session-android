@@ -49,6 +49,11 @@ import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
+import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
+import org.thoughtcrime.securesms.audio.model.PlayableAudio
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
@@ -217,7 +222,7 @@ fun MessageContent(
                                 )
 
                                 // Audio messages
-                                is MessageType.Audio -> AudioMessage(
+                                is Audio -> AudioMessage(
                                     data = data.type
                                 )
 
@@ -489,82 +494,13 @@ fun MessageLink(
     }
 }
 
-@Composable
-fun AudioMessage(
-    data: MessageType.Audio,
-    modifier: Modifier = Modifier
-){
-    Box(
-        modifier = modifier.width(160.dp)
-            .height(IntrinsicSize.Min),
-    ) {
-        // progress background
-        Box(
-          modifier = Modifier.fillMaxHeight()
-              .wrapContentWidth()
-              .fillMaxWidth(data.progress)
-              .background(blackAlpha12)
-              .align(Alignment.CenterStart)
-        )
-
-        // content
-        Row(
-            modifier = Modifier.padding(defaultMessageBubblePadding()),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if(data.audioState == MessageAudioState.Loading){
-                SmallCircularProgressIndicator(color = LocalColors.current.background)
-            } else {
-                Image(
-                    painter = painterResource(
-                        id = if (data.audioState == MessageAudioState.Paused)
-                            R.drawable.exo_icon_play else R.drawable.exo_icon_pause
-                    ),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(LocalColors.current.text),
-                    modifier = Modifier.size(LocalDimensions.current.iconMedium)
-                        .background(
-                            color = LocalColors.current.background,
-                            shape = MaterialTheme.shapes.medium
-                        )
-                        .padding(2.dp)
-                )
-            }
-
-            Box(
-                modifier = Modifier.weight(1f)
-                    .height(1.dp)
-                    .background(LocalColors.current.background)
-
-            )
-
-            Text(
-                modifier = Modifier.background(
-                    color = LocalColors.current.background,
-                    shape = MaterialTheme.shapes.medium
-                    )
-                    .padding(
-                        horizontal = LocalDimensions.current.xxsSpacing,
-                        vertical = LocalDimensions.current.xxxsSpacing
-                    ),
-                text = data.time,
-                style = LocalType.current.base,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = LocalColors.current.text
-            )
-        }
-    }
-}
-
-
 
 @Composable
-private fun getTextColor(outgoing: Boolean) = if(outgoing) LocalColors.current.textBubbleSent
+internal fun getTextColor(outgoing: Boolean) = if(outgoing) LocalColors.current.textBubbleSent
 else LocalColors.current.textBubbleReceived
 
 @Composable
-private fun defaultMessageBubblePadding() = PaddingValues(
+internal fun defaultMessageBubblePadding() = PaddingValues(
     horizontal = LocalDimensions.current.smallSpacing,
     vertical = LocalDimensions.current.messageVerticalPadding
 )
@@ -628,28 +564,12 @@ sealed class MessageType(){
         override val text: AnnotatedString? = null
     ): MessageType()
 
-    data class Audio(
-        override val outgoing: Boolean,
-        val name: String,
-        val time: String,
-        val uri: String,
-        val progress: Float,
-        val audioState: MessageAudioState,
-        override val text: AnnotatedString? = null
-    ): MessageType()
-
     data class Media(
         override val outgoing: Boolean,
         val items: List<MessageMediaItem>,
         val loading: Boolean,
         override val text: AnnotatedString? = null
     ): MessageType()
-}
-
-sealed class MessageAudioState(){
-    data object Loading: MessageAudioState()
-    data object Playing: MessageAudioState()
-    data object Paused: MessageAudioState()
 }
 
 /*@PreviewScreenSizes*/
@@ -879,41 +799,10 @@ fun LinkMessagePreview(
 
 @Preview
 @Composable
-fun AudioMessagePreview(
+fun AudioMessagePreviewReuse(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
-    PreviewTheme(colors) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing)
-
-        ) {
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.audio()
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.audio(
-                    outgoing = false,
-                    state = MessageAudioState.Loading,
-                    name = "Audio with a really long name that should ellipsize once it reaches the max width"
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.audio(
-                    state = MessageAudioState.Paused
-                ))
-            )
-        }
-    }
+    AudioMessagePreview(colors)
 }
 
 @Preview
@@ -1118,18 +1007,25 @@ object PreviewMessageData {
     )
 
     fun audio(
-        name: String = "Audio",
-        time: String = "1:23",
         outgoing: Boolean = true,
-        progress: Float = 0.3f,
-        state: MessageAudioState = MessageAudioState.Playing
-    ) = MessageType.Audio(
+        title: String = "Voice Message",
+        speedText: String = "1x",
+        remainingText: String = "0:20",
+        durationMs: Long = 83_000L,
+        positionMs: Long = 23_000L,
+        bufferedPositionMs: Long = 35_000L,
+        playing: Boolean = true,
+        showLoader: Boolean = false
+    ) = Audio(
         outgoing = outgoing,
-        name = name,
-        time = time,
-        uri = "",
-        progress = progress,
-        audioState = state
+        title = title,
+        speedText = speedText,
+        remainingText = remainingText,
+        durationMs = durationMs,
+        positionMs = positionMs,
+        bufferedPositionMs = bufferedPositionMs,
+        isPlaying = playing,
+        showLoader = showLoader,
     )
 
     fun image(
