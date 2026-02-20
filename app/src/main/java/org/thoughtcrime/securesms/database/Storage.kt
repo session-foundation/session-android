@@ -872,10 +872,6 @@ open class Storage @Inject constructor(
         return groupDatabase.getAllGroups(includeInactive)
     }
 
-    override suspend fun addOpenGroup(urlAsString: String) {
-        return openGroupManager.get().addOpenGroup(urlAsString)
-    }
-
     override fun getOrCreateThreadIdFor(address: Address): Long {
         return threadDatabase.getOrCreateThreadIdFor(address)
     }

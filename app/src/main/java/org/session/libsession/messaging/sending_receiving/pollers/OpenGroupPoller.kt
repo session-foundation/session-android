@@ -3,9 +3,11 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
@@ -83,7 +85,7 @@ class OpenGroupPoller @AssistedInject constructor(
      *
      * @return A list of rooms that were polled.
      */
-    override suspend fun doPollOnce(isFirstPollSinceApoStarted: Boolean): Unit = pollerSemaphore.withPermit {
+    override suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean): Unit = pollerSemaphore.withPermit {
         val allCommunities = configFactory.withUserConfigs { it.userGroups.allCommunityInfo() }
 
         val rooms = allCommunities
@@ -97,7 +99,7 @@ class OpenGroupPoller @AssistedInject constructor(
             return
         }
 
-        coroutineScope {
+        supervisorScope {
             var caps = storage.getServerCapabilities(server)
             if (caps == null) {
                 val fetched = communityApiExecutor.execute(
@@ -111,6 +113,8 @@ class OpenGroupPoller @AssistedInject constructor(
                 caps = fetched.capabilities
             }
 
+            val allTasks = mutableListOf<Pair<String, Deferred<Unit>>>()
+
             for (room in rooms) {
                 val address = Address.Community(serverUrl = server, room = room)
                 val latestRoomPollInfo = communityDatabase.getRoomInfo(address)
@@ -118,7 +122,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 val lastMessageServerId = storage.getLastMessageServerID(room, server)
 
                 // Poll room info
-                launch {
+                allTasks += "polling room info" to async {
                     val roomInfo = communityApiExecutor.execute(
                         CommunityApiRequest(
                             serverBaseUrl = server,
@@ -137,7 +141,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
 
                 // Poll room messages
-                launch {
+                allTasks += "polling room messages" to async {
                     val messages = communityApiExecutor.execute(
                         CommunityApiRequest(
                             serverBaseUrl = server,
@@ -158,7 +162,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 // We'll only poll our index if we are accepting community requests
                 if (storage.isCheckingCommunityRequests()) {
                     // Poll inbox messages
-                    launch {
+                    allTasks += "polling inbox messages" to async {
                         val inboxMessages = communityApiExecutor.execute(
                             CommunityApiRequest(
                                 serverBaseUrl = server,
@@ -175,7 +179,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
 
                 // Poll outbox messages regardless because these are messages we sent
-                launch {
+                allTasks += "polling outbox messages" to async {
                     val outboxMessages = communityApiExecutor.execute(
                         CommunityApiRequest(
                             serverBaseUrl = server,
@@ -189,6 +193,27 @@ class OpenGroupPoller @AssistedInject constructor(
 
                     handleOutboxMessages(messages = outboxMessages)
                 }
+            }
+
+            /**
+             * Await on all tasks and gather the first exception with the rest errors suppressed.
+             */
+            val accumulatedError = allTasks
+                .fold(null) { acc: Throwable?, (taskName, deferred) ->
+                    val err = runCatching { deferred.await() }
+                        .onFailure { if (it is CancellationException) throw it }
+                        .exceptionOrNull()
+                        ?.let { RuntimeException("Error $taskName", it) }
+
+                    if (err != null) {
+                        acc?.apply { addSuppressed(err) } ?: err
+                    } else {
+                        acc
+                    }
+                }
+
+            if (accumulatedError != null) {
+                throw accumulatedError
             }
         }
     }
