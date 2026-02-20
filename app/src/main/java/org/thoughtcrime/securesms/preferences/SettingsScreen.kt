@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -42,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -212,7 +214,7 @@ fun Settings(
                 }
             )
         },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
     ) { paddings ->
         // MAIN SCREEN CONTENT
         Column(
@@ -347,7 +349,7 @@ fun Settings(
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
 
         // DIALOGS AND SHEETS
@@ -740,7 +742,7 @@ fun ShowClearDataDialog(
     modifier: Modifier = Modifier,
     sendCommand: (SettingsViewModel.Commands) -> Unit
 ) {
-    var deleteOnNetwork by remember { mutableStateOf(false)}
+    var deleteOnNetwork by retain { mutableStateOf(false)}
     val context = LocalContext.current
 
     AlertDialog(

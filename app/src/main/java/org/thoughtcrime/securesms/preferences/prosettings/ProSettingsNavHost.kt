@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -47,6 +48,10 @@ sealed interface ProSettingsDestination: Parcelable {
     @Serializable
     @Parcelize
     data object RefundSubscription: ProSettingsDestination
+
+    @Serializable
+    @Parcelize
+    data object RefundInProgress: ProSettingsDestination
 }
 
 enum class ProNavHostCustomActions {
@@ -66,7 +71,7 @@ fun ProSettingsNavHost(
     onBack: () -> Unit
 ){
     val navController = rememberNavController()
-    val navigator: UINavigator<ProSettingsDestination> = remember {
+    val navigator: UINavigator<ProSettingsDestination> = retain {
         UINavigator<ProSettingsDestination>()
     }
 
@@ -178,6 +183,15 @@ fun ProSettingsNavHost(
             horizontalSlideComposable<RefundSubscription> { entry ->
                 val viewModel = navController.proGraphViewModel(entry, navigator)
                 RefundPlanScreen(
+                    viewModel = viewModel,
+                    onBack = handleBack,
+                )
+            }
+
+            // Refund In Progress
+            horizontalSlideComposable<ProSettingsDestination.RefundInProgress> { entry ->
+                val viewModel = navController.proGraphViewModel(entry, navigator)
+                RefundInProgressScreen(
                     viewModel = viewModel,
                     onBack = handleBack,
                 )

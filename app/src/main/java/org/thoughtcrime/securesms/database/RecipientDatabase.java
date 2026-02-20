@@ -6,8 +6,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
-import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.Address;
@@ -21,7 +19,6 @@ import java.util.List;
 import javax.inject.Provider;
 
 import kotlin.Triple;
-import okhttp3.HttpUrl;
 
 /**
  * Note that you should not use this table anymore, use {@link RecipientSettingsDatabase} instead.
@@ -87,10 +84,6 @@ public class RecipientDatabase extends Database {
       UNIDENTIFIED_ACCESS_MODE,
       FORCE_SMS_SELECTION, NOTIFY_TYPE, DISAPPEARING_STATE, WRAPPER_HASH, BLOCKS_COMMUNITY_MESSAGE_REQUESTS, AUTO_DOWNLOAD,
   };
-
-  static final List<String> TYPED_RECIPIENT_PROJECTION = Stream.of(RECIPIENT_PROJECTION)
-                                                               .map(columnName -> TABLE_NAME + "." + columnName)
-                                                               .toList();
 
   public static final String CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME +

@@ -1,7 +1,10 @@
 package org.session.libsession.network.snode
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.session.libsignal.crypto.shuffledRandom
-import org.session.libsignal.utilities.JsonUtil
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.snode.GetSwarmApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
@@ -17,6 +20,7 @@ class SwarmDirectory @Inject constructor(
     private val snodeDirectory: SnodeDirectory,
     private val snodeApiExecutor: Provider<SnodeApiExecutor>,
     private val getSwarmFactory: GetSwarmApi.Factory,
+    private val json: Json,
 ) {
     private val minimumSwarmSize: Int = 3
 
@@ -67,26 +71,6 @@ class SwarmDirectory @Inject constructor(
     }
 
     /**
-     * Expected response shape:
-     * { "snodes": [ { "ip": "...", "port": "443", "pubkey_ed25519": "...", "pubkey_x25519": "..." }, ... ] }
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun parseSnodes(rawResponse: Map<*, *>): List<Snode> {
-        val list = rawResponse["snodes"] as? List<*> ?: emptyList<Any>()
-        return list.asSequence()
-            .mapNotNull { it as? Map<*, *> }
-            .mapNotNull { raw ->
-                snodeDirectory.createSnode(
-                    address    = raw["ip"] as? String,
-                    port       = (raw["port"] as? String)?.toInt(),
-                    ed25519Key = raw["pubkey_ed25519"] as? String,
-                    x25519Key  = raw["pubkey_x25519"] as? String
-                )
-            }
-            .toList()
-    }
-
-    /**
      * Handles 421: snode says it's no longer associated with this pubkey.
      *
      * Old behaviour: if response contains snodes -> replace cached swarm.
@@ -97,16 +81,41 @@ class SwarmDirectory @Inject constructor(
     fun updateSwarmFromResponse(swarmPublicKey: String, errorResponseBody: String?): Boolean {
         if (errorResponseBody == null || errorResponseBody.isEmpty()) return false
 
-        val json: Map<*, *> = try {
-            JsonUtil.fromJson(errorResponseBody, Map::class.java) as Map<*, *>
-        } catch (_: Throwable) {
+        val response: SnodeNotPartOfSwarmResponse = try {
+            json.decodeFromString(errorResponseBody)
+        } catch (e: Throwable) {
+            Log.e("SwarmDirectory", "Failed to parse snode not part of swarm response body", e)
             return false
         }
 
-        val snodes = parseSnodes(json).toSet()
+        val snodes = response.snodes.mapNotNull {
+            snodeDirectory.createSnode(
+                address = it.ip,
+                port = it.port,
+                ed25519Key = it.pubKeyEd25519,
+                x25519Key = it.pubKeyX25519
+            )
+        }
+
         if (snodes.isEmpty()) return false
 
         storage.setSwarm(swarmPublicKey, snodes)
         return true
+    }
+
+    @Serializable
+    private class SnodeNotPartOfSwarmResponse(
+        val snodes: List<SnodeInfo>
+    ) {
+        @Serializable
+        class SnodeInfo(
+            val ip: String? = null,
+            val port: Int? = null,
+            @SerialName("pubkey_ed25519")
+            val pubKeyEd25519: String? = null,
+
+            @SerialName("pubkey_x25519")
+            val pubKeyX25519: String? = null
+        )
     }
 }

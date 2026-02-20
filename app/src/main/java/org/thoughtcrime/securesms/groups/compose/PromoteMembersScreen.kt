@@ -1,26 +1,19 @@
 package org.thoughtcrime.securesms.groups.compose
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,13 +37,11 @@ import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ShowCo
 import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ShowPromoteDialog
 import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ToggleFooter
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.SearchBarWithClose
-import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -92,7 +83,9 @@ fun PromoteMembers(
     hasActiveMembers: Boolean = false,
     onPromoteClicked: (Set<GroupMemberState>) -> Unit
 ) {
+
     val searchFocused = uiState.isSearchFocused
+    val isLandscape = getAdaptiveInfo().isLandscape
 
     val handleBack: () -> Unit = {
         when {
@@ -101,45 +94,46 @@ fun PromoteMembers(
         }
     }
 
+    val searchHeader: @Composable (Modifier) -> Unit = { modifier ->
+        MembersSearchHeader(
+            searchFocused = searchFocused,
+            searchQuery = searchQuery,
+            onQueryChange = { sendCommand(SearchQueryChange(it)) },
+            onClear = { sendCommand(SearchQueryChange("")) },
+            onFocusChanged = { sendCommand(SearchFocusChange(it)) },
+            modifier = modifier
+        )
+    }
+
     // Intercept system back
     BackHandler(enabled = true) { handleBack() }
 
-
-    Scaffold(
-        topBar = {
-            BackAppBar(
-                title = pluralStringResource(id = R.plurals.promoteMember, 2),
-                onBack = handleBack,
-            )
-        },
+    BaseManageGroupScreen(
+        title = pluralStringResource(id = R.plurals.promoteMember, 2),
+        onBack = handleBack,
+        enableCollapsingTopBarInLandscape = true,
+        collapseTopBar = searchFocused,
         bottomBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                    .imePadding()
-            ) {
-                CollapsibleFooterAction(
-                    data = CollapsibleFooterActionData(
-                        title = uiState.footer.footerTitle,
-                        collapsed = uiState.footer.collapsed,
-                        visible = uiState.footer.visible,
-                        items = listOf(
-                            CollapsibleFooterItemData(
-                                label = uiState.footer.footerActionLabel,
-                                buttonLabel = GetString(LocalResources.current.getString(R.string.promote)),
-                                isDanger = false,
-                                onClick = { sendCommand(ShowPromoteDialog) }
-                            )
+            CollapsibleFooterBottomBar(
+                footer = CollapsibleFooterActionData(
+                    title = uiState.footer.footerTitle,
+                    collapsed = uiState.footer.collapsed,
+                    visible = uiState.footer.visible,
+                    items = listOf(
+                        CollapsibleFooterItemData(
+                            label = uiState.footer.footerActionLabel,
+                            buttonLabel = GetString(LocalResources.current.getString(R.string.promote)),
+                            isDanger = false,
+                            onClick = { sendCommand(ShowPromoteDialog) }
                         )
-                    ),
-                    onCollapsedClicked = { sendCommand(ToggleFooter) },
-                    onClosedClicked = { sendCommand(CloseFooter) }
-                )
-            }
-        },
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
+                    )
+                ),
+                onToggle = { sendCommand(ToggleFooter) },
+                onClose = { sendCommand(CloseFooter) }
+            )
+        }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -157,20 +151,9 @@ fun PromoteMembers(
             )
 
             if (hasActiveMembers) {
-                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-
-                SearchBarWithClose(
-                    query = searchQuery,
-                    onValueChanged = { query -> sendCommand(SearchQueryChange(query)) },
-                    onClear = { sendCommand(SearchQueryChange("")) },
-                    placeholder = if (searchFocused) "" else LocalResources.current.getString(R.string.search),
-                    enabled = true,
-                    isFocused = searchFocused,
-                    modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
-                    onFocusChanged = { isFocused -> sendCommand(SearchFocusChange(isFocused)) }
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+                if (!isLandscape) {
+                    searchHeader(Modifier)
+                }
 
                 // List of members
                 LazyColumn(
@@ -178,6 +161,10 @@ fun PromoteMembers(
                         .weight(1f)
                         .imePadding()
                 ) {
+                    if (isLandscape) {
+                        stickyHeader { searchHeader(Modifier) }
+                    }
+
                     items(members) { member ->
                         // Each member's view
                         ManageMemberItem(

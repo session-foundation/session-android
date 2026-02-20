@@ -210,10 +210,7 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     override fun onRailItemDeleteClicked(distanceFromActive: Int) {
         val currentItem = binding?.mediasendPager?.currentItem ?: return
 
-        viewModel?.onMediaItemRemoved(
-            requireContext(),
-            currentItem + distanceFromActive
-        )
+        viewModel?.onMediaItemRemoved(currentItem + distanceFromActive)
     }
 
     fun onTouchEventsNeeded(needed: Boolean) {
@@ -227,9 +224,8 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
 
         viewModel.getSelectedMedia().observe(
             this
-        ) { media: List<Media?>? ->
-            if (media.isNullOrEmpty()) {
-                controller.onNoMediaAvailable()
+        ) { media: List<Media?> ->
+             if (media.isEmpty()) {
                 return@observe
             }
 
@@ -409,7 +405,6 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     interface Controller {
         fun onAddMediaClicked(bucketId: String)
         fun onSendClicked(media: List<Media>, body: String)
-        fun onNoMediaAvailable()
     }
 
     companion object {

@@ -267,6 +267,7 @@
     <!-- Pro Settings -->
     <string name="qa_pro_settings_action_update_plan">pro-settings-update-plan</string>
     <string name="qa_pro_settings_action_show_badge">pro-settings-show-badge</string>
+    <string name="qa_pro_settings_action_show_badge_toggle">pro-settings-show-badge-toggle</string>
     <string name="qa_pro_settings_action_request_refund">pro-settings-request-refund</string>
     <string name="qa_pro_settings_action_cancel_plan">pro-settings-cancel-plan</string>
     <string name="qa_pro_settings_action_renew_plan">pro-settings-renew-plan</string>
@@ -284,7 +285,55 @@
     <string name="qa_manage_members_dialog_remove_member_messages">remove-member-messages-option</string>
     <string name="qa_manage_members_dialog_share_message_history">share-message-history-option</string>
     <string name="qa_manage_members_dialog_share_new_messages">share-new-messages-option</string>
-    
+
+    <!-- Preferences -->
+    <string name="qa_preferences_voice_calls">preferences-option-voice-call</string>
+    <string name="qa_preferences_voice_calls_toggle">preferences-option-voice-call-toggle</string>
+    <string name="qa_preferences_lock_app">preferences-option-lock-app</string>
+    <string name="qa_preferences_lock_app_toggle">preferences-option-lock-app-toggle</string>
+    <string name="qa_preferences_message_requests">preferences-option-message-requests</string>
+    <string name="qa_preferences_message_requests_toggle">preferences-option-message-requests-toggle</string>
+    <string name="qa_preferences_read_receipt">preferences-option-read-receipt</string>
+    <string name="qa_preferences_read_receipt_toggle">preferences-option-read-receipt-toggle</string>
+    <string name="qa_preferences_typing_indicator">preferences-option-typing-indicators</string>
+    <string name="qa_preferences_typing_indicator_toggle">preferences-option-typing-indicators-toggle</string>
+    <string name="qa_preferences_link_previews">preferences-option-link-previews</string>
+    <string name="qa_preferences_link_previews_toggle">preferences-option-link-previews-toggle</string>
+    <string name="qa_preferences_incognito_keyboard">preferences-option-incognito-keyboard</string>
+    <string name="qa_preferences_incognito_keyboard_toggle">preferences-option-incognito-keyboard-toggle</string>
+    <string name="qa_preferences_trim_threads">preferences-option-trim-threads</string>
+    <string name="qa_preferences_trim_threads_toggle">preferences-option-trim-threads-toggle</string>
+    <string name="qa_preferences_send_with_enter">preferences-option-send-with-enter</string>
+    <string name="qa_preferences_send_with_enter_toggle">preferences-option-send-with-enter_toggle</string>
+    <string name="qa_preferences_autoplay_audio">preferences-option-autoplay-audio</string>
+    <string name="qa_preferences_autoplay_audio_toggle">preferences-option-autoplay-audio-toggle</string>
+    <string name="qa_preferences_option_blocked_contacts">preferences-option-blocked-contacts</string>
+    <string name="qa_preferences_option_notification_privacy">preferences-option-notification-privacy</string>
+    <string name="qa_preferences_ringtone">preferences-option-ringtone</string>
+    <string name="qa_preferences_navigate_device_settings">preferences-option-navigate-device-settings</string>
+    <string name="qa_preferences_vibrate">preferences-option-vibrate</string>
+    <string name="qa_preferences_vibrate_toggle">preferences-option-vibrate-toggle</string>
+    <string name="qa_preferences_sound_when_app_is_open">preferences-option-sound-when-app-is-open</string>
+    <string name="qa_preferences_sound_when_app_is_open_toggle">preferences-option-sound-when-app-is-open-toggle</string>
+    <string name="qa_preferences_whitelist">preferences-option-whitelist</string>
+    <string name="qa_preferences_whitelist_toggle">preferences-option-whitelist-toggle</string>
+    <string name="qa_preferences_enable_push">preferences-option-enable-push</string>
+    <string name="qa_preferences_enable_push_toggle">preferences-option-enable-push-toggle</string>
+    <string name="qa_preferences_appearance_follow_system">preferences-appearance_follow_system</string>
+    <string name="qa_preferences_dialog_enable">preferences-dialog-option-enable</string>
+    <string name="qa_preferences_dialog_cancel">preferences-dialog-option-cancel</string>
+
+    <!-- Help settings -->
+    <string name="qa_help_settings_export">preferences-option-export</string>
+    <string name="qa_help_settings_translate">preferences-option-translate</string>
+    <string name="qa_help_settings_feedback">preferences-option-feedback</string>
+    <string name="qa_help_settings_support">preferences-option-help</string>
+    <string name="qa_help_settings_faq">preferences-option-faq</string>
+
+    <!-- Media send -->
+    <string name="qa_mediapicker_folder_item">mediapicker-folder-item-thumbnail</string>
+    <string name="qa_mediapicker_image_item">mediapicker-image-item-thumbnail</string>
+
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
@@ -305,6 +354,7 @@
     <string name="qa_action_item_subtitle">action-item-subtitle</string>
     <string name="qa_action_item_icon">action-item-icon</string>
     <string name="qa_conversations_blocked_contact_item">qa-blocked-contacts-settings-item</string>
+    <string name="qa_default_debug">default-debug</string>
 
     <!-- CTAs -->
     <string name="qa_cta_body">cta-body</string>

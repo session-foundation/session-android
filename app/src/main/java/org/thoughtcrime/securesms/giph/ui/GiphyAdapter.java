@@ -29,6 +29,7 @@ import org.session.libsession.utilities.ViewUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.giph.model.ChunkedImageUrl;
 import org.thoughtcrime.securesms.giph.model.GiphyImage;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 
@@ -38,7 +39,7 @@ import java.util.concurrent.ExecutionException;
 import network.loki.messenger.R;
 
 
-class GiphyAdapter extends RecyclerView.Adapter<GiphyAdapter.GiphyViewHolder> {
+public class GiphyAdapter extends RecyclerView.Adapter<GiphyAdapter.GiphyViewHolder> {
 
   private static final String TAG = GiphyAdapter.class.getSimpleName();
 
@@ -48,7 +49,7 @@ class GiphyAdapter extends RecyclerView.Adapter<GiphyAdapter.GiphyViewHolder> {
   private List<GiphyImage>     images;
   private OnItemClickListener  listener;
 
-  class GiphyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, RequestListener<Drawable> {
+  public class GiphyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, RequestListener<Drawable> {
 
     public AspectRatioImageView thumbnail;
     public GiphyImage           image;
