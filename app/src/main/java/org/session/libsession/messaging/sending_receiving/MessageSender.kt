@@ -244,7 +244,7 @@ class MessageSender @Inject constructor(
     }
 
     // One-on-One Chats & Closed Groups
-    private suspend fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false) = supervisorScope {
+    private suspend fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false) {
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
             handleFailedMessageSend(message, error, isSyncMessage)

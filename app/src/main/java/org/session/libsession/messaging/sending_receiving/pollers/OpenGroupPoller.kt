@@ -3,6 +3,7 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -119,37 +120,48 @@ class OpenGroupPoller @AssistedInject constructor(
 
                 // Poll room info
                 launch {
-                    val roomInfo = communityApiExecutor.execute(
-                        CommunityApiRequest(
-                            serverBaseUrl = server,
-                            serverPubKey = serverKey,
-                            api = pollRoomInfoFactory.create(
-                                room = room,
-                                infoUpdates = infoUpdates
+                    try {
+                        val roomInfo = communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = server,
+                                serverPubKey = serverKey,
+                                api = pollRoomInfoFactory.create(
+                                    room = room,
+                                    infoUpdates = infoUpdates
+                                )
                             )
                         )
-                    )
 
-                    handleRoomPollInfo(
-                        address = address,
-                        pollInfoJsonText = json.encodeToString(roomInfo)
-                    )
+                        handleRoomPollInfo(
+                            address = address,
+                            pollInfoJsonText = json.encodeToString(roomInfo)
+                        )
+                    } catch (e: Throwable) {
+                        if (e is CancellationException) throw e
+                        Log.e(logTag, "Error polling room info")
+                    }
                 }
 
                 // Poll room messages
                 launch {
-                    val messages = communityApiExecutor.execute(
-                        CommunityApiRequest(
-                            serverBaseUrl = server,
-                            serverPubKey = serverKey,
-                            api = getRoomMessagesFactory.create(
-                                room = room,
-                                sinceSeqNo = lastMessageServerId,
+                    try {
+                        val messages = communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = server,
+                                serverPubKey = serverKey,
+                                api = getRoomMessagesFactory.create(
+                                    room = room,
+                                    sinceSeqNo = lastMessageServerId,
+                                )
                             )
                         )
-                    )
 
-                    handleMessages(roomToken = room, messages = messages)
+                        handleMessages(roomToken = room, messages = messages)
+                    } catch (e: Throwable) {
+                        if (e is CancellationException) throw e
+
+                        Log.e(logTag, "Error polling room messages")
+                    }
                 }
             }
 
@@ -159,35 +171,45 @@ class OpenGroupPoller @AssistedInject constructor(
                 if (storage.isCheckingCommunityRequests()) {
                     // Poll inbox messages
                     launch {
-                        val inboxMessages = communityApiExecutor.execute(
-                            CommunityApiRequest(
-                                serverBaseUrl = server,
-                                serverPubKey = serverKey,
-                                api = getDirectMessageFactory.create(
-                                    inboxOrOutbox = true,
-                                    sinceLastId = storage.getLastInboxMessageId(server),
+                        try {
+                            val inboxMessages = communityApiExecutor.execute(
+                                CommunityApiRequest(
+                                    serverBaseUrl = server,
+                                    serverPubKey = serverKey,
+                                    api = getDirectMessageFactory.create(
+                                        inboxOrOutbox = true,
+                                        sinceLastId = storage.getLastInboxMessageId(server),
+                                    )
                                 )
                             )
-                        )
 
-                        handleInboxMessages(messages = inboxMessages)
+                            handleInboxMessages(messages = inboxMessages)
+                        } catch (e: Throwable) {
+                            if (e is CancellationException) throw e
+                            Log.e(logTag, "Error polling inbox messages")
+                        }
                     }
                 }
 
                 // Poll outbox messages regardless because these are messages we sent
                 launch {
-                    val outboxMessages = communityApiExecutor.execute(
-                        CommunityApiRequest(
-                            serverBaseUrl = server,
-                            serverPubKey = serverKey,
-                            api = getDirectMessageFactory.create(
-                                inboxOrOutbox = false,
-                                sinceLastId = storage.getLastOutboxMessageId(server),
+                    try {
+                        val outboxMessages = communityApiExecutor.execute(
+                            CommunityApiRequest(
+                                serverBaseUrl = server,
+                                serverPubKey = serverKey,
+                                api = getDirectMessageFactory.create(
+                                    inboxOrOutbox = false,
+                                    sinceLastId = storage.getLastOutboxMessageId(server),
+                                )
                             )
                         )
-                    )
 
-                    handleOutboxMessages(messages = outboxMessages)
+                        handleOutboxMessages(messages = outboxMessages)
+                    } catch (e: Throwable) {
+                        if (e is CancellationException) throw e
+                        Log.e(logTag, "Error polling outbox messages")
+                    }
                 }
             }
         }
