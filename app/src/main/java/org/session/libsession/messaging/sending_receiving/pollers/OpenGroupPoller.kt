@@ -7,7 +7,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -143,24 +142,18 @@ class OpenGroupPoller @AssistedInject constructor(
 
                 // Poll room messages
                 allTasks += "polling room messages" to async {
-                    try {
-                        val messages = communityApiExecutor.execute(
-                            CommunityApiRequest(
-                                serverBaseUrl = server,
-                                serverPubKey = serverKey,
-                                api = getRoomMessagesFactory.create(
-                                    room = room,
-                                    sinceSeqNo = lastMessageServerId,
-                                )
+                    val messages = communityApiExecutor.execute(
+                        CommunityApiRequest(
+                            serverBaseUrl = server,
+                            serverPubKey = serverKey,
+                            api = getRoomMessagesFactory.create(
+                                room = room,
+                                sinceSeqNo = lastMessageServerId,
                             )
                         )
+                    )
 
-                        handleMessages(roomToken = room, messages = messages)
-                    } catch (e: Throwable) {
-                        if (e is CancellationException) throw e
-
-                        Log.e(logTag, "Error polling room messages", e)
-                    }
+                    handleMessages(roomToken = room, messages = messages)
                 }
             }
 
