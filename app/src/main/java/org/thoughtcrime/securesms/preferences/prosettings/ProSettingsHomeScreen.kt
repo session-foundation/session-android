@@ -599,7 +599,6 @@ fun ProSettings(
                 ),
                 subtitle = annotatedStringResource(subtitle),
                 subtitleColor = subColor,
-                enabled = !refunding,
                 endContent = {
                     Box(
                         modifier = Modifier.size(LocalDimensions.current.itemButtonIconSpacing)
@@ -942,7 +941,9 @@ fun ProSettingsFooter(
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
 ) {
     // Manage Pro - Expired has this in the header so exclude it here
-    if(proStatus !is ProStatus.Expired) {
+    // We also don't want to show this while refund in process
+    val refunding = (proStatus as? ProStatus.Active)?.refundInProgress ?: false
+    if(proStatus !is ProStatus.Expired && !refunding) {
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
         ProManage(
             data = proStatus,
@@ -1013,6 +1014,28 @@ fun PreviewProSettingsPro(
             data = ProSettingsViewModel.ProSettingsState(
                 proDataState = ProDataState(
                     type = previewAutoRenewingApple,
+                    refreshState = State.Success(Unit),
+                    showProBadge = true,
+                ),
+            ),
+            inSheet = false,
+            sendCommand = {},
+            listState = rememberLazyListState(),
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProSettingsProiOSRefund(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ProSettingsHome(
+            data = ProSettingsViewModel.ProSettingsState(
+                proDataState = ProDataState(
+                    type = previewAutoRenewingApple.copy(refundInProgress = true),
                     refreshState = State.Success(Unit),
                     showProBadge = true,
                 ),
