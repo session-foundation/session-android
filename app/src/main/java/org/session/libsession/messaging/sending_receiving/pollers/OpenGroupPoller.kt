@@ -138,7 +138,7 @@ class OpenGroupPoller @AssistedInject constructor(
                         )
                     } catch (e: Throwable) {
                         if (e is CancellationException) throw e
-                        Log.e(logTag, "Error polling room info")
+                        Log.e(logTag, "Error polling room info", e)
                     }
                 }
 
@@ -160,7 +160,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     } catch (e: Throwable) {
                         if (e is CancellationException) throw e
 
-                        Log.e(logTag, "Error polling room messages")
+                        Log.e(logTag, "Error polling room messages", e)
                     }
                 }
             }
@@ -186,7 +186,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             handleInboxMessages(messages = inboxMessages)
                         } catch (e: Throwable) {
                             if (e is CancellationException) throw e
-                            Log.e(logTag, "Error polling inbox messages")
+                            Log.e(logTag, "Error polling inbox messages", e)
                         }
                     }
                 }
@@ -208,7 +208,7 @@ class OpenGroupPoller @AssistedInject constructor(
                         handleOutboxMessages(messages = outboxMessages)
                     } catch (e: Throwable) {
                         if (e is CancellationException) throw e
-                        Log.e(logTag, "Error polling outbox messages")
+                        Log.e(logTag, "Error polling outbox messages", e)
                     }
                 }
             }
