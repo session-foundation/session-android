@@ -272,6 +272,8 @@ class Poller @AssistedInject constructor(
                         )
                     )
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+
                     Log.e(logTag, "Error while extending TTL for hashes", e)
                 }
             }
