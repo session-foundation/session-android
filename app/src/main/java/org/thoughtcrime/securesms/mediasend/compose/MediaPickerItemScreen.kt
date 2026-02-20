@@ -21,6 +21,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import network.loki.messenger.R
 import org.session.libsession.utilities.MediaTypes
 import org.thoughtcrime.securesms.mediasend.Media
@@ -39,10 +42,16 @@ fun MediaPickerItemScreen(
     onMediaSelected: (Media) -> Unit, // navigate to send screen
 ) {
     val uiState = viewModel.uiState.collectAsState().value
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.onItemPickerStarted()
+        }
+    }
 
     LaunchedEffect(bucketId) {
         viewModel.getMediaInBucket(bucketId) // triggers repository + updates uiState.bucketMedia
-        viewModel.onItemPickerStarted()
     }
 
     MediaPickerItem(
