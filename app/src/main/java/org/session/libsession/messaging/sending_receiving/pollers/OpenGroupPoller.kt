@@ -5,6 +5,8 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
@@ -112,6 +114,8 @@ class OpenGroupPoller @AssistedInject constructor(
                 caps = fetched.capabilities
             }
 
+            val allTasks = mutableListOf<Pair<String, Deferred<Unit>>>()
+
             for (room in rooms) {
                 val address = Address.Community(serverUrl = server, room = room)
                 val latestRoomPollInfo = communityDatabase.getRoomInfo(address)
@@ -119,31 +123,26 @@ class OpenGroupPoller @AssistedInject constructor(
                 val lastMessageServerId = storage.getLastMessageServerID(room, server)
 
                 // Poll room info
-                launch {
-                    try {
-                        val roomInfo = communityApiExecutor.execute(
-                            CommunityApiRequest(
-                                serverBaseUrl = server,
-                                serverPubKey = serverKey,
-                                api = pollRoomInfoFactory.create(
-                                    room = room,
-                                    infoUpdates = infoUpdates
-                                )
+                allTasks += "polling room info" to async {
+                    val roomInfo = communityApiExecutor.execute(
+                        CommunityApiRequest(
+                            serverBaseUrl = server,
+                            serverPubKey = serverKey,
+                            api = pollRoomInfoFactory.create(
+                                room = room,
+                                infoUpdates = infoUpdates
                             )
                         )
+                    )
 
-                        handleRoomPollInfo(
-                            address = address,
-                            pollInfoJsonText = json.encodeToString(roomInfo)
-                        )
-                    } catch (e: Throwable) {
-                        if (e is CancellationException) throw e
-                        Log.e(logTag, "Error polling room info", e)
-                    }
+                    handleRoomPollInfo(
+                        address = address,
+                        pollInfoJsonText = json.encodeToString(roomInfo)
+                    )
                 }
 
                 // Poll room messages
-                launch {
+                allTasks += "polling room messages" to async {
                     try {
                         val messages = communityApiExecutor.execute(
                             CommunityApiRequest(
@@ -170,47 +169,58 @@ class OpenGroupPoller @AssistedInject constructor(
                 // We'll only poll our index if we are accepting community requests
                 if (storage.isCheckingCommunityRequests()) {
                     // Poll inbox messages
-                    launch {
-                        try {
-                            val inboxMessages = communityApiExecutor.execute(
-                                CommunityApiRequest(
-                                    serverBaseUrl = server,
-                                    serverPubKey = serverKey,
-                                    api = getDirectMessageFactory.create(
-                                        inboxOrOutbox = true,
-                                        sinceLastId = storage.getLastInboxMessageId(server),
-                                    )
-                                )
-                            )
-
-                            handleInboxMessages(messages = inboxMessages)
-                        } catch (e: Throwable) {
-                            if (e is CancellationException) throw e
-                            Log.e(logTag, "Error polling inbox messages", e)
-                        }
-                    }
-                }
-
-                // Poll outbox messages regardless because these are messages we sent
-                launch {
-                    try {
-                        val outboxMessages = communityApiExecutor.execute(
+                    allTasks += "polling inbox messages" to async {
+                        val inboxMessages = communityApiExecutor.execute(
                             CommunityApiRequest(
                                 serverBaseUrl = server,
                                 serverPubKey = serverKey,
                                 api = getDirectMessageFactory.create(
-                                    inboxOrOutbox = false,
-                                    sinceLastId = storage.getLastOutboxMessageId(server),
+                                    inboxOrOutbox = true,
+                                    sinceLastId = storage.getLastInboxMessageId(server),
                                 )
                             )
                         )
 
-                        handleOutboxMessages(messages = outboxMessages)
-                    } catch (e: Throwable) {
-                        if (e is CancellationException) throw e
-                        Log.e(logTag, "Error polling outbox messages", e)
+                        handleInboxMessages(messages = inboxMessages)
                     }
                 }
+
+                // Poll outbox messages regardless because these are messages we sent
+                allTasks += "polling outbox messages" to async {
+                    val outboxMessages = communityApiExecutor.execute(
+                        CommunityApiRequest(
+                            serverBaseUrl = server,
+                            serverPubKey = serverKey,
+                            api = getDirectMessageFactory.create(
+                                inboxOrOutbox = false,
+                                sinceLastId = storage.getLastOutboxMessageId(server),
+                            )
+                        )
+                    )
+
+                    handleOutboxMessages(messages = outboxMessages)
+                }
+            }
+
+            /**
+             * Await on all tasks and gather the first exception with the rest errors suppressed.
+             */
+            val accumulatedError = allTasks
+                .fold(null) { acc: Throwable?, (taskName, deferred) ->
+                    val err = runCatching { deferred.await() }
+                        .onFailure { if (it is CancellationException) throw it }
+                        .exceptionOrNull()
+                        ?.let { RuntimeException("Error $taskName", it) }
+
+                    if (err != null) {
+                        acc?.apply { addSuppressed(err) } ?: err
+                    } else {
+                        acc
+                    }
+                }
+
+            if (accumulatedError != null) {
+                throw accumulatedError
             }
         }
     }
