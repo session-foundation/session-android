@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.configs
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -114,6 +115,8 @@ class ConfigUploader @Inject constructor(
                             pushUserConfigChangesIfNeeded()
                         }
                     } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+
                         Log.e(TAG, "Failed to push user configs", e)
                     }
                 }
@@ -142,6 +145,8 @@ class ConfigUploader @Inject constructor(
                             pushGroupConfigsChangesIfNeeded(groupId)
                         }
                     } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+
                         Log.e(TAG, "Failed to push group configs", e)
                     }
                 }
