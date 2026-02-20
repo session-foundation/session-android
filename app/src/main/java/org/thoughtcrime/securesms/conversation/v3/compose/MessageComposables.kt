@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalGlideComposeApi::class)
-
 package org.thoughtcrime.securesms.conversation.v3.compose
 
 import android.net.Uri
@@ -10,12 +8,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,7 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -45,18 +39,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.core.net.toUri
-import com.bumptech.glide.integration.compose.CrossFade
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import network.loki.messenger.R
-import org.session.libsession.utilities.Address
-import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
-import org.thoughtcrime.securesms.audio.model.PlayableAudio
-import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.ui.components.Avatar
-import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -64,7 +51,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.blackAlpha06
-import org.thoughtcrime.securesms.ui.theme.blackAlpha12
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -217,7 +203,7 @@ fun MessageContent(
                             // Apply content based on message type
                             when (data.type) {
                                 // Document messages
-                                is MessageType.Document -> DocumentMessage(
+                                is Document -> DocumentMessage(
                                     data = data.type
                                 )
 
@@ -307,79 +293,6 @@ fun MessageStatus(
 }
 
 @Composable
-fun MessageQuote(
-    outgoing: Boolean,
-    quote: MessageQuote,
-    modifier: Modifier = Modifier
-){
-    Row(
-        modifier = modifier.height(IntrinsicSize.Min)
-            .padding(horizontal = LocalDimensions.current.xsSpacing)
-            .padding(top = LocalDimensions.current.xsSpacing),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
-    ) {
-        // icon
-        when(quote.icon){
-            is MessageQuoteIcon.Bar -> {
-                Box(
-                    modifier = Modifier.fillMaxHeight()
-                        .background(color = if(outgoing) LocalColors.current.textBubbleSent else LocalColors.current.accent)
-                        .width(4.dp),
-                )
-            }
-
-            is MessageQuoteIcon.Icon -> {
-                Box(
-                    modifier = Modifier.fillMaxHeight()
-                        .background(
-                            color = blackAlpha06,
-                            shape = RoundedCornerShape(LocalDimensions.current.shapeXXSmall)
-                        )
-                        .size(LocalDimensions.current.quoteIconSize),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = quote.icon.icon),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(getTextColor(outgoing)),
-                        modifier = Modifier.align(Alignment.Center).size(LocalDimensions.current.iconMedium)
-                    )
-                }
-            }
-
-            is MessageQuoteIcon.Image -> {
-                GlideImage(
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.background(
-                        color = blackAlpha06,
-                        shape = RoundedCornerShape(LocalDimensions.current.shapeXXSmall)
-                    ).size(LocalDimensions.current.quoteIconSize),
-                    model = DecryptableStreamUriLoader.DecryptableUri(quote.icon.uri),
-                    contentDescription = quote.icon.filename
-                )
-            }
-        }
-
-        Column{
-            Text(
-                text = quote.title,
-                style = LocalType.current.base.bold(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = getTextColor(outgoing)
-            )
-
-            Text(
-                text = quote.subtitle,
-                style = LocalType.current.base,
-                color = getTextColor(outgoing)
-            )
-        }
-    }
-}
-
-@Composable
 fun MessageText(
     text: AnnotatedString,
     outgoing: Boolean,
@@ -391,60 +304,6 @@ fun MessageText(
         style = LocalType.current.large,
         color = getTextColor(outgoing),
     )
-}
-
-@Composable
-fun DocumentMessage(
-    data: MessageType.Document,
-    modifier: Modifier = Modifier
-){
-    Row(
-        modifier = modifier.height(IntrinsicSize.Min),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
-    ) {
-        // icon box
-        Box(
-            modifier = Modifier.fillMaxHeight()
-                .background(blackAlpha06)
-                .padding(horizontal = LocalDimensions.current.xsSpacing),
-            contentAlignment = Alignment.Center
-        ) {
-            if(data.loading){
-                SmallCircularProgressIndicator(color = getTextColor(data.outgoing))
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_file),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(getTextColor(data.outgoing)),
-                    modifier = Modifier.align(Alignment.Center).size(LocalDimensions.current.iconMedium)
-                )
-            }
-        }
-
-        val padding = defaultMessageBubblePadding()
-        Column(
-            modifier = Modifier.padding(
-                top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding(),
-                end = padding.calculateEndPadding(LocalLayoutDirection.current)
-            )
-        ) {
-            Text(
-                text = data.name,
-                style = LocalType.current.large,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = getTextColor(data.outgoing)
-            )
-
-            Text(
-                text = data.size,
-                style = LocalType.current.small,
-                color = getTextColor(data.outgoing)
-            )
-        }
-    }
 }
 
 @Composable
@@ -470,12 +329,14 @@ fun MessageLink(
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
-                GlideImage(
-                    model = data.imageUri,
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .crossfade(true)
+                        .data(data.imageUri)
+                        .build(),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
-                    transition = CrossFade,
                 )
             }
         }
@@ -555,15 +416,6 @@ sealed class MessageType(){
         override val text: AnnotatedString
     ): MessageType()
 
-    data class Document(
-        override val outgoing: Boolean,
-        val name: String,
-        val size: String,
-        val uri: String,
-        val loading: Boolean,
-        override val text: AnnotatedString? = null
-    ): MessageType()
-
     data class Media(
         override val outgoing: Boolean,
         val items: List<MessageMediaItem>,
@@ -625,118 +477,18 @@ fun MessagePreview(
 
 @Preview
 @Composable
-fun DocumentMessagePreview(
+fun DocumentMessagePreviewReuse(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
-    PreviewTheme(colors) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing)
-
-        ) {
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.document()
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.document(
-                    outgoing = false,
-                    name = "Document with a really long name that should ellipsize once it reaches the max width"
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.document(
-                    loading = true
-                ))
-            )
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = PreviewMessageData.document(
-                    loading = true
-                ))
-            )
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = PreviewMessageData.document(
-                    outgoing = false,
-                    loading = true
-                ))
-            )
-        }
-    }
+    DocumentMessagePreviewReuse(colors)
 }
 
 @Preview
 @Composable
-fun QuoteMessagePreview(
+fun QuoteMessagePreviewReuse(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
-    PreviewTheme(colors) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing)
-
-        ) {
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.text(outgoing = false, text="Quoting a document"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Icon(R.drawable.ic_file))
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Text(outgoing = true, AnnotatedString("Quoting audio")),
-                quote = PreviewMessageData.quote(
-                    title = "You",
-                    subtitle = "Audio message",
-                    icon = MessageQuoteIcon.Icon(R.drawable.ic_mic)
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Text(outgoing = true, AnnotatedString("Quoting an image")),
-                quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
-            ))
-
-        }
-    }
+    QuoteMessagePreview(colors)
 }
 
 @Preview
@@ -807,176 +559,10 @@ fun AudioMessagePreviewReuse(
 
 @Preview
 @Composable
-fun MediaMessagePreview(
+fun MediaMessagePreviewReuse(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
-    PreviewTheme(colors) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing)
-
-        ) {
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.image(true)),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(true), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    text = AnnotatedString("This also has text"),
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    text = AnnotatedString("This also has text"),
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = MessageType.Media(
-                    text = AnnotatedString("This also has text"),
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = MessageType.Media(
-                    text = AnnotatedString("This also has text"),
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-        }
-    }
+    MediaMessagePreview(colors)
 }
 
 object PreviewMessageData {
@@ -998,7 +584,7 @@ object PreviewMessageData {
         size: String = "5.4MB",
         outgoing: Boolean = true,
         loading: Boolean = false
-    ) = MessageType.Document(
+    ) = Document(
         outgoing = outgoing,
         name = name,
         size = size,

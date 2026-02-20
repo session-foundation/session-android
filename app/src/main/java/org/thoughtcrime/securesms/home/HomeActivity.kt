@@ -10,14 +10,11 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.LocalActivity
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -36,8 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -137,7 +132,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private val TAG = "HomeActivity"
 
     private lateinit var binding: ActivityHomeBinding
-    private lateinit var glide: RequestManager
 
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
@@ -241,8 +235,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         setContentView(binding.root)
         // Set custom toolbar
         setSupportActionBar(binding.toolbar)
-        // Set up Glide
-        glide = Glide.with(this)
         // Set up toolbar buttons
         binding.profileButton.setThemedContent {
             val recipient by recipientRepository.observeSelf()
@@ -336,7 +328,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up recycler view
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
-        homeAdapter.glide = glide
         binding.conversationsRecyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
