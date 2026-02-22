@@ -548,7 +548,7 @@ class MessageSender @Inject constructor(
         val threadID = storage.getThreadId(address)
         message.applyExpiryMode(address)
         message.threadID = threadID
-        val destination = Destination.from(address)
+        val destination = Destination.from(address, configFactory)
         val job = messageSendJobFactory.create(message, destination, statusCallback)
         jobQueue.get().add(job)
 
@@ -574,7 +574,7 @@ class MessageSender @Inject constructor(
     suspend fun sendNonDurably(message: Message, address: Address, isSyncMessage: Boolean) {
         val threadID = storage.getThreadId(address)
         message.threadID = threadID
-        val destination = Destination.from(address)
+        val destination = Destination.from(address, configFactory)
         sendNonDurably(message, destination, isSyncMessage)
     }
 }

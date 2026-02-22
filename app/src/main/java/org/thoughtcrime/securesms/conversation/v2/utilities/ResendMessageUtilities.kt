@@ -9,6 +9,7 @@ import org.session.libsession.messaging.messages.visible.Quote
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.UpdateMessageData
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.toGroupString
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -19,6 +20,7 @@ class ResendMessageUtilities @Inject constructor(
     private val messageSender: MessageSender,
     private val storage: StorageProtocol,
     private val json: Json,
+    private val configFactory: ConfigFactoryProtocol,
 ) {
 
     suspend fun resend(accountId: String?, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
@@ -62,7 +64,7 @@ class ResendMessageUtilities @Inject constructor(
         if (sentTimestamp != null && sender != null) {
             if (isResync) {
                 storage.markAsResyncing(messageRecord.messageId)
-                messageSender.sendNonDurably(message, Destination.from(recipient), isSyncMessage = true)
+                messageSender.sendNonDurably(message, Destination.from(recipient, configFactory), isSyncMessage = true)
             } else {
                 storage.markAsSending(messageRecord.messageId)
                 messageSender.send(message, recipient)
