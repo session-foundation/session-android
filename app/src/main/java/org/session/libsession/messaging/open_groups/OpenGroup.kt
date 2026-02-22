@@ -28,16 +28,6 @@ data class OpenGroup(
 
     companion object {
 
-        fun getServer(urlAsString: String): HttpUrl? {
-            val url = urlAsString.toHttpUrlOrNull() ?: return null
-            val builder = HttpUrl.Builder().scheme(url.scheme).host(url.host)
-            if (url.port != 80 || url.port != 443) {
-                // Non-standard port; add to server
-                builder.port(url.port)
-            }
-            return builder.build()
-        }
-
         /**
          * Returns the group ID for this community info. The group ID is the session android unique
          * way of identifying a community. It itself isn't super useful but it's used to construct
@@ -52,17 +42,6 @@ data class OpenGroup(
             return Address.fromSerialized(GroupUtil.getEncodedOpenGroupID(groupId.toByteArray()))
         }
     }
-
-    fun toCommunityInfo(): BaseCommunityInfo {
-        return BaseCommunityInfo(
-            baseUrl = server,
-            room = room,
-            pubKeyHex = publicKey,
-        )
-    }
-
-
-    val joinURL: String get() = "$server/$room?public_key=$publicKey"
 
     val groupId: String get() = "$server.$room"
 }
