@@ -3,16 +3,16 @@ package org.thoughtcrime.securesms.net;
 import static org.session.libsignal.utilities.Util.SECURE_RANDOM;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import android.text.TextUtils;
 
-import com.annimon.stream.Stream;
 import com.bumptech.glide.util.ContentLengthInputStream;
 
 import org.session.libsignal.utilities.Log;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.concurrent.SignalExecutors;
 import org.session.libsignal.utilities.Pair;
-import org.session.libsignal.utilities.guava.Optional;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class ChunkedDataFetcher {
     }
 
     CompositeRequestController compositeController = new CompositeRequestController();
-    fetchChunks(url, contentLength, Optional.absent(), compositeController, callback);
+    fetchChunks(url, contentLength, null, compositeController, callback);
     return compositeController;
   }
 
@@ -102,16 +102,16 @@ public class ChunkedDataFetcher {
           return;
         }
 
-        Optional<Long> contentLength = parseLengthFromContentRange(contentRange);
+        Long contentLength = parseLengthFromContentRange(contentRange);
 
-        if (!contentLength.isPresent()) {
+        if (contentLength ==  null) {
           Log.w(TAG, "Unable to parse length from Content-Range.");
           callback.onFailure(new IOException("Unable to get parse length from Content-Range."));
           compositeController.cancel();
           return;
         }
 
-        if (chunkSize >= contentLength.get()) {
+        if (chunkSize >= contentLength) {
           try {
             callback.onSuccess(response.body().byteStream());
           } catch (IOException e) {
@@ -120,7 +120,7 @@ public class ChunkedDataFetcher {
           }
         } else {
           InputStream stream = ContentLengthInputStream.obtain(response.body().byteStream(), chunkSize);
-          fetchChunks(url, contentLength.get(), Optional.of(new Pair<>(stream, chunkSize)), compositeController, callback);
+          fetchChunks(url, contentLength, new Pair<>(stream, chunkSize), compositeController, callback);
         }
       }
     });
@@ -128,60 +128,69 @@ public class ChunkedDataFetcher {
     return compositeController;
   }
 
-  private void fetchChunks(@NonNull String url,
-                           long contentLength,
-                           Optional<Pair<InputStream, Long>> firstChunk,
-                           CompositeRequestController compositeController,
-                           Callback callback)
-  {
-    List<ByteRange> requestPattern;
-    try {
-      if (firstChunk.isPresent()) {
-        requestPattern = Stream.of(getRequestPattern(contentLength - firstChunk.get().second()))
-                               .map(b -> new ByteRange(b.start + firstChunk.get().second(),
-                                                       b.end   + firstChunk.get().second(),
-                                                       b.ignoreFirst))
-                               .toList();
-      } else {
-        requestPattern = getRequestPattern(contentLength);
-      }
-    } catch (IOException e) {
-      callback.onFailure(e);
-      compositeController.cancel();
-      return;
-    }
+    private void fetchChunks(@NonNull String url,
+                             long contentLength,
+                             @Nullable Pair<InputStream, Long> firstChunk,
+                             CompositeRequestController compositeController,
+                             Callback callback)
+    {
+        final List<ByteRange> requestPattern;
+        try {
+            if (firstChunk != null) {
+                long offset = firstChunk.second();
 
-    SignalExecutors.UNBOUNDED.execute(() -> {
-      List<CallRequestController> controllers = Stream.of(requestPattern).map(range -> makeChunkRequest(client, url, range)).toList();
-      List<InputStream>           streams     = new ArrayList<>(controllers.size() + (firstChunk.isPresent() ? 1 : 0));
-
-      if (firstChunk.isPresent()) {
-        streams.add(firstChunk.get().first());
-      }
-
-      Stream.of(controllers).forEach(compositeController::addController);
-
-      for (CallRequestController controller : controllers) {
-        Optional<InputStream> stream = controller.getStream();
-
-        if (!stream.isPresent()) {
-          Log.w(TAG, "Stream was canceled.");
-          callback.onFailure(new IOException("Failure"));
-          compositeController.cancel();
-          return;
+                List<ByteRange> base = getRequestPattern(contentLength - offset);
+                List<ByteRange> shifted = new ArrayList<>(base.size());
+                for (ByteRange b : base) {
+                    shifted.add(new ByteRange(b.start + offset, b.end + offset, b.ignoreFirst));
+                }
+                requestPattern = shifted;
+            } else {
+                requestPattern = getRequestPattern(contentLength);
+            }
+        } catch (IOException e) {
+            callback.onFailure(e);
+            compositeController.cancel();
+            return;
         }
 
-        streams.add(stream.get());
-      }
+        SignalExecutors.UNBOUNDED.execute(() -> {
+            List<CallRequestController> controllers = new ArrayList<>(requestPattern.size());
+            for (ByteRange range : requestPattern) {
+                controllers.add(makeChunkRequest(client, url, range));
+            }
 
-      try {
-        callback.onSuccess(new InputStreamList(streams));
-      } catch (IOException e) {
-        callback.onFailure(e);
-        compositeController.cancel();
-      }
-    });
-  }
+            List<InputStream> streams = new ArrayList<>(controllers.size() + (firstChunk != null ? 1 : 0));
+
+            if (firstChunk != null) {
+                streams.add(firstChunk.first());
+            }
+
+            for (CallRequestController c : controllers) {
+                compositeController.addController(c);
+            }
+
+            for (CallRequestController controller : controllers) {
+                InputStream stream = controller.getStream();
+
+                if (stream == null) {
+                    Log.w(TAG, "Stream was canceled.");
+                    callback.onFailure(new IOException("Failure"));
+                    compositeController.cancel();
+                    return;
+                }
+
+                streams.add(stream);
+            }
+
+            try {
+                callback.onSuccess(new InputStreamList(streams));
+            } catch (IOException e) {
+                callback.onFailure(e);
+                compositeController.cancel();
+            }
+        });
+    }
 
   private CallRequestController makeChunkRequest(@NonNull OkHttpClient client, @NonNull String url, @NonNull ByteRange range) {
     Request request = new Request.Builder()
@@ -222,21 +231,22 @@ public class ChunkedDataFetcher {
     return callController;
   }
 
-  private Optional<Long> parseLengthFromContentRange(@NonNull String contentRange) {
-    int totalStartPos = contentRange.indexOf('/');
+    @Nullable
+    private Long parseLengthFromContentRange(@NonNull String contentRange) {
+        int totalStartPos = contentRange.indexOf('/');
 
-    if (totalStartPos >= 0 && contentRange.length() > totalStartPos + 1) {
-      String totalString = contentRange.substring(totalStartPos + 1);
+        if (totalStartPos >= 0 && contentRange.length() > totalStartPos + 1) {
+            String totalString = contentRange.substring(totalStartPos + 1);
 
-      try {
-        return Optional.of(Long.parseLong(totalString));
-      } catch (NumberFormatException e) {
-        return Optional.absent();
-      }
+            try {
+                return Long.parseLong(totalString);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+
+        return null;
     }
-
-    return Optional.absent();
-  }
 
   private List<ByteRange> getRequestPattern(long size) throws IOException {
     if      (size > MB)       return getRequestPattern(size, MB);

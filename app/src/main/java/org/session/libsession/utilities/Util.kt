@@ -102,9 +102,9 @@ object Util {
     }
 
     @JvmStatic
-    fun wait(lock: Object, timeout: Long) {
+    fun wait(lock: Any, timeout: Long) {
         try {
-            lock.wait(timeout)
+            (lock as Object).wait(timeout)
         } catch (ie: InterruptedException) {
             throw AssertionError(ie)
         }
@@ -248,7 +248,7 @@ object Util {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun readFully(`in`: InputStream): ByteArray? {
+    fun readFully(`in`: InputStream): ByteArray {
         val bout = ByteArrayOutputStream()
         val buffer = ByteArray(4096)
         var read: Int
@@ -261,8 +261,8 @@ object Util {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun readFullyAsString(`in`: InputStream): String? {
-        return String(readFully(`in`)!!)
+    fun readFullyAsString(`in`: InputStream): String {
+        return String(readFully(`in`))
     }
 
     @JvmStatic

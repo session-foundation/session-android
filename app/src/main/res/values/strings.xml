@@ -308,6 +308,8 @@
     <string name="contentDescriptionQuoteThumbnail">Thumbnail of image from quoted message</string>
     <string name="contentDescriptionStartConversation">Create a conversation with a new contact</string>
     <string name="contentNotificationDescription">Choose the content displayed in local notifications when an incoming message is received.</string>
+    <string name="conversationNavigate">Navigate to Conversation</string>
+    <string name="conversationSettings">Conversation Settings</string>
     <string name="conversationsAddToHome">Add to home screen</string>
     <string name="conversationsAddedToHome">Added to home screen</string>
     <string name="conversationsAudioMessages">Audio Messages</string>
@@ -525,6 +527,7 @@
     <string name="feedbackDescription">Share your experience with {app_name} by completing a short survey.</string>
     <string name="file">File</string>
     <string name="files">Files</string>
+    <string name="focusTextArea">Focus Text Area</string>
     <string name="followSystemSettings">Follow system settings.</string>
     <string name="forever">Forever</string>
     <string name="from">From:</string>
@@ -672,6 +675,7 @@
     <string name="inviteNewMemberGroupLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
     <string name="inviteNewMemberGroupNoLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code</string>
     <string name="join">Join</string>
+    <string name="keyboardShortcuts">Keyboard Shortcuts</string>
     <string name="later">Later</string>
     <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
     <string name="launchOnStartDesktop">Launch on Startup</string>
@@ -836,6 +840,7 @@
     <string name="noteToSelfEmpty">You have no messages in Note to Self.</string>
     <string name="noteToSelfHide">Hide Note to Self</string>
     <string name="noteToSelfHideDescription">Are you sure you want to hide Note to Self?</string>
+    <string name="noteToSelfOpen">Open Note to Self</string>
     <string name="noteTosPrivacyPolicy"><b>PLEASE NOTE</b>: By {action_type}, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="notificationDisplay">Notification Display</string>
     <string name="notificationSenderNameAndPreview">Display the sender\'s name and a preview of the message content.</string>
@@ -910,6 +915,7 @@
     <string name="onsErrorNotRecognized">We couldn\'t recognize this ONS. Please check it and try again.</string>
     <string name="onsErrorUnableToSearch">We were unable to search for this ONS. Please try again later.</string>
     <string name="open">Open</string>
+    <string name="openMessageContextMenu">Open Message Context Menu</string>
     <string name="openPlatformStoreWebsite">Open {platform_store} Website</string>
     <string name="openPlatformWebsite">Open {platform} Website</string>
     <string name="openSettings">Open Settings</string>
@@ -1104,7 +1110,7 @@
     <string name="proRefundNextSteps">{platform} is now processing your refund request. This typically takes 24-48 hours. Depending on their decision, you may see your {pro} status change in {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Your refund request will be handled by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
     <string name="proRefundRequestStorePolicies">Your refund request will be handled exclusively by {platform} through the <b>{platform} website</b>.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
-    <string name="proRefundSupport">Please contact {platform} for further updates on your refund request. Due to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0">{platform} Refund Support</font></string>
+    <string name="proRefundSupport">Please contact {platform} for further updates on your refund request. Due to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests.\n\n<font color="0"><b>{platform} Refund Support {icon}</b></font></string>
     <string name="proRefunding">Refunding {pro}</string>
     <string name="proRefundingDescription">Refunds for {app_pro} are handled exclusively by {platform} through the {platform_store}.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
     <string name="proRenewAnimatedDisplayPicture">Want to use animated display pictures again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
@@ -1277,6 +1283,7 @@
     <string name="runSessionBackground">Run {app_name} in the Background?</string>
     <string name="runSessionBackgroundDescription">Since you’re using slow mode, we recommend allowing {app_name} to run in the background to improve notifications. This can improve notification consistency, although your system may still automatically limit background activity.\n\nYou can change this later in Settings.</string>
     <string name="save">Save</string>
+    <string name="saveMessageAttachment">Save Message Attachment</string>
     <string name="saved">Saved</string>
     <string name="savedMessages">Saved messages</string>
     <string name="saving">Saving...</string>
@@ -1366,6 +1373,9 @@
     <string name="theError">Error</string>
     <string name="theReturn">Return</string>
     <string name="themePreview">Theme Preview</string>
+    <string name="toggleEmojiPicker">Toggle Emoji Picker</string>
+    <string name="toggleReactionBarMessage">Toggle Reaction Bar for Message</string>
+    <string name="toggleReplyMessage">Toggle Reply for Message</string>
     <string name="tooltipAccountIdVisible">The Account ID of <b>{name}</b> is visible based on your previous interactions</string>
     <string name="tooltipBlindedIdCommunities">Blinded IDs are used in communities to reduce spam and increase privacy</string>
     <string name="translate">Translate</string>
@@ -1412,6 +1422,7 @@
     <string name="urlOpenDescription">Are you sure you want to open this URL in your browser?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Links will open in your browser.</string>
     <string name="useFastMode">Use Fast Mode</string>
+    <string name="userSettings">User Settings</string>
     <string name="viaPlatformWebsiteDescription">Change your plan using the {platform_account} you used to sign up with, via the <b><font color="0">{platform} website</font></b> .</string>
     <string name="viaStoreWebsite">Via the {platform} website</string>
     <string name="viaStoreWebsiteDescription">Update your {pro} access using the {platform_account} you used to sign up with, via the <b><font color="0">{platform_store} website</font></b>.</string>

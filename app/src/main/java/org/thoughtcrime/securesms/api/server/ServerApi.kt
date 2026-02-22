@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.api.server
 
+import org.session.libsession.messaging.open_groups.api.CommunityApi
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
