@@ -139,7 +139,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private lateinit var binding: ActivityHomeBinding
     private lateinit var glide: RequestManager
 
-    @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var storage: Storage
     @Inject lateinit var groupDatabase: GroupDatabase
@@ -156,7 +155,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var avatarUtils: AvatarUtils
-    @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var messageFormatter: MessageFormatter
     @Inject lateinit var pathManager: PathManager
     @Inject lateinit var prefs: PreferenceStorage
