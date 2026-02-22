@@ -8,6 +8,7 @@ import android.widget.RelativeLayout
 import android.widget.SeekBar
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
+import com.google.android.material.slider.Slider
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,34 +57,31 @@ class VoiceMessageView @JvmOverloads constructor(
     }
 
     private fun setupListeners() {
-        // Seek Bar Listener
-        binding.voiceMessageSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    // Update the timer text immediately while dragging for visual feedback
-                    binding.voiceMessageViewDurationTextView.text =
-                        MediaUtil.getFormattedVoiceMessageDuration(progress.toLong())
-                }
+        // Slider listener
+        binding.voiceMessageSeekBar.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                binding.voiceMessageViewDurationTextView.text =
+                    MediaUtil.getFormattedVoiceMessageDuration(value.toLong())
             }
+        }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+        binding.voiceMessageSeekBar.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) {
                 val p = playable ?: return
                 isUserScrubbing = true
-
                 if (audioPlaybackManager.isActive(p.messageId)) {
                     audioPlaybackManager.beginScrub()
                 }
             }
 
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            override fun onStopTrackingTouch(slider: Slider) {
                 val p = playable ?: return
-                val pos = seekBar?.progress?.toLong() ?: return
+                val pos = slider.value.toLong()
                 isUserScrubbing = false
 
                 if (audioPlaybackManager.isActive(p.messageId)) {
                     audioPlaybackManager.endScrub(pos)
                 } else {
-                    // Scrubbing = intent to play from here
                     audioPlaybackManager.play(p, startPositionMs = pos)
                 }
             }
@@ -127,13 +125,15 @@ class VoiceMessageView @JvmOverloads constructor(
         binding.audioTitle.setTextColor(textColor)
 
         binding.playBg.backgroundTintList = ColorStateList.valueOf(color1)
-        binding.voiceMessageSeekBar.thumbTintList = ColorStateList.valueOf(color1)
-        binding.voiceMessageSeekBar.progressTintList = ColorStateList.valueOf(color1)
 
         binding.voiceMessagePlaybackImageView.imageTintList = ColorStateList.valueOf(color2)
         binding.voiceMessageViewLoader.backgroundTintList = ColorStateList.valueOf(color2)
 
-        binding.voiceMessageSeekBar.progressBackgroundTintList = ColorStateList.valueOf(trackEmptyColor)
+        // Apply Colors to Slider
+        val sliderColorList = ColorStateList.valueOf(color1)
+        binding.voiceMessageSeekBar.thumbTintList = sliderColorList
+        binding.voiceMessageSeekBar.trackActiveTintList = sliderColorList
+        binding.voiceMessageSeekBar.trackInactiveTintList = ColorStateList.valueOf(trackEmptyColor)
 
         if (message.isOutgoing) {
             binding.voiceMessageSpeedButton.backgroundTintList = ColorStateList.valueOf(color1)
@@ -228,16 +228,21 @@ class VoiceMessageView @JvmOverloads constructor(
     }
 
     private fun updateSeekBar(positionMs: Long, durationMs: Long) {
-        // Handle Unknown/Zero duration gracefully
-        val safeDuration = if (durationMs > 0) durationMs else this.durationMs
+        val safeDuration = if (durationMs > 0) durationMs.toFloat() else this.durationMs.toFloat()
 
-        if (binding.voiceMessageSeekBar.max != safeDuration.toInt()) {
-            binding.voiceMessageSeekBar.max = safeDuration.toInt()
+        // Slider crashes if valueTo <= valueFrom
+        val finalValueTo = if (safeDuration > 0f) safeDuration else 1f
+
+        if (binding.voiceMessageSeekBar.valueTo != finalValueTo) {
+            binding.voiceMessageSeekBar.valueTo = finalValueTo
         }
 
         if (!isUserScrubbing) {
-            binding.voiceMessageSeekBar.progress = positionMs.toInt()
-            val remaining = (safeDuration - positionMs).coerceAtLeast(0L)
+            // Ensure position is within [0, valueTo] to avoid crashes
+            val safePos = positionMs.toFloat().coerceIn(0f, finalValueTo)
+            binding.voiceMessageSeekBar.value = safePos
+
+            val remaining = (finalValueTo - safePos).toLong().coerceAtLeast(0L)
             binding.voiceMessageViewDurationTextView.text =
                 MediaUtil.getFormattedVoiceMessageDuration(remaining)
         }

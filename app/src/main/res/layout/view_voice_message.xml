@@ -61,23 +61,18 @@
                 tools:visibility="gone" />
         </FrameLayout>
 
-        <SeekBar
+        <com.google.android.material.slider.Slider
             android:id="@+id/voiceMessageSeekBar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:maxHeight="4dp"
-            android:minHeight="4dp"
-            android:progressDrawable="@drawable/voice_message_seekbar_progress"
-            android:thumb="@drawable/voice_message_seekbar_thumb"
-            android:splitTrack="false"
-            android:paddingStart="@dimen/message_spacing"
-            android:paddingEnd="@dimen/message_spacing"
+            android:valueFrom="0.0"
+            android:valueTo="100.0"
+            app:labelBehavior="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/playPauseContainer"
             app:layout_constraintTop_toTopOf="@id/playPauseContainer"
             app:layout_constraintBottom_toBottomOf="@id/playPauseContainer"
-            app:layout_constraintVertical_chainStyle="packed"
-            tools:progress="100" />
+            android:layout_marginHorizontal="@dimen/message_spacing" />
 
         <TextView
             android:id="@+id/voiceMessageSpeedButton"
