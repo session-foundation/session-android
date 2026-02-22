@@ -51,6 +51,7 @@ import network.loki.messenger.databinding.ActivityHomeBinding
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
@@ -117,6 +118,7 @@ import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import javax.inject.Inject
+import javax.inject.Provider
 
 // Intent extra keys so we know where we came from
 private const val NEW_ACCOUNT = "HomeActivity_NEW_ACCOUNT"
@@ -153,6 +155,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var pathManager: PathManager
     @Inject lateinit var prefs: PreferenceStorage
     @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
+    @Inject lateinit var jobQueue: Provider<JobQueue>
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()

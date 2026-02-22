@@ -21,7 +21,8 @@ import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.MessageExpirationManagerProtocol
+import org.session.libsession.utilities.TypingIndicatorsProtocol
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.updateContact
@@ -48,8 +49,8 @@ class VisibleMessageHandler @Inject constructor(
     private val configFactory: ConfigFactory,
     private val profileUpdateHandler: Provider<ProfileUpdateHandler>,
     private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
-    private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
-    private val typingIndicators: SSKEnvironment.TypingIndicatorsProtocol,
+    private val messageExpirationManager: MessageExpirationManagerProtocol,
+    private val typingIndicators: TypingIndicatorsProtocol,
     private val clock: SnodeClock,
     private val jobQueue: Provider<JobQueue>,
 ){

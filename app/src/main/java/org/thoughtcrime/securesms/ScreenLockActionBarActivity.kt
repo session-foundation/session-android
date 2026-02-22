@@ -12,10 +12,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -31,8 +31,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
 import javax.inject.Inject
-import javax.inject.Provider
 
+@AndroidEntryPoint
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     companion object {
@@ -90,17 +90,14 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     @Inject
     lateinit var appVisibilityManager: AppVisibilityManager
 
-    @Inject
-    lateinit var jobQueue: Provider<JobQueue>,
-
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
+
+        super.onCreate(savedInstanceState)
 
         val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) &&
                 loginStateRepository.peekLoginState() != null
         routeApplicationState(locked)
-
-        super.onCreate(savedInstanceState)
 
         if (!isFinishing) {
             initializeClearKeyReceiver()
