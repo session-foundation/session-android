@@ -10,14 +10,11 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.LocalActivity
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -54,7 +51,6 @@ import network.loki.messenger.databinding.ActivityHomeBinding
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
@@ -70,7 +66,6 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
@@ -79,7 +74,6 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -158,6 +152,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var messageFormatter: MessageFormatter
     @Inject lateinit var pathManager: PathManager
     @Inject lateinit var prefs: PreferenceStorage
+    @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -177,7 +172,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val globalSearchAdapter by lazy {
         GlobalSearchAdapter(
-            dateUtils = dateUtils,
+            contentViewFactory = contentViewFactory,
             onContactClicked = { model ->
                 val intent = when (model) {
                     is GlobalSearchAdapter.Model.Message -> ConversationActivityV2
@@ -436,7 +431,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (loginStateRepository.getLocalNumber() != null) {
-                    JobQueue.shared.resumePendingJobs()
+                    jobQueue.get().resumePendingJobs()
                 }
             }
 

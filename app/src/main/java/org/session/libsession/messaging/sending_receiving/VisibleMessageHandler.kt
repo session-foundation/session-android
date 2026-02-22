@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.sending_receiving
 
-import android.text.TextUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
@@ -52,6 +51,7 @@ class VisibleMessageHandler @Inject constructor(
     private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     private val typingIndicators: SSKEnvironment.TypingIndicatorsProtocol,
     private val clock: SnodeClock,
+    private val jobQueue: Provider<JobQueue>,
 ){
     fun handleVisibleMessage(
         ctx: ReceivedMessageProcessor.MessageProcessingContext,
@@ -234,7 +234,7 @@ class VisibleMessageHandler @Inject constructor(
             if (messageID.mms && (threadRecipient.autoDownloadAttachments == true || senderAddress.address == ctx.currentUserPublicKey)) {
                 storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
                     attachment.attachmentId?.let { id ->
-                        JobQueue.shared.add(
+                        jobQueue.get().add(
                             attachmentDownloadJobFactory.create(
                             attachmentID = id.rowId,
                             mmsMessageId = messageID.id

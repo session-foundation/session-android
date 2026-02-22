@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -30,6 +31,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
 import javax.inject.Inject
+import javax.inject.Provider
 
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
@@ -87,6 +89,9 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     @Inject
     lateinit var appVisibilityManager: AppVisibilityManager
+
+    @Inject
+    lateinit var jobQueue: Provider<JobQueue>,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")

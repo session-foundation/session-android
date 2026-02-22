@@ -26,6 +26,7 @@ import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
+import javax.inject.Provider
 
 class MessageSendJob @AssistedInject constructor(
     @Assisted val message: Message,
@@ -36,6 +37,7 @@ class MessageSendJob @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val messageSender: MessageSender,
+    private val jobQueue: Provider<JobQueue>,
 ) : Job {
 
     object AwaitingAttachmentUploadException : Exception("Awaiting attachment upload.")
@@ -80,7 +82,7 @@ class MessageSendJob @AssistedInject constructor(
                     // Wait for it to finish
                 } else {
                     val job = attachmentUploadJobFactory.create(it.attachmentId.rowId, message.threadID!!.toString(), message, id!!)
-                    JobQueue.shared.add(job)
+                    jobQueue.get().add(job)
                 }
             }
             if (attachmentsToUpload.isNotEmpty()) {

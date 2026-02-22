@@ -111,7 +111,6 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -135,6 +134,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.EnumSet
 import java.util.UUID
+import javax.inject.Provider
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
@@ -167,6 +167,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val deleteAllReactionsApiFactory: DeleteAllReactionsApi.Factory,
     private val audioPlaybackManager: AudioPlaybackManager,
     private val loginStateRepository: LoginStateRepository,
+    private val jobQueue: Provider<JobQueue>,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -1352,7 +1353,7 @@ class ConversationViewModel @AssistedInject constructor(
                         && storage.getAttachmentUploadJob(attachmentId) == null
                     ) {
                         // start download
-                        JobQueue.shared.add(
+                        jobQueue.get().add(
                             attachmentDownloadJobFactory.create(
                                 attachmentId,
                                 databaseAttachment.mmsId
