@@ -65,6 +65,10 @@ class VoiceMessageView @JvmOverloads constructor(
             }
         }
 
+        binding.voiceMessageSeekBar.setLabelFormatter { value ->
+            MediaUtil.getFormattedVoiceMessageDuration(value.toLong())
+        }
+
         binding.voiceMessageSeekBar.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
             override fun onStartTrackingTouch(slider: Slider) {
                 val p = playable ?: return
@@ -116,7 +120,7 @@ class VoiceMessageView @JvmOverloads constructor(
             intArrayOf(
                 context.getColorFromAttr(R.attr.accentColor),  // accent
                 context.getColorFromAttr(R.attr.colorPrimary), // bg primary
-                context.getColorFromAttr(android.R.attr.textColorSecondary), // text secondary
+                context.getColorFromAttr(android.R.attr.textColorTertiary), // text secondary
             )
         }
 
@@ -131,9 +135,13 @@ class VoiceMessageView @JvmOverloads constructor(
 
         // Apply Colors to Slider
         val sliderColorList = ColorStateList.valueOf(color1)
-        binding.voiceMessageSeekBar.thumbTintList = sliderColorList
-        binding.voiceMessageSeekBar.trackActiveTintList = sliderColorList
-        binding.voiceMessageSeekBar.trackInactiveTintList = ColorStateList.valueOf(trackEmptyColor)
+        binding.voiceMessageSeekBar.apply {
+            trackStopIndicatorSize = 0
+
+            thumbTintList = sliderColorList
+            trackActiveTintList = sliderColorList
+            trackInactiveTintList = ColorStateList.valueOf(trackEmptyColor)
+        }
 
         if (message.isOutgoing) {
             binding.voiceMessageSpeedButton.backgroundTintList = ColorStateList.valueOf(color1)

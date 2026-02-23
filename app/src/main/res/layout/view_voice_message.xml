@@ -34,7 +34,9 @@
             android:layout_height="36dp"
             android:layout_marginStart="@dimen/message_spacing"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/audioTitle">
+            app:layout_constraintTop_toBottomOf="@+id/audioTitle"
+            app:layout_constraintTop_toTopOf="@id/voiceMessageSeekBar"
+            app:layout_constraintBottom_toBottomOf="@id/voiceMessageSeekBar">
 
             <View android:id="@+id/playBg"
                 android:layout_width="match_parent"
@@ -67,12 +69,13 @@
             android:layout_height="wrap_content"
             android:valueFrom="0.0"
             android:valueTo="100.0"
-            app:labelBehavior="gone"
+            app:trackHeight="10dp"
+            app:thumbHeight="20dp"
+            android:insetTop="0dp"
+            android:theme="@style/Theme.Material3.DayNight"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/playPauseContainer"
-            app:layout_constraintTop_toTopOf="@id/playPauseContainer"
-            app:layout_constraintBottom_toBottomOf="@id/playPauseContainer"
-            android:layout_marginHorizontal="@dimen/message_spacing" />
+            app:layout_constraintTop_toBottomOf="@+id/audioTitle"/>
 
         <TextView
             android:id="@+id/voiceMessageSpeedButton"
@@ -87,10 +90,9 @@
             android:includeFontPadding="false"
             android:padding="@dimen/very_small_spacing"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginTop="@dimen/very_small_spacing"
-            android:layout_marginStart="@dimen/message_spacing"
+            android:layout_marginStart="@dimen/medium_spacing"
             app:layout_constraintStart_toStartOf="@+id/voiceMessageSeekBar"
-            app:layout_constraintTop_toBottomOf="@+id/playPauseContainer" />
+            app:layout_constraintTop_toBottomOf="@+id/voiceMessageSeekBar" />
 
         <TextView
             android:id="@+id/voiceMessageViewDurationTextView"
