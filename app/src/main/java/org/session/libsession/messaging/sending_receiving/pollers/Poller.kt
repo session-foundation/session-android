@@ -6,11 +6,8 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-
 import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
@@ -28,7 +25,6 @@ import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
@@ -66,6 +62,7 @@ class Poller @AssistedInject constructor(
     appVisibilityManager: AppVisibilityManager,
     @Assisted scope: CoroutineScope
 ) : BasePoller<Unit>(
+    debugLabel = "MainPoller",
     networkConnectivity = networkConnectivity,
     scope = scope,
     appVisibilityManager = appVisibilityManager
@@ -114,11 +111,11 @@ class Poller @AssistedInject constructor(
     // region Private API
     private fun processPersonalMessages(messages: List<RetrieveMessageResponse.Message>) {
         if (messages.isEmpty()) {
-            Log.d(logTag, "No personal messages to process")
+            log("No personal messages to process")
             return
         }
 
-        Log.d(logTag, "Received ${messages.size} personal messages from snode")
+        log("Received ${messages.size} personal messages from snode")
 
         processor.startProcessing("Poller") { ctx ->
             for (message in messages) {
@@ -127,7 +124,7 @@ class Poller @AssistedInject constructor(
                         namespace = Namespace.DEFAULT(),
                         hash = message.hash
                     )) {
-                    Log.d(logTag, "Skipping duplicated message ${message.hash}")
+                    log("Skipping duplicated message ${message.hash}")
                     continue
                 }
 
@@ -147,11 +144,7 @@ class Poller @AssistedInject constructor(
                         pro = result.pro,
                     )
                 } catch (ec: Exception) {
-                    Log.e(
-                        logTag,
-                        "Error while processing personal message with hash ${message.hash}",
-                        ec
-                    )
+                    logE("Error while processing personal message with hash ${message.hash}", ec)
                 }
             }
         }
@@ -159,7 +152,7 @@ class Poller @AssistedInject constructor(
 
     private fun processConfig(messages: List<RetrieveMessageResponse.Message>, forConfig: UserConfigType) {
         if (messages.isEmpty()) {
-            Log.d(logTag, "No messages to process for $forConfig")
+            log("No messages to process for $forConfig")
             return
         }
 
@@ -182,11 +175,11 @@ class Poller @AssistedInject constructor(
                     messages = newMessages
                 )
             } catch (e: Exception) {
-                Log.e(logTag, "Error while merging user configs for $forConfig", e)
+                logE("Error while merging user configs for $forConfig", e)
             }
         }
 
-        Log.d(logTag, "Processed ${newMessages.size} new messages for config $forConfig")
+        log("Processed ${newMessages.size} new messages for config $forConfig")
     }
 
     private fun RetrieveMessageResponse.Message.toConfigMessage(): ConfigMessage {
@@ -276,7 +269,7 @@ class Poller @AssistedInject constructor(
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
 
-                    Log.e(logTag, "Error while extending TTL for hashes", e)
+                    logE("Error while extending TTL for hashes", e)
                 }
             }
         }
@@ -325,7 +318,7 @@ class Poller @AssistedInject constructor(
             "Swarm is empty for user ${auth.accountId.hexString}"
         }
 
-        Log.d(logTag, "Start initial user profile polling from ${swarm.size} snodes")
+        log("Start initial user profile polling from ${swarm.size} snodes")
 
         val fetchMessageTasks = swarm.map { snode ->
             snode to async {
@@ -353,7 +346,7 @@ class Poller @AssistedInject constructor(
                 deferred.await()
             }.onFailure { e ->
                 if (e is CancellationException) throw e
-                Log.d(logTag, "Error polling initial config from $snode")
+                log("Error polling initial config from $snode")
             }
         }
 
@@ -376,7 +369,7 @@ class Poller @AssistedInject constructor(
                         }
 
                         else -> {
-                            Log.e(logTag, "Failed to fetch initial profile config from one snode", result.exceptionOrNull())
+                            logE("Failed to fetch initial profile config from one snode", result.exceptionOrNull())
                             emptySequence()
                         }
                     }
@@ -389,7 +382,7 @@ class Poller @AssistedInject constructor(
                 messages = messages
             )
 
-            Log.d(logTag, "Merged ${messages.size} config messages for initial profile poll")
+            log("Merged ${messages.size} config messages for initial profile poll")
         }
     }
 

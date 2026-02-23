@@ -29,7 +29,6 @@ import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcess
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withUserConfigs
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -65,7 +64,8 @@ class OpenGroupPoller @AssistedInject constructor(
 ): BasePoller<Unit>(
     networkConnectivity = networkConnectivity,
     scope = scope,
-    appVisibilityManager = appVisibilityManager
+    appVisibilityManager = appVisibilityManager,
+    debugLabel = "OpenGroupPoller($server)"
 ) {
     override val successfulPollIntervalSeconds: Int
         get() = 4
@@ -244,8 +244,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             message = msg,
                         )
                     } catch (e: Exception) {
-                        Log.e(
-                            logTag,
+                        logE(
                             "Error processing open group message ${msg.id} in ${threadAddress.debugString}",
                             e
                         )
@@ -277,7 +276,7 @@ class OpenGroupPoller @AssistedInject constructor(
 
         val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
             ?: run {
-                Log.e(logTag, "No community server public key cannot process inbox messages")
+                log("No community server public key cannot process inbox messages")
                 return
             }
 
@@ -294,7 +293,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     )
 
                 } catch (e: Exception) {
-                    Log.e(logTag, "Error processing inbox message", e)
+                    logE("Error processing inbox message", e)
                 }
             }
         }
@@ -311,7 +310,7 @@ class OpenGroupPoller @AssistedInject constructor(
 
         val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
             ?: run {
-                Log.e(logTag, "No community server public key cannot process inbox messages")
+                logE("No community server public key cannot process inbox messages")
                 return
             }
 
@@ -328,7 +327,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     )
 
                 } catch (e: Exception) {
-                    Log.e(logTag, "Error processing outbox message", e)
+                    logE("Error processing outbox message", e)
                 }
             }
         }
