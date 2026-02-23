@@ -311,14 +311,14 @@ fun MessageStatus(
         Text(
             text = data.name,
             style = LocalType.current.small,
-            color = LocalColors.current.text
+            color = LocalColors.current.textSecondary
         )
 
         when(data.icon){
             is MessageViewStatusIcon.DrawableIcon -> {
                 Image(
                     painter = painterResource(id = data.icon.icon),
-                    colorFilter = ColorFilter.tint(LocalColors.current.text),
+                    colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
                     contentDescription = null,
                     modifier = Modifier.size(LocalDimensions.current.iconStatus)
                 )
