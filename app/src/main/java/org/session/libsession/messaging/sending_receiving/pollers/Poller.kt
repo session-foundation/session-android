@@ -7,9 +7,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -326,29 +328,34 @@ class Poller @AssistedInject constructor(
         Log.d(logTag, "Start initial user profile polling from ${swarm.size} snodes")
 
         val fetchMessageTasks = swarm.map { snode ->
-            async {
-                runCatching {
-                    // Must not take too long
-                    withTimeout(10.seconds) {
-                        snodeApiExecutor.execute(
-                            SnodeApiRequest(
-                                snode = snode,
-                                api = retrieveMessageFactory.create(
-                                    namespace = Namespace.USER_PROFILE(),
-                                    auth = auth,
-                                    lastHash = null,
-                                    maxSize = null,
-                                )
+            snode to async {
+                // Must not take too long
+                requireNotNull(withTimeoutOrNull(10.seconds) {
+                    snodeApiExecutor.execute(
+                        SnodeApiRequest(
+                            snode = snode,
+                            api = retrieveMessageFactory.create(
+                                namespace = Namespace.USER_PROFILE(),
+                                auth = auth,
+                                lastHash = null,
+                                maxSize = null,
                             )
                         )
-                    }
-                }.onFailure { throwable ->
-                    if (throwable is CancellationException) throw throwable
+                    )
+                }) {
+                    "Time out waiting for result from $snode"
                 }
             }
         }
 
-        val results = fetchMessageTasks.awaitAll()
+        val results = fetchMessageTasks.map { (snode, deferred) ->
+            runCatching {
+                deferred.await()
+            }.onFailure { e ->
+                if (e is CancellationException) throw e
+                Log.d(logTag, "Error polling initial config from $snode")
+            }
+        }
 
         if (results.all { it.isFailure }) {
             throw results.fold(null as Throwable?) { acc, result ->
