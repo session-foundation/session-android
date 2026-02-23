@@ -36,11 +36,11 @@ private typealias PollRequestCallback<T> = SendChannel<Result<T>>
  * @param T The type of the result returned by the single polling.
  */
 abstract class BasePoller<T>(
+    private val debugLabel: String,
     private val networkConnectivity: NetworkConnectivity,
     private val appVisibilityManager: AppVisibilityManager,
     private val scope: CoroutineScope,
 ) {
-    protected val logTag: String = this::class.java.simpleName
 
     private val manualPollRequestSender: SendChannel<PollRequestCallback<T>>
 
@@ -80,7 +80,10 @@ abstract class BasePoller<T>(
                     pollOnce(pollReason)
                 }.onSuccess { numConsecutiveFailures = 0 }
                     .onFailure {
-                        if (it is CancellationException) throw it
+                        if (it is CancellationException) {
+                            logE("Polling cancelled", it)
+                            throw it
+                        }
                         numConsecutiveFailures += 1
                     }
 
@@ -101,7 +104,7 @@ abstract class BasePoller<T>(
                     if (visible) {
                         true
                     } else {
-                        Log.d(logTag, "Polling paused - app in background")
+                        log("Polling paused - app in background")
                         false
                     }
                 },
@@ -109,7 +112,7 @@ abstract class BasePoller<T>(
                     if (hasNetwork) {
                         true
                     } else {
-                        Log.d(logTag, "Polling paused - no network connectivity")
+                        log("Polling paused - no network connectivity")
                         false
                     }
                 },
@@ -121,7 +124,7 @@ abstract class BasePoller<T>(
             // If we are told we can only start executing from a time, wait until that.
             val delayMillis = minStartAt?.elapsedNow()?.let { -it.inWholeMilliseconds }
             if (delayMillis != null && delayMillis > 0) {
-                Log.d(logTag, "Delay next poll for ${delayMillis}ms")
+                log("Delay next poll for ${delayMillis}ms")
                 delay(delayMillis)
             }
         }
@@ -151,19 +154,33 @@ abstract class BasePoller<T>(
      */
     protected abstract suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean): T
 
+    /**
+     * Provides detailed context of this poller for logging.
+     */
+    protected fun log(message: String, e: Throwable? = null) {
+        Log.d(javaClass.simpleName, "$debugLabel: $message", e)
+    }
+
+    /**
+     * Provides detailed context of this poller for logging.
+     */
+    protected fun logE(message: String, e: Throwable? = null) {
+        Log.e(javaClass.simpleName, "$debugLabel: $message", e)
+    }
+
     private suspend fun pollOnce(reason: String): T {
         val lastState = mutablePollState.value
         mutablePollState.value =
             PollState.Polling(reason, lastPolledResult = lastState.lastPolledResult)
-        Log.d(logTag, "Start $reason polling")
+        log("Start $reason polling")
         val result = runCatching {
             doPollOnce(isFirstPollSinceAppStarted = lastState is PollState.Idle)
         }
 
         if (result.isSuccess) {
-            Log.d(logTag, "$reason polling succeeded")
+            log("$reason polling succeeded")
         } else if (result.exceptionOrNull() !is CancellationException) {
-            Log.e(logTag, "$reason polling failed", result.exceptionOrNull())
+            logE("$reason polling failed", result.exceptionOrNull())
         }
 
         mutablePollState.value = PollState.Polled(
