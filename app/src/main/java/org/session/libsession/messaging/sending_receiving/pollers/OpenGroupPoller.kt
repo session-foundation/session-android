@@ -58,6 +58,7 @@ class OpenGroupPoller @AssistedInject constructor(
     networkConnectivity: NetworkConnectivity,
     appVisibilityManager: AppVisibilityManager,
     private val json: Json,
+    private val jobQueue: Provider<JobQueue>,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
     @Assisted private val pollerSemaphore: Semaphore,
@@ -252,11 +253,11 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
             }
 
-            JobQueue.shared.add(trimThreadJobFactory.create(threadId))
+            jobQueue.get().add(trimThreadJobFactory.create(threadId))
         }
 
         if (deletions.isNotEmpty()) {
-            JobQueue.shared.add(
+            jobQueue.get().add(
                 openGroupDeleteJobFactory.create(
                     messageServerIds = LongArray(deletions.size) { i -> deletions[i].id },
                     threadId = threadId
