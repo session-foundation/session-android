@@ -283,9 +283,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     lateinit var scope: CoroutineScope
 
     @Inject
-    lateinit var loginStateRepository: LoginStateRepository
-
-    @Inject
     lateinit var conversationLoaderFactory: ConversationLoader.Factory
 
     @Inject

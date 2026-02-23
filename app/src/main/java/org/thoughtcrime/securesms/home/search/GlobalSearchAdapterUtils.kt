@@ -9,9 +9,6 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import network.loki.messenger.R
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.isLegacyGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncateIdForDisplay
@@ -113,14 +110,14 @@ private fun ComposeView.setupTitleWithBadge(title: String, showProBadge: Boolean
 fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
     binding.searchResultTimestamp.isVisible = false
-    val threadRecipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
+    val threadRecipient = recipientRepository.getRecipientSync(
         model.address
     )
 
     binding.searchResultProfilePicture.setThemedContent {
         Avatar(
             size = LocalDimensions.current.iconLarge,
-            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(threadRecipient)
+            data = avatarUtils.getUIDataFromRecipient(threadRecipient)
         )
     }
 
@@ -142,13 +139,13 @@ fun ContentView.bindModel(query: String?, model: ContactModel) = binding.run {
     searchResultSubtitle.isVisible = false
     searchResultTimestamp.isVisible = false
     searchResultSubtitle.text = null
-    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
+    val recipient = recipientRepository.getRecipientSync(
         model.contact
     )
     searchResultProfilePicture.setThemedContent {
         Avatar(
             size = LocalDimensions.current.iconLarge,
-            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(recipient)
+            data = avatarUtils.getUIDataFromRecipient(recipient)
         )
     }
 
@@ -169,12 +166,12 @@ fun ContentView.bindModel(model: SavedMessages) {
         showProBadge = false
     )
 
-    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getSelf()
+    val recipient = recipientRepository.getSelf()
 
     binding.searchResultProfilePicture.setThemedContent {
         Avatar(
             size = LocalDimensions.current.iconLarge,
-            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(recipient)
+            data = avatarUtils.getUIDataFromRecipient(recipient)
         )
     }
     binding.searchResultProfilePicture.isVisible = true
@@ -191,7 +188,7 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     searchResultProfilePicture.setThemedContent {
         Avatar(
             size = LocalDimensions.current.iconLarge,
-            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(model.messageResult.conversationRecipient)
+            data = avatarUtils.getUIDataFromRecipient(model.messageResult.conversationRecipient)
         )
     }
     val textSpannable = SpannableStringBuilder()

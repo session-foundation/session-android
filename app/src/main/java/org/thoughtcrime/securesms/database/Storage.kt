@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import android.net.Uri
-import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -73,7 +72,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
@@ -108,10 +106,10 @@ open class Storage @Inject constructor(
     private val notificationManager: MessageNotifier,
     private val messageDataProvider: MessageDataProvider,
     private val clock: SnodeClock,
-    private val openGroupManager: Lazy<OpenGroupManager>,
     private val recipientRepository: RecipientRepository,
     private val loginStateRepository: LoginStateRepository,
     private val json: Json,
+    private val jobQueue: Provider<JobQueue>,
 ) : Database(context, helper), StorageProtocol {
 
     override fun getUserPublicKey(): String? { return loginStateRepository.peekLoginState()?.accountId?.hexString }
@@ -449,7 +447,7 @@ open class Storage @Inject constructor(
 
     override fun resumeMessageSendJobIfNeeded(messageSendJobID: String) {
         val job = jobDatabase.getMessageSendJob(messageSendJobID) ?: return
-        JobQueue.shared.resumePendingSendMessage(job)
+        jobQueue.get().resumePendingSendMessage(job)
     }
 
     override fun isJobCanceled(job: Job): Boolean {

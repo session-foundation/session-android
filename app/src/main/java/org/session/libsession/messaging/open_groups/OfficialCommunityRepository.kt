@@ -105,7 +105,7 @@ class OfficialCommunityRepository @Inject constructor(
                     })
                 }
             }
-            .shareIn(scope, SharingStarted.Lazily)
+            .shareIn(scope, SharingStarted.Lazily, replay = 1)
 
     suspend fun fetchOfficialCommunities(): List<OpenGroupApi.DefaultGroup> {
         if (officialCommunitiesCache.replayCache.firstOrNull()?.isFailure == true) {
