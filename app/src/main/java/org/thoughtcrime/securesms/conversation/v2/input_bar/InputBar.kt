@@ -16,6 +16,7 @@ import android.widget.TextView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import com.bumptech.glide.RequestManager
+import com.jakewharton.rxbinding3.view.visibility
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
@@ -110,6 +111,10 @@ class InputBar @JvmOverloads constructor(
         contentDescription = context.getString(R.string.AccessibilityId_send)
     }
 
+    private val debugSendButton = InputBarButton(context, R.drawable.ic_settings, isSendButton = true).apply {
+        contentDescription = context.getString(R.string.AccessibilityId_send)
+    }
+
     private val textColor: Int by lazy {
         context.getColorFromAttr(android.R.attr.textColorPrimary)
     }
@@ -138,6 +143,20 @@ class InputBar @JvmOverloads constructor(
             if (sendButton.contains(PointF(e.x, e.y))) {
                 delegate?.sendMessage()
             }
+        }
+
+        //debug
+        if(TextSecurePreferences.isDebugSendMessageRampEnabled(context)){
+            binding.debugButtonContainer.visibility = VISIBLE
+            binding.debugButtonContainer.addView(debugSendButton)
+            debugSendButton.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+            debugSendButton.onUp = { e ->
+                if (debugSendButton.contains(PointF(e.x, e.y))) {
+                    delegate?.sendDebugMessage()
+                }
+            }
+        }else{
+            binding.debugButtonContainer.visibility = GONE
         }
 
         // Edit text
@@ -406,6 +425,7 @@ interface InputBarDelegate {
     fun onMicrophoneButtonCancel(event: MotionEvent)
     fun onMicrophoneButtonUp(event: MotionEvent)
     fun sendMessage()
+    fun sendDebugMessage()
     fun commitInputContent(contentUri: Uri)
     fun onCharLimitTapped()
 }

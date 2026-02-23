@@ -383,6 +383,10 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
         fragmentPagerAdapter?.let { processMedia(it.allMedia, it.savedState) }
     }
 
+    override fun sendDebugMessage() {
+
+    }
+
     override fun onCharLimitTapped() {
         viewModel?.onCharLimitTapped()
     }

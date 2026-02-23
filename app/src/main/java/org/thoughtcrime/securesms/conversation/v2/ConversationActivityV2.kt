@@ -2383,6 +2383,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
+    override fun sendDebugMessage() {
+       viewModel.debugRampSending()
+    }
+
     override fun commitInputContent(contentUri: Uri) {
         val recipient = viewModel.recipient
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!

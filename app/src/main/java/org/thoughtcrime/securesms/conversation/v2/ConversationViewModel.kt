@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
@@ -56,14 +57,19 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.messages.applyExpiryMode
+import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
+import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
 import org.session.libsession.messaging.open_groups.api.DeleteAllReactionsApi
 import org.session.libsession.messaging.open_groups.api.execute
+import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
@@ -102,6 +108,7 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
+import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -168,6 +175,9 @@ class ConversationViewModel @AssistedInject constructor(
     private val audioPlaybackManager: AudioPlaybackManager,
     private val loginStateRepository: LoginStateRepository,
     private val jobQueue: Provider<JobQueue>,
+    private val messageSender: MessageSender,
+    private val smsDb: SmsDatabase,
+    private val snodeClock: SnodeClock,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -1554,6 +1564,80 @@ class ConversationViewModel @AssistedInject constructor(
 
     fun cyclePlaybackSpeed(){
         audioPlaybackManager.cyclePlaybackSpeed()
+    }
+
+    fun debugRampSending(
+        start: Int = 20,
+        step: Int = 20,
+        max: Int = 100,
+        delayBetweenMessagesMs: Long = 50,
+        delayBetweenStepsMs: Long = 1500,
+    ) {
+        if (!BuildConfig.DEBUG) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            var n = start
+            while (n <= max) {
+                debugSendTextLoadTest(
+                    count = n,
+                    delayBetweenMessagesMs = delayBetweenMessagesMs,
+                    prefix = "Ramp $n"
+                )
+                delay(delayBetweenStepsMs)
+                n += step
+            }
+        }
+    }
+
+    private fun debugSendTextLoadTest(
+        count: Int,
+        delayBetweenMessagesMs: Long = 50L,
+        prefix: String = "Load test",
+    ) {
+        if (!BuildConfig.DEBUG) return
+        if (count <= 0) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val r = recipient
+
+            if (r.isStandardRecipient && r.blocked) return@launch
+
+            val threadId = threadIdFlow.filterNotNull().first()
+            implicitlyApproveRecipient()?.join()
+
+            repeat(count) { i ->
+                val ts = snodeClock.currentTimeMillis() + i
+
+                val message = VisibleMessage().applyExpiryMode(address).apply {
+                    sentTimestamp = ts
+                    text = "$prefix #${i + 1}"
+                }
+
+                proStatusManager.addProFeatures(message)
+
+                val outgoing = OutgoingTextMessage(
+                    message = message,
+                    recipient = r.address,
+                    expiresInMillis = r.expiryMode.expiryMillis,
+                    expireStartedAtMillis = 0
+                )
+
+                message.id = MessageId(
+                    smsDb.insertMessageOutbox(
+                        threadId,
+                        outgoing,
+                        false,
+                        message.sentTimestamp!!,
+                        true
+                    ),
+                    false
+                )
+
+                messageSender.send(message, r.address)
+
+                if (delayBetweenMessagesMs > 0) delay(delayBetweenMessagesMs)
+            }
+        }
     }
 
     @AssistedFactory

@@ -45,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:layout_toEndOf="@+id/attachmentsButtonContainer"
-                android:layout_toStartOf="@+id/microphoneOrSendButtonContainer"
+                android:layout_toStartOf="@+id/debugButtonContainer"
                 android:layout_marginHorizontal="16dp"
                 android:background="@null"
                 android:contentDescription="@string/AccessibilityId_inputBox"
@@ -93,6 +93,16 @@
                     tools:visibility="visible"
                     android:gravity="bottom|center_horizontal"/>
             </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/debugButtonContainer"
+                android:layout_width="@dimen/input_bar_button_expanded_size"
+                android:layout_height="@dimen/input_bar_button_expanded_size"
+                android:layout_toStartOf="@+id/microphoneOrSendButtonContainer"
+                android:layout_alignParentTop="true"
+                android:layout_marginEnd="@dimen/small_spacing"
+                android:visibility="visible"
+                tools:background="@color/classic_dark_3"/>
 
             <RelativeLayout
                 android:id="@+id/microphoneOrSendButtonContainer"

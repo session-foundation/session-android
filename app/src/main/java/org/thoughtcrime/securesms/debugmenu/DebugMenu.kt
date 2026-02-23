@@ -599,6 +599,23 @@ fun DebugMenu(
                 }
             }
 
+            // Debug Logger
+            DebugCell(
+                "Messages",
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            )
+            {
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+                DebugSwitchRow(
+                    text = "Show debug Send Message button",
+                    checked = uiState.debugMessageRampEnabled,
+                    onCheckedChange = { value ->
+                        sendCommand(SetDebugSendMessageRampEnabled(value))
+                    }
+                )
+            }
+
             DebugCell("Fileserver, avatar & attachment") {
                 Text("Alternative file server")
 
