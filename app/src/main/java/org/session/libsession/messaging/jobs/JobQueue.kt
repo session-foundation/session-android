@@ -1,26 +1,31 @@
 package org.session.libsession.messaging.jobs
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsignal.utilities.Log
-import java.util.Timer
+import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.schedule
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToLong
 
-class JobQueue : JobDelegate {
+@Singleton
+class JobQueue @Inject constructor(
+    @param:ManagerScope
+    private val scope: CoroutineScope,
+    private val storage: Storage,
+) : JobDelegate {
     private var hasResumedPendingJobs = false // Just for debugging
     private val jobTimestampMap = ConcurrentHashMap<Long, AtomicInteger>()
 
-    private val scope: CoroutineScope = GlobalScope
     private val queue = Channel<Job>(UNLIMITED)
 
     // Track the send message jobs that are pending or in progress. This doesn't take the
@@ -29,7 +34,6 @@ class JobQueue : JobDelegate {
 
     private val openGroupChannels = mutableMapOf<String, Channel<Job>>()
 
-    val timer = Timer()
 
     private fun CoroutineScope.processWithOpenGroupDispatcher(
         channel: Channel<Job>,
@@ -151,11 +155,6 @@ class JobQueue : JobDelegate {
         }
     }
 
-    companion object {
-        @JvmStatic
-        val shared: JobQueue by lazy { JobQueue() }
-    }
-
     fun add(job: Job) {
         addWithoutExecuting(job)
         queue.trySend(job) // offer always called on unlimited capacity
@@ -169,7 +168,7 @@ class JobQueue : JobDelegate {
         val currentTime = System.currentTimeMillis()
         jobTimestampMap.putIfAbsent(currentTime, AtomicInteger())
         job.id = currentTime.toString() + jobTimestampMap[currentTime]!!.getAndIncrement().toString()
-        MessagingModuleConfiguration.shared.storage.persistJob(job)
+        storage.persistJob(job)
     }
 
     fun resumePendingSendMessage(job: Job) {
@@ -192,7 +191,7 @@ class JobQueue : JobDelegate {
     }
 
     fun resumePendingJobs(typeKey: String) {
-        val allPendingJobs = MessagingModuleConfiguration.shared.storage.getAllPendingJobs(typeKey)
+        val allPendingJobs = storage.getAllPendingJobs(typeKey)
         val pendingJobs = mutableListOf<Job>()
         for ((id, job) in allPendingJobs) {
             if (job == null) {
@@ -228,12 +227,11 @@ class JobQueue : JobDelegate {
 
     override fun handleJobSucceeded(job: Job, dispatcherName: String) {
         val jobId = job.id ?: return
-        MessagingModuleConfiguration.shared.storage.markJobAsSucceeded(jobId)
+        storage.markJobAsSucceeded(jobId)
     }
 
     override fun handleJobFailed(job: Job, dispatcherName: String, error: Exception) {
         // Canceled
-        val storage = MessagingModuleConfiguration.shared.storage
         if (storage.isJobCanceled(job)) {
             return Log.i("Loki", "${job::class.simpleName} canceled (id: ${job.id}).")
         }
@@ -252,7 +250,8 @@ class JobQueue : JobDelegate {
             storage.persistJob(job)
             val retryInterval = getRetryInterval(job)
             Log.i("Loki", "${job::class.simpleName} failed (id: ${job.id}); scheduling retry (failure count is ${job.failureCount}).")
-            timer.schedule(delay = retryInterval) {
+            scope.launch {
+                delay(retryInterval)
                 Log.i("Loki", "Retrying ${job::class.simpleName} (id: ${job.id}).")
                 queue.trySend(job)
             }
@@ -266,7 +265,6 @@ class JobQueue : JobDelegate {
     }
 
     private fun handleJobFailedPermanently(jobId: String) {
-        val storage = MessagingModuleConfiguration.shared.storage
         storage.markJobAsFailedPermanently(jobId)
     }
 
@@ -281,7 +279,4 @@ class JobQueue : JobDelegate {
         val maxBackoff = (10 * 60).toDouble() // 10 minutes
         return (1000 * 0.25 * min(maxBackoff, (2.0).pow(job.failureCount))).roundToLong()
     }
-
-    private fun Job.isSend() = this is MessageSendJob || this is AttachmentUploadJob
-
 }

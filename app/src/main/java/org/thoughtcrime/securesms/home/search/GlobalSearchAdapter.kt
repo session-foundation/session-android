@@ -6,6 +6,9 @@ import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
@@ -14,14 +17,16 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import java.security.InvalidParameterException
 
 
 class GlobalSearchAdapter(
-    private val dateUtils: DateUtils,
+    private val contentViewFactory: ContentView.Factory,
     private val onContactClicked: (Model) -> Unit,
     private val onContactLongPressed: (Model.Contact) -> Unit,
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -69,9 +74,8 @@ class GlobalSearchAdapter(
             SUB_HEADER_VIEW_TYPE -> SubHeaderView(
                 LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_subheader, parent, false)
             )
-            else -> ContentView(
-                LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
-                dateUtils = dateUtils,
+            else -> contentViewFactory.create(
+                view = LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
                 onContactClicked = onContactClicked,
                 onContactLongPressed = onContactLongPressed
             )
@@ -115,11 +119,13 @@ class GlobalSearchAdapter(
     override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
     }
 
-    class ContentView(
-        view: View,
+    class ContentView @AssistedInject constructor(
+        @Assisted view: View,
         private val dateUtils: DateUtils,
-        private val onContactClicked: (Model) -> Unit,
-        private val onContactLongPressed: (Model.Contact) -> Unit,
+        val avatarUtils: AvatarUtils,
+        val recipientRepository: RecipientRepository,
+        @Assisted private val onContactClicked: (Model) -> Unit,
+        @Assisted private val onContactLongPressed: (Model.Contact) -> Unit,
     ) : RecyclerView.ViewHolder(view) {
 
         val binding = ViewGlobalSearchResultBinding.bind(view)
@@ -148,6 +154,15 @@ class GlobalSearchAdapter(
             } else {
                 binding.root.setOnLongClickListener(null)
             }
+        }
+
+        @AssistedFactory
+        interface Factory {
+            fun create(
+                view: View,
+                onContactClicked: (Model) -> Unit,
+                onContactLongPressed: (Model.Contact) -> Unit
+            ): ContentView
         }
     }
 

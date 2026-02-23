@@ -221,16 +221,19 @@ class MessageDetailsViewModel @AssistedInject constructor(
     }
 
     private val Slide.details: List<TitledText>
-        get() = listOfNotNull(
-            TitledText(R.string.attachmentsFileId, asAttachment().location), //File ID isn't the filename but the ID on the file server
-            TitledText(R.string.attachmentsFileType, asAttachment().contentType),
-            TitledText(R.string.attachmentsFileSize, Formatter.formatFileSize(context, fileSize)),
-            takeIf { it is ImageSlide }
-                ?.let(Slide::asAttachment)
-                ?.run { "${width}x$height" }
-                ?.let { TitledText(R.string.attachmentsResolution, it) },
-            attachmentDb.duration(this)?.let { TitledText(R.string.attachmentsDuration, it) },
-        )
+        get() {
+            val fileId = asAttachment().location //File ID isn't the filename but the ID on the file server
+            return listOfNotNull(
+                if(!fileId.isNullOrEmpty()) TitledText(R.string.attachmentsFileId, fileId) else null,
+                TitledText(R.string.attachmentsFileType, asAttachment().contentType),
+                TitledText(R.string.attachmentsFileSize, Formatter.formatFileSize(context, fileSize)),
+                takeIf { it is ImageSlide }
+                    ?.let(Slide::asAttachment)
+                    ?.run { "${width}x$height" }
+                    ?.let { TitledText(R.string.attachmentsResolution, it) },
+                attachmentDb.duration(this)?.let { TitledText(R.string.attachmentsDuration, it) },
+            )
+        }
 
     private fun AttachmentDatabase.duration(slide: Slide): String? =
         slide.takeIf { it.hasAudio() }

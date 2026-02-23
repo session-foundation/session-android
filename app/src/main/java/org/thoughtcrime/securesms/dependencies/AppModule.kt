@@ -4,7 +4,6 @@ import android.content.Context
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
-import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
@@ -17,8 +16,8 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TypingIndicatorsProtocol
 import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -73,7 +72,7 @@ abstract class AppBindings {
     abstract fun bindMessageNotifier(notifier: OptimizedMessageNotifier): MessageNotifier
 
     @Binds
-    abstract fun bindTypingIndicators(typingIndicators: TypingStatusRepository): SSKEnvironment.TypingIndicatorsProtocol
+    abstract fun bindTypingIndicators(typingIndicators: TypingStatusRepository): TypingIndicatorsProtocol
 
 }
 
@@ -83,11 +82,4 @@ class ToasterModule {
     @Provides
     @Singleton
     fun provideToaster(@ApplicationContext context: Context) = (context as org.thoughtcrime.securesms.ApplicationContext)
-}
-
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-interface AppComponent {
-    fun getPrefs(): TextSecurePreferences
-
 }
