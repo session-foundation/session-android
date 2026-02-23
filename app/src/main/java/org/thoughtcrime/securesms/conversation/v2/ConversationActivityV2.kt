@@ -90,6 +90,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -2686,6 +2687,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 intent ?: return
                 val body = intent.getStringExtra(MediaSendActivity.EXTRA_MESSAGE)
                 val mediaList = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
+                val debugUpload = intent.getBooleanExtra(MediaSendActivity.EXTRA_DEBUG_UPLOAD, false)
+
                 val slideDeck = SlideDeck()
                 for (media in mediaList) {
                     val mediaFilename: String? = media.filename
@@ -2698,7 +2701,28 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         }
                     }
                 }
-                sendAttachments(slideDeck.asAttachments(), body)
+
+                val attachments = slideDeck.asAttachments()
+
+                // If DEBUG, attempt to send as many times as "count"
+                if (BuildConfig.DEBUG && debugUpload) {
+                    val count = 20
+                    val delayBetweenSendsMs = 300L
+
+                    lifecycleScope.launch {
+                        repeat(count) { i ->
+                            val numberedBody = body?.let { "$it (#${i + 1})" } ?: "(#${i + 1})"
+                            sendAttachments(
+                                attachments = attachments,
+                                body = numberedBody,
+                                deleteAttachmentFilesAfterSave = false
+                            )
+                            delay(delayBetweenSendsMs)
+                        }
+                    }
+                } else {
+                    sendAttachments(attachments, body)
+                }
             }
         }
     }

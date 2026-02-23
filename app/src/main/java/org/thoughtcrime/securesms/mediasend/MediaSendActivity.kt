@@ -238,7 +238,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderCompos
             .commit()
     }
 
-    override fun onSendClicked(media: List<Media>, message: String) {
+    override fun onSendClicked(media: List<Media>, message: String, isDebug : Boolean) {
         viewModel.onSendClicked()
 
         val mediaList = ArrayList(media)
@@ -246,6 +246,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderCompos
 
         intent.putParcelableArrayListExtra(EXTRA_MEDIA, mediaList)
         intent.putExtra(EXTRA_MESSAGE, message)
+        intent.putExtra(EXTRA_DEBUG_UPLOAD, isDebug)
         setResult(RESULT_OK, intent)
         finish()
 
@@ -577,6 +578,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderCompos
 
         const val EXTRA_MEDIA: String = "media"
         const val EXTRA_MESSAGE: String = "message"
+        const val EXTRA_DEBUG_UPLOAD: String = "debug_upload_attachments"
 
         private const val KEY_ADDRESS = "address"
         private const val KEY_BODY = "body"

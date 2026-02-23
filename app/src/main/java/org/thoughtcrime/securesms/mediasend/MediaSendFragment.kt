@@ -37,6 +37,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.databinding.MediasendFragmentBinding
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.MediaTypes
@@ -253,7 +254,7 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
         }
     }
 
-    private fun processMedia(mediaList: List<Media>, savedState: Map<Uri, Any>) {
+    private fun processMedia(mediaList: List<Media>, savedState: Map<Uri, Any>, isDebug : Boolean = false) {
         val binding = binding ?: return // If the view is destroyed, this process should not continue
 
         val context = requireContext().applicationContext
@@ -357,7 +358,12 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
                 }
             }
 
-            controller.onSendClicked(updatedMedia, mentionViewModel.normalizeMessageBody())
+            controller.onSendClicked(
+                updatedMedia,
+                mentionViewModel.normalizeMessageBody(),
+                isDebug && BuildConfig.DEBUG
+            )
+
             delayedShowLoader.cancel()
             binding.loader.isVisible = false
             binding.inputBar.clearFocus()
@@ -384,7 +390,9 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
     }
 
     override fun sendDebugMessage() {
+        if(viewModel == null || viewModel?.validateMessageLength() == false) return
 
+        fragmentPagerAdapter?.let { processMedia(it.allMedia, it.savedState, isDebug = true) }
     }
 
     override fun onCharLimitTapped() {
@@ -408,7 +416,7 @@ class MediaSendFragment : Fragment(), RailItemListener, InputBarDelegate {
 
     interface Controller {
         fun onAddMediaClicked(bucketId: String)
-        fun onSendClicked(media: List<Media>, body: String)
+        fun onSendClicked(media: List<Media>, body: String, isDebug: Boolean)
     }
 
     companion object {
