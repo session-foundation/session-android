@@ -205,7 +205,6 @@ fun EmojiReactionOverflow(
     }
 }
 
-
 @Preview
 @Composable
 fun EmojiReactionsPreview(
@@ -219,9 +218,9 @@ fun EmojiReactionsPreview(
             EmojiReactionItem("😮", 5, selected = false),
             EmojiReactionItem("😢", 2, selected = false),
             EmojiReactionItem("🔥", 8, selected = false),
-            EmojiReactionItem("🔥", 8, selected = false),
-            EmojiReactionItem("🔥", 8, selected = false),
-            EmojiReactionItem("🔥", 8, selected = false),
+            EmojiReactionItem("💕", 8, selected = false),
+            EmojiReactionItem("🐙", 8, selected = false),
+            EmojiReactionItem("✅", 8, selected = false),
         )
 
         Column(

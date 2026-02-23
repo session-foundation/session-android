@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v3.compose
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +15,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +32,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
@@ -38,7 +43,9 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
+private val playPauseSize = 36.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudioMessage(
     data: Audio,
@@ -47,8 +54,8 @@ fun AudioMessage(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = LocalDimensions.current.smallSpacing),
-        verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+            .padding(vertical = LocalDimensions.current.xxsSpacing),
+        
     ) {
 
         val textColor = getTextColor(data.outgoing)
@@ -68,10 +75,12 @@ fun AudioMessage(
             )
         }
 
+        val playPauseSpacing = LocalDimensions.current.smallSpacing + playPauseSize + LocalDimensions.current.smallSpacing // aligns with slider start after play button
+
         // Title
         Text(
             modifier = Modifier
-                .padding(start = LocalDimensions.current.smallSpacing, end = LocalDimensions.current.smallSpacing),
+                .padding(start = playPauseSpacing, end = LocalDimensions.current.smallSpacing),
             text = data.title,
             style = LocalType.current.small.copy(fontStyle = FontStyle.Italic),
             color = textColor,
@@ -82,7 +91,7 @@ fun AudioMessage(
         // play + seek
         Row(
             modifier = Modifier
-                .padding(horizontal = LocalDimensions.current.smallSpacing),
+                .padding(horizontal = LocalDimensions.current.xsSpacing),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
@@ -109,11 +118,25 @@ fun AudioMessage(
                 },
                 enabled = !data.showLoader,
                 valueRange = 0f..1f,
-                colors = androidx.compose.material3.SliderDefaults.colors(
-                    thumbColor = color1,
-                    activeTrackColor = color1,
-                    inactiveTrackColor = trackEmptyColor
-                )
+                thumb = { source ->
+                    SliderDefaults.Thumb(
+                        interactionSource = remember { MutableInteractionSource() },
+                        colors = SliderDefaults.colors(thumbColor = color1),
+                        thumbSize = DpSize(4.dp, 20.dp)
+                    )
+                },
+                track = { sliderState ->
+                    SliderDefaults.Track(
+                        sliderState = sliderState,
+                        modifier = Modifier.height(10.dp),
+                        drawStopIndicator = null,
+                        thumbTrackGapSize = 2.dp,
+                        colors = SliderDefaults.colors(
+                            activeTrackColor = color1,
+                            inactiveTrackColor = trackEmptyColor
+                        )
+                    )
+                }
             )
         }
 
@@ -122,7 +145,7 @@ fun AudioMessage(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = LocalDimensions.current.smallSpacing + 36.dp + LocalDimensions.current.smallSpacing, // aligns with slider start after play button
+                    start = playPauseSpacing,
                     end = LocalDimensions.current.smallSpacing
                 ),
             verticalAlignment = Alignment.CenterVertically,
@@ -160,7 +183,7 @@ private fun PlayPauseButton(
 
     Box(
         modifier = modifier
-            .size(36.dp)
+            .size(playPauseSize)
             .clip(CircleShape)
             .background(bgColor)
             .clickable(onClick = onClick),
