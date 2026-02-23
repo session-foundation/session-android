@@ -3,7 +3,10 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
@@ -39,8 +42,8 @@ abstract class BasePoller<T>(
     private val debugLabel: String,
     private val networkConnectivity: NetworkConnectivity,
     private val appVisibilityManager: AppVisibilityManager,
-    private val scope: CoroutineScope,
 ) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val manualPollRequestSender: SendChannel<PollRequestCallback<T>>
 
@@ -80,8 +83,8 @@ abstract class BasePoller<T>(
                     pollOnce(pollReason)
                 }.onSuccess { numConsecutiveFailures = 0 }
                     .onFailure {
-                        if (it is CancellationException) {
-                            logE("Polling cancelled", it)
+                        if (it is PollerCancelledException) {
+                            log("Polling cancelled", it)
                             throw it
                         }
                         numConsecutiveFailures += 1
@@ -95,6 +98,12 @@ abstract class BasePoller<T>(
                 nextRoutinePollAt = TimeSource.Monotonic.markNow().plus(nextPollSeconds.seconds)
             }
         }
+    }
+
+    private class PollerCancelledException : CancellationException("Poller is cancelled")
+
+    fun cancel() {
+        scope.cancel(PollerCancelledException())
     }
 
     private fun waitForRoutinePoll(minStartAt: TimeMark?): Deferred<Unit> {
