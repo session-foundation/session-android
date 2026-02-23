@@ -135,6 +135,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
             deleteAllReactionsApiFactory = mock(),
             loginStateRepository = mock(),
             audioPlaybackManager = mock(),
+            jobQueue = mock(),
         )
     }
 

@@ -1,10 +1,10 @@
 package org.session.libsession.messaging.messages.visible
 
 import androidx.annotation.Keep
-import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreiview
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos
+import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreiview
 
 @Keep
 class LinkPreview() {
@@ -37,7 +37,7 @@ class LinkPreview() {
         this.attachmentID = attachmentID
     }
 
-    fun toProto(): SessionProtos.DataMessage.Preview? {
+    fun toProto(messageDataProvider: MessageDataProvider): SessionProtos.DataMessage.Preview? {
         val url = url
         if (url == null) {
             Log.w(TAG, "Couldn't construct link preview proto from: $this")
@@ -46,9 +46,8 @@ class LinkPreview() {
         val linkPreviewProto = SessionProtos.DataMessage.Preview.newBuilder()
         linkPreviewProto.url = url
         title?.let { linkPreviewProto.title = it }
-        val database = MessagingModuleConfiguration.shared.messageDataProvider
         attachmentID?.let {
-            database.getSignalAttachmentPointer(it)?.let {
+            messageDataProvider.getSignalAttachmentPointer(it)?.let {
                 val attachmentProto = Attachment.createAttachmentPointer(it)
                 linkPreviewProto.image = attachmentProto
             }
