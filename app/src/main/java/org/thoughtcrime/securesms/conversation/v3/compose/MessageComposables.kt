@@ -22,6 +22,11 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +47,7 @@ import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -57,7 +63,6 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
 //todo CONVOv3 status animated icon for disappearing messages
-//todo CONVOv3 highlight effect (needs to work on all types and shapes (how should it work for combos like message + image? overall effect?)
 //todo CONVOv3 text formatting in bubble including mentions and links
 //todo CONVOv3 typing indicator
 //todo CONVOv3 long press views (overlay+message+recent reactions+menu)
@@ -274,6 +279,7 @@ fun Message(
 ) {
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth()
+            .highlight(data.highlightKey)
     ) {
         val maxMessageWidth = max(
             LocalDimensions.current.minMessageWidth,
@@ -406,7 +412,8 @@ data class MessageViewData(
     val status: MessageViewStatus? = null,
     val quote: MessageQuote? = null,
     val link: MessageLinkData? = null,
-    val reactionsState: ReactionViewState? = null
+    val reactionsState: ReactionViewState? = null,
+    val highlightKey: Any? = null
 )
 
 data class ReactionViewState(
@@ -482,22 +489,41 @@ fun MessagePreview(
             modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.spacing)
 
         ) {
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text()
-            ))
+            var testData by remember {
+                mutableStateOf(
+                    MessageViewData(
+                    author = "Toto",
+                    type = PreviewMessageData.text()
+                )
+                )
+            }
+
+            var testData2 by remember {
+                mutableStateOf(
+                    MessageViewData(
+                        author = "Toto",
+                        displayName = true,
+                        avatar = PreviewMessageData.sampleAvatar,
+                        type = PreviewMessageData.text(
+                            outgoing = false,
+                            text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
+                        )
+                    )
+                )
+            }
+
+            LaunchedEffect(Unit) {
+                delay(3000)
+
+                testData = testData.copy(highlightKey = System.currentTimeMillis())
+                testData2 = testData2.copy(highlightKey = System.currentTimeMillis())
+            }
+
+            Message(data = testData)
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            Message(data = MessageViewData(
-                author = "Toto",
-                displayName = true,
-                avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.text(
-                    outgoing = false,
-                    text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
-                )
-            ))
+            Message(data = testData2)
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
