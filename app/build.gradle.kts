@@ -19,14 +19,15 @@ plugins {
 }
 
 val huaweiEnabled = project.properties["huawei"] != null
+val splitApksEnabled = project.properties["splitApks"] == "true"
 val hasIncludedLibSessionUtilProject: Boolean = System.getProperty("session.libsession_util.project.path", "").isNotBlank()
 
 configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 442
-val canonicalVersionName = "1.31.3"
+val canonicalVersionCode = 443
+val canonicalVersionName = "1.32.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -112,7 +113,7 @@ android {
 
     splits {
         abi {
-            isEnable = !huaweiEnabled
+            isEnable = splitApksEnabled
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
             isUniversalApk = true
