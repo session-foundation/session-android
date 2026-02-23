@@ -129,7 +129,7 @@ class NewMessageViewModel @Inject constructor(
                     withTimeoutOrNull(30_000L, {
                         onsResolver.resolve(ons)
                     })) {
-                    "Time out waiting for ONS resolution"
+                    "Timeout waiting for ONS resolution"
                 }
                 onPublicKey(publicKey)
             } catch (e: Exception) {

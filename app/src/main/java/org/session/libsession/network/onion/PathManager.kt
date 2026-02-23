@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
+
 import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.model.PathStatus

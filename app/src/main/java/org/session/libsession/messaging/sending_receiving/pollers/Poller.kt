@@ -10,7 +10,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withTimeout
+
 import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
@@ -343,7 +343,7 @@ class Poller @AssistedInject constructor(
                         )
                     )
                 }) {
-                    "Time out waiting for result from $snode"
+                    "Timeout waiting for result from $snode"
                 }
             }
         }
