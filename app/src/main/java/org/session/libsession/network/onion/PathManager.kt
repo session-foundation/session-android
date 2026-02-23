@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.snode.SnodeDirectory
@@ -153,7 +154,7 @@ open class PathManager @Inject constructor(
 
     private suspend fun testPath(pathCandidate: Path): Boolean {
         try {
-            return withTimeout(5.seconds) {
+            return withTimeoutOrNull(5.seconds) {
                 // Run an snode API to test the path but disable path manipulation, retries, etc.
                 snodeApiExecutor.get()
                     .execute(
@@ -167,8 +168,7 @@ open class PathManager @Inject constructor(
                     )
 
                 Log.d("Onion Request", "Path test succeeded for candidate path $pathCandidate")
-                true
-            }
+            } != null
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {

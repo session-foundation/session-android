@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
@@ -486,8 +486,8 @@ class ProStatusManager @Inject constructor(
         for (attempt in 1..maxAttempts) {
             try {
                 // 5s timeout as per PRD
-                val paymentResponse = withTimeout(5_000L) {
-                    runCatching {
+                val paymentResponse = runCatching {
+                    requireNotNull(withTimeoutOrNull(5000) {
                         serverApiExecutor.execute(
                             ServerApiRequest(
                                 proBackendConfig = backendConfig.get(),
@@ -499,9 +499,11 @@ class ProStatusManager @Inject constructor(
                                 )
                             )
                         )
-                    }.getOrElse {
-                        ProApiResponse.Failure(AddPaymentErrorStatus.GenericError, emptyList())
+                    }) {
+                        "Timeout adding pro payment"
                     }
+                }.getOrElse {
+                    ProApiResponse.Failure(AddPaymentErrorStatus.GenericError, emptyList())
                 }
 
                 when (paymentResponse) {

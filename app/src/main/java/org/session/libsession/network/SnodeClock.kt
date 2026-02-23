@@ -3,6 +3,7 @@ package org.session.libsession.network
 
 import android.os.SystemClock
 import dagger.Lazy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -15,6 +16,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.snode.GetInfoApi
@@ -114,7 +116,7 @@ class SnodeClock @Inject constructor(
      */
     private suspend fun performNetworkSync(): Boolean {
         return runCatching {
-            withTimeout(8_000L) {
+            requireNotNull(withTimeoutOrNull(8_000L) {
                 val nodes = pickDistinctRandomSnodes(count = 3)
 
                 val samples: List<Pair<Long, Long>> = supervisorScope {
@@ -139,9 +141,8 @@ class SnodeClock @Inject constructor(
                 }
 
                 // Check for empty samples to prevent IndexOutOfBoundsException
-                if (samples.isEmpty()) {
-                    Log.w("SnodeClock", "Resync failed: Unable to reach any Snodes.")
-                    return@withTimeout false
+                check(samples.isNotEmpty()) {
+                    "Resync failed: Unable to reach any Snodes."
                 }
 
                 val nowUptime = SystemClock.elapsedRealtime()
@@ -161,12 +162,13 @@ class SnodeClock @Inject constructor(
                 }
 
                 Log.d("SnodeClock", "Resynced. Network time: ${Date(medianNow)}, system time: ${Date()}")
-                true
+            }) {
+                "Timeout waiting for network sync"
             }
-        }.getOrElse { t ->
-            Log.w("SnodeClock", "Resync failed with exception", t)
-            false
-        }
+        }.onFailure { e ->
+            if (e is CancellationException) throw e
+            Log.w("SnodeClock", "Resync failed with exception", e)
+        }.isSuccess
     }
 
     private suspend fun pickDistinctRandomSnodes(count: Int): List<org.session.libsignal.utilities.Snode> {
