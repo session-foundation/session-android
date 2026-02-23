@@ -1,10 +1,6 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -40,10 +36,11 @@ import org.thoughtcrime.securesms.preferences.PreferenceKey
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
+import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
-class Poller @AssistedInject constructor(
+class Poller @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
@@ -60,11 +57,9 @@ class Poller @AssistedInject constructor(
     private val swarmDirectory: SwarmDirectory,
     private val snodeApiExecutor: SnodeApiExecutor,
     appVisibilityManager: AppVisibilityManager,
-    @Assisted scope: CoroutineScope
 ) : BasePoller<Unit>(
     debugLabel = "MainPoller",
     networkConnectivity = networkConnectivity,
-    scope = scope,
     appVisibilityManager = appVisibilityManager
 ) {
     private val userPublicKey: String
@@ -75,11 +70,6 @@ class Poller @AssistedInject constructor(
         private val hadSuccessfulPollKey = PreferenceKey.boolean("poller.had_successful_poll")
     }
 
-
-    @AssistedFactory
-    interface Factory {
-        fun create(scope: CoroutineScope): Poller
-    }
 
     override suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean) {
         // Migrate to multipart config when needed

@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -39,7 +38,6 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.days
 
 class GroupPoller @AssistedInject constructor(
-    @Assisted scope: CoroutineScope,
     @Assisted private val groupId: AccountId,
     @Assisted private val pollSemaphore: Semaphore,
     private val configFactoryProtocol: ConfigFactoryProtocol,
@@ -58,7 +56,6 @@ class GroupPoller @AssistedInject constructor(
 ): BasePoller<GroupPoller.GroupPollResult>(
     networkConnectivity = networkConnectivity,
     appVisibilityManager = appVisibilityManager,
-    scope = scope,
     debugLabel = "GroupPoller(${groupId.truncatedForDisplay()})"
 ) {
     data class GroupPollResult(
@@ -337,6 +334,6 @@ class GroupPoller @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(scope: CoroutineScope, groupId: AccountId, pollSemaphore: Semaphore): GroupPoller
+        fun create(groupId: AccountId, pollSemaphore: Semaphore): GroupPoller
     }
 }

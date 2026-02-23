@@ -1,12 +1,9 @@
 package org.thoughtcrime.securesms.groups
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -64,7 +61,7 @@ class GroupPollerManager @Inject constructor(
     private val groupPollerSemaphore = Semaphore(20)
 
     @Suppress("OPT_IN_USAGE")
-    private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =
+    private val groupPollers: StateFlow<Map<AccountId, GroupPoller>> =
         combine(
             connectivity.networkAvailable.debounce(200L),
             loginStateRepository.loggedInState,
@@ -95,12 +92,12 @@ class GroupPollerManager @Inject constructor(
             // This scan compares the previous active group pollers with the incoming set of groups
             // that should be polled now, to work out which pollers should be started or stopped,
             // and finally emits the new state
-            .scan(emptyMap<AccountId, GroupPollerHandle>()) { previous, newActiveGroupIDs ->
+            .scan(emptyMap<AccountId, GroupPoller>()) { previous, newActiveGroupIDs ->
                 // Go through previous pollers and stop those that are not in the new set
                 for ((groupId, poller) in previous) {
                     if (groupId !in newActiveGroupIDs) {
                         Log.d(TAG, "Stopping poller for $groupId")
-                        poller.scope.cancel()
+                        poller.cancel()
                     }
                 }
 
@@ -111,14 +108,9 @@ class GroupPollerManager @Inject constructor(
 
                     if (poller == null) {
                         Log.d(TAG, "Starting poller for $groupId")
-                        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-                        poller = GroupPollerHandle(
-                            poller = pollFactory.create(
-                                scope = scope,
-                                groupId = groupId,
-                                pollSemaphore = groupPollerSemaphore,
-                            ),
-                            scope = scope
+                        poller = pollFactory.create(
+                            groupId = groupId,
+                            pollSemaphore = groupPollerSemaphore,
                         )
                     }
 
@@ -133,7 +125,7 @@ class GroupPollerManager @Inject constructor(
     fun watchGroupPollingState(groupId: AccountId): Flow<BasePoller.PollState<GroupPoller.GroupPollResult>> {
         return groupPollers
             .flatMapLatest { pollers ->
-                pollers[groupId]?.poller?.pollState ?: flowOf(BasePoller.PollState.Idle)
+                pollers[groupId]?.pollState ?: flowOf(BasePoller.PollState.Idle)
             }
             .distinctUntilChanged()
     }
@@ -145,7 +137,7 @@ class GroupPollerManager @Inject constructor(
                 // Merge all poller states into a single flow of (groupId, state) pairs
                 merge(
                     *pollers
-                        .map { (id, poller) -> poller.poller.pollState.map { state -> id to state } }
+                        .map { (id, poller) -> poller.pollState.map { state -> id to state } }
                         .toTypedArray()
                 )
             }
@@ -155,7 +147,7 @@ class GroupPollerManager @Inject constructor(
         supervisorScope {
             groupPollers.value.values.map {
                 async {
-                    it.poller.manualPollOnce()
+                    it.manualPollOnce()
                 }
             }.awaitAll()
         }
@@ -170,14 +162,8 @@ class GroupPollerManager @Inject constructor(
     suspend fun pollOnce(groupId: AccountId): GroupPoller.GroupPollResult {
         return groupPollers.mapNotNull { it[groupId] }
             .first()
-            .poller
             .manualPollOnce()
     }
-
-    data class GroupPollerHandle(
-        val poller: GroupPoller,
-        val scope: CoroutineScope,
-    )
 
     companion object {
         private const val TAG = "GroupPollerHandler"
