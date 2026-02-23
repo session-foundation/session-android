@@ -55,7 +55,7 @@ fun AudioMessage(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = LocalDimensions.current.xxsSpacing),
-        
+
     ) {
 
         val textColor = getTextColor(data.outgoing)

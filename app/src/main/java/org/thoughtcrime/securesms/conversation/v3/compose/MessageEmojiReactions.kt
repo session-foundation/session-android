@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,9 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import com.google.android.material.shape.MaterialShapes
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -40,19 +37,13 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
-data class EmojiReactionItem(
-    val emoji: String,
-    val count: Long,
-    val selected: Boolean,
-)
-
-
 private const val REACTIONS_THRESHOLD = 5
 
 @Composable
 fun EmojiReactions(
-    reactions: List<EmojiReactionItem>,
+    reactions: List<ReactionItem>,
     isExpanded: Boolean,
+    outgoing: Boolean,
     modifier: Modifier = Modifier,
     onReactionClick: (emoji: String) -> Unit = {},
     onReactionLongClick: (emoji: String) -> Unit = {},
@@ -68,8 +59,12 @@ fun EmojiReactions(
     Column(modifier = modifier.wrapContentWidth()) {
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = if (outgoing) {
+                Arrangement.spacedBy(LocalDimensions.current.tinySpacing, Alignment.End)
+            } else {
+                Arrangement.spacedBy(LocalDimensions.current.tinySpacing, Alignment.Start)
+            },
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.tinySpacing),
         ) {
             visibleReactions.forEach { reaction ->
                 EmojiReactionPill(
@@ -119,7 +114,7 @@ fun EmojiReactions(
 /** A single reaction pill (emoji + count). */
 @Composable
 fun EmojiReactionPill(
-    reaction: EmojiReactionItem,
+    reaction: ReactionItem,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -166,7 +161,7 @@ fun EmojiReactionPill(
  */
 @Composable
 fun EmojiReactionOverflow(
-    reactions: List<EmojiReactionItem>,
+    reactions: List<ReactionItem>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -212,15 +207,15 @@ fun EmojiReactionsPreview(
 ) {
     PreviewTheme(colors) {
         val sampleReactions = listOf(
-            EmojiReactionItem("👍", 3, selected = true),
-            EmojiReactionItem("❤️", 12, selected = false),
-            EmojiReactionItem("😂", 1, selected = false),
-            EmojiReactionItem("😮", 5, selected = false),
-            EmojiReactionItem("😢", 2, selected = false),
-            EmojiReactionItem("🔥", 8, selected = false),
-            EmojiReactionItem("💕", 8, selected = false),
-            EmojiReactionItem("🐙", 8, selected = false),
-            EmojiReactionItem("✅", 8, selected = false),
+            ReactionItem("👍", 3, selected = true),
+            ReactionItem("❤️", 12, selected = false),
+            ReactionItem("😂", 1, selected = false),
+            ReactionItem("😮", 5, selected = false),
+            ReactionItem("😢", 2, selected = false),
+            ReactionItem("🔥", 8, selected = false),
+            ReactionItem("💕", 8, selected = false),
+            ReactionItem("🐙", 8, selected = false),
+            ReactionItem("✅", 8, selected = false),
         )
 
         Column(
@@ -228,13 +223,13 @@ fun EmojiReactionsPreview(
             modifier = Modifier.padding(16.dp),
         ) {
             // Collapsed: first 4 pills + overflow slot
-            EmojiReactions(reactions = sampleReactions, isExpanded = false)
+            EmojiReactions(reactions = sampleReactions, outgoing = false, isExpanded = false)
 
             // Expanded: all 6 pills + show less
-            EmojiReactions(reactions = sampleReactions, isExpanded = true)
+            EmojiReactions(reactions = sampleReactions, outgoing = false, isExpanded = true)
 
             // Under threshold: all shown, no overflow, no show less
-            EmojiReactions(reactions = sampleReactions.take(3), isExpanded = false)
+            EmojiReactions(reactions = sampleReactions.take(3), outgoing = false, isExpanded = false)
         }
     }
 }

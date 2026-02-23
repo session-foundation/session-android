@@ -61,7 +61,6 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 text formatting in bubble including mentions and links
 //todo CONVOv3 typing indicator
 //todo CONVOv3 long press views (overlay+message+recent reactions+menu)
-//todo CONVOv3 reactions
 //todo CONVOv3 control messages
 //todo CONVOv3 time/date "separator"
 //todo CONVOv3 bottom search
@@ -109,6 +108,7 @@ fun MessageContent(
 ) {
     Column(
         modifier = modifier,
+        horizontalAlignment = if (data.type.outgoing) Alignment.End else Alignment.Start
     ) {
         Row {
             if (data.avatar != null) {
@@ -123,16 +123,17 @@ fun MessageContent(
 
             Column(
                 horizontalAlignment = if(data.type.outgoing) Alignment.End else Alignment.Start
-            ) {
+            )
+            {
                 if (data.displayName) {
                     Text(
-                        modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
+                        modifier = Modifier.padding(start = LocalDimensions.current.xsSpacing),
                         text = data.author,
                         style = LocalType.current.base.bold(),
                         color = LocalColors.current.text
                     )
 
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
+                    Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                 }
 
                 // There can be two bubbles in a message: First one contains quotes, links and message text
@@ -188,7 +189,7 @@ fun MessageContent(
                         Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                     }
 
-                    // images and videos are a special case and aren' actually surrounded in a visible bubble
+                    // images and videos are a special case and aren't actually surrounded in a visible bubble
                     if(data.type is MessageType.Media){
                         MediaMessage(
                             data = data.type,
@@ -219,12 +220,43 @@ fun MessageContent(
             }
         }
 
+        //////// Below the Avatar + Message bubbles ////
+
+        val indentation = if(data.type.outgoing) 0.dp
+        else if (data.avatar != null) LocalDimensions.current.iconMediumAvatar + LocalDimensions.current.smallSpacing
+        else 0.dp
+
+        // reactions
+        if (data.reactionsState != null) {
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
+            EmojiReactions(
+                modifier = Modifier.padding(start = indentation),
+                reactions = data.reactionsState.reactions,
+                isExpanded = data.reactionsState.isExtended,
+                outgoing = data.type.outgoing,
+                onReactionClick = {
+                    //todo CONVOv3 implement
+                },
+                onExpandClick = {
+                    //todo CONVOv3 implement
+                },
+                onShowLessClick = {
+                    //todo CONVOv3 implement
+                },
+                onReactionLongClick = {
+                    //todo CONVOv3 implement
+                }
+            )
+        }
+
         // status
         if (data.status != null) {
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
             MessageStatus(
-                modifier = Modifier.align(Alignment.End)
-                    .padding(horizontal = 2.dp),
+                modifier = Modifier
+                    .padding(horizontal = LocalDimensions.current.tinySpacing)
+                    .padding(start = indentation)
+                    .align(if (data.type.outgoing) Alignment.End else Alignment.Start),
                 data = data.status
             )
         }
@@ -268,7 +300,7 @@ fun MessageStatus(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.tinySpacing)
     ) {
         Text(
             text = data.name,
@@ -373,7 +405,22 @@ data class MessageViewData(
     val avatar: AvatarUIData? = null,
     val status: MessageViewStatus? = null,
     val quote: MessageQuote? = null,
-    val link: MessageLinkData? = null
+    val link: MessageLinkData? = null,
+    val reactionsState: ReactionViewState? = null
+)
+
+data class ReactionViewState(
+    val reactions: List<ReactionItem>,
+    val isExtended: Boolean,
+    val onReactionClick: (String) -> Unit,
+    val onReactionLongClick: (String) -> Unit,
+    val onShowMoreClick: () -> Unit
+)
+
+data class ReactionItem(
+    val emoji: String,
+    val count: Int,
+    val selected: Boolean
 )
 
 data class MessageQuote(
@@ -444,6 +491,7 @@ fun MessagePreview(
 
             Message(data = MessageViewData(
                 author = "Toto",
+                displayName = true,
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(
                     outgoing = false,
@@ -469,6 +517,94 @@ fun MessagePreview(
                 type = PreviewMessageData.text(
                     outgoing = false,
                     text = "Hello"
+                ),
+                status = PreviewMessageData.sentStatus
+            ))
+        }
+    }
+}
+
+@Preview
+@Composable
+fun MessageReactionsPreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.spacing)
+
+        ) {
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = PreviewMessageData.text(
+                    text = "I have 3 emoji reactions"
+                ),
+                reactionsState = ReactionViewState(
+                    reactions = listOf(
+                        ReactionItem("👍", 3, selected = true),
+                        ReactionItem("❤️", 12, selected = false),
+                        ReactionItem("😂", 1, selected = false),
+                    ),
+                    isExtended = false,
+                    onReactionClick = {},
+                    onReactionLongClick = {},
+                    onShowMoreClick = {}
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                avatar = PreviewMessageData.sampleAvatar,
+                type = PreviewMessageData.text(
+                    outgoing = false,
+                    text = "I have lots of reactions - Closed"
+                ),
+                reactionsState = ReactionViewState(
+                    reactions = listOf(
+                        ReactionItem("👍", 3, selected = true),
+                        ReactionItem("❤️", 12, selected = false),
+                        ReactionItem("😂", 1, selected = false),
+                        ReactionItem("😮", 5, selected = false),
+                        ReactionItem("😢", 2, selected = false),
+                        ReactionItem("🔥", 8, selected = false),
+                        ReactionItem("💕", 8, selected = false),
+                        ReactionItem("🐙", 8, selected = false),
+                        ReactionItem("✅", 8, selected = false),
+                    ),
+                    isExtended = false,
+                    onReactionClick = {},
+                    onReactionLongClick = {},
+                    onShowMoreClick = {}
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                avatar = PreviewMessageData.sampleAvatar,
+                type = PreviewMessageData.text(
+                    outgoing = false,
+                    text = "I have lots of reactions - Open"
+                ),
+                reactionsState = ReactionViewState(
+                    reactions = listOf(
+                        ReactionItem("👍", 3, selected = true),
+                        ReactionItem("❤️", 12, selected = false),
+                        ReactionItem("😂", 1, selected = false),
+                        ReactionItem("😮", 5, selected = false),
+                        ReactionItem("😢", 2, selected = false),
+                        ReactionItem("🔥", 8, selected = false),
+                        ReactionItem("💕", 8, selected = false),
+                        ReactionItem("🐙", 8, selected = false),
+                        ReactionItem("✅", 8, selected = false),
+                    ),
+                    isExtended = true,
+                    onReactionClick = {},
+                    onReactionLongClick = {},
+                    onShowMoreClick = {}
                 )
             ))
         }
