@@ -10,11 +10,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +29,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import com.google.android.material.shape.MaterialShapes
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -71,11 +78,10 @@ fun EmojiReactions(
                     onLongClick = { onReactionLongClick(reaction.emoji) },
                 )
             }
-            SELECTED STATE ISNT RIGHT > CONTINUE SCANNING FILE > WRONG PILL SHAPES
 
             if (overflowReactions.isNotEmpty()) {
                 EmojiReactionOverflow(
-                    reactions = overflowReactions,
+                    reactions = overflowReactions.take(3), // only use first 3
                     onClick = onExpandClick,
                 )
             }
@@ -97,13 +103,13 @@ fun EmojiReactions(
                     painter = painterResource(R.drawable.ic_chevron_up),
                     contentDescription = null,
                     tint = LocalColors.current.text,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(LocalDimensions.current.iconXSmall),
                 )
                 Text(
                     text = stringResource(R.string.showLess),
                     style = LocalType.current.extraSmall,
                     color = LocalColors.current.text,
-                    modifier = Modifier.padding(start = 1.dp),
+                    modifier = Modifier.padding(start = LocalDimensions.current.tinySpacing),
                 )
             }
         }
@@ -118,41 +124,38 @@ fun EmojiReactionPill(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(50)
+    val shape = MaterialTheme.shapes.extraLarge
     val selected = reaction.selected
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing),
         modifier = modifier
             .clip(shape)
             .background(
-                color = if (selected) LocalColors.current.accent
-                else LocalColors.current.backgroundBubbleReceived,
+                color = LocalColors.current.backgroundBubbleReceived,
                 shape = shape,
             )
-            .then(
-                if (!selected) Modifier.border(
-                    width = 1.dp,
-                    color = LocalColors.current.borders,
-                    shape = shape,
-                ) else Modifier
+            .border(
+                width = 1.dp,
+                color = if(selected) LocalColors.current.accent
+                else LocalColors.current.background,
+                shape = shape,
             )
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(horizontal = LocalDimensions.current.xsSpacing, vertical = 4.dp),
+            .padding(horizontal = LocalDimensions.current.xxsSpacing,
+                vertical = LocalDimensions.current.xxxsSpacing),
     ) {
-        // Swap with your EmojiImageView interop wrapper if needed
         Text(
             text = reaction.emoji,
-            style = LocalType.current.base,
+            style = LocalType.current.extraSmall,
         )
 
         if (reaction.count > 0) {
             Text(
                 text = reaction.count.toString(),
                 style = LocalType.current.small,
-                color = if (selected) LocalColors.current.textBubbleSent
-                else LocalColors.current.textBubbleReceived,
+                color = LocalColors.current.text,
             )
         }
     }
@@ -160,8 +163,6 @@ fun EmojiReactionPill(
 
 /**
  * Compact stacked overflow pills — no count, overlapping horizontally.
- * Mirrors the original overflowContainer with negative right margins so pills
- * stack, and z-ordering so earlier items sit on top.
  */
 @Composable
 fun EmojiReactionOverflow(
@@ -169,43 +170,41 @@ fun EmojiReactionOverflow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pillSize = 24.dp
-    val overlapOffset = 8.dp // matches negativeMargin = dpToPx(-8) from original
+    val pillSize = LocalDimensions.current.iconMedium
+    val overlapOffset = LocalDimensions.current.smallSpacing
+
+    // We calculate the total width needed: size of one pill + (offset * remaining count)
+    val totalWidth = pillSize + (overlapOffset * (reactions.size - 1))
 
     Box(
         modifier = modifier
-            .size(
-                width = pillSize + overlapOffset * (reactions.size - 1).coerceAtLeast(0),
-                height = pillSize,
-            )
+            .width(totalWidth)
             .clickable(onClick = onClick),
     ) {
         reactions.forEachIndexed { index, reaction ->
-            val shape = RoundedCornerShape(50)
+            val shape = CircleShape
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(pillSize)
-                    .padding(start = overlapOffset * index)
-                    .clip(shape)
+                    .offset(x = overlapOffset * index)
+                    .zIndex(reactions.size - index.toFloat())
                     .background(
                         color = LocalColors.current.backgroundBubbleReceived,
                         shape = shape,
                     )
-                    .border(1.dp, LocalColors.current.borders, shape),
+                    .border(1.dp, LocalColors.current.borders, shape)
+                    .clip(shape),
             ) {
                 Text(
                     text = reaction.emoji,
-                    style = LocalType.current.small,
+                    style = LocalType.current.extraSmall,
                 )
             }
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// Previews
-// ---------------------------------------------------------------------------
 
 @Preview
 @Composable
