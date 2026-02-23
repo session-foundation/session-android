@@ -58,11 +58,9 @@ class OpenGroupPoller @AssistedInject constructor(
     appVisibilityManager: AppVisibilityManager,
     private val json: Json,
     @Assisted private val server: String,
-    @Assisted private val scope: CoroutineScope,
     @Assisted private val pollerSemaphore: Semaphore,
 ): BasePoller<Unit>(
     networkConnectivity = networkConnectivity,
-    scope = scope,
     appVisibilityManager = appVisibilityManager,
     debugLabel = "OpenGroupPoller($server)"
 ) {
@@ -336,7 +334,6 @@ class OpenGroupPoller @AssistedInject constructor(
     interface Factory {
         fun create(
             server: String,
-            scope: CoroutineScope,
             pollerSemaphore: Semaphore
         ): OpenGroupPoller
     }
