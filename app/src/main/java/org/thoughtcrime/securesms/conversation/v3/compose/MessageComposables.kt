@@ -616,7 +616,7 @@ fun MessageReactionsPreview(
 fun DocumentMessagePreviewReuse(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
-    DocumentMessagePreviewReuse(colors)
+    DocumentMessagePreview(colors)
 }
 
 @Preview
