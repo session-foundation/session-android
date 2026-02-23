@@ -19,6 +19,7 @@ plugins {
 }
 
 val huaweiEnabled = project.properties["huawei"] != null
+val splitApksEnabled = project.properties["splitApks"] == "true"
 val hasIncludedLibSessionUtilProject: Boolean = System.getProperty("session.libsession_util.project.path", "").isNotBlank()
 
 configurations.configureEach {
@@ -112,7 +113,7 @@ android {
 
     splits {
         abi {
-            isEnable = !huaweiEnabled
+            isEnable = splitApksEnabled
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
             isUniversalApk = true
