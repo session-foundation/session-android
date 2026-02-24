@@ -34,7 +34,9 @@
             android:layout_height="36dp"
             android:layout_marginStart="@dimen/message_spacing"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/audioTitle">
+            app:layout_constraintTop_toBottomOf="@+id/audioTitle"
+            app:layout_constraintTop_toTopOf="@id/voiceMessageSeekBar"
+            app:layout_constraintBottom_toBottomOf="@id/voiceMessageSeekBar">
 
             <View android:id="@+id/playBg"
                 android:layout_width="match_parent"
@@ -61,23 +63,19 @@
                 tools:visibility="gone" />
         </FrameLayout>
 
-        <SeekBar
+        <com.google.android.material.slider.Slider
             android:id="@+id/voiceMessageSeekBar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:maxHeight="4dp"
-            android:minHeight="4dp"
-            android:progressDrawable="@drawable/voice_message_seekbar_progress"
-            android:thumb="@drawable/voice_message_seekbar_thumb"
-            android:splitTrack="false"
-            android:paddingStart="@dimen/message_spacing"
-            android:paddingEnd="@dimen/message_spacing"
+            android:valueFrom="0.0"
+            android:valueTo="100.0"
+            app:trackHeight="10dp"
+            app:thumbHeight="20dp"
+            android:insetTop="0dp"
+            android:theme="@style/Theme.Material3.DayNight"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/playPauseContainer"
-            app:layout_constraintTop_toTopOf="@id/playPauseContainer"
-            app:layout_constraintBottom_toBottomOf="@id/playPauseContainer"
-            app:layout_constraintVertical_chainStyle="packed"
-            tools:progress="100" />
+            app:layout_constraintTop_toBottomOf="@+id/audioTitle"/>
 
         <TextView
             android:id="@+id/voiceMessageSpeedButton"
@@ -92,10 +90,9 @@
             android:includeFontPadding="false"
             android:padding="@dimen/very_small_spacing"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginTop="@dimen/very_small_spacing"
-            android:layout_marginStart="@dimen/message_spacing"
+            android:layout_marginStart="@dimen/medium_spacing"
             app:layout_constraintStart_toStartOf="@+id/voiceMessageSeekBar"
-            app:layout_constraintTop_toBottomOf="@+id/playPauseContainer" />
+            app:layout_constraintTop_toBottomOf="@+id/voiceMessageSeekBar" />
 
         <TextView
             android:id="@+id/voiceMessageViewDurationTextView"

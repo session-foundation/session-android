@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -20,11 +19,11 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.truncatedForDisplay
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
@@ -39,7 +38,6 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.days
 
 class GroupPoller @AssistedInject constructor(
-    @Assisted scope: CoroutineScope,
     @Assisted private val groupId: AccountId,
     @Assisted private val pollSemaphore: Semaphore,
     private val configFactoryProtocol: ConfigFactoryProtocol,
@@ -58,7 +56,7 @@ class GroupPoller @AssistedInject constructor(
 ): BasePoller<GroupPoller.GroupPollResult>(
     networkConnectivity = networkConnectivity,
     appVisibilityManager = appVisibilityManager,
-    scope = scope
+    debugLabel = "GroupPoller(${groupId.truncatedForDisplay()})"
 ) {
     data class GroupPollResult(
         val groupExpired: Boolean?
@@ -90,7 +88,7 @@ class GroupPoller @AssistedInject constructor(
                     throw NonRetryableException("Group has been kicked")
                 }
 
-                Log.v(logTag, "Start polling group($groupId) message snode = ${snode.ip}")
+                log("Start polling group($groupId) message snode = ${snode.ip}")
 
                 val adminKey = group.adminKey
 
@@ -235,7 +233,7 @@ class GroupPoller @AssistedInject constructor(
             }
         }
 
-        Log.d(logTag, "Group($groupId) polling completed, success = ${result.isSuccess}")
+        log("Group($groupId) polling completed, success = ${result.isSuccess}")
 
         result.getOrThrow()
 
@@ -276,8 +274,7 @@ class GroupPoller @AssistedInject constructor(
             return
         }
 
-        Log.d(
-            logTag, "Handling group config messages(" +
+        log("Handling group config messages(" +
                     "info = ${infoResponse.size}, " +
                     "keys = ${keysResponse.size}, " +
                     "members = ${membersResponse.size})"
@@ -306,7 +303,7 @@ class GroupPoller @AssistedInject constructor(
                         namespace = Namespace.GROUP_MESSAGES(),
                         hash = message.hash
                     )) {
-                    Log.v(logTag, "Skipping duplicated group message ${message.hash} for group $groupId")
+                    log("Skipping duplicated group message ${message.hash}")
                     continue
                 }
 
@@ -327,16 +324,16 @@ class GroupPoller @AssistedInject constructor(
                         pro = result.pro,
                     )
                 } catch (e: Exception) {
-                    Log.e(logTag, "Error handling group message", e)
+                    logE("Error handling group message", e)
                 }
             }
         }
 
-        Log.d(logTag, "Handled ${messages.size} group messages for $groupId in ${System.currentTimeMillis() - start}ms")
+        log("Handled ${messages.size} group messages in ${System.currentTimeMillis() - start}ms")
     }
 
     @AssistedFactory
     interface Factory {
-        fun create(scope: CoroutineScope, groupId: AccountId, pollSemaphore: Semaphore): GroupPoller
+        fun create(groupId: AccountId, pollSemaphore: Semaphore): GroupPoller
     }
 }
