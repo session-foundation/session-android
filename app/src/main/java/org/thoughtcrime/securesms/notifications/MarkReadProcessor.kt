@@ -120,8 +120,7 @@ class MarkReadProcessor @Inject constructor(
                     previousSeen = acc.currentSeen,
                 )
             }
-            .distinctUntilChanged()
-            .collectLatest { (previousSeen, currentSeen) ->
+            .collect { (previousSeen, currentSeen) ->
                 if (previousSeen != null && currentSeen != null) {
                     currentSeen
                         .asSequence()
@@ -174,15 +173,7 @@ class MarkReadProcessor @Inject constructor(
                 db.markExpireStarted(it.expirationInfo.id.id, snodeClock.currentTimeMillis())
             }
 
-        hashToDisappearAfterReadMessage(markedReadMessages)?.let { hashToMessages ->
-            scope.launch {
-                try {
-                    shortenExpiryOfDisappearingAfterRead(hashToMessages)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to fetch updated expiries and schedule deletion", e)
-                }
-            }
-        }
+        hashToDisappearAfterReadMessage(markedReadMessages)?.let(this::shortenExpiryOfDisappearingAfterRead)
     }
 
     private fun hashToDisappearAfterReadMessage(

@@ -364,50 +364,6 @@ class MmsDatabase @Inject constructor(
         database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(id.toString()))
     }
 
-    fun setMessagesRead(threadId: Long, beforeTime: Long): List<MarkedMessageInfo> {
-        val updatedThreadIDs = MutableLongSet(1)
-
-        //language=roomsql
-        val messages = writableDatabase.rawQuery("""
-            UPDATE $TABLE_NAME 
-            SET $READ = 1
-            WHERE $THREAD_ID = ? AND ($READ = 0) AND $DATE_SENT <= ?
-            RETURNING $ID, 
-                      $ADDRESS, 
-                      $THREAD_ID, 
-                      $DATE_SENT, 
-                      $EXPIRES_IN,
-                      $EXPIRE_STARTED
-        """, threadId, beforeTime).use { cursor ->
-            cursor.asSequence()
-                .map {
-                    val timestamp = cursor.getLong(3)
-
-                    updatedThreadIDs += cursor.getLong(2)
-
-                    MarkedMessageInfo(
-                        syncMessageId = SyncMessageId(
-                            cursor.getString(1).toAddress(),
-                            timestamp
-                        ),
-                        expirationInfo = ExpirationInfo(
-                            id = MessageId(cursor.getLong(0), true),
-                            timestamp = timestamp,
-                            expiresIn = cursor.getLong(4),
-                            expireStarted = cursor.getLong(5)
-                        )
-                    )
-                }
-                .toList()
-        }
-
-        updatedThreadIDs.forEach {
-            threadDatabase.notifyThreadUpdated(it)
-        }
-
-        return messages
-    }
-
     private fun getLinkPreviews(
         cursor: Cursor,
         attachments: List<DatabaseAttachment>

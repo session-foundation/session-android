@@ -385,15 +385,6 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
-  public List<MarkedMessageInfo> setMessagesRead(long threadId, long beforeTime) {
-    return SmsDatabaseExtKt.setMessagesRead(
-            this,
-            THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?",
-            threadId,
-            beforeTime
-    );
-  }
-
   public void updateSentTimestamp(long messageId, long newTimestamp) {
     SQLiteDatabase db = getWritableDatabase();
     try (final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +

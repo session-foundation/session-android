@@ -7,6 +7,12 @@ public interface MmsSmsColumns {
   public static final String NORMALIZED_DATE_SENT     = "date_sent";
   public static final String NORMALIZED_DATE_RECEIVED = "date_received";
   public static final String THREAD_ID                = "thread_id";
+
+  // Read status of this message - this piece of data is no longer used and will be removed in the
+  // future.
+  // To determine if a message is read, compare the message's time with the thread's lastSeen
+  // time.
+  @Deprecated(forRemoval = true)
   public static final String READ                     = "read";
   public static final String BODY                     = "body";
   public static final String MESSAGE_CONTENT          = "message_content";
