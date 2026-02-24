@@ -1,15 +1,13 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import androidx.collection.LongLongMap
+import androidx.collection.MutableLongLongMap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
-import network.loki.messenger.libsession_util.util.Conversation
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
@@ -18,14 +16,10 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
-import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
-import org.session.libsession.utilities.userConfigsChanged
-import org.session.libsession.utilities.withUserConfigs
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
@@ -41,10 +35,11 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getAllLastSeen
+import org.thoughtcrime.securesms.database.getLastSeen
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.util.castAwayType
-import java.util.EnumSet
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
@@ -61,9 +56,9 @@ class MarkReadProcessor @Inject constructor(
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
     private val lokiMessageDatabase: LokiMessageDatabase,
-    private val configFactory: ConfigFactoryProtocol,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val alterTtyFactory: AlterTtlApi.Factory,
+    private val prefs: PreferenceStorage,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
 
@@ -71,76 +66,112 @@ class MarkReadProcessor @Inject constructor(
         processLastSeenChanges()
     }
 
-    private suspend fun processLastSeenChanges() {
+    private fun LongLongMap.updated(key: Long, value: Long): LongLongMap {
+        val hasItem = containsKey(key)
+        val map = MutableLongLongMap(size + if (hasItem) 0 else 1)
+        map[key] = value
+        return map
+    }
 
-        data class LastSeenChanges(
-            val previousSeen: Map<Address.Conversable, Long>? = null,
-            val currentSeen: Map<Address.Conversable, Long>? = null,
+    private suspend fun processLastSeenChanges() {
+        class State(
+            val lastSeenByThreadIDs: LongLongMap,
+            // List of threadID, oldLastSeen, newLastSeen,
+            val updatedLastSeen: LongArray? = null,
         )
 
-        // Observe the config changes, figuring out the individual changes to each conversation
-        configFactory.userConfigsChanged(
-            onlyConfigTypes = EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE),
-            debounceMills = 500L
-        ).castAwayType()
-            .onStart { emit(Unit) }
-            .map {
-                buildMap {
-                    configFactory.withUserConfigs { configs ->
-                        configs.convoInfoVolatile.all()
-                    }.forEach { convo ->
-                        val address = when (convo) {
-                            is Conversation.ClosedGroup ->
-                                Address.Group(AccountId(convo.accountId))
+        threadDb.updateNotifications
+            .scan(State(threadDb.getAllLastSeen())) { acc, threadId ->
+                val oldLastSeen = acc.lastSeenByThreadIDs.getOrDefault(threadId, -1L)
+                val newLastSeen = threadDb.getLastSeen(threadId)?.toEpochMilliseconds() ?: 0L
 
-                            is Conversation.Community ->
-                                Address.Community(
-                                    serverUrl = convo.baseCommunityInfo.baseUrl,
-                                    room = convo.baseCommunityInfo.room
-                                )
-
-                            is Conversation.OneToOne ->
-                                Address.Standard(AccountId(convo.accountId))
-
-                            is Conversation.BlindedOneToOne,
-                            is Conversation.LegacyGroup,
-                            null -> null
+                if (oldLastSeen == newLastSeen) {
+                    acc
+                } else {
+                    State(
+                        lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(threadId, newLastSeen),
+                        updatedLastSeen = if (oldLastSeen >= 0L) {
+                            longArrayOf(threadId, oldLastSeen, newLastSeen)
+                        } else {
+                            null
                         }
-
-                        if (address != null && convo != null) {
-                            put(address, convo.lastRead)
-                        }
-                    }
+                    )
                 }
             }
-            .distinctUntilChanged()
-            .scan(LastSeenChanges()) { acc, current ->
-                acc.copy(
-                    currentSeen = current,
-                    previousSeen = acc.currentSeen,
-                )
+            .mapNotNull { it.updatedLastSeen }
+            .collect { (threadId, oldLastSeen, newLastSeen) ->
+                Log.d(TAG, "Thread(id=$threadId) changes, oldLastSeen = $oldLastSeen, newLastSeen = $newLastSeen")
             }
-            .collect { (previousSeen, currentSeen) ->
-                if (previousSeen != null && currentSeen != null) {
-                    currentSeen
-                        .asSequence()
-                        .filter { (key, value) ->
-                            previousSeen[key] != value
-                        }
-                        .forEach { changed ->
-                            val threadId = threadDb.getThreadIdIfExistsFor(changed.key.toString())
-                            if (threadId != -1L) {
-                                val allUnreadMessages = buildList {
-                                    addAll(smsDatabase.setMessagesRead(threadId, changed.value))
-                                    addAll(mmsDatabase.setMessagesRead(threadId, changed.value))
-                                }
 
-                                Log.d(TAG, "Processing mark read for ${changed.key.debugString}, messageCount = ${allUnreadMessages.size}")
-                                process(allUnreadMessages)
-                            }
-                        }
-                }
-            }
+//
+//        data class LastSeenChanges(
+//            val previousSeen: Map<Address.Conversable, Long>? = null,
+//            val currentSeen: Map<Address.Conversable, Long>? = null,
+//        )
+//
+//        // Observe the config changes, figuring out the individual changes to each conversation
+//        configFactory.userConfigsChanged(
+//            onlyConfigTypes = EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE),
+//            debounceMills = 500L
+//        ).castAwayType()
+//            .onStart { emit(Unit) }
+//            .map {
+//                buildMap {
+//                    configFactory.withUserConfigs { configs ->
+//                        configs.convoInfoVolatile.all()
+//                    }.forEach { convo ->
+//                        val address = when (convo) {
+//                            is Conversation.ClosedGroup ->
+//                                Address.Group(AccountId(convo.accountId))
+//
+//                            is Conversation.Community ->
+//                                Address.Community(
+//                                    serverUrl = convo.baseCommunityInfo.baseUrl,
+//                                    room = convo.baseCommunityInfo.room
+//                                )
+//
+//                            is Conversation.OneToOne ->
+//                                Address.Standard(AccountId(convo.accountId))
+//
+//                            is Conversation.BlindedOneToOne,
+//                            is Conversation.LegacyGroup,
+//                            null -> null
+//                        }
+//
+//                        if (address != null && convo != null) {
+//                            put(address, convo.lastRead)
+//                        }
+//                    }
+//                }
+//            }
+//            .distinctUntilChanged()
+//            .scan(LastSeenChanges()) { acc, current ->
+//                acc.copy(
+//                    currentSeen = current,
+//                    previousSeen = acc.currentSeen,
+//                )
+//            }
+//            .collect { (previousSeen, currentSeen) ->
+//                if (previousSeen != null && currentSeen != null) {
+//                    currentSeen
+//                        .asSequence()
+//                        .filter { (key, value) ->
+//                            previousSeen[key] != value
+//                        }
+//                        .forEach { changed ->
+//                            val threadId = threadDb.getThreadIdIfExistsFor(changed.key.toString())
+//                            if (threadId != -1L) {
+//                                val allUnreadMessages = buildList {
+//                                    addAll(smsDatabase.setMessagesRead(threadId, changed.value))
+//                                    addAll(mmsDatabase.setMessagesRead(threadId, changed.value))
+//                                }
+//
+//                                Log.d(TAG, "Processing mark read for ${changed.key.debugString}, messageCount = ${allUnreadMessages.size}")
+//                                process(allUnreadMessages)
+//                            }
+//                        }
+//                }
+//            }
     }
 
 

@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.database
 
 import android.database.sqlite.SQLiteDoneException
+import androidx.collection.LongLongMap
+import androidx.collection.MutableLongLongMap
 import androidx.collection.MutableLongSet
 import androidx.collection.mutableLongSetOf
 import androidx.core.database.getStringOrNull
@@ -155,6 +157,31 @@ fun ThreadDatabase.getLastSeen(address: Address.Conversable): Instant? {
             Instant.fromEpochMilliseconds(cursor.getLong(0))
         } else {
             null
+        }
+    }
+}
+
+fun ThreadDatabase.getLastSeen(id: Long): Instant? {
+    return readableDatabase.query(
+        "SELECT ${ThreadDatabase.LAST_SEEN} FROM ${ThreadDatabase.TABLE_NAME} WHERE ${ThreadDatabase.ID} = ?",
+        arrayOf(id)
+    ).use {
+        if (it.moveToNext()) {
+            Instant.fromEpochMilliseconds(it.getLong(0))
+        } else {
+            null
+        }
+    }
+}
+
+fun ThreadDatabase.getAllLastSeen(): LongLongMap {
+    return readableDatabase.query(
+        "SELECT ${ThreadDatabase.ID}, ${ThreadDatabase.LAST_SEEN} FROM ${ThreadDatabase.TABLE_NAME}"
+    ).use { cursor ->
+        MutableLongLongMap(cursor.count).apply {
+            while (cursor.moveToNext()) {
+                set(cursor.getLong(0), cursor.getLong(1))
+            }
         }
     }
 }

@@ -190,10 +190,8 @@ public class ThreadDatabase extends Database {
 
   final Lazy<@NonNull RecipientRepository> recipientRepository;
   final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
-  private final Lazy<@NonNull MessageNotifier> messageNotifier;
   private final Lazy<@NonNull MmsDatabase> mmsDatabase;
   private final Lazy<@NonNull SmsDatabase> smsDatabase;
-  private final Lazy<@NonNull MarkReadProcessor> markReadProcessor;
   @NonNull final Json json;
 
   @Inject
@@ -201,18 +199,14 @@ public class ThreadDatabase extends Database {
                         Provider<SQLCipherOpenHelper> databaseHelper,
                         Lazy<@NonNull RecipientRepository> recipientRepository,
                         Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase,
-                        Lazy<@NonNull MessageNotifier> messageNotifier,
                         Lazy<@NonNull MmsDatabase> mmsDatabase,
                         Lazy<@NonNull SmsDatabase> smsDatabase,
-                        Lazy<@NonNull MarkReadProcessor> markReadProcessor,
                         @NonNull Json json) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.mmsSmsDatabase = mmsSmsDatabase;
-    this.messageNotifier = messageNotifier;
     this.mmsDatabase = mmsDatabase;
     this.smsDatabase = smsDatabase;
-    this.markReadProcessor = markReadProcessor;
     this.json = json;
   }
 
