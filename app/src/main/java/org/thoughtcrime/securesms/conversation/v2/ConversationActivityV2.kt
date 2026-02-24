@@ -140,7 +140,6 @@ import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.recordAudio
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
@@ -2709,17 +2708,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     val count = 20
                     val delayBetweenSendsMs = 300L
 
-                    lifecycleScope.launch {
-                        repeat(count) { i ->
-                            val numberedBody = body?.let { "$it (#${i + 1})" } ?: "(#${i + 1})"
-                            sendAttachments(
-                                attachments = attachments,
-                                body = numberedBody,
-                                deleteAttachmentFilesAfterSave = false
-                            )
-                            delay(delayBetweenSendsMs)
-                        }
-                    }
+                    // ViewModel will enqueue a JobQueue job that re-builds attachments per send.
+                    viewModel.debugRampAttachmentSending(
+                        media = mediaList,
+                        body = body,
+                        count = count,
+                        delayMs = delayBetweenSendsMs,
+                        prefix = "Upload"
+                    )
                 } else {
                     sendAttachments(attachments, body)
                 }

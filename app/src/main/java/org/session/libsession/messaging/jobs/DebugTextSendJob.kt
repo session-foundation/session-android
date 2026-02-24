@@ -5,7 +5,6 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.delay
 import network.loki.messenger.BuildConfig
-import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -15,7 +14,6 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
-import javax.inject.Inject
 
 class DebugTextSendJob @AssistedInject constructor(
     @Assisted("threadId") private val threadId: Long,
@@ -47,7 +45,7 @@ class DebugTextSendJob @AssistedInject constructor(
 
     override suspend fun execute(dispatcherName: String) {
         if (!BuildConfig.DEBUG) {
-            // Safety guard: don’t ever run in release
+            // Safety guard
             delegate?.handleJobFailedPermanently(this, dispatcherName, IllegalStateException("Debug-only job"))
             return
         }

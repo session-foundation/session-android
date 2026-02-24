@@ -56,21 +56,17 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.DebugAttachmentSendJob
 import org.session.libsession.messaging.jobs.DebugTextSendJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.messages.applyExpiryMode
-import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
-import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
 import org.session.libsession.messaging.open_groups.api.DeleteAllReactionsApi
 import org.session.libsession.messaging.open_groups.api.execute
-import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ExpirationUtil
@@ -109,7 +105,6 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
-import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -119,6 +114,7 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.mediasend.Media
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -176,7 +172,8 @@ class ConversationViewModel @AssistedInject constructor(
     private val audioPlaybackManager: AudioPlaybackManager,
     private val loginStateRepository: LoginStateRepository,
     private val jobQueue: Provider<JobQueue>,
-    private val debugTextSendJobFactory: DebugTextSendJob.Factory
+    private val debugTextSendJobFactory: DebugTextSendJob.Factory,
+    private val debugAttachmentSendJobFactory: DebugAttachmentSendJob.Factory
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -1587,6 +1584,45 @@ class ConversationViewModel @AssistedInject constructor(
             )
         }
     }
+
+    fun debugRampAttachmentSending(
+        media: List<Media>,
+        body: String?,
+        count: Int = 20,
+        delayMs: Long = 300L,
+        prefix: String = "Upload",
+    ) {
+        if (!BuildConfig.DEBUG) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val threadId = threadIdFlow.filterNotNull().first()
+            implicitlyApproveRecipient()?.join()
+
+            val specs = media.map { m ->
+                DebugAttachmentSendJob.MediaSpec(
+                    uriString = m.uri.toString(),
+                    mimeType = m.mimeType,
+                    filename = m.filename,
+                    width = m.width,
+                    height = m.height,
+                    caption = m.caption
+                )
+            }
+
+            jobQueue.get().add(
+                debugAttachmentSendJobFactory.create(
+                    threadId = threadId,
+                    address = address,
+                    count = count,
+                    delayBetweenSendsMs = delayMs,
+                    prefix = prefix,
+                    body = body,
+                    mediaSpecs = specs
+                )
+            )
+        }
+    }
+
 
     @AssistedFactory
     interface Factory {

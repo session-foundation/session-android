@@ -126,15 +126,19 @@ class JobQueue @Inject constructor(
                     is InviteContactsJob,
                     is AttachmentUploadJob,
                     is MessageSendJob,
-                    is DebugTextSendJob-> {
+                    is DebugTextSendJob,
+                    is DebugAttachmentSendJob -> {
                         txQueue.send(job)
                     }
+
                     is AttachmentDownloadJob -> {
                         mediaQueue.send(job)
                     }
+
                     is OpenGroupDeleteJob -> {
                         openGroupQueue.send(job)
                     }
+
                     is TrimThreadJob -> {
                         if (job.communityAddress != null) {
                             openGroupQueue.send(job)
