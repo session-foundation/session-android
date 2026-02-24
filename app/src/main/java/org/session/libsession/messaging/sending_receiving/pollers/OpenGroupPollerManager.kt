@@ -3,6 +3,7 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -24,6 +26,7 @@ import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "OpenGroupPollerManager"
 
@@ -80,6 +83,18 @@ class OpenGroupPollerManager @Inject constructor(
                 }
             }
             .stateIn(scope, SharingStarted.Eagerly, emptyMap())
+
+    init {
+        scope.launch {
+            while (true) {
+                pollers.value.forEach { (url, poller) ->
+                    Log.d(TAG, "OpenGroupPoller($url), jobStatus = ${poller.mainJobStatus}, pollState = ${poller.pollState.value}")
+                }
+            }
+
+            delay(10.seconds)
+        }
+    }
 
     val isAllCaughtUp: Boolean
         get() = pollers.value.values.all {

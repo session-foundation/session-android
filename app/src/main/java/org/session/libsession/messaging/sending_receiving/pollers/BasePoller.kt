@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
@@ -54,12 +55,14 @@ abstract class BasePoller<T>(
      */
     val pollState: StateFlow<PollState<T>> get() = mutablePollState
 
+    private val mainJob: Job
+
     init {
         val manualPollRequestChannel = Channel<PollRequestCallback<T>>()
 
         manualPollRequestSender = manualPollRequestChannel
 
-        scope.launch {
+        mainJob = scope.launch {
             var numConsecutiveFailures = 0
             var nextRoutinePollAt: TimeMark? = null
 
@@ -104,6 +107,13 @@ abstract class BasePoller<T>(
 
     fun cancel() {
         scope.cancel(PollerCancelledException())
+    }
+
+    val mainJobStatus: String get() = when {
+        mainJob.isActive -> "Active"
+        mainJob.isCancelled -> "Cancelled"
+        mainJob.isCompleted -> "Completed"
+        else -> "Unknown($mainJob)"
     }
 
     private fun waitForRoutinePoll(minStartAt: TimeMark?): Deferred<Unit> {
@@ -188,7 +198,7 @@ abstract class BasePoller<T>(
 
         if (result.isSuccess) {
             log("$reason polling succeeded")
-        } else if (result.exceptionOrNull() !is CancellationException) {
+        } else {
             logE("$reason polling failed", result.exceptionOrNull())
         }
 

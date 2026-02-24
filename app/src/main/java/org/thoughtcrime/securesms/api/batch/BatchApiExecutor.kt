@@ -124,7 +124,12 @@ class BatchApiExecutor<Req, Res, T>(
 
                 if (transformed.isFailure) {
                     // Notify individual request of failure
-                    r.callback.send(Result.failure(transformed.exceptionOrNull()!!))
+                    try {
+                        r.callback.send(Result.failure(transformed.exceptionOrNull()!!))
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error sending individual request failure back", e)
+                        throw e
+                    }
                     continue
                 }
 
@@ -132,6 +137,7 @@ class BatchApiExecutor<Req, Res, T>(
             }
 
             if (requestsToSend.isEmpty()) {
+                Log.w(TAG, "No batch requests to send after transforming")
                 return@launch
             }
 
@@ -150,22 +156,28 @@ class BatchApiExecutor<Req, Res, T>(
                     response = resp
                 )
 
-                check(responses.size == batch.requests.size) {
+                check(responses.size == requestsToSend.size) {
                     "Batch response size ${responses.size} does not match request size ${batch.requests.size}"
                 }
 
-                for (i in batch.requests.indices) {
-                    val request = batch.requests[i]
+                for (i in requestsToSend.indices) {
+                    val request = requestsToSend[i].first
                     val response = responses[i]
                     request.callback.send(response)
                 }
 
             } catch (e: Throwable) {
+                Log.e(TAG, "Error while executing batch", e)
                 if (e is CancellationException) throw e
 
                 // Notify all requests of the failure
-                for (request in requestsToSend) {
-                    request.first.callback.send(Result.failure(e))
+                try {
+                    for (request in requestsToSend) {
+                        request.first.callback.send(Result.failure(e))
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error while sending response back to individual request", e)
+                    throw e
                 }
             }
         }
