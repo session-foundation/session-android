@@ -32,8 +32,9 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
-import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TypingIndicatorsProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -68,10 +69,10 @@ class ReceivedMessageProcessor @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val threadDatabase: ThreadDatabase,
     private val readReceiptManager: Provider<ReadReceiptManager>,
-    private val typingIndicators: Provider<SSKEnvironment.TypingIndicatorsProtocol>,
+    private val typingIndicators: Provider<TypingIndicatorsProtocol>,
     private val prefs: TextSecurePreferences,
     private val groupMessageHandler: Provider<GroupMessageHandler>,
-    private val messageExpirationManager: Provider<SSKEnvironment.MessageExpirationManagerProtocol>,
+    private val messageExpirationManager: Provider<MessageExpirationManagerProtocol>,
     private val messageDataProvider: MessageDataProvider,
     @param:ManagerScope private val scope: CoroutineScope,
     private val notificationManager: MessageNotifier,

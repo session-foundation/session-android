@@ -1,11 +1,11 @@
 package org.session.libsession.messaging.messages.visible
 
 import androidx.annotation.Keep
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
-import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.Log
+import org.session.protos.SessionProtos
+import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
 
 // R8: Must keep constructor for Kryo to work
 @Keep
@@ -41,7 +41,7 @@ class Quote() {
         this.attachmentID = attachmentID
     }
 
-    fun toProto(): SessionProtos.DataMessage.Quote? {
+    fun toProto(messageDataProvider: MessageDataProvider): SessionProtos.DataMessage.Quote? {
         val timestamp = timestamp
         val publicKey = publicKey
         if (timestamp == null || publicKey == null) {
@@ -52,7 +52,7 @@ class Quote() {
         quoteProto.id = timestamp
         quoteProto.author = publicKey
         text?.let { quoteProto.text = it }
-        addAttachmentsIfNeeded(quoteProto)
+        addAttachmentsIfNeeded(quoteProto, messageDataProvider)
 
         // Build
         try {
@@ -63,10 +63,8 @@ class Quote() {
         }
     }
 
-    private fun addAttachmentsIfNeeded(quoteProto: SessionProtos.DataMessage.Quote.Builder) {
+    private fun addAttachmentsIfNeeded(quoteProto: SessionProtos.DataMessage.Quote.Builder, database: MessageDataProvider) {
         val attachmentID = attachmentID ?: return Log.w(TAG, "Cannot add attachment with null attachmentID - bailing.")
-
-        val database = MessagingModuleConfiguration.shared.messageDataProvider
 
         val pointer = database.getSignalAttachmentPointer(attachmentID)
         if (pointer == null) { return Log.w(TAG, "Ignoring invalid attachment for quoted message.") }
