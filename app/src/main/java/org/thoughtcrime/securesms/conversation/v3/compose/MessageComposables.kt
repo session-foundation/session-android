@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -32,21 +34,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.core.net.toUri
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -56,7 +51,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.blackAlpha06
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -149,6 +143,7 @@ fun MessageContent(
                 // First bubble
                 if (hasFirstBubble) {
                     MessageBubble(
+                        modifier = Modifier.accentHighlight(data.highlightKey),
                         color = if (data.type.outgoing) LocalColors.current.accent
                         else LocalColors.current.backgroundBubbleReceived
                     ) {
@@ -197,11 +192,13 @@ fun MessageContent(
                     // images and videos are a special case and aren't actually surrounded in a visible bubble
                     if(data.type is MessageType.Media){
                         MediaMessage(
+                            modifier = Modifier.accentHighlight(data.highlightKey),
                             data = data.type,
                             maxWidth = maxWidth
                         )
                     } else {
                         MessageBubble(
+                            modifier = Modifier.accentHighlight(data.highlightKey),
                             color = if (data.type.outgoing) LocalColors.current.accent
                             else LocalColors.current.backgroundBubbleReceived
                         ) {
@@ -279,7 +276,6 @@ fun Message(
 ) {
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth()
-            .highlight(data.highlightKey)
     ) {
         val maxMessageWidth = max(
             LocalDimensions.current.minMessageWidth,
@@ -345,56 +341,6 @@ fun MessageText(
 }
 
 @Composable
-fun MessageLink(
-    data: MessageLinkData,
-    outgoing: Boolean,
-    modifier: Modifier = Modifier
-){
-    Row(
-        modifier = modifier.fillMaxWidth().background(
-            color = blackAlpha06
-        ),
-    ) {
-        Box(
-            modifier = Modifier.size(100.dp)
-                .background(color = blackAlpha06)
-        ){
-            if(data.imageUri == null){
-                Image(
-                    painter = painterResource(id = R.drawable.ic_link),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(LocalColors.current.text),
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .crossfade(true)
-                        .data(data.imageUri)
-                        .build(),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                    contentDescription = null,
-                )
-            }
-        }
-
-        Text(
-            modifier = Modifier.weight(1f)
-                .align(Alignment.CenterVertically)
-                .padding(horizontal = LocalDimensions.current.xsSpacing),
-            text = data.title,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Start,
-            style = LocalType.current.base.bold(),
-            color = getTextColor(outgoing)
-        )
-    }
-}
-
-
-@Composable
 internal fun getTextColor(outgoing: Boolean) = if(outgoing) LocalColors.current.textBubbleSent
 else LocalColors.current.textBubbleReceived
 
@@ -448,12 +394,6 @@ sealed class MessageQuoteIcon {
 data class MessageViewStatus(
     val name: String,
     val icon: MessageViewStatusIcon
-)
-
-data class MessageLinkData(
-    val url: String,
-    val title: String,
-    val imageUri: String? = null
 )
 
 sealed interface MessageViewStatusIcon{
@@ -515,6 +455,7 @@ fun MessagePreview(
             LaunchedEffect(Unit) {
                 delay(3000)
 
+                // to test out the selection
                 testData = testData.copy(highlightKey = System.currentTimeMillis())
                 testData2 = testData2.copy(highlightKey = System.currentTimeMillis())
             }
@@ -523,7 +464,15 @@ fun MessagePreview(
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            Message(data = testData2)
+            Message(
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                    testData2 = testData2.copy(highlightKey = System.currentTimeMillis())
+                }),
+                data = testData2
+            )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
@@ -655,60 +604,10 @@ fun QuoteMessagePreviewReuse(
 
 @Preview
 @Composable
-fun LinkMessagePreview(
+fun LinkMessagePreviewReuse(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
-    PreviewTheme(colors) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing),
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
-
-        ) {
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                link = MessageLinkData(
-                    url = "https://getsession.org/",
-                    title = "Welcome to Session",
-                    imageUri = null
-                )
-            ))
-
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                link = MessageLinkData(
-                    url = "https://picsum.photos/id/0/367/267",
-                    title = "Welcome to Session with a very long name",
-                    imageUri = "https://picsum.photos/id/1/200/300"
-                )
-            ))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                link = MessageLinkData(
-                    url = "https://getsession.org/",
-                    title = "Welcome to Session",
-                    imageUri = null
-                )
-            ))
-
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                link = MessageLinkData(
-                    url = "https://picsum.photos/id/0/367/267",
-                    title = "Welcome to Session with a very long name",
-                    imageUri = "https://picsum.photos/id/1/200/300"
-                )
-            ))
-        }
-    }
+    LinkMessagePreview(colors)
 }
 
 @Preview

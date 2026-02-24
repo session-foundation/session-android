@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.conversation.v3.compose
 
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -157,7 +163,7 @@ fun MediaMessagePreview(
                 .verticalScroll(rememberScrollState())
 
         ) {
-            Message(data = MessageViewData(
+            /*Message(data = MessageViewData(
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
@@ -178,20 +184,85 @@ fun MediaMessagePreview(
                     items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
                     loading = false
                 )
-            ))
+            ))*/
 
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    text = AnnotatedString("This also has text"),
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
+            var testData by remember {
+                mutableStateOf(
+                    MessageViewData(
+                        author = "Toto",
+                        type = MessageType.Media(
+                            text = AnnotatedString("This also has text"),
+                            outgoing = true,
+                            items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                            loading = false
+                        )
+                    )
                 )
-            ))
+            }
+
+            Message(
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        testData = testData.copy(highlightKey = System.currentTimeMillis())
+                    }),
+                data = testData
+            )
+
+            var testData2 by remember {
+                mutableStateOf(
+                    MessageViewData(
+                        author = "Toto",
+                        displayName = true,
+                        avatar = PreviewMessageData.sampleAvatar,
+                        type = MessageType.Text(
+                            text = AnnotatedString("This also has text"),
+                            outgoing = false,
+                        )
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        testData2 = testData2.copy(highlightKey = System.currentTimeMillis())
+                    }),
+                data = testData2
+            )
+
+            var testData3 by remember {
+                mutableStateOf(
+                    MessageViewData(
+                        author = "Toto",
+                        avatar = PreviewMessageData.sampleAvatar,
+                        type = PreviewMessageData.audio(
+                            outgoing = false,
+                            title = "Audio with a really long name that should ellipsize once it reaches the max width",
+                        )
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        testData3 = testData3.copy(highlightKey = System.currentTimeMillis())
+                    }),
+                data = testData3
+            )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
