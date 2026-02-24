@@ -739,7 +739,7 @@ class GroupManagerV2Impl @Inject constructor(
         // We need to wait until we have the first data polled from the poller, otherwise
         // we won't have the necessary configs to send invite response/or do anything else.
         // We can't hang on here forever if things don't work out, bail out if it's the case.
-        withTimeout(20_000L) {
+        requireNotNull(withTimeoutOrNull(20_000L) {
             // We must tell the poller to poll once, as we could have received this invitation
             // in the background where the poller isn't running
             val groupId = AccountId(group.groupAccountId)
@@ -748,6 +748,8 @@ class GroupManagerV2Impl @Inject constructor(
             groupPollerManager.watchGroupPollingState(groupId)
                 .filter { it.lastPolledResult?.isSuccess == true }
                 .first()
+        }) {
+            "Timeout waiting for first group polling to complete"
         }
 
         val adminKey = group.adminKey?.data

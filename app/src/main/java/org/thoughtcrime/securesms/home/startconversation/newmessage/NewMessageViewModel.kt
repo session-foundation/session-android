@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -125,9 +125,12 @@ class NewMessageViewModel @Inject constructor(
 
         loadOnsJob = viewModelScope.launch {
             try {
-                val publicKey = withTimeout(30_000L, {
-                    onsResolver.resolve(ons)
-                })
+                val publicKey = requireNotNull(
+                    withTimeoutOrNull(30_000L, {
+                        onsResolver.resolve(ons)
+                    })) {
+                    "Timeout waiting for ONS resolution"
+                }
                 onPublicKey(publicKey)
             } catch (e: Exception) {
                 Log.w("", "Error resolving ONS:", e)
