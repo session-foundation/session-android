@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -31,7 +30,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
@@ -47,7 +46,6 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
@@ -61,7 +59,6 @@ import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
@@ -88,7 +85,6 @@ import kotlin.time.Duration.Companion.milliseconds
 class ProStatusManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
-    recipientRepository: RecipientRepository,
     @param:ManagerScope private val scope: CoroutineScope,
     private val serverApiExecutor: ServerApiExecutor,
     private val addProPaymentApiFactory: AddProPaymentApi.Factory,
@@ -490,8 +486,8 @@ class ProStatusManager @Inject constructor(
         for (attempt in 1..maxAttempts) {
             try {
                 // 5s timeout as per PRD
-                val paymentResponse = withTimeout(5_000L) {
-                    runCatching {
+                val paymentResponse = runCatching {
+                    requireNotNull(withTimeoutOrNull(5000) {
                         serverApiExecutor.execute(
                             ServerApiRequest(
                                 proBackendConfig = backendConfig.get(),
@@ -503,9 +499,11 @@ class ProStatusManager @Inject constructor(
                                 )
                             )
                         )
-                    }.getOrElse {
-                        ProApiResponse.Failure(AddPaymentErrorStatus.GenericError, emptyList())
+                    }) {
+                        "Timeout adding pro payment"
                     }
+                }.getOrElse {
+                    ProApiResponse.Failure(AddPaymentErrorStatus.GenericError, emptyList())
                 }
 
                 when (paymentResponse) {

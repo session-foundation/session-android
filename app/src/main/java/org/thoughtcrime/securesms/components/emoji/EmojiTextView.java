@@ -1,21 +1,17 @@
 package org.thoughtcrime.securesms.components.emoji;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.widget.TextViewCompat;
 import androidx.appcompat.widget.AppCompatTextView;
 import android.text.SpannableStringBuilder;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import network.loki.messenger.R;
 import org.thoughtcrime.securesms.components.emoji.EmojiProvider.EmojiDrawable;
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiParser;
 import org.session.libsession.utilities.Util;
-import org.session.libsignal.utilities.guava.Optional;
 
 public class EmojiTextView extends AppCompatTextView {
   private final boolean scaleEmojis;
@@ -76,12 +72,21 @@ public class EmojiTextView extends AppCompatTextView {
     previousOverflowText = overflowText;
     previousBufferType   = type;
 
-    if (candidates == null || candidates.size() == 0) {
-      super.setText(new SpannableStringBuilder(Optional.fromNullable(text).or("")).append(Optional.fromNullable(overflowText).or("")), BufferType.NORMAL);
-    } else {
-      CharSequence emojified = EmojiProvider.emojify(candidates, text, this, false);
-      super.setText(new SpannableStringBuilder(emojified).append(Optional.fromNullable(overflowText).or("")), BufferType.SPANNABLE);
-    }
+      if (candidates == null || candidates.size() == 0) {
+          super.setText(
+                  new SpannableStringBuilder(text != null ? text : "")
+                          .append(overflowText != null ? overflowText : ""),
+                  BufferType.NORMAL
+          );
+      } else {
+          CharSequence emojified = EmojiProvider.emojify(candidates, text, this, false);
+
+          super.setText(
+                  new SpannableStringBuilder(emojified)
+                          .append(overflowText != null ? overflowText : ""),
+                  BufferType.SPANNABLE
+          );
+      }
   }
 
   private boolean unchanged(CharSequence text, CharSequence overflowText, BufferType bufferType) {

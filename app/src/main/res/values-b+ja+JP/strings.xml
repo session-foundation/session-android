@@ -1063,7 +1063,6 @@
     <string name="proRefundNextSteps">{platform} で返金申請の処理中です。通常は 24～48 時間かかります。決定に応じて、{app_name} 内の {pro} ステータスが変更される場合があります。</string>
     <string name="proRefundRequestSessionSupport">払い戻しリクエストは {app_name} サポートによって処理されます。\n\n下のボタンを押して払い戻しリクエストフォームに記入することで、払い戻しを申請できます。\n\n{app_name} サポートは通常24～72時間以内の処理を目指していますが、リクエストが集中している場合は処理に時間がかかることがあります。</string>
     <string name="proRefundRequestStorePolicies">払い戻しリクエストは、<b>{platform} ウェブサイト</b>を通じて{platform}によってのみ処理されます。\n\n{platform}の払い戻しポリシーにより、{app_name} の開発者は払い戻しリクエストの結果に影響を与えることができません。これには、リクエストが承認されるか却下されるか、および全額または一部の返金が行われるかが含まれます。</string>
-    <string name="proRefundSupport">返金申請の進捗については、{platform} にお問い合わせください。{platform} の返金ポリシーにより、{app_name} の開発者は返金申請の結果に影響を与えることができません。\n\n<font color="0">{platform} 返金サポート</font></string>
     <string name="proRefunding">{pro} の返金処理中</string>
     <string name="proRefundingDescription">{app_pro} の返金処理はすべて {platform_store} を通じて {platform} によって行われます。\n\n{platform} の返金ポリシーにより、{app_name} の開発者は返金申請の結果に影響を与えることができません。これには申請の承認・却下の判断、および全額または一部返金かどうかも含まれます。</string>
     <string name="proRenewAnimatedDisplayPicture">アニメーション付き表示画像を再び使いたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>

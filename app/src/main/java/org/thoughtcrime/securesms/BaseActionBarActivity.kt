@@ -147,11 +147,11 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        if (super.onSupportNavigateUp()) return true
-
-        onBackPressed()
+        if (handleNavigateUp()) return true
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
+    protected open fun handleNavigateUp(): Boolean = false
 
     private fun initializeScreenshotSecurity(isResume: Boolean) {
         if (!isResume) {

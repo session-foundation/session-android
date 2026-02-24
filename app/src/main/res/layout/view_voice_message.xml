@@ -1,71 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.conversation.v2.messages.VoiceMessageView xmlns:android="http://schemas.android.com/apk/res/android"
+<org.thoughtcrime.securesms.conversation.v2.messages.VoiceMessageView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainVoiceMessageViewContainer"
     android:contentDescription="@string/AccessibilityId_messageVoice"
     android:background="@drawable/message_bubble_background"
-    android:layout_width="160dp"
-    android:layout_height="36dp">
+    android:layout_width="@dimen/max_bubble_width"
+    android:layout_height="wrap_content">
 
-    <View
-        android:id="@+id/progressView"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="true"
-        android:background="@color/transparent_black_30" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="@dimen/small_spacing"
+        >
+        <TextView android:id="@+id/audioTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/playPauseContainer"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="@dimen/message_spacing"
+            android:ellipsize="end"
+            tools:text="Voice Message"
+            android:textStyle="italic"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="@dimen/small_font_size"
+            />
 
-    <View
-        android:layout_width="84dp"
-        android:layout_height="1dp"
-        android:layout_marginStart="28dp"
-        android:layout_centerVertical="true"
-        android:background="@color/white" />
+        <FrameLayout
+            android:id="@+id/playPauseContainer"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="@dimen/message_spacing"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/audioTitle"
+            app:layout_constraintTop_toTopOf="@id/voiceMessageSeekBar"
+            app:layout_constraintBottom_toBottomOf="@id/voiceMessageSeekBar">
 
-    <RelativeLayout
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_alignParentStart="true">
-
-        <RelativeLayout
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_centerInParent="true"
-            android:background="@drawable/circle_tintable"
-            android:backgroundTint="@color/white">
+            <View android:id="@+id/playBg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/circle_tintable"
+                android:backgroundTint="@color/white" />
 
             <ImageView
                 android:id="@+id/voiceMessagePlaybackImageView"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:src="@drawable/exo_icon_play"
-                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:src="@drawable/play"
                 app:tint="@color/black" />
 
-        </RelativeLayout>
+            <ProgressBar
+                android:id="@+id/voiceMessageViewLoader"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:indeterminateTint="@color/black"
+                android:visibility="gone"
+                tools:visibility="gone" />
+        </FrameLayout>
 
-        <ProgressBar
-            android:id="@+id/voiceMessageViewLoader"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_centerInParent="true"
-            android:indeterminate="true"
-            android:indeterminateTint="@color/white" />
+        <com.google.android.material.slider.Slider
+            android:id="@+id/voiceMessageSeekBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:valueFrom="0.0"
+            android:valueTo="100.0"
+            app:trackHeight="10dp"
+            app:thumbHeight="20dp"
+            android:insetTop="0dp"
+            android:theme="@style/Theme.Material3.DayNight"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/playPauseContainer"
+            app:layout_constraintTop_toBottomOf="@+id/audioTitle"/>
 
-    </RelativeLayout>
+        <TextView
+            android:id="@+id/voiceMessageSpeedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_rectangle_small"
+            android:backgroundTint="@color/transparent_white_40"
+            android:gravity="center"
+            android:text="1x"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="@dimen/very_small_font_size"
+            android:includeFontPadding="false"
+            android:padding="@dimen/very_small_spacing"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginStart="@dimen/medium_spacing"
+            app:layout_constraintStart_toStartOf="@+id/voiceMessageSeekBar"
+            app:layout_constraintTop_toBottomOf="@+id/voiceMessageSeekBar" />
 
-    <TextView
-        android:id="@+id/voiceMessageViewDurationTextView"
-        android:layout_width="40dp"
-        android:layout_height="20dp"
-        android:layout_centerVertical="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="@dimen/small_spacing"
-        android:gravity="center"
-        tools:text="0:08"
-        android:textColor="@color/black"
-        android:textSize="@dimen/small_font_size"
-        android:background="@drawable/view_voice_message_duration_text_view_background"
-        android:backgroundTint="@color/white" />
+        <TextView
+            android:id="@+id/voiceMessageViewDurationTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="@dimen/very_small_font_size"
+            android:layout_marginEnd="@dimen/message_spacing"
+            app:layout_constraintBaseline_toBaselineOf="@+id/voiceMessageSpeedButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="0:08" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </org.thoughtcrime.securesms.conversation.v2.messages.VoiceMessageView>

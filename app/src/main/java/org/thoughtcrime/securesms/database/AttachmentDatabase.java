@@ -44,8 +44,8 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.ExternalStorageUtil;
-import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
+import org.session.libsignal.utilities.SaneJSONObject;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
 import org.thoughtcrime.securesms.crypto.ClassicDecryptingPartInputStream;
 import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
@@ -399,7 +399,6 @@ public class AttachmentDatabase extends Database {
     }
 
     values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
-    values.put(CONTENT_LOCATION, (String)null);
     values.put(CONTENT_DISPOSITION, (String)null);
     values.put(DIGEST, (byte[])null);
     values.put(NAME, (String) null);
@@ -636,7 +635,7 @@ public class AttachmentDatabase extends Database {
         JSONArray                array  = new JSONArray(cursor.getString(cursor.getColumnIndexOrThrow(ATTACHMENT_JSON_ALIAS)));
 
         for (int i=0;i<array.length();i++) {
-          JsonUtil.SaneJSONObject object = new JsonUtil.SaneJSONObject(array.getJSONObject(i));
+          SaneJSONObject object = new SaneJSONObject(array.getJSONObject(i));
 
           if (!object.isNull(ROW_ID)) {
             result.add(new DatabaseAttachment(new AttachmentId(object.getLong(ROW_ID), object.getLong(UNIQUE_ID)),

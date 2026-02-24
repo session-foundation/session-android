@@ -8,7 +8,6 @@ import android.os.Handler
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.jobmanager.impl.JsonDataSerializer
 
 private const val TAG = "ScreenshotObserver"
 

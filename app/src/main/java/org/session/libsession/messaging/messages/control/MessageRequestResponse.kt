@@ -4,7 +4,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.protos.SessionProtos
 
-class MessageRequestResponse(val isApproved: Boolean) : ControlMessage() {
+class MessageRequestResponse @JvmOverloads constructor(val isApproved: Boolean = false) : ControlMessage() {
 
     override val isSelfSendValid: Boolean = true
 
