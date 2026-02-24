@@ -9,6 +9,7 @@ class SessionJobManagerFactories @Inject constructor(
     private val messageSendJobFactory: MessageSendJob.Factory,
     private val deleteJobFactory: OpenGroupDeleteJob.Factory,
     private val inviteContactsJobFactory: InviteContactsJob.Factory,
+    private val debugTextSendJobFactory: DebugTextSendJob.Factory,
 ) {
 
     fun getSessionJobFactories(): Map<String, Job.DeserializeFactory<out Job>> {
@@ -19,6 +20,7 @@ class SessionJobManagerFactories @Inject constructor(
             TrimThreadJob.KEY to trimThreadFactory,
             OpenGroupDeleteJob.KEY to deleteJobFactory,
             InviteContactsJob.KEY to inviteContactsJobFactory,
+            DebugTextSendJob.KEY to debugTextSendJobFactory,
         )
     }
 }

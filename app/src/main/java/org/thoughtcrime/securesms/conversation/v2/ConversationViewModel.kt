@@ -56,6 +56,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.DebugTextSendJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
@@ -175,9 +176,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val audioPlaybackManager: AudioPlaybackManager,
     private val loginStateRepository: LoginStateRepository,
     private val jobQueue: Provider<JobQueue>,
-    private val messageSender: MessageSender,
-    private val smsDb: SmsDatabase,
-    private val snodeClock: SnodeClock,
+    private val debugTextSendJobFactory: DebugTextSendJob.Factory
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -1567,76 +1566,25 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun debugRampSending(
-        start: Int = 20,
-        step: Int = 20,
-        max: Int = 100,
-        delayBetweenMessagesMs: Long = 50,
-        delayBetweenStepsMs: Long = 1500,
+        count: Int = 100,
+        delayMs: Long = 50,
+        prefix: String = "Auto",
     ) {
         if (!BuildConfig.DEBUG) return
 
         viewModelScope.launch(Dispatchers.IO) {
-            var n = start
-            while (n <= max) {
-                debugSendTextLoadTest(
-                    count = n,
-                    delayBetweenMessagesMs = delayBetweenMessagesMs,
-                    prefix = "Ramp $n"
-                )
-                delay(delayBetweenStepsMs)
-                n += step
-            }
-        }
-    }
-
-    private fun debugSendTextLoadTest(
-        count: Int,
-        delayBetweenMessagesMs: Long = 50L,
-        prefix: String = "Load test",
-    ) {
-        if (!BuildConfig.DEBUG) return
-        if (count <= 0) return
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val r = recipient
-
-            if (r.isStandardRecipient && r.blocked) return@launch
-
             val threadId = threadIdFlow.filterNotNull().first()
             implicitlyApproveRecipient()?.join()
 
-            repeat(count) { i ->
-                val ts = snodeClock.currentTimeMillis() + i
-
-                val message = VisibleMessage().applyExpiryMode(address).apply {
-                    sentTimestamp = ts
-                    text = "$prefix #${i + 1}"
-                }
-
-                proStatusManager.addProFeatures(message)
-
-                val outgoing = OutgoingTextMessage(
-                    message = message,
-                    recipient = r.address,
-                    expiresInMillis = r.expiryMode.expiryMillis,
-                    expireStartedAtMillis = 0
+            jobQueue.get().add(
+                debugTextSendJobFactory.create(
+                    threadId = threadId,
+                    address = address,
+                    count = count,
+                    delayBetweenMessagesMs = delayMs,
+                    prefix = prefix
                 )
-
-                message.id = MessageId(
-                    smsDb.insertMessageOutbox(
-                        threadId,
-                        outgoing,
-                        false,
-                        message.sentTimestamp!!,
-                        true
-                    ),
-                    false
-                )
-
-                messageSender.send(message, r.address)
-
-                if (delayBetweenMessagesMs > 0) delay(delayBetweenMessagesMs)
-            }
+            )
         }
     }
 

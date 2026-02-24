@@ -125,7 +125,8 @@ class JobQueue @Inject constructor(
                 when (val job = queue.receive()) {
                     is InviteContactsJob,
                     is AttachmentUploadJob,
-                    is MessageSendJob -> {
+                    is MessageSendJob,
+                    is DebugTextSendJob-> {
                         txQueue.send(job)
                     }
                     is AttachmentDownloadJob -> {
