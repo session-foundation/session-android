@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v2.settings
+package org.thoughtcrime.securesms.conversation.v3
 
 import android.annotation.SuppressLint
 import android.os.Parcelable
@@ -18,14 +18,18 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.*
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
@@ -49,14 +53,109 @@ import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
+sealed interface ConversationV3Destination: Parcelable {
+    @Serializable
+    @Parcelize
+    data object RouteConversation: ConversationV3Destination
+
+
+    @Serializable
+    @Parcelize
+    data object RouteConversationSettings: ConversationV3Destination
+
+    @Serializable
+    @Parcelize
+    data class RouteGroupMembers private constructor(
+        private val address: String
+    ): ConversationV3Destination {
+        constructor(groupAddress: Address.Group): this(groupAddress.address)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
+
+    @Serializable
+    @Parcelize
+    data class RouteManageMembers private constructor(
+        private val address: String
+    ): ConversationV3Destination {
+        constructor(groupAddress: Address.Group): this(groupAddress.address)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
+
+    @Serializable
+    @Parcelize
+    data class RouteManageAdmins private constructor(
+        private val address: String,
+        val navigateToPromoteMembers: Boolean = false
+    ) : ConversationV3Destination {
+        constructor(groupAddress: Address.Group, navigateToPromoteMembers: Boolean = false) : this(
+            groupAddress.address,
+            navigateToPromoteMembers
+        )
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
+
+    @Serializable
+    @Parcelize
+    data class RoutePromoteMembers(
+        private val address: String
+    ): ConversationV3Destination {
+        constructor(groupAddress: Address.Group): this(groupAddress.address)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
+
+    @Serializable
+    @Parcelize
+    data class RouteInviteToGroup private constructor(
+        private val address: String,
+        val excludingAccountIDs: List<String>
+    ): ConversationV3Destination {
+        constructor(groupAddress: Address.Group, excludingAccountIDs: List<String>)
+            : this(groupAddress.address, excludingAccountIDs)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
+
+    @Serializable
+    @Parcelize
+    data object RouteDisappearingMessages: ConversationV3Destination
+
+    @Serializable
+    @Parcelize
+    data object RouteAllMedia: ConversationV3Destination
+
+    @Serializable
+    @Parcelize
+    data object RouteNotifications: ConversationV3Destination
+
+    @Serializable
+    @Parcelize
+    data class RouteInviteToCommunity(
+        val communityUrl: String
+    ): ConversationV3Destination
+
+    @Serializable
+    @Parcelize
+    data class RouteInviteAccountIdToGroup private constructor(
+        private val address: String,
+        val excludingAccountIDs: List<String>
+    ): ConversationV3Destination {
+        constructor(groupAddress: Address.Group, excludingAccountIDs: List<String>)
+        : this(groupAddress.address, excludingAccountIDs)
+
+        val groupAddress: Address.Group get() = Address.Group(AccountId(address))
+    }
+}
 
 @SuppressLint("RestrictedApi")
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun ConversationSettingsNavHost(
+fun ConversationV3NavHost(
     address: Address.Conversable,
-    startDestination: ConversationV3Destination = RouteConversationSettings,
-    returnResult: (String, Boolean) -> Unit,
+    startDestination: ConversationV3Destination = RouteConversation,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
@@ -86,7 +185,7 @@ fun ConversationSettingsNavHost(
                 }
 
                 is NavigationAction.ReturnResult -> {
-                    returnResult(action.code, action.value)
+                    //todo convov3 this was used to get data back from convo settings to convo
                 }
 
                 else -> {}

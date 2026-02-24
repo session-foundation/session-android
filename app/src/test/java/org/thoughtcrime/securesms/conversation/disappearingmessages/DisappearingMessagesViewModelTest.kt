@@ -23,7 +23,7 @@ import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -44,7 +44,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
     @Mock lateinit var application: Application
     @Mock lateinit var disappearingMessages: DisappearingMessages
-    @Mock lateinit var navigator: UINavigator<ConversationSettingsDestination>
+    @Mock lateinit var navigator: UINavigator<ConversationV3Destination>
 
     @Test
     fun `note to self, off, new config`() = runTest {

@@ -22,7 +22,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isGroup
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.ui.UINavigator
 
@@ -31,7 +31,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     @Assisted private val address: Address,
     @Assisted("isNewConfigEnabled")  private val isNewConfigEnabled: Boolean,
     @Assisted("showDebugOptions")    private val showDebugOptions: Boolean,
-    @Assisted private val navigator: UINavigator<ConversationSettingsDestination>,
+    @Assisted private val navigator: UINavigator<ConversationV3Destination>,
     @param:ApplicationContext private val context: Context,
     private val disappearingMessages: DisappearingMessages,
     private val recipientRepository: RecipientRepository,
@@ -97,7 +97,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
             address: Address,
             @Assisted("isNewConfigEnabled") isNewConfigEnabled: Boolean,
             @Assisted("showDebugOptions")   showDebugOptions: Boolean,
-            navigator: UINavigator<ConversationSettingsDestination>
+            navigator: UINavigator<ConversationV3Destination>
         ): DisappearingMessagesViewModel
     }
 }

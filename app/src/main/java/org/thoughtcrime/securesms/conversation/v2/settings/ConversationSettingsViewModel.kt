@@ -54,6 +54,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP_DESCRIPTION_BYTES
@@ -74,7 +75,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 @HiltViewModel(assistedFactory = ConversationSettingsViewModel.Factory::class)
 class ConversationSettingsViewModel @AssistedInject constructor(
     @Assisted private val address: Address.Conversable,
-    @Assisted private val navigator: UINavigator<ConversationSettingsDestination>,
+    @Assisted private val navigator: UINavigator<ConversationV3Destination>,
     @param:ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
     private val repository: ConversationRepository,
@@ -133,7 +134,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             qaTag = R.string.qa_conversation_settings_disappearing,
             subtitleQaTag = R.string.qa_conversation_settings_disappearing_sub,
             onClick = {
-                navigateTo(ConversationSettingsDestination.RouteDisappearingMessages)
+                navigateTo(ConversationV3Destination.RouteDisappearingMessages)
             }
         )
     }
@@ -164,7 +165,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             qaTag = R.string.qa_conversation_settings_notifications,
             subtitleQaTag = R.string.qa_conversation_settings_notifications_sub,
             onClick = {
-                navigateTo(ConversationSettingsDestination.RouteNotifications)
+                navigateTo(ConversationV3Destination.RouteNotifications)
             }
         )
     }
@@ -175,7 +176,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             icon = R.drawable.ic_file,
             qaTag = R.string.qa_conversation_settings_attachments,
             onClick = {
-                navigateTo(ConversationSettingsDestination.RouteAllMedia)
+                navigateTo(ConversationV3Destination.RouteAllMedia)
             }
         )
     }
@@ -251,7 +252,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             qaTag = R.string.qa_conversation_settings_group_members,
             onClick = {
                 (address as? Address.Group)?.let {
-                    navigateTo(ConversationSettingsDestination.RouteGroupMembers(it))
+                    navigateTo(ConversationV3Destination.RouteGroupMembers(it))
                 }
             }
         )
@@ -263,7 +264,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             icon = R.drawable.ic_user_round_plus,
             qaTag = R.string.qa_conversation_settings_invite_contacts,
             onClick = {
-                navigateTo(ConversationSettingsDestination.RouteInviteToCommunity(
+                navigateTo(ConversationV3Destination.RouteInviteToCommunity(
                     communityUrl = (recipient?.data as? RecipientData.Community)?.joinURL.orEmpty()
                 ))
             }
@@ -277,7 +278,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             qaTag = R.string.qa_conversation_settings_manage_members,
             onClick = {
                 (address as? Address.Group)?.let {
-                    navigateTo(ConversationSettingsDestination.RouteManageMembers(it))
+                    navigateTo(ConversationV3Destination.RouteManageMembers(it))
                 }
             }
         )
@@ -290,7 +291,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             qaTag = R.string.qa_conversation_settings_manage_admins,
             onClick = {
                 (address as? Address.Group)?.let {
-                    navigateTo(ConversationSettingsDestination.RouteManageAdmins(it))
+                    navigateTo(ConversationV3Destination.RouteManageAdmins(it))
                 }
             }
         )
@@ -1087,7 +1088,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                             // Calling this to have the ManageAdminScreen in the backstack so we can
                             // get its VM and PromoteMembersScreen can navigate back to it after sending promotions
                             navigateTo(
-                                ConversationSettingsDestination.RouteManageAdmins(
+                                ConversationV3Destination.RouteManageAdmins(
                                     groupAddress = address,
                                     navigateToPromoteMembers = true
                                 )
@@ -1477,7 +1478,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun navigateTo(destination: ConversationSettingsDestination){
+    private fun navigateTo(destination: ConversationV3Destination){
         viewModelScope.launch {
             navigator.navigate(destination)
         }
@@ -1541,7 +1542,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     interface Factory {
         fun create(
             address: Address.Conversable,
-            navigator: UINavigator<ConversationSettingsDestination>
+            navigator: UINavigator<ConversationV3Destination>
         ): ConversationSettingsViewModel
     }
 
