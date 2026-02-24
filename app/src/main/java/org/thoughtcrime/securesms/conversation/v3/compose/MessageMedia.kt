@@ -163,7 +163,7 @@ fun MediaMessagePreview(
                 .verticalScroll(rememberScrollState())
 
         ) {
-            /*Message(data = MessageViewData(
+            Message(data = MessageViewData(
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
@@ -184,7 +184,7 @@ fun MediaMessagePreview(
                     items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
                     loading = false
                 )
-            ))*/
+            ))
 
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
@@ -211,57 +211,6 @@ fun MediaMessagePreview(
                         testData = testData.copy(highlightKey = System.currentTimeMillis())
                     }),
                 data = testData
-            )
-
-            var testData2 by remember {
-                mutableStateOf(
-                    MessageViewData(
-                        author = "Toto",
-                        displayName = true,
-                        avatar = PreviewMessageData.sampleAvatar,
-                        type = MessageType.Text(
-                            text = AnnotatedString("This also has text"),
-                            outgoing = false,
-                        )
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = {
-                        testData2 = testData2.copy(highlightKey = System.currentTimeMillis())
-                    }),
-                data = testData2
-            )
-
-            var testData3 by remember {
-                mutableStateOf(
-                    MessageViewData(
-                        author = "Toto",
-                        avatar = PreviewMessageData.sampleAvatar,
-                        type = PreviewMessageData.audio(
-                            outgoing = false,
-                            title = "Audio with a really long name that should ellipsize once it reaches the max width",
-                        )
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = {
-                        testData3 = testData3.copy(highlightKey = System.currentTimeMillis())
-                    }),
-                data = testData3
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
