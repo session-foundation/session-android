@@ -189,7 +189,7 @@ class HomeViewModel @Inject constructor(
     init {
         // check for white list status in case of slow mode
         if(!prefStorage[SystemPreferences.HAS_CHECKED_DOZE_WHITELIST] // the user has not yet seen the dialog
-            && !prefStorage[PushPreferences.isPushEnabled(TextSecurePreferences.pushSuffix)] // the user is in slow mode
+            && !prefStorage[PushPreferences.IS_PUSH_ENABLED] // the user is in slow mode
             && !context.isWhitelistedFromDoze() // the user isn't yet whitelisted
         ){
             prefStorage[SystemPreferences.HAS_CHECKED_DOZE_WHITELIST] = true

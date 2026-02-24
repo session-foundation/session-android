@@ -123,7 +123,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.thoughtcrime.securesms.preferences.MessagingPreferences
 import org.thoughtcrime.securesms.preferences.NotificationPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
@@ -1730,7 +1729,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
                     val intent = Intent(context, PrivacySettingsActivity::class.java)
                     // allow the screen to auto scroll to the appropriate toggle
-                    intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
+                    intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, NotificationPreferences.CALL_NOTIFICATIONS_ENABLED.name)
                     context.startActivity(intent)
                 }
                 cancelButton()
