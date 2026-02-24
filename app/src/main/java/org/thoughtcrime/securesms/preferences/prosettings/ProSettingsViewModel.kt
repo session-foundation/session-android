@@ -503,6 +503,13 @@ class ProSettingsViewModel @AssistedInject constructor(
                     // Not loading nor error. If in grace period show a dialog
                     // otherwise go to the "choose plan" screen
                     else -> {
+                        // if we in the process of refunding on another platform, show that screen instead
+                        if((_proSettingsUIState.value.proDataState.type as? ProStatus.Active)?.refundInProgress == true){
+                            navigateTo(ProSettingsDestination.RefundInProgress)
+                            return
+                        }
+
+                        // otherwise handle the "Choose Plan"
                         val provider = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)?.providerData
                         if(_proSettingsUIState.value.inGracePeriod){
                             _dialogState.update {

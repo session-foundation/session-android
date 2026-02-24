@@ -1,9 +1,8 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -11,8 +10,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -48,7 +45,7 @@ class OpenGroupPollerManager @Inject constructor(
 ) : OnAppStartupComponent {
     private val pollerSemaphore = Semaphore(3)
 
-    val pollers: StateFlow<Map<String, PollerHandle>> =
+    val pollers: StateFlow<Map<String, OpenGroupPoller>> =
         loginStateRepository.flowWithLoggedInState {
             configFactory
                 .userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_GROUPS))
@@ -61,25 +58,21 @@ class OpenGroupPollerManager @Inject constructor(
                 }
         }
             .distinctUntilChanged()
-            .scan(emptyMap<String, PollerHandle>()) { acc, value ->
+            .scan(emptyMap<String, OpenGroupPoller>()) { acc, value ->
                 if (acc.keys == value) {
                     acc // No change, return the same map
                 } else {
                     val newPollerStates = value.associateWith { baseUrl ->
                         acc[baseUrl] ?: run {
-                            val scope = CoroutineScope(Dispatchers.Default)
                             Log.d(TAG, "Creating new poller for $baseUrl")
-                            PollerHandle(
-                                poller = pollerFactory.create(baseUrl, scope, pollerSemaphore),
-                                pollerScope = scope
-                            )
+                            pollerFactory.create(baseUrl, pollerSemaphore)
                         }
                     }
 
-                    for ((baseUrl, handle) in acc) {
+                    for ((baseUrl, poller) in acc) {
                         if (baseUrl !in value) {
                             Log.d(TAG, "Stopping poller for $baseUrl")
-                            handle.pollerScope.cancel()
+                            poller.cancel()
                         }
                     }
 
@@ -90,29 +83,18 @@ class OpenGroupPollerManager @Inject constructor(
 
     val isAllCaughtUp: Boolean
         get() = pollers.value.values.all {
-            it.poller.pollState.value is BasePoller.PollState.Polled
+            it.pollState.value is BasePoller.PollState.Polled
         }
 
 
     suspend fun pollAllOpenGroupsOnce() {
         Log.d(TAG, "Polling all open groups once")
         supervisorScope {
-            pollers.value.map { (server, handle) ->
-                handle.pollerScope.launch {
-                    runCatching {
-                        handle.poller.manualPollOnce()
-                    }.onFailure {
-                        if (it !is CancellationException) {
-                            Log.e(TAG, "Error polling open group $server", it)
-                        }
-                    }
+            pollers.value.map { (_, poller) ->
+                async {
+                    poller.manualPollOnce()
                 }
-            }.joinAll()
+            }.awaitAll()
         }
     }
-
-    data class PollerHandle(
-        val poller: OpenGroupPoller,
-        val pollerScope: CoroutineScope
-    )
 }

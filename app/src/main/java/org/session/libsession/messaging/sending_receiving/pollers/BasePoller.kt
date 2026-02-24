@@ -2,7 +2,13 @@ package org.session.libsession.messaging.sending_receiving.pollers
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,13 +16,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.selects.selectUnbiased
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+private typealias PollRequestCallback<T> = SendChannel<Result<T>>
 
 /**
  * Base class for pollers that perform periodic polling operations. These poller will:
@@ -29,12 +39,13 @@ import kotlin.time.Instant
  * @param T The type of the result returned by the single polling.
  */
 abstract class BasePoller<T>(
+    private val debugLabel: String,
     private val networkConnectivity: NetworkConnectivity,
-    appVisibilityManager: AppVisibilityManager,
-    private val scope: CoroutineScope,
+    private val appVisibilityManager: AppVisibilityManager,
 ) {
-    protected val logTag: String = this::class.java.simpleName
-    private val pollMutex = Mutex()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    private val manualPollRequestSender: SendChannel<PollRequestCallback<T>>
 
     private val mutablePollState = MutableStateFlow<PollState<T>>(PollState.Idle)
 
@@ -44,43 +55,86 @@ abstract class BasePoller<T>(
     val pollState: StateFlow<PollState<T>> get() = mutablePollState
 
     init {
+        val manualPollRequestChannel = Channel<PollRequestCallback<T>>()
+
+        manualPollRequestSender = manualPollRequestChannel
+
         scope.launch {
             var numConsecutiveFailures = 0
+            var nextRoutinePollAt: TimeMark? = null
 
             while (true) {
-                // Wait until the app is in the foreground and we have network connectivity
-                combine(
-                    appVisibilityManager.isAppVisible.filter { visible ->
-                        if (visible) {
-                            true
-                        } else {
-                            Log.d(logTag, "Polling paused - app in background")
-                            false
-                        }
-                    },
-                    networkConnectivity.networkAvailable.filter { hasNetwork ->
-                        if (hasNetwork) {
-                            true
-                        } else {
-                            Log.d(logTag, "Polling paused - no network connectivity")
-                            false
-                        }
-                    },
-                    transform = { _, _ -> }
-                ).first()
+                val waitForRoutinePollDeferred = waitForRoutinePoll(nextRoutinePollAt)
 
-                try {
-                    pollOnce("routine")
-                    numConsecutiveFailures = 0
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Throwable) {
-                    numConsecutiveFailures += 1
+                val (pollReason, callback) = selectUnbiased {
+                    manualPollRequestChannel.onReceive { callback ->
+                        "manual" to callback
+                    }
+
+                    waitForRoutinePollDeferred.onAwait {
+                        "routine" to null
+                    }
                 }
 
+                // Clean up the deferred
+                waitForRoutinePollDeferred.cancel()
+
+                val result = runCatching {
+                    pollOnce(pollReason)
+                }.onSuccess { numConsecutiveFailures = 0 }
+                    .onFailure {
+                        if (it is PollerCancelledException) {
+                            log("Polling cancelled", it)
+                            throw it
+                        }
+                        numConsecutiveFailures += 1
+                    }
+
+                // Must use trySend as we shouldn't be waiting or responsible for
+                // the manual request (potential) ill-setup.
+                callback?.trySend(result)
+
                 val nextPollSeconds = nextPollDelaySeconds(numConsecutiveFailures)
-                Log.d(logTag, "Next poll in ${nextPollSeconds}s")
-                delay(nextPollSeconds * 1000L)
+                nextRoutinePollAt = TimeSource.Monotonic.markNow().plus(nextPollSeconds.seconds)
+            }
+        }
+    }
+
+    private class PollerCancelledException : CancellationException("Poller is cancelled")
+
+    fun cancel() {
+        scope.cancel(PollerCancelledException())
+    }
+
+    private fun waitForRoutinePoll(minStartAt: TimeMark?): Deferred<Unit> {
+        return scope.async {
+            combine(
+                appVisibilityManager.isAppVisible.filter { visible ->
+                    if (visible) {
+                        true
+                    } else {
+                        log("Polling paused - app in background")
+                        false
+                    }
+                },
+                networkConnectivity.networkAvailable.filter { hasNetwork ->
+                    if (hasNetwork) {
+                        true
+                    } else {
+                        log("Polling paused - no network connectivity")
+                        false
+                    }
+                },
+                { _, _ -> }
+            ).first()
+
+            // At this point, the criteria for routine poll are all satisfied.
+
+            // If we are told we can only start executing from a time, wait until that.
+            val delayMillis = minStartAt?.elapsedNow()?.let { -it.inWholeMilliseconds }
+            if (delayMillis != null && delayMillis > 0) {
+                log("Delay next poll for ${delayMillis}ms")
+                delay(delayMillis)
             }
         }
     }
@@ -109,29 +163,41 @@ abstract class BasePoller<T>(
      */
     protected abstract suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean): T
 
+    /**
+     * Provides detailed context of this poller for logging.
+     */
+    protected fun log(message: String, e: Throwable? = null) {
+        Log.d(javaClass.simpleName, "$debugLabel: $message", e)
+    }
+
+    /**
+     * Provides detailed context of this poller for logging.
+     */
+    protected fun logE(message: String, e: Throwable? = null) {
+        Log.e(javaClass.simpleName, "$debugLabel: $message", e)
+    }
+
     private suspend fun pollOnce(reason: String): T {
-        pollMutex.withLock {
-            val lastState = mutablePollState.value
-            mutablePollState.value =
-                PollState.Polling(reason, lastPolledResult = lastState.lastPolledResult)
-            Log.d(logTag, "Start $reason polling")
-            val result = runCatching {
-                doPollOnce(isFirstPollSinceAppStarted = lastState is PollState.Idle)
-            }
-
-            if (result.isSuccess) {
-                Log.d(logTag, "$reason polling succeeded")
-            } else if (result.exceptionOrNull() !is CancellationException) {
-                Log.e(logTag, "$reason polling failed", result.exceptionOrNull())
-            }
-
-            mutablePollState.value = PollState.Polled(
-                at = Clock.System.now(),
-                result = result,
-            )
-
-            return result.getOrThrow()
+        val lastState = mutablePollState.value
+        mutablePollState.value =
+            PollState.Polling(reason, lastPolledResult = lastState.lastPolledResult)
+        log("Start $reason polling")
+        val result = runCatching {
+            doPollOnce(isFirstPollSinceAppStarted = lastState is PollState.Idle)
         }
+
+        if (result.isSuccess) {
+            log("$reason polling succeeded")
+        } else if (result.exceptionOrNull() !is CancellationException) {
+            logE("$reason polling failed", result.exceptionOrNull())
+        }
+
+        mutablePollState.value = PollState.Polled(
+            at = Clock.System.now(),
+            result = result,
+        )
+
+        return result.getOrThrow()
     }
 
     /**
@@ -143,15 +209,9 @@ abstract class BasePoller<T>(
      * * This method will throw if the polling operation fails.
      */
     suspend fun manualPollOnce(): T {
-        val resultChannel = Channel<Result<T>>()
-
-        scope.launch {
-            resultChannel.trySend(runCatching {
-                pollOnce("manual")
-            })
-        }
-
-        return resultChannel.receive().getOrThrow()
+        val callback = Channel<Result<T>>(capacity = 1)
+        manualPollRequestSender.send(callback)
+        return callback.receive().getOrThrow()
     }
 
 

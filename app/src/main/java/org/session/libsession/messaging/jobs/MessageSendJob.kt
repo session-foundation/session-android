@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.withTimeout
+
+import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE_BYTES
@@ -26,6 +27,7 @@ import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
+import javax.inject.Provider
 
 class MessageSendJob @AssistedInject constructor(
     @Assisted val message: Message,
@@ -36,6 +38,7 @@ class MessageSendJob @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val messageSender: MessageSender,
+    private val jobQueue: Provider<JobQueue>,
 ) : Job {
 
     object AwaitingAttachmentUploadException : Exception("Awaiting attachment upload.")
@@ -80,7 +83,7 @@ class MessageSendJob @AssistedInject constructor(
                     // Wait for it to finish
                 } else {
                     val job = attachmentUploadJobFactory.create(it.attachmentId.rowId, message.threadID!!.toString(), message, id!!)
-                    JobQueue.shared.add(job)
+                    jobQueue.get().add(job)
                 }
             }
             if (attachmentsToUpload.isNotEmpty()) {
@@ -93,9 +96,11 @@ class MessageSendJob @AssistedInject constructor(
         try {
             // Shouldn't send message to group when the group has no keys available
             if (destination is Destination.ClosedGroup) {
-                withTimeout(20_000L) {
+                requireNotNull(withTimeoutOrNull(20_000L) {
                     configFactory
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
+                }) {
+                    "Timeout waiting for group keys to become available"
                 }
             }
 

@@ -33,6 +33,9 @@ import coil3.SingletonImageLoader
 import dagger.Lazy
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.LogLevel
@@ -41,7 +44,6 @@ import org.conscrypt.Conscrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -56,7 +58,6 @@ import org.thoughtcrime.securesms.glide.RemoteFileLoader
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger
-import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.service.KeyCachingService
@@ -80,7 +81,6 @@ import kotlin.concurrent.Volatile
 class ApplicationContext : Application(), DefaultLifecycleObserver, Configuration.Provider, SingletonImageLoader.Factory {
     @Inject lateinit var messagingModuleConfiguration: Lazy<MessagingModuleConfiguration>
     @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
-    @Inject lateinit var sskEnvironment: Lazy<SSKEnvironment>
 
     @Inject lateinit var startupComponents: Lazy<OnAppStartupComponents>
     @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
@@ -140,7 +140,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         initializeCrashHandling()
         notificationChannels.get().create()
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
-        SSKEnvironment.sharedLazy = sskEnvironment
 
         initializeWebRtc()
         initializeBlobProvider()
@@ -233,8 +232,8 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     }
 
     private fun initializeBlobProvider() {
-        AsyncTask.THREAD_POOL_EXECUTOR.execute {
-            BlobUtils.getInstance().onSessionStart(this)
+        GlobalScope.launch(Dispatchers.IO) {
+            BlobUtils.getInstance().onSessionStart(this@ApplicationContext)
         }
     }
      // endregion

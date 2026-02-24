@@ -3,9 +3,11 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
@@ -27,7 +29,6 @@ import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcess
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withUserConfigs
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -56,13 +57,13 @@ class OpenGroupPoller @AssistedInject constructor(
     networkConnectivity: NetworkConnectivity,
     appVisibilityManager: AppVisibilityManager,
     private val json: Json,
+    private val jobQueue: Provider<JobQueue>,
     @Assisted private val server: String,
-    @Assisted private val scope: CoroutineScope,
     @Assisted private val pollerSemaphore: Semaphore,
 ): BasePoller<Unit>(
     networkConnectivity = networkConnectivity,
-    scope = scope,
-    appVisibilityManager = appVisibilityManager
+    appVisibilityManager = appVisibilityManager,
+    debugLabel = "OpenGroupPoller($server)"
 ) {
     override val successfulPollIntervalSeconds: Int
         get() = 4
@@ -97,7 +98,7 @@ class OpenGroupPoller @AssistedInject constructor(
             return
         }
 
-        coroutineScope {
+        supervisorScope {
             var caps = storage.getServerCapabilities(server)
             if (caps == null) {
                 val fetched = communityApiExecutor.execute(
@@ -111,6 +112,8 @@ class OpenGroupPoller @AssistedInject constructor(
                 caps = fetched.capabilities
             }
 
+            val allTasks = mutableListOf<Pair<String, Deferred<Unit>>>()
+
             for (room in rooms) {
                 val address = Address.Community(serverUrl = server, room = room)
                 val latestRoomPollInfo = communityDatabase.getRoomInfo(address)
@@ -118,7 +121,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 val lastMessageServerId = storage.getLastMessageServerID(room, server)
 
                 // Poll room info
-                launch {
+                allTasks += "polling room info" to async {
                     val roomInfo = communityApiExecutor.execute(
                         CommunityApiRequest(
                             serverBaseUrl = server,
@@ -137,7 +140,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
 
                 // Poll room messages
-                launch {
+                allTasks += "polling room messages" to async {
                     val messages = communityApiExecutor.execute(
                         CommunityApiRequest(
                             serverBaseUrl = server,
@@ -158,7 +161,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 // We'll only poll our index if we are accepting community requests
                 if (storage.isCheckingCommunityRequests()) {
                     // Poll inbox messages
-                    launch {
+                    allTasks += "polling inbox messages" to async {
                         val inboxMessages = communityApiExecutor.execute(
                             CommunityApiRequest(
                                 serverBaseUrl = server,
@@ -175,7 +178,7 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
 
                 // Poll outbox messages regardless because these are messages we sent
-                launch {
+                allTasks += "polling outbox messages" to async {
                     val outboxMessages = communityApiExecutor.execute(
                         CommunityApiRequest(
                             serverBaseUrl = server,
@@ -189,6 +192,27 @@ class OpenGroupPoller @AssistedInject constructor(
 
                     handleOutboxMessages(messages = outboxMessages)
                 }
+            }
+
+            /**
+             * Await on all tasks and gather the first exception with the rest errors suppressed.
+             */
+            val accumulatedError = allTasks
+                .fold(null) { acc: Throwable?, (taskName, deferred) ->
+                    val err = runCatching { deferred.await() }
+                        .onFailure { if (it is CancellationException) throw it }
+                        .exceptionOrNull()
+                        ?.let { RuntimeException("Error $taskName", it) }
+
+                    if (err != null) {
+                        acc?.apply { addSuppressed(err) } ?: err
+                    } else {
+                        acc
+                    }
+                }
+
+            if (accumulatedError != null) {
+                throw accumulatedError
             }
         }
     }
@@ -218,8 +242,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             message = msg,
                         )
                     } catch (e: Exception) {
-                        Log.e(
-                            logTag,
+                        logE(
                             "Error processing open group message ${msg.id} in ${threadAddress.debugString}",
                             e
                         )
@@ -227,11 +250,11 @@ class OpenGroupPoller @AssistedInject constructor(
                 }
             }
 
-            JobQueue.shared.add(trimThreadJobFactory.create(threadId))
+            jobQueue.get().add(trimThreadJobFactory.create(threadId))
         }
 
         if (deletions.isNotEmpty()) {
-            JobQueue.shared.add(
+            jobQueue.get().add(
                 openGroupDeleteJobFactory.create(
                     messageServerIds = LongArray(deletions.size) { i -> deletions[i].id },
                     threadId = threadId
@@ -251,7 +274,7 @@ class OpenGroupPoller @AssistedInject constructor(
 
         val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
             ?: run {
-                Log.e(logTag, "No community server public key cannot process inbox messages")
+                log("No community server public key cannot process inbox messages")
                 return
             }
 
@@ -268,7 +291,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     )
 
                 } catch (e: Exception) {
-                    Log.e(logTag, "Error processing inbox message", e)
+                    logE("Error processing inbox message", e)
                 }
             }
         }
@@ -285,7 +308,7 @@ class OpenGroupPoller @AssistedInject constructor(
 
         val serverPubKeyHex = storage.getOpenGroupPublicKey(server)
             ?: run {
-                Log.e(logTag, "No community server public key cannot process inbox messages")
+                logE("No community server public key cannot process inbox messages")
                 return
             }
 
@@ -302,7 +325,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     )
 
                 } catch (e: Exception) {
-                    Log.e(logTag, "Error processing outbox message", e)
+                    logE("Error processing outbox message", e)
                 }
             }
         }
@@ -312,7 +335,6 @@ class OpenGroupPoller @AssistedInject constructor(
     interface Factory {
         fun create(
             server: String,
-            scope: CoroutineScope,
             pollerSemaphore: Semaphore
         ): OpenGroupPoller
     }

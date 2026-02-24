@@ -1,7 +1,8 @@
 package org.thoughtcrime.securesms.sskenvironment
 
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.ReadReceiptManagerProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.PrivacyPreferences
 import org.session.libsignal.utilities.Log
@@ -14,7 +15,7 @@ import javax.inject.Singleton
 class ReadReceiptManager @Inject constructor(
     private val preferenceStorage: PreferenceStorage,
     private val mmsSmsDatabase: MmsSmsDatabase,
-): SSKEnvironment.ReadReceiptManagerProtocol {
+): ReadReceiptManagerProtocol {
 
     override fun processReadReceipts(
         fromRecipientId: String,

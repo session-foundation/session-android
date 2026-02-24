@@ -10,14 +10,11 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.LocalActivity
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -70,7 +67,6 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
@@ -79,7 +75,6 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -126,6 +121,7 @@ import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import javax.inject.Inject
+import javax.inject.Provider
 
 // Intent extra keys so we know where we came from
 private const val NEW_ACCOUNT = "HomeActivity_NEW_ACCOUNT"
@@ -142,7 +138,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private lateinit var binding: ActivityHomeBinding
     private lateinit var glide: RequestManager
 
-    @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var storage: Storage
     @Inject lateinit var groupDatabase: GroupDatabase
@@ -159,10 +154,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var avatarUtils: AvatarUtils
-    @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var messageFormatter: MessageFormatter
     @Inject lateinit var pathManager: PathManager
     @Inject lateinit var prefs: PreferenceStorage
+    @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
+    @Inject lateinit var jobQueue: Provider<JobQueue>
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -182,7 +178,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val globalSearchAdapter by lazy {
         GlobalSearchAdapter(
-            dateUtils = dateUtils,
+            contentViewFactory = contentViewFactory,
             onContactClicked = { model ->
                 val intent = when (model) {
                     is GlobalSearchAdapter.Model.Message -> ConversationActivityV2
@@ -441,7 +437,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (loginStateRepository.getLocalNumber() != null) {
-                    JobQueue.shared.resumePendingJobs()
+                    jobQueue.get().resumePendingJobs()
                 }
             }
 

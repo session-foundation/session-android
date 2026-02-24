@@ -9,37 +9,45 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SecurityPreferences
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity
 import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.FilenameUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
+<<<<<<< HEAD
 import dagger.hilt.android.AndroidEntryPoint
+=======
+>>>>>>> origin/dev
 import javax.inject.Inject
 
 @AndroidEntryPoint
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
+<<<<<<< HEAD
     @Inject open lateinit var preferenceStorage: PreferenceStorage
 
     private val migrationManager: DatabaseMigrationManager
         get() = (applicationContext as ApplicationContext).migrationManager.get()
 
+=======
+>>>>>>> origin/dev
     companion object {
         private val TAG = ScreenLockActionBarActivity::class.java.simpleName
 
@@ -86,14 +94,23 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     private var clearKeyReceiver: BroadcastReceiver? = null
 
+    @Inject
+    lateinit var loginStateRepository: LoginStateRepository
+
+    @Inject
+    lateinit var migrationManager: DatabaseMigrationManager
+
+    @Inject
+    lateinit var appVisibilityManager: AppVisibilityManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
+
+        super.onCreate(savedInstanceState)
 
         val locked = KeyCachingService.isLocked(this) && preferenceStorage[SecurityPreferences.SCREEN_LOCK] &&
                 (applicationContext as ApplicationContext).loginStateRepository.get().peekLoginState() != null
         routeApplicationState(locked)
-
-        super.onCreate(savedInstanceState)
 
         if (!isFinishing) {
             initializeClearKeyReceiver()
@@ -116,7 +133,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     fun onMasterSecretCleared() {
         Log.i(TAG, "onMasterSecretCleared()")
-        if (ApplicationContext.getInstance(this).isAppVisible) routeApplicationState(true)
+        if (appVisibilityManager.isAppVisible.value) routeApplicationState(true)
         else finish()
     }
 
@@ -172,7 +189,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     private fun getApplicationState(locked: Boolean): Int {
         return if (migrationManager.migrationState.value.shouldShowUI) {
             STATE_DATABASE_MIGRATE
-        } else if ((applicationContext as ApplicationContext).loginStateRepository.get().peekLoginState() == null) {
+        } else if (loginStateRepository.peekLoginState() == null) {
             STATE_WELCOME_SCREEN
         } else if (locked) {
             STATE_SCREEN_LOCKED

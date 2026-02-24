@@ -80,6 +80,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.time.Duration.Companion.seconds
 
@@ -109,6 +110,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
     private val unrevokeSubKeyApiFactory: UnrevokeSubKeyApi.Factory,
     private val batchApiFactory: BatchApi.Factory,
+    private val jobQueue: Provider<JobQueue>,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -224,7 +226,7 @@ class GroupManagerV2Impl @Inject constructor(
             val recipient = recipientRepository.getRecipient(Address.fromSerialized(groupId.hexString))
 
             // Invite members
-            JobQueue.shared.add(
+            jobQueue.get().add(
                 inviteContactJobFactory.create(
                     groupSessionId = groupId.hexString,
                     memberSessionIds = members.map { it.hexString }.toTypedArray(),
@@ -370,7 +372,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Send the invitation message to the new members
-        JobQueue.shared.add(
+        jobQueue.get().add(
             inviteContactJobFactory.create(
                 groupSessionId = group.hexString,
                 memberSessionIds = memberInvites.map { it.id.hexString }.toTypedArray(),
@@ -737,7 +739,7 @@ class GroupManagerV2Impl @Inject constructor(
         // We need to wait until we have the first data polled from the poller, otherwise
         // we won't have the necessary configs to send invite response/or do anything else.
         // We can't hang on here forever if things don't work out, bail out if it's the case.
-        withTimeout(20_000L) {
+        requireNotNull(withTimeoutOrNull(20_000L) {
             // We must tell the poller to poll once, as we could have received this invitation
             // in the background where the poller isn't running
             val groupId = AccountId(group.groupAccountId)
@@ -746,6 +748,8 @@ class GroupManagerV2Impl @Inject constructor(
             groupPollerManager.watchGroupPollingState(groupId)
                 .filter { it.lastPolledResult?.isSuccess == true }
                 .first()
+        }) {
+            "Timeout waiting for first group polling to complete"
         }
 
         val adminKey = group.adminKey?.data
