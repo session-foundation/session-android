@@ -11,11 +11,14 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsignal.utilities.Log.Logger
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import java.io.File
+import java.io.PrintStream
+import java.io.PrintWriter
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.regex.Pattern
@@ -24,6 +27,7 @@ import java.util.zip.ZipOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 /**
  * A [Logger] that writes logs to encrypted files in the app's cache directory.
@@ -159,10 +163,9 @@ class PersistentLogger @Inject constructor(
     private suspend fun ReceiveChannel<LogEntry>.receiveBulkLogs(out: MutableList<LogEntry>) {
         out += receive()
 
-        withTimeoutOrNull(500.milliseconds) {
-            repeat(15) {
-                out += receiveCatching().getOrNull() ?: return@repeat
-            }
+        // We may have many items cached in the channel, try to receive up to 15 items
+        repeat(15) {
+            out += tryReceive().getOrNull() ?: return@repeat
         }
     }
 

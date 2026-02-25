@@ -5,12 +5,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
@@ -55,8 +55,9 @@ class BatchApiExecutor<Req, Res, T>(
                     } else {
                         val now = timeSource.markNow()
                         if (nextDeadline > now) {
-                            withTimeoutOrNull(nextDeadline - now) {
-                                channel.receive()
+                            select {
+                                channel.onReceive { it }
+                                onTimeout(nextDeadline - now) { null }
                             }
                         } else {
                             // Deadline already reached
