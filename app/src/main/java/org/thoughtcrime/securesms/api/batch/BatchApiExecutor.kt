@@ -10,7 +10,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import java.time.Instant
+import kotlin.time.ComparableTimeMark
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 /**
  * An [ApiExecutor] that batches requests together based on a [Batcher.batchKey].
@@ -37,16 +39,18 @@ class BatchApiExecutor<Req, Res, T>(
         batchCommandSender = channel
 
         scope.launch {
+            val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic
+
             val pendingRequests = linkedMapOf<Any, BatchInfo<Req, Res>>()
-            var nextDeadline: Instant? = null
+            var nextDeadline: ComparableTimeMark? = null
 
             while (true) {
                 val command: BatchCommand<Req, Res>? = if (nextDeadline == null) {
                     channel.receive()
                 } else {
-                    val now = Instant.now()
+                    val now = timeSource.markNow()
                     if (nextDeadline > now) {
-                        withTimeoutOrNull(nextDeadline.toEpochMilli() - now.toEpochMilli()) {
+                        withTimeoutOrNull(nextDeadline - now) {
                             channel.receive()
                         }
                     } else {
@@ -63,7 +67,7 @@ class BatchApiExecutor<Req, Res, T>(
                         if (existingBatch == null) {
                             pendingRequests[command.batchKey] = BatchInfo(
                                 requests = arrayListOf(command),
-                                deadline = Instant.now().plusMillis(100L),
+                                deadline = timeSource.markNow() + 100.milliseconds
                             )
 
                             calculateNextDeadline = true
@@ -103,7 +107,7 @@ class BatchApiExecutor<Req, Res, T>(
 
     private class BatchInfo<Req, Res>(
         val requests: ArrayList<BatchCommand.Send<Req, Res>>,
-        val deadline: Instant,
+        val deadline: ComparableTimeMark,
     ) {
         init {
             check(requests.isNotEmpty()) {
@@ -123,8 +127,13 @@ class BatchApiExecutor<Req, Res, T>(
                 }
 
                 if (transformed.isFailure) {
+                    Log.d(TAG, "Transformation of request failed", transformed.exceptionOrNull())
                     // Notify individual request of failure
-                    r.callback.send(Result.failure(transformed.exceptionOrNull()!!))
+                    try {
+                        r.callback.send(Result.failure(transformed.exceptionOrNull()!!))
+                    } catch (e: Throwable) {
+                        Log.w(TAG, "Error sending transform failure back to request", e)
+                    }
                     continue
                 }
 
@@ -150,12 +159,12 @@ class BatchApiExecutor<Req, Res, T>(
                     response = resp
                 )
 
-                check(responses.size == batch.requests.size) {
-                    "Batch response size ${responses.size} does not match request size ${batch.requests.size}"
+                check(responses.size == requestsToSend.size) {
+                    "Batch response size ${responses.size} does not match request size ${requestsToSend.size}"
                 }
 
-                for (i in batch.requests.indices) {
-                    val request = batch.requests[i]
+                for (i in requestsToSend.indices) {
+                    val (request, _) = requestsToSend[i]
                     val response = responses[i]
                     request.callback.send(response)
                 }
@@ -165,7 +174,11 @@ class BatchApiExecutor<Req, Res, T>(
 
                 // Notify all requests of the failure
                 for (request in requestsToSend) {
-                    request.first.callback.send(Result.failure(e))
+                    try {
+                        request.first.callback.send(Result.failure(e))
+                    } catch (e: Throwable) {
+                        Log.w(TAG, "Error sending failure back to request", e)
+                    }
                 }
             }
         }
