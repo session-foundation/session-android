@@ -30,7 +30,19 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsS
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.*
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteAllMedia
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteConversation
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteConversationSettings
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteDisappearingMessages
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteGroupMembers
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteInviteAccountIdToGroup
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteInviteToCommunity
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteInviteToGroup
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteManageAdmins
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteManageMembers
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteNotifications
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RoutePromoteMembers
+import org.thoughtcrime.securesms.conversation.v3.compose.ConversationScreen
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel
@@ -193,7 +205,21 @@ fun ConversationV3NavHost(
         }
 
         NavHost(navController = navController, startDestination = startDestination) {
+            // Main conversation screen
+            horizontalSlideComposable<RouteConversation> {
+                val viewModel =
+                    hiltViewModel<ConversationV3ViewModel, ConversationV3ViewModel.Factory> { factory ->
+                        factory.create(address, navigator)
+                    }
+
+                ConversationScreen(
+                    viewModel = viewModel,
+                    onBack = onBack,
+                )
+            }
+
             // Conversation Settings
+            //todo Convov3 we might need to recreate the convo settings to differentiate going back to convo activity vs being in the same compose graph
             horizontalSlideComposable<RouteConversationSettings> {
                 val viewModel =
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
