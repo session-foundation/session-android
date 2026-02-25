@@ -108,7 +108,7 @@ class BatchApiExecutor<Req, Res, T>(
                         }
                     }
                 } catch (e: CancellationException) {
-                    Log.e(TAG, "Main loop cancelled", e)
+                    Log.i(TAG, "Main loop cancelled")
                     throw e
                 } catch (e: ClosedReceiveChannelException) {
                     Log.e(TAG, "Channel no longer open. Stopping batch handling", e)
