@@ -129,10 +129,8 @@ class BatchApiExecutor<Req, Res, T>(
                 if (transformed.isFailure) {
                     Log.d(TAG, "Transformation of request failed", transformed.exceptionOrNull())
                     // Notify individual request of failure
-                    try {
-                        r.callback.send(Result.failure(transformed.exceptionOrNull()!!))
-                    } catch (e: Throwable) {
-                        Log.w(TAG, "Error sending transform failure back to request", e)
+                    if (!r.callback.trySend(Result.failure(transformed.exceptionOrNull()!!)).isSuccess) {
+                        Log.w(TAG, "Unable to send transform result back")
                     }
                     continue
                 }
@@ -166,7 +164,10 @@ class BatchApiExecutor<Req, Res, T>(
                 for (i in requestsToSend.indices) {
                     val (request, _) = requestsToSend[i]
                     val response = responses[i]
-                    request.callback.send(response)
+
+                    if (!request.callback.trySend(response).isSuccess) {
+                        Log.w(TAG, "Unable to send result back to individual request")
+                    }
                 }
 
             } catch (e: Throwable) {
@@ -174,10 +175,8 @@ class BatchApiExecutor<Req, Res, T>(
 
                 // Notify all requests of the failure
                 for (request in requestsToSend) {
-                    try {
-                        request.first.callback.send(Result.failure(e))
-                    } catch (e: Throwable) {
-                        Log.w(TAG, "Error sending failure back to request", e)
+                    if (!request.first.callback.trySend(Result.failure(e)).isSuccess) {
+                        Log.w(TAG, "Unable to send failure back to individual request")
                     }
                 }
             }
@@ -195,7 +194,7 @@ class BatchApiExecutor<Req, Res, T>(
         val batchKey = batcher.batchKey(req)
             ?: return actualExecutor.send(ctx, req)
 
-        val callback = Channel<Result<*>>(1)
+        val callback = Channel<Result<*>>(capacity = 1)
         batchCommandSender.send(BatchCommand.Send(
             ctx = ctx,
             batchKey = batchKey,
