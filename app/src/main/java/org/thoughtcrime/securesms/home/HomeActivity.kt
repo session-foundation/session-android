@@ -33,8 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -133,7 +131,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private val TAG = "HomeActivity"
 
     private lateinit var binding: ActivityHomeBinding
-    private lateinit var glide: RequestManager
 
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var storage: Storage
@@ -237,8 +234,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         setContentView(binding.root)
         // Set custom toolbar
         setSupportActionBar(binding.toolbar)
-        // Set up Glide
-        glide = Glide.with(this)
         // Set up toolbar buttons
         binding.profileButton.setThemedContent {
             val recipient by recipientRepository.observeSelf()
@@ -332,7 +327,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up recycler view
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
-        homeAdapter.glide = glide
         binding.conversationsRecyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 

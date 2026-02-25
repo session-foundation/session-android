@@ -126,7 +126,7 @@ class SnodeClock @Inject constructor(
                                 val requestStarted = SystemClock.elapsedRealtime()
                                 var networkTime = snodeApiExecutor.get().execute(
                                     SnodeApiRequest(
-                                        snode = snodeDirectory.getRandomSnode(),
+                                        snode = node,
                                         api = getInfoApi.get(),
                                     )
                                 ).timestamp.toEpochMilli()
@@ -172,7 +172,7 @@ class SnodeClock @Inject constructor(
     }
 
     private suspend fun pickDistinctRandomSnodes(count: Int): List<org.session.libsignal.utilities.Snode> {
-        val out = LinkedHashSet<org.session.libsignal.utilities.Snode>(count)
+        val out = ArrayList<org.session.libsignal.utilities.Snode>(count)
         var guard = 0
         // Added a sanity check for pool size to prevent infinite loops if pool is tiny
         val poolSize = snodeDirectory.getSnodePool().size
@@ -180,7 +180,7 @@ class SnodeClock @Inject constructor(
         while (out.size < count && out.size < poolSize && guard++ < 20) {
             out += snodeDirectory.getRandomSnode()
         }
-        return out.toList()
+        return out
     }
 
     /**
