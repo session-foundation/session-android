@@ -213,8 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name}でQRコードをスキャンするにはカメラへのアクセスが必要です</string>
     <string name="cancel">キャンセル</string>
     <string name="cancelAccess">{pro} をキャンセル</string>
-    <string name="cancelProPlatform">{platform} のウェブサイトで、{pro} に登録した {platform_account} を使用してキャンセルしてください。</string>
-    <string name="cancelProPlatformStore">{platform_store} のウェブサイトで、{pro} に登録した {platform_account} を使用してキャンセルしてください。</string>
     <string name="change">変更</string>
     <string name="changePasswordFail">パスワードの変更に失敗しました</string>
     <string name="changePasswordModalDescription">{app_name} のパスワードを変更します。ローカルに保存されたデータは、新しいパスワードで再暗号化されます。</string>

@@ -216,8 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} heeft toegang tot de camera nodig om QR-codes te scannen</string>
     <string name="cancel">Annuleren</string>
     <string name="cancelAccess">{pro} annuleren</string>
-    <string name="cancelProPlatform">Annuleer op de {platform}-website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
-    <string name="cancelProPlatformStore">Annuleer op de {platform_store}-website met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="change">Wijzigen</string>
     <string name="changePasswordFail">Wachtwoord wijzigen mislukt</string>
     <string name="changePasswordModalDescription">Wijzig je wachtwoord voor {app_name}. Lokaal opgeslagen gegevens worden opnieuw versleuteld met je nieuwe wachtwoord.</string>

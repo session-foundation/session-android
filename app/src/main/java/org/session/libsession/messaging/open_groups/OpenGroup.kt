@@ -34,16 +34,5 @@ data class OpenGroup(
 
     }
 
-    fun toCommunityInfo(): BaseCommunityInfo {
-        return BaseCommunityInfo(
-            baseUrl = server,
-            room = room,
-            pubKeyHex = publicKey,
-        )
-    }
-
-
-    val joinURL: String get() = "$server/$room?public_key=$publicKey"
-
     val groupId: String get() = "$server.$room"
 }

@@ -216,8 +216,6 @@
     <string name="cameraGrantAccessQr">क्यूआर कोड स्कैन करने के लिए {app_name} को कैमरा एक्सेस की आवश्यकता है</string>
     <string name="cancel">रद्द करना |</string>
     <string name="cancelAccess">{pro} रद्द करें</string>
-    <string name="cancelProPlatform">{platform} वेबसाइट पर जाकर {pro} रद्द करें, उस {platform_account} का उपयोग करके जिससे आपने साइन अप किया था।</string>
-    <string name="cancelProPlatformStore">{platform_store} वेबसाइट पर जाकर {pro} रद्द करें, उस {platform_account} का उपयोग करके जिससे आपने साइन अप किया था।</string>
     <string name="change">बदलें</string>
     <string name="changePasswordFail">पासवर्ड बदलने में विफल रहा</string>
     <string name="changePasswordModalDescription">{app_name} के लिए अपना पासवर्ड बदलें। स्थानीय रूप से संग्रहीत डेटा फिर से आपके नए पासवर्ड से एन्क्रिप्ट किया जाएगा।</string>

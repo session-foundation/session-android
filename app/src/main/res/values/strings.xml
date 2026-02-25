@@ -217,8 +217,8 @@
     <string name="cameraGrantAccessQr">{app_name} needs camera access to scan QR codes</string>
     <string name="cancel">Cancel</string>
     <string name="cancelAccess">Cancel {pro}</string>
-    <string name="cancelProPlatform">Cancel on the {platform} website, using the {platform_account} you signed up for {pro} with.</string>
-    <string name="cancelProPlatformStore">Cancel on the {platform_store} website, using the {platform_account} you signed up for {pro} with.</string>
+    <string name="cancelProPlatform">Cancel on the <font color="0">{platform} website</font>, using the {platform_account} you signed up for {pro} with.</string>
+    <string name="cancelProPlatformStore">Cancel on the <font color="0">{platform_store} website</font>, using the {platform_account} you signed up for {pro} with.</string>
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
