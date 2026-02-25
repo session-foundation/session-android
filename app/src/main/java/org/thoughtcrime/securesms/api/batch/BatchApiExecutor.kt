@@ -4,7 +4,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsignal.utilities.Log
@@ -44,62 +48,73 @@ class BatchApiExecutor<Req, Res, T>(
             val pendingRequests = linkedMapOf<Any, BatchInfo<Req, Res>>()
             var nextDeadline: ComparableTimeMark? = null
 
-            while (true) {
-                val command: BatchCommand<Req, Res>? = if (nextDeadline == null) {
-                    channel.receive()
-                } else {
-                    val now = timeSource.markNow()
-                    if (nextDeadline > now) {
-                        withTimeoutOrNull(nextDeadline - now) {
-                            channel.receive()
-                        }
+            while (isActive) {
+                try {
+                    val command: BatchCommand<Req, Res>? = if (nextDeadline == null) {
+                        channel.receive()
                     } else {
-                        // Deadline already reached
-                        null
-                    }
-                }
-
-                var calculateNextDeadline = false
-
-                when (command) {
-                    is BatchCommand.Send<Req, Res> -> {
-                        val existingBatch = pendingRequests[command.batchKey]
-                        if (existingBatch == null) {
-                            pendingRequests[command.batchKey] = BatchInfo(
-                                requests = arrayListOf(command),
-                                deadline = timeSource.markNow() + 100.milliseconds
-                            )
-
-                            calculateNextDeadline = true
+                        val now = timeSource.markNow()
+                        if (nextDeadline > now) {
+                            withTimeoutOrNull(nextDeadline - now) {
+                                channel.receive()
+                            }
                         } else {
-                            existingBatch.requests.add(command)
+                            // Deadline already reached
+                            null
                         }
                     }
 
-                    is BatchCommand.Cancel<Req, Res> -> {
-                        val existingBatch = pendingRequests[command.batchKey]
-                        if (existingBatch != null) {
-                            existingBatch.requests.removeIf { it.req == command.req }
-                            if (existingBatch.requests.isEmpty()) {
-                                pendingRequests.remove(command.batchKey)
+                    var calculateNextDeadline = false
+
+                    when (command) {
+                        is BatchCommand.Send<Req, Res> -> {
+                            val existingBatch = pendingRequests[command.batchKey]
+                            if (existingBatch == null) {
+                                pendingRequests[command.batchKey] = BatchInfo(
+                                    requests = arrayListOf(command),
+                                    deadline = timeSource.markNow() + 100.milliseconds
+                                )
+
                                 calculateNextDeadline = true
+                            } else {
+                                existingBatch.requests.add(command)
                             }
                         }
+
+                        is BatchCommand.Cancel<Req, Res> -> {
+                            val existingBatch = pendingRequests[command.batchKey]
+                            if (existingBatch != null) {
+                                existingBatch.requests.removeIf { it.req == command.req }
+                                if (existingBatch.requests.isEmpty()) {
+                                    pendingRequests.remove(command.batchKey)
+                                    calculateNextDeadline = true
+                                }
+                            }
+                        }
+
+                        null -> {
+                            // Deadline reached: it will be the first batch in the queue
+                            executeBatch(pendingRequests.removeFirst())
+                            calculateNextDeadline = true
+                        }
                     }
 
-                    null -> {
-                        // Deadline reached: it will be the first batch in the queue
-                        executeBatch(pendingRequests.removeFirst())
-                        calculateNextDeadline = true
+                    if (calculateNextDeadline) {
+                        nextDeadline = if (pendingRequests.isEmpty()) {
+                            null
+                        } else {
+                            pendingRequests.values.first().deadline
+                        }
                     }
-                }
-
-                if (calculateNextDeadline) {
-                    nextDeadline = if (pendingRequests.isEmpty()) {
-                        null
-                    } else {
-                        pendingRequests.values.first().deadline
-                    }
+                } catch (e: CancellationException) {
+                    Log.e(TAG, "Main loop cancelled", e)
+                    throw e
+                } catch (e: ClosedReceiveChannelException) {
+                    Log.e(TAG, "Channel no longer open. Stopping batch handling", e)
+                    break
+                } catch (e: Throwable) {
+                    Log.e(TAG, "Error in main loop. Retrying in 1s", e)
+                    delay(1000)
                 }
             }
         }
