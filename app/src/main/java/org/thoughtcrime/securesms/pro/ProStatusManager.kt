@@ -9,8 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -27,7 +25,6 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
@@ -46,7 +43,6 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.userConfigsChanged
@@ -63,6 +59,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
 import org.thoughtcrime.securesms.pro.api.AddProPaymentApi
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
@@ -84,7 +81,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Singleton
 class ProStatusManager @Inject constructor(
     private val application: Application,
-    private val prefs: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     @param:ManagerScope private val scope: CoroutineScope,
     private val serverApiExecutor: ServerApiExecutor,
     private val addProPaymentApiFactory: AddProPaymentApi.Factory,
@@ -108,15 +105,9 @@ class ProStatusManager @Inject constructor(
                 }
                 .distinctUntilChanged(),
             proDetailsRepository.get().loadState,
-            (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
-                .onStart { emit(Unit) }
-                .map { prefs.getDebugSubscriptionType() },
-            (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
-                .onStart { emit(Unit) }
-                .map { prefs.getDebugProPlanStatus() },
-            (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
-                .onStart { emit(Unit) }
-                .map { prefs.forceCurrentUserAsPro() },
+            prefs.watch(scope, ProPreferenceKeys.DEBUG_SUBSCRIPTION_STATUS),
+            prefs.watch(scope, ProPreferenceKeys.DEBUG_PRO_PLAN_STATUS),
+            prefs.watch(scope, ProPreferenceKeys.FORCE_CURRENT_USER_PRO),
         ){ showProBadgePreference, proDetailsState,
            debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
@@ -225,17 +216,7 @@ class ProStatusManager @Inject constructor(
         initialValue = getDefaultSubscriptionStateData()
     )
 
-    private val _postProLaunchStatus = MutableStateFlow(isPostPro())
-    val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
-
-
-    init {
-        scope.launch {
-            prefs.watchPostProStatus().collect {
-                _postProLaunchStatus.update { isPostPro() }
-            }
-        }
-    }
+    val postProLaunchStatus: StateFlow<Boolean> = prefs.watch(scope, ProPreferenceKeys.FORCE_POST_PRO)
 
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
         launch {
@@ -412,7 +393,7 @@ class ProStatusManager @Inject constructor(
     fun getIncomingMessageMaxLength(message: VisibleMessage): Int {
         // if the debug is set, return that
         // of if we are in pre-pro world
-        if (prefs.forceIncomingMessagesAsPro() || !isPostPro()) return MAX_CHARACTER_PRO
+        if (prefs[ProPreferenceKeys.FORCE_INCOMING_MESSAGE_PRO] || !isPostPro()) return MAX_CHARACTER_PRO
 
         if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
             return MAX_CHARACTER_PRO
@@ -423,7 +404,7 @@ class ProStatusManager @Inject constructor(
 
     // Temporary method and concept that we should remove once Pro is out
     fun isPostPro(): Boolean {
-        return prefs.forcePostPro()
+        return postProLaunchStatus.value
     }
 
     fun getCharacterLimit(isPro: Boolean): Int {
@@ -441,8 +422,11 @@ class ProStatusManager @Inject constructor(
      */
     fun getMessageProFeatures(message: MessageRecord): Set<ProFeature> {
         // use debug values if any
-        if(prefs.forceIncomingMessagesAsPro()){
-            return prefs.getDebugMessageFeatures()
+        if(prefs[ProPreferenceKeys.FORCE_INCOMING_MESSAGE_PRO]){
+            return buildSet {
+                prefs[ProPreferenceKeys.DEBUG_PRO_MESSAGE_FEATURES].toProMessageFeatures(this)
+                prefs[ProPreferenceKeys.DEBUG_PRO_PROFILE_FEATURES].toProProfileFeatures(this)
+            }
         }
 
         return message.proFeatures

@@ -6,12 +6,10 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.*
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
-import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.preferences.TestPreferenceStorage
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -29,7 +27,7 @@ import java.util.concurrent.TimeUnit
 class DateUtilsTest {
 
     private lateinit var context: Context
-    private lateinit var preferences: TextSecurePreferences
+    private lateinit var preferences: PreferenceStorage
     private lateinit var dateUtils: DateUtils
 
     // Fixed test timestamps
@@ -46,17 +44,10 @@ class DateUtilsTest {
         // Get Robolectric context - this will be a real implementation, not a mock
         context = org.robolectric.RuntimeEnvironment.getApplication()
 
-        // Mock preferences with explicit system behavior handling
-        preferences = mock(TextSecurePreferences::class.java)
-
-        // Mock the date format preference
-        `when`(preferences.getStringPreference(DATE_FORMAT_PREF, "dd/MM/yyyy"))
-            .thenReturn("dd/MM/yyyy")
-
-        // For time format, we need to account for the system's 24-hour format setting
-        val systemDefault = if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
-        `when`(preferences.getStringPreference(TIME_FORMAT_PREF, systemDefault))
-            .thenReturn("HH:mm") // Force 24-hour format for consistent testing
+        preferences = TestPreferenceStorage().apply {
+            this[DateTimePreferenceKeys.DATE_FORMAT] = "dd/MM/yyyy"
+            this[DateTimePreferenceKeys.TIME_FORMAT] = "HH:mm" // Force 24-hour for consistent testing
+        }
 
         // Create the real DateUtils with a Robolectric context
         dateUtils = DateUtils(context, preferences)
@@ -67,13 +58,10 @@ class DateUtilsTest {
         assertEquals("dd/MM/yyyy", dateUtils.getDateFormat())
 
         // Test with a different preference value
-        val newPreferences = mock(TextSecurePreferences::class.java)
-        `when`(newPreferences.getStringPreference(DATE_FORMAT_PREF, "dd/MM/yyyy"))
-            .thenReturn("yyyy-MM-dd")
-
-        val systemDefault = if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
-        `when`(newPreferences.getStringPreference(TIME_FORMAT_PREF, systemDefault))
-            .thenReturn("HH:mm")
+        val newPreferences = TestPreferenceStorage().apply {
+            this[DateTimePreferenceKeys.DATE_FORMAT] = "yyyy-MM-dd"
+            this[DateTimePreferenceKeys.TIME_FORMAT] = "HH:mm"
+        }
 
         val newDateUtils = DateUtils(context, newPreferences)
         assertEquals("yyyy-MM-dd", newDateUtils.getDateFormat())
@@ -84,13 +72,10 @@ class DateUtilsTest {
         assertEquals("HH:mm", dateUtils.getTimeFormat())
 
         // Test with a different preference value
-        val newPreferences = mock(TextSecurePreferences::class.java)
-        `when`(newPreferences.getStringPreference(DATE_FORMAT_PREF, "dd/MM/yyyy"))
-            .thenReturn("dd/MM/yyyy")
-
-        val systemDefault = if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
-        `when`(newPreferences.getStringPreference(TIME_FORMAT_PREF, systemDefault))
-            .thenReturn("h:mm")
+        val newPreferences = TestPreferenceStorage().apply {
+            this[DateTimePreferenceKeys.DATE_FORMAT] = "dd/MM/yyyy"
+            this[DateTimePreferenceKeys.TIME_FORMAT] = "h:mm"
+        }
 
         val newDateUtils = DateUtils(context, newPreferences)
         assertEquals("h:mm", newDateUtils.getTimeFormat())
@@ -138,8 +123,6 @@ class DateUtilsTest {
 
     @Test
     fun `test updatePreferredDateFormat with valid format`() {
-        val captor = org.mockito.ArgumentCaptor.forClass(String::class.java)
-
         // First, get the list of valid patterns to ensure we use one that exists
         val validPatterns = dateUtils.getUiPrintableDatePatterns()
         println("Available date patterns: $validPatterns")
@@ -158,14 +141,11 @@ class DateUtilsTest {
 
         dateUtils.updatePreferredDateFormat(validFormat)
 
-        verify(preferences).setStringPreference(eq(DATE_FORMAT_PREF), captor.capture())
-        assertEquals(validFormat, captor.value)
+        assertEquals(validFormat, preferences[DateTimePreferenceKeys.DATE_FORMAT])
     }
 
     @Test
     fun `test updatePreferredDateFormat validates against actual valid patterns`() {
-        val captor = org.mockito.ArgumentCaptor.forClass(String::class.java)
-
         // Get the actual valid patterns from the DateUtils implementation
         val validPatterns = dateUtils.getUiPrintableDatePatterns()
 
@@ -183,51 +163,38 @@ class DateUtilsTest {
 
         dateUtils.updatePreferredDateFormat(testPattern)
 
-        verify(preferences).setStringPreference(eq(DATE_FORMAT_PREF), captor.capture())
+        val storedValue = preferences[DateTimePreferenceKeys.DATE_FORMAT]
 
         // The captured value should be the test pattern if it was valid,
         // or the default if it wasn't
         assertTrue("Expected either the test pattern or default pattern",
-            captor.value == testPattern || captor.value == "dd/MM/yyyy")
+            storedValue == testPattern || storedValue == "dd/MM/yyyy")
 
         // If it's not the test pattern, it should be because the pattern wasn't actually valid
-        if (captor.value != testPattern) {
+        if (storedValue != testPattern) {
             println("Pattern '$testPattern' was not accepted, fell back to default")
         }
     }
 
     @Test
     fun `test updatePreferredDateFormat with invalid format falls back to default`() {
-        val captor = org.mockito.ArgumentCaptor.forClass(String::class.java)
-
         // Use an invalid format
         dateUtils.updatePreferredDateFormat("invalid-format")
 
-        verify(preferences).setStringPreference(eq(DATE_FORMAT_PREF), captor.capture())
-        assertEquals("dd/MM/yyyy", captor.value) // Should fall back to default
+        assertEquals("dd/MM/yyyy", preferences[DateTimePreferenceKeys.DATE_FORMAT]) // Should fall back to default
     }
 
     @Test
     fun `test updatePreferredTimeFormat updates preference`() {
-        val captor = org.mockito.ArgumentCaptor.forClass(String::class.java)
-
         // Update with valid format
         dateUtils.updatePreferredTimeFormat("h:mm")
 
-        verify(preferences).setStringPreference(eq(TIME_FORMAT_PREF), captor.capture())
-        assertEquals("h:mm", captor.value)
-
-        // Reset for next test
-        reset(preferences)
-        val systemDefault = if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
-        `when`(preferences.getStringPreference(TIME_FORMAT_PREF, systemDefault))
-            .thenReturn("HH:mm")
+        assertEquals("h:mm", preferences[DateTimePreferenceKeys.TIME_FORMAT])
 
         // Test with invalid format
         dateUtils.updatePreferredTimeFormat("invalid-format")
 
-        verify(preferences).setStringPreference(eq(TIME_FORMAT_PREF), captor.capture())
-        assertEquals("HH:mm", captor.value) // Should default to 24-hour format
+        assertEquals("HH:mm", preferences[DateTimePreferenceKeys.TIME_FORMAT]) // Should default to 24-hour format
     }
 
     @Test
@@ -257,7 +224,7 @@ class DateUtilsTest {
 class DateUtilsTimeSpanTest {
 
     private lateinit var context: Context
-    private lateinit var preferences: TextSecurePreferences
+    private lateinit var preferences: PreferenceStorage
     private lateinit var dateUtils: DateUtils
 
     // Fixed point in time to base all tests on - April 15, 2023 at 12:00 UTC
@@ -271,14 +238,10 @@ class DateUtilsTimeSpanTest {
         // Get Robolectric context
         context = org.robolectric.RuntimeEnvironment.getApplication()
 
-        // Mock preferences accounting for system 24-hour format
-        preferences = mock(TextSecurePreferences::class.java)
-        `when`(preferences.getStringPreference(DATE_FORMAT_PREF, "dd/MM/yyyy"))
-            .thenReturn("dd/MM/yyyy")
-
-        val systemDefault = if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
-        `when`(preferences.getStringPreference(TIME_FORMAT_PREF, systemDefault))
-            .thenReturn("HH:mm") // Force 24-hour for consistent testing
+        preferences = TestPreferenceStorage().apply {
+            this[DateTimePreferenceKeys.DATE_FORMAT] = "dd/MM/yyyy"
+            this[DateTimePreferenceKeys.TIME_FORMAT] = "HH:mm" // Force 24-hour for consistent testing
+        }
 
         dateUtils = DateUtils(context, preferences)
     }
@@ -322,12 +285,9 @@ class DateUtilsTimeSpanTest {
     @Test
     fun `getDisplayFormattedTimeSpanString adapts based on preferred time format`() {
         // Create preferences with 12-hour time format
-        val twelveHourPrefs = mock(TextSecurePreferences::class.java).apply {
-            `when`(getStringPreference(DATE_FORMAT_PREF, "dd/MM/yyyy")).thenReturn("dd/MM/yyyy")
-
-            // Mock both possible system defaults to ensure we get what we want
-            val systemDefault = if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
-            `when`(getStringPreference(TIME_FORMAT_PREF, systemDefault)).thenReturn("h:mm")
+        val twelveHourPrefs = TestPreferenceStorage().apply {
+            this[DateTimePreferenceKeys.DATE_FORMAT] = "dd/MM/yyyy"
+            this[DateTimePreferenceKeys.TIME_FORMAT] = "h:mm"
         }
         val twelveHourDateUtils = DateUtils(context, twelveHourPrefs)
 

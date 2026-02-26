@@ -12,21 +12,16 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.onboarding.messagenotifications.startMessageNotificationsActivity
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
-import javax.inject.Inject
 
 private const val EXTRA_LOAD_FAILED = "extra_load_failed"
 
 @AndroidEntryPoint
 class PickDisplayNameActivity : BaseActionBarActivity() {
-
-    @Inject
-    internal lateinit var prefs: TextSecurePreferences
 
     private val viewModel: PickDisplayNameViewModel by viewModels(extrasProducer = {
         defaultViewModelCreationExtras.withCreationCallback<PickDisplayNameViewModel.Factory> {

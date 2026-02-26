@@ -16,23 +16,20 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.pro.ProPreferenceKeys
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
@@ -45,7 +42,7 @@ import javax.inject.Singleton
 class PlayStoreSubscriptionManager @Inject constructor(
     private val application: Application,
     private val currentActivityObserver: CurrentActivityObserver,
-    private val prefs: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     private val loginStateRepository: LoginStateRepository,
     proStatusManager: ProStatusManager,
     @param:ManagerScope scope: CoroutineScope,
@@ -61,9 +58,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
     // generic billing support method. Uses the property above and also checks the debug pref
     override val supportsBilling: StateFlow<Boolean> = combine(
         _playBillingAvailable,
-        (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_FORCE_NO_BILLING } as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { prefs.getDebugForceNoBilling() },
+        prefs.watch(scope, ProPreferenceKeys.DEBUG_FORCE_NO_BILLING),
         ){ available, forceNoBilling ->
             !forceNoBilling && available
         }
@@ -280,7 +275,7 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
     override suspend fun hasValidSubscription(): Boolean {
         // if in debug mode, always return true
-        return if(prefs.forceCurrentUserAsPro()) true
+        return if(prefs[ProPreferenceKeys.FORCE_CURRENT_USER_PRO]) true
         else getExistingSubscription() != null
     }
 

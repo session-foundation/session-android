@@ -6,8 +6,6 @@ import app.cash.turbine.test
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.plus
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -15,9 +13,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.kotlin.any
-import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import org.thoughtcrime.securesms.preferences.TestPreferenceStorage
 import org.thoughtcrime.securesms.util.MockLoggingRule
 import java.util.EnumSet
 
@@ -180,20 +178,12 @@ fun TestScope.createManager(
         }
     }
 
-    var reviewState: String? = null
-
     return InAppReviewManager(
         context = mock {
             on { packageManager } doReturn pm
             on { packageName } doReturn "mypackage.name"
         },
-        prefs = mock {
-            on { inAppReviewState } doAnswer { reviewState }
-            on { inAppReviewState = any() } doAnswer { reviewState = it.arguments[0] as? String }
-        },
-        json = Json {
-            serializersModule += ReviewsSerializerModule().provideReviewsSerializersModule()
-        },
+        prefs = TestPreferenceStorage(),
         storeReviewManager = mock {
             on { supportsReviewFlow } doReturn supportInAppReviewFlow
         },

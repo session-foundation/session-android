@@ -2,16 +2,17 @@ package org.thoughtcrime.securesms.sskenvironment
 
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ReadReceiptManagerProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.preferences.CommunicationPreferenceKeys
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ReadReceiptManager @Inject constructor(
-    private val textSecurePreferences: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     private val mmsSmsDatabase: MmsSmsDatabase,
 ): ReadReceiptManagerProtocol {
 
@@ -20,7 +21,7 @@ class ReadReceiptManager @Inject constructor(
         sentTimestamps: List<Long>,
         readTimestamp: Long
     ) {
-        if (textSecurePreferences.isReadReceiptsEnabled()) {
+        if (prefs[CommunicationPreferenceKeys.READ_RECEIPTS]) {
 
             // Redirect message to master device conversation
             var address = Address.fromSerialized(fromRecipientId)

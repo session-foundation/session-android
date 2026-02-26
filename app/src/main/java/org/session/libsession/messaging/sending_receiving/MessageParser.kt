@@ -21,7 +21,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
@@ -30,6 +29,8 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.protos.SessionProtos
+import org.thoughtcrime.securesms.preferences.CommunicationPreferenceKeys
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.pro.ProBackendConfig
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -42,7 +43,7 @@ class MessageParser @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
-    private val prefs: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     private val proBackendConfig: Provider<ProBackendConfig>,
 ) {
 
@@ -143,7 +144,7 @@ class MessageParser @Inject constructor(
         message.isSenderSelf = isSenderSelf
 
         // Only process pro features post pro launch
-        if (prefs.forcePostPro()) {
+        if (prefs[CommunicationPreferenceKeys.FORCE_POST_PRO]) {
             if (pro?.status == ProProof.STATUS_VALID) {
                 (message as? VisibleMessage)?.proFeatures = buildSet {
                     addAll(pro.proMessageFeatures.asSequence())

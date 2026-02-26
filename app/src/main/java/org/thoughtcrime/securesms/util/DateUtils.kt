@@ -7,10 +7,8 @@ import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
-import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -34,7 +32,7 @@ enum class RelativeDay { TODAY, YESTERDAY, TOMORROW }
 @Singleton
 class DateUtils @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val textSecurePreferences: TextSecurePreferences
+    private val prefs: PreferenceStorage
 ) {
     private val tag = "DateUtils"
 
@@ -63,20 +61,18 @@ class DateUtils @Inject constructor(
 
     // User preferences with property accessors
     private var userDateFormat: String
-        get() = textSecurePreferences.getStringPreference(DATE_FORMAT_PREF, defaultDateFormat)!!
+        get() = prefs[DateTimePreferenceKeys.DATE_FORMAT] ?: defaultDateFormat
         private set(value) {
-            textSecurePreferences.setStringPreference(DATE_FORMAT_PREF, value)
+            prefs[DateTimePreferenceKeys.DATE_FORMAT] = value
         }
 
     // The user time format is the one chosen by the user,if they chose one from the ui (not yet available but coming later)
     // Or we check for the system preference setting for 12 vs 24h format
     private var userTimeFormat: String
-        get() = textSecurePreferences.getStringPreference(
-            TIME_FORMAT_PREF,
-            if (DateFormat.is24HourFormat(context)) defaultTimeFormat else twelveHourFormat
-        )!!
+        get() = prefs[DateTimePreferenceKeys.TIME_FORMAT]
+            ?: if (DateFormat.is24HourFormat(context)) defaultTimeFormat else twelveHourFormat
         private set(value) {
-            textSecurePreferences.setStringPreference(TIME_FORMAT_PREF, value)
+            prefs[DateTimePreferenceKeys.TIME_FORMAT] = value
         }
 
     // Public getters

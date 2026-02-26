@@ -10,23 +10,14 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.protocol.ProFeature
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature
-import network.loki.messenger.libsession_util.protocol.ProProfileFeature
-import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
@@ -43,7 +34,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_S
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_CHECKED_DOZE_WHITELIST
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
-import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
@@ -60,18 +50,11 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SEEN_DON
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SEND_WITH_ENTER
-import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
-import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
-import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO
-import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
-import org.thoughtcrime.securesms.pro.toProMessageFeatures
-import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -166,21 +149,10 @@ interface TextSecurePreferences {
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
     fun setHasSeenLinkPreviewSuggestionDialog()
-    fun hasHiddenMessageRequests(): Boolean
-    fun setHasHiddenMessageRequests(hidden: Boolean)
-    fun forceCurrentUserAsPro(): Boolean
-    fun setForceCurrentUserAsPro(isPro: Boolean)
-    fun forceOtherUsersAsPro(): Boolean
-    fun setForceOtherUsersAsPro(isPro: Boolean)
-    fun forceIncomingMessagesAsPro(): Boolean
-    fun setForceIncomingMessagesAsPro(isPro: Boolean)
-    fun forcePostPro(): Boolean
-    fun setForcePostPro(postPro: Boolean)
     fun hasSeenProExpiring(): Boolean
     fun setHasSeenProExpiring()
     fun hasSeenProExpired(): Boolean
     fun setHasSeenProExpired()
-    fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
     fun setCallNotificationsEnabled(enabled : Boolean)
@@ -212,18 +184,6 @@ interface TextSecurePreferences {
     fun setHasSeenTokenPageNotification(value: Boolean)
     fun forcedShortTTL(): Boolean
     fun setForcedShortTTL(value: Boolean)
-
-    fun  getDebugMessageFeatures(): Set<ProFeature>
-    fun  setDebugMessageFeatures(features: Set<ProFeature>)
-
-    fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
-    fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
-    fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
-    fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
-    fun getDebugForceNoBilling(): Boolean
-    fun setDebugForceNoBilling(hasBilling: Boolean)
-    fun getDebugIsWithinQuickRefund(): Boolean
-    fun setDebugIsWithinQuickRefund(isWithin: Boolean)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -326,11 +286,6 @@ interface TextSecurePreferences {
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
-        const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
-        const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
-        const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
-        const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
-        const val SET_FORCE_POST_PRO = "pref_force_post_pro"
         const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
         const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
@@ -392,13 +347,6 @@ interface TextSecurePreferences {
         const val FORCED_SHORT_TTL = "forced_short_ttl"
 
         const val IN_APP_REVIEW_STATE = "in_app_review_state"
-
-        const val DEBUG_PRO_MESSAGE_FEATURES = "debug_pro_message_features"
-        const val DEBUG_PRO_PROFILE_FEATURES = "debug_pro_profile_features"
-        const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
-        const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
-        const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
-        const val DEBUG_WITHIN_QUICK_REFUND = "debug_within_quick_refund"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
@@ -611,12 +559,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun removeHasHiddenMessageRequests(context: Context) {
-            removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
-            _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
-        }
-
-        @JvmStatic
         fun isCallNotificationsEnabled(context: Context): Boolean {
             return getBooleanPreference(context, CALL_NOTIFICATIONS_ENABLED, false)
         }
@@ -660,7 +602,6 @@ class AppTextSecurePreferences @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val json: Json,
 ): TextSecurePreferences {
-    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, if (BuildConfig.BUILD_TYPE != "release") true else false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
     override var migratedToGroupV2Config: Boolean
@@ -1144,50 +1085,6 @@ class AppTextSecurePreferences @Inject constructor(
         return previousValue != setValue
     }
 
-    override fun hasHiddenMessageRequests(): Boolean {
-        return getBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, false)
-    }
-
-    override fun setHasHiddenMessageRequests(hidden: Boolean) {
-        setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
-        _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
-    }
-    override fun forceCurrentUserAsPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
-    }
-
-    override fun setForceCurrentUserAsPro(isPro: Boolean) {
-        setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, isPro)
-        _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
-    }
-
-    override fun forceOtherUsersAsPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_OTHER_USERS_PRO, false)
-    }
-
-    override fun setForceOtherUsersAsPro(isPro: Boolean) {
-        setBooleanPreference(SET_FORCE_OTHER_USERS_PRO, isPro)
-        _events.tryEmit(SET_FORCE_OTHER_USERS_PRO)
-    }
-
-    override fun forceIncomingMessagesAsPro(): Boolean {
-        return getBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, false)
-    }
-
-    override fun setForceIncomingMessagesAsPro(isPro: Boolean) {
-        setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, isPro)
-    }
-
-    override fun forcePostPro(): Boolean {
-        return postProLaunchState.value
-    }
-
-    override fun setForcePostPro(postPro: Boolean) {
-        setBooleanPreference(SET_FORCE_POST_PRO, postPro)
-        postProLaunchState.update { postPro }
-        _events.tryEmit(SET_FORCE_POST_PRO)
-    }
-
     override fun hasSeenProExpiring(): Boolean {
         return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
     }
@@ -1202,10 +1099,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasSeenProExpired() {
         setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
-    }
-
-    override fun watchPostProStatus(): StateFlow<Boolean> {
-        return postProLaunchState
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {
@@ -1312,7 +1205,6 @@ class AppTextSecurePreferences @Inject constructor(
      */
     override fun clearAll() {
         pushEnabled.update { false }
-        postProLaunchState.update { false }
         hiddenPasswordState.update { false }
 
         getDefaultSharedPreferences(context).edit(commit = true) { clear() }
@@ -1378,58 +1270,6 @@ class AppTextSecurePreferences @Inject constructor(
                 setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
-    override fun getDebugMessageFeatures(): Set<ProFeature> {
-        return buildSet {
-            getLongPreference(TextSecurePreferences.DEBUG_PRO_MESSAGE_FEATURES, 0L).toProMessageFeatures(this)
-            getLongPreference(TextSecurePreferences.DEBUG_PRO_PROFILE_FEATURES, 0L).toProProfileFeatures(this)
-        }
-    }
-
-    override fun setDebugMessageFeatures(features: Set<ProFeature>) {
-        setLongPreference(TextSecurePreferences.DEBUG_PRO_MESSAGE_FEATURES, features.filterIsInstance<ProMessageFeature>().toBitSet().rawValue)
-        setLongPreference(TextSecurePreferences.DEBUG_PRO_PROFILE_FEATURES, features.filterIsInstance<ProProfileFeature>().toBitSet().rawValue)
-    }
-
-    override fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus? {
-        return getStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, null)?.let {
-            DebugMenuViewModel.DebugSubscriptionStatus.valueOf(it)
-        }
-    }
-
-    override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
-        setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
-        _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
-    }
-
-    override fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus? {
-        return getStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, null)?.let {
-            DebugMenuViewModel.DebugProPlanStatus.valueOf(it)
-        }
-    }
-
-    override fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?) {
-        setStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, status?.name)
-        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS)
-    }
-
-    override fun getDebugForceNoBilling(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, false)
-    }
-
-    override fun setDebugForceNoBilling(hasBilling: Boolean) {
-        setBooleanPreference(TextSecurePreferences.DEBUG_FORCE_NO_BILLING, hasBilling)
-        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
-    }
-
-    override fun getDebugIsWithinQuickRefund(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, false)
-    }
-
-    override fun setDebugIsWithinQuickRefund(isWithin: Boolean) {
-        setBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin)
-        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
-    }
-
     override fun getSubscriptionProvider(): String? {
         return getStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, null)
     }
@@ -1548,23 +1388,3 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(key)
     }
 }
-
-fun TextSecurePreferences.observeBooleanKey(
-    key: String,
-    default: Boolean
-): Flow<Boolean> =
-    TextSecurePreferences.events
-        .filter { it == key }
-        .onStart { emit(key) } // trigger initial read
-        .map { getBooleanPreference(key, default) }
-        .distinctUntilChanged()
-
-fun TextSecurePreferences.observeStringKey(
-    key: String,
-    default: String?
-): Flow<String?> =
-    TextSecurePreferences.events
-        .filter { it == key }
-        .onStart { emit(key) }
-        .map { getStringPreference(key, default) }
-        .distinctUntilChanged()

@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.startHomeActivity
@@ -21,9 +20,6 @@ class LoadingActivity: BaseActionBarActivity() {
 
     @Inject
     internal lateinit var configFactory: ConfigFactory
-
-    @Inject
-    internal lateinit var prefs: TextSecurePreferences
 
     private val viewModel: LoadingViewModel by viewModels()
 

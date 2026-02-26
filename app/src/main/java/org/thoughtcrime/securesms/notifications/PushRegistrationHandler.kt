@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsession.utilities.withUserConfigs
@@ -21,6 +21,8 @@ import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.database.PushRegistrationDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.CommunicationPreferenceKeys
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicBoolean
@@ -34,7 +36,7 @@ import javax.inject.Singleton
 @Singleton
 class PushRegistrationHandler @Inject constructor(
     private val configFactory: ConfigFactory,
-    private val preferences: TextSecurePreferences,
+    private val preferences: PreferenceStorage,
     private val tokenFetcher: TokenFetcher,
     @param:ApplicationContext private val context: Context,
     @param:PushNotificationModule.PushProcessingSemaphore
@@ -52,7 +54,10 @@ class PushRegistrationHandler @Inject constructor(
             )
                 .castAwayType()
                 .onStart { emit(Unit) },
-            preferences.pushEnabled,
+            preferences.changes()
+                .filter { it.name == CommunicationPreferenceKeys.PUSH_ENABLED.name }
+                .onStart { emit(CommunicationPreferenceKeys.PUSH_ENABLED) }
+                .map { preferences[CommunicationPreferenceKeys.PUSH_ENABLED] },
             tokenFetcher.token.filterNotNull().filter { !it.isBlank() }
         ) { _, enabled, token ->
             if (enabled) {

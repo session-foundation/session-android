@@ -34,7 +34,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
@@ -69,8 +68,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val prefs: TextSecurePreferences,
-    private val prefStorage: PreferenceStorage,
+    private val prefs: PreferenceStorage,
     private val loginStateRepository: LoginStateRepository,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
@@ -143,14 +141,12 @@ class HomeViewModel @Inject constructor(
         observeTypingStatus(),
 
         // Third flow: whether the user has marked message requests as hidden
-        (TextSecurePreferences.events.filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS } as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { prefs.hasHiddenMessageRequests() }
+        prefs.watch(viewModelScope, HomePreferenceKeys.HAS_HIDDEN_MESSAGE_REQUESTS)
     ) { (unapproveConvoCount, convoList), typingStatus, hiddenMessageRequest ->
         // check if we should show the recovery phrase backup banner:
         // - if the user has not yet seen the warning
         // - if the user has at least 3 conversations
-        if (!prefStorage[HAS_VIEWED_SEED] && convoList.size >= 3){
+        if (!prefs[HAS_VIEWED_SEED] && convoList.size >= 3){
             _uiState.update {
                 it.copy(showRecoveryPhraseBackupBanner = true)
             }
@@ -183,11 +179,11 @@ class HomeViewModel @Inject constructor(
 
     init {
         // check for white list status in case of slow mode
-        if(!prefs.hasCheckedDozeWhitelist() // the user has not yet seen the dialog
-            && !prefs.pushEnabled.value // the user is in slow mode
+        if(!prefs[HomePreferenceKeys.HAS_CHECKED_DOZE_WHITELIST] // the user has not yet seen the dialog
+            && !prefs[HomePreferenceKeys.PUSH_ENABLED] // the user is in slow mode
             && !context.isWhitelistedFromDoze() // the user isn't yet whitelisted
         ){
-            prefs.setHasCheckedDozeWhitelist(true)
+            prefs[HomePreferenceKeys.HAS_CHECKED_DOZE_WHITELIST] = true
             viewModelScope.launch {
                 delay(1500)
                 _dialogsState.update {
@@ -229,7 +225,7 @@ class HomeViewModel @Inject constructor(
                 var showExpired: Boolean = false
 
                 if(subscription.type is ProStatus.Active.Expiring
-                    && !prefs.hasSeenProExpiring()
+                    && !prefs[HomePreferenceKeys.HAS_SEEN_PRO_EXPIRING]
                 ){
                     val validUntil = subscription.type.renewingAt
                     showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
@@ -245,7 +241,7 @@ class HomeViewModel @Inject constructor(
                     }
                 }
                 else if(subscription.type is ProStatus.Expired
-                    && !prefs.hasSeenProExpired()) {
+                    && !prefs[HomePreferenceKeys.HAS_SEEN_PRO_EXPIRED]) {
                     val validUntil = subscription.type.expiredAt
                     showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
 
@@ -383,12 +379,12 @@ class HomeViewModel @Inject constructor(
             }
 
             is Commands.HideExpiringCTADialog -> {
-                prefs.setHasSeenProExpiring()
+                prefs[HomePreferenceKeys.HAS_SEEN_PRO_EXPIRING] = true
                 _dialogsState.update { it.copy(proExpiringCTA = null) }
             }
 
             is Commands.HideExpiredCTADialog -> {
-                prefs.setHasSeenProExpired()
+                prefs[HomePreferenceKeys.HAS_SEEN_PRO_EXPIRED] = true
                 _dialogsState.update { it.copy(proExpiredCTA = false) }
             }
 

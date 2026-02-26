@@ -33,7 +33,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.isGroupV2
 import org.session.libsession.utilities.isLegacyGroup
@@ -63,6 +62,8 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.pro.ProPreferenceKeys
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.castAwayType
 import java.util.EnumSet
@@ -88,6 +89,7 @@ class DefaultConversationRepository @Inject constructor(
     private val recipientRepository: RecipientRepository,
     private val messageSender: MessageSender,
     private val loginStateRepository: LoginStateRepository,
+    private val prefs: PreferenceStorage,
     private val proStatusManager: ProStatusManager,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val communityApiExecutor: CommunityApiExecutor,
@@ -174,10 +176,10 @@ class DefaultConversationRepository @Inject constructor(
                     communityDatabase.changeNotification.filter { it in allAddresses },
                     threadDb.updateNotifications,
                     // If pro status pref changes, the convo is likely needing changes too
-                    TextSecurePreferences.Companion.events.filter {
-                        it == TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO ||
-                                it == TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
-                        it == TextSecurePreferences.Companion.SET_FORCE_POST_PRO
+                    prefs.changes().filter {
+                        it.name == ProPreferenceKeys.FORCE_OTHER_USERS_PRO.name ||
+                                it.name == ProPreferenceKeys.FORCE_CURRENT_USER_PRO.name ||
+                                it.name == ProPreferenceKeys.FORCE_POST_PRO.name
                     }
                 ).debounce(500)
                     .onStart { emit(allAddresses) }

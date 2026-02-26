@@ -40,7 +40,6 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
@@ -59,9 +58,12 @@ import org.thoughtcrime.securesms.database.model.RecipientSettings
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupMemberComparator
 import org.thoughtcrime.securesms.pro.ProDataState
+import org.thoughtcrime.securesms.pro.ProPreferenceKeys
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.db.ProDatabase
+import org.thoughtcrime.securesms.preferences.PreferenceKey
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.lang.ref.WeakReference
 import java.time.Duration
@@ -82,7 +84,7 @@ import javax.inject.Singleton
 @Singleton
 class RecipientRepository @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
-    private val prefs: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     private val groupDatabase: GroupDatabase,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val blindedIdMappingRepository: BlindMappingRepository,
@@ -94,6 +96,11 @@ class RecipientRepository @Inject constructor(
     private val proStatusManager: Lazy<ProStatusManager>,
 ) {
     private val recipientFlowCache = LruCache<Address, WeakReference<SharedFlow<Recipient>>>(512)
+
+    private fun proDebugPreferenceChanges(vararg keys: PreferenceKey<*>): Flow<PreferenceKey<*>> {
+        val names = keys.mapTo(hashSetOf()) { it.name }
+        return prefs.changes().filter { it.name in names }
+    }
 
     fun observeRecipient(address: Address): Flow<Recipient> {
         val cache = recipientFlowCache[address]?.get()
@@ -213,10 +220,10 @@ class RecipientRepository @Inject constructor(
                 changeSources = if (needFlow) {
                     arrayListOf(
                         configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
-                        TextSecurePreferences.events.filter {
-                            it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
-                                    || it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS
-                        },
+                        proDebugPreferenceChanges(
+                            ProPreferenceKeys.FORCE_CURRENT_USER_PRO,
+                            ProPreferenceKeys.DEBUG_SUBSCRIPTION_STATUS,
+                        ),
                     )
                 } else {
                     null
@@ -229,7 +236,7 @@ class RecipientRepository @Inject constructor(
                 changeSources = if (needFlow) {
                     arrayListOf(
                         configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
-                        TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                        proDebugPreferenceChanges(ProPreferenceKeys.FORCE_OTHER_USERS_PRO),
                         proDatabase.revocationChangeNotification,
                     )
                 } else {
@@ -248,7 +255,7 @@ class RecipientRepository @Inject constructor(
                     arrayListOf(
                         configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.CONTACTS)),
                         recipientSettingsDatabase.changeNotification.filter { it == address },
-                        TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                        proDebugPreferenceChanges(ProPreferenceKeys.FORCE_OTHER_USERS_PRO),
                         proDatabase.revocationChangeNotification,
                     )
                 } else {
@@ -279,7 +286,7 @@ class RecipientRepository @Inject constructor(
                                 it
                             )
                         },
-                        TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                        proDebugPreferenceChanges(ProPreferenceKeys.FORCE_OTHER_USERS_PRO),
                         proDatabase.revocationChangeNotification,
                     )
                 } else {
@@ -403,7 +410,7 @@ class RecipientRepository @Inject constructor(
                                     .filter { it.groupId == address.accountId },
                                 configFactory.userConfigsChanged(),
                                 recipientSettingsDatabase.changeNotification.filter { it == address },
-                                TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                                proDebugPreferenceChanges(ProPreferenceKeys.FORCE_OTHER_USERS_PRO),
                                 configFactory.userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE)),
                             )
                         } else {
@@ -421,7 +428,7 @@ class RecipientRepository @Inject constructor(
                         changeSources = if (needFlow) {
                             arrayListOf(
                                 recipientSettingsDatabase.changeNotification.filter { it == address },
-                                TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_OTHER_USERS_PRO },
+                                proDebugPreferenceChanges(ProPreferenceKeys.FORCE_OTHER_USERS_PRO),
                                 configFactory.userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE)),
                             )
                         } else {
@@ -506,12 +513,12 @@ class RecipientRepository @Inject constructor(
         }
 
         // 3. Apply Debug Overrides
-        if (recipient.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
+        if (recipient.isSelf && proData == null && prefs[ProPreferenceKeys.FORCE_CURRENT_USER_PRO]) {
             proData = RecipientData.ProData(showProBadge = true)
         } else if (!recipient.isSelf
             && (recipient.address is Address.Standard)
             && proData == null
-            && prefs.forceOtherUsersAsPro()
+            && prefs[ProPreferenceKeys.FORCE_OTHER_USERS_PRO]
         ) {
             proData = RecipientData.ProData(showProBadge = true)
         }
@@ -660,7 +667,7 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         val pro = configs.userProfile.getProConfig()
 
-                        if (prefs.forceCurrentUserAsPro()) {
+                        if (prefs[ProPreferenceKeys.FORCE_CURRENT_USER_PRO]) {
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
