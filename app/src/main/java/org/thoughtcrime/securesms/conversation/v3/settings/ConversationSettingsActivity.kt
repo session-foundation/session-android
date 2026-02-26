@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v2.settings
+package org.thoughtcrime.securesms.conversation.v3.settings
 
 import android.content.Context
 import android.content.Intent

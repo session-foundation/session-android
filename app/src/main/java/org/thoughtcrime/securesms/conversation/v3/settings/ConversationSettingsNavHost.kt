@@ -1,7 +1,6 @@
-package org.thoughtcrime.securesms.conversation.v2.settings
+package org.thoughtcrime.securesms.conversation.v3.settings
 
 import android.annotation.SuppressLint
-import android.os.Parcelable
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
@@ -23,8 +22,8 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsViewModel
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.*
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel

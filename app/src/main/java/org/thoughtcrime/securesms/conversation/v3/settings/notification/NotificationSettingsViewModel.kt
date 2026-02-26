@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v2.settings.notification
+package org.thoughtcrime.securesms.conversation.v3.settings.notification
 
 import android.content.Context
 import android.widget.Toast

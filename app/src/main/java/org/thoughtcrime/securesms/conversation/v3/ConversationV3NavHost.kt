@@ -26,10 +26,10 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsViewModel
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteAllMedia
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteConversation
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteConversationSettings

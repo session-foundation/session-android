@@ -67,7 +67,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
