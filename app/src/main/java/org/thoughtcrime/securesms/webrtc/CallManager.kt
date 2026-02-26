@@ -577,7 +577,9 @@ class CallManager @Inject constructor(
                 CallMessage.answer(
                     answer.description,
                     callId
-                ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber
+                ).apply{
+                    this.expiryMode = currentRemoteExpiry()
+                }, recipient, isSyncMessage = recipient.isLocalNumber
             )
         }
 
