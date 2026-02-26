@@ -32,7 +32,8 @@ class CallMessageProcessor @Inject constructor(
     private val storage: StorageProtocol,
     private val webRtcBridge: WebRtcCallBridge,
     private val recipientRepository: RecipientRepository,
-    private val snodeClock: SnodeClock
+    private val snodeClock: SnodeClock,
+    private val callManager: CallManager
 ) : AuthAwareComponent {
 
     companion object {
@@ -65,6 +66,10 @@ class CallMessageProcessor @Inject constructor(
             if (isVeryExpired) {
                 Log.e("Loki", "Dropping very expired call message")
                 continue
+            }
+
+            nextMessage.callId?.let{
+                callManager.setInboundCallContext(it, Address.fromSerialized(sender), nextMessage.expiryMode)
             }
 
             when (nextMessage.type) {

@@ -30,7 +30,6 @@ import org.session.libsession.utilities.Debouncer
 import org.session.libsession.utilities.Util
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos.CallMessage.Type.ICE_CANDIDATES
-import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioDeviceUpdate
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioEnabled
@@ -76,7 +75,6 @@ class CallManager @Inject constructor(
     private val storage: StorageProtocol,
     private val messageSender: MessageSender,
     private val snodeClock: SnodeClock,
-    private val recipientRepository: RecipientRepository
 ): PeerConnection.Observer,
     SignalAudioManager.EventListener, CameraEventListener, DataChannel.Observer {
 
@@ -195,6 +193,8 @@ class CallManager @Inject constructor(
     }
 
     fun setInboundCallContext(callId: UUID, remote: Address, expiry: ExpiryMode) {
+        val existing = callContext
+        if (existing != null && existing.callId != callId) return
         callContext = CallContext(callId, remote, expiry)
     }
 
@@ -422,8 +422,6 @@ class CallManager @Inject constructor(
                 _videoState.update { it.copy(remoteVideoEnabled = json["video"]?.jsonPrimitive?.boolean ?: false) }
                 handleMirroring()
             } else if (json.containsKey("hangup")) {
-                val expiry = if(recipient == null) ExpiryMode.NONE
-                else recipientRepository.getRecipientSync(recipient!!).expiryMode
                 peerConnectionObservers.forEach(WebRtcListener::onHangup)
             }
         } catch (e: Exception) {
@@ -467,6 +465,7 @@ class CallManager @Inject constructor(
             )
             pendingOutgoingIceUpdates.clear()
             pendingIncomingIceUpdates.clear()
+            callContext = null
         }
     }
 
@@ -561,7 +560,7 @@ class CallManager @Inject constructor(
         val answer = connection.createAnswer(MediaConstraints())
         connection.setLocalDescription(answer)
         val answerMessage = CallMessage.answer(answer.description, callId).apply {
-            this.expiryMode = expiryMode
+            this.expiryMode = currentRemoteExpiry()
         }
         val userAddress = storage.getUserPublicKey() ?: throw NullPointerException("No user public key")
 
@@ -681,6 +680,7 @@ class CallManager @Inject constructor(
                 }
             }
 
+            // We are always calling handleDenyCall for incoming messages which is why it's ok to use `currentRemoteExpiry`
             insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING, currentRemoteExpiry())
         }
     }
