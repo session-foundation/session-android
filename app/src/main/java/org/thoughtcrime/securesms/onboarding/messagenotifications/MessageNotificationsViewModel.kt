@@ -14,14 +14,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.onboarding.OnboardingPreferenceKeys
 import org.thoughtcrime.securesms.onboarding.manager.CreateAccountManager
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.util.ClearDataUtils
 
 internal class MessageNotificationsViewModel(
     private val state: State,
     private val application: Application,
-    private val prefs: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     private val createAccountManager: CreateAccountManager,
     private val clearDataUtils: ClearDataUtils,
 ): AndroidViewModel(application) {
@@ -39,7 +40,7 @@ internal class MessageNotificationsViewModel(
         viewModelScope.launch {
             if (state is State.CreateAccount) createAccountManager.createAccount(state.displayName)
 
-            prefs.setPushEnabled(uiStates.value.pushEnabled)
+            prefs[OnboardingPreferenceKeys.PUSH_ENABLED] = uiStates.value.pushEnabled
 
             _events.emit(
                 when (state) {
@@ -98,7 +99,7 @@ internal class MessageNotificationsViewModel(
     class Factory @AssistedInject constructor(
         @Assisted private val profileName: String?,
         private val application: Application,
-        private val prefs: TextSecurePreferences,
+        private val prefs: PreferenceStorage,
         private val createAccountManager: CreateAccountManager,
         private val clearDataUtils: ClearDataUtils,
     ) : ViewModelProvider.Factory {

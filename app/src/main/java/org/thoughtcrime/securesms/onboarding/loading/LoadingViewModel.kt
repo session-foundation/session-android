@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.userConfigsChanged
 import org.session.libsession.utilities.withUserConfigs
@@ -50,7 +49,6 @@ private val REFRESH_TIME = 50.milliseconds
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel
 internal class LoadingViewModel @Inject constructor(
-    val prefs: TextSecurePreferences,
     val configFactory: ConfigFactoryProtocol,
     private val loginStateRepository: LoginStateRepository,
 ): ViewModel() {

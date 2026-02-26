@@ -8,7 +8,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -17,15 +16,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -35,18 +31,15 @@ import kotlin.time.Duration.Companion.days
 @Singleton
 class InAppReviewManager @Inject constructor(
     @param:ApplicationContext val context: Context,
-    private val prefs: TextSecurePreferences,
-    private val json: Json,
+    private val prefs: PreferenceStorage,
     private val storeReviewManager: StoreReviewManager,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
-    private val stateChangeNotification = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val reviewState = prefs.watch(scope, InAppReviewPreferenceKeys.REVIEW_STATE)
     private val eventsChannel: SendChannel<Event>
 
     @Suppress("OPT_IN_USAGE")
-    val shouldShowPrompt: StateFlow<Boolean> = stateChangeNotification
-        .onStart { emit(Unit) }
-        .map { prefs.reviewState }
+    val shouldShowPrompt: StateFlow<Boolean> = reviewState
         .flatMapLatest { state ->
             when (state) {
                 InAppReviewState.DismissedForever, is InAppReviewState.WaitingForTrigger, null -> flowOf(false)
@@ -74,7 +67,7 @@ class InAppReviewManager @Inject constructor(
         eventsChannel = channel
 
         scope.launch {
-            val startState = prefs.reviewState ?: run {
+            val startState = reviewState.value ?: run {
                 if (storeReviewManager.supportsReviewFlow) {
                     val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
                     InAppReviewState.WaitingForTrigger(
@@ -131,7 +124,7 @@ class InAppReviewManager @Inject constructor(
                 }
                 .distinctUntilChanged()
                 .collectLatest {
-                    prefs.reviewState = it
+                    prefs[InAppReviewPreferenceKeys.REVIEW_STATE] = it
                     Log.d(TAG, "New review state is: $it")
                 }
         }
@@ -148,19 +141,6 @@ class InAppReviewManager @Inject constructor(
         ReviewFlowAbandoned,
         Dismiss,
     }
-
-    private var TextSecurePreferences.reviewState
-        get() = prefs.inAppReviewState?.let {
-            runCatching { json.decodeFromString<InAppReviewState>(it) }
-                .onFailure { Log.w(TAG, "Failed to decode review state", it) }
-                .getOrNull()
-        }
-        set(value) {
-            prefs.inAppReviewState =
-                value?.let { json.encodeToString(InAppReviewState.serializer(), it) }
-            stateChangeNotification.tryEmit(Unit)
-        }
-
 
     companion object {
         private const val TAG = "InAppReviewManager"

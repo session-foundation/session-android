@@ -18,14 +18,11 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.withMutableUserConfigs
-import org.session.libsignal.utilities.Log
 
 @HiltViewModel(assistedFactory = PickDisplayNameViewModel.Factory::class)
 class PickDisplayNameViewModel @AssistedInject constructor(
     @Assisted private val loadFailed: Boolean,
-    private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactoryProtocol,
 ): ViewModel() {
     private val isCreateAccount = !loadFailed

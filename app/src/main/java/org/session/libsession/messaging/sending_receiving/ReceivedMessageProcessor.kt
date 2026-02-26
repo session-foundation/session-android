@@ -33,7 +33,6 @@ import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.MessageExpirationManagerProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TypingIndicatorsProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
@@ -54,6 +53,8 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.preferences.CommunicationPreferenceKeys
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
@@ -70,7 +71,7 @@ class ReceivedMessageProcessor @Inject constructor(
     private val threadDatabase: ThreadDatabase,
     private val readReceiptManager: Provider<ReadReceiptManager>,
     private val typingIndicators: Provider<TypingIndicatorsProtocol>,
-    private val prefs: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     private val groupMessageHandler: Provider<GroupMessageHandler>,
     private val messageExpirationManager: Provider<MessageExpirationManagerProtocol>,
     private val messageDataProvider: MessageDataProvider,
@@ -378,7 +379,7 @@ class ReceivedMessageProcessor @Inject constructor(
 
     private fun showTypingIndicatorIfNeeded(senderPublicKey: String) {
         // We don't want to show other people's indicators if the toggle is off
-        if (!prefs.isTypingIndicatorsEnabled()) return
+        if (!prefs[CommunicationPreferenceKeys.TYPING_INDICATORS]) return
 
         val address = Address.fromSerialized(senderPublicKey)
         val threadID = storage.getThreadId(address) ?: return

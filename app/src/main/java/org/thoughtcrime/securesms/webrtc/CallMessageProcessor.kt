@@ -9,7 +9,6 @@ import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos.CallMessage.Type.ANSWER
 import org.session.protos.SessionProtos.CallMessage.Type.END_CALL
@@ -21,6 +20,8 @@ import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.CommunicationPreferenceKeys
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.webrtc.IceCandidate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,7 +29,7 @@ import javax.inject.Singleton
 @Singleton
 class CallMessageProcessor @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val textSecurePreferences: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
     private val storage: StorageProtocol,
     private val webRtcBridge: WebRtcCallBridge,
     private val recipientRepository: RecipientRepository,
@@ -52,7 +53,7 @@ class CallMessageProcessor @Inject constructor(
 
             // If the user has not enabled voice/video calls or if the user has not granted audio/microphone permissions
             if (
-                !textSecurePreferences.isCallNotificationsEnabled() ||
+                !prefs[CommunicationPreferenceKeys.CALL_NOTIFICATIONS_ENABLED] ||
                 !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)
             ) {
                 Log.d("Loki","Dropping call message if call notifications disabled")

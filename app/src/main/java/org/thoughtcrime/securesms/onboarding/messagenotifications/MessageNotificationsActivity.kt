@@ -10,11 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.onboarding.loading.LoadingActivity
-import org.thoughtcrime.securesms.onboarding.manager.LoadAccountManager
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity.Companion.EXTRA_PROFILE_NAME
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.util.setUpActionBarSessionLogo
@@ -30,9 +28,6 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
 
     @Inject
     internal lateinit var viewModelFactory: MessageNotificationsViewModel.AssistedFactory
-
-    @Inject lateinit var prefs: TextSecurePreferences
-    @Inject lateinit var loadAccountManager: LoadAccountManager
 
     val profileName by lazy { intent.getStringExtra(EXTRA_PROFILE_NAME) }
 

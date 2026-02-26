@@ -57,7 +57,6 @@ import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.updateContact
@@ -135,7 +134,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var storage: Storage
     @Inject lateinit var groupDatabase: GroupDatabase
-    @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var tokenPageNotificationManager: TokenPageNotificationManager
     @Inject lateinit var groupManagerV2: GroupManagerV2
@@ -331,7 +329,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
         binding.configOutdatedView.setOnClickListener {
-            textSecurePreferences.setHasLegacyConfig(false)
+            prefs[HomePreferenceKeys.HAS_RECEIVED_LEGACY_CONFIG] = false
             updateLegacyConfigView()
         }
 
@@ -397,7 +395,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // subscribe to outdated config updates, this should be removed after long enough time for device migration
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                TextSecurePreferences.events.filter { it == TextSecurePreferences.HAS_RECEIVED_LEGACY_CONFIG }.collect {
+                prefs.watch(lifecycleScope, HomePreferenceKeys.HAS_RECEIVED_LEGACY_CONFIG).collect {
                     updateLegacyConfigView()
                 }
             }
@@ -629,7 +627,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     private fun updateLegacyConfigView() {
-        binding.configOutdatedView.isVisible = textSecurePreferences.getHasLegacyConfig()
+        binding.configOutdatedView.isVisible = prefs[HomePreferenceKeys.HAS_RECEIVED_LEGACY_CONFIG]
     }
 
     override fun onResume() {
@@ -995,7 +993,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             text(getString(R.string.hide))
             button(R.string.yes) {
-                textSecurePreferences.setHasHiddenMessageRequests(true)
+                prefs[HomePreferenceKeys.HAS_HIDDEN_MESSAGE_REQUESTS] = true
                 homeViewModel.tryReload()
             }
             button(R.string.no)

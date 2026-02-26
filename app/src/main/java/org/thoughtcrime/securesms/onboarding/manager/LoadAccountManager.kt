@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.onboarding.manager
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoggedInState
