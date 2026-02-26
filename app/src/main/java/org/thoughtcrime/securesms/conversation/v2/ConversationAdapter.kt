@@ -8,9 +8,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.RequestManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
@@ -19,7 +17,6 @@ import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
@@ -155,8 +152,7 @@ class ConversationAdapter(
         val c = cursor ?: return null
         for (i in 0 until itemCount) {
             if (!c.moveToPosition(i)) break
-            val rec = messageDB.readerFor(c).current ?: continue
-            if (rec.messageId == target) return i
+            if (messageDB.readCurrentMessageId(c) == target) return i
         }
         return null
     }
