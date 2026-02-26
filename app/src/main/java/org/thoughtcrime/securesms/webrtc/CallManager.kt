@@ -198,7 +198,7 @@ class CallManager @Inject constructor(
         callContext = CallContext(callId, remote, expiry)
     }
 
-    fun currentRemoteExpiry(): ExpiryMode = callContext?.remoteExpiryMode ?: ExpiryMode.NONE
+    fun currentRemoteExpiry(): ExpiryMode = callContext?.remoteExpiryMode?.coerceSendToRead(true) ?: ExpiryMode.NONE
 
     private fun registerUncaughtExceptionHandler() {
         uncaughtExceptionHandlerManager = UncaughtExceptionHandlerManager().apply {
