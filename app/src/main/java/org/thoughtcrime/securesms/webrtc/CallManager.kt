@@ -561,7 +561,7 @@ class CallManager @Inject constructor(
             )
         }
 
-        insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING, false)
+        insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING)
 
         while (pendingIncomingIceUpdates.isNotEmpty()) {
             val candidate = pendingIncomingIceUpdates.pop() ?: break
@@ -690,7 +690,11 @@ class CallManager @Inject constructor(
         }
     }
 
-    fun insertCallMessage(threadPublicKey: String, callMessageType: CallMessageType, signal: Boolean = false, sentTimestamp: Long = snodeClock.currentTimeMillis()) {
+    fun insertCallMessage(
+        threadPublicKey: String,
+        callMessageType: CallMessageType,
+        sentTimestamp: Long = snodeClock.currentTimeMillis()
+    ) {
         storage.insertCallMessage(threadPublicKey, callMessageType, sentTimestamp)
     }
 

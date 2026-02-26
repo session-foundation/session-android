@@ -19,10 +19,12 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
-import androidx.collection.MutableLongSet
+import androidx.collection.MutableLongObjectMap
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
@@ -68,7 +70,6 @@ class MmsDatabase @Inject constructor(
     databaseHelper: Provider<SQLCipherOpenHelper>,
     private val recipientRepository: RecipientRepository,
     private val json: Json,
-    private val threadDatabase: ThreadDatabase,
     private val groupReceiptDatabase: GroupReceiptDatabase,
     private val attachmentDatabase: AttachmentDatabase,
     private val reactionDatabase: ReactionDatabase,
@@ -79,6 +80,10 @@ class MmsDatabase @Inject constructor(
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
     override fun getTableName() = TABLE_NAME
+
+    private val _changeNotification = MutableSharedFlow<MessageUpdateNotification>(extraBufferCapacity = 24)
+
+    val changeNotification: SharedFlow<MessageUpdateNotification> get() = _changeNotification
 
     fun getMessageCountForThread(threadId: Long): Int {
         val db = readableDatabase
@@ -97,7 +102,7 @@ class MmsDatabase @Inject constructor(
     }
 
     fun isOutgoingMessage(id: Long): Boolean =
-        writableDatabase.query(
+        readableDatabase.query(
             TABLE_NAME,
             arrayOf(ID, THREAD_ID, MESSAGE_BOX, ADDRESS),
             "$ID = ?",
@@ -134,7 +139,7 @@ class MmsDatabase @Inject constructor(
     }
 
     fun isDeletedMessage(id: Long): Boolean =
-        writableDatabase.query(
+        readableDatabase.query(
             TABLE_NAME,
             arrayOf(ID, THREAD_ID, MESSAGE_BOX, ADDRESS),
             "$ID = ?",
@@ -196,12 +201,17 @@ class MmsDatabase @Inject constructor(
                             if (deliveryReceipt) GroupReceiptDatabase.STATUS_DELIVERED else GroupReceiptDatabase.STATUS_READ
                         found = true
                         database.execSQL(
-                            "UPDATE " + TABLE_NAME + " SET " +
-                                    columnName + " = " + columnName + " + 1 WHERE " + ID + " = ?",
-                            arrayOf(id.toString())
+                            "UPDATE $TABLE_NAME SET $columnName = $columnName + 1 WHERE $ID = ?",
+                            arrayOf(id)
                         )
                         groupReceiptDatabase
                             .update(ourAddress, id, status, timestamp)
+
+                        _changeNotification.tryEmit(MessageUpdateNotification(
+                            changeType = MessageUpdateNotification.ChangeType.Updated,
+                            id = MessageId(id, true),
+                            threadId = threadId
+                        ))
                     }
                 }
             }
@@ -221,17 +231,22 @@ class MmsDatabase @Inject constructor(
     }
 
     fun updateSentTimestamp(messageId: Long, newTimestamp: Long) {
-        val db = writableDatabase
-        val threadId = db.rawQuery(
-            "UPDATE $TABLE_NAME SET $DATE_SENT = ? WHERE $ID = ? RETURNING $THREAD_ID",
-            newTimestamp.toString(),
-            messageId.toString()
-        ).use {
-            if (it.moveToFirst()) it.getLong(0) else null
-        }
-
-        if (threadId != null) {
-            threadDatabase.notifyThreadUpdated(threadId)
+        //language=roomsql
+        writableDatabase.query("""
+            UPDATE $TABLE_NAME 
+            SET $DATE_SENT = ?1 
+            WHERE $ID = ?2 AND IFNULL($DATE_SENT, 0) != ?1 
+            RETURNING $THREAD_ID""",
+            arrayOf(newTimestamp, messageId)
+        ).use { cursor ->
+            if (cursor.moveToFirst()) {
+                val threadId = cursor.getLong(0)
+                _changeNotification.tryEmit(MessageUpdateNotification(
+                    changeType = MessageUpdateNotification.ChangeType.Updated,
+                    id = MessageId(messageId, true),
+                    threadId = threadId
+                ))
+            }
         }
     }
 
@@ -276,33 +291,29 @@ class MmsDatabase @Inject constructor(
         }
     }
 
-    private fun updateMailboxBitmask(
-        id: Long,
-        maskOff: Long,
-        maskOn: Long,
-        threadId: Long?
-    ) {
-        val db = writableDatabase
-        db.execSQL(
-            "UPDATE " + TABLE_NAME +
-                    " SET " + MESSAGE_BOX + " = (" + MESSAGE_BOX + " & " + (MmsSmsColumns.Types.TOTAL_MASK - maskOff) + " | " + maskOn + " )" +
-                    " WHERE " + ID + " = ?", arrayOf(id.toString() + "")
-        )
-
-        threadId?.let { threadDatabase.notifyThreadUpdated(it) }
-    }
-
     private fun markAs(
         messageId: Long,
-        baseType: Long,
-        threadId: Long = getThreadIdForMessage(messageId)
+        baseType: Long
     ) {
-        updateMailboxBitmask(
-            messageId,
-            MmsSmsColumns.Types.BASE_TYPE_MASK,
-            baseType,
-            threadId
-        )
+        //language=roomsql
+        this.writableDatabase.query(
+            """
+            UPDATE $TABLE_NAME 
+            SET $MESSAGE_BOX = (${MESSAGE_BOX} & ${MmsSmsColumns.Types.TOTAL_MASK - MmsSmsColumns.Types.BASE_TYPE_MASK} | $baseType) 
+            WHERE $ID = ?
+            RETURNING $THREAD_ID""",
+            arrayOf(messageId)
+        ).use { cursor ->
+            if (cursor.moveToNext()) {
+                _changeNotification.tryEmit(
+                    MessageUpdateNotification(
+                        changeType = MessageUpdateNotification.ChangeType.Updated,
+                        id = MessageId(messageId, true),
+                        threadId = cursor.getLong(0)
+                    )
+                )
+            }
+        }
     }
 
     override fun markAsSyncing(messageId: Long) {
@@ -324,7 +335,10 @@ class MmsDatabase @Inject constructor(
     }
 
     override fun markAsSent(messageId: Long, isSent: Boolean) {
-        markAs(messageId, MmsSmsColumns.Types.BASE_SENT_TYPE or if (isSent) MmsSmsColumns.Types.PUSH_MESSAGE_BIT or MmsSmsColumns.Types.SECURE_MESSAGE_BIT else 0)
+        markAs(
+            messageId,
+            MmsSmsColumns.Types.BASE_SENT_TYPE or if (isSent) MmsSmsColumns.Types.PUSH_MESSAGE_BIT or MmsSmsColumns.Types.SECURE_MESSAGE_BIT else 0
+        )
     }
 
     override fun markAsDeleted(messageId: Long, isOutgoing: Boolean, displayedMessage: String) {
@@ -336,32 +350,31 @@ class MmsDatabase @Inject constructor(
 
         database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
         queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
-        val threadId = getThreadIdForMessage(messageId)
-
         val deletedType = if (isOutgoing) {  MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE} else {
             MmsSmsColumns.Types.BASE_DELETED_INCOMING_TYPE
         }
-        markAs(messageId, deletedType, threadId)
+
+        // We rely on the markAs to notify the change so we don't have to do it ourselves
+        markAs(messageId, deletedType)
     }
 
     override fun markExpireStarted(messageId: Long, startedTimestamp: Long) {
         //language=roomsql
         writableDatabase.rawQuery("""
-            UPDATE $TABLE_NAME SET $EXPIRE_STARTED = ?
-            WHERE $ID = ?
+            UPDATE $TABLE_NAME SET $EXPIRE_STARTED = ?1
+            WHERE $ID = ?2 AND IFNULL($EXPIRE_STARTED, 0) != ?1  
             RETURNING $THREAD_ID
         """, startedTimestamp, messageId).use { cursor ->
             if (cursor.moveToNext()) {
-                threadDatabase.notifyThreadUpdated(cursor.getLong(0))
+                _changeNotification.tryEmit(
+                    MessageUpdateNotification(
+                        changeType = MessageUpdateNotification.ChangeType.Updated,
+                        id = MessageId(messageId, true),
+                        threadId = cursor.getLong(0)
+                    )
+                )
             }
         }
-    }
-
-    fun markAsNotified(id: Long) {
-        val database = writableDatabase
-        val contentValues = ContentValues()
-        contentValues.put(NOTIFIED, 1)
-        database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(id.toString()))
     }
 
     private fun getLinkPreviews(
@@ -394,12 +407,11 @@ class MmsDatabase @Inject constructor(
             .orEmpty()
     }
 
-    @Throws(MmsException::class)
     private fun insertMessageInbox(
         retrieved: IncomingMediaMessage,
         threadId: Long,
-        mailbox: Long, serverTimestamp: Long,
-        runThreadUpdate: Boolean
+        mailbox: Long,
+        serverTimestamp: Long
     ): InsertResult? {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
         if (retrieved.messageContent is DisappearingMessageUpdate)
@@ -449,9 +461,13 @@ class MmsDatabase @Inject constructor(
             linkPreviews = retrieved.linkPreviews,
             contentValues = contentValues,
         )
-        if (runThreadUpdate) {
-            threadDatabase.notifyThreadUpdated(threadId)
-        }
+
+        _changeNotification.tryEmit(MessageUpdateNotification(
+            changeType = MessageUpdateNotification.ChangeType.Added,
+            id = MessageId(messageId, true),
+            threadId = contentValues.getAsLong(THREAD_ID)
+        ))
+
         return InsertResult(messageId, threadId)
     }
 
@@ -459,8 +475,7 @@ class MmsDatabase @Inject constructor(
     fun insertSecureDecryptedMessageOutbox(
         retrieved: OutgoingMediaMessage,
         threadId: Long,
-        serverTimestamp: Long,
-        runThreadUpdate: Boolean
+        serverTimestamp: Long
     ): InsertResult? {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
         if (retrieved.messageContent is DisappearingMessageUpdate) deleteExpirationTimerMessages(threadId, true.takeUnless { retrieved.isGroup })
@@ -468,8 +483,7 @@ class MmsDatabase @Inject constructor(
             retrieved,
             threadId,
             false,
-            serverTimestamp,
-            runThreadUpdate
+            serverTimestamp
         )
         if (messageId == -1L) {
             Log.w(TAG, "insertSecureDecryptedMessageOutbox believes the MmsDatabase insertion failed.")
@@ -484,8 +498,7 @@ class MmsDatabase @Inject constructor(
     fun insertSecureDecryptedMessageInbox(
         retrieved: IncomingMediaMessage,
         threadId: Long,
-        serverTimestamp: Long = 0,
-        runThreadUpdate: Boolean
+        serverTimestamp: Long = 0
     ): InsertResult? {
         var type = MmsSmsColumns.Types.BASE_INBOX_TYPE or MmsSmsColumns.Types.SECURE_MESSAGE_BIT or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
         if (retrieved.isMediaSavedDataExtraction) {
@@ -494,7 +507,7 @@ class MmsDatabase @Inject constructor(
         if (retrieved.isMessageRequestResponse) {
             type = type or MmsSmsColumns.Types.MESSAGE_REQUEST_RESPONSE_BIT
         }
-        return insertMessageInbox(retrieved, threadId, type, serverTimestamp, runThreadUpdate)
+        return insertMessageInbox(retrieved, threadId, type, serverTimestamp)
     }
 
     @Throws(MmsException::class)
@@ -502,8 +515,7 @@ class MmsDatabase @Inject constructor(
         message: OutgoingMediaMessage,
         threadId: Long,
         forceSms: Boolean,
-        serverTimestamp: Long = 0,
-        runThreadUpdate: Boolean
+        serverTimestamp: Long = 0
     ): Long {
         var type = MmsSmsColumns.Types.BASE_SENDING_TYPE
         if (message.isSecure) type =
@@ -571,14 +583,15 @@ class MmsDatabase @Inject constructor(
             )
         }
 
-        if (runThreadUpdate) {
-            threadDatabase.notifyThreadUpdated(threadId)
-        }
+        _changeNotification.tryEmit(MessageUpdateNotification(
+            changeType = MessageUpdateNotification.ChangeType.Added,
+            id = MessageId(messageId, true),
+            threadId = threadId
+        ))
 
         return messageId
     }
 
-    @Throws(MmsException::class)
     private fun insertMediaMessage(
         body: String?,
         messageContent: MessageContent?,
@@ -647,47 +660,50 @@ class MmsDatabase @Inject constructor(
         }
     }
 
-    private fun doDeleteMessages(
-        updateThread: Boolean,
-        where: String,
-        vararg whereArgs: Any?): Boolean {
-        val deletedMessageIDs: MutableList<Long>
-        val deletedMessagesThreadIDs = MutableLongSet(1)
+    private fun doDeleteMessages(where: String, vararg whereArgs: Any?): Boolean {
+        val deleted = mutableListOf<Long>()
+        val deletedByThreadIDs: MutableLongObjectMap<ArrayList<MessageId>>
 
         //language=roomsql
         writableDatabase.rawQuery(
             "DELETE FROM $TABLE_NAME WHERE $where RETURNING $ID, $THREAD_ID",
             *whereArgs
         ).use { cursor ->
-            deletedMessageIDs = ArrayList(cursor.count)
+            deletedByThreadIDs = MutableLongObjectMap()
 
             while (cursor.moveToNext()) {
-                deletedMessageIDs += cursor.getLong(0)
-                deletedMessagesThreadIDs += cursor.getLong(1)
+                val threadId = cursor.getLong(1)
+                val messageId = MessageId(cursor.getLong(0), true)
+
+                deletedByThreadIDs.getOrPut(threadId) { ArrayList() } += messageId
+                deleted += messageId.id
             }
         }
 
         // Delete messages related data from other tables
-        if (!deletedMessageIDs.isEmpty()) {
-            attachmentDatabase.deleteAttachmentsForMessages(deletedMessageIDs)
-            groupReceiptDatabase.deleteRowsForMessages(deletedMessageIDs)
+        if (deletedByThreadIDs.isNotEmpty()) {
+            attachmentDatabase.deleteAttachmentsForMessages(deleted)
+            groupReceiptDatabase.deleteRowsForMessages(deleted)
 
             notifyStickerListeners()
             notifyStickerPackListeners()
         }
 
-        if (updateThread) {
-            deletedMessagesThreadIDs.forEach(threadDatabase::notifyThreadUpdated)
+        deletedByThreadIDs.forEach { threadId, deletedMessageIDs ->
+            _changeNotification.tryEmit(MessageUpdateNotification(
+                changeType = MessageUpdateNotification.ChangeType.Deleted,
+                ids = deletedMessageIDs,
+                threadId = threadId
+            ))
         }
 
-        return deletedMessageIDs.isNotEmpty()
+        return deleted.isNotEmpty()
     }
 
     override fun getTypeColumn(): String = MESSAGE_BOX
 
     override fun deleteMessage(messageId: Long) {
         doDeleteMessages(
-            updateThread = true,
             where = "$ID = ?",
             messageId
         )
@@ -695,18 +711,43 @@ class MmsDatabase @Inject constructor(
 
     override fun deleteMessages(messageIds: Collection<Long>) {
         doDeleteMessages(
-            updateThread = true,
             where = "$ID IN (SELECT value FROM json_each(?))",
             JSONArray(messageIds).toString()
         )
     }
 
     override fun updateThreadId(fromId: Long, toId: Long) {
-        val contentValues = ContentValues(1)
-        contentValues.put(THREAD_ID, toId)
+        if (fromId == toId) {
+            return
+        }
 
-        val db = writableDatabase
-        db.update(TABLE_NAME, contentValues, "$THREAD_ID = ?", arrayOf("$fromId"))
+        //language=roomsql
+        val updatedMessageIDs = writableDatabase.query("""
+            UPDATE $TABLE_NAME
+            SET $THREAD_ID = ?1
+            WHERE $THREAD_ID = ?2
+            RETURNING $ID
+        """, arrayOf(toId, fromId)).use { cursor ->
+            cursor.asSequence()
+                .map { MessageId(it.getLong(0), true) }
+                .toList()
+        }
+
+        _changeNotification.tryEmit(
+            MessageUpdateNotification(
+                changeType = MessageUpdateNotification.ChangeType.Deleted,
+                ids = updatedMessageIDs,
+                threadId = fromId
+            )
+        )
+
+        _changeNotification.tryEmit(
+            MessageUpdateNotification(
+                changeType = MessageUpdateNotification.ChangeType.Added,
+                ids = updatedMessageIDs,
+                threadId = toId
+            )
+        )
     }
 
     fun deleteThread(threadId: Long, updateThread: Boolean) {
@@ -716,13 +757,11 @@ class MmsDatabase @Inject constructor(
     fun deleteMediaFor(threadId: Long, fromUser: String? = null) {
         if (fromUser != null) {
             doDeleteMessages(
-                updateThread = true,
                 where = "$THREAD_ID = ? AND $ADDRESS = ? AND $LINK_PREVIEWS IS NULL",
                 threadId, fromUser
             )
         } else {
             doDeleteMessages(
-                updateThread = true,
                 where = "$THREAD_ID = ? AND $LINK_PREVIEWS IS NULL",
                 threadId
             )
@@ -731,7 +770,6 @@ class MmsDatabase @Inject constructor(
 
     fun deleteMessagesFrom(threadId: Long, fromUser: String) { // copied from deleteThreads implementation
         doDeleteMessages(
-            updateThread = true,
             where = "$THREAD_ID = ? AND $ADDRESS = ?",
             threadId, fromUser
         )
@@ -847,7 +885,6 @@ class MmsDatabase @Inject constructor(
 
     fun deleteThreads(threadIds: Collection<Long>, updateThread: Boolean) {
         doDeleteMessages(
-            updateThread = updateThread,
             where = "$THREAD_ID IN (SELECT value FROM json_each(?))",
             JSONArray(threadIds).toString()
         )
@@ -866,7 +903,6 @@ class MmsDatabase @Inject constructor(
         if (onlyMedia) where += " AND $PART_COUNT >= 1"
 
         doDeleteMessages(
-            updateThread = true,
             where = where,
             threadId
         )
@@ -886,7 +922,7 @@ class MmsDatabase @Inject constructor(
 
         val where = "$THREAD_ID = ? AND $MESSAGE_CONTENT->>'$.${MessageContent.DISCRIMINATOR}' == '${DisappearingMessageUpdate.TYPE_NAME}' " + outgoingClause
 
-        doDeleteMessages(updateThread = true, where, threadId)
+        doDeleteMessages(where, threadId)
     }
 
     object Status {

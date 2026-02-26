@@ -51,7 +51,6 @@ import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -75,11 +74,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
-import org.thoughtcrime.securesms.util.get
 import org.thoughtcrime.securesms.util.getOrConstructConvo
 import org.thoughtcrime.securesms.util.findCause
-import java.time.Instant
-import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -314,8 +310,7 @@ open class Storage @Inject constructor(
             message.syncTarget!!.toAddress()
         } else (threadRecipient.address as? Address.Group) ?: senderAddress
 
-        if (message.threadID == null && !targetAddress.isCommunity) {
-            // open group recipients should explicitly create threads
+        if (message.threadID == null) {
             message.threadID = getOrCreateThreadIdFor(targetAddress)
         }
         val expiryMode = message.expiryMode
@@ -350,7 +345,11 @@ open class Storage @Inject constructor(
                     expiresInMillis = expiresInMillis,
                     expireStartedAt = expireStartedAt
                 )
-                mmsDatabase.insertSecureDecryptedMessageOutbox(mediaMessage, message.threadID ?: -1, message.sentTimestamp!!, runThreadUpdate)
+                mmsDatabase.insertSecureDecryptedMessageOutbox(
+                    mediaMessage,
+                    message.threadID!!,
+                    message.sentTimestamp!!
+                )
             } else {
                 // It seems like we have replaced SignalServiceAttachment with SessionServiceAttachment
                 val signalServiceAttachments = attachments.mapNotNull {
@@ -366,7 +365,11 @@ open class Storage @Inject constructor(
                     quote = quotes,
                     linkPreviews = linkPreviews
                 )
-                mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
+                mmsDatabase.insertSecureDecryptedMessageInbox(
+                    mediaMessage,
+                    message.threadID!!,
+                    message.receivedTimestamp ?: 0
+                )
             }
 
             messageID = insertResult?.messageId?.let { MessageId(it, mms = true) }
@@ -391,7 +394,11 @@ open class Storage @Inject constructor(
                     expireStartedAtMillis = expireStartedAt
                 )
 
-                smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
+                smsDatabase.insertMessageOutbox(
+                    message.threadID!!,
+                    textMessage,
+                    message.sentTimestamp!!
+                )
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(
                     json = json,
@@ -408,7 +415,11 @@ open class Storage @Inject constructor(
                     expiresInMillis = expiresInMillis,
                     expireStartedAt = expireStartedAt
                 )
-                smsDatabase.insertMessageInbox(textMessage.copy(isSecureMessage = true), message.receivedTimestamp ?: 0, runThreadUpdate)
+                smsDatabase.insertMessageInbox(
+                    textMessage.copy(isSecureMessage = true),
+                    message.threadID!!,
+                    message.receivedTimestamp ?: 0
+                )
             }
             messageID = insertResult?.messageId?.let { MessageId(it, mms = false) }
         }
@@ -830,8 +841,7 @@ open class Storage @Inject constructor(
             val infoMessageID = mmsDB.insertMessageOutbox(
                 infoMessage,
                 threadID,
-                false,
-                runThreadUpdate = true
+                false
             )
             mmsDB.markAsSent(infoMessageID, true)
             return MessageId(infoMessageID, mms = true)
@@ -853,10 +863,13 @@ open class Storage @Inject constructor(
                 isGroupUpdateMessage = true,
             )
             val smsDB = smsDatabase
-            val insertResult = smsDB.insertMessageInbox(m.copy(
-                isGroupUpdateMessage = true,
-                message = inviteJson
-            ),  true)
+            val insertResult = smsDB.insertMessageInbox(
+                m.copy(
+                    isGroupUpdateMessage = true,
+                    message = inviteJson
+                ),
+                threadID
+            )
             return insertResult?.messageId?.let { MessageId(it, mms = false) }
         }
     }
@@ -1078,7 +1091,7 @@ open class Storage @Inject constructor(
             message
         )
 
-        mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
+        mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId)
     }
 
     /**
@@ -1103,7 +1116,7 @@ open class Storage @Inject constructor(
             linkPreviews = emptyList(),
             dataExtractionNotification = null
         )
-        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
+        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId)
     }
 
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
@@ -1120,7 +1133,8 @@ open class Storage @Inject constructor(
             expiresInMillis = expiresInMillis,
             expireStartedAt = expireStartedAt
         )
-        smsDatabase.insertCallMessage(callMessage)
+
+        smsDatabase.insertCallMessage(callMessage, threadDatabase.getOrCreateThreadIdFor(address))
     }
 
     override fun getLastInboxMessageId(server: String): Long? {

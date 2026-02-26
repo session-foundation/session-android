@@ -127,7 +127,6 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
@@ -138,7 +137,6 @@ import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.recordAudio
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
@@ -2418,8 +2416,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 viewModel.threadIdFlow.filterNotNull().first(),
                 outgoingTextMessage,
                 false,
-                message.sentTimestamp!!,
-                true
+                message.sentTimestamp!!
             ), false)
 
             message.id?.let{
@@ -2505,8 +2502,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     mmsDb.insertMessageOutbox(
                         outgoingTextMessage,
                         viewModel.threadIdFlow.filterNotNull().first(),
-                        false,
-                        runThreadUpdate = true
+                        false
                     ), mms = true
                 )
 

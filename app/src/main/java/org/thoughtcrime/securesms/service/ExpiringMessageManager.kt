@@ -99,7 +99,7 @@ class ExpiringMessageManager @Inject constructor(
                 dataExtractionNotification = null
             )
             //insert the timer update message
-            mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
+            mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId)
                 ?.let { MessageId(it.messageId, mms = true) }
         } catch (ioe: IOException) {
             Log.e("Loki", "Failed to insert expiration update message.")
@@ -151,8 +151,7 @@ class ExpiringMessageManager @Inject constructor(
             return mmsDatabase.insertSecureDecryptedMessageOutbox(
                 timerUpdateMessage,
                 message.threadID!!,
-                sentTimestamp,
-                true
+                sentTimestamp
             )?.messageId?.let { MessageId(it, mms = true) }
         } catch (ioe: MmsException) {
             Log.e("Loki", "Failed to insert expiration update message.", ioe)

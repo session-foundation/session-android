@@ -152,7 +152,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
         if (result.deletedThreads.isNotEmpty()) {
             val deletedThreadIDs = result.deletedThreads.values
-            smsDatabase.deleteThreads(deletedThreadIDs, false)
+            smsDatabase.deleteThreads(deletedThreadIDs)
             mmsDatabase.deleteThreads(deletedThreadIDs, updateThread = false)
             draftDatabase.clearDrafts(deletedThreadIDs)
 

@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.database
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.util.asSequence
 import org.thoughtcrime.securesms.util.get
 
 /**
@@ -321,5 +322,45 @@ fun MmsSmsDatabase.getUnreadCount(address: Address.Conversable): Int {
         } else {
             0
         }
+    }
+}
+
+/**
+ * Find all incoming messages (including control messages) for the given thread within
+ * a time range.
+ */
+fun MmsSmsDatabase.findIncomingMessages(
+    threadId: Long,
+    startMsExclusive: Long,
+    endMsInclusive: Long
+): List<MessageId> {
+    //language=roomsql
+    return readableDatabase.rawQuery("""
+        SELECT ${SmsDatabase.ID}, 0
+        FROM ${SmsDatabase.TABLE_NAME}
+        WHERE 
+            ${SmsDatabase.THREAD_ID} = ?1
+            AND ${SmsDatabase.DATE_SENT} > ?1
+            AND ${SmsDatabase.DATE_SENT} <= ?2 
+            AND ${SmsDatabase.THREAD_ID} = ?3
+            AND NOT ${SmsDatabase.IS_OUTGOING}
+            AND NOT ${SmsDatabase.IS_DELETED}
+
+        UNION ALL
+        
+        SELECT ${MmsSmsColumns.ID}, 1
+        FROM ${MmsDatabase.TABLE_NAME}
+        WHERE 
+            ${MmsSmsColumns.THREAD_ID} = ?1
+            AND ${MmsDatabase.DATE_SENT} > ?2 
+            AND ${MmsDatabase.DATE_SENT} <= ?3
+            AND NOT ${MmsSmsColumns.IS_OUTGOING}
+            AND NOT ${MmsSmsColumns.IS_DELETED}
+    """, longArrayOf(threadId, startMsExclusive, endMsInclusive)).use { cursor ->
+        cursor.asSequence()
+            .map {
+                MessageId(cursor.getLong(0), cursor.getInt(1) != 0)
+            }
+            .toList()
     }
 }

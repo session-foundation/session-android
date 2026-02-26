@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.repository
 
 import androidx.collection.MutableIntList
-import androidx.collection.arraySetOf
 import androidx.collection.mutableIntListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,6 +55,7 @@ import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
@@ -82,6 +82,7 @@ class DefaultConversationRepository @Inject constructor(
     private val communityDatabase: CommunityDatabase,
     private val draftDb: DraftDatabase,
     private val smsDb: SmsDatabase,
+    private val mmsDb: MmsDatabase,
     private val mmsSmsDb: MmsSmsDatabase,
     private val storage: Storage,
     private val lokiMessageDb: LokiMessageDatabase,
@@ -177,6 +178,8 @@ class DefaultConversationRepository @Inject constructor(
                     recipientDatabase.changeNotification.filter { it in allAddresses },
                     communityDatabase.changeNotification.filter { it in allAddresses },
                     threadDb.updateNotifications,
+                    smsDb.updateNotification,
+                    mmsDb.changeNotification,
                     // If pro status pref changes, the convo is likely needing changes too
                     TextSecurePreferences.Companion.events.filter {
                         it == TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO ||
@@ -278,8 +281,7 @@ class DefaultConversationRepository @Inject constructor(
                     contactThreadId,
                     outgoingTextMessage,
                     false,
-                    message.sentTimestamp!!,
-                    true
+                    message.sentTimestamp!!
                 ),
                 false
             )

@@ -586,8 +586,7 @@ class WebRtcCallBridge @Inject constructor(
     private fun insertMissedCall(recipient: Address, signal: Boolean) {
         callManager.insertCallMessage(
             threadPublicKey = recipient.address.toString(),
-            callMessageType = CallMessageType.CALL_MISSED,
-            signal = signal
+            callMessageType = CallMessageType.CALL_MISSED
         )
     }
 

@@ -319,7 +319,7 @@ public class MmsSmsDatabase extends Database {
    */
   @Nullable
   public Pair<Long, Long> getMaxTimestampInThreadUpTo(@NonNull final MessageId messageId) {
-    Pair<String, Object[]> query = MmsSmsDatabaseSQLKt.buildMaxTimestampInThreadUpToQuery(messageId);
+    Pair<String, Object[]> query = MmsSmsDatabaseExtKt.buildMaxTimestampInThreadUpToQuery(messageId);
     try (Cursor cursor = getReadableDatabase().rawQuery(query.getFirst(), query.getSecond())) {
       if (cursor != null && cursor.moveToFirst()) {
         return new Pair<>(cursor.getLong(0), cursor.getLong(1));
@@ -549,7 +549,7 @@ public class MmsSmsDatabase extends Database {
           @Nullable String order,
           @Nullable String limit) {
     SQLiteDatabase db = getReadableDatabase();
-    String query = MmsSmsDatabaseSQLKt.buildMmsSmsCombinedQuery(projection,
+    String query = MmsSmsDatabaseExtKt.buildMmsSmsCombinedQuery(projection,
             selection,
             includeReactions,
             additionalReactionSelection,

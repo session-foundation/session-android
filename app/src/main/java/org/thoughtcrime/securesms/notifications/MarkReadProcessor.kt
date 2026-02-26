@@ -6,8 +6,10 @@ import androidx.collection.MutableLongLongMap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
@@ -27,6 +29,7 @@ import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
@@ -35,8 +38,9 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.findIncomingMessages
+import org.thoughtcrime.securesms.database.getAddressAndLastSeen
 import org.thoughtcrime.securesms.database.getAllLastSeen
-import org.thoughtcrime.securesms.database.getLastSeen
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
@@ -59,8 +63,21 @@ class MarkReadProcessor @Inject constructor(
     private val swarmApiExecutor: SwarmApiExecutor,
     private val alterTtyFactory: AlterTtlApi.Factory,
     private val prefs: PreferenceStorage,
+    private val loginStateRepository: LoginStateRepository,
+    private val configFactory: ConfigFactoryProtocol,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
+
+    init {
+        scope.launch {
+            merge(
+                smsDatabase.updateNotification,
+                mmsDatabase.changeNotification
+            ).collect {
+                Log.d(TAG, "Message change: $it")
+            }
+        }
+    }
 
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
         processLastSeenChanges()
@@ -74,104 +91,88 @@ class MarkReadProcessor @Inject constructor(
     }
 
     private suspend fun processLastSeenChanges() {
+        class Updated(
+            val address: Address.Conversable,
+            val threadId: Long,
+            val oldLastSeenMs: Long,
+            val newLastSeenMs: Long,
+        )
+
         class State(
             val lastSeenByThreadIDs: LongLongMap,
-            // List of threadID, oldLastSeen, newLastSeen,
-            val updatedLastSeen: LongArray? = null,
+            val updated: Updated? = null,
         )
 
         threadDb.updateNotifications
             .scan(State(threadDb.getAllLastSeen())) { acc, threadId ->
                 val oldLastSeen = acc.lastSeenByThreadIDs.getOrDefault(threadId, -1L)
-                val newLastSeen = threadDb.getLastSeen(threadId)?.toEpochMilliseconds() ?: 0L
+                val r = threadDb.getAddressAndLastSeen(threadId)
+                val newLastSeen = r?.second?.toEpochMilliseconds() ?: 0L
 
                 if (oldLastSeen == newLastSeen) {
                     acc
                 } else {
                     State(
                         lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(threadId, newLastSeen),
-                        updatedLastSeen = if (oldLastSeen >= 0L) {
-                            longArrayOf(threadId, oldLastSeen, newLastSeen)
+                        updated = if (r != null && oldLastSeen >= 0L) {
+                            Updated(
+                                address = r.first,
+                                threadId = threadId,
+                                oldLastSeenMs = oldLastSeen,
+                                newLastSeenMs = newLastSeen,
+                            )
                         } else {
                             null
                         }
                     )
                 }
             }
-            .mapNotNull { it.updatedLastSeen }
-            .collect { (threadId, oldLastSeen, newLastSeen) ->
-                Log.d(TAG, "Thread(id=$threadId) changes, oldLastSeen = $oldLastSeen, newLastSeen = $newLastSeen")
-            }
+            .mapNotNull { it.updated }
+            // Must NOT use collectLatest as "updated" data is an "event" rather than a state: it
+            // does not persist between emissions. Using collectLatest will potentially cause
+            // data loss.
+            .collect { updated ->
+                val threadRecipient = recipientRepository.getRecipient(updated.address)
 
-//
-//        data class LastSeenChanges(
-//            val previousSeen: Map<Address.Conversable, Long>? = null,
-//            val currentSeen: Map<Address.Conversable, Long>? = null,
-//        )
-//
-//        // Observe the config changes, figuring out the individual changes to each conversation
-//        configFactory.userConfigsChanged(
-//            onlyConfigTypes = EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE),
-//            debounceMills = 500L
-//        ).castAwayType()
-//            .onStart { emit(Unit) }
-//            .map {
-//                buildMap {
-//                    configFactory.withUserConfigs { configs ->
-//                        configs.convoInfoVolatile.all()
-//                    }.forEach { convo ->
-//                        val address = when (convo) {
-//                            is Conversation.ClosedGroup ->
-//                                Address.Group(AccountId(convo.accountId))
-//
-//                            is Conversation.Community ->
-//                                Address.Community(
-//                                    serverUrl = convo.baseCommunityInfo.baseUrl,
-//                                    room = convo.baseCommunityInfo.room
-//                                )
-//
-//                            is Conversation.OneToOne ->
-//                                Address.Standard(AccountId(convo.accountId))
-//
-//                            is Conversation.BlindedOneToOne,
-//                            is Conversation.LegacyGroup,
-//                            null -> null
-//                        }
-//
-//                        if (address != null && convo != null) {
-//                            put(address, convo.lastRead)
-//                        }
-//                    }
-//                }
-//            }
-//            .distinctUntilChanged()
-//            .scan(LastSeenChanges()) { acc, current ->
-//                acc.copy(
-//                    currentSeen = current,
-//                    previousSeen = acc.currentSeen,
-//                )
-//            }
-//            .collect { (previousSeen, currentSeen) ->
-//                if (previousSeen != null && currentSeen != null) {
-//                    currentSeen
-//                        .asSequence()
-//                        .filter { (key, value) ->
-//                            previousSeen[key] != value
-//                        }
-//                        .forEach { changed ->
-//                            val threadId = threadDb.getThreadIdIfExistsFor(changed.key.toString())
-//                            if (threadId != -1L) {
-//                                val allUnreadMessages = buildList {
-//                                    addAll(smsDatabase.setMessagesRead(threadId, changed.value))
-//                                    addAll(mmsDatabase.setMessagesRead(threadId, changed.value))
-//                                }
-//
-//                                Log.d(TAG, "Processing mark read for ${changed.key.debugString}, messageCount = ${allUnreadMessages.size}")
-//                                process(allUnreadMessages)
-//                            }
-//                        }
-//                }
-//            }
+                val shouldSendReadReceipt = when (updated.address) {
+                    is Address.GroupLike -> {
+                        // It's impossible to send read receipts to any group like conversation
+                        false
+                    }
+
+                    is Address.CommunityBlindedId -> {
+                        // Read receipt doesn't apply on the blinded convo
+                        false
+                    }
+
+                    is Address.Standard -> {
+                        // For 1on1 convo, first check if we have read receipts enabled
+                        if (!isReadReceiptsEnabled(context)) {
+                            false
+                        } else {
+                            // For contacts scenario, we only send read receipt to approved and
+                            // non-blocked contacts
+                            (threadRecipient.data as? RecipientData.Contact)?.let {
+                                it.approved && !it.blocked
+                            } == true
+                        }
+                    }
+                }
+
+                val shouldStartExpiringMessages = threadRecipient.expiryMode is ExpiryMode.AfterRead
+
+                if (!shouldSendReadReceipt && !shouldStartExpiringMessages) {
+                    // Nothing to do
+                    Log.d(TAG, "Thread(${updated.address.debugString}) changes but no action required")
+                    return@collect
+                }
+
+                val affectedMessageIDs = mmsSmsDatabase.findIncomingMessages(
+                    threadId = updated.threadId,
+                    startMsExclusive = updated.oldLastSeenMs,
+                    endMsInclusive = updated.newLastSeenMs,
+                )
+            }
     }
 
 

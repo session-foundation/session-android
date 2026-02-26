@@ -161,13 +161,14 @@ fun ThreadDatabase.getLastSeen(address: Address.Conversable): Instant? {
     }
 }
 
-fun ThreadDatabase.getLastSeen(id: Long): Instant? {
+fun ThreadDatabase.getAddressAndLastSeen(id: Long): Pair<Address.Conversable, Instant>? {
     return readableDatabase.query(
-        "SELECT ${ThreadDatabase.LAST_SEEN} FROM ${ThreadDatabase.TABLE_NAME} WHERE ${ThreadDatabase.ID} = ?",
+        "SELECT ${ThreadDatabase.ADDRESS}, ${ThreadDatabase.LAST_SEEN} FROM ${ThreadDatabase.TABLE_NAME} WHERE ${ThreadDatabase.ID} = ?",
         arrayOf(id)
     ).use {
         if (it.moveToNext()) {
-            Instant.fromEpochMilliseconds(it.getLong(0))
+            (it.getString(0).toAddress() as Address.Conversable) to
+                    Instant.fromEpochMilliseconds(it.getLong(1))
         } else {
             null
         }

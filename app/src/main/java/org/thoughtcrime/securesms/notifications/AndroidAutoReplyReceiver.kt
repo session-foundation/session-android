@@ -123,8 +123,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             mmsDatabase.insertMessageOutbox(
                                 message = reply,
                                 threadId = replyThreadId,
-                                forceSms = false,
-                                runThreadUpdate = true
+                                forceSms = false
                             )
                         } catch (e: MmsException) {
                             Log.w(TAG, e)
@@ -141,8 +140,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             replyThreadId,
                             reply,
                             false,
-                            snodeClock.currentTimeMillis(),
-                            true
+                            snodeClock.currentTimeMillis()
                         )
                     }
 

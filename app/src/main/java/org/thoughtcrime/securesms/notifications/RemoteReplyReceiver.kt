@@ -118,8 +118,7 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                                     mmsDatabase.insertMessageOutbox(
                                         message = reply,
                                         threadId = threadId,
-                                        forceSms = false,
-                                        runThreadUpdate = true
+                                        forceSms = false
                                     ), true
                                 )
                                 messageSender.send(message, address)
@@ -140,8 +139,7 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                                     threadId,
                                     reply,
                                     false,
-                                    System.currentTimeMillis(),
-                                    true
+                                    System.currentTimeMillis()
                                 ), false
                             )
                             messageSender.send(message, address)
