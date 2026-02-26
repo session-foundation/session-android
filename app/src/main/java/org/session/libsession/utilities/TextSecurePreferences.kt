@@ -36,6 +36,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_COPIED_DONATION_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SEEN_DONATION_CTA_AMOUNT
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SEND_MESSAGE_RAMP
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
@@ -259,6 +260,9 @@ interface TextSecurePreferences {
     fun isSendWithEnterEnabled() : Boolean
     fun updateBooleanFromKey(key : String, value : Boolean)
 
+    fun setDebugSendMessageRampEnabled(enable: Boolean)
+    fun isDebugSendMessageRampEnabled(): Boolean
+
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
@@ -402,6 +406,8 @@ interface TextSecurePreferences {
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
+
+        const val DEBUG_SEND_MESSAGE_RAMP = "debug_send_message_ramp"
 
         const val HAS_CHECKED_DOZE_WHITELIST = "has_checked_doze_whitelist"
 
@@ -651,6 +657,11 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setHaveWarnedUserAboutSavingAttachments(context: Context) {
             setBooleanPreference(context, HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS, true)
+        }
+
+        @JvmStatic
+        fun isDebugSendMessageRampEnabled(context : Context): Boolean {
+            return getBooleanPreference(context, DEBUG_SEND_MESSAGE_RAMP, false)
         }
     }
 }
@@ -1541,6 +1552,14 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isSendWithEnterEnabled(): Boolean {
         return getBooleanPreference(SEND_WITH_ENTER, false)
+    }
+
+    override fun setDebugSendMessageRampEnabled(enable: Boolean) {
+        setBooleanPreference(DEBUG_SEND_MESSAGE_RAMP, enable)
+    }
+
+    override fun isDebugSendMessageRampEnabled(): Boolean {
+        return getBooleanPreference(DEBUG_SEND_MESSAGE_RAMP, false)
     }
 
     override fun updateBooleanFromKey(key: String, value: Boolean) {

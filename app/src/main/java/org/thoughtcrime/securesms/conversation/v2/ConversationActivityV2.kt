@@ -90,6 +90,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -139,7 +140,6 @@ import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.recordAudio
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
@@ -2383,6 +2383,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
+    override fun sendDebugMessage() {
+       viewModel.debugRampSending()
+    }
+
     override fun commitInputContent(contentUri: Uri) {
         val recipient = viewModel.recipient
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
@@ -2682,6 +2686,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 intent ?: return
                 val body = intent.getStringExtra(MediaSendActivity.EXTRA_MESSAGE)
                 val mediaList = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
+                val debugUpload = intent.getBooleanExtra(MediaSendActivity.EXTRA_DEBUG_UPLOAD, false)
+
                 val slideDeck = SlideDeck()
                 for (media in mediaList) {
                     val mediaFilename: String? = media.filename
@@ -2694,7 +2700,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         }
                     }
                 }
-                sendAttachments(slideDeck.asAttachments(), body)
+
+                val attachments = slideDeck.asAttachments()
+
+                // If DEBUG, attempt to send as many times as "count"
+                if (BuildConfig.DEBUG && debugUpload) {
+                    val count = 20
+                    val delayBetweenSendsMs = 300L
+
+                    // ViewModel will enqueue a JobQueue job that re-builds attachments per send.
+                    viewModel.debugRampAttachmentSending(
+                        media = mediaList,
+                        body = body,
+                        count = count,
+                        delayMs = delayBetweenSendsMs,
+                        prefix = "Upload"
+                    )
+                } else {
+                    sendAttachments(attachments, body)
+                }
             }
         }
     }

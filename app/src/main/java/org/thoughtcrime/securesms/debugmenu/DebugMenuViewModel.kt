@@ -35,6 +35,7 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.*
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.upsertContact
@@ -145,7 +146,8 @@ class DebugMenuViewModel @AssistedInject constructor(
             hasDonatedDebug = textSecurePreferences.hasDonatedDebug() ?: NOT_SET,
             hasCopiedDonationURLDebug = textSecurePreferences.hasCopiedDonationURLDebug() ?: NOT_SET,
             seenDonateCTAAmountDebug = textSecurePreferences.seenDonationCTAAmountDebug() ?: NOT_SET,
-            showDonateCTAFromPositiveReviewDebug = textSecurePreferences.showDonationCTAFromPositiveReviewDebug() ?: NOT_SET
+            showDonateCTAFromPositiveReviewDebug = textSecurePreferences.showDonationCTAFromPositiveReviewDebug() ?: NOT_SET,
+            debugMessageRampEnabled = textSecurePreferences.isDebugSendMessageRampEnabled()
         )
     )
     val uiState: StateFlow<UIState>
@@ -294,7 +296,7 @@ class DebugMenuViewModel @AssistedInject constructor(
                         configFactory.withMutableUserConfigs { configs ->
                             for ((index, key) in keys.withIndex()) {
                                 configs.contacts.upsertContact(
-                                    Address.Standard(key),
+                                    Standard(key),
                                 ) {
                                     name = "${command.prefix}$index"
                                     approved = true
@@ -516,6 +518,11 @@ class DebugMenuViewModel @AssistedInject constructor(
                     else -> textSecurePreferences.setShowDonationCTAFromPositiveReviewDebug(null)
                 }
             }
+
+            is Commands.SetDebugSendMessageRampEnabled -> {
+                textSecurePreferences.setDebugSendMessageRampEnabled(command.value)
+                _uiState.update { it.copy(debugMessageRampEnabled = command.value) }
+            }
         }
     }
 
@@ -646,7 +653,8 @@ class DebugMenuViewModel @AssistedInject constructor(
         val hasDonatedDebug: String,
         val hasCopiedDonationURLDebug: String,
         val seenDonateCTAAmountDebug: String,
-        val showDonateCTAFromPositiveReviewDebug: String
+        val showDonateCTAFromPositiveReviewDebug: String,
+        val debugMessageRampEnabled: Boolean = false
     )
 
     enum class DatabaseInspectorState {
@@ -715,6 +723,8 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class SetDebugHasCopiedDonation(val value: String) : Commands()
         data class SetDebugDonationCTAViews(val value: String) : Commands()
         data class SetDebugShowDonationFromReview(val value: String) : Commands()
+
+        data class SetDebugSendMessageRampEnabled(val value: Boolean) : Commands()
     }
 
     companion object {

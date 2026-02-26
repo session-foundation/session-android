@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
@@ -55,6 +56,8 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
+import org.session.libsession.messaging.jobs.DebugAttachmentSendJob
+import org.session.libsession.messaging.jobs.DebugTextSendJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -111,6 +114,7 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.mediasend.Media
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.SimpleDialogData
@@ -168,6 +172,8 @@ class ConversationViewModel @AssistedInject constructor(
     private val audioPlaybackManager: AudioPlaybackManager,
     private val loginStateRepository: LoginStateRepository,
     private val jobQueue: Provider<JobQueue>,
+    private val debugTextSendJobFactory: DebugTextSendJob.Factory,
+    private val debugAttachmentSendJobFactory: DebugAttachmentSendJob.Factory
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager,
@@ -1555,6 +1561,68 @@ class ConversationViewModel @AssistedInject constructor(
     fun cyclePlaybackSpeed(){
         audioPlaybackManager.cyclePlaybackSpeed()
     }
+
+    fun debugRampSending(
+        count: Int = 100,
+        delayMs: Long = 50,
+        prefix: String = "Auto",
+    ) {
+        if (!BuildConfig.DEBUG) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val threadId = threadIdFlow.filterNotNull().first()
+            implicitlyApproveRecipient()?.join()
+
+            jobQueue.get().add(
+                debugTextSendJobFactory.create(
+                    threadId = threadId,
+                    address = address,
+                    count = count,
+                    delayBetweenMessagesMs = delayMs,
+                    prefix = prefix
+                )
+            )
+        }
+    }
+
+    fun debugRampAttachmentSending(
+        media: List<Media>,
+        body: String?,
+        count: Int = 20,
+        delayMs: Long = 300L,
+        prefix: String = "Upload",
+    ) {
+        if (!BuildConfig.DEBUG) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val threadId = threadIdFlow.filterNotNull().first()
+            implicitlyApproveRecipient()?.join()
+
+            val specs = media.map { m ->
+                DebugAttachmentSendJob.MediaSpec(
+                    uriString = m.uri.toString(),
+                    mimeType = m.mimeType,
+                    filename = m.filename,
+                    width = m.width,
+                    height = m.height,
+                    caption = m.caption
+                )
+            }
+
+            jobQueue.get().add(
+                debugAttachmentSendJobFactory.create(
+                    threadId = threadId,
+                    address = address,
+                    count = count,
+                    delayBetweenSendsMs = delayMs,
+                    prefix = prefix,
+                    body = body,
+                    mediaSpecs = specs
+                )
+            )
+        }
+    }
+
 
     @AssistedFactory
     interface Factory {

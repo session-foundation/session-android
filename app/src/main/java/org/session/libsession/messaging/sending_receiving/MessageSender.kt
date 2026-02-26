@@ -80,6 +80,20 @@ class MessageSender @Inject constructor(
     private val jobQueue: Provider<JobQueue>,
 ) {
 
+    companion object {
+        private var debugLabel = "MessageSender"
+        private const val CH_SNODE = "SNODE"
+        private const val CH_OPEN_GROUP = "OPEN GROUP"
+        private const val CH_OPEN_GROUP_INBOX = "OPEN GROUP INBOX"
+
+        private const val PHASE_ENQUEUE = "Enqueue"
+        private const val PHASE_NETWORK_START = "Network start"
+        private const val PHASE_NETWORK_SUCCESS = "Network success"
+        private const val PHASE_NETWORK_FAILED = "Network failed"
+        private const val PHASE_MARKED_SENT = "Marked SENT"
+        private const val PHASE_MARKED_FAILED = "Marked FAILED"
+    }
+
     // Error
     sealed class Error(val description: String, cause: Throwable? = null) : Exception(description, cause) {
         class InvalidMessage : Error("Invalid message.")
@@ -97,6 +111,13 @@ class MessageSender @Inject constructor(
         }
     }
 
+    private fun log(message: String, e: Throwable? = null) {
+        Log.d(javaClass.simpleName, "$debugLabel: $message", e)
+    }
+
+    private fun logE(message: String, e: Throwable? = null) {
+        Log.e(javaClass.simpleName, "$debugLabel: $message", e)
+    }
 
     private fun SessionProtos.DataMessage.Builder.copyProfileFromConfig() {
         configFactory.withUserConfigs {
@@ -247,6 +268,7 @@ class MessageSender @Inject constructor(
 
     // One-on-One Chats & Closed Groups
     private suspend fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false) {
+        log("$PHASE_NETWORK_START ($CH_SNODE):\nmsgId=${message.id}\ndest=$destination")
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
             handleFailedMessageSend(message, error, isSyncMessage)
@@ -292,12 +314,14 @@ class MessageSender @Inject constructor(
 
             if (sendResult.isSuccess) {
                 message.serverHash = sendResult.getOrThrow().hash
+                log("$PHASE_NETWORK_SUCCESS ($CH_SNODE):\nmsgId=${message.id}\nhash=${message.serverHash}")
                 handleSuccessfulMessageSend(message, destination, isSyncMessage)
             } else {
                 throw sendResult.exceptionOrNull()!!
             }
         } catch (exception: Exception) {
             if (exception !is CancellationException) {
+                logE("$PHASE_NETWORK_FAILED ($CH_SNODE):\nmsgId=${message.id}", exception)
                 handleFailure(exception)
             }
 
@@ -333,6 +357,7 @@ class MessageSender @Inject constructor(
 
     // Open Groups
     private suspend fun sendToOpenGroupDestination(destination: Destination, message: Message) {
+        log("$PHASE_NETWORK_START ($CH_OPEN_GROUP):\nmsgId=${message.id}\ndestination=$destination")
         if (message.sentTimestamp == null) {
             message.sentTimestamp = snodeClock.currentTimeMillis()
         }
@@ -408,6 +433,7 @@ class MessageSender @Inject constructor(
                     )
 
                     message.openGroupServerMessageID = response.id
+                    log("$PHASE_NETWORK_SUCCESS ($CH_OPEN_GROUP):\nmsgId=${message.id}\nserverId=${message.openGroupServerMessageID}")
                     handleSuccessfulMessageSend(message, destination, openGroupSentTimestamp = response.postedMills)
                     return
                 }
@@ -435,6 +461,7 @@ class MessageSender @Inject constructor(
                     ))
 
                     message.openGroupServerMessageID = response.id
+                    log("$PHASE_NETWORK_SUCCESS ($CH_OPEN_GROUP_INBOX):\nmsgId=${message.id}\nserverId=${message.openGroupServerMessageID}")
                     handleSuccessfulMessageSend(message, destination,
                         openGroupSentTimestamp = response.postedAt?.toEpochMilli() ?: 0L)
                     return
@@ -449,6 +476,7 @@ class MessageSender @Inject constructor(
 
     // Result Handling
     private fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
+        log("$PHASE_MARKED_SENT:\nmsgId=${message.id}\nfinalTimestamp=${message.sentTimestamp}")
         val userPublicKey = storage.getUserPublicKey()!!
         // Ignore future self-sends
         storage.addReceivedMessageTimestamp(message.sentTimestamp!!)
@@ -506,7 +534,7 @@ class MessageSender @Inject constructor(
                 try {
                     sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
                 } catch (ec: Exception) {
-                    Log.e("MessageSender", "Unable to send sync message", ec)
+                    logE("Unable to send sync message", ec)
                 }
             }
         }
@@ -514,6 +542,7 @@ class MessageSender @Inject constructor(
 
     fun handleFailedMessageSend(message: Message, error: Exception, isSyncMessage: Boolean = false) {
         val messageId = message.id ?: return
+        logE("$PHASE_MARKED_FAILED\nmsgId=$messageId\nsync=$isSyncMessage", error)
 
         // no need to handle if message is marked as deleted
         if (messageDataProvider.isDeletedMessage(messageId)){
@@ -550,6 +579,7 @@ class MessageSender @Inject constructor(
         message.threadID = threadID
         val destination = Destination.from(address, configFactory)
         val job = messageSendJobFactory.create(message, destination, statusCallback)
+        log("$PHASE_ENQUEUE:\nmsgId=${message.id}\nthread=${message.threadID}\ndest=$address")
         jobQueue.get().add(job)
 
         // if we are sending a 'Note to Self' make sure it is not hidden
