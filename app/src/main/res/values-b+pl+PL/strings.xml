@@ -222,8 +222,6 @@
     <string name="cameraGrantAccessQr">Aby skanować kody QR, aplikacja {app_name} wymaga dostępu do aparatu</string>
     <string name="cancel">Anulowanie</string>
     <string name="cancelAccess">Anuluj {pro}</string>
-    <string name="cancelProPlatform">Anuluj na stronie {platform}, korzystając z konta {platform_account}, którego użyto do rejestracji w {pro}.</string>
-    <string name="cancelProPlatformStore">Anuluj na stronie {platform_store}, korzystając z konta {platform_account}, którego użyto do rejestracji w {pro}.</string>
     <string name="change">Zmień</string>
     <string name="changePasswordFail">Nie udało się zmienić hasła</string>
     <string name="changePasswordModalDescription">Zmień hasło dla {app_name}. Dane przechowywane lokalnie zostaną ponownie zaszyfrowane nowym hasłem.</string>

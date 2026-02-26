@@ -213,8 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name}需要相机访问权限才能扫描二维码</string>
     <string name="cancel">取消</string>
     <string name="cancelAccess">取消 {pro}</string>
-    <string name="cancelProPlatform">请使用您注册 {pro} 所用的 {platform_account}，前往 {platform} 网站进行取消。</string>
-    <string name="cancelProPlatformStore">请使用您注册 {pro} 所用的 {platform_account}，前往 {platform_store} 网站进行取消。</string>
     <string name="change">更改</string>
     <string name="changePasswordFail">更改密码失败</string>
     <string name="changePasswordModalDescription">更改 {app_name} 的密码。本地存储的数据将使用您的新密码重新加密。</string>

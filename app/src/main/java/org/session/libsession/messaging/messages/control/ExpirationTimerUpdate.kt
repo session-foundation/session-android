@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.messages.control
 
 import org.session.libsession.database.MessageDataProvider
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.copyExpiration
 import org.session.protos.SessionProtos
 import org.session.protos.SessionProtos.DataMessage.Flags.EXPIRATION_TIMER_UPDATE_VALUE
@@ -17,7 +16,6 @@ data class ExpirationTimerUpdate @JvmOverloads constructor(var syncTarget: Strin
 
     companion object {
         const val TAG = "ExpirationTimerUpdate"
-        private val storage = MessagingModuleConfiguration.shared.storage
 
         fun fromProto(proto: SessionProtos.Content, isGroup: Boolean): ExpirationTimerUpdate? =
             proto.dataMessage?.takeIf { it.flags and EXPIRATION_TIMER_UPDATE_VALUE != 0 }?.run {

@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.jobs
 
+import android.app.Application
 import android.widget.Toast
 import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
@@ -11,7 +12,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ED25519
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
@@ -27,6 +27,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.protos.SessionProtos.GroupUpdateInviteMessage
 import org.session.protos.SessionProtos.GroupUpdateMessage
+import org.thoughtcrime.securesms.database.RecipientRepository
 
 class InviteContactsJob @AssistedInject constructor(
     @Assisted val groupSessionId: String,
@@ -34,8 +35,9 @@ class InviteContactsJob @AssistedInject constructor(
     @Assisted val isReinvite: Boolean,
     private val configFactory: ConfigFactoryProtocol,
     private val messageSender: MessageSender,
-    private val snodeClock: SnodeClock
-
+    private val snodeClock: SnodeClock,
+    private val application: Application,
+    private val recipientRepository: RecipientRepository,
 ) : Job {
 
     companion object {
@@ -137,13 +139,11 @@ class InviteContactsJob @AssistedInject constructor(
                     groupName = groupName.orEmpty(),
                     underlying = firstError,
                     isReinvite = isReinvite
-                ).format(
-                    MessagingModuleConfiguration.shared.context,
-                    MessagingModuleConfiguration.shared.recipientRepository
+                ).format(application, recipientRepository
                 ).let {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
-                            MessagingModuleConfiguration.shared.context,
+                            application,
                             it,
                             Toast.LENGTH_LONG
                         ).show()

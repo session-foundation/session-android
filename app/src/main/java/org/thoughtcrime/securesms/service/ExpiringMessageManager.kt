@@ -14,7 +14,7 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
+import org.session.libsession.utilities.MessageExpirationManagerProtocol
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState

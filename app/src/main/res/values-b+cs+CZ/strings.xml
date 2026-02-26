@@ -221,8 +221,6 @@
     <string name="cameraGrantAccessQr">{app_name} potřebuje přístup k fotoaparátu ke skenování QR kódů</string>
     <string name="cancel">Zrušit</string>
     <string name="cancelAccess">Zrušit {pro}</string>
-    <string name="cancelProPlatform">Zrušení proveďte na webu {platform} pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
-    <string name="cancelProPlatformStore">Zrušení proveďte na webu {platform_store} pomocí {platform_account}, kterým jste si zaregistrovali {pro}.</string>
     <string name="change">Změnit</string>
     <string name="changePasswordFail">Změna hesla selhala</string>
     <string name="changePasswordModalDescription">Změňte své heslo pro {app_name}. Lokálně uložená data budou znovu zašifrována pomocí vašeho nového hesla.</string>

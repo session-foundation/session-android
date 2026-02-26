@@ -23,11 +23,13 @@ data class Dimensions(
     val minItemButtonHeight: Dp = 60.dp,
     val minButtonWidth: Dp = 160.dp,
     val minSmallButtonWidth: Dp = 50.dp,
+    val minMessageWidth: Dp = 200.dp,
 
     val indicatorHeight: Dp = 4.dp,
 
     val borderStroke: Dp = 1.dp,
 
+    val iconStatus: Dp = 12.dp,
     val iconXXSmall: Dp = 10.dp,
     val iconXSmall: Dp = 14.dp,
     val iconSmall: Dp = 20.dp,
@@ -45,7 +47,13 @@ data class Dimensions(
     val shapeSmall: Dp = 12.dp,
     val shapeMedium: Dp = 16.dp,
 
+    val messageCornerRadius: Dp = 16.dp,
+    val messageVerticalPadding: Dp = 10.dp,
+
     val maxContentWidth: Dp = 410.dp,
+
+    val quoteIconSize: Dp = 40.dp,
+
     val maxDialogWidth: Dp = 560.dp,
     val maxTooltipWidth: Dp = 280.dp,
 

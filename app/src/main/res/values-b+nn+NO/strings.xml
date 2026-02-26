@@ -216,8 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} trenger kameratilgang for å skanne QR-koder</string>
     <string name="cancel">Avbryt</string>
     <string name="cancelAccess">Kanseller {pro}</string>
-    <string name="cancelProPlatform">Avbryt på {platform}-nettstedet, ved å bruke {platform_account} du registrerte deg for {pro} med.</string>
-    <string name="cancelProPlatformStore">Avbryt på {platform_store}-nettstedet, ved å bruke {platform_account} du registrerte deg for {pro} med.</string>
     <string name="change">Endre</string>
     <string name="changePasswordFail">Kunne ikkje endre passordet</string>
     <string name="changePasswordModalDescription">Endre passordet ditt for {app_name}. Lokalt lagrede data vil bli kryptert på nytt med det nye passordet ditt.</string>
