@@ -196,10 +196,6 @@ fun ConversationV3NavHost(
                     navController.handleIntent(action.intent)
                 }
 
-                is NavigationAction.ReturnResult -> {
-                    //todo convov3 this was used to get data back from convo settings to convo
-                }
-
                 else -> {}
             }
         }
@@ -219,7 +215,6 @@ fun ConversationV3NavHost(
             }
 
             // Conversation Settings
-            //todo Convov3 we might need to recreate the convo settings to differentiate going back to convo activity vs being in the same compose graph
             horizontalSlideComposable<RouteConversationSettings> {
                 val viewModel =
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
@@ -237,7 +232,9 @@ fun ConversationV3NavHost(
 
                 ConversationSettingsScreen(
                     viewModel = viewModel,
-                    onBack = onBack,
+                    onBack = dropUnlessResumed {
+                        handleBack()
+                    },
                 )
             }
 

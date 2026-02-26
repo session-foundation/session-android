@@ -152,7 +152,7 @@
             android:label="@string/conversationsBlockedContacts"
             />
         <activity
-            android:name="org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity"
+            android:name="org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:label="@string/sessionSettings" />
         <activity
@@ -173,7 +173,7 @@
         <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity" />
         <activity android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
-        <activity android:name="org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity"
+        <activity android:name="org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:exported="true"
