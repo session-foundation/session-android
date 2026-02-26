@@ -55,8 +55,6 @@ import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Pair;
 import kotlin.Triple;
-import network.loki.messenger.libsession_util.protocol.ProFeature;
-import network.loki.messenger.libsession_util.protocol.ProMessageFeature;
 
 @Singleton
 public class MmsSmsDatabase extends Database {
@@ -597,6 +595,20 @@ public class MmsSmsDatabase extends Database {
 
   public Reader readerFor(@NonNull Cursor cursor, boolean getQuote) {
     return new Reader(cursor, getQuote);
+  }
+
+  @NonNull
+  public MessageId readCurrentMessageId(@NonNull Cursor cursor) {
+    String type = cursor.getString(cursor.getColumnIndexOrThrow(TRANSPORT));
+    long id = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+
+    if (MMS_TRANSPORT.equals(type)) {
+      return new MessageId(id, true);
+    } else if (SMS_TRANSPORT.equals(type)) {
+      return new MessageId(id, false);
+    } else {
+      throw new AssertionError("Bad type: " + type);
+    }
   }
 
   @NonNull
