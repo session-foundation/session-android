@@ -16,6 +16,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
@@ -74,8 +75,8 @@ fun CancelPlanNonOriginating(
                 title =  Phrase.from(context.getText(R.string.onPlatformWebsite))
                     .put(PLATFORM_KEY, providerData.getPlatformDisplayName())
                     .format(),
-                info = Phrase.from(context.getText(R.string.requestRefundPlatformWebsite))
-                    .put(PLATFORM_KEY, providerData.getPlatformDisplayName())
+                info = Phrase.from(context.getText(R.string.cancelProPlatformStore))
+                    .put(PLATFORM_STORE_KEY, providerData.store)
                     .put(PLATFORM_ACCOUNT_KEY, providerData.platformAccount)
                     .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
