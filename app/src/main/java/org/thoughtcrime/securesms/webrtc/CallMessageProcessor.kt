@@ -57,7 +57,7 @@ class CallMessageProcessor @Inject constructor(
                 Log.d("Loki","Dropping call message if call notifications disabled")
                 if (nextMessage.type != PRE_OFFER) continue
                 val sentTimestamp = nextMessage.sentTimestamp ?: continue
-                insertMissedCall(sender, sentTimestamp)
+                insertMissedCall(sender, sentTimestamp, nextMessage)
                 continue
             }
 
@@ -78,10 +78,10 @@ class CallMessageProcessor @Inject constructor(
         }
     }
 
-    private fun insertMissedCall(sender: String, sentTimestamp: Long) {
+    private fun insertMissedCall(sender: String, sentTimestamp: Long, callMessage: CallMessage) {
         val currentUserPublicKey = storage.getUserPublicKey()
         if (sender == currentUserPublicKey) return // don't insert a "missed" due to call notifications disabled if it's our own sender
-        storage.insertCallMessage(sender, CallMessageType.CALL_MISSED, sentTimestamp)
+        storage.insertCallMessage(sender, CallMessageType.CALL_MISSED, sentTimestamp, callMessage.expiryMode)
     }
 
     private fun incomingHangup(callMessage: CallMessage) {

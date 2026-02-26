@@ -8,6 +8,7 @@ import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.visible.Attachment
 import org.session.libsession.messaging.messages.visible.Reaction
@@ -190,7 +191,7 @@ interface StorageProtocol {
     fun updateThread(threadId: Long, unarchive: Boolean)
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
     fun insertMessageRequestResponseFromYou(threadId: Long)
-    fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long)
+    fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long, expiryMode: ExpiryMode)
     fun conversationHasOutgoing(userPublicKey: String): Boolean
     fun deleteMessagesByHash(threadId: Long, hashes: List<String>)
     fun deleteMessagesByUser(threadId: Long, userSessionId: String)
