@@ -168,6 +168,7 @@ sealed interface ConversationV3Destination: Parcelable {
 fun ConversationV3NavHost(
     address: Address.Conversable,
     startDestination: ConversationV3Destination = RouteConversation,
+    switchConvoVersion: () -> Unit,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
@@ -210,6 +211,7 @@ fun ConversationV3NavHost(
 
                 ConversationScreen(
                     viewModel = viewModel,
+                    switchConvoVersion = switchConvoVersion,
                     onBack = onBack,
                 )
             }

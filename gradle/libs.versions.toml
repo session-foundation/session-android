@@ -70,6 +70,7 @@ googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.3.0"
 billingVersion = "8.3.0"
 autolinkVersion = "0.12.0"
+pagingCommonVersion = "3.4.1"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
@@ -175,6 +176,8 @@ android-billing-ktx = { module = "com.android.billingclient:billing-ktx", versio
 mockk = { module = "io.mockk:mockk", version = "1.14.9" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlinVersion" }
 autolink = { module = "org.nibor.autolink:autolink", version.ref = "autolinkVersion" }
+androidx-paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "pagingCommonVersion" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagingCommonVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

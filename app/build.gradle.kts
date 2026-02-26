@@ -365,6 +365,8 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.interpolator)
+    implementation(libs.androidx.paging.common)
+    implementation(libs.androidx.paging.compose)
 
     // Add firebase dependencies to specific variants
     for (variant in firebaseEnabledVariants) {

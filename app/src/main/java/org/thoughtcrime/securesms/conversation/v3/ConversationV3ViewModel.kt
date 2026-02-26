@@ -3,6 +3,10 @@ package org.thoughtcrime.securesms.conversation.v3
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -11,14 +15,26 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -33,8 +49,15 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
 import org.session.libsession.utilities.toGroupString
+import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.ReactionDatabase
+import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
@@ -55,14 +78,24 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val recipientRepository: RecipientRepository,
     private val groupDb: GroupDatabase,
-    val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
-) : ViewModel() {
+    private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+    private val threadDb: ThreadDatabase,
+    private val mmsSmsDatabase: MmsSmsDatabase,
+    private val recipientSettingsDatabase: RecipientSettingsDatabase,
+    private val attachmentDatabase: AttachmentDatabase,
+    private val reactionDb: ReactionDatabase,
 
-    private val threadId by lazy {
-        requireNotNull(storage.getThreadId(address)) {
-            "Thread doesn't exist for this conversation"
-        }
-    }
+    ) : ViewModel() {
+
+    val threadIdFlow: StateFlow<Long?> =
+        storage.getThreadId(address)
+            ?.let { MutableStateFlow(it) }
+            ?: threadDb.updateNotifications
+                .map { storage.getThreadId(address) }
+                .flowOn(Dispatchers.Default)
+                .filterNotNull()
+                .take(1)
+                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
         UIState()
@@ -111,8 +144,46 @@ class ConversationV3ViewModel @AssistedInject constructor(
             avatarUIData = AvatarUIData(emptyList())
         ))
 
-    init {
+    private var pagingSource: ConversationPagingSource? = null
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val conversationMessages: Flow<PagingData<MessageRecord>> = threadIdFlow
+        .filterNotNull()
+        .flatMapLatest { id ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = 50,
+                    initialLoadSize = 100,
+                    enablePlaceholders = false
+                ),
+                pagingSourceFactory = {
+                    ConversationPagingSource(id, mmsSmsDatabase, reverse = true).also {
+                        pagingSource = it
+                    }
+                }
+            ).flow
+        }
+        .cachedIn(viewModelScope)
+
+    @Suppress("OPT_IN_USAGE")
+    val databaseChanges: SharedFlow<*> = merge(
+        threadIdFlow
+            .filterNotNull()
+            .flatMapLatest { id -> threadDb.updateNotifications.filter { it == id } },
+        recipientSettingsDatabase.changeNotification.filter { it == address },
+        attachmentDatabase.changesNotification,
+        reactionDb.changeNotification,
+    ).debounce(200L) // debounce to avoid too many reloads
+        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 0)
+
+
+    init {
+        viewModelScope.launch {
+            databaseChanges.collectLatest {
+                // Forces the Pager to re-query the PagingSource
+                pagingSource?.invalidate()
+            }
+        }
     }
 
 
