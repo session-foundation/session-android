@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
@@ -28,6 +27,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.pro.api.GetProDetailsApi
 import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
@@ -55,10 +55,10 @@ class FetchProDetailsWorker @AssistedInject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val snodeClock: SnodeClock,
     private val configFactory: ConfigFactoryProtocol,
-    private val prefs: TextSecurePreferences,
+    private val prefs: PreferenceStorage,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        if (!prefs.forcePostPro()) {
+        if (!prefs[ProPreferenceKeys.FORCE_POST_PRO]) {
             Log.d(TAG, "Pro details fetch skipped because pro is not enabled")
             return Result.success()
         }

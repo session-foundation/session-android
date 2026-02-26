@@ -33,7 +33,6 @@ import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
-import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -49,7 +48,9 @@ import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
+import org.thoughtcrime.securesms.home.HomePreferenceKeys
 import org.thoughtcrime.securesms.mms.SlideDeck
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
@@ -75,6 +76,7 @@ class DefaultMessageNotifier @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val imageLoader: Provider<ImageLoader>,
     private val loginStateRepository: LoginStateRepository,
+    private val prefs: PreferenceStorage,
     private val messageFormatter: Lazy<MessageFormatter>,
 ) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
@@ -169,7 +171,7 @@ class DefaultMessageNotifier @Inject constructor(
             ) == 1 &&
             !(recipient.approved || threadDatabase.getLastSeenAndHasSent(threadId).second())
         ) {
-            removeHasHiddenMessageRequests(context)
+            prefs.remove(HomePreferenceKeys.HAS_HIDDEN_MESSAGE_REQUESTS)
         }
 
         if (!isNotificationsEnabled(context) ||

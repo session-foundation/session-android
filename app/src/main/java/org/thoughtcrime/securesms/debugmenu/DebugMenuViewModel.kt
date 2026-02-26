@@ -27,7 +27,10 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.protocol.ProFeature
+import network.loki.messenger.libsession_util.protocol.ProMessageFeature
+import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import network.loki.messenger.libsession_util.util.toBitSet
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.messaging.file_server.FileServerApis
@@ -48,6 +51,11 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.home.HomePreferenceKeys
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.pro.ProPreferenceKeys
+import org.thoughtcrime.securesms.pro.toProMessageFeatures
+import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
@@ -62,6 +70,7 @@ class DebugMenuViewModel @AssistedInject constructor(
     @Assisted private val navigator: UINavigator<DebugMenuDestination>,
     @param:ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
+    private val preferenceStorage: PreferenceStorage,
     private val tokenPageNotificationManager: TokenPageNotificationManager,
     private val configFactory: ConfigFactory,
     private val storage: StorageProtocol,
@@ -92,20 +101,23 @@ class DebugMenuViewModel @AssistedInject constructor(
             showEnvironmentWarningDialog = false,
             showLoadingDialog = false,
             showDeprecatedStateWarningDialog = false,
-            hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
+            hideMessageRequests = preferenceStorage[HomePreferenceKeys.HAS_HIDDEN_MESSAGE_REQUESTS],
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
             forceDeterministicEncryption = textSecurePreferences.forcesDeterministicAttachmentEncryption,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
-            forceCurrentUserAsPro = textSecurePreferences.forceCurrentUserAsPro(),
-            forceOtherUsersAsPro = textSecurePreferences.forceOtherUsersAsPro(),
-            forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
-            forcePostPro = textSecurePreferences.forcePostPro(),
+            forceCurrentUserAsPro = preferenceStorage[ProPreferenceKeys.FORCE_CURRENT_USER_PRO],
+            forceOtherUsersAsPro = preferenceStorage[ProPreferenceKeys.FORCE_OTHER_USERS_PRO],
+            forceIncomingMessagesAsPro = preferenceStorage[ProPreferenceKeys.FORCE_INCOMING_MESSAGE_PRO],
+            forcePostPro = preferenceStorage[ProPreferenceKeys.FORCE_POST_PRO],
             forceShortTTl = textSecurePreferences.forcedShortTTL(),
             debugAvatarReupload = textSecurePreferences.debugAvatarReupload,
-            messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
+            messageProFeature = buildSet {
+                preferenceStorage[ProPreferenceKeys.DEBUG_PRO_MESSAGE_FEATURES].toProMessageFeatures(this)
+                preferenceStorage[ProPreferenceKeys.DEBUG_PRO_PROFILE_FEATURES].toProProfileFeatures(this)
+            },
             dbInspectorState = DatabaseInspectorState.NOT_AVAILABLE,
             debugSubscriptionStatuses = setOf(
                 DebugSubscriptionStatus.AUTO_GOOGLE,
@@ -118,18 +130,20 @@ class DebugMenuViewModel @AssistedInject constructor(
                 DebugSubscriptionStatus.EXPIRED_APPLE,
                 DebugSubscriptionStatus.AUTO_APPLE_REFUNDING,
             ),
-            selectedDebugSubscriptionStatus = textSecurePreferences.getDebugSubscriptionType() ?: DebugSubscriptionStatus.AUTO_GOOGLE,
+            selectedDebugSubscriptionStatus = preferenceStorage[ProPreferenceKeys.DEBUG_SUBSCRIPTION_STATUS]
+                ?: DebugSubscriptionStatus.AUTO_GOOGLE,
             debugProPlanStatus = setOf(
                 DebugProPlanStatus.NORMAL,
                 DebugProPlanStatus.LOADING,
                 DebugProPlanStatus.ERROR,
             ),
-            selectedDebugProPlanStatus = textSecurePreferences.getDebugProPlanStatus() ?: DebugProPlanStatus.NORMAL,
+            selectedDebugProPlanStatus = preferenceStorage[ProPreferenceKeys.DEBUG_PRO_PLAN_STATUS]
+                ?: DebugProPlanStatus.NORMAL,
             debugProPlans = subscriptionManagers.asSequence()
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
-            forceNoBilling = textSecurePreferences.getDebugForceNoBilling(),
-            withinQuickRefund = textSecurePreferences.getDebugIsWithinQuickRefund(),
+            forceNoBilling = preferenceStorage[ProPreferenceKeys.DEBUG_FORCE_NO_BILLING],
+            withinQuickRefund = preferenceStorage[ProPreferenceKeys.DEBUG_WITHIN_QUICK_REFUND],
             availableAltFileServers = TEST_FILE_SERVERS,
             alternativeFileServer = textSecurePreferences.alternativeFileServer,
             showToastForGroups = getDebugGroupToastPref(),
@@ -235,7 +249,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.HideMessageRequest -> {
-                textSecurePreferences.setHasHiddenMessageRequests(command.hide)
+                preferenceStorage[HomePreferenceKeys.HAS_HIDDEN_MESSAGE_REQUESTS] = command.hide
                 _uiState.value = _uiState.value.copy(hideMessageRequests = command.hide)
             }
 
@@ -309,42 +323,42 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.ForceCurrentUserAsPro -> {
-                textSecurePreferences.setForceCurrentUserAsPro(command.set)
+                preferenceStorage[ProPreferenceKeys.FORCE_CURRENT_USER_PRO] = command.set
                 _uiState.update {
                     it.copy(forceCurrentUserAsPro = command.set)
                 }
             }
 
             is Commands.ForceOtherUsersAsPro -> {
-                textSecurePreferences.setForceOtherUsersAsPro(command.set)
+                preferenceStorage[ProPreferenceKeys.FORCE_OTHER_USERS_PRO] = command.set
                 _uiState.update {
                     it.copy(forceOtherUsersAsPro = command.set)
                 }
             }
 
             is Commands.ForceIncomingMessagesAsPro -> {
-                textSecurePreferences.setForceIncomingMessagesAsPro(command.set)
+                preferenceStorage[ProPreferenceKeys.FORCE_INCOMING_MESSAGE_PRO] = command.set
                 _uiState.update {
                     it.copy(forceIncomingMessagesAsPro = command.set)
                 }
             }
 
             is Commands.ForceNoBilling -> {
-                textSecurePreferences.setDebugForceNoBilling(command.set)
+                preferenceStorage[ProPreferenceKeys.DEBUG_FORCE_NO_BILLING] = command.set
                 _uiState.update {
                     it.copy(forceNoBilling = command.set)
                 }
             }
 
             is Commands.WithinQuickRefund -> {
-                textSecurePreferences.setDebugIsWithinQuickRefund(command.set)
+                preferenceStorage[ProPreferenceKeys.DEBUG_WITHIN_QUICK_REFUND] = command.set
                 _uiState.update {
                     it.copy(withinQuickRefund = command.set)
                 }
             }
 
             is Commands.ForcePostPro -> {
-                textSecurePreferences.setForcePostPro(command.set)
+                preferenceStorage[ProPreferenceKeys.FORCE_POST_PRO] = command.set
                 _uiState.update {
                     it.copy(forcePostPro = command.set)
                 }
@@ -360,7 +374,10 @@ class DebugMenuViewModel @AssistedInject constructor(
             is Commands.SetMessageProFeature -> {
                 val features = ArraySet(_uiState.value.messageProFeature)
                 if(command.set) features.add(command.feature) else features.remove(command.feature)
-                textSecurePreferences.setDebugMessageFeatures(features)
+                preferenceStorage[ProPreferenceKeys.DEBUG_PRO_MESSAGE_FEATURES] =
+                    features.filterIsInstance<ProMessageFeature>().toBitSet().rawValue
+                preferenceStorage[ProPreferenceKeys.DEBUG_PRO_PROFILE_FEATURES] =
+                    features.filterIsInstance<ProProfileFeature>().toBitSet().rawValue
                 _uiState.update {
                     it.copy(messageProFeature = features)
                 }
@@ -377,14 +394,14 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.SetDebugSubscriptionStatus -> {
-                textSecurePreferences.setDebugSubscriptionType(command.status)
+                preferenceStorage[ProPreferenceKeys.DEBUG_SUBSCRIPTION_STATUS] = command.status
                 _uiState.update {
                     it.copy(selectedDebugSubscriptionStatus = command.status)
                 }
             }
 
             is Commands.SetDebugProPlanStatus -> {
-                textSecurePreferences.setDebugProPlanStatus(command.status)
+                preferenceStorage[ProPreferenceKeys.DEBUG_PRO_PLAN_STATUS] = command.status
                 _uiState.update {
                     it.copy(selectedDebugProPlanStatus = command.status)
                 }
