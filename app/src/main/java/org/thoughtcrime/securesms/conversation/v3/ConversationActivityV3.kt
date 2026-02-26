@@ -25,10 +25,6 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
             // If provided, this will scroll to the message with the given message id
             scrollToMessage: MessageId? = null
         ): Intent {
-            require(!address.isBlinded) {
-                "Cannot create a conversation for a blinded address. Use a \"Community inbox\" address instead."
-            }
-
             return Intent(context, ConversationActivityV3::class.java).apply {
                 putExtra(ADDRESS, address)
                 scrollToMessage?.let {
