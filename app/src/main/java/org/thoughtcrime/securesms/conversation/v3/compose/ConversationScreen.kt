@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v3.compose
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -35,9 +36,12 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.ui.components.ConversationAppBar
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
@@ -81,7 +85,7 @@ fun ConversationScreen(
 fun Conversation(
     conversationState: ConversationV3ViewModel.UIState,
     appBarData: ConversationAppBarData,
-    messages: LazyPagingItems<MessageRecord>,
+    messages: LazyPagingItems<MessageViewData>,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     switchConvoVersion: () -> Unit,
     onBack: () -> Unit,
@@ -106,7 +110,7 @@ fun Conversation(
                 }
             )
         },
-        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddings ->
 
         LazyColumn(
@@ -115,14 +119,19 @@ fun Conversation(
                 .padding(paddings)
                 .consumeWindowInsets(paddings),
             reverseLayout = true,  // newest messages at the bottom
+            contentPadding = PaddingValues(
+                horizontal = LocalDimensions.current.xsSpacing
+            ),
             state = rememberLazyListState(),
         ) {
             items(
                 count = messages.itemCount,
-                key = messages.itemKey { msg -> "${msg.id}_${msg.isMms}" }
+                key = messages.itemKey { msg -> "${msg.id}_${msg.type}" }
             ) { index ->
                 messages[index]?.let { message ->
-                    Text(message.body)
+                    Message(
+                        data = message,
+                    )
                 }
             }
 
@@ -167,7 +176,43 @@ fun PreviewConversation(
                     )
                 )
             ),
-            messages = emptyFlow<PagingData<MessageRecord>>().collectAsLazyPagingItems(),
+            messages = flowOf<PagingData<MessageViewData>>(
+                PagingData.from(
+                    data = listOf(
+                        MessageViewData(
+                            id = MessageId(0, false),
+                            author = "Toto",
+                            type = PreviewMessageData.text()
+                        ),
+                        MessageViewData(
+                            id = MessageId(0, false),
+                            author = "Toto",
+                            avatar = PreviewMessageData.sampleAvatar,
+                            type = PreviewMessageData.text(
+                                outgoing = false,
+                                text = "I have lots of reactions - Closed"
+                            ),
+                            reactionsState = ReactionViewState(
+                                reactions = listOf(
+                                    ReactionItem("👍", 3, selected = true),
+                                    ReactionItem("❤️", 12, selected = false),
+                                    ReactionItem("😂", 1, selected = false),
+                                    ReactionItem("😮", 5, selected = false),
+                                    ReactionItem("😢", 2, selected = false),
+                                    ReactionItem("🔥", 8, selected = false),
+                                    ReactionItem("💕", 8, selected = false),
+                                    ReactionItem("🐙", 8, selected = false),
+                                    ReactionItem("✅", 8, selected = false),
+                                ),
+                                isExtended = false,
+                                onReactionClick = {},
+                                onReactionLongClick = {},
+                                onShowMoreClick = {}
+                            )
+                        )
+                    )
+                )
+            ).collectAsLazyPagingItems(),
             sendCommand = {},
             switchConvoVersion = {},
             onBack = {},

@@ -49,15 +49,14 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
 import org.session.libsession.utilities.toGroupString
+import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewData
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
@@ -84,7 +83,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val attachmentDatabase: AttachmentDatabase,
     private val reactionDb: ReactionDatabase,
-
+    private val dataMapper: ConversationDataMapper,
     ) : ViewModel() {
 
     val threadIdFlow: StateFlow<Long?> =
@@ -147,7 +146,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private var pagingSource: ConversationPagingSource? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val conversationMessages: Flow<PagingData<MessageRecord>> = threadIdFlow
+    val conversationMessages: Flow<PagingData<MessageViewData>> = threadIdFlow
         .filterNotNull()
         .flatMapLatest { id ->
             Pager(
@@ -157,7 +156,15 @@ class ConversationV3ViewModel @AssistedInject constructor(
                     enablePlaceholders = false
                 ),
                 pagingSourceFactory = {
-                    ConversationPagingSource(id, mmsSmsDatabase, reverse = true).also {
+                    ConversationPagingSource(
+                        id,
+                        mmsSmsDatabase,
+                        reverse = true,
+                        dataMapper = dataMapper,
+                        threadRecipient = recipient,
+                        localUserAddress = storage.getUserPublicKey() ?: "",
+                        lastSentMessageId = mmsSmsDatabase.getLastSentMessageID(id),
+                    ).also {
                         pagingSource = it
                     }
                 }

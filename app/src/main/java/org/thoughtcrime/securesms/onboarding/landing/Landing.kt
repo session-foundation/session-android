@@ -39,6 +39,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.conversation.v3.compose.Message
 import org.thoughtcrime.securesms.conversation.v3.compose.MessageType
 import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewData
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.TCPolicyDialog
 import org.thoughtcrime.securesms.ui.components.AccentFillButton
@@ -79,18 +80,21 @@ internal fun LandingScreen(
                         .put(EMOJI_KEY, "\uD83D\uDC4B") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                         .format().toString()
                 ), outgoing = false),
-                author = "Test"
+                author = "Test",
+                id = MessageId(0, false)
             ),
             MessageViewData(
                 type = MessageType.Text(text = AnnotatedString(
                     Phrase.from(context.getString(R.string.onboardingBubbleSessionIsEngineered))
                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .format().toString()), outgoing = true),
-                author = "Test"
+                author = "Test",
+                id = MessageId(0, false)
             ),
             MessageViewData(
                 type = MessageType.Text(text = AnnotatedString(context.getString(R.string.onboardingBubbleNoPhoneNumber)), outgoing = false),
-                author = "Test"
+                author = "Test",
+                id = MessageId(0, false)
             ),
             MessageViewData(
                 type = MessageType.Text(text = AnnotatedString(
@@ -98,7 +102,8 @@ internal fun LandingScreen(
                         .put(EMOJI_KEY, "\uD83D\uDC47") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                         .format().toString()
                 ), outgoing = true),
-                author = "Test"
+                author = "Test",
+                id = MessageId(0, false)
             ),
         )
     }

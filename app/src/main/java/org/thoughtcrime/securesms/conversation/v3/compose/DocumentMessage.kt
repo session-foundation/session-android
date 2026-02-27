@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -112,6 +113,7 @@ fun DocumentMessagePreview(
 
         ) {
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.document()
             ))
@@ -119,6 +121,7 @@ fun DocumentMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.document(
@@ -130,6 +133,7 @@ fun DocumentMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.document(
                     loading = true
@@ -139,6 +143,7 @@ fun DocumentMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = PreviewMessageData.document(
@@ -149,6 +154,7 @@ fun DocumentMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = PreviewMessageData.document(

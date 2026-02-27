@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -164,6 +165,7 @@ fun MediaMessagePreview(
 
         ) {
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
@@ -178,6 +180,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
@@ -192,6 +195,7 @@ fun MediaMessagePreview(
             var testData by remember {
                 mutableStateOf(
                     MessageViewData(
+                        id = MessageId(0, false),
                         author = "Toto",
                         type = MessageType.Media(
                             text = AnnotatedString("This also has text"),
@@ -216,6 +220,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
@@ -227,6 +232,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
@@ -238,6 +244,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
@@ -249,6 +256,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
@@ -260,6 +268,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
@@ -271,6 +280,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
@@ -282,6 +292,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Media(
                     text = AnnotatedString("This also has text"),
@@ -294,6 +305,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = MessageType.Media(
@@ -306,6 +318,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = MessageType.Media(
@@ -319,6 +332,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = MessageType.Media(
@@ -332,6 +346,7 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = MessageType.Media(

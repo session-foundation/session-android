@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -258,6 +259,7 @@ fun AudioMessagePreview(
 
         ) {
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.audio()
             ))
@@ -265,6 +267,7 @@ fun AudioMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.audio(
@@ -276,6 +279,7 @@ fun AudioMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.audio(
                     playing = false

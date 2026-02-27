@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.max
 import androidx.core.net.toUri
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -351,6 +352,7 @@ internal fun defaultMessageBubblePadding() = PaddingValues(
 )
 
 data class MessageViewData(
+    val id: MessageId,
     val type: MessageType,
     val author: String,
     val displayName: Boolean = false,
@@ -432,6 +434,7 @@ fun MessagePreview(
             var testData by remember {
                 mutableStateOf(
                     MessageViewData(
+                        id = MessageId(0, false),
                     author = "Toto",
                     type = PreviewMessageData.text()
                 )
@@ -441,6 +444,7 @@ fun MessagePreview(
             var testData2 by remember {
                 mutableStateOf(
                     MessageViewData(
+                        id = MessageId(0, false),
                         author = "Toto",
                         displayName = true,
                         avatar = PreviewMessageData.sampleAvatar,
@@ -477,6 +481,7 @@ fun MessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.text(
                     text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
@@ -487,6 +492,7 @@ fun MessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(
@@ -510,6 +516,7 @@ fun MessageReactionsPreview(
 
         ) {
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.text(
                     text = "I have 3 emoji reactions"
@@ -530,6 +537,7 @@ fun MessageReactionsPreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(
@@ -558,6 +566,7 @@ fun MessageReactionsPreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(

@@ -27,6 +27,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -103,6 +104,7 @@ fun LinkMessagePreview(
 
         ) {
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
                 link = MessageLinkData(
@@ -114,6 +116,7 @@ fun LinkMessagePreview(
 
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.text(text="Quoting text"),
                 link = MessageLinkData(
@@ -124,6 +127,7 @@ fun LinkMessagePreview(
             ))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
@@ -136,6 +140,7 @@ fun LinkMessagePreview(
 
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.text(text="Quoting text"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),

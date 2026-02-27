@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -128,6 +129,7 @@ fun QuoteMessagePreview(
 
         ) {
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
@@ -136,6 +138,7 @@ fun QuoteMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = PreviewMessageData.text(text="Quoting text"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
@@ -144,6 +147,7 @@ fun QuoteMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(outgoing = false, text="Quoting a document"),
@@ -153,6 +157,7 @@ fun QuoteMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Text(outgoing = true, AnnotatedString("Quoting audio")),
                 quote = PreviewMessageData.quote(
@@ -165,6 +170,7 @@ fun QuoteMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
+                id = MessageId(0, false),
                 author = "Toto",
                 type = MessageType.Text(outgoing = true, AnnotatedString("Quoting an image")),
                 quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
