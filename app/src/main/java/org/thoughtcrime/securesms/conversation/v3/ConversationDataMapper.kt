@@ -98,6 +98,7 @@ class ConversationDataMapper @Inject constructor(
                 link = mapLinkPreview(record),
                 reactionsState = mapReactions(record, localUserAddress),
                 highlightKey = highlightKey,
+                clusterPosition = clusterPosition
         ))
 
         return buildList {

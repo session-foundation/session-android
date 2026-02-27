@@ -36,7 +36,8 @@ fun ConversationDateBreak(
     modifier: Modifier = Modifier
 ){
     Text(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            .padding(vertical = LocalDimensions.current.xxxsSpacing),
         text = date,
         color = LocalColors.current.text,
         style = LocalType.current.small.bold(),
@@ -50,7 +51,10 @@ fun ConversationUnreadBreak(
 ){
     Row(
         modifier = modifier.fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.smallSpacing),
+            .padding(
+                horizontal = LocalDimensions.current.smallSpacing,
+                vertical = LocalDimensions.current.xxxsSpacing
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
     ) {

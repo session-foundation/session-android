@@ -283,8 +283,14 @@ fun Message(
     data: MessageViewData,
     modifier: Modifier = Modifier
 ) {
+    val bottomPadding = when (data.clusterPosition) {
+        ClusterPosition.BOTTOM, ClusterPosition.ISOLATED -> LocalDimensions.current.contentSpacing
+        ClusterPosition.TOP, ClusterPosition.MIDDLE -> LocalDimensions.current.xxxsSpacing
+    }
+
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth()
+            .padding(bottom = bottomPadding)
     ) {
         val maxMessageWidth = max(
             LocalDimensions.current.minMessageWidth,
