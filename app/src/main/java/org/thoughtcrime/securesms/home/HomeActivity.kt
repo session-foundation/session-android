@@ -67,13 +67,15 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
@@ -658,7 +660,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // region Interaction
 
     override fun onConversationClick(thread: ThreadRecord) {
-        push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        if(prefs[DebugMenuViewModel.useConvoV3]){
+            push(ConversationActivityV3.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        } else {
+            push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        }
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {

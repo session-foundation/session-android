@@ -655,6 +655,16 @@ fun DebugMenu(
                 }
             }
 
+            DebugCell("Conversation V3") {
+                DebugSwitchRow(
+                    text = "Use ConversationV3",
+                    checked = uiState.userConvoV3,
+                    onCheckedChange = {
+                        sendCommand(UseConvoV3(it))
+                    }
+                )
+            }
+
             // Group deprecation state
             DebugCell("Legacy Group Deprecation Overrides") {
                 DropDown(
@@ -975,7 +985,8 @@ fun PreviewDebugMenu() {
                 hasCopiedDonationURLDebug = "",
                 seenDonateCTAAmountDebug = "",
                 showDonateCTAFromPositiveReviewDebug = "",
-                firstInstall = ""
+                firstInstall = "",
+                userConvoV3 = false,
             ),
             sendCommand = {},
             onClose = {}

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v2.settings
+package org.thoughtcrime.securesms.conversation.v3.settings
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,7 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.AccountIdHeader
 import org.thoughtcrime.securesms.ui.AvatarQrWidget
 import org.thoughtcrime.securesms.ui.Cell

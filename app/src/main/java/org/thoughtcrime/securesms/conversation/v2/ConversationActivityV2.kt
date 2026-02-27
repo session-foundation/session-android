@@ -139,7 +139,6 @@ import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.audio.AudioRecorderHandle
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.audio.recordAudio
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
@@ -164,12 +163,12 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -837,7 +836,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         val intent = ConversationSettingsActivity.createIntent(
                             context = this@ConversationActivityV2,
                             address = event.address,
-                            startDestination = ConversationSettingsDestination.RouteDisappearingMessages
+                            startDestination = ConversationV3Destination.RouteDisappearingMessages
                         )
                         startActivity(intent)
                     }
