@@ -114,7 +114,6 @@ class ReceivedMessageProcessor @Inject constructor(
                 )
 
                 notificationManager.updateNotification(this.context, threadId)
-                threadDatabase.notifyThreadUpdated(threadId)
             }
 
             // Handle pending community reactions

@@ -389,14 +389,14 @@ public class ThreadDatabase extends Database {
 
     try (final Cursor cursor = db.query(TABLE_NAME, new String[] { ADDRESS }, ID + " = ?", new String[] { String.valueOf(threadId )}, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
-        return (Address.Conversable) Address.fromSerialized(cursor.getString(0));
+        return Address.fromSerialized(cursor.getString(0));
       }
     }
 
     return null;
   }
 
-  public void notifyThreadUpdated(long threadId) {
+  void notifyThreadUpdated(long threadId) {
     Log.d(TAG, "Notifying thread updated: " + threadId);
     updateNotifications.tryEmit(threadId);
   }
