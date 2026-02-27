@@ -1,7 +1,11 @@
 package org.thoughtcrime.securesms.service
 
 import dagger.Lazy
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
@@ -23,13 +27,13 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.mms.MmsException
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 private val TAG = ExpiringMessageManager::class.java.simpleName
 
@@ -50,14 +54,13 @@ class ExpiringMessageManager @Inject constructor(
     private val storage: Lazy<Storage>,
     private val loginStateRepository: LoginStateRepository,
     private val recipientRepository: RecipientRepository,
-    private val threadDatabase: ThreadDatabase,
 ) : MessageExpirationManagerProtocol, AuthAwareComponent {
 
 
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
         supervisorScope {
-            launch { processDatabase(smsDatabase) }
-            launch { processDatabase(mmsDatabase) }
+            launch { processDatabase(smsDatabase, smsDatabase.updateNotification) }
+            launch { processDatabase(mmsDatabase, mmsDatabase.changeNotification) }
         }
     }
 
@@ -102,10 +105,10 @@ class ExpiringMessageManager @Inject constructor(
             mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId)
                 ?.let { MessageId(it.messageId, mms = true) }
         } catch (ioe: IOException) {
-            Log.e("Loki", "Failed to insert expiration update message.")
+            Log.e(TAG, "Failed to insert expiration update message.")
             null
         } catch (ioe: MmsException) {
-            Log.e("Loki", "Failed to insert expiration update message.")
+            Log.e(TAG, "Failed to insert expiration update message.")
             null
         }
     }
@@ -154,10 +157,10 @@ class ExpiringMessageManager @Inject constructor(
                 sentTimestamp
             )?.messageId?.let { MessageId(it, mms = true) }
         } catch (ioe: MmsException) {
-            Log.e("Loki", "Failed to insert expiration update message.", ioe)
+            Log.e(TAG, "Failed to insert expiration update message.", ioe)
             return null
         } catch (ioe: IOException) {
-            Log.e("Loki", "Failed to insert expiration update message.", ioe)
+            Log.e(TAG, "Failed to insert expiration update message.", ioe)
             return null
         }
     }
@@ -203,7 +206,7 @@ class ExpiringMessageManager @Inject constructor(
         }
     }
 
-    private suspend fun processDatabase(db: MessagingDatabase) {
+    private suspend fun processDatabase(db: MessagingDatabase, dbChanges: SharedFlow<*>) {
         while (true) {
             val expiredMessages = db.getExpiredMessageIDs(clock.currentTimeMillis())
 
@@ -228,17 +231,16 @@ class ExpiringMessageManager @Inject constructor(
                 continue // Proceed to the next iteration if the next expiration is already or about go to in the past
             }
 
-            val dbChanges = threadDatabase.updateNotifications
-
             if (nextExpiration > 0) {
                 val delayMills = nextExpiration - now
                 Log.d(
                     TAG,
                     "Wait for up to $delayMills ms for next expiration in ${db.javaClass.simpleName}"
                 )
-                withTimeoutOrNull(delayMills) {
-                    dbChanges.first()
-                }
+                @Suppress("OPT_IN_USAGE")
+                dbChanges.timeout(delayMills.milliseconds)
+                    .catch { emit(Unit) }
+                    .first()
             } else {
                 Log.d(
                     TAG,

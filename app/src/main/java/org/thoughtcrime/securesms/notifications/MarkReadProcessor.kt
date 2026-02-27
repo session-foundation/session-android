@@ -1,9 +1,7 @@
 package org.thoughtcrime.securesms.notifications
 
-import android.content.Context
 import androidx.collection.LongLongMap
 import androidx.collection.MutableLongLongMap
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,20 +17,14 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.api.snode.AlterTtlApi
-import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
-import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MessageUpdateNotification
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -65,21 +57,14 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @Singleton
 class MarkReadProcessor @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val recipientRepository: RecipientRepository,
     private val messageSender: MessageSender,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
     private val threadDb: ThreadDatabase,
-    private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
-    private val lokiMessageDatabase: LokiMessageDatabase,
-    private val swarmApiExecutor: SwarmApiExecutor,
-    private val alterTtyFactory: AlterTtlApi.Factory,
     private val prefs: PreferenceStorage,
-    private val loginStateRepository: LoginStateRepository,
-    private val configFactory: ConfigFactoryProtocol,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
@@ -163,67 +148,92 @@ class MarkReadProcessor @Inject constructor(
                  * There are other nuisances in the flow where we try not to query db unnecessarily
                  * when we don't do read receipts for those threads anyway.
                  */
-                merge(
-                    threadLastSeenFlow,
-                    messageAddedFlow,
-                ).scan(State<Updates>(threadDb.getAllLastSeen())) { acc, event ->
-                    when (event) {
-                        is MessageUpdateNotification -> {
-                            State(
-                                lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
-                                updates = threadDb.getRecipientForThreadId(event.threadId)
-                                    ?.takeIf(::eligibleForReadReceipt)
-                                    ?.let { threadAddress ->
-                                        val threadLastSeen =
-                                            acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
-                                        mmsSmsDatabase.getMessages(event.ids)
-                                            .mapNotNull { msg ->
-                                                msg.dateSent.takeIf { msg.eligibleForReadReceipt(threadLastSeen) }
-                                            }
-                                            .takeIf { it.isNotEmpty() }
-                                            ?.also { Log.d(TAG, "New message(s) in thread ${event.threadId} eligible for read receipt") }
-                                            ?.let { Updates(threadAddress, it) }
-                                    }
-                            )
-                        }
-
-                        is ThreadUpdated -> {
-                            // Thread updated, look at the last seen to determine if we are truly updated
-                            val oldLastSeen =
-                                acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
-
-                            if (event.lastSeenMs > oldLastSeen) {
-                                Log.d(TAG, "Thread ${event.threadId} lastSeen advanced $oldLastSeen -> ${event.lastSeenMs}")
+                merge(threadLastSeenFlow, messageAddedFlow,)
+                    .scan(State<Updates>(threadDb.getAllLastSeen())) { acc, event ->
+                        when (event) {
+                            is MessageUpdateNotification -> {
                                 State(
-                                    lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(
-                                        event.threadId,
-                                        event.lastSeenMs
-                                    ),
-                                    updates = if (eligibleForReadReceipt(event.threadAddress)) {
-                                        mmsSmsDatabase.findIncomingMessages(
-                                            event.threadId,
-                                            oldLastSeen,
-                                            event.lastSeenMs
-                                        ).mapNotNull { msg ->
-                                            msg.dateSent.takeIf { msg.eligibleForReadReceipt(event.lastSeenMs) }
-                                        }.takeIf { it.isNotEmpty() }
-                                            ?.also { Log.d(TAG, "Sending read receipt for ${it.size} message(s) in thread ${event.threadId}") }
-                                            ?.let { Updates(event.threadAddress, it) }
-                                    } else {
-                                        Log.d(TAG, "Thread ${event.threadId} not eligible for read receipt, skipping")
-                                        null
-                                    }
+                                    lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
+                                    updates = threadDb.getRecipientForThreadId(event.threadId)
+                                        ?.takeIf(::eligibleForReadReceipt)
+                                        ?.let { threadAddress ->
+                                            val threadLastSeen =
+                                                acc.lastSeenByThreadIDs.getOrDefault(
+                                                    event.threadId,
+                                                    0L
+                                                )
+                                            mmsSmsDatabase.getMessages(event.ids)
+                                                .mapNotNull { msg ->
+                                                    msg.dateSent.takeIf {
+                                                        msg.eligibleForReadReceipt(
+                                                            threadLastSeen
+                                                        )
+                                                    }
+                                                }
+                                                .takeIf { it.isNotEmpty() }
+                                                ?.also {
+                                                    Log.d(
+                                                        TAG,
+                                                        "New message(s) in thread ${event.threadId} eligible for read receipt"
+                                                    )
+                                                }
+                                                ?.let { Updates(threadAddress, it) }
+                                        }
                                 )
-                            } else if (acc.updates != null) {
-                                acc.copy(updates = null)
-                            } else {
-                                acc
                             }
-                        }
 
-                        else -> error("Unexpected event type $event")
-                    }
-                }.mapNotNull { it.updates }
+                            is ThreadUpdated -> {
+                                // Thread updated, look at the last seen to determine if we are truly updated
+                                val oldLastSeen =
+                                    acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
+
+                                if (event.lastSeenMs > oldLastSeen) {
+                                    Log.d(
+                                        TAG,
+                                        "Thread ${event.threadId} lastSeen advanced $oldLastSeen -> ${event.lastSeenMs}"
+                                    )
+                                    State(
+                                        lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(
+                                            event.threadId,
+                                            event.lastSeenMs
+                                        ),
+                                        updates = if (eligibleForReadReceipt(event.threadAddress)) {
+                                            mmsSmsDatabase.findIncomingMessages(
+                                                event.threadId,
+                                                oldLastSeen,
+                                                event.lastSeenMs
+                                            ).mapNotNull { msg ->
+                                                msg.dateSent.takeIf {
+                                                    msg.eligibleForReadReceipt(
+                                                        event.lastSeenMs
+                                                    )
+                                                }
+                                            }.takeIf { it.isNotEmpty() }
+                                                ?.also {
+                                                    Log.d(
+                                                        TAG,
+                                                        "Sending read receipt for ${it.size} message(s) in thread ${event.threadId}"
+                                                    )
+                                                }
+                                                ?.let { Updates(event.threadAddress, it) }
+                                        } else {
+                                            Log.d(
+                                                TAG,
+                                                "Thread ${event.threadId} not eligible for read receipt, skipping"
+                                            )
+                                            null
+                                        }
+                                    )
+                                } else if (acc.updates != null) {
+                                    acc.copy(updates = null)
+                                } else {
+                                    acc
+                                }
+                            }
+
+                            else -> error("Unexpected event type $event")
+                        }
+                    }.mapNotNull { it.updates }
             }
             // Must NOT use collectLatest as "updates" data is an "event" rather than a state: it
             // does not persist between emissions. Using collectLatest will potentially cause
@@ -256,8 +266,10 @@ class MarkReadProcessor @Inject constructor(
         threadLastSeenFlow: SharedFlow<ThreadUpdated>,
         messageAddedFlow: SharedFlow<MessageUpdateNotification>
     ) {
+        class ExpiryUpdates(val messageIds: List<MessageId>, val expireStarted: Long)
+
         merge(threadLastSeenFlow, messageAddedFlow)
-            .scan(State<List<Pair<MessageId, Long>>>(threadDb.getAllLastSeen())) { acc, event ->
+            .scan(State<ExpiryUpdates>(threadDb.getAllLastSeen())) { acc, event ->
                 when (event) {
                     is MessageUpdateNotification -> {
                         val threadLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
@@ -265,9 +277,10 @@ class MarkReadProcessor @Inject constructor(
                             lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
                             updates = mmsSmsDatabase.getMessages(event.ids)
                                 .filter { msg -> msg.eligibleForAfterReadExpiry(threadLastSeen) }
-                                .map { it.messageId to threadLastSeen }
+                                .map { it.messageId }
                                 .takeIf { it.isNotEmpty() }
                                 ?.also { Log.d(TAG, "New message(s) in thread ${event.threadId} eligible for AFTER_READ expiry") }
+                                ?.let { ExpiryUpdates(it, expireStarted = snodeClock.currentTimeMillis()) }
                         )
                     }
 
@@ -284,9 +297,10 @@ class MarkReadProcessor @Inject constructor(
                                     oldLastSeen,
                                     event.lastSeenMs
                                 ).filter { msg -> msg.eligibleForAfterReadExpiry(event.lastSeenMs) }
-                                    .map { it.messageId to event.lastSeenMs }
+                                    .map { it.messageId }
                                     .takeIf { it.isNotEmpty() }
                                     ?.also { Log.d(TAG, "Starting AFTER_READ expiry for ${it.size} message(s) in thread ${event.threadId}") }
+                                    ?.let { ExpiryUpdates(it, expireStarted = snodeClock.currentTimeMillis()) }
                             )
                         } else if (acc.updates != null) {
                             acc.copy(updates = null)
@@ -298,13 +312,13 @@ class MarkReadProcessor @Inject constructor(
                     else -> error("Unknown event type $event")
                 }
             }.mapNotNull { it.updates }
-            .collect { messages ->
-                for ((messageId, expireStarted) in messages) {
-                    Log.d(TAG, "Marking expiry started for $messageId at $expireStarted")
+            .collect { updates ->
+                Log.d(TAG, "Marking expiry started for ${updates.messageIds.size} message(s) at ${updates.expireStarted}")
+                for (messageId in updates.messageIds) {
                     if (messageId.mms) {
-                        mmsDatabase.markExpireStarted(messageId.id, expireStarted)
+                        mmsDatabase.markExpireStarted(messageId.id, updates.expireStarted)
                     } else {
-                        smsDatabase.markExpireStarted(messageId.id, expireStarted)
+                        smsDatabase.markExpireStarted(messageId.id, updates.expireStarted)
                     }
                 }
             }
