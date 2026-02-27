@@ -124,14 +124,9 @@ class MarkReadProcessor @Inject constructor(
         val lastSeenMs: Long
     )
 
-    private class Updates<T>(
-        val threadAddress: Address,
-        val changes: T,
-    )
-
     private data class State<T>(
         val lastSeenByThreadIDs: LongLongMap,
-        val updates: Updates<T>? = null,
+        val updates: T? = null,
     )
 
     /**
@@ -141,10 +136,13 @@ class MarkReadProcessor @Inject constructor(
         threadLastSeenFlow: SharedFlow<ThreadUpdated>,
         messageAddedFlow: SharedFlow<MessageUpdateNotification>
     ) {
+        class Updates(val threadAddress: Address, val messageTimestamps: List<Long>)
+
         @Suppress("OPT_IN_USAGE")
         prefs.watch(scope, CommunicationPreferences.READ_RECEIPT_ENABLED)
             .flatMapLatest { enabled ->
                 if (!enabled) {
+                    Log.d(TAG, "Read receipts disabled, skipping")
                     return@flatMapLatest emptyFlow()
                 }
 
@@ -168,7 +166,7 @@ class MarkReadProcessor @Inject constructor(
                 merge(
                     threadLastSeenFlow,
                     messageAddedFlow,
-                ).scan(State<List<Long>>(threadDb.getAllLastSeen())) { acc, event ->
+                ).scan(State<Updates>(threadDb.getAllLastSeen())) { acc, event ->
                     when (event) {
                         is MessageUpdateNotification -> {
                             State(
@@ -183,6 +181,7 @@ class MarkReadProcessor @Inject constructor(
                                                 msg.dateSent.takeIf { msg.eligibleForReadReceipt(threadLastSeen) }
                                             }
                                             .takeIf { it.isNotEmpty() }
+                                            ?.also { Log.d(TAG, "New message(s) in thread ${event.threadId} eligible for read receipt") }
                                             ?.let { Updates(threadAddress, it) }
                                     }
                             )
@@ -194,6 +193,7 @@ class MarkReadProcessor @Inject constructor(
                                 acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
 
                             if (event.lastSeenMs > oldLastSeen) {
+                                Log.d(TAG, "Thread ${event.threadId} lastSeen advanced $oldLastSeen -> ${event.lastSeenMs}")
                                 State(
                                     lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(
                                         event.threadId,
@@ -207,8 +207,10 @@ class MarkReadProcessor @Inject constructor(
                                         ).mapNotNull { msg ->
                                             msg.dateSent.takeIf { msg.eligibleForReadReceipt(event.lastSeenMs) }
                                         }.takeIf { it.isNotEmpty() }
+                                            ?.also { Log.d(TAG, "Sending read receipt for ${it.size} message(s) in thread ${event.threadId}") }
                                             ?.let { Updates(event.threadAddress, it) }
                                     } else {
+                                        Log.d(TAG, "Thread ${event.threadId} not eligible for read receipt, skipping")
                                         null
                                     }
                                 )
@@ -227,9 +229,9 @@ class MarkReadProcessor @Inject constructor(
             // does not persist between emissions. Using collectLatest will potentially cause
             // data loss.
             .collect { updates ->
-                Log.d(TAG, "Sending read receipts to ${updates.changes.size} messages")
+                Log.d(TAG, "Sending read receipts to ${updates.messageTimestamps.size} messages")
 
-                val message = ReadReceipt(updates.changes).apply {
+                val message = ReadReceipt(updates.messageTimestamps).apply {
                     sentTimestamp = snodeClock.currentTimeMillis()
                 }
 
@@ -255,29 +257,84 @@ class MarkReadProcessor @Inject constructor(
         messageAddedFlow: SharedFlow<MessageUpdateNotification>
     ) {
         merge(threadLastSeenFlow, messageAddedFlow)
-            .scan(State<List<MessageId>>(threadDb.getAllLastSeen())) { acc, event ->
+            .scan(State<List<Pair<MessageId, Long>>>(threadDb.getAllLastSeen())) { acc, event ->
                 when (event) {
-                    is MessageUpdateNotification -> {}
-                    is ThreadUpdated -> {
+                    is MessageUpdateNotification -> {
+                        val threadLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
                         State(
-                            lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(event.threadId, event.lastSeenMs),
-                            updates = null
+                            lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
+                            updates = mmsSmsDatabase.getMessages(event.ids)
+                                .filter { msg -> msg.eligibleForAfterReadExpiry(threadLastSeen) }
+                                .map { it.messageId to threadLastSeen }
+                                .takeIf { it.isNotEmpty() }
+                                ?.also { Log.d(TAG, "New message(s) in thread ${event.threadId} eligible for AFTER_READ expiry") }
                         )
                     }
+
+                    is ThreadUpdated -> {
+                        val oldLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
+                        if (event.lastSeenMs > oldLastSeen) {
+                            State(
+                                lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(
+                                    event.threadId,
+                                    event.lastSeenMs
+                                ),
+                                updates = mmsSmsDatabase.findIncomingMessages(
+                                    event.threadId,
+                                    oldLastSeen,
+                                    event.lastSeenMs
+                                ).filter { msg -> msg.eligibleForAfterReadExpiry(event.lastSeenMs) }
+                                    .map { it.messageId to event.lastSeenMs }
+                                    .takeIf { it.isNotEmpty() }
+                                    ?.also { Log.d(TAG, "Starting AFTER_READ expiry for ${it.size} message(s) in thread ${event.threadId}") }
+                            )
+                        } else if (acc.updates != null) {
+                            acc.copy(updates = null)
+                        } else {
+                            acc
+                        }
+                    }
+
                     else -> error("Unknown event type $event")
                 }
-
-                TODO()
-            }.mapNotNull { state ->
-                state.updates
-            }.collect { updates ->
-                TODO()
+            }.mapNotNull { it.updates }
+            .collect { messages ->
+                for ((messageId, expireStarted) in messages) {
+                    Log.d(TAG, "Marking expiry started for $messageId at $expireStarted")
+                    if (messageId.mms) {
+                        mmsDatabase.markExpireStarted(messageId.id, expireStarted)
+                    } else {
+                        smsDatabase.markExpireStarted(messageId.id, expireStarted)
+                    }
+                }
             }
     }
 
     companion object {
         private fun MessageRecord.eligibleForReadReceipt(maxSentTimeMsInclusive: Long): Boolean {
             return isIncoming && !isControlMessage && dateSent <= maxSentTimeMsInclusive
+        }
+
+        /**
+         * Determines whether this message should have its expiry timer started as a result of
+         * the thread being read up to [lastSeenMs].
+         *
+         * The AFTER_READ expiry mode is encoded in the message columns rather than as an explicit
+         * mode field: [MessageRecord.expiresIn] > 0 means expiry is configured, and
+         * [MessageRecord.expireStarted] == 0 means the timer hasn't started (i.e. AFTER_READ).
+         * AFTER_SEND messages already have expireStarted = sentTimestamp on insertion, so they are
+         * implicitly excluded.
+         *
+         * Control message exceptions are also handled at insertion time and need no special casing
+         * here: MessageRequestResponse is inserted with expiresIn = 0; CallMessage is coerced to
+         * AFTER_SEND so expireStarted != 0. Other control messages (e.g. timer updates) are
+         * intentionally eligible and follow the same rules as regular messages.
+         *
+         * Only incoming messages are handled here; outgoing timers are started by
+         * [ExpiringMessageManager] at send time.
+         */
+        private fun MessageRecord.eligibleForAfterReadExpiry(lastSeenMs: Long): Boolean {
+            return isIncoming && expiresIn > 0 && expireStarted == 0L && dateSent <= lastSeenMs
         }
 
         // Copy the existing map and add the new item
