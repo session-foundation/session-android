@@ -49,7 +49,6 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
 import org.session.libsession.utilities.toGroupString
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewData
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -146,7 +145,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private var pagingSource: ConversationPagingSource? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val conversationMessages: Flow<PagingData<MessageViewData>> = threadIdFlow
+    val conversationItems: Flow<PagingData<ConversationDataMapper.ConversationItem>> = threadIdFlow
         .filterNotNull()
         .flatMapLatest { id ->
             Pager(

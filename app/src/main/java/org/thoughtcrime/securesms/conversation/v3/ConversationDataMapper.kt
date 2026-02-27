@@ -8,72 +8,158 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.thoughtcrime.securesms.conversation.v3.compose.Audio
-import org.thoughtcrime.securesms.conversation.v3.compose.Document
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageLinkData
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageMediaItem
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageQuote
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageQuoteIcon
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageType
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewData
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewStatus
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewStatusIcon
-import org.thoughtcrime.securesms.conversation.v3.compose.ReactionItem
-import org.thoughtcrime.securesms.conversation.v3.compose.ReactionViewState
+import org.thoughtcrime.securesms.conversation.v3.compose.message.Audio
+import org.thoughtcrime.securesms.conversation.v3.compose.message.ClusterPosition
+import org.thoughtcrime.securesms.conversation.v3.compose.message.Document
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageAvatar
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLinkData
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageMediaItem
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageQuote
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageQuoteIcon
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageType
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewData
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewStatus
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewStatusIcon
+import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionItem
+import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionViewState
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.DateUtils
+import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 
 
 @Singleton
 class ConversationDataMapper @Inject constructor(
     @ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
+    private val dateUtils: DateUtils
 ) {
+    private val timeZoneOffsetSeconds = TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000
+
+    sealed interface ConversationItem {
+        data class Message(val data: MessageViewData) : ConversationItem
+        data class DateBreak(val date: String) : ConversationItem
+        data class UnreadMarker(val count: Int) : ConversationItem
+    }
+
     fun map(
         record: MessageRecord,
         previous: MessageRecord?,
+        next: MessageRecord?,
         threadRecipient: Recipient,
         localUserAddress: String,
         highlightKey: Any? = null,
         showStatus: Boolean = false,
-    ): MessageViewData {
+    ): List<ConversationItem> {
         val isOutgoing = record.isOutgoing
-
-        // Show sender name only in groups, and only when the author changes between messages.
-        // Show avatar for all incoming messages when the author changes.
-        val isGroup = threadRecipient.isGroupOrCommunityRecipient
-        val previousSameAuthor = previous != null
-                && previous.isOutgoing == record.isOutgoing
-                && previous.individualRecipient.address == record.individualRecipient.address
-
-        val showSenderName = !isOutgoing && isGroup && !previousSameAuthor
-        val showAvatar = !isOutgoing && !previousSameAuthor
-
         val senderName = record.individualRecipient.displayName()
+        val isGroup = threadRecipient.isGroupOrCommunityRecipient
 
-        val avatarData = if (showAvatar) {
-            avatarUtils.getUIDataFromRecipient(record.individualRecipient)
-        } else {
-            null
+        val isStart = isStartOfCluster(record, previous, isGroup)
+        val isEnd = isEndOfCluster(record, next, isGroup)
+
+        val clusterPosition = when {
+            isStart && isEnd -> ClusterPosition.ISOLATED
+            isStart -> ClusterPosition.TOP
+            isEnd -> ClusterPosition.BOTTOM
+            else -> ClusterPosition.MIDDLE
         }
 
-        return MessageViewData(
-            id = record.messageId,
-            type = mapMessageType(record, isOutgoing),
-            author = senderName,
-            displayName = showSenderName,
-            avatar = avatarData,
-            status = if (showStatus && isOutgoing) mapStatus(record) else null,
-            quote = mapQuote(record),
-            link = mapLinkPreview(record),
-            reactionsState = mapReactions(record, localUserAddress),
-            highlightKey = highlightKey,
-        )
+        val avatar = when{
+            // outgoing and non group conversations: No avatar
+            isOutgoing || !isGroup -> MessageAvatar.None
+
+            // if at the right cluster position, show avatar
+            clusterPosition == ClusterPosition.BOTTOM
+                    || clusterPosition == ClusterPosition.ISOLATED -> MessageAvatar.Visible(avatarUtils.getUIDataFromRecipient(record.individualRecipient))
+
+            // otherwise leave an empty space the size of the avatar
+            else -> MessageAvatar.Invisible
+        }
+
+        val showDateBreak = shouldShowDateBreak(record, previous)
+        val showAuthorName = shouldShowAuthorName(record, previous, isGroup, showDateBreak)
+
+        val message = ConversationItem.Message(
+            MessageViewData(
+                id = record.messageId,
+                type = mapMessageType(record, isOutgoing),
+                author = senderName,
+                displayName = showAuthorName,
+                avatar = avatar,
+                status = if (showStatus && isOutgoing) mapStatus(record) else null,
+                quote = mapQuote(record),
+                link = mapLinkPreview(record),
+                reactionsState = mapReactions(record, localUserAddress),
+                highlightKey = highlightKey,
+        ))
+
+        return buildList {
+            add(message)
+
+            // Items added after message appear visually ABOVE it (with reverseLayout = true)
+            if (showDateBreak) add(ConversationItem.DateBreak(
+                dateUtils.getDisplayFormattedTimeSpanString(record.timestamp)
+            ))
+        }
+    }
+
+    private fun isStartOfCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
+        previous == null || previous.isControlMessage || !dateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
+            current.recipient.address != previous.recipient.address
+        } else {
+            current.isOutgoing != previous.isOutgoing
+        }
+
+    private fun isEndOfCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean =
+        next == null || next.isControlMessage || !dateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
+            current.recipient.address != next.recipient.address
+        } else {
+            current.isOutgoing != next.isOutgoing
+        }
+
+    private fun shouldShowDateBreak(current: MessageRecord, previous: MessageRecord?): Boolean {
+        // Always show before the first visible message (no previous)
+        if (previous == null) return true
+
+        // Never show before control messages
+        if (current.isControlMessage) return false
+
+        // Always show before a message that follows a control message
+        if (previous.isControlMessage) return true
+
+        val t1 = previous.timestamp
+        val t2 = current.timestamp
+
+        // Rule 1: 5+ minute gap
+        if (abs(t2 - t1) > 5 * 60 * 1000) return true
+
+        // Rule 2: crossed midnight in local timezone
+        val day1 = ((t1 / 1000) + timeZoneOffsetSeconds) / 86400
+        val day2 = ((t2 / 1000) + timeZoneOffsetSeconds) / 86400
+
+        return day1 != day2
+    }
+
+    private fun shouldShowAuthorName(
+        current: MessageRecord,
+        previous: MessageRecord?,
+        isGroupThread: Boolean,
+        showDateBreak: Boolean,
+    ): Boolean {
+        if (!isGroupThread) return false
+        if (current.isOutgoing) return false
+
+        // Show if there's a date break, the author changed, or previous was a control message
+        return (showDateBreak
+                || current.individualRecipient.address != previous?.individualRecipient?.address)
+                || previous.isControlMessage
     }
 
     // ---- Message type ----

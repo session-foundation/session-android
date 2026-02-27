@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v3.compose
+package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import android.net.Uri
 import androidx.annotation.DrawableRes
@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -111,14 +112,21 @@ fun MessageContent(
         horizontalAlignment = if (data.type.outgoing) Alignment.End else Alignment.Start
     ) {
         Row {
-            if (data.avatar != null) {
-                Avatar(
-                    modifier = Modifier.align(Alignment.Bottom),
-                    size = LocalDimensions.current.iconMediumAvatar,
-                    data = data.avatar
-                )
+            if (data.avatar !is MessageAvatar.None) {
+                if(data.avatar is MessageAvatar.Visible) {
+                    Avatar(
+                        modifier = Modifier.align(Alignment.Bottom),
+                        size = LocalDimensions.current.iconMediumAvatar,
+                        data = data.avatar.data
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.size(LocalDimensions.current.iconMediumAvatar)
+                            .clearAndSetSemantics {} // no ax for this empty box
+                    )
+                }
 
-                Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
+                Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
             }
 
             Column(
@@ -356,13 +364,27 @@ data class MessageViewData(
     val type: MessageType,
     val author: String,
     val displayName: Boolean = false,
-    val avatar: AvatarUIData? = null,
+    val avatar: MessageAvatar = MessageAvatar.None,
     val status: MessageViewStatus? = null,
     val quote: MessageQuote? = null,
     val link: MessageLinkData? = null,
     val reactionsState: ReactionViewState? = null,
-    val highlightKey: Any? = null
+    val highlightKey: Any? = null,
+    val clusterPosition: ClusterPosition = ClusterPosition.ISOLATED
 )
+
+enum class ClusterPosition {
+    TOP,
+    MIDDLE,
+    BOTTOM,
+    ISOLATED
+}
+
+sealed interface MessageAvatar {
+    data object None: MessageAvatar
+    data object Invisible: MessageAvatar// the avatar is not visible but still takes up the space
+    data class Visible(val data: AvatarUIData): MessageAvatar
+}
 
 data class ReactionViewState(
     val reactions: List<ReactionItem>,
@@ -638,7 +660,9 @@ fun MediaMessagePreviewReuse(
 object PreviewMessageData {
 
     // Common data
-    val sampleAvatar = AvatarUIData(listOf(AvatarUIElement(name = "TO", color = primaryBlue)))
+    val sampleAvatar = MessageAvatar.Visible(
+        AvatarUIData(listOf(AvatarUIElement(name = "TO", color = primaryBlue)))
+    )
     val sentStatus = MessageViewStatus(
         name = "Sent",
         icon = MessageViewStatusIcon.DrawableIcon(icon = R.drawable.ic_circle_check)

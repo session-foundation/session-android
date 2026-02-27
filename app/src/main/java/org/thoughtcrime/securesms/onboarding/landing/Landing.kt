@@ -36,9 +36,9 @@ import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.thoughtcrime.securesms.conversation.v3.compose.Message
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageType
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewData
+import org.thoughtcrime.securesms.conversation.v3.compose.message.Message
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageType
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewData
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.TCPolicyDialog

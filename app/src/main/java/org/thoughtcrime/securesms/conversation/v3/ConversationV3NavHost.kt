@@ -42,7 +42,7 @@ import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.Rout
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteManageMembers
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteNotifications
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RoutePromoteMembers
-import org.thoughtcrime.securesms.conversation.v3.compose.ConversationScreen
+import org.thoughtcrime.securesms.conversation.v3.compose.conversation.ConversationScreen
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel

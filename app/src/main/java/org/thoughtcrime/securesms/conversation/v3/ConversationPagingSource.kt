@@ -3,10 +3,9 @@ package org.thoughtcrime.securesms.conversation.v3
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.conversation.v3.compose.MessageViewData
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewData
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.database.model.MessageRecord
 
 class ConversationPagingSource(
     private val threadId: Long,
@@ -16,9 +15,9 @@ class ConversationPagingSource(
     private val threadRecipient: Recipient,
     private val localUserAddress: String,
     private val lastSentMessageId: MessageId?,
-) : PagingSource<Int, MessageViewData>() {
+) : PagingSource<Int, ConversationDataMapper.ConversationItem>() {
 
-    override fun getRefreshKey(state: PagingState<Int, MessageViewData>): Int? =
+    override fun getRefreshKey(state: PagingState<Int, ConversationDataMapper.ConversationItem>): Int? =
         state.anchorPosition?.let { anchor ->
             // Snap refresh back to the anchor page so scroll position is preserved
             val page = state.closestPageToPosition(anchor)
@@ -26,7 +25,7 @@ class ConversationPagingSource(
                 ?: page?.nextKey?.minus(state.config.pageSize)
         }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MessageViewData> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ConversationDataMapper.ConversationItem> {
         val offset = params.key ?: 0
         return try {
             // getConversation already handles LIMIT/OFFSET in SQL
@@ -43,10 +42,11 @@ class ConversationPagingSource(
                 }
             }
 
-            val mapped = records.mapIndexed { index, record ->
+            val mapped = records.flatMapIndexed { index, record ->
                 dataMapper.map(
                     record = record,
                     previous = records.getOrNull(index + 1),
+                    next = records.getOrNull(index - 1),
                     threadRecipient = threadRecipient,
                     localUserAddress = localUserAddress,
                     showStatus = record.messageId == lastSentMessageId,
