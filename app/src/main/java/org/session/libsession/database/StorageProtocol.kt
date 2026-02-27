@@ -190,7 +190,7 @@ interface StorageProtocol {
     fun updateThread(threadId: Long, unarchive: Boolean)
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
     fun insertMessageRequestResponseFromYou(threadId: Long)
-    fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long)
+    fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long, expiryMode: ExpiryMode)
     fun conversationHasOutgoing(userPublicKey: String): Boolean
     fun deleteMessagesByHash(threadId: Long, hashes: List<String>)
     fun deleteMessagesByUser(threadId: Long, userSessionId: String)
