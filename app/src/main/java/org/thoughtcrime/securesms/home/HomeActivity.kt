@@ -71,9 +71,9 @@ import org.thoughtcrime.securesms.conversation.v2.settings.notification.Notifica
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getUnreadCount
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.getUnreadCount
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager

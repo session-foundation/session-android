@@ -9,8 +9,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.getUnreadCount
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getUnreadCount
 import org.thoughtcrime.securesms.util.AbstractCursorLoader
 
 class ConversationLoader @AssistedInject constructor(
@@ -29,7 +28,7 @@ class ConversationLoader @AssistedInject constructor(
         )
 
         return Data(
-            messageCursor = mmsSmsDatabase.getConversation(threadID, reverse),
+            messageCursor = mmsSmsDatabase.getConversation(id, reverse),
             threadUnreadCount = mmsSmsDatabase.getUnreadCount(threadAddress),
         )
     }

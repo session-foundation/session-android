@@ -186,7 +186,8 @@ public class ThreadDatabase extends Database {
   }
 
 
-  private final MutableSharedFlow<Long> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
+  private final MutableSharedFlow<Long> updateNotifications
+          = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
 
   final Lazy<@NonNull RecipientRepository> recipientRepository;
   final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
@@ -388,7 +389,7 @@ public class ThreadDatabase extends Database {
 
     try (final Cursor cursor = db.query(TABLE_NAME, new String[] { ADDRESS }, ID + " = ?", new String[] { String.valueOf(threadId )}, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
-        return Address.fromSerialized(cursor.getString(0));
+        return (Address.Conversable) Address.fromSerialized(cursor.getString(0));
       }
     }
 

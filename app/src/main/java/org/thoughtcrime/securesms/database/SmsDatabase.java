@@ -44,6 +44,8 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
+import org.thoughtcrime.securesms.preferences.CommunicationPreferences;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
 import org.thoughtcrime.securesms.pro.ProFeatureExtKt;
 
 import java.io.Closeable;
@@ -161,6 +163,7 @@ public class SmsDatabase extends MessagingDatabase {
   private final RecipientRepository recipientRepository;
   private final SnodeClock snodeClock;
   private final Lazy<@NonNull ReactionDatabase> reactionDatabase;
+  final Provider<@NonNull PreferenceStorage> prefs;
 
   final MutableSharedFlow<MessageUpdateNotification> updateNotification
           = SharedFlowKt.MutableSharedFlow(0, 24, BufferOverflow.DROP_OLDEST);
@@ -170,11 +173,13 @@ public class SmsDatabase extends MessagingDatabase {
                      Provider<SQLCipherOpenHelper> databaseHelper,
                      RecipientRepository recipientRepository,
                      SnodeClock snodeClock,
-                     Lazy<@NonNull ReactionDatabase> reactionDatabase) {
+                     Lazy<@NonNull ReactionDatabase> reactionDatabase,
+                     Provider<@NonNull PreferenceStorage> prefs) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.snodeClock = snodeClock;
     this.reactionDatabase = reactionDatabase;
+    this.prefs = prefs;
   }
 
   public SharedFlow<MessageUpdateNotification> getUpdateNotification() {
@@ -710,7 +715,7 @@ public class SmsDatabase extends MessagingDatabase {
       ProFeatureExtKt.toProMessageFeatures(cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.PRO_MESSAGE_FEATURES)), proFeatures);
       ProFeatureExtKt.toProProfileFeatures(cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.PRO_PROFILE_FEATURES)), proFeatures);
 
-      if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
+      if (!prefs.get().get(CommunicationPreferences.INSTANCE.getREAD_RECEIPT_ENABLED())) {
         readReceiptCount = 0;
       }
 

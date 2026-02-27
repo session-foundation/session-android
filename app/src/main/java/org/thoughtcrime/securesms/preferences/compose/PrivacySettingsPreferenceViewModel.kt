@@ -21,13 +21,14 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DISABLE_PASSPHRASE_PREF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.INCOGNITO_KEYBOARD_PREF
-import org.session.libsession.utilities.TextSecurePreferences.Companion.READ_RECEIPTS_PREF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SCREEN_LOCK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.TYPING_INDICATORS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LINK_PREVIEWS
 import org.session.libsession.utilities.observeBooleanKey
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.CommunicationPreferences
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.ShowCallsWarningDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
@@ -36,6 +37,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PrivacySettingsPreferenceViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
+    private val prefStorage: PreferenceStorage,
     private val configFactory: ConfigFactory,
     private val app: Application,
     private val typingStatusRepository: TypingStatusRepository,
@@ -64,7 +66,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         CALL_NOTIFICATIONS_ENABLED,
         SCREEN_LOCK,
         "community_message_requests",
-        READ_RECEIPTS_PREF,
+        CommunicationPreferences.READ_RECEIPT_ENABLED.name,
         TYPING_INDICATORS,
         LINK_PREVIEWS,
         INCOGNITO_KEYBOARD_PREF
@@ -87,7 +89,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     private val togglesFlow =
         combine(
             prefs.observeBooleanKey(CALL_NOTIFICATIONS_ENABLED, default = false),
-            prefs.observeBooleanKey(READ_RECEIPTS_PREF, default = false),
+            prefStorage.watch(viewModelScope, CommunicationPreferences.READ_RECEIPT_ENABLED),
             prefs.observeBooleanKey(TYPING_INDICATORS, default = false),
             prefs.observeBooleanKey(LINK_PREVIEWS, default = false),
             prefs.observeBooleanKey(INCOGNITO_KEYBOARD_PREF, default = false),
@@ -215,7 +217,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
             }
 
             is Commands.ToggleReadReceipts -> {
-                prefs.setReadReceiptsEnabled(command.isEnabled)
+                prefStorage[CommunicationPreferences.READ_RECEIPT_ENABLED] = command.isEnabled
             }
 
             is Commands.ToggleTypingIndicators -> {

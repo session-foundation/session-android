@@ -45,6 +45,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +58,8 @@ import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Pair;
 import kotlin.Triple;
+import kotlin.collections.CollectionsKt;
+import kotlinx.serialization.json.Json;
 
 @Singleton
 public class MmsSmsDatabase extends Database {
@@ -68,13 +71,14 @@ public class MmsSmsDatabase extends Database {
   public static final String MMS_TRANSPORT = "mms";
   public static final String SMS_TRANSPORT = "sms";
 
-  private static final String PROJECTION_ALL = "*";
+  static final String PROJECTION_ALL = "*";
 
   private final LoginStateRepository loginStateRepository;
   private final Lazy<@NonNull ThreadDatabase> threadDatabase;
   private final Lazy<@NonNull MmsDatabase> mmsDatabase;
   private final Lazy<@NonNull SmsDatabase> smsDatabase;
   final Lazy<@NonNull ConfigFactoryProtocol> configFactory;
+  @NonNull final Json json;
 
   @Inject
   public MmsSmsDatabase(@ApplicationContext Context context,
@@ -83,7 +87,8 @@ public class MmsSmsDatabase extends Database {
                         Lazy<@NonNull ThreadDatabase> threadDatabase, 
                         Lazy<@NonNull MmsDatabase> mmsDatabase, 
                         Lazy<@NonNull SmsDatabase> smsDatabase,
-                        Lazy<@NonNull ConfigFactoryProtocol> configFactory) {
+                        Lazy<@NonNull ConfigFactoryProtocol> configFactory,
+                        @NonNull Json json) {
     super(context, databaseHelper);
 
     this.loginStateRepository = loginStateRepository;
@@ -91,29 +96,21 @@ public class MmsSmsDatabase extends Database {
     this.mmsDatabase = mmsDatabase;
     this.smsDatabase = smsDatabase;
     this.configFactory = configFactory;
+    this.json = json;
   }
 
   public @Nullable MessageRecord getMessageForTimestamp(long threadId, long timestamp) {
     final String selection = MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp +
             " AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
 
-    try (Cursor cursor = queryTables(PROJECTION_ALL, selection, true, null, null, null)) {
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, null, null)) {
       MmsSmsDatabase.Reader reader = readerFor(cursor);
       return reader.getNext();
     }
   }
 
   public @Nullable MessageRecord getMessageById(@NonNull MessageId id) {
-      String selection = ID + " = " + id.getId() + " AND " +
-              TRANSPORT + " = '" + (id.isMms() ? MMS_TRANSPORT : SMS_TRANSPORT) + "'";
-      try (MmsSmsDatabase.Reader reader = readerFor(queryTables(PROJECTION_ALL, selection, true, null, null, null))) {
-          final MessageRecord messageRecord;
-          if ((messageRecord = reader.getNext()) != null) {
-            return messageRecord;
-          }
-      }
-
-    return null;
+      return CollectionsKt.firstOrNull(MmsSmsDatabaseExt.INSTANCE.getMessages(this, Collections.singletonList(id), false));
   }
 
   public @Nullable MessageRecord getMessageFor(long threadId, long timestamp, String serializedAuthor) {
@@ -124,7 +121,7 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp + " AND " +
             MmsSmsColumns.THREAD_ID + " = " + threadId;
 
-    try (Cursor cursor = queryTables(PROJECTION_ALL, selection, true, null, null, null)) {
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, null, null)) {
       MmsSmsDatabase.Reader reader = readerFor(cursor, getQuote);
 
       MessageRecord messageRecord;
@@ -147,7 +144,7 @@ public class MmsSmsDatabase extends Database {
    */
   @Deprecated(forRemoval = true)
   public @Nullable MessageRecord getMessageByTimestamp(long timestamp, String serializedAuthor, boolean getQuote) {
-    try (Cursor cursor = queryTables(PROJECTION_ALL, MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp, true, null, null, null)) {
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp, true, null, null, null)) {
       MmsSmsDatabase.Reader reader = readerFor(cursor, getQuote);
 
       MessageRecord messageRecord;
@@ -170,7 +167,7 @@ public class MmsSmsDatabase extends Database {
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND NOT " + MmsSmsColumns.IS_DELETED;
 
-    try (final Cursor cursor = queryTables(PROJECTION_ALL, selection, true, null, order, null)) {
+    try (final Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, order, null)) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
@@ -193,7 +190,7 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + THREAD_ID + " != " + -1L;
     String limitStr  = limit > 0 || offset > 0 ? offset + ", " + limit : null;
 
-    return queryTables(PROJECTION_ALL, selection, true, null, order, limitStr);
+    return MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, order, limitStr);
   }
 
   public Cursor getConversation(long threadId, boolean reverse) {
@@ -206,7 +203,7 @@ public class MmsSmsDatabase extends Database {
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String limitStr = String.valueOf(limit);
 
-    try (Cursor cursor = queryTables(projection, selection, true, null, order, limitStr)) {
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, projection, selection, true, null, order, limitStr)) {
       List<String> addresses = new ArrayList<>();
       while (cursor != null && cursor.moveToNext()) {
         String address = cursor.getString(0);
@@ -243,7 +240,7 @@ public class MmsSmsDatabase extends Database {
     Set<MessageRecord> identifiedMessages = new HashSet<MessageRecord>();
 
     // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION_ALL, selection, true, null, null, null)) {
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, null, null)) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
@@ -259,7 +256,7 @@ public class MmsSmsDatabase extends Database {
     List<Pair<MessageRecord, String>> identifiedMessages = new ArrayList<>();
 
     // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION_ALL, selection, true, null, null, null)) {
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, null, null)) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
@@ -278,7 +275,7 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
     List<Pair<MessageRecord, String>> identifiedMessages = new ArrayList<>();
 
-    try (Cursor cursor = queryTables(PROJECTION_ALL, selection, true, null, null, null);
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, null, null);
          MmsSmsDatabase.Reader reader = readerFor(cursor)) {
 
       MessageRecord record;
@@ -302,7 +299,7 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " +
             "NOT " + MmsSmsColumns.IS_DELETED;
 
-    try (Cursor cursor = queryTables(PROJECTION_ALL, selection, includeReactions, null, order, "1")) {
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, includeReactions, null, order, "1")) {
       return readerFor(cursor, getQuote).getNext();
     }
   }
@@ -319,7 +316,7 @@ public class MmsSmsDatabase extends Database {
    */
   @Nullable
   public Pair<Long, Long> getMaxTimestampInThreadUpTo(@NonNull final MessageId messageId) {
-    Pair<String, Object[]> query = MmsSmsDatabaseExtKt.buildMaxTimestampInThreadUpToQuery(messageId);
+    Pair<String, Object[]> query = MmsSmsDatabaseExt.INSTANCE.buildMaxTimestampInThreadUpToQuery(messageId);
     try (Cursor cursor = getReadableDatabase().rawQuery(query.getFirst(), query.getSecond())) {
       if (cursor != null && cursor.moveToFirst()) {
         return new Pair<>(cursor.getLong(0), cursor.getLong(1));
@@ -333,7 +330,7 @@ public class MmsSmsDatabase extends Database {
     String selection = "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + IS_OUTGOING + "))";
     String order    = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String limitStr = maxRows > 0 ? String.valueOf(maxRows) : null;
-    return queryTables(PROJECTION_ALL, selection, true, null, order, limitStr);
+    return MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, order, limitStr);
   }
 
   public Cursor getOutgoingWithUnseenReactionsForNotifications(int maxRows) {
@@ -347,7 +344,7 @@ public class MmsSmsDatabase extends Database {
 
     String order    = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String limitStr = maxRows > 0 ? String.valueOf(maxRows) : null;
-    return queryTables(PROJECTION_ALL, IS_OUTGOING, true, reactionSelection, order, limitStr);
+    return MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, IS_OUTGOING, true, reactionSelection, order, limitStr);
   }
 
   public Set<Address> getAllReferencedAddresses() {
@@ -356,7 +353,7 @@ public class MmsSmsDatabase extends Database {
                     " AND " + MmsSmsColumns.ADDRESS + " != ''";
 
     Set<Address> out = new HashSet<>();
-    try (Cursor cursor = queryTables(projection, selection, true, null, null, null)) {
+    try (Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, projection, selection, true, null, null, null)) {
       while (cursor != null && cursor.moveToNext()) {
         String serialized = cursor.getString(0);
         try {
@@ -541,22 +538,6 @@ public class MmsSmsDatabase extends Database {
     migrateLegacyCommunityAddresses2(db, MmsDatabase.TABLE_NAME);
   }
 
-  private Cursor queryTables(
-          @NonNull String projection,
-          @Nullable String selection,
-          boolean includeReactions,
-          @Nullable String additionalReactionSelection,
-          @Nullable String order,
-          @Nullable String limit) {
-    SQLiteDatabase db = getReadableDatabase();
-    String query = MmsSmsDatabaseExtKt.buildMmsSmsCombinedQuery(projection,
-            selection,
-            includeReactions,
-            additionalReactionSelection,
-            order,
-            limit);
-      return db.rawQuery(query, null);
-  }
 
   public Reader readerFor(@NonNull Cursor cursor) {
     return readerFor(cursor, true);

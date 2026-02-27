@@ -1,46 +1,18 @@
 package org.thoughtcrime.securesms.database
 
+import android.database.Cursor
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.util.asSequence
 import org.thoughtcrime.securesms.util.get
 
-/**
- * Build a combined query to fetch both MMS and SMS messages in one go, the high level idea is to
- * use a UNION between two SELECT statements, one for MMS and one for SMS. And they will need
- * to have the same projection so we'll also do some aliasing on them. This can be illustrated as:
- *
- * For each message, we will perform sub-query to reaction/attachment database to query the relevant
- * data. We try not to use JOIN as they screw up performance by impacting the index selection.
- *
- * ```sqlite
- * SELECT sms_fields,
- *  (query reaction table) AS reactions,
- *  NULL AS attachments,
- *  (query hash table) AS server_hash
- * FROM sms
- *
- * UNION ALL
- *
- * SELECT
- *  mms_fields,
- *  (query reaction table) AS reactions,
- *  (query attachment table) AS attachments,
- *  (query hash table) AS server_hash
- * FROM mms
- * ```
- */
-fun buildMmsSmsCombinedQuery(
-    projection: String,
-    selection: String?,
-    includeReactions: Boolean,
-    reactionSelection: String?,
-    order: String?,
-    limit: String?
-): String {
+object MmsSmsDatabaseExt {
     // The query parts that fetch all reactions for a given message, and group them into a JSON array
-    val reactionsQueryParts = """
+    //language=roomsql
+    private const val REACTIONS_QUERY_PARTS = """
         SELECT json_group_array(
             json_object(
                 '${ReactionDatabase.ROW_ID}', ${ReactionDatabase.TABLE_NAME}.${ReactionDatabase.ROW_ID},
@@ -59,30 +31,78 @@ fun buildMmsSmsCombinedQuery(
         """
 
     // Subquery to grab sms' server hash
-    val smsHashQuery = """
+    //language=roomsql
+    private const val SMS_HASH_QUERY = """
         SELECT server_hash
         FROM ${LokiMessageDatabase.smsHashTable} sms_hash
         WHERE sms_hash.message_id = ${SmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID}
     """
 
-    // Custom where statement for reactions if provided
-    val additionalReactionSelection = reactionSelection?.let { " AND ($it)" }.orEmpty()
+    // Subquery to grab mms' server hash
+    //language=roomsql
+    private const val MMS_HASH_QUERY = """
+        SELECT server_hash
+        FROM ${LokiMessageDatabase.mmsHashTable} mms_hash
+        WHERE mms_hash.message_id = ${MmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID}
+    """
 
-    // If reactions are not requested, we just return an empty JSON array
-    val smsReactionQuery = if (includeReactions) {
-        """($reactionsQueryParts 
+    /**
+     * Build a combined query to fetch both MMS and SMS messages in one go, the high level idea is to
+     * use a UNION between two SELECT statements, one for MMS and one for SMS. And they will need
+     * to have the same projection so we'll also do some aliasing on them. This can be illustrated as:
+     *
+     * For each message, we will perform sub-query to reaction/attachment database to query the relevant
+     * data. We try not to use JOIN as they screw up performance by impacting the index selection.
+     *
+     * ```sqlite
+     * SELECT sms_fields,
+     *  (query reaction table) AS reactions,
+     *  NULL AS attachments,
+     *  (query hash table) AS server_hash
+     * FROM sms
+     *
+     * UNION ALL
+     *
+     * SELECT
+     *  mms_fields,
+     *  (query reaction table) AS reactions,
+     *  (query attachment table) AS attachments,
+     *  (query hash table) AS server_hash
+     * FROM mms
+     * ```
+     */
+    private fun buildMmsSmsCombinedQuery(
+        projection: String,
+        selection: String?,
+        includeReactions: Boolean,
+        reactionSelection: String?,
+        order: String?,
+        limit: String?,
+        querySms: Boolean = true,
+        queryMms: Boolean = true,
+    ): String {
+        require(querySms || queryMms) {
+            "At least one of querySms or queryMms must be true"
+        }
+
+        // Custom where statement for reactions if provided
+        val additionalReactionSelection = reactionSelection?.let { " AND ($it)" }.orEmpty()
+
+        // If reactions are not requested, we just return an empty JSON array
+        val smsReactionQuery = if (includeReactions) {
+            """($REACTIONS_QUERY_PARTS 
             WHERE 
                 ${ReactionDatabase.TABLE_NAME}.${ReactionDatabase.MESSAGE_ID} = ${SmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID} 
                 AND NOT ${ReactionDatabase.TABLE_NAME}.${ReactionDatabase.IS_MMS}
                 $additionalReactionSelection)"""
-    } else {
-        "'[]'"
-    }
+        } else {
+            "'[]'"
+        }
 
-    val whereStatement = selection?.let { "WHERE $it" }.orEmpty()
+        val whereStatement = selection?.let { "WHERE $it" }.orEmpty()
 
-    // The main query for SMS messages
-    val smsQuery = """
+        // The main query for SMS messages
+        val smsQuery = if (querySms) """
         SELECT
             ${SmsDatabase.DATE_SENT} AS ${MmsSmsColumns.NORMALIZED_DATE_SENT},
             ${SmsDatabase.DATE_RECEIVED} AS ${MmsSmsColumns.NORMALIZED_DATE_RECEIVED},
@@ -115,23 +135,16 @@ fun buildMmsSmsCombinedQuery(
             NULL AS ${MmsDatabase.QUOTE_ATTACHMENT},
             NULL AS ${MmsDatabase.LINK_PREVIEWS},
             ${MmsSmsColumns.HAS_MENTION},
-            ($smsHashQuery) AS ${MmsSmsColumns.SERVER_HASH},
+            ($SMS_HASH_QUERY) AS ${MmsSmsColumns.SERVER_HASH},
             ${MmsSmsColumns.PRO_MESSAGE_FEATURES},
             ${MmsSmsColumns.PRO_PROFILE_FEATURES},
             ${MmsSmsColumns.IS_OUTGOING}
         FROM ${SmsDatabase.TABLE_NAME}
         $whereStatement
-    """
+    """ else null
 
-    // Subquery to grab mms' server hash
-    val mmsHashQuery = """
-        SELECT server_hash
-        FROM ${LokiMessageDatabase.mmsHashTable} mms_hash
-        WHERE mms_hash.message_id = ${MmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID}
-    """
-
-    // The subquery that fetches all attachments for a given MMS message, and group them into a JSON array
-    val attachmentQuery = """
+        // The subquery that fetches all attachments for a given MMS message, and group them into a JSON array
+        val attachmentQuery = """
         SELECT json_group_array(
             json_object(
                 '${AttachmentDatabase.ROW_ID}', a.${AttachmentDatabase.ROW_ID}, 
@@ -162,19 +175,19 @@ fun buildMmsSmsCombinedQuery(
         WHERE a.${AttachmentDatabase.MMS_ID} = ${MmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID}
     """
 
-    // Custom where statement for reactions if provided
-    val mmsReactionQuery = if (includeReactions) {
-        """($reactionsQueryParts 
+        // Custom where statement for reactions if provided
+        val mmsReactionQuery = if (includeReactions) {
+            """($REACTIONS_QUERY_PARTS 
             WHERE 
                 ${ReactionDatabase.TABLE_NAME}.${ReactionDatabase.MESSAGE_ID} = ${MmsDatabase.TABLE_NAME}.${MmsSmsColumns.ID} 
                 AND ${ReactionDatabase.TABLE_NAME}.${ReactionDatabase.IS_MMS}
                 $additionalReactionSelection)"""
-    } else {
-        "'[]'"
-    }
+        } else {
+            "'[]'"
+        }
 
-    // The main query for MMS messages
-    val mmsQuery = """
+        // The main query for MMS messages
+        val mmsQuery = if (queryMms) """
         SELECT
             ${MmsDatabase.DATE_SENT} AS ${MmsSmsColumns.NORMALIZED_DATE_SENT},
             ${MmsDatabase.DATE_RECEIVED} AS ${MmsSmsColumns.NORMALIZED_DATE_RECEIVED},
@@ -207,54 +220,80 @@ fun buildMmsSmsCombinedQuery(
             ${MmsDatabase.QUOTE_ATTACHMENT},
             ${MmsDatabase.LINK_PREVIEWS},
             ${MmsSmsColumns.HAS_MENTION},
-            ($mmsHashQuery) AS ${MmsSmsColumns.SERVER_HASH},
+            ($MMS_HASH_QUERY) AS ${MmsSmsColumns.SERVER_HASH},
             ${MmsSmsColumns.PRO_MESSAGE_FEATURES},
             ${MmsSmsColumns.PRO_PROFILE_FEATURES},
             ${MmsSmsColumns.IS_OUTGOING}
         FROM ${MmsDatabase.TABLE_NAME}
         $whereStatement
-    """
+    """ else null
 
-    val orderStatement = order?.let { "ORDER BY $it" }.orEmpty()
-    val limitStatement = limit?.let { "LIMIT $it" }.orEmpty()
+        val orderStatement = order?.let { "ORDER BY $it" }.orEmpty()
+        val limitStatement = limit?.let { "LIMIT $it" }.orEmpty()
 
-    return """
-        WITH combined AS (
-            $smsQuery
-            UNION ALL
-            $mmsQuery
-        )
+        val cteQuery = when {
+            smsQuery != null && mmsQuery != null -> "WITH combined AS ($smsQuery UNION ALL $mmsQuery)"
+            else -> "WITH combined AS (${smsQuery ?: mmsQuery})"
+        }
+
+        return """
+        $cteQuery
         
         SELECT $projection
         FROM combined
         $orderStatement
         $limitStatement
     """
-}
+    }
 
-/**
- * Build a query to get the maximum timestamp (date sent) in a thread up to and including
- * the timestamp of the given message ID.
- *
- * This query will also look at reactions associated with messages in the thread
- * to ensure that if there are reactions with later timestamps, they are considered
- * as well.
- *
- * @return A pair containing the SQL query string and an array of parameters to bind.
- *         The query will return at most one row of "maxTimestamp", "threadId".
- */
-fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> {
-    val msgTable = if (id.mms) MmsDatabase.TABLE_NAME else SmsDatabase.TABLE_NAME
-    val dateSentColumn = if (id.mms) MmsDatabase.DATE_SENT else SmsDatabase.DATE_SENT
-    val threadIdColumn = if (id.mms) MmsSmsColumns.THREAD_ID else SmsDatabase.THREAD_ID
+    @JvmOverloads
+    fun MmsSmsDatabase.queryTables(
+        projection: String,
+        selection: String?,
+        includeReactions: Boolean,
+        additionalReactionSelection: String?,
+        order: String?,
+        limit: String?,
+        querySms: Boolean = true,
+        queryMms: Boolean = true,
+    ): Cursor {
+        val query = buildMmsSmsCombinedQuery(
+            projection = projection,
+            selection = selection,
+            includeReactions = includeReactions,
+            reactionSelection = additionalReactionSelection,
+            order = order,
+            limit = limit,
+            querySms = querySms,
+            queryMms = queryMms
+        )
+        return readableDatabase.rawQuery(query, null)
+    }
 
-    // The query below does this:
-    // 1. Query the given message, find out its thread id and its date sent
-    // 2. Find all the messages in this thread before this messages (using result from step 1)
-    // 3. With this message + earlier messages, grab all the reactions associated with them
-    // 4. Look at the max date among the reactions returned from step 3
-    // 5. Return the max between this message's date and the max reaction date
-    return """
+    /**
+     * Build a query to get the maximum timestamp (date sent) in a thread up to and including
+     * the timestamp of the given message ID.
+     *
+     * This query will also look at reactions associated with messages in the thread
+     * to ensure that if there are reactions with later timestamps, they are considered
+     * as well.
+     *
+     * @return A pair containing the SQL query string and an array of parameters to bind.
+     *         The query will return at most one row of "maxTimestamp", "threadId".
+     */
+    fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> {
+        val msgTable = if (id.mms) MmsDatabase.TABLE_NAME else SmsDatabase.TABLE_NAME
+        val dateSentColumn = if (id.mms) MmsDatabase.DATE_SENT else SmsDatabase.DATE_SENT
+        val threadIdColumn = if (id.mms) MmsSmsColumns.THREAD_ID else SmsDatabase.THREAD_ID
+
+        // The query below does this:
+        // 1. Query the given message, find out its thread id and its date sent
+        // 2. Find all the messages in this thread before this messages (using result from step 1)
+        // 3. With this message + earlier messages, grab all the reactions associated with them
+        // 4. Look at the max date among the reactions returned from step 3
+        // 5. Return the max between this message's date and the max reaction date
+        //language=roomsql
+        return """
         SELECT 
             MAX(
                 mainMessage.$dateSentColumn, 
@@ -284,14 +323,14 @@ fun buildMaxTimestampInThreadUpToQuery(id: MessageId): Pair<String, Array<Any>> 
         FROM $msgTable mainMessage
         WHERE mainMessage.${MmsSmsColumns.ID} = ?
     """ to arrayOf(id.id)
-}
+    }
 
-fun MmsSmsDatabase.getUnreadCount(address: Address.Conversable): Int {
-    val lastRead = configFactory.get().withUserConfigs { it.convoInfoVolatile.get(address) }
-        ?.lastRead ?: 0L
+    fun MmsSmsDatabase.getUnreadCount(address: Address.Conversable): Int {
+        val lastRead = configFactory.get().withUserConfigs { it.convoInfoVolatile.get(address) }
+            ?.lastRead ?: 0L
 
-    //language=roomsql
-    return readableDatabase.rawQuery("""
+        //language=roomsql
+        return readableDatabase.rawQuery("""
         SELECT IFNULL(
             (
                  SELECT COUNT(*)
@@ -317,50 +356,75 @@ fun MmsSmsDatabase.getUnreadCount(address: Address.Conversable): Int {
                     AND NOT m.${MmsSmsColumns.IS_DELETED}
             ), 0)
     """, address.address, lastRead).use { cursor ->
-        if (cursor.moveToFirst()) {
-            cursor.getInt(0)
-        } else {
-            0
+            if (cursor.moveToFirst()) {
+                cursor.getInt(0)
+            } else {
+                0
+            }
         }
     }
-}
 
-/**
- * Find all incoming messages (including control messages) for the given thread within
- * a time range.
- */
-fun MmsSmsDatabase.findIncomingMessages(
-    threadId: Long,
-    startMsExclusive: Long,
-    endMsInclusive: Long
-): List<MessageId> {
-    //language=roomsql
-    return readableDatabase.rawQuery("""
-        SELECT ${SmsDatabase.ID}, 0
-        FROM ${SmsDatabase.TABLE_NAME}
-        WHERE 
-            ${SmsDatabase.THREAD_ID} = ?1
-            AND ${SmsDatabase.DATE_SENT} > ?1
-            AND ${SmsDatabase.DATE_SENT} <= ?2 
-            AND ${SmsDatabase.THREAD_ID} = ?3
-            AND NOT ${SmsDatabase.IS_OUTGOING}
-            AND NOT ${SmsDatabase.IS_DELETED}
+    /**
+     * Find all incoming messages (including control messages) for the given thread within
+     * a time range.
+     */
+    fun MmsSmsDatabase.findIncomingMessages(
+        threadId: Long,
+        startMsExclusive: Long,
+        endMsInclusive: Long
+    ): List<MessageRecord> {
+        return queryTables(
+            projection = MmsSmsDatabase.PROJECTION_ALL,
+            selection = "${MmsSmsColumns.THREAD_ID} = $threadId AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} > $startMsExclusive AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} <= $endMsInclusive",
+            includeReactions = false,
+            additionalReactionSelection = null,
+            order = null,
+            limit = null,
+        ).use {
+            val reader = readerFor(it)
+            generateSequence { reader.next }.toList()
+        }
+    }
 
-        UNION ALL
-        
-        SELECT ${MmsSmsColumns.ID}, 1
-        FROM ${MmsDatabase.TABLE_NAME}
-        WHERE 
-            ${MmsSmsColumns.THREAD_ID} = ?1
-            AND ${MmsDatabase.DATE_SENT} > ?2 
-            AND ${MmsDatabase.DATE_SENT} <= ?3
-            AND NOT ${MmsSmsColumns.IS_OUTGOING}
-            AND NOT ${MmsSmsColumns.IS_DELETED}
-    """, longArrayOf(threadId, startMsExclusive, endMsInclusive)).use { cursor ->
-        cursor.asSequence()
-            .map {
-                MessageId(cursor.getLong(0), cursor.getInt(1) != 0)
+    fun MmsSmsDatabase.getMessages(messageIds: List<MessageId>, includeReactions: Boolean = false): List<MessageRecord> {
+        val records = ArrayList<MessageRecord>(messageIds.size)
+
+        if (messageIds.any { it.sms }) {
+            val idSet = messageIds.asSequence().filter { it.sms }.joinToString(separator = ",") { it.id.toString() }
+
+            queryTables(
+                projection = MmsSmsDatabase.PROJECTION_ALL,
+                selection = """${MmsSmsColumns.ID} IN ($idSet)""",
+                includeReactions = includeReactions,
+                additionalReactionSelection = null,
+                order = null,
+                limit = null,
+                queryMms = false,
+                querySms = true,
+            ).use { cursor ->
+                val reader = readerFor(cursor)
+                records.addAll(generateSequence { reader.next })
             }
-            .toList()
+        }
+
+        if (messageIds.any { it.mms }) {
+            val idSet = messageIds.asSequence().filter { it.mms }.joinToString(separator = ",") { it.id.toString() }
+
+            queryTables(
+                projection = MmsSmsDatabase.PROJECTION_ALL,
+                selection = """${MmsSmsColumns.ID} IN ($idSet)""",
+                includeReactions = includeReactions,
+                additionalReactionSelection = null,
+                order = null,
+                limit = null,
+                querySms = false,
+                queryMms = true,
+            ).use { cursor ->
+                val reader = readerFor(cursor)
+                records.addAll(generateSequence { reader.next })
+            }
+        }
+
+        return records
     }
 }

@@ -101,8 +101,6 @@ interface TextSecurePreferences {
     fun getNeedsSqlCipherMigration(): Boolean
     fun isIncognitoKeyboardEnabled(): Boolean
     fun setIncognitoKeyboardEnabled(enabled : Boolean)
-    fun isReadReceiptsEnabled(): Boolean
-    fun setReadReceiptsEnabled(enabled: Boolean)
     fun isTypingIndicatorsEnabled(): Boolean
     fun setTypingIndicatorsEnabled(enabled: Boolean)
     fun isLinkPreviewsEnabled(): Boolean
@@ -302,7 +300,6 @@ interface TextSecurePreferences {
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
         const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
-        const val READ_RECEIPTS_PREF = "pref_read_receipts"
         const val INCOGNITO_KEYBOARD_PREF = "pref_incognito_keyboard"
         const val NEEDS_SQLCIPHER_MIGRATION = "pref_needs_sql_cipher_migration"
         const val BACKUP_ENABLED = "pref_backup_enabled_v3"
@@ -446,11 +443,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun isIncognitoKeyboardEnabled(context: Context): Boolean {
             return getBooleanPreference(context, INCOGNITO_KEYBOARD_PREF, true)
-        }
-
-        @JvmStatic
-        fun isReadReceiptsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, READ_RECEIPTS_PREF, false)
         }
 
         @JvmStatic
@@ -762,15 +754,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setIncognitoKeyboardEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF, enabled)
         _events.tryEmit(TextSecurePreferences.INCOGNITO_KEYBOARD_PREF)
-    }
-
-    override fun isReadReceiptsEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.READ_RECEIPTS_PREF, false)
-    }
-
-    override fun setReadReceiptsEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.READ_RECEIPTS_PREF, enabled)
-        _events.tryEmit(TextSecurePreferences.READ_RECEIPTS_PREF)
     }
 
     override fun isTypingIndicatorsEnabled(): Boolean {
