@@ -1,15 +1,15 @@
 package org.thoughtcrime.securesms.service
 
 import dagger.Lazy
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
@@ -19,6 +19,10 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.MessageExpirationManagerProtocol
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.snode.AlterTtlApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
@@ -29,10 +33,12 @@ import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.mms.MmsException
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
 
 private val TAG = ExpiringMessageManager::class.java.simpleName
@@ -54,6 +60,9 @@ class ExpiringMessageManager @Inject constructor(
     private val storage: Lazy<Storage>,
     private val loginStateRepository: LoginStateRepository,
     private val recipientRepository: RecipientRepository,
+    private val alterTtlApiFactory: AlterTtlApi.Factory,
+    private val swarmApiExecutor: SwarmApiExecutor,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) : MessageExpirationManagerProtocol, AuthAwareComponent {
 
 
@@ -186,8 +195,12 @@ class ExpiringMessageManager @Inject constructor(
         // they've done reading it.
         val messageId = message.id
         if (message.expiryMode != ExpiryMode.NONE && messageId != null) {
-            getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, clock.currentTimeMillis())
+            val expireStarted = clock.currentTimeMillis()
+            getDatabase(messageId.mms).markExpireStarted(messageId.id, expireStarted)
+            val hash = message.serverHash
+            if (hash != null) {
+                scope.launch { shortenTtl(hash, expireStarted, message.expiryMode.expiryMillis) }
+            }
         }
     }
 
@@ -201,8 +214,34 @@ class ExpiringMessageManager @Inject constructor(
         if (message.expiryMode is ExpiryMode.AfterSend ||
             (message.expiryMode != ExpiryMode.NONE && message.isSenderSelf)
         ) {
-            getDatabase(messageId.mms)
-                .markExpireStarted(messageId.id, message.sentTimestamp!!)
+            val expireStarted = message.sentTimestamp!!
+            getDatabase(messageId.mms).markExpireStarted(messageId.id, expireStarted)
+            val hash = message.serverHash
+            if (hash != null) {
+                scope.launch { shortenTtl(hash, expireStarted, message.expiryMode.expiryMillis) }
+            }
+        }
+    }
+
+    private suspend fun shortenTtl(hash: String, expireStarted: Long, expiresIn: Long) {
+        val userAuth = storage.get().userAuth ?: return
+
+        try {
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = userAuth.accountId.hexString,
+                    api = alterTtlApiFactory.create(
+                        messageHashes = listOf(hash),
+                        auth = userAuth,
+                        alterType = AlterTtlApi.AlterType.Shorten,
+                        newExpiry = expireStarted + expiresIn,
+                    )
+                )
+            )
+            Log.d(TAG, "Shortened TTL for message hash $hash, new expiry at ${expireStarted + expiresIn}")
+        } catch (e: Throwable) {
+            if (e is CancellationException) throw e
+            Log.e(TAG, "Failed to shorten TTL for message hash $hash", e)
         }
     }
 

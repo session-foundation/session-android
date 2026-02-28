@@ -719,6 +719,8 @@ public class SmsDatabase extends MessagingDatabase {
         readReceiptCount = 0;
       }
 
+      String serverHash = cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsColumns.SERVER_HASH));
+
       Recipient recipient  = recipientRepository.getRecipientSync(address);
       List<ReactionRecord>      reactions  = reactionDatabase.get().getReactions(cursor);
 
@@ -738,7 +740,8 @@ public class SmsDatabase extends MessagingDatabase {
               readReceiptCount,
               reactions,
               hasMention,
-              proFeatures);
+              proFeatures,
+              serverHash);
     }
 
 

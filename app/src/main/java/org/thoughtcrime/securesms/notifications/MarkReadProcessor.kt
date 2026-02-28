@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.notifications
 
 import androidx.collection.LongLongMap
+import androidx.collection.LongObjectMap
 import androidx.collection.MutableLongLongMap
+import androidx.collection.MutableLongObjectMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,9 +22,14 @@ import kotlinx.coroutines.supervisorScope
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.database.userAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.api.snode.AlterTtlApi
+import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
+import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
+import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.database.MessageUpdateNotification
@@ -32,6 +39,7 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.findIncomingMessage
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getMessages
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.getAddressAndLastSeen
 import org.thoughtcrime.securesms.database.getAllLastSeen
@@ -65,6 +73,9 @@ class MarkReadProcessor @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val snodeClock: SnodeClock,
     private val prefs: PreferenceStorage,
+    private val storage: Storage,
+    private val alterTtlApiFactory: AlterTtlApi.Factory,
+    private val swarmApiExecutor: SwarmApiExecutor,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
@@ -264,48 +275,50 @@ class MarkReadProcessor @Inject constructor(
 
     private suspend fun handleAfterReadDisappearingMessages(
         threadLastSeenFlow: SharedFlow<ThreadUpdated>,
-        messageAddedFlow: SharedFlow<MessageUpdateNotification>
+        messageAddedFlow: SharedFlow<MessageUpdateNotification>,
     ) {
-        class ExpiryUpdates(val messageIds: List<MessageId>, val expireStarted: Long)
-
         merge(threadLastSeenFlow, messageAddedFlow)
             .scan(State<ExpiryUpdates>(threadDb.getAllLastSeen())) { acc, event ->
                 when (event) {
                     is MessageUpdateNotification -> {
-                        val threadLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
-                        State(
-                            lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
-                            updates = mmsSmsDatabase.getMessages(event.ids)
-                                .filter { msg -> msg.eligibleForAfterReadExpiry(threadLastSeen) }
-                                .map { it.messageId }
-                                .takeIf { it.isNotEmpty() }
-                                ?.also { Log.d(TAG, "New message(s) in thread ${event.threadId} eligible for AFTER_READ expiry") }
-                                ?.let { ExpiryUpdates(it, expireStarted = snodeClock.currentTimeMillis()) }
-                        )
+                        if (threadDb.getRecipientForThreadId(event.threadId) is Address.GroupLike) {
+                            if (acc.updates != null) acc.copy(updates = null) else acc
+                        } else {
+                            val threadLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
+                            val eligible = mmsSmsDatabase.getMessages(event.ids)
+                                .filter { it.eligibleForAfterReadExpiry(threadLastSeen) }
+                            State(
+                                lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
+                                updates = eligible.toExpiryUpdates(snodeClock.currentTimeMillis())
+                                    ?.also { Log.d(TAG, "New message(s) in thread ${event.threadId} eligible for AFTER_READ expiry") }
+                            )
+                        }
                     }
 
                     is ThreadUpdated -> {
-                        val oldLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
-                        if (event.lastSeenMs > oldLastSeen) {
-                            State(
-                                lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(
-                                    event.threadId,
-                                    event.lastSeenMs
-                                ),
-                                updates = mmsSmsDatabase.findIncomingMessages(
+                        if (event.threadAddress is Address.GroupLike) {
+                            if (acc.updates != null) acc.copy(updates = null) else acc
+                        } else {
+                            val oldLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
+                            if (event.lastSeenMs > oldLastSeen) {
+                                val eligible = mmsSmsDatabase.findIncomingMessages(
                                     event.threadId,
                                     oldLastSeen,
                                     event.lastSeenMs
-                                ).filter { msg -> msg.eligibleForAfterReadExpiry(event.lastSeenMs) }
-                                    .map { it.messageId }
-                                    .takeIf { it.isNotEmpty() }
-                                    ?.also { Log.d(TAG, "Starting AFTER_READ expiry for ${it.size} message(s) in thread ${event.threadId}") }
-                                    ?.let { ExpiryUpdates(it, expireStarted = snodeClock.currentTimeMillis()) }
-                            )
-                        } else if (acc.updates != null) {
-                            acc.copy(updates = null)
-                        } else {
-                            acc
+                                ).filter { it.eligibleForAfterReadExpiry(event.lastSeenMs) }
+                                State(
+                                    lastSeenByThreadIDs = acc.lastSeenByThreadIDs.updated(
+                                        event.threadId,
+                                        event.lastSeenMs
+                                    ),
+                                    updates = eligible.toExpiryUpdates(snodeClock.currentTimeMillis())
+                                        ?.also { Log.d(TAG, "Starting AFTER_READ expiry for ${it.messageIds.size} message(s) in thread ${event.threadId}") }
+                                )
+                            } else if (acc.updates != null) {
+                                acc.copy(updates = null)
+                            } else {
+                                acc
+                            }
                         }
                     }
 
@@ -321,17 +334,75 @@ class MarkReadProcessor @Inject constructor(
                         smsDatabase.markExpireStarted(messageId.id, updates.expireStarted)
                     }
                 }
+
+                scope.launch {
+                    shortenExpiry(updates)
+                }
             }
     }
 
+    /**
+     * Shortens the swarm-side TTL of AFTER_READ messages to match their local expiry time,
+     * so they disappear from the network at the same time as locally.
+     */
+    private suspend fun shortenExpiry(updates: ExpiryUpdates) {
+        if (updates.hashesByExpiry.isEmpty()) return
+        val userAuth = storage.userAuth ?: return
+
+        updates.hashesByExpiry.forEach { expiresIn, hashes ->
+            try {
+                swarmApiExecutor.execute(
+                    SwarmApiRequest(
+                        swarmPubKeyHex = userAuth.accountId.hexString,
+                        api = alterTtlApiFactory.create(
+                            messageHashes = hashes,
+                            auth = userAuth,
+                            alterType = AlterTtlApi.AlterType.Shorten,
+                            newExpiry = updates.expireStarted + expiresIn,
+                        )
+                    )
+                )
+                Log.d(TAG, "Shortened TTL for ${hashes.size} message(s), new expiry at ${updates.expireStarted + expiresIn}")
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+                Log.e(TAG, "Failed to shorten TTL for ${hashes.size} message(s)", e)
+            }
+        }
+    }
+
+    // messageIds: for markExpireStarted; hashesByExpiry: expiresIn -> hashes for TTL shortening
+    private class ExpiryUpdates(
+        val messageIds: List<MessageId>,
+        val hashesByExpiry: LongObjectMap<List<String>>,
+        val expireStarted: Long,
+    )
+
     companion object {
+        private fun List<MessageRecord>.toExpiryUpdates(expireStarted: Long): ExpiryUpdates? {
+            if (isEmpty()) return null
+            val hashesByExpiry = MutableLongObjectMap<MutableList<String>>()
+            for (msg in this) {
+                val hash = msg.serverHash
+                if (hash != null) {
+                    hashesByExpiry.getOrPut(msg.expiresIn) { ArrayList() }.add(hash)
+                }
+            }
+            @Suppress("UNCHECKED_CAST")
+            return ExpiryUpdates(
+                messageIds = map { it.messageId },
+                hashesByExpiry = hashesByExpiry as LongObjectMap<List<String>>,
+                expireStarted = expireStarted
+            )
+        }
+
         private fun MessageRecord.eligibleForReadReceipt(maxSentTimeMsInclusive: Long): Boolean {
             return isIncoming && !isControlMessage && dateSent <= maxSentTimeMsInclusive
         }
 
         /**
          * Determines whether this message should have its expiry timer started as a result of
-         * the thread being read up to [lastSeenMs].
+         * the thread being read up to [lastSeenMs]. Group threads are excluded entirely at the
+         * call site, as they don't support AFTER_READ mode.
          *
          * The AFTER_READ expiry mode is encoded in the message columns rather than as an explicit
          * mode field: [MessageRecord.expiresIn] > 0 means expiry is configured, and
@@ -339,13 +410,11 @@ class MarkReadProcessor @Inject constructor(
          * AFTER_SEND messages already have expireStarted = sentTimestamp on insertion, so they are
          * implicitly excluded.
          *
-         * Control message exceptions are also handled at insertion time and need no special casing
-         * here: MessageRequestResponse is inserted with expiresIn = 0; CallMessage is coerced to
-         * AFTER_SEND so expireStarted != 0. Other control messages (e.g. timer updates) are
-         * intentionally eligible and follow the same rules as regular messages.
+         * Control message exceptions are handled at insertion time: MessageRequestResponse is
+         * inserted with expiresIn = 0; CallMessage is coerced to AFTER_SEND so expireStarted != 0.
          *
          * Only incoming messages are handled here; outgoing timers are started by
-         * [ExpiringMessageManager] at send time.
+         * [org.thoughtcrime.securesms.service.ExpiringMessageManager] at send time.
          */
         private fun MessageRecord.eligibleForAfterReadExpiry(lastSeenMs: Long): Boolean {
             return isIncoming && expiresIn > 0 && expireStarted == 0L && dateSent <= lastSeenMs
@@ -353,8 +422,8 @@ class MarkReadProcessor @Inject constructor(
 
         // Copy the existing map and add the new item
         private fun LongLongMap.updated(key: Long, value: Long): LongLongMap {
-            val hasItem = containsKey(key)
-            val map = MutableLongLongMap(size + if (hasItem) 0 else 1)
+            val map = MutableLongLongMap(size + if (containsKey(key)) 0 else 1)
+            map.putAll(this)
             map[key] = value
             return map
         }

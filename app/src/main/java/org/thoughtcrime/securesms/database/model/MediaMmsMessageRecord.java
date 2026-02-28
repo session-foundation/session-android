@@ -51,12 +51,13 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
                                @NonNull List<LinkPreview> linkPreviews,
                                @NonNull List<ReactionRecord> reactions, boolean hasMention,
                                @Nullable MessageContent messageContent,
-                               Set<ProFeature> proFeatures)
+                               Set<ProFeature> proFeatures,
+                               @Nullable String serverHash)
   {
     super(id, body, conversationRecipient, individualRecipient, dateSent,
       dateReceived, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox,
       expiresIn, expireStarted, slideDeck, readReceiptCount, quote,
-            linkPreviews, reactions, hasMention, messageContent, proFeatures);
+            linkPreviews, reactions, hasMention, messageContent, proFeatures, serverHash);
   }
 
     @Override

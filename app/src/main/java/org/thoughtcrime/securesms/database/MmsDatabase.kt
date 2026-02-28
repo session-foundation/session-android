@@ -984,6 +984,8 @@ class MmsDatabase @Inject constructor(
                 Log.e(TAG, "Failed to decode message content", it)
             }.getOrNull()
 
+            val serverHash = cursor.getString(cursor.getColumnIndexOrThrow(MmsSmsColumns.SERVER_HASH))
+
             return MediaMmsMessageRecord(
                 /* id = */ id,
                 /* conversationRecipient = */ recipient,
@@ -1003,7 +1005,8 @@ class MmsDatabase @Inject constructor(
                 /* reactions = */ reactions,
                 /* hasMention = */ hasMention,
                 /* messageContent = */ messageContent,
-                /* proFeatures = */ proFeatures
+                /* proFeatures = */ proFeatures,
+                /* serverHash = */ serverHash
             )
         }
 
