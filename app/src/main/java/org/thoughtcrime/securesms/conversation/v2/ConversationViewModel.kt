@@ -104,7 +104,6 @@ import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
-import org.thoughtcrime.securesms.database.SmsDatabase_Factory
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -220,7 +219,7 @@ class ConversationViewModel @AssistedInject constructor(
                 merge(
                     merge(
                         mmsDatabase.changeNotification,
-                        smsDatabase.updateNotification
+                        smsDatabase.changeNotification
                     ).filter { it.threadId == threadId },
 
                     threadDb.updateNotifications.filter { it == threadId }

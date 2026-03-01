@@ -32,7 +32,7 @@ import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
-import org.thoughtcrime.securesms.database.MessageUpdateNotification
+import org.thoughtcrime.securesms.database.MessageChanges
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.findIncomingMessages
@@ -91,8 +91,8 @@ class MarkReadProcessor @Inject constructor(
 
         val messageAddedFlow = merge(
             mmsDatabase.changeNotification,
-            smsDatabase.updateNotification,
-        ).filter { it.changeType == MessageUpdateNotification.ChangeType.Added }
+            smsDatabase.changeNotification,
+        ).filter { it.changeType == MessageChanges.ChangeType.Added }
             .shareIn(this, SharingStarted.Lazily)
 
         launch {
@@ -130,7 +130,7 @@ class MarkReadProcessor @Inject constructor(
      */
     private suspend fun handleReadReceiptSending(
         threadLastSeenFlow: SharedFlow<ThreadUpdated>,
-        messageAddedFlow: SharedFlow<MessageUpdateNotification>
+        messageAddedFlow: SharedFlow<MessageChanges>
     ) {
         class Updates(val threadAddress: Address, val messageTimestamps: List<Long>)
 
@@ -162,7 +162,7 @@ class MarkReadProcessor @Inject constructor(
                 merge(threadLastSeenFlow, messageAddedFlow,)
                     .scan(State<Updates>(threadDb.getAllLastSeen())) { acc, event ->
                         when (event) {
-                            is MessageUpdateNotification -> {
+                            is MessageChanges -> {
                                 State(
                                     lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
                                     updates = threadDb.getRecipientForThreadId(event.threadId)
@@ -275,12 +275,12 @@ class MarkReadProcessor @Inject constructor(
 
     private suspend fun handleAfterReadDisappearingMessages(
         threadLastSeenFlow: SharedFlow<ThreadUpdated>,
-        messageAddedFlow: SharedFlow<MessageUpdateNotification>,
+        messageAddedFlow: SharedFlow<MessageChanges>,
     ) {
         merge(threadLastSeenFlow, messageAddedFlow)
             .scan(State<ExpiryUpdates>(threadDb.getAllLastSeen())) { acc, event ->
                 when (event) {
-                    is MessageUpdateNotification -> {
+                    is MessageChanges -> {
                         if (threadDb.getRecipientForThreadId(event.threadId) is Address.GroupLike) {
                             if (acc.updates != null) acc.copy(updates = null) else acc
                         } else {

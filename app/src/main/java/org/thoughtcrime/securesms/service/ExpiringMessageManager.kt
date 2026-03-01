@@ -68,7 +68,7 @@ class ExpiringMessageManager @Inject constructor(
 
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
         supervisorScope {
-            launch { processDatabase(smsDatabase, smsDatabase.updateNotification) }
+            launch { processDatabase(smsDatabase, smsDatabase.changeNotification) }
             launch { processDatabase(mmsDatabase, mmsDatabase.changeNotification) }
         }
     }

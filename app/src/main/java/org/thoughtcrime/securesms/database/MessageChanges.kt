@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import org.thoughtcrime.securesms.database.model.MessageId
 
-data class MessageUpdateNotification(
+data class MessageChanges(
     val changeType: ChangeType,
     val ids: List<MessageId>,
     val threadId: Long,

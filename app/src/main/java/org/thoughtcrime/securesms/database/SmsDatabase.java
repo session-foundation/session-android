@@ -37,7 +37,6 @@ import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage;
 import org.session.libsession.network.SnodeClock;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -165,7 +164,7 @@ public class SmsDatabase extends MessagingDatabase {
   private final Lazy<@NonNull ReactionDatabase> reactionDatabase;
   final Provider<@NonNull PreferenceStorage> prefs;
 
-  final MutableSharedFlow<MessageUpdateNotification> updateNotification
+  final MutableSharedFlow<MessageChanges> changeNotification
           = SharedFlowKt.MutableSharedFlow(0, 24, BufferOverflow.DROP_OLDEST);
 
   @Inject
@@ -182,8 +181,8 @@ public class SmsDatabase extends MessagingDatabase {
     this.prefs = prefs;
   }
 
-  public SharedFlow<MessageUpdateNotification> getUpdateNotification() {
-    return updateNotification;
+  public SharedFlow<MessageChanges> getChangeNotification() {
+    return changeNotification;
   }
 
   protected String getTableName() {
@@ -200,8 +199,8 @@ public class SmsDatabase extends MessagingDatabase {
                " RETURNING " + THREAD_ID, id)) {
         if (cursor.moveToNext()) {
             long threadId = cursor.getLong(0);
-            updateNotification.tryEmit(new MessageUpdateNotification(
-                    MessageUpdateNotification.ChangeType.Updated,
+            changeNotification.tryEmit(new MessageChanges(
+                    MessageChanges.ChangeType.Updated,
                     new MessageId(id, false),
                     threadId
             ));
@@ -270,8 +269,8 @@ public class SmsDatabase extends MessagingDatabase {
                     "WHERE " + ID + " = ? RETURNING " + THREAD_ID, startedAtTimestamp, id)) {
       if (cursor.moveToNext()) {
         long threadId = cursor.getLong(0);
-        updateNotification.tryEmit(new MessageUpdateNotification(
-                MessageUpdateNotification.ChangeType.Updated,
+        changeNotification.tryEmit(new MessageChanges(
+                MessageChanges.ChangeType.Updated,
                 new MessageId(id, false),
                 threadId
         ));
@@ -379,8 +378,8 @@ public class SmsDatabase extends MessagingDatabase {
                              ID + " = ?",
                              new String[] {String.valueOf(id)});
 
-            updateNotification.tryEmit(new MessageUpdateNotification(
-                    MessageUpdateNotification.ChangeType.Updated,
+            changeNotification.tryEmit(new MessageChanges(
+                    MessageChanges.ChangeType.Updated,
                     new MessageId(id, false),
                     threadId
             ));
@@ -406,8 +405,8 @@ public class SmsDatabase extends MessagingDatabase {
             "WHERE " + ID + " = ? RETURNING " + THREAD_ID, newTimestamp, messageId)) {
         if (cursor.moveToNext()) {
           long threadId = cursor.getLong(0);
-          updateNotification.tryEmit(new MessageUpdateNotification(
-                  MessageUpdateNotification.ChangeType.Updated,
+          changeNotification.tryEmit(new MessageChanges(
+                  MessageChanges.ChangeType.Updated,
                   new MessageId(messageId, false),
                   threadId
           ));
@@ -458,8 +457,8 @@ public class SmsDatabase extends MessagingDatabase {
       SQLiteDatabase db        = getWritableDatabase();
       long           messageId = db.insert(TABLE_NAME, null, values);
 
-      updateNotification.tryEmit(new MessageUpdateNotification(
-              MessageUpdateNotification.ChangeType.Added,
+      changeNotification.tryEmit(new MessageChanges(
+              MessageChanges.ChangeType.Added,
               new MessageId(messageId, false),
               threadId
       ));
@@ -538,8 +537,8 @@ public class SmsDatabase extends MessagingDatabase {
 
     final long id = getWritableDatabase().insert(TABLE_NAME, ADDRESS, contentValues);
 
-    updateNotification.tryEmit(new MessageUpdateNotification(
-            MessageUpdateNotification.ChangeType.Added,
+    changeNotification.tryEmit(new MessageChanges(
+            MessageChanges.ChangeType.Added,
             new MessageId(id, false),
             threadId
     ));
@@ -634,8 +633,8 @@ public class SmsDatabase extends MessagingDatabase {
     }
 
     deletedByThreadIDs.forEach((threadId, deleted) -> {
-      updateNotification.tryEmit(new MessageUpdateNotification(
-              MessageUpdateNotification.ChangeType.Deleted,
+      changeNotification.tryEmit(new MessageChanges(
+              MessageChanges.ChangeType.Deleted,
               deleted,
               threadId
       ));

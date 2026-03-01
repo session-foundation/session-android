@@ -83,9 +83,9 @@ class MmsDatabase @Inject constructor(
     private val earlyReadReceiptCache = EarlyReceiptCache()
     override fun getTableName() = TABLE_NAME
 
-    private val _changeNotification = MutableSharedFlow<MessageUpdateNotification>(extraBufferCapacity = 24)
+    private val _changeNotification = MutableSharedFlow<MessageChanges>(extraBufferCapacity = 24)
 
-    val changeNotification: SharedFlow<MessageUpdateNotification> get() = _changeNotification
+    val changeNotification: SharedFlow<MessageChanges> get() = _changeNotification
 
     fun getMessageCountForThread(threadId: Long): Int {
         val db = readableDatabase
@@ -209,8 +209,8 @@ class MmsDatabase @Inject constructor(
                         groupReceiptDatabase
                             .update(ourAddress, id, status, timestamp)
 
-                        _changeNotification.tryEmit(MessageUpdateNotification(
-                            changeType = MessageUpdateNotification.ChangeType.Updated,
+                        _changeNotification.tryEmit(MessageChanges(
+                            changeType = MessageChanges.ChangeType.Updated,
                             id = MessageId(id, true),
                             threadId = threadId
                         ))
@@ -243,8 +243,8 @@ class MmsDatabase @Inject constructor(
         ).use { cursor ->
             if (cursor.moveToFirst()) {
                 val threadId = cursor.getLong(0)
-                _changeNotification.tryEmit(MessageUpdateNotification(
-                    changeType = MessageUpdateNotification.ChangeType.Updated,
+                _changeNotification.tryEmit(MessageChanges(
+                    changeType = MessageChanges.ChangeType.Updated,
                     id = MessageId(messageId, true),
                     threadId = threadId
                 ))
@@ -308,8 +308,8 @@ class MmsDatabase @Inject constructor(
         ).use { cursor ->
             if (cursor.moveToNext()) {
                 _changeNotification.tryEmit(
-                    MessageUpdateNotification(
-                        changeType = MessageUpdateNotification.ChangeType.Updated,
+                    MessageChanges(
+                        changeType = MessageChanges.ChangeType.Updated,
                         id = MessageId(messageId, true),
                         threadId = cursor.getLong(0)
                     )
@@ -369,8 +369,8 @@ class MmsDatabase @Inject constructor(
         """, startedTimestamp, messageId).use { cursor ->
             if (cursor.moveToNext()) {
                 _changeNotification.tryEmit(
-                    MessageUpdateNotification(
-                        changeType = MessageUpdateNotification.ChangeType.Updated,
+                    MessageChanges(
+                        changeType = MessageChanges.ChangeType.Updated,
                         id = MessageId(messageId, true),
                         threadId = cursor.getLong(0)
                     )
@@ -464,8 +464,8 @@ class MmsDatabase @Inject constructor(
             contentValues = contentValues,
         )
 
-        _changeNotification.tryEmit(MessageUpdateNotification(
-            changeType = MessageUpdateNotification.ChangeType.Added,
+        _changeNotification.tryEmit(MessageChanges(
+            changeType = MessageChanges.ChangeType.Added,
             id = MessageId(messageId, true),
             threadId = contentValues.getAsLong(THREAD_ID)
         ))
@@ -585,8 +585,8 @@ class MmsDatabase @Inject constructor(
             )
         }
 
-        _changeNotification.tryEmit(MessageUpdateNotification(
-            changeType = MessageUpdateNotification.ChangeType.Added,
+        _changeNotification.tryEmit(MessageChanges(
+            changeType = MessageChanges.ChangeType.Added,
             id = MessageId(messageId, true),
             threadId = threadId
         ))
@@ -692,8 +692,8 @@ class MmsDatabase @Inject constructor(
         }
 
         deletedByThreadIDs.forEach { threadId, deletedMessageIDs ->
-            _changeNotification.tryEmit(MessageUpdateNotification(
-                changeType = MessageUpdateNotification.ChangeType.Deleted,
+            _changeNotification.tryEmit(MessageChanges(
+                changeType = MessageChanges.ChangeType.Deleted,
                 ids = deletedMessageIDs,
                 threadId = threadId
             ))
@@ -736,16 +736,16 @@ class MmsDatabase @Inject constructor(
         }
 
         _changeNotification.tryEmit(
-            MessageUpdateNotification(
-                changeType = MessageUpdateNotification.ChangeType.Deleted,
+            MessageChanges(
+                changeType = MessageChanges.ChangeType.Deleted,
                 ids = updatedMessageIDs,
                 threadId = fromId
             )
         )
 
         _changeNotification.tryEmit(
-            MessageUpdateNotification(
-                changeType = MessageUpdateNotification.ChangeType.Added,
+            MessageChanges(
+                changeType = MessageChanges.ChangeType.Added,
                 ids = updatedMessageIDs,
                 threadId = toId
             )

@@ -178,7 +178,7 @@ class DefaultConversationRepository @Inject constructor(
                     recipientDatabase.changeNotification.filter { it in allAddresses },
                     communityDatabase.changeNotification.filter { it in allAddresses },
                     threadDb.updateNotifications,
-                    smsDb.updateNotification,
+                    smsDb.changeNotification,
                     mmsDb.changeNotification,
                     // If pro status pref changes, the convo is likely needing changes too
                     TextSecurePreferences.Companion.events.filter {

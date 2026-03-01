@@ -17,14 +17,14 @@ fun SmsDatabase.updateThreadId(fromId: Long, toId: Long) {
     }
 
     if (updatedMessageIds.isNotEmpty()) {
-        updateNotification.tryEmit(MessageUpdateNotification(
-            changeType = MessageUpdateNotification.ChangeType.Deleted,
+        changeNotification.tryEmit(MessageChanges(
+            changeType = MessageChanges.ChangeType.Deleted,
             ids = updatedMessageIds,
             threadId = fromId
         ))
 
-        updateNotification.tryEmit(MessageUpdateNotification(
-            changeType = MessageUpdateNotification.ChangeType.Added,
+        changeNotification.tryEmit(MessageChanges(
+            changeType = MessageChanges.ChangeType.Added,
             ids = updatedMessageIds,
             threadId = toId
         ))
