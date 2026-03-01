@@ -138,6 +138,12 @@ class ConversationViewModelTest : BaseViewModelTest() {
             loginStateRepository = mock(),
             audioPlaybackManager = mock(),
             jobQueue = mock(),
+            mmsDatabase = mock {
+                on { changeNotification } doReturn MutableSharedFlow()
+            },
+            smsDatabase = mock {
+                on { changeNotification } doReturn MutableSharedFlow()
+            },
         )
     }
 
