@@ -13,10 +13,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 import kotlinx.coroutines.withTimeoutOrNull
+import network.loki.messenger.libsession_util.encrypt.DecryptionStream
+import network.loki.messenger.libsession_util.encrypt.EncryptionStream
 import org.session.libsignal.utilities.Log.Logger
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
+import java.io.BufferedOutputStream
 import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -59,7 +64,8 @@ class PersistentLogger @Inject constructor(
 
         scope.launch {
             val bulk = ArrayList<LogEntry>()
-            var logWriter: LogFile.Writer? = null
+            var writer: OutputStreamWriter? = null
+            var currentFile: File? = null
             val entryBuilder = StringBuilder()
 
             while (true) {
@@ -67,37 +73,50 @@ class PersistentLogger @Inject constructor(
                     channel.receiveBulkLogs(bulk)
 
                     if (bulk.isNotEmpty()) {
-                        if (logWriter == null) {
-                            val currentFile = File(logFolder, CURRENT_LOG_FILE_NAME)
-
-                            // If current file exist, we need to make sure we can decrypt it
-                            // as this file can come from a previous session.
-                            val append = if (currentFile.exists() && currentFile.length() > 0) {
-                                LogFile.Reader(secret, currentFile).use {
-                                    it.readEntryBytes() != null
-                                }
-                            } else {
-                                true
+                        if (writer == null) {
+                            // Can't append to a stream cipher, so rotate existing v2 file
+                            val existingV2 = File(logFolder, CURRENT_LOG_FILE_NAME_V2)
+                            if (existingV2.exists() && existingV2.length() > 0) {
+                                rotateAndTrimLogFiles(existingV2)
                             }
 
-                            logWriter = LogFile.Writer(secret, currentFile, append)
+                            // One-time migration: rotate old v1 current log if present
+                            val existingV1 = File(logFolder, CURRENT_LOG_FILE_NAME)
+                            if (existingV1.exists() && existingV1.length() > 0) {
+                                rotateAndTrimLogFiles(existingV1)
+                            }
+
+                            currentFile = File(logFolder, CURRENT_LOG_FILE_NAME_V2)
+                            writer = OutputStreamWriter(
+                                BufferedOutputStream(
+                                    EncryptionStream(FileOutputStream(currentFile), secret)
+                                ),
+                                Charsets.UTF_8
+                            )
                         }
 
-                        bulkWrite(entryBuilder, logWriter, bulk)
+                        bulkWrite(entryBuilder, writer, bulk)
 
                         // Release entries back to the pool
                         freeLogEntryPool.release(bulk)
                         bulk.clear()
 
                         // Rotate the log file if necessary
-                        if (logWriter.logSize > MAX_SINGLE_LOG_FILE_SIZE) {
-                            rotateAndTrimLogFiles(logWriter.file)
-                            logWriter.close()
-                            logWriter = null
+                        if (currentFile!!.length() > MAX_SINGLE_LOG_FILE_SIZE) {
+                            writer.close()
+                            rotateAndTrimLogFiles(currentFile)
+                            writer = null
+                            currentFile = null
                         }
                     }
                 } catch (e: Throwable) {
-                    logWriter?.close()
+                    writer?.close()
+                    writer = null
+                    currentFile = null
+
+                    // Release entries back to the pool on error
+                    freeLogEntryPool.release(bulk)
+                    bulk.clear()
 
                     android.util.Log.e(
                         TAG,
@@ -117,10 +136,10 @@ class PersistentLogger @Inject constructor(
     }
 
     private fun rotateAndTrimLogFiles(currentFile: File) {
-        val permLogFile = File(logFolder, "${System.currentTimeMillis()}$PERM_LOG_FILE_SUFFIX")
+        val suffix = if (currentFile.isV2LogFile()) PERM_LOG_FILE_SUFFIX_V2 else PERM_LOG_FILE_SUFFIX
+        val permLogFile = File(logFolder, "${System.currentTimeMillis()}$suffix")
         if (currentFile.renameTo(permLogFile)) {
             android.util.Log.d(TAG, "Rotated log file: $currentFile to $permLogFile")
-            currentFile.createNewFile()
         } else {
             android.util.Log.e(TAG, "Failed to rotate log file: $currentFile")
         }
@@ -138,7 +157,7 @@ class PersistentLogger @Inject constructor(
         }
     }
 
-    private fun bulkWrite(sb: StringBuilder, writer: LogFile.Writer, bulk: List<LogEntry>) {
+    private fun bulkWrite(sb: StringBuilder, writer: OutputStreamWriter, bulk: List<LogEntry>) {
         for (entry in bulk) {
             sb.clear()
             sb.append(logDateFormat.format(entry.timestampMills))
@@ -153,7 +172,7 @@ class PersistentLogger @Inject constructor(
                 sb.append('\n')
                 sb.append(it.stackTraceToString())
             }
-            writer.writeEntry(sb.toString(), false)
+            writer.append(sb)
         }
 
         writer.flush()
@@ -162,9 +181,8 @@ class PersistentLogger @Inject constructor(
     private suspend fun ReceiveChannel<LogEntry>.receiveBulkLogs(out: MutableList<LogEntry>) {
         out += receive()
 
-        // We may have many items cached in the channel, try to receive up to 15 items
-        repeat(15) {
-            out += tryReceive().getOrNull() ?: return@repeat
+        while (out.size < MAX_BULK_DRAIN_SIZE) {
+            out += tryReceive().getOrNull() ?: break
         }
     }
 
@@ -208,20 +226,36 @@ class PersistentLogger @Inject constructor(
 
     private fun getLogFilesSorted(includeActiveLogFile: Boolean): MutableList<File> {
         val files = (logFolder.listFiles()?.asSequence() ?: emptySequence())
-            .mapNotNull {
-                if (!it.isFile) return@mapNotNull null
-                PERM_LOG_FILE_PATTERN.matcher(it.name).takeIf { it.matches() }
-                    ?.group(1)
-                    ?.toLongOrNull()
-                    ?.let { timestamp -> it to timestamp }
+            .mapNotNull { file ->
+                if (!file.isFile) return@mapNotNull null
+
+                val v2Match = PERM_LOG_FILE_PATTERN_V2.matcher(file.name)
+                if (v2Match.matches()) {
+                    return@mapNotNull v2Match.group(1)?.toLongOrNull()
+                        ?.let { timestamp -> file to timestamp }
+                }
+
+                val v1Match = PERM_LOG_FILE_PATTERN.matcher(file.name)
+                if (v1Match.matches()) {
+                    return@mapNotNull v1Match.group(1)?.toLongOrNull()
+                        ?.let { timestamp -> file to timestamp }
+                }
+
+                null
             }
             .sortedByDescending { (_, timestamp) -> timestamp }
             .mapTo(arrayListOf()) { it.first }
 
         if (includeActiveLogFile) {
-            val currentLogFile = File(logFolder, CURRENT_LOG_FILE_NAME)
-            if (currentLogFile.exists()) {
-                files.add(0, currentLogFile)
+            // v2 current file is newest (index 0), v1 current file next (index 1)
+            val currentV1 = File(logFolder, CURRENT_LOG_FILE_NAME)
+            if (currentV1.exists() && currentV1.length() > 0) {
+                files.add(0, currentV1)
+            }
+
+            val currentV2 = File(logFolder, CURRENT_LOG_FILE_NAME_V2)
+            if (currentV2.exists() && currentV2.length() > 0) {
+                files.add(0, currentV2)
             }
         }
 
@@ -248,20 +282,23 @@ class PersistentLogger @Inject constructor(
                 zipOut.putNextEntry(ZipEntry("log.txt"))
 
                 for (log in logs) {
-                    LogFile.Reader(secret, log).use { reader ->
-                        var count = 0
-                        generateSequence { reader.readEntryBytes() }
-                            .forEach { entry ->
-                                zipOut.write(entry)
+                    try {
+                        if (log.isV2LogFile()) {
+                            DecryptionStream(log.inputStream(), secret).use { it.copyTo(zipOut) }
+                        } else {
+                            LogFile.Reader(secret, log).use { reader ->
+                                generateSequence { reader.readEntryBytes() }
+                                    .forEach { entry ->
+                                        zipOut.write(entry)
 
-                                if (entry.isEmpty() || entry.last().toInt() != '\n'.code) {
-                                    zipOut.write('\n'.code)
-                                }
-
-                                count++
+                                        if (entry.isEmpty() || entry.last().toInt() != '\n'.code) {
+                                            zipOut.write('\n'.code)
+                                        }
+                                    }
                             }
-
-                        android.util.Log.d(TAG, "Read $count entries from ${log.name}")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e(TAG, "Error reading log file: ${log.name}", e)
                     }
                 }
                 zipOut.closeEntry()
@@ -326,9 +363,15 @@ class PersistentLogger @Inject constructor(
         private const val LOG_E: String = "E"
         private const val LOG_WTF: String = "A"
 
+        // v1 format (AES-CBC per-entry encryption)
         private const val PERM_LOG_FILE_SUFFIX = ".permlog"
         private const val CURRENT_LOG_FILE_NAME = "current.log"
         private val PERM_LOG_FILE_PATTERN by lazy { Pattern.compile("^(\\d+?)\\.permlog$") }
+
+        // v2 format (ChaCha20 stream encryption)
+        private const val PERM_LOG_FILE_SUFFIX_V2 = ".v2.permlog"
+        private const val CURRENT_LOG_FILE_NAME_V2 = "current.v2.log"
+        private val PERM_LOG_FILE_PATTERN_V2 by lazy { Pattern.compile("^(\\d+?)\\.v2\\.permlog$") }
 
         // Maximum size of a single log file
         private const val MAX_SINGLE_LOG_FILE_SIZE = 2 * 1024 * 1024
@@ -338,5 +381,9 @@ class PersistentLogger @Inject constructor(
 
         private const val MAX_LOG_ENTRIES_POOL_SIZE = 64
         private const val MAX_PENDING_LOG_ENTRIES = 65536
+        private const val MAX_BULK_DRAIN_SIZE = 512
+
+        private fun File.isV2LogFile(): Boolean =
+            name.endsWith(PERM_LOG_FILE_SUFFIX_V2) || name == CURRENT_LOG_FILE_NAME_V2
     }
 }
