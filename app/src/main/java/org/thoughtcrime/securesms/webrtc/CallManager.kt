@@ -18,6 +18,7 @@ import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.messages.applyExpiryMode
@@ -73,7 +74,7 @@ class CallManager @Inject constructor(
     audioManager: AudioManagerCompat,
     private val storage: StorageProtocol,
     private val messageSender: MessageSender,
-    private val snodeClock: SnodeClock
+    private val snodeClock: SnodeClock,
 ): PeerConnection.Observer,
     SignalAudioManager.EventListener, CameraEventListener, DataChannel.Observer {
 
@@ -179,9 +180,25 @@ class CallManager @Inject constructor(
     private val lockManager by lazy { LockManager(context) }
     private var uncaughtExceptionHandlerManager: UncaughtExceptionHandlerManager? = null
 
+    data class CallContext(
+        val callId: UUID,
+        val remote: Address,
+        val remoteExpiryMode: ExpiryMode
+    )
+
+    private var callContext: CallContext? = null
+
     init {
         registerUncaughtExceptionHandler()
     }
+
+    fun setInboundCallContext(callId: UUID, remote: Address, expiry: ExpiryMode) {
+        val existing = callContext
+        if (existing != null && existing.callId != callId) return
+        callContext = CallContext(callId, remote, expiry)
+    }
+
+    fun currentRemoteExpiry(): ExpiryMode = callContext?.remoteExpiryMode?.coerceSendToRead(true) ?: ExpiryMode.NONE
 
     private fun registerUncaughtExceptionHandler() {
         uncaughtExceptionHandlerManager = UncaughtExceptionHandlerManager().apply {
@@ -448,6 +465,7 @@ class CallManager @Inject constructor(
             )
             pendingOutgoingIceUpdates.clear()
             pendingIncomingIceUpdates.clear()
+            callContext = null
         }
     }
 
@@ -541,7 +559,9 @@ class CallManager @Inject constructor(
         connection.setRemoteDescription(SessionDescription(SessionDescription.Type.OFFER, offer))
         val answer = connection.createAnswer(MediaConstraints())
         connection.setLocalDescription(answer)
-        val answerMessage = CallMessage.answer(answer.description, callId).applyExpiryMode(recipient)
+        val answerMessage = CallMessage.answer(answer.description, callId).apply {
+            this.expiryMode = currentRemoteExpiry()
+        }
         val userAddress = storage.getUserPublicKey() ?: throw NullPointerException("No user public key")
 
         runCatching {
@@ -557,11 +577,13 @@ class CallManager @Inject constructor(
                 CallMessage.answer(
                     answer.description,
                     callId
-                ).applyExpiryMode(recipient), recipient, isSyncMessage = recipient.isLocalNumber
+                ).apply{
+                    this.expiryMode = currentRemoteExpiry()
+                }, recipient, isSyncMessage = recipient.isLocalNumber
             )
         }
 
-        insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING)
+        insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING, currentRemoteExpiry())
 
         while (pendingIncomingIceUpdates.isNotEmpty()) {
             val candidate = pendingIncomingIceUpdates.pop() ?: break
@@ -640,7 +662,9 @@ class CallManager @Inject constructor(
             scope.launch {
                 runCatching {
                     messageSender.sendNonDurably(
-                        CallMessage.endCall(callId).applyExpiryMode(recipient),
+                        CallMessage.endCall(callId).apply {
+                            this.expiryMode = currentRemoteExpiry()
+                        },
                         Address.fromSerialized(userAddress),
                         isSyncMessage = true
                     )
@@ -649,14 +673,17 @@ class CallManager @Inject constructor(
             scope.launch {
                 runCatching {
                     messageSender.sendNonDurably(
-                        CallMessage.endCall(callId).applyExpiryMode(recipient),
+                        CallMessage.endCall(callId).apply {
+                            this.expiryMode = currentRemoteExpiry()
+                        },
                         recipient,
                         isSyncMessage = recipient.isLocalNumber
                     )
                 }
             }
 
-            insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING)
+            // We are always calling handleDenyCall for incoming messages which is why it's ok to use `currentRemoteExpiry`
+            insertCallMessage(recipient.toString(), CallMessageType.CALL_INCOMING, currentRemoteExpiry())
         }
     }
 
@@ -693,9 +720,10 @@ class CallManager @Inject constructor(
     fun insertCallMessage(
         threadPublicKey: String,
         callMessageType: CallMessageType,
+        expiryMode: ExpiryMode,
         sentTimestamp: Long = snodeClock.currentTimeMillis()
     ) {
-        storage.insertCallMessage(threadPublicKey, callMessageType, sentTimestamp)
+        storage.insertCallMessage(threadPublicKey, callMessageType, sentTimestamp, expiryMode)
     }
 
     fun handleRemoteHangup() {

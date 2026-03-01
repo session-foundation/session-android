@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
@@ -141,7 +142,7 @@ class WebRtcCallBridge @Inject constructor(
 
             if (!hasAcceptedCall.value) {
                 callManager.recipient?.let { recipient ->
-                    insertMissedCall(recipient, true)
+                    insertMissedCall(recipient, callManager.currentRemoteExpiry())
                 }
             }
 
@@ -155,7 +156,7 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     private fun handleBusyCall(address: Address) {
-        insertMissedCall(address, false)
+        insertMissedCall(address, callManager.currentRemoteExpiry())
     }
 
     private fun handleNewOffer(address: Address, sdp: String, callId: UUID) {
@@ -200,7 +201,7 @@ class WebRtcCallBridge @Inject constructor(
 
             if (isIncomingMessageExpired(callTime)) {
                 Log.d(TAG, "Pre offer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - callTime}s")
-                insertMissedCall(address, true)
+                insertMissedCall(address, callManager.currentRemoteExpiry())
                 terminate()
                 return@execute
             }
@@ -263,8 +264,9 @@ class WebRtcCallBridge @Inject constructor(
                 callManager.startOutgoingRinger(OutgoingRinger.Type.RINGING)
                 setCallNotification(TYPE_OUTGOING_RINGING, callManager.recipient)
                 callManager.insertCallMessage(
-                    recipient.address.toString(),
-                    CallMessageType.CALL_OUTGOING
+                    recipient.address,
+                    CallMessageType.CALL_OUTGOING,
+                    recipientRepository.getRecipientSync(recipient).expiryMode
                 )
                 scheduledTimeout = timeoutExecutor.schedule(
                     TimeoutRunnable(callId, ::handleCheckTimeout),
@@ -328,7 +330,7 @@ class WebRtcCallBridge @Inject constructor(
                     Log.d(TAG, "Answer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - timestamp}s")
                     insertMissedCall(
                         recipient,
-                        true
+                        callManager.currentRemoteExpiry()
                     ) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
                     terminate()
                 }
@@ -369,7 +371,7 @@ class WebRtcCallBridge @Inject constructor(
                         ) {
                             insertMissedCall(
                                 recipient,
-                                true
+                                callManager.currentRemoteExpiry()
                             ) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
                         }
 
@@ -583,10 +585,11 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    private fun insertMissedCall(recipient: Address, signal: Boolean) {
+    private fun insertMissedCall(recipient: Address, expiryMode: ExpiryMode) {
         callManager.insertCallMessage(
-            threadPublicKey = recipient.address.toString(),
-            callMessageType = CallMessageType.CALL_MISSED
+            threadPublicKey = recipient.address,
+            callMessageType = CallMessageType.CALL_MISSED,
+            expiryMode = expiryMode
         )
     }
 

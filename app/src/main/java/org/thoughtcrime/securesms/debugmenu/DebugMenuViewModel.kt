@@ -48,6 +48,8 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.PreferenceKey
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
@@ -75,6 +77,7 @@ class DebugMenuViewModel @AssistedInject constructor(
     private val debugLogger: DebugLogger,
     private val dateUtils: DateUtils,
     private val loginStateRepository: LoginStateRepository,
+    private val preferenceStorage: PreferenceStorage,
     subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
@@ -145,7 +148,8 @@ class DebugMenuViewModel @AssistedInject constructor(
             hasDonatedDebug = textSecurePreferences.hasDonatedDebug() ?: NOT_SET,
             hasCopiedDonationURLDebug = textSecurePreferences.hasCopiedDonationURLDebug() ?: NOT_SET,
             seenDonateCTAAmountDebug = textSecurePreferences.seenDonationCTAAmountDebug() ?: NOT_SET,
-            showDonateCTAFromPositiveReviewDebug = textSecurePreferences.showDonationCTAFromPositiveReviewDebug() ?: NOT_SET
+            showDonateCTAFromPositiveReviewDebug = textSecurePreferences.showDonationCTAFromPositiveReviewDebug() ?: NOT_SET,
+            userConvoV3 = preferenceStorage[useConvoV3]
         )
     )
     val uiState: StateFlow<UIState>
@@ -516,6 +520,13 @@ class DebugMenuViewModel @AssistedInject constructor(
                     else -> textSecurePreferences.setShowDonationCTAFromPositiveReviewDebug(null)
                 }
             }
+
+            is Commands.UseConvoV3 -> {
+                preferenceStorage[useConvoV3] = command.use
+                _uiState.update {
+                    it.copy(userConvoV3 = command.use)
+                }
+            }
         }
     }
 
@@ -646,7 +657,8 @@ class DebugMenuViewModel @AssistedInject constructor(
         val hasDonatedDebug: String,
         val hasCopiedDonationURLDebug: String,
         val seenDonateCTAAmountDebug: String,
-        val showDonateCTAFromPositiveReviewDebug: String
+        val showDonateCTAFromPositiveReviewDebug: String,
+        val userConvoV3: Boolean
     )
 
     enum class DatabaseInspectorState {
@@ -715,6 +727,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class SetDebugHasCopiedDonation(val value: String) : Commands()
         data class SetDebugDonationCTAViews(val value: String) : Commands()
         data class SetDebugShowDonationFromReview(val value: String) : Commands()
+        data class UseConvoV3(val use: Boolean) : Commands()
     }
 
     companion object {
@@ -736,5 +749,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         val SEEN_2 = "2"
         val SEEN_3 = "3"
         val SEEN_4 = "4"
+
+        val useConvoV3 = PreferenceKey.boolean("debug_use_convo_v3")
     }
 }

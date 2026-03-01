@@ -548,6 +548,20 @@ public class MmsSmsDatabase extends Database {
   }
 
   @NonNull
+  public MessageId readCurrentMessageId(@NonNull Cursor cursor) {
+    String type = cursor.getString(cursor.getColumnIndexOrThrow(TRANSPORT));
+    long id = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+
+    if (MMS_TRANSPORT.equals(type)) {
+      return new MessageId(id, true);
+    } else if (SMS_TRANSPORT.equals(type)) {
+      return new MessageId(id, false);
+    } else {
+      throw new AssertionError("Bad type: " + type);
+    }
+  }
+
+  @NonNull
   public Pair<Boolean, Long> timestampAndDirectionForCurrent(@NonNull Cursor cursor) {
     int sentColumn = cursor.getColumnIndex(MmsSmsColumns.NORMALIZED_DATE_SENT);
     String msgType = cursor.getString(cursor.getColumnIndexOrThrow(TRANSPORT));

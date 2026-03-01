@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v2.settings
+package org.thoughtcrime.securesms.conversation.v3
 
 import android.annotation.SuppressLint
 import android.os.Parcelable
@@ -21,23 +21,28 @@ import androidx.navigation.toRoute
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
+import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteAllMedia
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteDisappearingMessages
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteGroupMembers
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteAccountIdToGroup
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToCommunity
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToGroup
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageAdmins
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteNotifications
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RoutePromoteMembers
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsViewModel
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteAllMedia
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteConversation
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteConversationSettings
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteDisappearingMessages
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteGroupMembers
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteInviteAccountIdToGroup
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteInviteToCommunity
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteInviteToGroup
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteManageAdmins
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteManageMembers
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteNotifications
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RoutePromoteMembers
+import org.thoughtcrime.securesms.conversation.v3.compose.ConversationScreen
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel
@@ -60,16 +65,21 @@ import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
-sealed interface ConversationSettingsDestination: Parcelable {
+sealed interface ConversationV3Destination: Parcelable {
     @Serializable
     @Parcelize
-    data object RouteConversationSettings: ConversationSettingsDestination
+    data object RouteConversation: ConversationV3Destination
+
+
+    @Serializable
+    @Parcelize
+    data object RouteConversationSettings: ConversationV3Destination
 
     @Serializable
     @Parcelize
     data class RouteGroupMembers private constructor(
         private val address: String
-    ): ConversationSettingsDestination {
+    ): ConversationV3Destination {
         constructor(groupAddress: Address.Group): this(groupAddress.address)
 
         val groupAddress: Address.Group get() = Address.Group(AccountId(address))
@@ -79,7 +89,7 @@ sealed interface ConversationSettingsDestination: Parcelable {
     @Parcelize
     data class RouteManageMembers private constructor(
         private val address: String
-    ): ConversationSettingsDestination {
+    ): ConversationV3Destination {
         constructor(groupAddress: Address.Group): this(groupAddress.address)
 
         val groupAddress: Address.Group get() = Address.Group(AccountId(address))
@@ -90,7 +100,7 @@ sealed interface ConversationSettingsDestination: Parcelable {
     data class RouteManageAdmins private constructor(
         private val address: String,
         val navigateToPromoteMembers: Boolean = false
-    ) : ConversationSettingsDestination {
+    ) : ConversationV3Destination {
         constructor(groupAddress: Address.Group, navigateToPromoteMembers: Boolean = false) : this(
             groupAddress.address,
             navigateToPromoteMembers
@@ -103,7 +113,7 @@ sealed interface ConversationSettingsDestination: Parcelable {
     @Parcelize
     data class RoutePromoteMembers(
         private val address: String
-    ): ConversationSettingsDestination {
+    ): ConversationV3Destination {
         constructor(groupAddress: Address.Group): this(groupAddress.address)
 
         val groupAddress: Address.Group get() = Address.Group(AccountId(address))
@@ -114,7 +124,7 @@ sealed interface ConversationSettingsDestination: Parcelable {
     data class RouteInviteToGroup private constructor(
         private val address: String,
         val excludingAccountIDs: List<String>
-    ): ConversationSettingsDestination {
+    ): ConversationV3Destination {
         constructor(groupAddress: Address.Group, excludingAccountIDs: List<String>)
             : this(groupAddress.address, excludingAccountIDs)
 
@@ -123,28 +133,28 @@ sealed interface ConversationSettingsDestination: Parcelable {
 
     @Serializable
     @Parcelize
-    data object RouteDisappearingMessages: ConversationSettingsDestination
+    data object RouteDisappearingMessages: ConversationV3Destination
 
     @Serializable
     @Parcelize
-    data object RouteAllMedia: ConversationSettingsDestination
+    data object RouteAllMedia: ConversationV3Destination
 
     @Serializable
     @Parcelize
-    data object RouteNotifications: ConversationSettingsDestination
+    data object RouteNotifications: ConversationV3Destination
 
     @Serializable
     @Parcelize
     data class RouteInviteToCommunity(
         val communityUrl: String
-    ): ConversationSettingsDestination
+    ): ConversationV3Destination
 
     @Serializable
     @Parcelize
     data class RouteInviteAccountIdToGroup private constructor(
         private val address: String,
         val excludingAccountIDs: List<String>
-    ): ConversationSettingsDestination {
+    ): ConversationV3Destination {
         constructor(groupAddress: Address.Group, excludingAccountIDs: List<String>)
         : this(groupAddress.address, excludingAccountIDs)
 
@@ -155,15 +165,14 @@ sealed interface ConversationSettingsDestination: Parcelable {
 @SuppressLint("RestrictedApi")
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun ConversationSettingsNavHost(
+fun ConversationV3NavHost(
     address: Address.Conversable,
-    startDestination: ConversationSettingsDestination = RouteConversationSettings,
-    returnResult: (String, Boolean) -> Unit,
+    startDestination: ConversationV3Destination = RouteConversation,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
         val navController = rememberNavController()
-        val navigator: UINavigator<ConversationSettingsDestination> = retain { UINavigator() }
+        val navigator: UINavigator<ConversationV3Destination> = retain { UINavigator() }
 
         val handleBack: () -> Unit = {
             if (navController.previousBackStackEntry != null) {
@@ -175,7 +184,7 @@ fun ConversationSettingsNavHost(
 
         ObserveAsEvents(flow = navigator.navigationActions) { action ->
             when (action) {
-                is NavigationAction.Navigate<ConversationSettingsDestination> -> navController.navigate(
+                is NavigationAction.Navigate<ConversationV3Destination> -> navController.navigate(
                     action.destination
                 ) {
                     action.navOptions(this)
@@ -187,15 +196,24 @@ fun ConversationSettingsNavHost(
                     navController.handleIntent(action.intent)
                 }
 
-                is NavigationAction.ReturnResult -> {
-                    returnResult(action.code, action.value)
-                }
-
                 else -> {}
             }
         }
 
         NavHost(navController = navController, startDestination = startDestination) {
+            // Main conversation screen
+            horizontalSlideComposable<RouteConversation> {
+                val viewModel =
+                    hiltViewModel<ConversationV3ViewModel, ConversationV3ViewModel.Factory> { factory ->
+                        factory.create(address, navigator)
+                    }
+
+                ConversationScreen(
+                    viewModel = viewModel,
+                    onBack = onBack,
+                )
+            }
+
             // Conversation Settings
             horizontalSlideComposable<RouteConversationSettings> {
                 val viewModel =
@@ -214,7 +232,9 @@ fun ConversationSettingsNavHost(
 
                 ConversationSettingsScreen(
                     viewModel = viewModel,
-                    onBack = onBack,
+                    onBack = dropUnlessResumed {
+                        handleBack()
+                    },
                 )
             }
 
@@ -422,6 +442,7 @@ fun ConversationSettingsNavHost(
                     hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
                         factory.create(
                             address = address,
+                            isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
                             showDebugOptions = BuildConfig.BUILD_TYPE != "release",
                             navigator = navigator
                         )

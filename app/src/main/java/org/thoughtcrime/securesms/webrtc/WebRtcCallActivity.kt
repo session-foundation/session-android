@@ -434,7 +434,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
                 else buttonColorDisabled
             )
     }
-    
+
     /**
      * Shows the avatar image.
      * If @showUserAvatar is true, the user's avatar is shown, otherwise the contact's avatar is shown.
