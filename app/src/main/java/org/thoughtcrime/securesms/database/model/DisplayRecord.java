@@ -16,8 +16,6 @@
  */
 package org.thoughtcrime.securesms.database.model;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -72,9 +70,6 @@ public abstract class DisplayRecord {
   public long getDateSent() { return dateSent; }
   public long getDateReceived() { return dateReceived; }
   public long getThreadId() { return threadId; }
-  public int getDeliveryStatus() { return deliveryStatus; }
-  public int getDeliveryReceiptCount() { return deliveryReceiptCount; }
-  public int getReadReceiptCount() { return readReceiptCount; }
 
   public boolean isDelivered() {
     return (deliveryStatus >= SmsDatabase.Status.STATUS_COMPLETE &&

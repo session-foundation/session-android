@@ -51,7 +51,6 @@ import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.isCommunityInbox
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -75,9 +74,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.getOrConstructConvo
 import org.thoughtcrime.securesms.util.findCause
-import java.time.Instant
-import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -129,8 +127,8 @@ open class Storage @Inject constructor(
         return attachmentDatabase.getAttachmentsForMessage(mmsMessageId)
     }
 
-    override fun getLastSeen(threadId: Long): Long {
-        return threadDatabase.getLastSeenAndHasSent(threadId)?.first() ?: 0L
+    override fun getLastSeen(threadAddress: Address.Conversable): Long? {
+        return threadDatabase.getLastSeen(threadAddress)?.toEpochMilliseconds()
     }
 
     override fun ensureMessageHashesAreSender(
@@ -179,32 +177,48 @@ open class Storage @Inject constructor(
         return messages.map { it.second } // return the message hashes
     }
 
-    override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean, updateNotification: Boolean) {
-        val threadDb = threadDatabase
-        val threadAddress = threadDb.getRecipientForThreadId(threadId) ?: return
-        // don't set the last read in the volatile if we didn't set it in the DB
-        if (!threadDb.markAllAsRead(threadId, lastSeenTime, force, updateNotification) && !force) return
-
-        // don't process configs for inbox recipients
-        if (threadAddress.isCommunityInbox) return
-
-        val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
+    override fun updateConversationLastSeenIfNeeded(
+        threadAddress: Address.Conversable,
+        lastSeenTime: Long
+    ) {
+        var shouldUpdateLastRead = false
 
         configFactory.withMutableUserConfigs { configs ->
-            val config = configs.convoInfoVolatile
-            val convo = getConvo(
-                threadAddress = threadAddress,
-                config = config,
-                groupConfig = configs.userGroups
-            )  ?: return@withMutableUserConfigs
-            convo.lastRead = lastSeenTime
+            val convo = configs.getOrConstructConvo(threadAddress)
+            val currentLastRead = convo.lastRead
 
-            if(convo.unread){
+            if (convo.unread) {
                 convo.unread = lastSeenTime < currentLastRead
             }
 
-            config.set(convo)
+            shouldUpdateLastRead = lastSeenTime > currentLastRead
+            if (shouldUpdateLastRead) {
+                convo.lastRead = lastSeenTime
+            }
+
+            configs.convoInfoVolatile.set(convo)
         }
+
+        // Normally, the config will be synced to db automatically.
+        // But there are cases the config reject our request, mainly due to lastSeenTime
+        // being too ancient.
+        // So we manually update the db here also to protect against this case
+        if (shouldUpdateLastRead) {
+            threadDatabase.upsertThreadLastSeen(
+                listOf(threadAddress to kotlin.time.Instant.fromEpochMilliseconds(lastSeenTime))
+            )
+        }
+    }
+
+    override fun updateConversationLastSeenIfNeeded(
+        threadId: Long,
+        lastSeenTime: Long
+    ) {
+        val threadAddress = threadDatabase.getRecipientForThreadId(threadId) as? Address.Conversable ?: return
+        updateConversationLastSeenIfNeeded(
+            threadAddress = threadAddress,
+            lastSeenTime = lastSeenTime
+        )
     }
 
     override fun markConversationAsReadUpToMessage(messageId: MessageId) {
@@ -212,16 +226,11 @@ open class Storage @Inject constructor(
         if (maxTimestampMillsAndThreadId != null) {
             val threadId = maxTimestampMillsAndThreadId.second
             val maxTimestamp = maxTimestampMillsAndThreadId.first
-            if (getLastSeen(threadId) < maxTimestamp) {
-                Log.d(TAG, "Marking last seen for thread $threadId as ${Instant.ofEpochMilli(maxTimestamp).atZone(
-                    ZoneId.systemDefault())}")
-                markConversationAsRead(
-                    threadId = threadId,
-                    lastSeenTime = maxTimestamp,
-                    force = false,
-                    updateNotification = true
-                )
-            }
+            val threadAddress = threadDatabase.getRecipientForThreadId(threadId) as? Address.Conversable ?: return
+            updateConversationLastSeenIfNeeded(
+                threadAddress = threadAddress,
+                lastSeenTime = maxTimestamp
+            )
         }
     }
 
@@ -276,11 +285,6 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun updateThread(threadId: Long, unarchive: Boolean) {
-        val threadDb = threadDatabase
-        threadDb.update(threadId, unarchive)
-    }
-
     override fun persist(
         threadRecipient: Recipient,
         message: VisibleMessage,
@@ -306,8 +310,7 @@ open class Storage @Inject constructor(
             message.syncTarget!!.toAddress()
         } else (threadRecipient.address as? Address.Group) ?: senderAddress
 
-        if (message.threadID == null && !targetAddress.isCommunity) {
-            // open group recipients should explicitly create threads
+        if (message.threadID == null) {
             message.threadID = getOrCreateThreadIdFor(targetAddress)
         }
         val expiryMode = message.expiryMode
@@ -342,7 +345,11 @@ open class Storage @Inject constructor(
                     expiresInMillis = expiresInMillis,
                     expireStartedAt = expireStartedAt
                 )
-                mmsDatabase.insertSecureDecryptedMessageOutbox(mediaMessage, message.threadID ?: -1, message.sentTimestamp!!, runThreadUpdate)
+                mmsDatabase.insertSecureDecryptedMessageOutbox(
+                    mediaMessage,
+                    message.threadID!!,
+                    message.sentTimestamp!!
+                )
             } else {
                 // It seems like we have replaced SignalServiceAttachment with SessionServiceAttachment
                 val signalServiceAttachments = attachments.mapNotNull {
@@ -358,7 +365,11 @@ open class Storage @Inject constructor(
                     quote = quotes,
                     linkPreviews = linkPreviews
                 )
-                mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
+                mmsDatabase.insertSecureDecryptedMessageInbox(
+                    mediaMessage,
+                    message.threadID!!,
+                    message.receivedTimestamp ?: 0
+                )
             }
 
             messageID = insertResult?.messageId?.let { MessageId(it, mms = true) }
@@ -383,7 +394,11 @@ open class Storage @Inject constructor(
                     expireStartedAtMillis = expireStartedAt
                 )
 
-                smsDatabase.insertMessageOutbox(message.threadID ?: -1, textMessage, message.sentTimestamp!!, runThreadUpdate)
+                smsDatabase.insertMessageOutbox(
+                    message.threadID!!,
+                    textMessage,
+                    message.sentTimestamp!!
+                )
             } else {
                 val textMessage = if (isOpenGroupInvitation) IncomingTextMessage.fromOpenGroupInvitation(
                     json = json,
@@ -400,7 +415,11 @@ open class Storage @Inject constructor(
                     expiresInMillis = expiresInMillis,
                     expireStartedAt = expireStartedAt
                 )
-                smsDatabase.insertMessageInbox(textMessage.copy(isSecureMessage = true), message.receivedTimestamp ?: 0, runThreadUpdate)
+                smsDatabase.insertMessageInbox(
+                    textMessage.copy(isSecureMessage = true),
+                    message.threadID!!,
+                    message.receivedTimestamp ?: 0
+                )
             }
             messageID = insertResult?.messageId?.let { MessageId(it, mms = false) }
         }
@@ -822,8 +841,7 @@ open class Storage @Inject constructor(
             val infoMessageID = mmsDB.insertMessageOutbox(
                 infoMessage,
                 threadID,
-                false,
-                runThreadUpdate = true
+                false
             )
             mmsDB.markAsSent(infoMessageID, true)
             return MessageId(infoMessageID, mms = true)
@@ -845,10 +863,13 @@ open class Storage @Inject constructor(
                 isGroupUpdateMessage = true,
             )
             val smsDB = smsDatabase
-            val insertResult = smsDB.insertMessageInbox(m.copy(
-                isGroupUpdateMessage = true,
-                message = inviteJson
-            ),  true)
+            val insertResult = smsDB.insertMessageInbox(
+                m.copy(
+                    isGroupUpdateMessage = true,
+                    message = inviteJson
+                ),
+                threadID
+            )
             return insertResult?.messageId?.let { MessageId(it, mms = false) }
         }
     }
@@ -893,11 +914,6 @@ open class Storage @Inject constructor(
         recipientDatabase.save(recipient) {
             it.copy(autoDownloadAttachments = shouldAutoDownloadAttachments)
         }
-    }
-
-    override fun getLastUpdated(threadID: Long): Long {
-        val threadDB = threadDatabase
-        return threadDB.getLastUpdated(threadID)
     }
 
     override fun trimThreadBefore(threadID: Long, timestamp: Long) {
@@ -1011,11 +1027,6 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun isRead(threadId: Long) : Boolean {
-        val threadDB = threadDatabase
-        return threadDB.isRead(threadId)
-    }
-
     override fun setThreadCreationDate(threadId: Long, newDate: Long) {
         val threadDb = threadDatabase
         threadDb.setCreationDate(threadId, newDate)
@@ -1038,8 +1049,6 @@ open class Storage @Inject constructor(
             smsDatabase.deleteMessagesFrom(threadID, fromUser.toString())
             mmsDatabase.deleteMessagesFrom(threadID, fromUser.toString())
         }
-
-        threadDb.setRead(threadID, true)
 
         return true
     }
@@ -1082,7 +1091,7 @@ open class Storage @Inject constructor(
             message
         )
 
-        mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
+        mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId)
     }
 
     /**
@@ -1107,7 +1116,7 @@ open class Storage @Inject constructor(
             linkPreviews = emptyList(),
             dataExtractionNotification = null
         )
-        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
+        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId)
     }
 
     override fun insertCallMessage(
@@ -1126,16 +1135,8 @@ open class Storage @Inject constructor(
             expiresInMillis = expiresInMillis,
             expireStartedAt = expireStartedAt
         )
-        smsDatabase.insertCallMessage(callMessage)
-    }
 
-    override fun conversationHasOutgoing(userPublicKey: String): Boolean {
-        val database = threadDatabase
-        val threadId = database.getThreadIdIfExistsFor(userPublicKey)
-
-        if (threadId == -1L) return false
-
-        return database.getLastSeenAndHasSent(threadId).second() ?: false
+        smsDatabase.insertCallMessage(callMessage, threadDatabase.getOrCreateThreadIdFor(address))
     }
 
     override fun getLastInboxMessageId(server: String): Long? {

@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.repository
 
+import androidx.collection.MutableIntList
+import androidx.collection.mutableIntListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -53,6 +55,7 @@ import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.CommunityDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
@@ -65,6 +68,7 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.castAwayType
+import org.thoughtcrime.securesms.util.get
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -78,6 +82,7 @@ class DefaultConversationRepository @Inject constructor(
     private val communityDatabase: CommunityDatabase,
     private val draftDb: DraftDatabase,
     private val smsDb: SmsDatabase,
+    private val mmsDb: MmsDatabase,
     private val mmsSmsDb: MmsSmsDatabase,
     private val storage: Storage,
     private val lokiMessageDb: LokiMessageDatabase,
@@ -173,6 +178,8 @@ class DefaultConversationRepository @Inject constructor(
                     recipientDatabase.changeNotification.filter { it in allAddresses },
                     communityDatabase.changeNotification.filter { it in allAddresses },
                     threadDb.updateNotifications,
+                    smsDb.changeNotification,
+                    mmsDb.changeNotification,
                     // If pro status pref changes, the convo is likely needing changes too
                     TextSecurePreferences.Companion.events.filter {
                         it == TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO ||
@@ -185,13 +192,44 @@ class DefaultConversationRepository @Inject constructor(
             }
             .map { addresses ->
                 withContext(Dispatchers.Default) {
-                    threadDb.getThreads(addresses)
+                    threadDb.getThreads(addresses).populateUnreadStatus()
                 }
             }
     }
 
     override fun getConversationList(): List<ThreadRecord> {
-        return threadDb.getThreads(getConversationListAddresses())
+        return threadDb.getThreads(getConversationListAddresses()).populateUnreadStatus()
+    }
+
+    /**
+     *
+     */
+    private fun List<ThreadRecord>.populateUnreadStatus(): List<ThreadRecord> {
+        var recordIndicesWithUnreadStatus: MutableIntList? = null
+
+        configFactory.withUserConfigs { configs ->
+            forEachIndexed { index, record ->
+                if (configs.convoInfoVolatile.get(record.recipient.address as Address.Conversable)?.unread == true) {
+                    if (recordIndicesWithUnreadStatus == null) {
+                        recordIndicesWithUnreadStatus = mutableIntListOf(index)
+                    } else {
+                        recordIndicesWithUnreadStatus.add(index)
+                    }
+                }
+            }
+        }
+
+        // No record has unread status, no need to change anything
+        if (recordIndicesWithUnreadStatus == null) {
+            return this
+        }
+
+        // Some record have unread status, make a copy of the list and copy of those items
+        val copied = this.toMutableList()
+        recordIndicesWithUnreadStatus.forEach { index ->
+            copied[index] = copied[index].copy(isUnread = true)
+        }
+        return copied
     }
 
     override fun saveDraft(threadId: Long, text: String) {
@@ -243,8 +281,7 @@ class DefaultConversationRepository @Inject constructor(
                     contactThreadId,
                     outgoingTextMessage,
                     false,
-                    message.sentTimestamp!!,
-                    true
+                    message.sentTimestamp!!
                 ),
                 false
             )

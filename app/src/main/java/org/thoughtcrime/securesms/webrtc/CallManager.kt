@@ -718,8 +718,10 @@ class CallManager @Inject constructor(
     }
 
     fun insertCallMessage(
-        threadPublicKey: String, callMessageType: CallMessageType,
-        expiryMode: ExpiryMode, sentTimestamp: Long = snodeClock.currentTimeMillis()
+        threadPublicKey: String,
+        callMessageType: CallMessageType,
+        expiryMode: ExpiryMode,
+        sentTimestamp: Long = snodeClock.currentTimeMillis()
     ) {
         storage.insertCallMessage(threadPublicKey, callMessageType, sentTimestamp, expiryMode)
     }

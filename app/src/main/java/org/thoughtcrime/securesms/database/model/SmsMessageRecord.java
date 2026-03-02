@@ -17,6 +17,8 @@
 
 package org.thoughtcrime.securesms.database.model;
 
+import androidx.annotation.Nullable;
+
 import org.session.libsession.utilities.recipients.Recipient;
 
 import java.util.List;
@@ -41,11 +43,12 @@ public class SmsMessageRecord extends MessageRecord {
                             int status,
                             long expiresIn, long expireStarted,
                             int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
-                            Set<ProFeature> proFeatures) {
+                            Set<ProFeature> proFeatures,
+                            @Nullable String serverHash) {
         super(id, body, recipient, individualRecipient,
                 dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,
                 expiresIn, expireStarted, readReceiptCount, reactions, hasMention, null,
-                proFeatures);
+                proFeatures, serverHash);
     }
 
     public long getType() {

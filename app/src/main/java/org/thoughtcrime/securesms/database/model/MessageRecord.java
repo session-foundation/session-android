@@ -45,6 +45,8 @@ public abstract class MessageRecord extends DisplayRecord {
   public  final long                      id;
   private final List<ReactionRecord>      reactions;
   private final boolean                   hasMention;
+  @Nullable
+  private final String                    serverHash;
 
   @Nullable
   private UpdateMessageData               groupUpdateMessage;
@@ -64,7 +66,8 @@ public abstract class MessageRecord extends DisplayRecord {
                 long expiresIn, long expireStarted,
                 int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention,
                 @Nullable MessageContent messageContent,
-                Set<ProFeature> proFeatures)
+                Set<ProFeature> proFeatures,
+                @Nullable String serverHash)
   {
     super(body, conversationRecipient, dateSent, dateReceived,
       threadId, deliveryStatus, deliveryReceiptCount, type, readReceiptCount, messageContent);
@@ -74,7 +77,8 @@ public abstract class MessageRecord extends DisplayRecord {
     this.expireStarted       = expireStarted;
     this.reactions           = reactions;
     this.hasMention          = hasMention;
-    this.proFeatures = proFeatures;
+    this.proFeatures         = proFeatures;
+    this.serverHash          = serverHash;
   }
 
   public long getId() {
@@ -94,6 +98,8 @@ public abstract class MessageRecord extends DisplayRecord {
     return expiresIn;
   }
   public long getExpireStarted() { return expireStarted; }
+
+  public @Nullable String getServerHash() { return serverHash; }
 
   public boolean getHasMention() { return hasMention; }
 

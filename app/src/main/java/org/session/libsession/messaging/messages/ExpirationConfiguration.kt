@@ -7,11 +7,7 @@ data class ExpirationConfiguration(
     val expiryMode: ExpiryMode = ExpiryMode.NONE,
     val updatedTimestampMs: Long = 0
 ) {
-    val isEnabled = expiryMode.expirySeconds > 0
-
-    companion object {
-        val isNewConfigEnabled = true
-    }
+    val isEnabled get() = expiryMode.expirySeconds > 0
 }
 
 data class ExpirationDatabaseMetadata(

@@ -5,11 +5,14 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -20,19 +23,26 @@ class MarkReadReceiver : BroadcastReceiver() {
     @Inject
     lateinit var clock: SnodeClock
 
+    @Inject
+    lateinit var threadDatabase: ThreadDatabase
+
+    @Inject
+    @ManagerScope
+    lateinit var scope: CoroutineScope
+
 
     override fun onReceive(context: Context, intent: Intent) {
         if (CLEAR_ACTION != intent.action) return
         val threadIds = intent.getLongArrayExtra(THREAD_IDS_EXTRA) ?: return
         NotificationManagerCompat.from(context).cancel(intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1))
-        GlobalScope.launch {
+
+        scope.launch {
             val currentTime = clock.currentTimeMillis()
             threadIds.forEach {
                 Log.i(TAG, "Marking as read: $it")
-                storage.markConversationAsRead(
-                    threadId = it,
+                storage.updateConversationLastSeenIfNeeded(
+                    threadAddress = threadDatabase.getRecipientForThreadId(it) as? Address.Conversable ?: return@forEach,
                     lastSeenTime = currentTime,
-                    force = true
                 )
             }
         }

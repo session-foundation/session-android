@@ -321,11 +321,6 @@ class MediaOverviewViewModel @AssistedInject constructor(
                 threadDatabase.getThreadIdIfExistsFor(address.toString())
             }
 
-            // Notify the content provider that the thread has been updated
-            if (threadId >= 0) {
-                threadDatabase.notifyThreadUpdated(threadId)
-            }
-
             mutableShowingActionProgress.value = null
             mutableSelectedItemIDs.value = emptySet()
         }

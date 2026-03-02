@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
@@ -64,16 +65,17 @@ class ConversationViewModelTest : BaseViewModelTest() {
     private val standardRecipient = Recipient(
         address = STANDARD_ADDRESS,
         data = RecipientData.Contact(
-            name = "Test User",
-            nickname = "Test User",
-            avatar = null,
-            approved = true,
-            approvedMe = true,
-            blocked = false,
-            expiryMode = ExpiryMode.NONE,
-            1,
+            configData = Contact(
+                id = "contact-1",
+                name = "Test User",
+                nickname = "Test User",
+                approved = true,
+                approvedMe = true,
+                blocked = false,
+                expiryMode = ExpiryMode.NONE,
+                createdEpochSeconds = System.currentTimeMillis() / 1000L,
+            ),
             proData = null,
-            profileUpdatedAt = null
         )
     )
 
@@ -136,6 +138,12 @@ class ConversationViewModelTest : BaseViewModelTest() {
             loginStateRepository = mock(),
             audioPlaybackManager = mock(),
             jobQueue = mock(),
+            mmsDatabase = mock {
+                on { changeNotification } doReturn MutableSharedFlow()
+            },
+            smsDatabase = mock {
+                on { changeNotification } doReturn MutableSharedFlow()
+            },
         )
     }
 

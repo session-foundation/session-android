@@ -114,8 +114,7 @@ class ControlMessageView : LinearLayout {
                         expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
                     }
 
-                    followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
-                            && !message.isOutgoing
+                    followSetting.isVisible = !message.isOutgoing
                             && messageContent.expiryMode != (message.individualRecipient?.expiryMode ?: ExpiryMode.NONE)
                             && !threadRecipient.isGroupOrCommunityRecipient
 
