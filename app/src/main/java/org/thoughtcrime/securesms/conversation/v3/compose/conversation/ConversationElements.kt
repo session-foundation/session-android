@@ -52,8 +52,8 @@ fun ConversationUnreadBreak(
     Row(
         modifier = modifier.fillMaxWidth()
             .padding(
-                horizontal = LocalDimensions.current.smallSpacing,
-                vertical = LocalDimensions.current.xxxsSpacing
+                top = LocalDimensions.current.xxxsSpacing,
+                bottom = LocalDimensions.current.smallSpacing
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)

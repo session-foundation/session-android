@@ -45,7 +45,7 @@ class ConversationDataMapper @Inject constructor(
     sealed interface ConversationItem {
         data class Message(val data: MessageViewData) : ConversationItem
         data class DateBreak(val date: String) : ConversationItem
-        data class UnreadMarker(val count: Int) : ConversationItem
+        data object UnreadMarker : ConversationItem
     }
 
     fun map(
@@ -54,6 +54,7 @@ class ConversationDataMapper @Inject constructor(
         next: MessageRecord?,
         threadRecipient: Recipient,
         localUserAddress: String,
+        lastSeen: Long?,
         highlightKey: Any? = null,
         showStatus: Boolean = false,
     ): List<ConversationItem> {
@@ -101,6 +102,11 @@ class ConversationDataMapper @Inject constructor(
                 clusterPosition = clusterPosition
         ))
 
+        val showUnreadMarker = lastSeen != null
+                && record.timestamp > lastSeen
+                && (previous == null || previous.timestamp <= lastSeen)
+                && !record.isOutgoing
+
         return buildList {
             add(message)
 
@@ -108,6 +114,9 @@ class ConversationDataMapper @Inject constructor(
             if (showDateBreak) add(ConversationItem.DateBreak(
                 dateUtils.getDisplayFormattedTimeSpanString(record.timestamp)
             ))
+
+            // unread marker, if needed
+            if (showUnreadMarker) add(ConversationItem.UnreadMarker)
         }
     }
 

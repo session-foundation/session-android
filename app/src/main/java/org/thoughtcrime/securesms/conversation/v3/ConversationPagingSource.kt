@@ -15,6 +15,7 @@ class ConversationPagingSource(
     private val threadRecipient: Recipient,
     private val localUserAddress: String,
     private val lastSentMessageId: MessageId?,
+    private val lastSeen: Long?
 ) : PagingSource<Int, ConversationDataMapper.ConversationItem>() {
 
     override fun getRefreshKey(state: PagingState<Int, ConversationDataMapper.ConversationItem>): Int? =
@@ -50,6 +51,7 @@ class ConversationPagingSource(
                     threadRecipient = threadRecipient,
                     localUserAddress = localUserAddress,
                     showStatus = record.messageId == lastSentMessageId,
+                    lastSeen = lastSeen
                 )
             }
 

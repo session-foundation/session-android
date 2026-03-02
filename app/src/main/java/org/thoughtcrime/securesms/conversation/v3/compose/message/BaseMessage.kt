@@ -63,7 +63,6 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 typing indicator
 //todo CONVOv3 long press views (overlay+message+recent reactions+menu)
 //todo CONVOv3 control messages
-//todo CONVOv3 time/date "separator"
 //todo CONVOv3 bottom search
 //todo CONVOv3 text input
 //todo CONVOv3 voice recording
@@ -284,8 +283,8 @@ fun Message(
     modifier: Modifier = Modifier
 ) {
     val bottomPadding = when (data.clusterPosition) {
-        ClusterPosition.BOTTOM, ClusterPosition.ISOLATED -> LocalDimensions.current.contentSpacing
-        ClusterPosition.TOP, ClusterPosition.MIDDLE -> LocalDimensions.current.xxxsSpacing
+        ClusterPosition.BOTTOM, ClusterPosition.ISOLATED -> LocalDimensions.current.smallSpacing // vertical space between mesasges of different authors
+        ClusterPosition.TOP, ClusterPosition.MIDDLE -> LocalDimensions.current.xxxsSpacing // vertical space between cluster of messages from same author
     }
 
     BoxWithConstraints(
@@ -446,6 +445,7 @@ sealed class MessageType(){
         val loading: Boolean,
         override val text: AnnotatedString? = null
     ): MessageType()
+    
 }
 
 /*@PreviewScreenSizes*/

@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
@@ -144,28 +146,38 @@ class ConversationV3ViewModel @AssistedInject constructor(
 
     private var pagingSource: ConversationPagingSource? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val conversationItems: Flow<PagingData<ConversationDataMapper.ConversationItem>> = threadIdFlow
+    // obtain the last seen message id
+    private val lastSeen: StateFlow<Long?> = threadIdFlow
         .filterNotNull()
         .flatMapLatest { id ->
+            flow {
+                emit(withContext(Dispatchers.IO) {
+                    threadDb.getLastSeenAndHasSent(id).first().takeIf { it > 0 }
+                })
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val conversationItems: Flow<PagingData<ConversationDataMapper.ConversationItem>> = combine(
+        threadIdFlow.filterNotNull(),
+        lastSeen,
+    ) { id, lastSeen ->
+        Pair(id, lastSeen)
+    }
+        .flatMapLatest { (id, lastSeen) ->
             Pager(
-                config = PagingConfig(
-                    pageSize = 50,
-                    initialLoadSize = 100,
-                    enablePlaceholders = false
-                ),
+                config = PagingConfig(pageSize = 50, initialLoadSize = 100, enablePlaceholders = false),
                 pagingSourceFactory = {
                     ConversationPagingSource(
-                        id,
-                        mmsSmsDatabase,
+                        threadId = id,
+                        mmsSmsDatabase = mmsSmsDatabase,
                         reverse = true,
                         dataMapper = dataMapper,
                         threadRecipient = recipient,
                         localUserAddress = storage.getUserPublicKey() ?: "",
                         lastSentMessageId = mmsSmsDatabase.getLastSentMessageID(id),
-                    ).also {
-                        pagingSource = it
-                    }
+                        lastSeen = lastSeen,
+                    ).also { pagingSource = it }
                 }
             ).flow
         }
