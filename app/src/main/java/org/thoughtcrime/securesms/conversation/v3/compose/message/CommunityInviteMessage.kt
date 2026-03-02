@@ -44,7 +44,8 @@ fun ColumnScope.CommunityInviteMessage(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.padding(defaultMessageBubblePadding()),
+        modifier = modifier.padding(defaultMessageBubblePadding())
+            .padding(vertical = LocalDimensions.current.tinySpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Icon background circle

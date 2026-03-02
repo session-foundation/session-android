@@ -15,6 +15,7 @@ import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Audio
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ClusterPosition
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Document
+import org.thoughtcrime.securesms.conversation.v3.compose.message.HighlightMessage
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageAvatar
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLinkData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageMediaItem
@@ -61,7 +62,7 @@ class ConversationDataMapper @Inject constructor(
         threadRecipient: Recipient,
         localUserAddress: String,
         lastSeen: Long?,
-        highlightKey: Any? = null,
+        highlightKey: HighlightMessage? = null,
         showStatus: Boolean = false,
     ): List<ConversationItem> {
         val isOutgoing = record.isOutgoing

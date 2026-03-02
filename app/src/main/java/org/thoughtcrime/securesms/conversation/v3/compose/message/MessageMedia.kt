@@ -212,7 +212,7 @@ fun MediaMessagePreview(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {
-                        testData = testData.copy(highlightKey = System.currentTimeMillis())
+                        testData = testData.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
                     }),
                 data = testData
             )

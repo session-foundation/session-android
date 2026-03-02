@@ -75,6 +75,7 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 inputbar quote/reply
 //todo CONVOv3 proper accessibility on overall message control
 //todo CONVOv3 new "read more" expandable feature
+//todo CONVOv3 verify immutability/stability of data classes
 
 /**
  * The overall Message composable
@@ -430,9 +431,11 @@ data class MessageViewData(
     val quote: MessageQuote? = null,
     val link: MessageLinkData? = null,
     val reactionsState: ReactionViewState? = null,
-    val highlightKey: Any? = null,
+    val highlightKey: HighlightMessage? = null,
     val clusterPosition: ClusterPosition = ClusterPosition.ISOLATED
 )
+
+data class HighlightMessage(val token: Long)
 
 enum class ClusterPosition {
     TOP,
@@ -450,7 +453,7 @@ sealed interface MessageAvatar {
 data class ReactionViewState(
     val reactions: List<ReactionItem>,
     val isExtended: Boolean,
-    val onReactionClick: (String) -> Unit,
+    val onReactionClick: (String) -> Unit, //todo convov3 lift lambdas out
     val onReactionLongClick: (String) -> Unit,
     val onShowMoreClick: () -> Unit
 )
@@ -559,8 +562,8 @@ fun MessagePreview(
                 delay(3000)
 
                 // to test out the selection
-                testData = testData.copy(highlightKey = System.currentTimeMillis())
-                testData2 = testData2.copy(highlightKey = System.currentTimeMillis())
+                testData = testData.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
+                testData2 = testData2.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
             }
 
             Message(data = testData)
@@ -572,7 +575,7 @@ fun MessagePreview(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {
-                    testData2 = testData2.copy(highlightKey = System.currentTimeMillis())
+                    testData2 = testData2.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
                 }),
                 data = testData2
             )
