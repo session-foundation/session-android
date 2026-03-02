@@ -359,7 +359,10 @@ class ConversationReactionOverlay : FrameLayout {
                 scrubberX - contextMenu.getMaxWidth() - menuPadding
             }
 
-            val maxMenuYInOverlay = (height - systemInsets.bottom - actualMenuHeight).toFloat()
+            val maxMenuYInOverlay = maxOf(
+                systemInsets.top.toFloat(),
+                (height - systemInsets.bottom - actualMenuHeight).toFloat()
+            )
             val menuYInOverlay = minOf(backgroundView.y, maxMenuYInOverlay)
 
             // Convert overlay-local to anchor relative as expected by ConversationContextMenu.show()
@@ -377,7 +380,10 @@ class ConversationReactionOverlay : FrameLayout {
             val menuYInOverlay = (menuTop + menuPadding)
                 .coerceIn(
                     systemInsets.top.toFloat(),
-                    (height - systemInsets.bottom - actualMenuHeight).toFloat()
+                    maxOf(
+                        systemInsets.top.toFloat(),
+                        (height - systemInsets.bottom - actualMenuHeight).toFloat()
+                    )
                 )
 
             val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
