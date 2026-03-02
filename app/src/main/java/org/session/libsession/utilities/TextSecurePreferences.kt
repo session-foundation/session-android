@@ -42,7 +42,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_S
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_CHECKED_DOZE_WHITELIST
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
-import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
@@ -112,8 +111,6 @@ interface TextSecurePreferences {
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
-    fun setNotificationPrivacy(string : String)
-    fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
     fun isInThreadNotifications(): Boolean
     fun isUniversalUnidentifiedAccess(): Boolean
@@ -132,12 +129,6 @@ interface TextSecurePreferences {
     fun isPassphraseTimeoutEnabled(): Boolean
     fun getPassphraseTimeoutInterval(): Int
     fun getLanguage(): String?
-    fun isNotificationsEnabled(): Boolean
-    fun getNotificationRingtone(): Uri
-    fun removeNotificationRingtone()
-    fun setNotificationRingtone(ringtone: String?)
-    fun setNotificationVibrateEnabled(enabled: Boolean)
-    fun isNotificationVibrateEnabled(): Boolean
     fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
     fun isSoundWhenAppIsOpenEnabled(): Boolean
     fun getNotificationLedColor(): Int
@@ -163,8 +154,6 @@ interface TextSecurePreferences {
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
     fun setHasSeenLinkPreviewSuggestionDialog()
-    fun hasHiddenMessageRequests(): Boolean
-    fun setHasHiddenMessageRequests(hidden: Boolean)
     fun forceCurrentUserAsPro(): Boolean
     fun setForceCurrentUserAsPro(isPro: Boolean)
     fun forceOtherUsersAsPro(): Boolean
@@ -283,10 +272,7 @@ interface TextSecurePreferences {
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
         const val LAST_VERSION_CODE_PREF = "last_version_code"
-        const val RINGTONE_PREF = "pref_key_ringtone"
-        const val VIBRATE_PREF = "pref_key_vibrate"
         const val SOUND_WHEN_OPEN = "pref_sound_when_app_open"
-        const val NOTIFICATION_PREF = "pref_key_enable_notifications"
         const val LED_COLOR_PREF_PRIMARY = "pref_led_color_primary"
         const val PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval"
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
@@ -298,7 +284,6 @@ interface TextSecurePreferences {
         const val MESSAGE_BODY_TEXT_SIZE_PREF = "pref_message_body_text_size"
         @Deprecated("No longer used, kept for migration purposes")
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
-        const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
         const val INCOGNITO_KEYBOARD_PREF = "pref_incognito_keyboard"
         const val NEEDS_SQLCIPHER_MIGRATION = "pref_needs_sql_cipher_migration"
@@ -320,7 +305,6 @@ interface TextSecurePreferences {
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
-        const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
@@ -456,11 +440,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun getNotificationPrivacy(context: Context): NotificationPrivacyPreference {
-            return NotificationPrivacyPreference(getStringPreference(context, NOTIFICATION_PRIVACY_PREF, "all"))
-        }
-
-        @JvmStatic
         fun isPasswordDisabled(context: Context): Boolean {
             return getBooleanPreference(context, DISABLE_PASSPHRASE_PREF, true)
         }
@@ -489,25 +468,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getPassphraseTimeoutInterval(context: Context): Int {
             return getIntegerPreference(context, PASSPHRASE_TIMEOUT_INTERVAL_PREF, 5 * 60)
-        }
-
-        @JvmStatic
-        fun isNotificationsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, NOTIFICATION_PREF, true)
-        }
-
-        @JvmStatic
-        fun getNotificationRingtone(context: Context): Uri {
-            var result = getStringPreference(context, RINGTONE_PREF, Settings.System.DEFAULT_NOTIFICATION_URI.toString())
-            if (result != null && result.startsWith("file:")) {
-                result = Settings.System.DEFAULT_NOTIFICATION_URI.toString()
-            }
-            return Uri.parse(result)
-        }
-
-        @JvmStatic
-        fun isNotificationVibrateEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, VIBRATE_PREF, true)
         }
 
         @JvmStatic
@@ -597,12 +557,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
-        }
-
-        @JvmStatic
-        fun removeHasHiddenMessageRequests(context: Context) {
-            removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
-            _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
         }
 
         @JvmStatic
@@ -809,16 +763,6 @@ class AppTextSecurePreferences @Inject constructor(
         }
     }
 
-    override fun setNotificationPrivacy(string: String) {
-        setStringPreference(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, string)
-        _events.tryEmit(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF)
-    }
-
-    override fun getNotificationPrivacy(): NotificationPrivacyPreference {
-        return NotificationPrivacyPreference(getStringPreference(
-            TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, "all"))
-    }
-
     override fun getRepeatAlertsCount(): Int {
         return try {
             getStringPreference(TextSecurePreferences.REPEAT_ALERTS_PREF, "0")!!.toInt()
@@ -898,37 +842,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun getLanguage(): String? {
         return getStringPreference(TextSecurePreferences.LANGUAGE_PREF, "zz")
-    }
-
-    override fun isNotificationsEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.NOTIFICATION_PREF, true)
-    }
-
-    override fun getNotificationRingtone(): Uri {
-        var result = getStringPreference(TextSecurePreferences.RINGTONE_PREF, Settings.System.DEFAULT_NOTIFICATION_URI.toString())
-        if (result != null && result.startsWith("file:")) {
-            result = Settings.System.DEFAULT_NOTIFICATION_URI.toString()
-        }
-        return Uri.parse(result)
-    }
-
-    override fun removeNotificationRingtone() {
-        removePreference(TextSecurePreferences.RINGTONE_PREF)
-        _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
-    }
-
-    override fun setNotificationRingtone(ringtone: String?) {
-        setStringPreference(TextSecurePreferences.RINGTONE_PREF, ringtone)
-        _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
-    }
-
-    override fun setNotificationVibrateEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.VIBRATE_PREF, enabled)
-        _events.tryEmit(TextSecurePreferences.VIBRATE_PREF)
-    }
-
-    override fun isNotificationVibrateEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.VIBRATE_PREF, true)
     }
 
     override fun setSoundWhenAppIsOpenEnabled(enabled: Boolean) {
@@ -1120,14 +1033,6 @@ class AppTextSecurePreferences @Inject constructor(
         return previousValue != setValue
     }
 
-    override fun hasHiddenMessageRequests(): Boolean {
-        return getBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, false)
-    }
-
-    override fun setHasHiddenMessageRequests(hidden: Boolean) {
-        setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
-        _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
-    }
     override fun forceCurrentUserAsPro(): Boolean {
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
     }

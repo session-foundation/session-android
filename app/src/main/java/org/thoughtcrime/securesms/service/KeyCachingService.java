@@ -125,15 +125,7 @@ public class KeyCachingService extends Service {
 
       foregroundService();
 
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... params) {
-          if (!DatabaseUpgradeActivity.isUpdate(KeyCachingService.this)) {
-            ApplicationContext.getInstance(KeyCachingService.this).getMessageNotifier().updateNotification(KeyCachingService.this);
-          }
-          return null;
-        }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      // Notifications are now handled reactively by NotificationProcessor
     }
   }
 
@@ -192,13 +184,7 @@ public class KeyCachingService extends Service {
 
     sendBroadcast(intent, KEY_PERMISSION);
 
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        ApplicationContext.getInstance(KeyCachingService.this).getMessageNotifier().updateNotification(KeyCachingService.this);
-        return null;
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    // Notifications are now handled reactively by NotificationProcessor
   }
 
   private void handleLockToggled() {

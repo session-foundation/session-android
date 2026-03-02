@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -34,15 +33,19 @@ class MarkReadReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (CLEAR_ACTION != intent.action) return
         val threadIds = intent.getLongArrayExtra(THREAD_IDS_EXTRA) ?: return
-        NotificationManagerCompat.from(context).cancel(intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1))
 
+        // Use the latest message timestamp from the notification, falling back to current time
+        val lastSeenTime = intent.getLongExtra(LATEST_TIMESTAMP_EXTRA, 0L)
+            .takeIf { it > 0L }
+            ?: clock.currentTimeMillis()
+
+        // Notification cancellation is handled reactively by NotificationProcessor when lastSeen advances.
         scope.launch {
-            val currentTime = clock.currentTimeMillis()
             threadIds.forEach {
-                Log.i(TAG, "Marking as read: $it")
+                Log.i(TAG, "Marking as read: $it at timestamp $lastSeenTime")
                 storage.updateConversationLastSeenIfNeeded(
                     threadAddress = threadDatabase.getRecipientForThreadId(it) as? Address.Conversable ?: return@forEach,
-                    lastSeenTime = currentTime,
+                    lastSeenTime = lastSeenTime,
                 )
             }
         }
@@ -52,7 +55,6 @@ class MarkReadReceiver : BroadcastReceiver() {
         private val TAG = MarkReadReceiver::class.java.simpleName
         const val CLEAR_ACTION = "network.loki.securesms.notifications.CLEAR"
         const val THREAD_IDS_EXTRA = "thread_ids"
-        const val NOTIFICATION_ID_EXTRA = "notification_id"
-
+        const val LATEST_TIMESTAMP_EXTRA = "latest_timestamp"
     }
 }

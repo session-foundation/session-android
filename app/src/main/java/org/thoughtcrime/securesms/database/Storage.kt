@@ -40,7 +40,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.network.SnodeClock
@@ -99,7 +99,7 @@ open class Storage @Inject constructor(
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
     private val reactionDatabase: ReactionDatabase,
-    private val notificationManager: MessageNotifier,
+
     private val messageDataProvider: MessageDataProvider,
     private val clock: SnodeClock,
     private val recipientRepository: RecipientRepository,
@@ -147,9 +147,6 @@ open class Storage @Inject constructor(
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
         for (info in lokiMessageDatabase.getSendersForHashes(threadId, hashes.toSet())) {
             messageDataProvider.deleteMessage(info.messageId)
-            if (!info.isOutgoing) {
-                notificationManager.updateNotification(context)
-            }
         }
     }
 

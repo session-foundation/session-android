@@ -110,7 +110,7 @@ import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
@@ -273,7 +273,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageSender: MessageSender
     @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
-    @Inject lateinit var messageNotifier: MessageNotifier
+
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var snodeClock: SnodeClock
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
@@ -885,14 +885,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onResume() {
         super.onResume()
-        viewModel.threadId?.let { threadId ->
-            messageNotifier.setVisibleThread(threadId)
-        }
     }
 
     override fun onPause() {
         super.onPause()
-        messageNotifier.setVisibleThread(-1)
     }
 
     override fun getSystemService(name: String): Any? {

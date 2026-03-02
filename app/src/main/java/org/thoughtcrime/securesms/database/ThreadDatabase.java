@@ -28,7 +28,6 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.utilities.AccountId;

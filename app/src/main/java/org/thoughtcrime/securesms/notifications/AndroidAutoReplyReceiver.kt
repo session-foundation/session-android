@@ -28,7 +28,7 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isGroupOrCommunity
@@ -58,9 +58,6 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var smsDatabase: SmsDatabase
-
-    @Inject
-    lateinit var messageNotifier: MessageNotifier
 
     @Inject
     lateinit var storage: Storage
@@ -150,8 +147,6 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             lastSeenTime = snodeClock.currentTimeMillis()
                         )
                     }
-
-                    messageNotifier.updateNotification(context)
 
                     return null
                 }

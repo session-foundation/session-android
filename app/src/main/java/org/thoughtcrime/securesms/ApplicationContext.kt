@@ -43,7 +43,7 @@ import network.loki.messenger.libsession_util.util.Logger
 import org.conscrypt.Conscrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
 import org.session.libsignal.utilities.Log
@@ -124,8 +124,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
             DatabaseComponent::class.java
         )
 
-    @get:Deprecated(message = "Use proper DI to inject this component")
-    @Inject lateinit var messageNotifier: MessageNotifier
 
 
     override fun onCreate() {
@@ -180,7 +178,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         isAppVisible = false
         Log.i(TAG, "App is no longer visible.")
         KeyCachingService.onAppBackgrounded(this)
-        messageNotifier.setVisibleThread(-1)
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {

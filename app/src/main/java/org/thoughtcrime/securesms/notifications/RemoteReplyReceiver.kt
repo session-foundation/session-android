@@ -28,7 +28,7 @@ import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
@@ -59,9 +59,6 @@ class RemoteReplyReceiver : BroadcastReceiver() {
     lateinit var storage: Storage
 
     @Inject
-    lateinit var messageNotifier: MessageNotifier
-
-    @Inject
     lateinit var clock: SnodeClock
 
     @Inject
@@ -84,7 +81,7 @@ class RemoteReplyReceiver : BroadcastReceiver() {
 
         val address = intent.getParcelableExtra<Address?>(ADDRESS_EXTRA)
         val replyMethod = intent.getSerializableExtra(REPLY_METHOD) as ReplyMethod?
-        val responseText = remoteInput.getCharSequence(DefaultMessageNotifier.EXTRA_REMOTE_REPLY)
+        val responseText = remoteInput.getCharSequence(NotificationProcessor.EXTRA_REMOTE_REPLY)
 
         if (address == null) throw AssertionError("No address specified")
         if (replyMethod == null) throw AssertionError("No reply method specified")
@@ -152,8 +149,6 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                             lastSeenTime = clock.currentTimeMillis()
                         )
                     }
-
-                    messageNotifier.updateNotification(context)
 
                     return null
                 }

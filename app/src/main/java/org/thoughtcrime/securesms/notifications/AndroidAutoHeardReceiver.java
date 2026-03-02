@@ -23,9 +23,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 
-import androidx.core.app.NotificationManagerCompat;
-
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.network.SnodeClock;
 import org.thoughtcrime.securesms.database.Storage;
 
@@ -39,13 +36,11 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class AndroidAutoHeardReceiver extends BroadcastReceiver {
 
-  public static final String TAG                   = AndroidAutoHeardReceiver.class.getSimpleName();
-  public static final String HEARD_ACTION          = "network.loki.securesms.notifications.ANDROID_AUTO_HEARD";
-  public static final String THREAD_IDS_EXTRA      = "car_heard_thread_ids";
-  public static final String NOTIFICATION_ID_EXTRA = "car_notification_id";
+  public static final String TAG              = AndroidAutoHeardReceiver.class.getSimpleName();
+  public static final String HEARD_ACTION     = "network.loki.securesms.notifications.ANDROID_AUTO_HEARD";
+  public static final String THREAD_IDS_EXTRA = "car_heard_thread_ids";
 
   @Inject Storage storage;
-  @Inject MessageNotifier messageNotifier;
   @Inject SnodeClock clock;
 
   @SuppressLint("StaticFieldLeak")
@@ -58,9 +53,7 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
     final long[] threadIds = intent.getLongArrayExtra(THREAD_IDS_EXTRA);
 
     if (threadIds != null) {
-      int notificationId = intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1);
-      NotificationManagerCompat.from(context).cancel(notificationId);
-
+      // Notification cancellation is handled reactively by NotificationProcessor when lastSeen advances.
       new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... params) {
@@ -68,8 +61,6 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
             for (long threadId : threadIds) {
                 storage.updateConversationLastSeenIfNeeded(threadId, now);
             }
-
-            messageNotifier.updateNotification(context);
 
             return null;
         }

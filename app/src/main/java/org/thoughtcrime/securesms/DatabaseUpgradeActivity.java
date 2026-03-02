@@ -44,14 +44,7 @@ public class DatabaseUpgradeActivity extends BaseActivity {
     return previousVersionCode < currentVersionCode;
   }
 
-  @SuppressLint("StaticFieldLeak")
   private void updateNotifications(final Context context) {
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        ApplicationContext.getInstance(context).getMessageNotifier().updateNotification(context);
-        return null;
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    // Notifications are now handled reactively by NotificationProcessor
   }
 }
