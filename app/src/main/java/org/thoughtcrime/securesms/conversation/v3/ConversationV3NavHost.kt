@@ -21,15 +21,10 @@ import androidx.navigation.toRoute
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsScreen
-import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel
-import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsScreen
-import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsViewModel
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteAllMedia
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteConversation
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteConversationSettings
@@ -43,6 +38,10 @@ import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.Rout
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteNotifications
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RoutePromoteMembers
 import org.thoughtcrime.securesms.conversation.v3.compose.ConversationScreen
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsScreen
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsViewModel
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel
@@ -442,7 +441,6 @@ fun ConversationV3NavHost(
                     hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
                         factory.create(
                             address = address,
-                            isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
                             showDebugOptions = BuildConfig.BUILD_TYPE != "release",
                             navigator = navigator
                         )

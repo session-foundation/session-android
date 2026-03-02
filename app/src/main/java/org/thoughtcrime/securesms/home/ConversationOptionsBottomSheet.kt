@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -27,11 +26,10 @@ import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -52,7 +50,7 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
     @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var groupManager : GroupManagerV2
 
-    @Inject lateinit var threadDatabase: ThreadDatabase
+    @Inject lateinit var conversationRepository: ConversationRepository
 
     var onViewDetailsTapped: (() -> Unit?)? = null
     var onCopyConversationId: (() -> Unit?)? = null
@@ -92,9 +90,9 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         publicKey = requireNotNull(args.getString(ARG_PUBLIC_KEY))
         requireNotNull(args.getLong(ARG_THREAD_ID))
         val addressString = requireNotNull(args.getString(ARG_ADDRESS))
-        val address = Address.fromSerialized(addressString)
+        val address = Address.fromSerialized(addressString) as Address.Conversable
         thread = requireNotNull(
-            threadDatabase.getThreads(listOf(address)).firstOrNull()
+            conversationRepository.getConversationList().firstOrNull { it.recipient.address == address }
         ) { "Thread not found for address: $addressString" }
         group = groupDatabase.getGroup(thread.recipient.address.toString())
     }

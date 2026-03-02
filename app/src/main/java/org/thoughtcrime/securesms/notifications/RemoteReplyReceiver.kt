@@ -47,7 +47,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class RemoteReplyReceiver : BroadcastReceiver() {
-    @Inject
     lateinit var threadDatabase: ThreadDatabase
 
     @Inject
@@ -67,9 +66,6 @@ class RemoteReplyReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var recipientRepository: RecipientRepository
-
-    @Inject
-    lateinit var markReadProcessor: MarkReadProcessor
 
     @Inject
     lateinit var messageSender: MessageSender
@@ -122,8 +118,7 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                                     mmsDatabase.insertMessageOutbox(
                                         message = reply,
                                         threadId = threadId,
-                                        forceSms = false,
-                                        runThreadUpdate = true
+                                        forceSms = false
                                     ), true
                                 )
                                 messageSender.send(message, address)
@@ -144,18 +139,21 @@ class RemoteReplyReceiver : BroadcastReceiver() {
                                     threadId,
                                     reply,
                                     false,
-                                    System.currentTimeMillis(),
-                                    true
+                                    System.currentTimeMillis()
                                 ), false
                             )
                             messageSender.send(message, address)
                         }
                     }
 
-                    val messageIds = threadDatabase.setRead(threadId, true)
+                    if (address is Address.Conversable) {
+                        storage.updateConversationLastSeenIfNeeded(
+                            threadAddress = address,
+                            lastSeenTime = clock.currentTimeMillis()
+                        )
+                    }
 
                     messageNotifier.updateNotification(context)
-                    markReadProcessor.process(messageIds)
 
                     return null
                 }

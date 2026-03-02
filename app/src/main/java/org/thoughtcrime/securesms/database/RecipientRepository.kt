@@ -710,16 +710,8 @@ class RecipientRepository @Inject constructor(
                         }
 
                         RecipientData.Contact(
-                            name = contact.name,
-                            nickname = contact.nickname.takeIf { it.isNotBlank() },
-                            avatar = contact.profilePicture.toRemoteFile(),
-                            approved = contact.approved,
-                            approvedMe = contact.approvedMe,
-                            blocked = contact.blocked,
-                            expiryMode = contact.expiryMode,
-                            priority = contact.priority,
+                            configData = contact,
                             proData = null, // final ProData will be calculated later
-                            profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant(),
                         )
                     }
                 }

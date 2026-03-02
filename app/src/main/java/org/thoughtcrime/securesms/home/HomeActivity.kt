@@ -72,6 +72,7 @@ import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getUnreadCount
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -593,13 +594,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
         val unreadThreadMap = messages
-            .map { it.threadId }.toSet()
+            .asSequence()
+            .mapNotNull { it.conversationRecipient.address as? Address.Conversable }
+            .toSet()
             .associateWith { mmsSmsDatabase.getUnreadCount(it) }
 
         return messages.map {
             GlobalSearchAdapter.Model.Message(
                 messageResult = it,
-                unread = unreadThreadMap[it.threadId] ?: 0,
+                unread = unreadThreadMap[it.conversationRecipient.address] ?: 0,
                 isSelf = it.conversationRecipient.isLocalNumber,
                 showProBadge = it.conversationRecipient.shouldShowProBadge
             )
@@ -826,7 +829,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun markAllAsRead(thread: ThreadRecord) {
         lifecycleScope.launch(Dispatchers.Default) {
-            storage.markConversationAsRead(thread.threadId, clock.currentTimeMillis())
+            storage.updateConversationLastSeenIfNeeded(
+                thread.recipient.address as Address.Conversable,
+                clock.currentTimeMillis()
+            )
         }
     }
 

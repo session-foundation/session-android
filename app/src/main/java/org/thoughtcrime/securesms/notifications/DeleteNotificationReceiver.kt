@@ -5,12 +5,8 @@ import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.thoughtcrime.securesms.database.MmsDatabase
-import org.thoughtcrime.securesms.database.SmsDatabase
+import org.session.libsession.network.SnodeClock
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
@@ -28,11 +24,8 @@ class DeleteNotificationReceiver : BroadcastReceiver() {
     @Inject @ManagerScope
     lateinit var scope: CoroutineScope
 
-    @Inject lateinit var messageNotifier: MessageNotifier
-
-    @Inject lateinit var smsDb: SmsDatabase
-    @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var storage: Storage
+    @Inject lateinit var snodeClock: SnodeClock
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != DELETE_NOTIFICATION_ACTION) return
@@ -46,21 +39,12 @@ class DeleteNotificationReceiver : BroadcastReceiver() {
         val pending = goAsync() // extends the receiver's lifecycle
         scope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    val now = System.currentTimeMillis()
-                    for(threadId in threadIds){
-                        storage.markConversationAsRead(
-                            threadId = threadId,
-                            lastSeenTime = now,
-                            force = false,
-                            updateNotification = false
-                        )
-                    }
-
-                    for (i in ids.indices) {
-                        if (!mms[i]) smsDb.markAsNotified(ids[i])
-                        else mmsDb.markAsNotified(ids[i])
-                    }
+                val now = snodeClock.currentTimeMillis()
+                for (threadId in threadIds){
+                    storage.updateConversationLastSeenIfNeeded(
+                        threadId = threadId,
+                        lastSeenTime = now
+                    )
                 }
             } finally {
                 pending.finish()

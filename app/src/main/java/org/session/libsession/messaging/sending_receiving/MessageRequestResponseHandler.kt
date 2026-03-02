@@ -173,7 +173,6 @@ class MessageRequestResponseHandler @Inject constructor(
                             dataExtractionNotification = null
                         ),
                         threadId,
-                        runThreadUpdate = true,
                     )
                 }
 

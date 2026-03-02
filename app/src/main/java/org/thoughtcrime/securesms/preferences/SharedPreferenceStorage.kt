@@ -29,7 +29,7 @@ class SharedPreferenceStorage @AssistedInject constructor(
     @Assisted private val prefs: SharedPreferences,
     private val json: Json,
 ) : PreferenceStorage {
-    private val changes = MutableSharedFlow<PreferenceKey<*>>()
+    private val changes = MutableSharedFlow<PreferenceKey<*>>(extraBufferCapacity = 10)
 
     private val cache = LruCache<String, Optional<Any>>(100)
 

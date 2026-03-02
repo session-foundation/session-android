@@ -95,7 +95,6 @@ import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
@@ -128,7 +127,6 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
@@ -224,7 +222,6 @@ import org.thoughtcrime.securesms.util.adapter.runWhenLaidOut
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
-import org.thoughtcrime.securesms.util.getConversationUnread
 import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isNearBottom
 import org.thoughtcrime.securesms.util.push
@@ -402,8 +399,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val adapter by lazy {
         val adapter = ConversationAdapter(
             this,
-            originalLastSeen = viewModel.threadId
-                ?.let { storage.getLastSeen(it) },
+            storage.getLastSeen(viewModel.address),
             false,
             onItemPress = { message, position, view, event ->
                 handlePress(message, position, view, event)
@@ -722,11 +718,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         try {
                             when (it) {
                                 is Long -> {
-                                    viewModel.threadId?.let { threadId ->
-                                        if (storage.getLastSeen(threadId) < it) {
-                                            storage.markConversationAsRead(threadId, it)
-                                        }
-                                    }
+                                    storage.updateConversationLastSeenIfNeeded(
+                                        viewModel.address,
+                                        it
+                                    )
                                 }
 
                                 is MessageId -> {
@@ -915,6 +910,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<ConversationLoader.Data> {
         return conversationLoaderFactory.create(
             threadID = viewModel.threadId,
+            threadAddress = viewModel.address,
             reverse = false,
         )
     }
@@ -956,26 +952,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     if (binding.conversationRecyclerView.isNearBottom &&
                         !binding.conversationRecyclerView.isFullyScrolled) {
                         gotoConversationEnd()
-                    }
-                }
-
-                // We should do this check regardless of whether we're restoring a saved scroll position.
-                if (firstLoad && unreadCount == 0 && adapter.itemCount > 0) {
-                    lifecycleScope.launch(Dispatchers.Default) {
-                        val isUnread = configFactory.withUserConfigs {
-                            it.convoInfoVolatile.getConversationUnread(
-                                viewModel.address,
-                            )
-                        }
-
-                        viewModel.threadId?.let { threadId ->
-                            if (isUnread) {
-                                storage.markConversationAsRead(
-                                    threadId,
-                                    clock.currentTimeMillis()
-                                )
-                            }
-                        }
                     }
                 }
 
@@ -1212,8 +1188,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun setUpOutdatedClientBanner() {
         val legacyRecipient = viewModel.legacyBannerRecipient(this)
 
-        val shouldShowLegacy = ExpirationConfiguration.isNewConfigEnabled &&
-                legacyRecipient != null
+        val shouldShowLegacy = legacyRecipient != null
 
         binding.conversationHeader.outdatedDisappearingBanner.isVisible = shouldShowLegacy
         if (shouldShowLegacy) {
@@ -1411,11 +1386,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         }
 
-        val threadId = viewModel.threadId
-        if (threadId == null) return // Maybe don't scroll
-
-        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(threadId).first()
-        val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return
+        val lastSeenTimestamp = storage.getLastSeen(viewModel.address)
+        val lastSeenItemPosition = lastSeenTimestamp?.let(adapter::findLastSeenItemPosition) ?: return
 
         binding.conversationRecyclerView.runWhenLaidOut {
             layoutManager?.scrollToPositionWithOffset(
@@ -1642,8 +1614,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     .put(GROUP_NAME_KEY, recipient.displayName())
                     .format()
                     .toString()
-
-                else -> ""
             }
             return
         }
@@ -2446,8 +2416,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 viewModel.threadIdFlow.filterNotNull().first(),
                 outgoingTextMessage,
                 false,
-                message.sentTimestamp!!,
-                true
+                message.sentTimestamp!!
             ), false)
 
             message.id?.let{
@@ -2533,8 +2502,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     mmsDb.insertMessageOutbox(
                         outgoingTextMessage,
                         viewModel.threadIdFlow.filterNotNull().first(),
-                        false,
-                        runThreadUpdate = true
+                        false
                     ), mms = true
                 )
 

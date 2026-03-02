@@ -36,6 +36,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -62,7 +63,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
     lateinit var messageNotifier: MessageNotifier
 
     @Inject
-    lateinit var markReadProcessor: MarkReadProcessor
+    lateinit var storage: Storage
 
     @Inject
     lateinit var messageSender: MessageSender
@@ -122,8 +123,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             mmsDatabase.insertMessageOutbox(
                                 message = reply,
                                 threadId = replyThreadId,
-                                forceSms = false,
-                                runThreadUpdate = true
+                                forceSms = false
                             )
                         } catch (e: MmsException) {
                             Log.w(TAG, e)
@@ -140,15 +140,18 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
                             replyThreadId,
                             reply,
                             false,
-                            snodeClock.currentTimeMillis(),
-                            true
+                            snodeClock.currentTimeMillis()
                         )
                     }
 
-                    val messageIds = threadDatabase.setRead(replyThreadId, true)
+                    if (address is Address.Conversable) {
+                        storage.updateConversationLastSeenIfNeeded(
+                            threadAddress = address,
+                            lastSeenTime = snodeClock.currentTimeMillis()
+                        )
+                    }
 
                     messageNotifier.updateNotification(context)
-                    markReadProcessor.process(messageIds)
 
                     return null
                 }
