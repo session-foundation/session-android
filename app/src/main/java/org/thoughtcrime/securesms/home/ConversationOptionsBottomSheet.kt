@@ -25,6 +25,7 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -93,9 +94,15 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         requireNotNull(args.getLong(ARG_THREAD_ID))
         val addressString = requireNotNull(args.getString(ARG_ADDRESS))
         val address = Address.fromSerialized(addressString)
-        thread = requireNotNull(
-            threadDatabase.getThreads(listOf(address)).firstOrNull()
-        ) { "Thread not found for address: $addressString" }
+        val threadFromDb = threadDatabase.getThreads(listOf(address)).firstOrNull()
+
+        if(threadFromDb == null){
+            Log.w("", "Home conversation bottom sheet: Thread not found for address: $addressString" )
+            dismiss()
+            return
+        }
+
+        thread = threadFromDb
         group = groupDatabase.getGroup(thread.recipient.address.toString())
     }
 
