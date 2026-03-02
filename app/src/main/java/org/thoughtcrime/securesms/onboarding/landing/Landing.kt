@@ -80,7 +80,7 @@ internal fun LandingScreen(
                         .put(EMOJI_KEY, "\uD83D\uDC4B") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                         .format().toString()
                 ), outgoing = false),
-                author = "Test",
+                displayName = "Test",
                 id = MessageId(0, false)
             ),
             MessageViewData(
@@ -88,12 +88,12 @@ internal fun LandingScreen(
                     Phrase.from(context.getString(R.string.onboardingBubbleSessionIsEngineered))
                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .format().toString()), outgoing = true),
-                author = "Test",
+                displayName = "Test",
                 id = MessageId(0, false)
             ),
             MessageViewData(
                 type = MessageType.Text(text = AnnotatedString(context.getString(R.string.onboardingBubbleNoPhoneNumber)), outgoing = false),
-                author = "Test",
+                displayName = "Test",
                 id = MessageId(0, false)
             ),
             MessageViewData(
@@ -102,7 +102,7 @@ internal fun LandingScreen(
                         .put(EMOJI_KEY, "\uD83D\uDC47") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                         .format().toString()
                 ), outgoing = true),
-                author = "Test",
+                displayName = "Test",
                 id = MessageId(0, false)
             ),
         )

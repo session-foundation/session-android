@@ -260,7 +260,7 @@ fun AudioMessagePreview(
         ) {
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.audio()
             ))
 
@@ -268,7 +268,7 @@ fun AudioMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.audio(
                     outgoing = false,
@@ -280,7 +280,7 @@ fun AudioMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.audio(
                     playing = false
                 )

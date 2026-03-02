@@ -118,7 +118,7 @@ fun Conversation(
                 key = conversationItems.itemKey { item ->
                     when (item) {
                         is ConversationItem.Message -> "msg_${item.data.id}"
-                        is ConversationItem.DateBreak -> "date_${item.date}"
+                        is ConversationItem.DateBreak -> "date_${item.date}_${item.messageId}"
                         is ConversationItem.UnreadMarker -> "unread"
                     }
                 },
@@ -185,13 +185,13 @@ fun PreviewConversation(
                         ConversationItem.Message(
                         MessageViewData(
                             id = MessageId(0, false),
-                            author = "Toto",
+                            displayName = "Toto",
                             type = PreviewMessageData.text()
                         )),
                         ConversationItem.Message(
                         MessageViewData(
                             id = MessageId(0, false),
-                            author = "Toto",
+                            displayName = "Toto",
                             avatar = PreviewMessageData.sampleAvatar,
                             type = PreviewMessageData.text(
                                 outgoing = false,

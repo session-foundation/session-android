@@ -130,7 +130,7 @@ fun QuoteMessagePreview(
         ) {
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
             ))
@@ -139,7 +139,7 @@ fun QuoteMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.text(text="Quoting text"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
             ))
@@ -148,7 +148,7 @@ fun QuoteMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(outgoing = false, text="Quoting a document"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Icon(R.drawable.ic_file))
@@ -158,7 +158,7 @@ fun QuoteMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Text(outgoing = true, AnnotatedString("Quoting audio")),
                 quote = PreviewMessageData.quote(
                     title = "You",
@@ -171,7 +171,7 @@ fun QuoteMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Text(outgoing = true, AnnotatedString("Quoting an image")),
                 quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
             ))

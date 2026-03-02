@@ -114,7 +114,7 @@ fun DocumentMessagePreview(
         ) {
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.document()
             ))
 
@@ -122,7 +122,7 @@ fun DocumentMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.document(
                     outgoing = false,
@@ -134,7 +134,7 @@ fun DocumentMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.document(
                     loading = true
                 ))
@@ -144,7 +144,7 @@ fun DocumentMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = PreviewMessageData.document(
                     loading = true
@@ -155,7 +155,7 @@ fun DocumentMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = PreviewMessageData.document(
                     outgoing = false,

@@ -6,8 +6,10 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Audio
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ClusterPosition
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Document
@@ -23,6 +25,7 @@ import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewSta
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionItem
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionViewState
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -44,7 +47,7 @@ class ConversationDataMapper @Inject constructor(
 
     sealed interface ConversationItem {
         data class Message(val data: MessageViewData) : ConversationItem
-        data class DateBreak(val date: String) : ConversationItem
+        data class DateBreak(val messageId: MessageId, val date: String) : ConversationItem
         data object UnreadMarker : ConversationItem
     }
 
@@ -59,7 +62,15 @@ class ConversationDataMapper @Inject constructor(
         showStatus: Boolean = false,
     ): List<ConversationItem> {
         val isOutgoing = record.isOutgoing
+
         val senderName = record.individualRecipient.displayName()
+        val extraDisplayName = when {
+            record.recipient.address is Address.Blinded ->
+                (record.recipient.address as Address.Blinded).blindedId.truncatedForDisplay()
+
+            else -> null
+        }
+
         val isGroup = threadRecipient.isGroupOrCommunityRecipient
 
         val isStart = isStartOfCluster(record, previous, isGroup)
@@ -91,8 +102,10 @@ class ConversationDataMapper @Inject constructor(
             MessageViewData(
                 id = record.messageId,
                 type = mapMessageType(record, isOutgoing),
-                author = senderName,
-                displayName = showAuthorName,
+                displayName = senderName,
+                displayNameExtra = extraDisplayName,
+                showDisplayName = showAuthorName,
+                showProBadge = record.recipient.shouldShowProBadge,
                 avatar = avatar,
                 status = if (showStatus && isOutgoing) mapStatus(record) else null,
                 quote = mapQuote(record),
@@ -112,7 +125,8 @@ class ConversationDataMapper @Inject constructor(
 
             // Items added after message appear visually ABOVE it (with reverseLayout = true)
             if (showDateBreak) add(ConversationItem.DateBreak(
-                dateUtils.getDisplayFormattedTimeSpanString(record.timestamp)
+                messageId = message.data.id, // useful in case of repeated dates due to logic
+                date = dateUtils.getDisplayFormattedTimeSpanString(record.timestamp)
             ))
 
             // unread marker, if needed
@@ -140,9 +154,6 @@ class ConversationDataMapper @Inject constructor(
 
         // Never show before control messages
         if (current.isControlMessage) return false
-
-        // Always show before a message that follows a control message
-        if (previous.isControlMessage) return true
 
         val t1 = previous.timestamp
         val t2 = current.timestamp

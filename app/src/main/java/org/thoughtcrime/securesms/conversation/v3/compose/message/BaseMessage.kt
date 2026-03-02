@@ -45,7 +45,10 @@ import androidx.compose.ui.unit.max
 import androidx.core.net.toUri
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -132,13 +135,26 @@ fun MessageContent(
                 horizontalAlignment = if(data.type.outgoing) Alignment.End else Alignment.Start
             )
             {
-                if (data.displayName) {
-                    Text(
-                        modifier = Modifier.padding(start = LocalDimensions.current.xsSpacing),
-                        text = data.author,
-                        style = LocalType.current.base.bold(),
-                        color = LocalColors.current.text
-                    )
+                if (data.showDisplayName) {
+                    Row {
+                        ProBadgeText(
+                            modifier = Modifier.weight(1f, fill = false),
+                            text = data.displayName,
+                            textStyle = LocalType.current.base.bold()
+                                .copy(color = LocalColors.current.text),
+                            showBadge = data.showProBadge,
+                        )
+
+                        if (!data.displayNameExtra.isNullOrEmpty()) {
+                            Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
+
+                            Text(
+                                text = "(${data.displayNameExtra})",
+                                maxLines = 1,
+                                style = LocalType.current.base
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                 }
@@ -367,8 +383,10 @@ internal fun defaultMessageBubblePadding() = PaddingValues(
 data class MessageViewData(
     val id: MessageId,
     val type: MessageType,
-    val author: String,
-    val displayName: Boolean = false,
+    val displayName: String,
+    val displayNameExtra: String? = null, // when you want to add extra text to the display name, like the blinded id - after the pro badge)
+    val showDisplayName: Boolean = false,
+    val showProBadge: Boolean = false,
     val avatar: MessageAvatar = MessageAvatar.None,
     val status: MessageViewStatus? = null,
     val quote: MessageQuote? = null,
@@ -445,7 +463,7 @@ sealed class MessageType(){
         val loading: Boolean,
         override val text: AnnotatedString? = null
     ): MessageType()
-    
+
 }
 
 /*@PreviewScreenSizes*/
@@ -463,9 +481,11 @@ fun MessagePreview(
                 mutableStateOf(
                     MessageViewData(
                         id = MessageId(0, false),
-                    author = "Toto",
-                    type = PreviewMessageData.text()
-                )
+                        displayName = "Toto",
+                        showProBadge = true,
+                        displayNameExtra = "(some extra text)",
+                        type = PreviewMessageData.text()
+                    )
                 )
             }
 
@@ -473,8 +493,8 @@ fun MessagePreview(
                 mutableStateOf(
                     MessageViewData(
                         id = MessageId(0, false),
-                        author = "Toto",
-                        displayName = true,
+                        displayName = "Toto",
+                        showDisplayName = true,
                         avatar = PreviewMessageData.sampleAvatar,
                         type = PreviewMessageData.text(
                             outgoing = false,
@@ -510,7 +530,7 @@ fun MessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.text(
                     text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
                 ),
@@ -521,7 +541,7 @@ fun MessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(
                     outgoing = false,
@@ -545,7 +565,7 @@ fun MessageReactionsPreview(
         ) {
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.text(
                     text = "I have 3 emoji reactions"
                 ),
@@ -566,7 +586,7 @@ fun MessageReactionsPreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(
                     outgoing = false,
@@ -595,7 +615,7 @@ fun MessageReactionsPreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 type = PreviewMessageData.text(
                     outgoing = false,

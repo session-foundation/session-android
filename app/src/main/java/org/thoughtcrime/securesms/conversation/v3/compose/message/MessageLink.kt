@@ -105,7 +105,7 @@ fun LinkMessagePreview(
         ) {
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
                 link = MessageLinkData(
                     url = "https://getsession.org/",
@@ -117,7 +117,7 @@ fun LinkMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.text(text="Quoting text"),
                 link = MessageLinkData(
                     url = "https://picsum.photos/id/0/367/267",
@@ -128,7 +128,7 @@ fun LinkMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 link = MessageLinkData(
@@ -141,7 +141,7 @@ fun LinkMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = PreviewMessageData.text(text="Quoting text"),
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 link = MessageLinkData(

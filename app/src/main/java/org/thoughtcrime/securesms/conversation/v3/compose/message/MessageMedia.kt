@@ -166,7 +166,7 @@ fun MediaMessagePreview(
         ) {
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
                     items = listOf(PreviewMessageData.image(
@@ -181,7 +181,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
                     items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
@@ -196,7 +196,7 @@ fun MediaMessagePreview(
                 mutableStateOf(
                     MessageViewData(
                         id = MessageId(0, false),
-                        author = "Toto",
+                        displayName = "Toto",
                         type = MessageType.Media(
                             text = AnnotatedString("This also has text"),
                             outgoing = true,
@@ -221,7 +221,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
                     items = listOf(PreviewMessageData.image(true)),
@@ -233,7 +233,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
                     items = listOf(PreviewMessageData.video()),
@@ -245,7 +245,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
                     items = listOf(PreviewMessageData.video()),
@@ -257,7 +257,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
                     items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
@@ -269,7 +269,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
                     items = listOf(PreviewMessageData.video(), PreviewMessageData.image(true), PreviewMessageData.image()),
@@ -281,7 +281,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
                     items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
@@ -293,7 +293,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 type = MessageType.Media(
                     text = AnnotatedString("This also has text"),
                     outgoing = false,
@@ -306,7 +306,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = MessageType.Media(
                     outgoing = true,
@@ -319,7 +319,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = MessageType.Media(
                     outgoing = false,
@@ -333,7 +333,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = MessageType.Media(
                     text = AnnotatedString("This also has text"),
@@ -347,7 +347,7 @@ fun MediaMessagePreview(
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
-                author = "Toto",
+                displayName = "Toto",
                 quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
                 type = MessageType.Media(
                     text = AnnotatedString("This also has text"),

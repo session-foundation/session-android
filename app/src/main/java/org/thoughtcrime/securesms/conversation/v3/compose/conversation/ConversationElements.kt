@@ -37,7 +37,10 @@ fun ConversationDateBreak(
 ){
     Text(
         modifier = modifier.fillMaxWidth()
-            .padding(vertical = LocalDimensions.current.xxxsSpacing),
+            .padding(
+                top = LocalDimensions.current.xxxsSpacing,
+                bottom = LocalDimensions.current.xxsSpacing
+            ),
         text = date,
         color = LocalColors.current.text,
         style = LocalType.current.small.bold(),
