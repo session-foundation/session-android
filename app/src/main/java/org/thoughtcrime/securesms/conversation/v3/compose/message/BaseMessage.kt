@@ -45,8 +45,6 @@ import androidx.compose.ui.unit.max
 import androidx.core.net.toUri
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.truncatedForDisplay
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -71,7 +69,6 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 voice recording
 //todo CONVOv3 collapsible + menu for attachments
 //todo CONVOv3 jump down to last message button
-//todo CONVOv3 community invites
 //todo CONVOv3 attachment controls
 //todo CONVOv3 deleted messages
 //todo CONVOv3 swipe to reply
@@ -80,23 +77,62 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 new "read more" expandable feature
 
 /**
- * Basic message building block: Bubble
+ * The overall Message composable
+ * This controls the width and position of the message as a whole
  */
 @Composable
-fun MessageBubble(
-    color: Color,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit = {}
+fun Message(
+    data: MessageViewData,
+    modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .background(
-                color = color,
-                shape = RoundedCornerShape(LocalDimensions.current.messageCornerRadius)
+    when(data.type){
+        is MessageType.RecipientMessage -> {
+            RecipientMessage(
+                data = data,
+                type = data.type,
+                modifier = modifier
             )
-            .clip(shape = RoundedCornerShape(LocalDimensions.current.messageCornerRadius))
+        }
+
+        is MessageType.ControlMessage -> {
+           /* ControlMessage(
+                data = data,
+                modifier = modifier
+            )*/
+        }
+    }
+}
+
+@Composable
+fun RecipientMessage(
+    data: MessageViewData,
+    type: MessageType.RecipientMessage,
+    modifier: Modifier = Modifier
+){
+    val bottomPadding = when (data.clusterPosition) {
+        ClusterPosition.BOTTOM, ClusterPosition.ISOLATED -> LocalDimensions.current.smallSpacing // vertical space between mesasges of different authors
+        ClusterPosition.TOP, ClusterPosition.MIDDLE -> LocalDimensions.current.xxxsSpacing // vertical space between cluster of messages from same author
+    }
+
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth()
+            .padding(bottom = bottomPadding)
     ) {
-        content()
+        val maxMessageWidth = max(
+            LocalDimensions.current.minMessageWidth,
+            this.maxWidth * 0.8f // 80% of available width
+            //todo ConvoV3 we probably should cap the max so that large screens/tablets don't extend too far
+        )
+
+        RecipientMessageContent(
+            modifier = Modifier
+                .align(if (type.outgoing) Alignment.CenterEnd else Alignment.CenterStart)
+                .widthIn(max = maxMessageWidth)
+                .wrapContentWidth(),
+            data = data,
+            type = type,
+            maxWidth = maxMessageWidth
+        )
     }
 }
 
@@ -104,14 +140,16 @@ fun MessageBubble(
  * All the content of a message: Bubble with its internal content, avatar, status
  */
 @Composable
-fun MessageContent(
+fun RecipientMessageContent(
     data: MessageViewData,
+    type: MessageType.RecipientMessage,
     modifier: Modifier = Modifier,
     maxWidth: Dp
 ) {
+
     Column(
         modifier = modifier,
-        horizontalAlignment = if (data.type.outgoing) Alignment.End else Alignment.Start
+        horizontalAlignment = if (type.outgoing) Alignment.End else Alignment.Start
     ) {
         Row {
             if (data.avatar !is MessageAvatar.None) {
@@ -132,7 +170,7 @@ fun MessageContent(
             }
 
             Column(
-                horizontalAlignment = if(data.type.outgoing) Alignment.End else Alignment.Start
+                horizontalAlignment = if(type.outgoing) Alignment.End else Alignment.Start
             )
             {
                 if (data.showDisplayName) {
@@ -161,60 +199,74 @@ fun MessageContent(
 
                 // There can be two bubbles in a message: First one contains quotes, links and message text
                 // The second one contains audio, document, images and video
-                val hasFirstBubble = data.quote != null || data.link != null || data.type.text != null
-                val hasSecondBubble = data.type !is MessageType.Text
+                val hasFirstBubble =
+                    data.quote != null || data.link != null || type.text != null
+                            || type is MessageType.RecipientMessage.CommunityInvite
+                val hasSecondBubble = data.type !is MessageType.RecipientMessage.Text
+                        && type !is MessageType.RecipientMessage.CommunityInvite
 
                 // First bubble
                 if (hasFirstBubble) {
                     MessageBubble(
                         modifier = Modifier.accentHighlight(data.highlightKey),
-                        color = if (data.type.outgoing) LocalColors.current.accent
+                        color = if (type.outgoing) LocalColors.current.accent
                         else LocalColors.current.backgroundBubbleReceived
                     ) {
-                        Column {
-                            // Display quote if there is one
-                            if (data.quote != null) {
-                                MessageQuote(
-                                    modifier = Modifier.padding(bottom =
-                                        if (data.link == null && data.type.text == null)
-                                            defaultMessageBubblePadding().calculateBottomPadding()
-                                        else 0.dp
-                                    ),
-                                    outgoing = data.type.outgoing,
-                                    quote = data.quote
-                                )
-                            }
+                        // community invites
+                        if (data.type is MessageType.RecipientMessage.CommunityInvite) {
+                            //todo convov3 add onclick for community invite
+                            CommunityInviteMessage(
+                                data = data,
+                                type = data.type,
+                                modifier = Modifier.accentHighlight(data.highlightKey),
+                            )
+                        } else { // regular recipient messages
+                            Column {
+                                // Display quote if there is one
+                                if (data.quote != null) {
+                                    MessageQuote(
+                                        modifier = Modifier.padding(
+                                            bottom =
+                                                if (data.link == null && type.text == null)
+                                                    defaultMessageBubblePadding().calculateBottomPadding()
+                                                else 0.dp
+                                        ),
+                                        outgoing = type.outgoing,
+                                        quote = data.quote
+                                    )
+                                }
 
-                            // display link data if any
-                            if (data.link != null) {
-                                MessageLink(
-                                    modifier = Modifier.padding(top = if (data.quote != null) LocalDimensions.current.xxsSpacing else 0.dp),
-                                    data = data.link,
-                                    outgoing = data.type.outgoing
-                                )
-                            }
+                                // display link data if any
+                                if (data.link != null) {
+                                    MessageLink(
+                                        modifier = Modifier.padding(top = if (data.quote != null) LocalDimensions.current.xxsSpacing else 0.dp),
+                                        data = data.link,
+                                        outgoing = type.outgoing
+                                    )
+                                }
 
-                            if(data.type.text != null){
-                                // Text messages
-                                MessageText(
-                                    modifier = Modifier.padding(defaultMessageBubblePadding()),
-                                    text = data.type.text!!,
-                                    outgoing = data.type.outgoing
-                                )
+                                if (type.text != null) {
+                                    // Text messages
+                                    MessageText(
+                                        modifier = Modifier.padding(defaultMessageBubblePadding()),
+                                        text = type.text!!,
+                                        outgoing = type.outgoing
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
                 // Second bubble
-                if(hasSecondBubble){
+                if (hasSecondBubble) {
                     // add spacing if there is a first bubble
-                    if(hasFirstBubble){
+                    if (hasFirstBubble) {
                         Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                     }
 
                     // images and videos are a special case and aren't actually surrounded in a visible bubble
-                    if(data.type is MessageType.Media){
+                    if (data.type is MessageType.RecipientMessage.Media) {
                         MediaMessage(
                             modifier = Modifier.accentHighlight(data.highlightKey),
                             data = data.type,
@@ -223,7 +275,7 @@ fun MessageContent(
                     } else {
                         MessageBubble(
                             modifier = Modifier.accentHighlight(data.highlightKey),
-                            color = if (data.type.outgoing) LocalColors.current.accent
+                            color = if (type.outgoing) LocalColors.current.accent
                             else LocalColors.current.backgroundBubbleReceived
                         ) {
                             // Apply content based on message type
@@ -248,8 +300,8 @@ fun MessageContent(
 
         //////// Below the Avatar + Message bubbles ////
 
-        val indentation = if(data.type.outgoing) 0.dp
-        else if (data.avatar != null) LocalDimensions.current.iconMediumAvatar + LocalDimensions.current.smallSpacing
+        val indentation = if(type.outgoing) 0.dp
+        else if (data.avatar !is MessageAvatar.None) LocalDimensions.current.iconMediumAvatar + LocalDimensions.current.smallSpacing
         else 0.dp
 
         // reactions
@@ -259,7 +311,7 @@ fun MessageContent(
                 modifier = Modifier.padding(start = indentation),
                 reactions = data.reactionsState.reactions,
                 isExpanded = data.reactionsState.isExtended,
-                outgoing = data.type.outgoing,
+                outgoing = type.outgoing,
                 onReactionClick = {
                     //todo CONVOv3 implement
                 },
@@ -282,7 +334,7 @@ fun MessageContent(
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.tinySpacing)
                     .padding(start = indentation)
-                    .align(if (data.type.outgoing) Alignment.End else Alignment.Start),
+                    .align(if (type.outgoing) Alignment.End else Alignment.Start),
                 data = data.status
             )
         }
@@ -290,37 +342,23 @@ fun MessageContent(
 }
 
 /**
- * The overall Message composable
- * This controls the width and position of the message as a whole
+ * Basic message building block: Bubble
  */
 @Composable
-fun Message(
-    data: MessageViewData,
-    modifier: Modifier = Modifier
+fun MessageBubble(
+    color: Color,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit = {}
 ) {
-    val bottomPadding = when (data.clusterPosition) {
-        ClusterPosition.BOTTOM, ClusterPosition.ISOLATED -> LocalDimensions.current.smallSpacing // vertical space between mesasges of different authors
-        ClusterPosition.TOP, ClusterPosition.MIDDLE -> LocalDimensions.current.xxxsSpacing // vertical space between cluster of messages from same author
-    }
-
-    BoxWithConstraints(
-        modifier = modifier.fillMaxWidth()
-            .padding(bottom = bottomPadding)
+    Box(
+        modifier = modifier
+            .background(
+                color = color,
+                shape = RoundedCornerShape(LocalDimensions.current.messageCornerRadius)
+            )
+            .clip(shape = RoundedCornerShape(LocalDimensions.current.messageCornerRadius))
     ) {
-        val maxMessageWidth = max(
-            LocalDimensions.current.minMessageWidth,
-            this.maxWidth * 0.8f // 80% of available width
-            //todo ConvoV3 we probably should cap the max so that large screens/tablets don't extend too far
-        )
-
-        MessageContent(
-            modifier = Modifier
-                .align(if (data.type.outgoing) Alignment.CenterEnd else Alignment.CenterStart)
-                .widthIn(max = maxMessageWidth)
-                .wrapContentWidth(),
-            data = data,
-            maxWidth = maxMessageWidth
-        )
+        content()
     }
 }
 
@@ -448,22 +486,35 @@ sealed interface MessageViewStatusIcon{
     data object DisappearingMessageIcon: MessageViewStatusIcon
 }
 
-sealed class MessageType(){
-    abstract val outgoing: Boolean
-    abstract val text: AnnotatedString?
+sealed interface MessageType{
 
-    data class Text(
-        override val outgoing: Boolean,
-        override val text: AnnotatedString
-    ): MessageType()
+    sealed interface RecipientMessage: MessageType {
+        val outgoing: Boolean
+        val text: AnnotatedString?
 
-    data class Media(
-        override val outgoing: Boolean,
-        val items: List<MessageMediaItem>,
-        val loading: Boolean,
-        override val text: AnnotatedString? = null
-    ): MessageType()
+        data class Text(
+            override val outgoing: Boolean,
+            override val text: AnnotatedString
+        ) : RecipientMessage
 
+        data class Media(
+            override val outgoing: Boolean,
+            val items: List<MessageMediaItem>,
+            val loading: Boolean,
+            override val text: AnnotatedString? = null
+        ) : RecipientMessage
+
+        data class CommunityInvite(
+            override val outgoing: Boolean,
+            override val text: AnnotatedString = AnnotatedString(""),
+            val communityName: String,
+            val url: String
+        ) : RecipientMessage
+    }
+
+    sealed interface ControlMessage: MessageType {
+
+    }
 }
 
 /*@PreviewScreenSizes*/
@@ -694,10 +745,19 @@ object PreviewMessageData {
         icon = MessageViewStatusIcon.DrawableIcon(icon = R.drawable.ic_circle_check)
     )
 
+    fun communityInvite(
+        outgoing: Boolean = true
+    ) = MessageType.RecipientMessage.CommunityInvite(
+        outgoing = outgoing,
+        text = AnnotatedString(""),
+        communityName = "Test Community",
+        url = "https://www.test-community-url.com/testing-the-url-look-and-feel",
+    )
+
     fun text(
         text: String = "Hi there",
         outgoing: Boolean = true
-    ) = MessageType.Text(outgoing = outgoing, AnnotatedString(text))
+    ) = MessageType.RecipientMessage.Text(outgoing = outgoing, AnnotatedString(text))
 
     fun document(
         name: String = "Document name",

@@ -159,7 +159,7 @@ fun QuoteMessagePreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = MessageType.Text(outgoing = true, AnnotatedString("Quoting audio")),
+                type = MessageType.RecipientMessage.Text(outgoing = true, AnnotatedString("Quoting audio")),
                 quote = PreviewMessageData.quote(
                     title = "You",
                     subtitle = "Audio message",
@@ -172,7 +172,7 @@ fun QuoteMessagePreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = MessageType.Text(outgoing = true, AnnotatedString("Quoting an image")),
+                type = MessageType.RecipientMessage.Text(outgoing = true, AnnotatedString("Quoting an image")),
                 quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
             ))
 

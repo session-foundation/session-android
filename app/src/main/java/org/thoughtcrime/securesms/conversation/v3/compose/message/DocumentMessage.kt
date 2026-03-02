@@ -100,7 +100,7 @@ data class Document(
     val uri: String,
     val loading: Boolean,
     override val text: AnnotatedString? = null
-) : MessageType()
+) : MessageType.RecipientMessage
 
 @Preview
 @Composable

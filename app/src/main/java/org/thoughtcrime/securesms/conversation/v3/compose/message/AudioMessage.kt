@@ -246,7 +246,7 @@ data class Audio(
     val bufferedPositionMs: Long = 0L,
     val isPlaying: Boolean,
     val showLoader: Boolean,
-) : MessageType()
+) : MessageType.RecipientMessage
 
 @Preview
 @Composable

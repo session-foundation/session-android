@@ -5,7 +5,9 @@ import android.text.format.Formatter
 import androidx.compose.ui.text.AnnotatedString
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.json.Json
 import network.loki.messenger.R
+import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
@@ -41,7 +43,8 @@ import kotlin.math.abs
 class ConversationDataMapper @Inject constructor(
     @ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
-    private val dateUtils: DateUtils
+    private val dateUtils: DateUtils,
+    private val json: Json,
 ) {
     private val timeZoneOffsetSeconds = TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000
 
@@ -194,9 +197,21 @@ class ConversationDataMapper @Inject constructor(
     private fun mapMessageType(record: MessageRecord, isOutgoing: Boolean): MessageType {
         val mms = record as? MmsMessageRecord
 
+        // community invites
+        if(record.isOpenGroupInvitation){
+            val jsonData =  UpdateMessageData.fromJSON(json, record.body)
+            if(jsonData?.kind is UpdateMessageData.Kind.OpenGroupInvitation){
+                return MessageType.RecipientMessage.CommunityInvite(
+                    outgoing = isOutgoing,
+                    communityName = jsonData.kind.groupName,
+                    url = jsonData.kind.groupUrl
+                )
+            }
+        }
+
         // Deleted messages — check first; body is not meaningful for these
         if (record.isDeleted) {
-            return MessageType.Text(
+            return MessageType.RecipientMessage.Text(
                 outgoing = isOutgoing,
                 text = AnnotatedString(context.getString(R.string.deleteMessageDeletedGlobally)),
             )
@@ -236,7 +251,7 @@ class ConversationDataMapper @Inject constructor(
         if (record is MediaMmsMessageRecord) {
             val mediaSlides = record.slideDeck.slides.filter { it.hasImage() || it.hasVideo() }
 
-            //todp convoV3 map this properly
+            //todo convoV3 map this properly
             if (mediaSlides.isNotEmpty()) {
                 val items = mediaSlides.map { slide ->
                     val uri = (slide.uri ?: slide.thumbnailUri) ?: "".toUri()
@@ -251,7 +266,7 @@ class ConversationDataMapper @Inject constructor(
                         MessageMediaItem.Image(uri, filename, loading, width, height)
                     }
                 }
-                return MessageType.Media(
+                return MessageType.RecipientMessage.Media(
                     outgoing = isOutgoing,
                     items = items,
                     loading = items.any { it.loading },
@@ -262,7 +277,7 @@ class ConversationDataMapper @Inject constructor(
 
         // Plain text
         // todo CONVOv3: replace with spans for mentions, links, and markdown-style formatting
-        return MessageType.Text(
+        return MessageType.RecipientMessage.Text(
             outgoing = isOutgoing,
             text = AnnotatedString(record.body),
         )

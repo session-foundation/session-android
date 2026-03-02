@@ -74,7 +74,7 @@ internal fun LandingScreen(
     val messages = remember(context) {
         listOf(
             MessageViewData(
-                type = MessageType.Text(text = AnnotatedString(
+                type = MessageType.RecipientMessage.Text(text = AnnotatedString(
                     Phrase.from(context.getString(R.string.onboardingBubbleWelcomeToSession))
                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .put(EMOJI_KEY, "\uD83D\uDC4B") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
@@ -84,7 +84,7 @@ internal fun LandingScreen(
                 id = MessageId(0, false)
             ),
             MessageViewData(
-                type = MessageType.Text(text = AnnotatedString(
+                type = MessageType.RecipientMessage.Text(text = AnnotatedString(
                     Phrase.from(context.getString(R.string.onboardingBubbleSessionIsEngineered))
                         .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .format().toString()), outgoing = true),
@@ -92,12 +92,12 @@ internal fun LandingScreen(
                 id = MessageId(0, false)
             ),
             MessageViewData(
-                type = MessageType.Text(text = AnnotatedString(context.getString(R.string.onboardingBubbleNoPhoneNumber)), outgoing = false),
+                type = MessageType.RecipientMessage.Text(text = AnnotatedString(context.getString(R.string.onboardingBubbleNoPhoneNumber)), outgoing = false),
                 displayName = "Test",
                 id = MessageId(0, false)
             ),
             MessageViewData(
-                type = MessageType.Text(text = AnnotatedString(
+                type = MessageType.RecipientMessage.Text(text = AnnotatedString(
                     Phrase.from(context.getString(R.string.onboardingBubbleCreatingAnAccountIsEasy))
                         .put(EMOJI_KEY, "\uD83D\uDC47") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                         .format().toString()
