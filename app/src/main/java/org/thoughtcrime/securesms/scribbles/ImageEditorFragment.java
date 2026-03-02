@@ -152,7 +152,11 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   @Override
   public void onSaveInstanceState(@NonNull Bundle outState) {
     super.onSaveInstanceState(outState);
-    new Data(outState).writeModel(imageEditorView.getModel());
+    if (imageEditorView != null) {
+      new Data(outState).writeModel(imageEditorView.getModel());
+    } else if (restoredModel != null) {
+      new Data(outState).writeModel(restoredModel);
+    }
   }
 
   @Override
