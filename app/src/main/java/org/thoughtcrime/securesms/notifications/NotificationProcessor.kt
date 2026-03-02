@@ -99,6 +99,7 @@ class NotificationProcessor @Inject constructor(
     private val imageLoader: Provider<ImageLoader>,
     private val currentActivityObserver: CurrentActivityObserver,
     private val prefs: PreferenceStorage,
+    private val notificationChannels: Lazy<NotificationChannels>,
 ) : AuthAwareComponent {
 
     val notificationManager: NotificationManager by lazy {
@@ -239,10 +240,12 @@ class NotificationProcessor @Inject constructor(
         if (items.isEmpty()) return
 
         val builder = SingleRecipientNotificationBuilder(
-            context,
-            NotificationPrivacyPreference(prefs[NotificationPreferences.PRIVACY]),
-            avatarUtils,
-            imageLoader,
+            /* context = */ context,
+            /* privacy = */ NotificationPrivacyPreference(prefs[NotificationPreferences.PRIVACY]),
+            /* avatarUtils = */ avatarUtils,
+            /* imageLoaderProvider = */ imageLoader,
+            /* notificationChannels = */ notificationChannels.get(),
+            /* prefs = */ prefs,
         )
 
         val first = items.first()
@@ -308,7 +311,7 @@ class NotificationProcessor @Inject constructor(
         }
 
         if (signal) {
-            builder.setAlarms(NotificationChannels.getMessageRingtone(context))
+            builder.setAlarms(notificationChannels.get().getMessageRingtone())
             builder.setTicker(first.individualRecipient, first.text)
         }
 
@@ -329,7 +332,12 @@ class NotificationProcessor @Inject constructor(
             return
         }
 
-        val builder = GroupSummaryNotificationBuilder(context, NotificationPrivacyPreference(prefs[NotificationPreferences.PRIVACY]))
+        val builder = GroupSummaryNotificationBuilder(
+            context = context,
+            privacy = NotificationPrivacyPreference(prefs[NotificationPreferences.PRIVACY]),
+            notificationChannels = notificationChannels.get(),
+            preferenceStorage = prefs,
+        )
         builder.setGroup(NOTIFICATION_GROUP)
 
         var totalCount = 0

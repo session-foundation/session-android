@@ -131,13 +131,8 @@ interface TextSecurePreferences {
     fun getLanguage(): String?
     fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
     fun isSoundWhenAppIsOpenEnabled(): Boolean
-    fun getNotificationLedColor(): Int
     fun setThreadLengthTrimmingEnabled(enabled : Boolean)
     fun isThreadLengthTrimmingEnabled(): Boolean
-    fun getNotificationChannelVersion(): Int
-    fun setNotificationChannelVersion(version: Int)
-    fun getNotificationMessagesChannelVersion(): Int
-    fun setNotificationMessagesChannelVersion(version: Int)
     fun getBooleanPreference(key: String?, defaultValue: Boolean): Boolean
     fun setBooleanPreference(key: String?, value: Boolean)
     fun getStringPreference(key: String, defaultValue: String?): String?
@@ -273,7 +268,6 @@ interface TextSecurePreferences {
         const val LANGUAGE_PREF = "pref_language"
         const val LAST_VERSION_CODE_PREF = "last_version_code"
         const val SOUND_WHEN_OPEN = "pref_sound_when_app_open"
-        const val LED_COLOR_PREF_PRIMARY = "pref_led_color_primary"
         const val PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval"
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
@@ -294,8 +288,6 @@ interface TextSecurePreferences {
         const val BACKUP_SAVE_DIR = "pref_save_dir"
         const val SCREEN_LOCK = "pref_android_screen_lock"
         const val SCREEN_LOCK_TIMEOUT = "pref_android_screen_lock_timeout"
-        const val NOTIFICATION_CHANNEL_VERSION = "pref_notification_channel_version"
-        const val NOTIFICATION_MESSAGES_CHANNEL_VERSION = "pref_notification_messages_channel_version"
         const val UNIVERSAL_UNIDENTIFIED_ACCESS = "pref_universal_unidentified_access"
         const val TYPING_INDICATORS = "pref_typing_indicators"
         const val LINK_PREVIEWS = "pref_link_previews"
@@ -471,33 +463,8 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun getNotificationLedColor(context: Context): Int {
-            return getIntegerPreference(context, LED_COLOR_PREF_PRIMARY, ThemeUtil.getThemedColor(context, R.attr.colorAccent))
-        }
-
-        @JvmStatic
         fun isThreadLengthTrimmingEnabled(context: Context): Boolean {
             return getBooleanPreference(context, THREAD_TRIM_ENABLED, true)
-        }
-
-        @JvmStatic
-        fun getNotificationChannelVersion(context: Context): Int {
-            return getIntegerPreference(context, NOTIFICATION_CHANNEL_VERSION, 1)
-        }
-
-        @JvmStatic
-        fun setNotificationChannelVersion(context: Context, version: Int) {
-            setIntegerPreference(context, NOTIFICATION_CHANNEL_VERSION, version)
-        }
-
-        @JvmStatic
-        fun getNotificationMessagesChannelVersion(context: Context): Int {
-            return getIntegerPreference(context, NOTIFICATION_MESSAGES_CHANNEL_VERSION, 1)
-        }
-
-        @JvmStatic
-        fun setNotificationMessagesChannelVersion(context: Context, version: Int) {
-            setIntegerPreference(context, NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
         }
 
         @JvmStatic
@@ -853,10 +820,6 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, false)
     }
 
-    override fun getNotificationLedColor(): Int {
-        return getIntegerPreference(TextSecurePreferences.LED_COLOR_PREF_PRIMARY, context.getColor(R.color.accent_green))
-    }
-
     override fun setThreadLengthTrimmingEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, enabled)
         _events.tryEmit(TextSecurePreferences.THREAD_TRIM_ENABLED)
@@ -864,22 +827,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isThreadLengthTrimmingEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, true)
-    }
-
-    override fun getNotificationChannelVersion(): Int {
-        return getIntegerPreference(TextSecurePreferences.NOTIFICATION_CHANNEL_VERSION, 1)
-    }
-
-    override fun setNotificationChannelVersion(version: Int) {
-        setIntegerPreference(TextSecurePreferences.NOTIFICATION_CHANNEL_VERSION, version)
-    }
-
-    override fun getNotificationMessagesChannelVersion(): Int {
-        return getIntegerPreference(TextSecurePreferences.NOTIFICATION_MESSAGES_CHANNEL_VERSION, 1)
-    }
-
-    override fun setNotificationMessagesChannelVersion(version: Int) {
-        setIntegerPreference(TextSecurePreferences.NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
     }
 
     override fun hasForcedNewConfig(): Boolean =

@@ -12,15 +12,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.ServiceUtil;
-import org.session.libsession.utilities.TextSecurePreferences;
+import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.preferences.PreferenceKey;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
 
 import java.util.Arrays;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 
+@Singleton
 public class NotificationChannels {
 
   private static final String TAG = NotificationChannels.class.getSimpleName();
@@ -41,45 +47,56 @@ public class NotificationChannels {
   public static final String LOCKED_STATUS = "locked_status_v2";
   public static final String OTHER         = "other_v2";
 
-  /**
-   * Ensures all of the notification channels are created. No harm in repeat calls. Call is safely
-   * ignored for API < 26.
-   */
-  public static synchronized void create(@NonNull Context context) {
-    NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
+  private static final PreferenceKey<Integer> CHANNEL_VERSION = PreferenceKey.Companion.integer("pref_notification_channel_version", 1);
+  private static final PreferenceKey<Integer> MESSAGE_CHANNEL_VERSION = PreferenceKey.Companion.integer("pref_notification_messages_channel_version", 1);
 
-    int oldVersion = TextSecurePreferences.getNotificationChannelVersion(context);
+  @NonNull final Context context;
+  @NonNull final PreferenceStorage prefs;
+  @NonNull final NotificationManager notificationManager;
+
+  @Inject
+  public NotificationChannels(@NonNull @ApplicationContext Context context, @NonNull PreferenceStorage prefs) {
+    this.context = context;
+    this.prefs = prefs;
+
+    notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+    int oldVersion = prefs.get(CHANNEL_VERSION);
     if (oldVersion != VERSION) {
       onUpgrade(notificationManager, oldVersion, VERSION);
-      TextSecurePreferences.setNotificationChannelVersion(context, VERSION);
+      prefs.set(CHANNEL_VERSION, VERSION);
     }
 
-    onCreate(context, notificationManager);
+    onCreate();
+  }
+
+  public void recreate() {
+    onCreate();
   }
 
   /**
    * @return The channel ID for the default messages channel.
    */
-  public static synchronized @NonNull String getMessagesChannel(@NonNull Context context) {
-    return getMessagesChannelId(TextSecurePreferences.getNotificationMessagesChannelVersion(context));
+  public @NonNull String getMessagesChannel() {
+    return getMessagesChannelId(prefs.get(MESSAGE_CHANNEL_VERSION));
   }
 
 
   /**
    * @return The message ringtone set for the default message channel.
    */
-  public static synchronized @NonNull Uri getMessageRingtone(@NonNull Context context) {
-    Uri sound = ServiceUtil.getNotificationManager(context).getNotificationChannel(getMessagesChannel(context)).getSound();
+  public synchronized @NonNull Uri getMessageRingtone() {
+    Uri sound = notificationManager.getNotificationChannel(getMessagesChannel()).getSound();
     return sound == null ? Uri.EMPTY : sound;
   }
 
   /**
    * Update the message ringtone for the default message channel.
    */
-  public static synchronized void updateMessageRingtone(@NonNull Context context, @Nullable Uri uri) {
+  public synchronized void updateMessageRingtone(@Nullable Uri uri) {
     Log.i(TAG, "Updating default message ringtone with URI: " + String.valueOf(uri));
 
-    updateMessageChannel(context, channel -> {
+    updateMessageChannel(channel -> {
       channel.setSound(uri == null ? Settings.System.DEFAULT_NOTIFICATION_URI : uri, getRingtoneAudioAttributes());
     });
   }
@@ -88,34 +105,37 @@ public class NotificationChannels {
   /**
    * @return The vibrate settings for the default message channel.
    */
-  public static synchronized boolean getMessageVibrate(@NonNull Context context) {
-    return ServiceUtil.getNotificationManager(context).getNotificationChannel(getMessagesChannel(context)).shouldVibrate();
+  public synchronized boolean getMessageVibrate() {
+    return notificationManager.getNotificationChannel(getMessagesChannel()).shouldVibrate();
   }
 
   /**
    * Sets the vibrate property for the default message channel.
    */
-  public static synchronized void updateMessageVibrate(@NonNull Context context, boolean enabled) {
+  public synchronized void updateMessageVibrate(@NonNull Context context, boolean enabled) {
     Log.i(TAG, "Updating default vibrate with value: " + enabled);
 
-    updateMessageChannel(context, channel -> channel.enableVibration(enabled));
+    updateMessageChannel(channel -> channel.enableVibration(enabled));
   }
 
 
-  private static void onCreate(@NonNull Context context, @NonNull NotificationManager notificationManager) {
+  private void onCreate() {
     NotificationChannelGroup messagesGroup = new NotificationChannelGroup(CATEGORY_MESSAGES, context.getResources().getString(R.string.messages));
     notificationManager.createNotificationChannelGroup(messagesGroup);
 
-    NotificationChannel messages     = new NotificationChannel(getMessagesChannel(context), context.getString(R.string.theDefault), NotificationManager.IMPORTANCE_HIGH);
+    NotificationChannel messages     = new NotificationChannel(getMessagesChannel(), context.getString(R.string.theDefault), NotificationManager.IMPORTANCE_HIGH);
     NotificationChannel calls        = new NotificationChannel(CALLS, context.getString(R.string.callsSettings), NotificationManager.IMPORTANCE_HIGH);
     NotificationChannel failures     = new NotificationChannel(FAILURES, context.getString(R.string.failures), NotificationManager.IMPORTANCE_HIGH);
     NotificationChannel lockedStatus = new NotificationChannel(LOCKED_STATUS, context.getString(R.string.lockAppStatus), NotificationManager.IMPORTANCE_LOW);
     NotificationChannel other        = new NotificationChannel(OTHER, context.getString(R.string.other), NotificationManager.IMPORTANCE_LOW);
 
     messages.setGroup(CATEGORY_MESSAGES);
-    messages.enableVibration(TextSecurePreferences.isNotificationVibrateEnabled(context));
-    messages.setSound(TextSecurePreferences.getNotificationRingtone(context), getRingtoneAudioAttributes());
-    setLedPreference(messages, TextSecurePreferences.getNotificationLedColor(context));
+    messages.enableVibration(prefs.get(NotificationPreferences.INSTANCE.getENABLE_VIBRATION()));
+
+    String ringtoneUri = prefs.get(NotificationPreferences.INSTANCE.getRINGTONE());
+    messages.setSound((ringtoneUri != null) ? Uri.parse(ringtoneUri) : null, getRingtoneAudioAttributes());
+    Integer ledColor = prefs.get(NotificationPreferences.INSTANCE.getLED_COLOR());
+    setLedPreference(messages, ledColor == 0 ? context.getColor(R.color.accent_green) : ledColor);
 
     calls.setShowBadge(false);
     calls.setSound(null, null);
@@ -146,13 +166,9 @@ public class NotificationChannels {
     }
   }
 
-  private static void setLedPreference(@NonNull NotificationChannel channel, @NonNull Integer ledColor) {
-    if ("none".equals(ledColor)) {
-      channel.enableLights(false);
-    } else {
-      channel.enableLights(true);
-      channel.setLightColor(ledColor);
-    }
+  private static void setLedPreference(@NonNull NotificationChannel channel, int ledColor) {
+    channel.enableLights(true);
+    channel.setLightColor(ledColor);
   }
 
 
@@ -181,16 +197,16 @@ public class NotificationChannels {
   }
 
 
-  private static void updateMessageChannel(@NonNull Context context, @NonNull ChannelUpdater updater) {
-    NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
-    int existingVersion                     = TextSecurePreferences.getNotificationMessagesChannelVersion(context);
+  private void updateMessageChannel(@NonNull ChannelUpdater updater) {
+    NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    int existingVersion                     = prefs.get(MESSAGE_CHANNEL_VERSION);
     int newVersion                          = existingVersion + 1;
 
     Log.i(TAG, "Updating message channel from version " + existingVersion + " to " + newVersion);
     if (updateExistingChannel(notificationManager, getMessagesChannelId(existingVersion), getMessagesChannelId(newVersion), updater)) {
-      TextSecurePreferences.setNotificationMessagesChannelVersion(context, newVersion);
+      prefs.set(MESSAGE_CHANNEL_VERSION, newVersion);
     } else {
-      onCreate(context, notificationManager);
+      recreate();
     }
   }
 

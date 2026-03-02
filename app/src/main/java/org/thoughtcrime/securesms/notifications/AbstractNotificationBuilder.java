@@ -16,6 +16,8 @@ import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientNamesKt;
+import org.thoughtcrime.securesms.preferences.PreferenceKey;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
 
 import network.loki.messenger.R;
 
@@ -29,14 +31,21 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
   protected Context                       context;
   protected NotificationPrivacyPreference privacy;
   protected final Bundle                  extras;
+  protected final NotificationChannels notificationChannels;
+  private final PreferenceStorage preferenceStorage;
 
-  public AbstractNotificationBuilder(Context context, NotificationPrivacyPreference privacy) {
+  public AbstractNotificationBuilder(Context context,
+                                     NotificationPrivacyPreference privacy,
+                                     NotificationChannels notificationChannels,
+                                     PreferenceStorage preferenceStorage) {
     super(context);
-    extras = new Bundle();
+    this.notificationChannels = notificationChannels;
+      this.preferenceStorage = preferenceStorage;
+      extras = new Bundle();
     this.context = context;
     this.privacy = privacy;
 
-    setChannelId(NotificationChannels.getMessagesChannel(context));
+    setChannelId(AbstractNotificationBuilder.this.notificationChannels.getMessagesChannel());
     setLed();
   }
 
@@ -50,15 +59,15 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
   }
 
   public void setAlarms(@Nullable Uri ringtone) {
-    Uri     defaultRingtone = NotificationChannels.getMessageRingtone(context);
-    boolean defaultVibrate  = NotificationChannels.getMessageVibrate(context);
+    Uri     defaultRingtone = notificationChannels.getMessageRingtone();
+    boolean defaultVibrate  = notificationChannels.getMessageVibrate();
 
     if      (ringtone == null && !TextUtils.isEmpty(defaultRingtone.toString())) setSound(defaultRingtone);
     else if (ringtone != null && !ringtone.toString().isEmpty())                 setSound(ringtone);
   }
 
   private void setLed() {
-    int ledColor = TextSecurePreferences.getNotificationLedColor(context);
+    int ledColor = preferenceStorage.get(NotificationPreferences.INSTANCE.getLED_COLOR());
     setLights(ledColor, 500,2000);
   }
 

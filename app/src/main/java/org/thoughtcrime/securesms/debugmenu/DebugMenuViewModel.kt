@@ -48,6 +48,7 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.preferences.AppPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceKey
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
@@ -95,7 +96,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             showEnvironmentWarningDialog = false,
             showLoadingDialog = false,
             showDeprecatedStateWarningDialog = false,
-            hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
+            hideMessageRequests = preferenceStorage[AppPreferences.HAS_HIDDEN_MESSAGE_REQUESTS],
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
             forceDeterministicEncryption = textSecurePreferences.forcesDeterministicAttachmentEncryption,
@@ -239,7 +240,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.HideMessageRequest -> {
-                textSecurePreferences.setHasHiddenMessageRequests(command.hide)
+                preferenceStorage[AppPreferences.HAS_HIDDEN_MESSAGE_REQUESTS] = command.hide
                 _uiState.value = _uiState.value.copy(hideMessageRequests = command.hide)
             }
 

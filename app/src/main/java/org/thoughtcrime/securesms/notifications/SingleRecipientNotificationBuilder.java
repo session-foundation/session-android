@@ -35,6 +35,7 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
+import org.thoughtcrime.securesms.preferences.PreferenceStorage;
 import org.thoughtcrime.securesms.util.AvatarUtils;
 
 import java.util.LinkedList;
@@ -70,9 +71,11 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
           @NonNull Context context,
           @NonNull NotificationPrivacyPreference privacy,
           @NonNull AvatarUtils avatarUtils,
-          Provider<ImageLoader> imageLoaderProvider
+          Provider<ImageLoader> imageLoaderProvider,
+          @NonNull NotificationChannels notificationChannels,
+          @NonNull PreferenceStorage prefs
   ) {
-    super(context, privacy);
+    super(context, privacy, notificationChannels, prefs);
 
     this.avatarUtils = avatarUtils;
     this.imageLoaderProvider = imageLoaderProvider;
@@ -82,7 +85,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   }
 
   public void setThread(@NonNull Recipient recipient) {
-    setChannelId(NotificationChannels.getMessagesChannel(context));
+    setChannelId(notificationChannels.getMessagesChannel());
 
     Bitmap largeIconBitmap;
     boolean recycleBitmap;

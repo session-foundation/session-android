@@ -16,10 +16,15 @@ import org.session.libsession.utilities.Util.getBoldedString
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.ui.getSubbedString
 import java.util.LinkedList
 
-class GroupSummaryNotificationBuilder(context: Context, privacy: NotificationPrivacyPreference?) : AbstractNotificationBuilder(context, privacy) {
+class GroupSummaryNotificationBuilder(context: Context,
+                                      privacy: NotificationPrivacyPreference?,
+                                      notificationChannels: NotificationChannels,
+                                      preferenceStorage: PreferenceStorage,
+) : AbstractNotificationBuilder(context, privacy, notificationChannels, preferenceStorage) {
     private val messageBodies: MutableList<CharSequence> = LinkedList()
 
     init {

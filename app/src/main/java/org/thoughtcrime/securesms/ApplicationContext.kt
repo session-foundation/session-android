@@ -136,7 +136,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         initializeSecurityProvider()
         initializeLogging()
         initializeCrashHandling()
-        NotificationChannels.create(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         initializeWebRtc()

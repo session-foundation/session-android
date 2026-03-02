@@ -87,6 +87,7 @@ import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.AppPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
@@ -1002,7 +1003,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             text(getString(R.string.hide))
             button(R.string.yes) {
-                textSecurePreferences.setHasHiddenMessageRequests(true)
+                prefs[AppPreferences.HAS_HIDDEN_MESSAGE_REQUESTS] = true
                 homeViewModel.tryReload()
             }
             button(R.string.no)

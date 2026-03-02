@@ -34,7 +34,7 @@ class PreferenceKey<T>(
         fun string(name: String, defaultValue: String? = null): PreferenceKey<String?> =
             PreferenceKey(name, Strategy.PrimitiveString(defaultValue))
 
-        fun int(name: String, defaultValue: Int): PreferenceKey<Int> =
+        fun integer(name: String, defaultValue: Int): PreferenceKey<Int> =
             PreferenceKey(name, Strategy.PrimitiveInt(defaultValue))
 
         fun long(name: String, defaultValue: Long): PreferenceKey<Long> =
