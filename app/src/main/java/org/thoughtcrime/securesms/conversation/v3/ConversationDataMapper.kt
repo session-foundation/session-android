@@ -141,12 +141,18 @@ class ConversationDataMapper @Inject constructor(
             current.isOutgoing != previous.isOutgoing
         }
 
-    private fun isEndOfCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean =
-        next == null || next.isControlMessage || !dateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
+    private fun isEndOfCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean {
+        if (next == null || next.isControlMessage) return true
+
+        // If there's a date break before the next message, this is the end of a cluster
+        if (shouldShowDateBreak(next, current)) return true
+
+        return if (isGroupThread) {
             current.recipient.address != next.recipient.address
         } else {
             current.isOutgoing != next.isOutgoing
         }
+    }
 
     private fun shouldShowDateBreak(current: MessageRecord, previous: MessageRecord?): Boolean {
         // Always show before the first visible message (no previous)
