@@ -453,9 +453,7 @@ dependencies {
     testJvmAgent(libs.mockito.core) { isTransitive = false }
 
     androidTestImplementation(libs.androidx.espresso.core)
-//    androidTestImplementation(libs.androidx.espresso.contrib)
     androidTestImplementation(libs.androidx.espresso.intents)
-//    androidTestImplementation(libs.androidx.espresso.accessibility)
     androidTestImplementation(libs.androidx.espresso.contrib) {
         exclude(group = "com.google.protobuf", module = "protobuf-lite")
     }
@@ -485,7 +483,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     androidTestImplementation(libs.androidx.ui.test.junit4.android)
-    androidTestImplementation(libs.uiAutomator)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation(libs.androidx.navigation.compose)
