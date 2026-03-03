@@ -1,116 +1,174 @@
 package org.thoughtcrime.securesms.conversation.v3
 
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withLink
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 
+/**
+ * Formats message text for Compose rendering.
+ *
+ * Responsibilities:
+ * - Adds URL string annotations ("url") + underline style (tap handling is done in the Composable).
+ * - Bolds mentions and adds mention metadata annotations.
+ * - Adds a "mention_bg" annotation for mentions that require a rounded background.
+ * - Inserts subtle *layout spacing* immediately OUTSIDE mention_bg mentions so the rounded background
+ *   doesn't visually butt against neighboring words.
+ *
+ * Non-responsibilities:
+ * - No click handling
+ * - No theme colors
+ * - No UI behavior
+ *
+ * Safe to call in mappers: deterministic, context-free, no closures.
+ */
 object RichTextFormatter {
 
     private val URL_REGEX = Regex("""(?i)\bhttps?://[^\s<>()]+\b""")
+    //todo convov3 look at new way to match urls
+
+    // Subtle spacing that affects layout but is visually minimal.
+    // If too subtle, try '\u2009' (thin space).
+    private const val OUTSIDE_SPACE: Char = '\u200A' // hair space
 
     /**
-     * Build an AnnotatedString for message text with:
-     * - URLs made clickable using LinkAnnotation (no ClickableText)
-     * - URL underline via TextLinkStyles
-     * - Mentions bold + mention metadata + mention_bg tag where needed
+     * Formats parsed message text into an AnnotatedString suitable for RichText().
      *
-     * Notes:
-     * - We build sequentially because LinkAnnotation can only be applied while appending (withLink).
-     * - We do NOT apply colors here (leave to Compose theme).
-     *
-     * @param onUrlClick called when a URL is clicked. You decide how to open it.
+     * @param parsed Result of MentionUtilities.parseAndSubstituteMentions
+     * @param isOutgoing Whether the message is outgoing
      */
     fun formatMessage(
         parsed: MentionUtilities.ParsedMentions,
-        isOutgoing: Boolean,
-        onUrlClick: (String) -> Unit
+        isOutgoing: Boolean
     ): AnnotatedString {
-        val text = parsed.text
+        val input = parsed.text
+        val mentionsIn = parsed.mentions
+            .sortedBy { it.start } // ensure deterministic left-to-right processing
 
-        val base = buildAnnotatedString {
-            var cursor = 0
+        // 1) Build output text and remap mention ranges safely.
+        val remapped = buildTextWithOutsideSpacing(
+            text = input,
+            mentions = mentionsIn,
+            needsBg = { it.isSelf && !isOutgoing }
+        )
 
-            URL_REGEX.findAll(text).forEach { match ->
-                var start = match.range.first
-                var endExclusive = match.range.last + 1
-                var urlText = match.value
+        val outText = remapped.text
+        val outMentions = remapped.mentions
 
-                // Trim common trailing punctuation from URL matches so "https://x.y)." doesn't include ")."
-                val (trimmedUrl, trailing) = trimTrailingUrlPunctuation(urlText)
-                if (trimmedUrl != urlText) {
-                    endExclusive = start + trimmedUrl.length
-                    urlText = trimmedUrl
-                }
+        // 2) Build AnnotatedString with styles/annotations.
+        val b = AnnotatedString.Builder(outText)
 
-                // Append non-url chunk
-                if (cursor < start) append(text.substring(cursor, start))
+        // URLs: underline + "url" annotation (click handled in composable)
+        URL_REGEX.findAll(outText).forEach { match ->
+            val start = match.range.first
+            val rawUrl = match.value
+            val (url, _) = trimTrailingUrlPunctuation(rawUrl)
+            val endExclusive = start + url.length
 
-                // Append URL chunk with link
-                val link = LinkAnnotation.Clickable(
-                    tag = "url",
-                    linkInteractionListener = { onUrlClick(urlText) },
-                    styles = TextLinkStyles(
-                        style = SpanStyle(textDecoration = TextDecoration.Underline)
-                    )
-                )
-                withLink(link) { append(urlText) }
-
-                // Append trailing punctuation that we trimmed off
-                if (trailing.isNotEmpty()) append(trailing)
-
-                cursor = match.range.last + 1 // move past the ORIGINAL match
-            }
-
-            // Append remaining text
-            if (cursor < text.length) append(text.substring(cursor))
+            b.addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, endExclusive)
+            b.addStringAnnotation(tag = "url", annotation = url, start = start, end = endExclusive)
         }
 
-        // Now add mention styles/annotations by range.
-        // Mention ranges are based on parsed.text; since we rebuilt the same text content in order,
-        // indices still line up.
-        val b = AnnotatedString.Builder(base)
-
-        parsed.mentions.forEach { m ->
-            val start = m.start
-            val end = m.endExclusive
-
-            // Bold mentions (parity)
-            b.addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
-
-            // Metadata tags (optional but handy)
-            b.addStringAnnotation("mention_pk", m.publicKey, start, end)
-            b.addStringAnnotation("mention_self", m.isSelf.toString(), start, end)
-
-            // Tag when mention needs rounded background:
-            // parity with XML: incoming mentioning you
-            val needsBg = m.isSelf && !isOutgoing
-            if (needsBg) {
-                b.addStringAnnotation("mention_bg", "true", start, end)
-            }
+        // Mentions: bold + metadata + bg marker (ranges are correct in outText)
+        outMentions.forEach { m ->
+            b.addStyle(SpanStyle(fontWeight = FontWeight.Bold), m.start, m.endExclusive)
+            b.addStringAnnotation("mention_pk", m.publicKey, m.start, m.endExclusive)
+            b.addStringAnnotation("mention_self", m.isSelf.toString(), m.start, m.endExclusive)
+            if (m.needsBg) b.addStringAnnotation("mention_bg", "true", m.start, m.endExclusive)
         }
 
         return b.toAnnotatedString()
     }
 
+    // ---------------------------------------------------------------------
+    // Safe range remapping
+    // ---------------------------------------------------------------------
+
+    private data class RemappedText(
+        val text: String,
+        val mentions: List<MentionOut>
+    )
+
+    private data class MentionOut(
+        val start: Int,
+        val endExclusive: Int,
+        val publicKey: String,
+        val isSelf: Boolean,
+        val needsBg: Boolean
+    )
+
+    /**
+     * Builds the final text left-to-right and produces new mention ranges.
+     * This is the only robust way to insert extra characters without corrupting ranges.
+     */
+    private fun buildTextWithOutsideSpacing(
+        text: String,
+        mentions: List<MentionUtilities.MentionToken>,
+        needsBg: (MentionUtilities.MentionToken) -> Boolean
+    ): RemappedText {
+        val out = StringBuilder(text.length + mentions.size * 2)
+        val outMentions = ArrayList<MentionOut>(mentions.size)
+
+        var cursor = 0
+
+        for (m in mentions) {
+            val start = m.start
+            val end = m.endExclusive
+
+            // Guard (mentions should be non-overlapping; if they aren't, we skip safely)
+            if (start < cursor || start > text.length || end > text.length || start >= end) {
+                continue
+            }
+
+            // Append text before mention
+            if (cursor < start) out.append(text, cursor, start)
+
+            val bg = needsBg(m)
+
+            // Insert OUTSIDE_SPACE before mention if bg
+            if (bg) out.append(OUTSIDE_SPACE)
+
+            val mentionStartOut = out.length
+            out.append(text, start, end)
+            val mentionEndOut = out.length
+
+            // Insert OUTSIDE_SPACE after mention if bg
+            if (bg) out.append(OUTSIDE_SPACE)
+
+            outMentions += MentionOut(
+                start = mentionStartOut,
+                endExclusive = mentionEndOut,
+                publicKey = m.publicKey,
+                isSelf = m.isSelf,
+                needsBg = bg
+            )
+
+            cursor = end
+        }
+
+        // Append trailing text after last mention
+        if (cursor < text.length) out.append(text, cursor, text.length)
+
+        return RemappedText(text = out.toString(), mentions = outMentions)
+    }
+
+    // ---------------------------------------------------------------------
+    // URL helpers
+    // ---------------------------------------------------------------------
+
+    /**
+     * Removes common trailing punctuation from detected URLs.
+     * Example: "https://example.com)." => url="https://example.com", trailing=")."
+     */
     private fun trimTrailingUrlPunctuation(url: String): Pair<String, String> {
         if (url.isEmpty()) return url to ""
 
-        // Common trailing punctuation we don't want inside URL
         val trailingChars = ".,;:!?)]}\"'"
         var end = url.length
         while (end > 0 && trailingChars.indexOf(url[end - 1]) >= 0) end--
 
-        // If we trimmed everything, keep original
         if (end == 0) return url to ""
-
-        val trimmed = url.substring(0, end)
-        val trailing = url.substring(end)
-        return trimmed to trailing
+        return url.substring(0, end) to url.substring(end)
     }
 }

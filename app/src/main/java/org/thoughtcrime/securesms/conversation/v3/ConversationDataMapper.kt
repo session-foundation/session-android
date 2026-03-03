@@ -260,9 +260,7 @@ class ConversationDataMapper @Inject constructor(
             val annotatedBody =  RichTextFormatter.formatMessage(
                 parsed = parsed,
                 isOutgoing = record.isOutgoing,
-            ) { url ->
-
-            }
+            )
 
             primaryData += MessageContentData.Text(annotatedBody)
         }
@@ -378,8 +376,7 @@ class ConversationDataMapper @Inject constructor(
 
             RichTextFormatter.formatMessage(
                 parsed = parsed,
-                isOutgoing = record.isOutgoing,
-                onUrlClick = {}
+                isOutgoing = record.isOutgoing
             )
         } else {
             AnnotatedString(context.getString(R.string.document))

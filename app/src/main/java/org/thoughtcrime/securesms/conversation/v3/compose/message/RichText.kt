@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.message
 
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -9,6 +9,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -16,18 +17,16 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.style.TextOverflow.Companion
 import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalType
 
 /**
  * Renders message text with:
- * - clickable URLs (via LinkAnnotation inside AnnotatedString)
- * - underlined URLs (done in formatter via TextLinkStyles)
- * - mention bold (done in formatter)
- * - mention foreground color parity (applied here)
- * - mention rounded background parity (drawn here)
+ * - URL tap handling without ClickableText (tap -> offset -> "url" annotation)
+ * - Underlined URLs (from formatter)
+ * - Mention coloring + bold
+ * - Rounded bg for "mention_bg" ranges (with spacing)
  */
 @Composable
 fun RichText(
@@ -36,16 +35,13 @@ fun RichText(
     modifier: Modifier = Modifier,
     overflow: TextOverflow = TextOverflow.Clip,
     maxLines: Int = Int.MAX_VALUE,
+    onUrlClick: ((String) -> Unit)? = null,
 ) {
     val colors = LocalColors.current
-
-    // Parity with your XML color logic:
-    // mainTextColor: default message text color for this bubble direction
     val mainTextColor = if (isOutgoing) colors.textBubbleSent else colors.textBubbleReceived
 
-
-    // Build a styled copy (preserves existing LinkAnnotations)
-    val styled = remember(text, isOutgoing, mainTextColor) {
+    // Apply mention foreground styling (keep your rules; adjust as needed)
+    val styled = remember(text, isOutgoing, mainTextColor, colors) {
         buildAnnotatedString {
             append(text)
 
@@ -54,13 +50,7 @@ fun RichText(
                 val isSelf = text.getStringAnnotations("mention_self", m.start, m.end)
                     .firstOrNull()?.item == "true"
 
-                // Foreground parity rules :
-                val fg = when {
-                    // Incoming mentioning you: foreground is mainTextColor (on accent bg)
-                    !isSelf && !isOutgoing -> colors.accent
-
-                    else -> colors.textBubbleSent
-                }
+                val fg = if (!isSelf && !isOutgoing) colors.accentText else colors.textBubbleSent
 
                 addStyle(
                     SpanStyle(color = fg, fontWeight = FontWeight.Bold),
@@ -76,38 +66,52 @@ fun RichText(
     val density = LocalDensity.current
     val cornerPx = with(density) { 6.dp.toPx() }
     val padHPx = with(density) { 4.dp.toPx() }
-    val padVPx = with(density) { 2.dp.toPx() }
+    val padVPx = with(density) { 3.dp.toPx() }
 
-    // Mentions that need rounded background (parity tag from formatter)
     val bgRanges = remember(text, isOutgoing) {
         if (isOutgoing) emptyList()
         else text.getStringAnnotations("mention_bg", 0, text.length)
     }
 
-    val modifierWithBg = modifier.drawBehind {
-        val lr = layout ?: return@drawBehind
-        if (bgRanges.isEmpty()) return@drawBehind
+    val modifierWithBgAndClicks =
+        modifier
+            .drawBehind {
+                val lr = layout ?: return@drawBehind
+                if (bgRanges.isEmpty()) return@drawBehind
 
-        bgRanges.forEach { ann ->
-            computeLineRectsForRange(lr, ann.start, ann.end).forEach { r ->
-                drawRoundRect(
-                    color = colors.accent,
-                    topLeft = Offset(r.left - padHPx, r.top - padVPx),
-                    size = Size(
-                        width = (r.right - r.left) + padHPx * 2,
-                        height = (r.bottom - r.top) + padVPx * 2
-                    ),
-                    cornerRadius = CornerRadius(cornerPx, cornerPx)
-                )
+                bgRanges.forEach { ann ->
+                    computeLineRectsForRange(lr, ann.start, ann.end).forEach { r ->
+                        drawRoundRect(
+                            color = colors.accent,
+                            topLeft = Offset(r.left - padHPx, r.top - padVPx),
+                            size = Size(
+                                width = (r.right - r.left) + padHPx * 2,
+                                height = (r.bottom - r.top) + padVPx * 2
+                            ),
+                            cornerRadius = CornerRadius(cornerPx, cornerPx)
+                        )
+                    }
+                }
             }
-        }
-    }
+            .pointerInput(text, onUrlClick) {
+                if (onUrlClick == null) return@pointerInput
+                detectTapGestures { pos ->
+                    val lr = layout ?: return@detectTapGestures
+                    val offset = lr.getOffsetForPosition(pos)
 
-    // You can apply padding outside or pass in as modifier.
+                    val hit = text.getStringAnnotations("url", offset, offset)
+                        .firstOrNull()
+                        ?.item
+                        ?: return@detectTapGestures
+
+                    onUrlClick(hit)
+                }
+            }
+
     Text(
         text = styled,
         style = LocalType.current.large.copy(color = mainTextColor),
-        modifier = modifierWithBg,
+        modifier = modifierWithBgAndClicks,
         onTextLayout = { layout = it },
         maxLines = maxLines,
         overflow = overflow
@@ -141,6 +145,7 @@ private fun computeLineRectsForRange(
         }
     }
 
+    // Normalize to full line height so the bg looks consistent
     return rectsByLine.map { (line, r) ->
         val top = layout.getLineTop(line).toFloat()
         val bottom = layout.getLineBottom(line).toFloat()
