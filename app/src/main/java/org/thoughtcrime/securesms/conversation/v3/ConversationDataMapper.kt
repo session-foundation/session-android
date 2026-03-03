@@ -14,6 +14,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncatedForDisplay
+import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v3.compose.message.AudioMessageData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ClusterPosition
 import org.thoughtcrime.securesms.conversation.v3.compose.message.DocumentMessageData
@@ -33,6 +34,7 @@ import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewSta
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewStatusIcon
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionItem
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionViewState
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -54,6 +56,7 @@ class ConversationDataMapper @Inject constructor(
     private val avatarUtils: AvatarUtils,
     private val dateUtils: DateUtils,
     private val json: Json,
+    private val recipientRepository: RecipientRepository
 ) {
     private val timeZoneOffsetSeconds = TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000
 
@@ -247,9 +250,21 @@ class ConversationDataMapper @Inject constructor(
         mapQuote(record)?.let { primaryData += MessageContentData.Quote(it) }
         mapLinkPreview(record)?.let { primaryData += MessageContentData.Link(it) }
 
-        // todo CONVOv3: replace with spans for mentions, links, and markdown-style formatting
         if (record.body.isNotBlank()) {
-            primaryData += MessageContentData.Text(AnnotatedString(record.body))
+
+            val parsed = MentionUtilities.parseAndSubstituteMentions(
+                recipientRepository = recipientRepository,
+                input = record.body,
+                context = context
+            )
+            val annotatedBody =  RichTextFormatter.formatMessage(
+                parsed = parsed,
+                isOutgoing = record.isOutgoing,
+            ) { url ->
+
+            }
+
+            primaryData += MessageContentData.Text(annotatedBody)
         }
 
         // now we can map the message content data to message content, which is a wrapper
@@ -352,6 +367,24 @@ class ConversationDataMapper @Inject constructor(
     private fun mapQuote(record: MessageRecord): QuoteMessageData? {
         val quote = (record as? MmsMessageRecord)?.quote ?: return null
 
+        val raw = quote.text?.ifBlank { null }
+
+        val subtitle: AnnotatedString = if (raw != null) {
+            val parsed = MentionUtilities.parseAndSubstituteMentions(
+                recipientRepository = recipientRepository,
+                input = raw,
+                context = context
+            )
+
+            RichTextFormatter.formatMessage(
+                parsed = parsed,
+                isOutgoing = record.isOutgoing,
+                onUrlClick = {}
+            )
+        } else {
+            AnnotatedString(context.getString(R.string.document))
+        }
+
         val icon: MessageQuoteIcon = MessageQuoteIcon.Bar
         /*when {
             quote.attachment.thumbnail != null -> MessageQuoteIcon.Image(
@@ -364,8 +397,7 @@ class ConversationDataMapper @Inject constructor(
 
         return QuoteMessageData(
             title = quote.author.displayName(),
-            subtitle = quote.text?.ifBlank { null }
-                ?: context.getString(R.string.document),
+            subtitle = subtitle,
             icon = icon,
             showProBadge = quote.author.shouldShowProBadge
         )

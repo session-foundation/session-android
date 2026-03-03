@@ -120,10 +120,9 @@ fun MessageQuote(
                 else proBadgeColorStandard()
             )
 
-            Text(
+            RichText(
                 text = quote.subtitle,
-                style = LocalType.current.base,
-                color = getTextColor(outgoing),
+                isOutgoing = outgoing,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )

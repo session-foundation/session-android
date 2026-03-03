@@ -37,6 +37,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
@@ -272,8 +275,10 @@ fun MessageContentRenderer(content: MessageContent, layout: MessageLayout, maxWi
         )
     ) {
         when (content.contentData) {
-            is MessageContentData.Text -> MessageText(
-                text = content.contentData.text, outgoing = isOutgoing
+            is MessageContentData.Text -> RichText(
+                text = content.contentData.text,
+                isOutgoing = isOutgoing,
+                modifier = Modifier.padding(defaultMessageBubblePadding())
             )
 
             is MessageContentData.Quote -> MessageQuote(
@@ -370,20 +375,6 @@ fun MessageStatus(
 }
 
 @Composable
-fun MessageText(
-    text: AnnotatedString,
-    outgoing: Boolean,
-    modifier: Modifier = Modifier
-){
-    Text(
-        modifier = modifier.padding(defaultMessageBubblePadding()),
-        text = text,
-        style = LocalType.current.large,
-        color = getTextColor(outgoing),
-    )
-}
-
-@Composable
 internal fun getTextColor(outgoing: Boolean) = if(outgoing) LocalColors.current.textBubbleSent
 else LocalColors.current.textBubbleReceived
 
@@ -467,7 +458,7 @@ data class ReactionItem(
 
 data class QuoteMessageData(
     val title: String,
-    val subtitle: String,
+    val subtitle: AnnotatedString,
     val icon: MessageQuoteIcon,
     val showProBadge: Boolean
 )
@@ -783,7 +774,7 @@ object PreviewMessageData {
     fun image(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Image("".toUri(), "img.jpg", loading, width, height)
     fun video(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Video("".toUri(), "vid.mp4", loading, width, height)
     fun quote(title: String = "Toto", subtitle: String = "This is a quote", icon: MessageQuoteIcon = MessageQuoteIcon.Bar, showProBadge: Boolean = false) =
-        MessageContentData.Quote(QuoteMessageData(title, subtitle, icon, showProBadge))
+        MessageContentData.Quote(QuoteMessageData(title, AnnotatedString(subtitle), icon, showProBadge))
 
     fun composeContent(vararg content: MessageContentData): MessageContentGroup {
         return MessageContentGroup(

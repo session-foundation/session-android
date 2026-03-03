@@ -6,8 +6,6 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
-import android.util.Range
-import network.loki.messenger.R
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -17,6 +15,7 @@ import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.RoundedBackgroundSpan
 import org.thoughtcrime.securesms.util.getAccentColor
+import network.loki.messenger.R
 import java.util.regex.Pattern
 
 object MentionUtilities {
@@ -27,40 +26,121 @@ object MentionUtilities {
     /**
      * In-place replacement on the *live* MentionEditable that the
      * input-bar is already using.
-     *
-     * It swaps every "@<64-hex>" token for "@DisplayName" **and**
-     * attaches a MentionSpan so later normalisation still works.
      */
     fun substituteIdsInPlace(
         editable: MentionEditable,
         membersById: Map<String, MentionViewModel.Member>
     ) {
         ACCOUNT_ID.findAll(editable)
-            .toList()                // avoid index shifts
-            .asReversed()            // back-to-front replacement
+            .toList()       // avoid index shifts
+            .asReversed()   // back-to-front replacement
             .forEach { m ->
-                val id      = m.groupValues[1]
-                val member  = membersById[id] ?: return@forEach
+                val id = m.groupValues[1]
+                val member = membersById[id] ?: return@forEach
 
                 val start = m.range.first
-                val end   = m.range.last + 1    // inclusive ➜ exclusive
+                val end = m.range.last + 1 // inclusive ➜ exclusive
 
                 editable.replace(start, end, "@${member.name}")
-                editable.addMention(member, start .. start + member.name.length + 1)
+                editable.addMention(member, start..start + member.name.length + 1)
             }
     }
 
+    // ----------------------------
+    // Shared parsing/substitution core
+    // ----------------------------
+
+    data class MentionToken(
+        val start: Int,          // start in FINAL substituted text
+        val endExclusive: Int,   // end-exclusive in FINAL substituted text
+        val publicKey: String,
+        val isSelf: Boolean
+    )
+
+    data class ParsedMentions(
+        val text: String,
+        val mentions: List<MentionToken>
+    )
 
     /**
+     * Shared core:
+     * - replaces "@<66-hex>" with "@DisplayName"
+     * - returns the final text + mention ranges (in that final text) + metadata
+     *
+     * This is UI-agnostic and is used by BOTH:
+     * - legacy XML span formatting
+     * - Compose rich text formatting
+     */
+    @JvmStatic
+    fun parseAndSubstituteMentions(
+        recipientRepository: RecipientRepository,
+        input: CharSequence,
+        context: Context
+    ): ParsedMentions {
+        @Suppress("NAME_SHADOWING")
+        var text: CharSequence = input
+
+        var matcher = pattern.matcher(text)
+        val mentions = mutableListOf<MentionToken>()
+        var startIndex = 0
+
+        if (matcher.find(startIndex)) {
+            while (true) {
+                val publicKey =
+                    text.subSequence(matcher.start() + 1, matcher.end()).toString() // drop '@'
+
+                val user = recipientRepository.getRecipientSync(publicKey.toAddress())
+                val displayName = if (user.isSelf) {
+                    context.getString(R.string.you)
+                } else {
+                    user.displayName(attachesBlindedId = true)
+                }
+
+                val replacement = "@$displayName"
+
+                val newText = buildString(
+                    text.length - (matcher.end() - matcher.start()) + replacement.length
+                ) {
+                    append(text.subSequence(0, matcher.start()))
+                    append(replacement)
+                    append(text.subSequence(matcher.end(), text.length))
+                }
+
+                val start = matcher.start()
+                val endExclusive = start + replacement.length
+
+                mentions += MentionToken(
+                    start = start,
+                    endExclusive = endExclusive,
+                    publicKey = publicKey,
+                    isSelf = user.isSelf
+                )
+
+                text = newText
+                startIndex = endExclusive
+
+                matcher = pattern.matcher(text)
+                if (!matcher.find(startIndex)) break
+            }
+        }
+
+        return ParsedMentions(
+            text = text.toString(),
+            mentions = mentions
+        )
+    }
+
+    // ----------------------------
+    // Legacy (XML/TextView) formatter
+    // ----------------------------
+
+    /**
+     * Legacy (XML/TextView) formatter.
+     *
      * Highlights mentions in a given text.
      *
-     * @param text The text to highlight mentions in.
-     * @param isOutgoingMessage Whether the message is outgoing.
-     * @param isQuote Whether the message is a quote.
-     * @param formatOnly Whether to only format the mentions. If true we only format the text itself,
-     * for example resolving an accountID to a username. If false we also apply styling, like colors and background.
-     * @param context The context to use.
-     * @return A SpannableString with highlighted mentions.
+     * @param formatOnly If true we only format the text itself,
+     * for example resolving an accountID to a username. If false we also apply styling.
      */
     @JvmStatic
     fun highlightMentions(
@@ -71,108 +151,76 @@ object MentionUtilities {
         formatOnly: Boolean = false,
         context: Context
     ): SpannableString {
-        @Suppress("NAME_SHADOWING") var text = text
+        val parsed = parseAndSubstituteMentions(recipientRepository, text, context)
+        val result = SpannableString(parsed.text)
 
-        var matcher = pattern.matcher(text)
-        val mentions = mutableListOf<Pair<Range<Int>, String>>()
-        var startIndex = 0
+        if (formatOnly) return result
 
-        // Format the mention text
-        if (matcher.find(startIndex)) {
-            while (true) {
-                val publicKey = text.subSequence(matcher.start() + 1, matcher.end()).toString() // +1 to get rid of the @
-                val user = recipientRepository.getRecipientSync(publicKey.toAddress())
-
-                val userDisplayName: String = if (user.isSelf) {
-                    context.getString(R.string.you)
-                } else {
-                    user.displayName(attachesBlindedId = true)
-                }
-
-                val mention = "@$userDisplayName"
-                text = text.subSequence(0, matcher.start()).toString() + mention + text.subSequence(matcher.end(), text.length)
-                val endIndex = matcher.start() + 1 + userDisplayName.length
-                startIndex = endIndex
-                mentions.add(Pair(Range.create(matcher.start(), endIndex), publicKey))
-
-                matcher = pattern.matcher(text)
-                if (!matcher.find(startIndex)) { break }
-            }
-        }
-        val result = SpannableString(text)
-
-        // apply styling if required
         // Normal text color: black in dark mode and primary text color for light mode
         val mainTextColor by lazy {
             if (ThemeUtil.isDarkTheme(context)) context.getColor(R.color.black)
             else context.getColorFromAttr(android.R.attr.textColorPrimary)
         }
 
-        // Highlighted text color: primary/accent in dark mode and primary text color for light mode
+        // Highlighted text color: accent in dark theme and primary text for light
         val highlightedTextColor by lazy {
             if (ThemeUtil.isDarkTheme(context)) context.getAccentColor()
             else context.getColorFromAttr(android.R.attr.textColorPrimary)
         }
 
-        if(!formatOnly) {
-            for (mention in mentions) {
-                val backgroundColor: Int?
-                val foregroundColor: Int?
+        parsed.mentions.forEach { mention ->
+            val backgroundColor: Int?
+            val foregroundColor: Int?
 
-                // quotes
-                if(isQuote) {
-                    backgroundColor = null
-                    // the text color has different rule depending if the message is incoming or outgoing
-                    foregroundColor = if(isOutgoingMessage) null else highlightedTextColor
-                }
-                // incoming message mentioning you
-                else if (recipientRepository.getRecipientSync(mention.second.toAddress()).isSelf) {
-                    backgroundColor = context.getAccentColor()
-                    foregroundColor = mainTextColor
-                }
-                // outgoing message
-                else if (isOutgoingMessage) {
-                    backgroundColor = null
-                    foregroundColor = mainTextColor
-                }
-                // incoming messages mentioning someone else
-                else {
-                    backgroundColor = null
-                    // accent color for dark themes and primary text for light
-                    foregroundColor = highlightedTextColor
-                }
+            // quotes
+            if (isQuote) {
+                backgroundColor = null
+                // incoming quote gets accent-ish foreground, outgoing quote keeps default
+                foregroundColor = if (isOutgoingMessage) null else highlightedTextColor
+            }
+            // incoming message mentioning you
+            else if (mention.isSelf && !isOutgoingMessage) {
+                backgroundColor = context.getAccentColor()
+                foregroundColor = mainTextColor
+            }
+            // outgoing message
+            else if (isOutgoingMessage) {
+                backgroundColor = null
+                foregroundColor = mainTextColor
+            }
+            // incoming messages mentioning someone else
+            else {
+                backgroundColor = null
+                foregroundColor = highlightedTextColor
+            }
 
-                // apply the background, if any
-                backgroundColor?.let { background ->
-                    result.setSpan(
-                        RoundedBackgroundSpan(
-                            context = context,
-                            textColor = mainTextColor,
-                            backgroundColor = background
-                        ),
-                        mention.first.lower, mention.first.upper, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
+            val start = mention.start
+            val end = mention.endExclusive
 
-                // apply the foreground, if any
-                foregroundColor?.let {
-                    result.setSpan(
-                        ForegroundColorSpan(it),
-                        mention.first.lower,
-                        mention.first.upper,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-
-                // apply bold on the mention
+            backgroundColor?.let { background ->
                 result.setSpan(
-                    StyleSpan(Typeface.BOLD),
-                    mention.first.lower,
-                    mention.first.upper,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    RoundedBackgroundSpan(
+                        context = context,
+                        textColor = mainTextColor,
+                        backgroundColor = background
+                    ),
+                    start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                 )
             }
+
+            foregroundColor?.let { fg ->
+                result.setSpan(
+                    ForegroundColorSpan(fg),
+                    start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+
+            result.setSpan(
+                StyleSpan(Typeface.BOLD),
+                start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
         }
+
         return result
     }
 }
