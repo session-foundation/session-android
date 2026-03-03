@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.message
 
+import android.R.attr.textColor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +40,9 @@ import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessage
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.text
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.video
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.proBadgeColorOutgoing
+import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -108,18 +112,20 @@ fun MessageQuote(
         }
 
         Column{
-            Text(
+            ProBadgeText(
                 text = quote.title,
-                style = LocalType.current.base.bold(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = getTextColor(outgoing)
+                textStyle = LocalType.current.small.bold().copy(color = getTextColor(outgoing)),
+                showBadge = quote.showProBadge,
+                badgeColors = if(outgoing) proBadgeColorOutgoing() //todo convov3 xml quotes also checked for mode - regular here to distinguish form the quote used in the input
+                else proBadgeColorStandard()
             )
 
             Text(
                 text = quote.subtitle,
                 style = LocalType.current.base,
-                color = getTextColor(outgoing)
+                color = getTextColor(outgoing),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -148,7 +154,9 @@ fun QuoteMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.OUTGOING,
-                contentGroups = quoteGroup(text = "Quoting text")
+                contentGroups = quoteGroup(
+                    showProBadge = true,
+                    subtitle = "This is a long text efcwec wf fv d df klsdknvdslkvfds lk djvl jldfs vjldf jlkdfsv jldf jlkd jlkdf jlkdf jl kdvmkl dsfmkldmkldfmldflkdfmklfd lk mdfs fdmlkdfmklfd ml mlk mlkdf", text = "Quoting text")
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
@@ -158,7 +166,7 @@ fun QuoteMessagePreview(
                 displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
                 layout = MessageLayout.INCOMING,
-                contentGroups = quoteGroup(icon = MessageQuoteIcon.Icon(R.drawable.ic_file), text = "Quoting a document")
+                contentGroups = quoteGroup(icon = MessageQuoteIcon.Icon(R.drawable.ic_file), showProBadge = true, text = "Quoting a document")
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))

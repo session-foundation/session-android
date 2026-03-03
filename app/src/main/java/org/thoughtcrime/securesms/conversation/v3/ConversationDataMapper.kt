@@ -367,6 +367,7 @@ class ConversationDataMapper @Inject constructor(
             subtitle = quote.text?.ifBlank { null }
                 ?: context.getString(R.string.document),
             icon = icon,
+            showProBadge = quote.author.shouldShowProBadge
         )
     }
 

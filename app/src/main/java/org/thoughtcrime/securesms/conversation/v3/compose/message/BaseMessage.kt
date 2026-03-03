@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.min
 import androidx.core.net.toUri
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
@@ -58,6 +59,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import kotlin.math.min
 
 //todo CONVOv3 status animated icon for disappearing messages
 //todo CONVOv3 text formatting in bubble including mentions and links
@@ -112,11 +114,12 @@ fun RecipientMessage(
         modifier = modifier.fillMaxWidth()
             .padding(bottom = bottomPadding)
     ) {
-        val maxMessageWidth = max(
+        val maxMessageWidth = min(
+            LocalDimensions.current.maxMessageWidth, // cap a max width for large content like tablets and large landscape devices
+            max(
             LocalDimensions.current.minMessageWidth,
             this.maxWidth * 0.8f // 80% of available width
-            //todo ConvoV3 we probably should cap the max so that large screens/tablets don't extend too far
-        )
+        ))
 
         RecipientMessageContent(
             modifier = Modifier
@@ -465,7 +468,8 @@ data class ReactionItem(
 data class QuoteMessageData(
     val title: String,
     val subtitle: String,
-    val icon: MessageQuoteIcon
+    val icon: MessageQuoteIcon,
+    val showProBadge: Boolean
 )
 
 sealed class MessageQuoteIcon {
@@ -749,11 +753,12 @@ object PreviewMessageData {
         icon: MessageQuoteIcon = MessageQuoteIcon.Bar,
         title: String = "Toto",
         subtitle: String = "This is a quote",
-        text: String? = null
+        text: String? = null,
+        showProBadge: Boolean = false
     ): List<MessageContentGroup> {
         val group = mutableListOf<MessageContentData>()
         group.add(
-            quote(title = title, subtitle = subtitle, icon = icon)
+            quote(title = title, subtitle = subtitle, icon = icon, showProBadge = showProBadge)
         )
 
         if(text != null) group.add(MessageContentData.Text(AnnotatedString(text)))
@@ -777,8 +782,8 @@ object PreviewMessageData {
     ))
     fun image(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Image("".toUri(), "img.jpg", loading, width, height)
     fun video(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Video("".toUri(), "vid.mp4", loading, width, height)
-    fun quote(title: String = "Toto", subtitle: String = "This is a quote", icon: MessageQuoteIcon = MessageQuoteIcon.Bar) =
-        MessageContentData.Quote(QuoteMessageData(title, subtitle, icon))
+    fun quote(title: String = "Toto", subtitle: String = "This is a quote", icon: MessageQuoteIcon = MessageQuoteIcon.Bar, showProBadge: Boolean = false) =
+        MessageContentData.Quote(QuoteMessageData(title, subtitle, icon, showProBadge))
 
     fun composeContent(vararg content: MessageContentData): MessageContentGroup {
         return MessageContentGroup(
