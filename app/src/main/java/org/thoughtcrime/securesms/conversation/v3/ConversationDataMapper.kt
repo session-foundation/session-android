@@ -2,7 +2,9 @@ package org.thoughtcrime.securesms.conversation.v3
 
 import android.content.Context
 import android.text.format.Formatter
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
@@ -18,7 +20,9 @@ import org.thoughtcrime.securesms.conversation.v3.compose.message.DocumentMessag
 import org.thoughtcrime.securesms.conversation.v3.compose.message.HighlightMessage
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageAvatar
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageContent
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageContentData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageContentGroup
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageContentPadding
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLayout
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLinkData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageMediaItem
@@ -34,11 +38,13 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.mutableListOf
 import kotlin.math.abs
 
 
@@ -208,36 +214,60 @@ class ConversationDataMapper @Inject constructor(
 
         // Deleted messages — check first; body is not meaningful for these
         if (record.isDeleted) {
-            return listOf(MessageContentGroup(listOf(
-                MessageContent.Text(
+            addContentToGroup(
+                groups,
+                MessageContentData.Text(
                     text = AnnotatedString(context.getString(R.string.deleteMessageDeletedGlobally)),
                 )
-            )))
+            )
+
+            return groups
         }
 
         // Group 1: Quotes, Links, and Text
-        val primaryContent = mutableListOf<MessageContent>()
+        // We map the message content data first
+        val primaryData = mutableListOf<MessageContentData>()
 
-        // quotes
-        mapQuote(record)?.let { primaryContent.add(MessageContent.Quote(it)) }
-
-        // links
-        mapLinkPreview(record)?.let { primaryContent.add(MessageContent.Link(it)) }
+        mapQuote(record)?.let { primaryData += MessageContentData.Quote(it) }
+        mapLinkPreview(record)?.let { primaryData += MessageContentData.Link(it) }
 
         // todo CONVOv3: replace with spans for mentions, links, and markdown-style formatting
         if (record.body.isNotBlank()) {
-            primaryContent.add(MessageContent.Text(AnnotatedString(record.body)))
+            primaryData += MessageContentData.Text(AnnotatedString(record.body))
         }
 
         if (record.isOpenGroupInvitation) {
             val jsonData = UpdateMessageData.fromJSON(json, record.body)
             if (jsonData?.kind is UpdateMessageData.Kind.OpenGroupInvitation) {
-                primaryContent.add(MessageContent.CommunityInvite(jsonData.kind.groupName, jsonData.kind.groupUrl))
+                primaryData += MessageContentData.CommunityInvite(
+                    jsonData.kind.groupName,
+                    jsonData.kind.groupUrl
+                )
             }
         }
 
-        if (primaryContent.isNotEmpty()) {
-            groups.add(MessageContentGroup(primaryContent, showBubble = true))
+        // now we can map the message content data to message content, which is a wrapper
+        // that allows custom padding based on certain rules
+        // for example used by quotes to change their paddings depending on neighboring content
+        if (primaryData.isNotEmpty()) {
+            val primaryContents: List<MessageContent> =
+                primaryData.mapIndexed { index, data ->
+                    val extraPadding =
+                        if (data is MessageContentData.Quote) {
+                            // custom rules for quotes
+                            // add bottom padding if quote is alone or if there is a link below
+                            val isAlone = primaryData.size == 1
+                            val nextIsLink = primaryData.getOrNull(index + 1) is MessageContentData.Link
+
+                            if (isAlone || nextIsLink) MessageContentPadding.Bottom else MessageContentPadding.None
+                        } else {
+                            MessageContentPadding.None
+                        }
+
+                    MessageContent(contentData = data, extraPadding = extraPadding)
+                }
+
+            groups.add(MessageContentGroup(primaryContents, showBubble = true))
         }
 
         // Group 2: Media, Audio, or Documents
@@ -246,8 +276,9 @@ class ConversationDataMapper @Inject constructor(
             // Audio
             //todo convov3 maybe this should be packed inside an audio composable to live listen to changes locally?
             // todo CONVOv3: drive values from playback state
-            groups.add(
-                MessageContentGroup(listOf(MessageContent.Audio(
+            addContentToGroup(
+                groups,
+                MessageContentData.Audio(
                     AudioMessageData(
                         title = audioSlide.filename,
                         speedText = "1x",
@@ -256,17 +287,21 @@ class ConversationDataMapper @Inject constructor(
                         positionMs = 0L,
                         isPlaying = false,
                         showLoader = audioSlide.isInProgress
-            ))), showBubble = true))
+                    ))
+            )
         }
 
         val documentSlide = mms?.slideDeck?.documentSlide
         if (documentSlide != null) {
-            groups.add(MessageContentGroup(listOf(MessageContent.Document(DocumentMessageData(
-                name = documentSlide.filename,
-                size = Formatter.formatFileSize(context, documentSlide.fileSize),
-                uri = documentSlide.uri?.toString() ?: "",
-                loading = documentSlide.isInProgress
-            ))), showBubble = true))
+            addContentToGroup(
+                groups,
+                MessageContentData.Document(DocumentMessageData(
+                    name = documentSlide.filename,
+                    size = Formatter.formatFileSize(context, documentSlide.fileSize),
+                    uri = documentSlide.uri?.toString() ?: "",
+                    loading = documentSlide.isInProgress
+                ))
+            )
         }
 
         if (record is MediaMmsMessageRecord) {
@@ -285,11 +320,25 @@ class ConversationDataMapper @Inject constructor(
                         MessageMediaItem.Image(uri, filename, loading, width, height)
                     }
                 }
-                groups.add(MessageContentGroup(listOf(MessageContent.Media(items, items.any { it.loading })), showBubble = false))
+                groups.add(MessageContentGroup(listOf(MessageContent(
+                    MessageContentData.Media(items, items.any { it.loading })))
+                    , showBubble = false)
+                )
             }
         }
 
         return groups
+    }
+
+    private fun addContentToGroup(
+        groups: MutableList<MessageContentGroup>,
+        contentData: MessageContentData,
+        showBubble: Boolean = true,
+        paddingValues: MessageContentPadding = MessageContentPadding.None
+    ){
+        groups.add(
+            MessageContentGroup(listOf(MessageContent(contentData, paddingValues)), showBubble)
+        )
     }
 
     // ---- Quote ----
@@ -360,9 +409,6 @@ class ConversationDataMapper @Inject constructor(
         return ReactionViewState(
             reactions = items,
             isExtended = false,        // todo CONVOv3: drive from per-message expanded state in ViewModel
-            onReactionClick = {},
-            onReactionLongClick = {},
-            onShowMoreClick = {},
         )
     }
 

@@ -110,7 +110,7 @@ fun LinkMessagePreview(
                 layout = MessageLayout.INCOMING,
                 contentGroups = listOf(
                     composeContent(
-                        MessageContent.Link(
+                        MessageContentData.Link(
                             MessageLinkData(
                                 url = "https://getsession.org/",
                                 title = "Welcome to Session",
@@ -128,7 +128,7 @@ fun LinkMessagePreview(
                 layout = MessageLayout.OUTGOING,
                 contentGroups = listOf(
                     composeContent(
-                        MessageContent.Link(
+                        MessageContentData.Link(
                             MessageLinkData(
                                 url = "https://picsum.photos/id/0/367/267",
                                 title = "Welcome to Session with a very long name",
@@ -146,7 +146,7 @@ fun LinkMessagePreview(
                 contentGroups = listOf(
                     composeContent(
                         PreviewMessageData.quote(),
-                        MessageContent.Link(
+                        MessageContentData.Link(
                             MessageLinkData(
                                 url = "https://getsession.org/",
                                 title = "Welcome to Session",
@@ -165,7 +165,7 @@ fun LinkMessagePreview(
                 contentGroups = listOf(
                     composeContent(
                         PreviewMessageData.quote(),
-                        MessageContent.Link(
+                        MessageContentData.Link(
                             MessageLinkData(
                                 url = "https://picsum.photos/id/0/367/267",
                                 title = "Welcome to Session with a very long name",

@@ -260,25 +260,56 @@ fun RecipientMessageContent(
 @Composable
 fun MessageContentRenderer(content: MessageContent, layout: MessageLayout, maxWidth: Dp) {
     val isOutgoing = layout == MessageLayout.OUTGOING
-    when (content) {
-        is MessageContent.Text -> MessageText(
-            text = content.text, outgoing = isOutgoing
+    Box(
+        modifier = Modifier.padding(
+            when(content.extraPadding){
+                MessageContentPadding.Bottom -> PaddingValues(bottom = defaultMessageBubblePadding().calculateBottomPadding())
+                else -> PaddingValues()
+            }
         )
+    ) {
+        when (content.contentData) {
+            is MessageContentData.Text -> MessageText(
+                text = content.contentData.text, outgoing = isOutgoing
+            )
 
-        is MessageContent.Quote -> MessageQuote(
-            modifier = Modifier.padding(
-                bottom = if (content.addBottomBubblePadding)
-                    defaultMessageBubblePadding().calculateBottomPadding()
-                else 0.dp
-            ),
-            quote = content.data,
-            outgoing = isOutgoing
-        )
-        is MessageContent.Link -> MessageLink(content.data, isOutgoing)
-        is MessageContent.Document -> DocumentMessage(content.data, isOutgoing)
-        is MessageContent.Audio -> AudioMessage(content.data, isOutgoing)
-        is MessageContent.CommunityInvite -> CommunityInviteMessage(content.name, content.url, isOutgoing)
-        is MessageContent.Media -> MediaMessage(content.items, content.loading, maxWidth)
+            is MessageContentData.Quote -> MessageQuote(
+                quote = content.contentData.data,
+                outgoing = isOutgoing
+            )
+
+            is MessageContentData.Link ->
+                MessageLink(
+                    data = content.contentData.data,
+                    outgoing = isOutgoing
+                )
+
+            is MessageContentData.Document ->
+                DocumentMessage(
+                    data = content.contentData.data,
+                    outgoing = isOutgoing
+                )
+
+            is MessageContentData.Audio ->
+                AudioMessage(
+                    data = content.contentData.data,
+                    outgoing = isOutgoing
+                )
+
+            is MessageContentData.CommunityInvite ->
+                CommunityInviteMessage(
+                    name = content.contentData.name,
+                    url = content.contentData.url,
+                    outgoing = isOutgoing
+                )
+
+            is MessageContentData.Media ->
+                MediaMessage(
+                    items = content.contentData.items,
+                    loading = content.contentData.loading,
+                    maxWidth = maxWidth
+                )
+        }
     }
 }
 
@@ -379,14 +410,24 @@ data class MessageContentGroup(
     val showBubble: Boolean = true //whether the grouped content should be placed in a bubble
 )
 
-sealed interface MessageContent {
-    data class Text(val text: AnnotatedString) : MessageContent
-    data class Media(val items: List<MessageMediaItem>, val loading: Boolean) : MessageContent
-    data class Link(val data: MessageLinkData) : MessageContent
-    data class Quote(val data: QuoteMessageData, val addBottomBubblePadding: Boolean = false) : MessageContent
-    data class Document(val data: DocumentMessageData) : MessageContent
-    data class Audio(val data: AudioMessageData) : MessageContent
-    data class CommunityInvite(val name: String, val url: String) : MessageContent
+data class MessageContent(
+    val contentData: MessageContentData,
+    val extraPadding: MessageContentPadding = MessageContentPadding.None
+)
+
+sealed interface MessageContentPadding{
+    data object None: MessageContentPadding
+    data object Bottom: MessageContentPadding
+}
+
+sealed interface MessageContentData {
+    data class Text(val text: AnnotatedString) : MessageContentData
+    data class Media(val items: List<MessageMediaItem>, val loading: Boolean) : MessageContentData
+    data class Link(val data: MessageLinkData) : MessageContentData
+    data class Quote(val data: QuoteMessageData) : MessageContentData
+    data class Document(val data: DocumentMessageData) : MessageContentData
+    data class Audio(val data: AudioMessageData) : MessageContentData
+    data class CommunityInvite(val name: String, val url: String) : MessageContentData
 }
 
 enum class MessageLayout {
@@ -667,41 +708,42 @@ object PreviewMessageData {
     )
 
     fun textGroup(text: String = "Hi there") = listOf(
-        MessageContentGroup(listOf(text(text)), showBubble = true)
+        MessageContentGroup(listOf(MessageContent(text(text))), showBubble = true)
     )
 
     fun textGroup(text: AnnotatedString) = listOf(
-        MessageContentGroup(listOf(text(text)), showBubble = true)
+        MessageContentGroup(listOf(MessageContent(text(text))), showBubble = true)
     )
 
     fun audioGroup(
         title: String = "Voice Message",
         playing: Boolean = true
     ) = listOf(
-        MessageContentGroup(listOf(MessageContent.Audio(AudioMessageData(
+        MessageContentGroup(listOf(MessageContent(MessageContentData.Audio(AudioMessageData(
             title = title, speedText = "1x", remainingText = "0:20",
             durationMs = 83_000L, positionMs = 23_000L, isPlaying = playing, showLoader = false
-        ))), showBubble = true)
+        )))), showBubble = true)
     )
 
     fun documentGroup(
         name: String = "Document.pdf",
         loading: Boolean = false
     ) = listOf(
-        MessageContentGroup(listOf(document(name, loading)), showBubble = true)
+        MessageContentGroup(listOf(MessageContent(document(name, loading))), showBubble = true)
     )
 
     fun mediaGroup(
         items: List<MessageMediaItem>,
         text: String? = null
     ) = buildList {
-        if(text != null) add(MessageContentGroup(listOf(MessageContent.Text(AnnotatedString(text))), showBubble = true))
+        if(text != null) add(MessageContentGroup(
+            listOf(MessageContent(MessageContentData.Text(AnnotatedString(text)))), showBubble = true))
         add(mediaGroup(items))
     }
 
     fun mediaGroup(
         items: List<MessageMediaItem>,
-    ) = MessageContentGroup(listOf(MessageContent.Media(items, false)), showBubble = false)
+    ) = MessageContentGroup(listOf(MessageContent(MessageContentData.Media(items, false))), showBubble = false)
 
     fun quoteGroup(
         icon: MessageQuoteIcon = MessageQuoteIcon.Bar,
@@ -709,37 +751,39 @@ object PreviewMessageData {
         subtitle: String = "This is a quote",
         text: String? = null
     ): List<MessageContentGroup> {
-        val group = mutableListOf<MessageContent>()
+        val group = mutableListOf<MessageContentData>()
         group.add(
             quote(title = title, subtitle = subtitle, icon = icon)
         )
 
-        if(text != null) group.add(MessageContent.Text(AnnotatedString(text)))
+        if(text != null) group.add(MessageContentData.Text(AnnotatedString(text)))
 
-        return listOf(MessageContentGroup(group, showBubble = true))
+        return listOf(MessageContentGroup(group.map { MessageContent(it) }, showBubble = true))
     }
 
     // Individual item helpers
     fun text(
         text: String = "Hi there",
-    ) = MessageContent.Text(AnnotatedString(text))
+    ) = MessageContentData.Text(AnnotatedString(text))
     fun text(
         text: AnnotatedString,
-    ) = MessageContent.Text(text)
+    ) = MessageContentData.Text(text)
 
     fun document(
         name: String = "Document.pdf",
         loading: Boolean = false
-    ) = MessageContent.Document(DocumentMessageData(
+    ) = MessageContentData.Document(DocumentMessageData(
         name = name, size = "5.4MB", uri = "", loading = loading
     ))
     fun image(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Image("".toUri(), "img.jpg", loading, width, height)
     fun video(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Video("".toUri(), "vid.mp4", loading, width, height)
     fun quote(title: String = "Toto", subtitle: String = "This is a quote", icon: MessageQuoteIcon = MessageQuoteIcon.Bar) =
-        MessageContent.Quote(QuoteMessageData(title, subtitle, icon))
+        MessageContentData.Quote(QuoteMessageData(title, subtitle, icon))
 
-    fun composeContent(vararg content: MessageContent): MessageContentGroup {
-        return MessageContentGroup(content.toList())
+    fun composeContent(vararg content: MessageContentData): MessageContentGroup {
+        return MessageContentGroup(
+            contents = content.map { MessageContent(it) },
+        )
     }
 }
 

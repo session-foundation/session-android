@@ -23,7 +23,7 @@ fun ControlMessage(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 group.contents.forEach { content ->
                     // Cast to specific content types or render text
-                    if (content is MessageContent.Text) {
+                    if (content is MessageContentData.Text) {
                         Text(text = content.text, style = LocalType.current.small)
                     }
                 }

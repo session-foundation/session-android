@@ -211,9 +211,6 @@ fun PreviewConversation(
                                     ReactionItem("✅", 8, selected = false),
                                 ),
                                 isExtended = false,
-                                onReactionClick = {},
-                                onReactionLongClick = {},
-                                onShowMoreClick = {}
                             )
                         ))
                     )
