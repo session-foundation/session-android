@@ -278,7 +278,10 @@ fun MessageContentRenderer(content: MessageContent, layout: MessageLayout, maxWi
             is MessageContentData.Text -> RichText(
                 text = content.contentData.text,
                 isOutgoing = isOutgoing,
-                modifier = Modifier.padding(defaultMessageBubblePadding())
+                modifier = Modifier.padding(defaultMessageBubblePadding()),
+                onUrlClick = {
+                    //todo convov3 handle
+                }
             )
 
             is MessageContentData.Quote -> MessageQuote(

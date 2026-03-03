@@ -59,7 +59,7 @@ fun RichText(
         }
     }
 
-    val (displayText, bgRanges) = remember(text, isOutgoing, colors) {
+    val (displayText, bgRanges) =  remember(text, isOutgoing, colors, onUrlClick != null) {
         val withColors = buildAnnotatedString {
             append(text)
 
@@ -76,22 +76,33 @@ fun RichText(
             }
         }
 
-        val displayText = withColors.mapAnnotations { range ->
-            val item = range.item
-            if (item is LinkAnnotation.Clickable) {
-                val url = item.tag
-                AnnotatedString.Range(
-                    item = LinkAnnotation.Clickable(
-                        tag = url,
-                        styles = item.styles,
-                        linkInteractionListener = { onUrlClickState.value?.invoke(url) }
-                    ),
-                    start = range.start,
-                    end = range.end,
-                    tag = range.tag
-                )
-            } else {
-                range
+        val displayText = if (onUrlClick != null) {
+            withColors.mapAnnotations { range ->
+                val item = range.item
+                if (item is LinkAnnotation.Clickable) {
+                    val url = item.tag
+                    AnnotatedString.Range(
+                        item = LinkAnnotation.Clickable(
+                            tag = url,
+                            styles = item.styles,
+                            linkInteractionListener = { onUrlClickState.value?.invoke(url) }
+                        ),
+                        start = range.start,
+                        end = range.end,
+                        tag = range.tag
+                    )
+                } else {
+                    range
+                }
+            }
+        } else {
+            buildAnnotatedString {
+                append(withColors.text)
+                withColors.spanStyles.forEach { addStyle(it.item, it.start, it.end) }
+                withColors.paragraphStyles.forEach { addStyle(it.item, it.start, it.end) }
+                for (ann in withColors.getStringAnnotations(0, withColors.length)) {
+                    addStringAnnotation(ann.tag, ann.item, ann.start, ann.end)
+                }
             }
         }
 
