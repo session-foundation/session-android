@@ -392,8 +392,12 @@ class ConversationDataMapper @Inject constructor(
             else -> MessageQuoteIcon.Bar
         }*/
 
+        // title
+        val title = if(quote.author.isLocalNumber) context.getString(R.string.you)
+        else quote.author.displayName()
+
         return QuoteMessageData(
-            title = quote.author.displayName(),
+            title = title,
             subtitle = subtitle,
             icon = icon,
             showProBadge = quote.author.shouldShowProBadge

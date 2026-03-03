@@ -114,12 +114,15 @@ fun MessageQuote(
         Column{
             ProBadgeText(
                 text = quote.title,
-                textStyle = LocalType.current.small.bold().copy(color = getTextColor(outgoing)),
+                textStyle = LocalType.current.base.bold().copy(color = getTextColor(outgoing)),
                 showBadge = quote.showProBadge,
                 badgeColors = if(outgoing) proBadgeColorOutgoing() //todo convov3 xml quotes also checked for mode - regular here to distinguish form the quote used in the input
                 else proBadgeColorStandard()
             )
 
+            Spacer(Modifier.height(LocalDimensions.current.tinySpacing))
+
+            //todo convov3 we shouldn't render/click links for quotes
             RichText(
                 text = quote.subtitle,
                 isOutgoing = outgoing,

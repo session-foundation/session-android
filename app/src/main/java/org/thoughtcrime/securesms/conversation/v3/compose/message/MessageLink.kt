@@ -57,7 +57,7 @@ fun MessageLink(
                 Image(
                     painter = painterResource(id = R.drawable.ic_link),
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(LocalColors.current.text),
+                    colorFilter = ColorFilter.tint(getTextColor(outgoing)),
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
@@ -132,7 +132,6 @@ fun LinkMessagePreview(
                             MessageLinkData(
                                 url = "https://picsum.photos/id/0/367/267",
                                 title = "Welcome to Session with a very long name",
-                                imageUri = "https://picsum.photos/id/1/200/300"
                             )
                         ),
                         PreviewMessageData.text(text = "Quoting text")

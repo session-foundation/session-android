@@ -23,10 +23,10 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 
 /**
  * Renders message text with:
- * - URL tap handling without ClickableText (tap -> offset -> "url" annotation)
+ * - URL tap handling (tap -> offset -> "url" annotation)
  * - Underlined URLs (from formatter)
  * - Mention coloring + bold
- * - Rounded bg for "mention_bg" ranges (with spacing)
+ * - Rounded bg for "mention_bg" ranges
  */
 @Composable
 fun RichText(
