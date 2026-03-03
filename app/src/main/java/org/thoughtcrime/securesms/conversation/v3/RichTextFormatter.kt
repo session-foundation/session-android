@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.conversation.v3
 
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import org.nibor.autolink.LinkExtractor
@@ -10,92 +12,75 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import java.util.EnumSet
 
 /**
- * Formats message text for Compose rendering.
+ * Pure formatting only:
+ * - No UI colors
+ * - No click behavior (Compose injects)
  *
- * Responsibilities:
- * - Detects links using autolink-java (URL + WWW) with robust boundaries
- * - Adds URL string annotations ("url") + underline style (tap handling in Composable)
- * - Bolds mentions and adds mention metadata annotations
- * - Adds "mention_bg" annotation for mentions that require rounded background
- * - Inserts subtle *layout spacing* immediately OUTSIDE mention_bg mentions, without corrupting
- *   other mention ranges (safe remap via left-to-right rebuild)
+ * Produces:
+ * - LinkAnnotation.Clickable(tag=url) with underline style (no default open)
+ * - Mention annotations:
+ *    - "mention_pk" = publicKey
+ *    - "mention_self" presence-only when true
+ *    - "mention_bg" presence-only when mention should have pill background
  *
- * Non-responsibilities:
- * - No click handling
- * - No theme colors
- * - No UI behavior
- *
- * Safe to call in mappers.
+ * Also:
+ * - Inserts subtle OUTSIDE spacing around bg mentions (layout breathing room)
+ * - Remaps mention ranges safely.
  */
 object RichTextFormatter {
 
-    // autolink-java: better link boundaries than regex / Linkify
     private val linkExtractor: LinkExtractor = LinkExtractor.builder()
         .linkTypes(EnumSet.of(LinkType.URL, LinkType.WWW))
         .build()
 
-    // Subtle spacing that affects layout but is visually minimal.
-    // If too subtle, try '\u2009' (thin space).
-    private const val OUTSIDE_SPACE: Char = '\u200A' // hair space
+    // Layout spacing outside pill; hair space is subtle and works well.
+    private const val OUTSIDE_SPACE: Char = '\u2009'
 
-    /**
-     * Formats parsed message text into an AnnotatedString suitable for RichText().
-     *
-     * @param parsed Result of MentionUtilities.parseAndSubstituteMentions
-     * @param isOutgoing Whether the message is outgoing
-     */
     fun formatMessage(
         parsed: MentionUtilities.ParsedMentions,
         isOutgoing: Boolean
     ): AnnotatedString {
-        val input = parsed.text
-
-        // 1) Rebuild text with outside spacing around bg mentions and remap mention ranges safely.
+        // Insert spacing ONLY for bg mentions (incoming mentions of self)
         val remapped = buildTextWithOutsideSpacing(
-            text = input,
+            text = parsed.text,
             mentions = parsed.mentions.sortedBy { it.start },
             needsBg = { it.isSelf && !isOutgoing }
         )
 
-        val outText = remapped.text
-        val outMentions = remapped.mentions
+        val text = remapped.text
+        val mentions = remapped.mentions
 
-        // 2) Create AnnotatedString and apply link + mention annotations/styles.
-        val b = AnnotatedString.Builder(outText)
+        val b = AnnotatedString.Builder(text)
 
-        // Links: underline + "url" annotation
-        addLinkAnnotationsWithAutolink(b, outText)
+        // Links first (they key off final text indices)
+        addLinkAnnotationsWithAutolink(b, text)
 
-        // Mentions: bold + metadata + bg marker
-        outMentions.forEach { m ->
+        // Mentions: bold + metadata annotations
+        for (m in mentions) {
             b.addStyle(SpanStyle(fontWeight = FontWeight.Bold), m.start, m.endExclusive)
             b.addStringAnnotation("mention_pk", m.publicKey, m.start, m.endExclusive)
-            b.addStringAnnotation("mention_self", m.isSelf.toString(), m.start, m.endExclusive)
-            if (m.needsBg) b.addStringAnnotation("mention_bg", "true", m.start, m.endExclusive)
+            if (m.isSelf) b.addStringAnnotation("mention_self", "", m.start, m.endExclusive)
+            if (m.needsBg) b.addStringAnnotation("mention_bg", "", m.start, m.endExclusive)
         }
 
         return b.toAnnotatedString()
     }
 
-    // ---------------------------------------------------------------------
-    // Links (Compose annotations) via autolink-java
-    // ---------------------------------------------------------------------
+    // ---------------- Links (no click behavior here) ----------------
 
-    /**
-     * Uses autolink-java to detect URL/WWW links and applies:
-     * - underline style
-     * - "url" string annotations containing the normalized url (WWW -> https://...)
-     */
     private fun addLinkAnnotationsWithAutolink(
         builder: AnnotatedString.Builder,
         text: String
     ) {
         val links = linkExtractor.extractLinks(text)
 
+        val styles = TextLinkStyles(
+            style = SpanStyle(textDecoration = TextDecoration.Underline)
+        )
+
         for (link in links) {
             val start = link.beginIndex
             val end = link.endIndex
-
             if (start < 0 || end > text.length || start >= end) continue
 
             val raw = text.substring(start, end)
@@ -104,29 +89,22 @@ object RichTextFormatter {
                 else -> raw
             }
 
-            builder.addStyle(
-                SpanStyle(textDecoration = TextDecoration.Underline),
-                start,
-                end
-            )
-            builder.addStringAnnotation(
-                tag = "url",
-                annotation = url,
+            builder.addLink(
+                clickable = LinkAnnotation.Clickable(
+                    tag = url,
+                    styles = styles,
+                    // required in your BOM; keep it no-op here
+                    linkInteractionListener = { /* no-op */ }
+                ),
                 start = start,
                 end = end
             )
         }
     }
 
-    // ---------------------------------------------------------------------
-    // Safe mention spacing + range remapping
-    // ---------------------------------------------------------------------
+    // ---------------- Mention spacing + remap ----------------
 
-    private data class RemappedText(
-        val text: String,
-        val mentions: List<MentionOut>
-    )
-
+    private data class RemappedText(val text: String, val mentions: List<MentionOut>)
     private data class MentionOut(
         val start: Int,
         val endExclusive: Int,
@@ -136,12 +114,8 @@ object RichTextFormatter {
     )
 
     /**
-     * Builds the final text left-to-right and produces new mention ranges.
-     * This is the robust way to insert extra characters without breaking indices.
-     *
-     * We insert OUTSIDE_SPACE immediately before and after mention text for mentions that need bg.
-     * The mention range excludes this spacing so the rounded pill hugs the mention text, while
-     * the spacing provides "breathing room" to neighbors.
+     * Rebuilds the final text left-to-right, inserting OUTSIDE_SPACE before/after
+     * mentions that need a pill background. Mention ranges exclude the spaces.
      */
     private fun buildTextWithOutsideSpacing(
         text: String,
@@ -157,14 +131,13 @@ object RichTextFormatter {
             val start = m.start
             val end = m.endExclusive
 
-            // Defensive: skip invalid/overlapping ranges
+            // Defensive: skip invalid/overlapping
             if (start < cursor || start < 0 || end > text.length || start >= end) continue
 
-            // Append text before mention
+            // before mention
             if (cursor < start) out.append(text, cursor, start)
 
             val bg = needsBg(m)
-
             if (bg) out.append(OUTSIDE_SPACE)
 
             val mentionStartOut = out.length
@@ -184,7 +157,6 @@ object RichTextFormatter {
             cursor = end
         }
 
-        // Append trailing text
         if (cursor < text.length) out.append(text, cursor, text.length)
 
         return RemappedText(out.toString(), outMentions)
