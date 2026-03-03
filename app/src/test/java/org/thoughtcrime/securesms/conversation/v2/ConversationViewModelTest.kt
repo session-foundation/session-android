@@ -87,7 +87,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
     private fun createViewModel(recipient: Recipient): ConversationViewModel {
         return ConversationViewModel(
             repository = repository,
-            storage = mock{
+            storage = mock {
                 on { getThreadId(recipient.address) } doReturn threadId
             },
             groupDb = mock(),
@@ -136,6 +136,8 @@ class ConversationViewModelTest : BaseViewModelTest() {
             loginStateRepository = mock(),
             audioPlaybackManager = mock(),
             jobQueue = mock(),
+            debugTextSendJobFactory = mock(),
+            debugAttachmentSendJobFactory = mock(),
         )
     }
 

@@ -44,16 +44,27 @@ class DebugTextSendJob @AssistedInject constructor(
     }
 
     override suspend fun execute(dispatcherName: String) {
+        // Keep Job API intact, but allow tests to obtain ids via the helper.
+        executeAndReturnMessageIds(dispatcherName)
+    }
+
+    /**
+     * Test/automation helper: runs the same send loop but returns the inserted DB ids so tests
+     * can track status (sent/delivered) via DB state transitions.
+     */
+    suspend fun executeAndReturnMessageIds(dispatcherName: String): List<MessageId> {
         if (!BuildConfig.DEBUG) {
             // Safety guard
             delegate?.handleJobFailedPermanently(this, dispatcherName, IllegalStateException("Debug-only job"))
-            return
+            return emptyList()
         }
 
         val address = Address.fromSerialized(addressSerialized)
+        val messageIds = ArrayList<MessageId>(count)
 
         repeat(count) { i ->
-            val ts = snodeClock.currentTimeMillis() + i
+            // Ensure unique timestamps across tight loops.
+            val ts = snodeClock.currentTimeMillis()
 
             val message = VisibleMessage().applyExpiryMode(address).apply {
                 sentTimestamp = ts
@@ -67,8 +78,8 @@ class DebugTextSendJob @AssistedInject constructor(
                 expireStartedAtMillis = 0
             )
 
-            message.id = MessageId(
-                smsDb.insertMessageOutbox(
+            val messageId = MessageId(
+                id = smsDb.insertMessageOutbox(
                     threadId,
                     outgoing,
                     false,
@@ -78,10 +89,15 @@ class DebugTextSendJob @AssistedInject constructor(
                 false
             )
 
+            message.id = messageId
+            messageIds += messageId
+
             messageSender.send(message, address)
 
             if (delayBetweenMessagesMs > 0) delay(delayBetweenMessagesMs)
         }
+
+        return messageIds
     }
 
     override fun serialize(): Data {

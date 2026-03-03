@@ -1,6 +1,7 @@
 package org.session.libsession.messaging
 
 import android.content.Context
+import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 import org.session.libsession.database.MessageDataProvider
@@ -18,6 +19,7 @@ import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.jvm.java
 
 @Singleton
 class MessagingModuleConfiguration @Inject constructor(
@@ -39,11 +41,6 @@ class MessagingModuleConfiguration @Inject constructor(
 ) {
 
     companion object {
-        @JvmStatic
-        @Deprecated("Use properly DI components instead")
-        val shared: MessagingModuleConfiguration
-        get() = context.getSystemService(MESSAGING_MODULE_SERVICE) as MessagingModuleConfiguration
-
         const val MESSAGING_MODULE_SERVICE: String = "MessagingModuleConfiguration_MESSAGING_MODULE_SERVICE"
 
         private lateinit var context: Context
@@ -52,5 +49,23 @@ class MessagingModuleConfiguration @Inject constructor(
         fun configure(context: Context) {
             this.context = context
         }
+
+        /**
+         * Works in BOTH:
+         * - Production (ApplicationContext)
+         * - Hilt tests (HiltTestApplication)
+         */
+        @JvmStatic
+        val shared: MessagingModuleConfiguration
+            get() {
+                val appContext = context.applicationContext
+
+                val entryPoint = EntryPointAccessors.fromApplication(
+                    appContext,
+                    MessagingModuleConfigurationEntryPoint::class.java
+                )
+
+                return entryPoint.messagingModuleConfiguration()
+            }
     }
 }

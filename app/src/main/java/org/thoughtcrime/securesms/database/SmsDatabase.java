@@ -259,6 +259,7 @@ public class SmsDatabase extends MessagingDatabase {
     updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SENT_FAILED_TYPE);
   }
 
+
   public void markAsNotified(long id) {
     SQLiteDatabase database      = getWritableDatabase();
     ContentValues  contentValues = new ContentValues();

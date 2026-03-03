@@ -572,6 +572,52 @@ public class MmsSmsDatabase extends Database {
     migrateLegacyCommunityAddresses2(db, MmsDatabase.TABLE_NAME);
   }
 
+    public enum OutgoingTerminalState {
+        SENT,
+        FAILED,
+        PENDING
+    }
+
+    /**
+     * Test/diagnostic helper: returns the terminal send state for an outgoing SMS row.
+     *
+     * SENT   -> base type is BASE_SENT_TYPE
+     * FAILED -> base type is BASE_SENT_FAILED_TYPE or BASE_SYNC_FAILED_TYPE
+     * PENDING -> anything else (e.g. BASE_SENDING_TYPE / BASE_SYNCING_TYPE / BASE_RESYNCING_TYPE)
+     */
+    public @NonNull OutgoingTerminalState getOutgoingTerminalState(@NonNull MessageId messageId) {
+        final String table;
+        final String typeColumn;
+
+        if (messageId.isMms()) {
+            table = MmsDatabase.TABLE_NAME;
+            typeColumn = MmsDatabase.MESSAGE_BOX;
+        } else {
+            table = SmsDatabase.TABLE_NAME;
+            typeColumn = SmsDatabase.TYPE;
+        }
+
+        SQLiteDatabase database = getReadableDatabase();
+        String sql = "SELECT " + typeColumn + " FROM " + table + " WHERE " + ID + " = ?";
+        String[] args = new String[] { String.valueOf(messageId.getId()) };
+
+        try (Cursor cursor = database.rawQuery(sql, args)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                long type = cursor.getLong(0);
+                long baseType = type & MmsSmsColumns.Types.BASE_TYPE_MASK;
+
+                if (baseType == MmsSmsColumns.Types.BASE_SENT_TYPE) {
+                    return OutgoingTerminalState.SENT;
+                } else if (baseType == MmsSmsColumns.Types.BASE_SENT_FAILED_TYPE ||
+                        baseType == MmsSmsColumns.Types.BASE_SYNC_FAILED_TYPE) {
+                    return OutgoingTerminalState.FAILED;
+                }
+            }
+        }
+
+        return OutgoingTerminalState.PENDING;
+    }
+
   private Cursor queryTables(
           @NonNull String projection,
           @Nullable String selection,

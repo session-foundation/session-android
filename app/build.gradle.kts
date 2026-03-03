@@ -152,7 +152,8 @@ android {
         """.trimIndent())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+        testInstrumentationRunner = "org.thoughtcrime.securesms.HiltTestRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "false"
         testOptions {
             execution = "ANDROIDX_TEST_ORCHESTRATOR"
         }
@@ -430,6 +431,7 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     androidTestImplementation(libs.mockito.core)
     androidTestImplementation(libs.mockito.kotlin)
+    androidTestImplementation(libs.hilt.android.testing)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.core.testing)
     testImplementation(libs.kotlinx.coroutines.testing)
@@ -451,9 +453,16 @@ dependencies {
     testJvmAgent(libs.mockito.core) { isTransitive = false }
 
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.espresso.contrib)
+//    androidTestImplementation(libs.androidx.espresso.contrib)
     androidTestImplementation(libs.androidx.espresso.intents)
-    androidTestImplementation(libs.androidx.espresso.accessibility)
+//    androidTestImplementation(libs.androidx.espresso.accessibility)
+    androidTestImplementation(libs.androidx.espresso.contrib) {
+        exclude(group = "com.google.protobuf", module = "protobuf-lite")
+    }
+    androidTestImplementation(libs.androidx.espresso.accessibility) {
+        exclude(group = "com.google.protobuf", module = "protobuf-lite")
+    }
+    androidTestImplementation("com.google.protobuf:protobuf-java:4.33.1")
     androidTestImplementation(libs.androidx.espresso.web)
     androidTestImplementation(libs.androidx.idling.concurrent)
     androidTestImplementation(libs.androidx.espresso.idling.resource)
@@ -476,6 +485,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     androidTestImplementation(libs.androidx.ui.test.junit4.android)
+    androidTestImplementation(libs.uiAutomator)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation(libs.androidx.navigation.compose)

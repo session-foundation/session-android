@@ -17,6 +17,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.mapNotNull
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -153,9 +154,16 @@ class FetchProDetailsWorker @AssistedInject constructor(
                 .fromUniqueWorkNames(listOf(TAG))
                 .build()
 
-            return WorkManager.getInstance(context)
-                .getWorkInfosFlow(workQuery)
-                .mapNotNull { it.firstOrNull() }
+            return try {
+                WorkManager.getInstance(context)
+                    .getWorkInfosFlow(workQuery)
+                    .mapNotNull { it.firstOrNull() }
+            } catch (e: IllegalStateException) {
+                // In certain test setups WorkManager is not manually initialized.
+                // Avoid crashing observers, callers can initialize WorkManager in tests if they need real emissions.
+                Log.w(TAG, "WorkManager not initialized; returning empty flow from FetchProDetailsWorker.watch()", e)
+                emptyFlow()
+            }
         }
 
         fun schedule(
