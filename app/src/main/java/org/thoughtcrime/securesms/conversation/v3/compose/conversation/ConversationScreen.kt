@@ -31,8 +31,10 @@ import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
 import org.thoughtcrime.securesms.conversation.v3.ConversationDataMapper.ConversationItem
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Message
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLayout
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.textGroup
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionItem
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionViewState
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -186,18 +188,17 @@ fun PreviewConversation(
                         MessageViewData(
                             id = MessageId(0, false),
                             displayName = "Toto",
-                            type = PreviewMessageData.text()
+                            layout = MessageLayout.OUTGOING,
+                            contentGroups = textGroup()
                         )),
                         ConversationItem.Message(
                         MessageViewData(
                             id = MessageId(0, false),
                             displayName = "Toto",
                             avatar = PreviewMessageData.sampleAvatar,
-                            type = PreviewMessageData.text(
-                                outgoing = false,
-                                text = "I have lots of reactions - Closed"
-                            ),
-                            reactionsState = ReactionViewState(
+                            layout = MessageLayout.INCOMING,
+                            contentGroups = textGroup("I have lots of reactions - Closed"),
+                            reactions = ReactionViewState(
                                 reactions = listOf(
                                     ReactionItem("👍", 3, selected = true),
                                     ReactionItem("❤️", 12, selected = false),

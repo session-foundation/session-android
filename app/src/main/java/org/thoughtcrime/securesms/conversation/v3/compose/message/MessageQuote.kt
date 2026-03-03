@@ -28,9 +28,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.image
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.mediaGroup
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.quoteGroup
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.text
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.video
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -44,7 +51,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 @Composable
 fun MessageQuote(
     outgoing: Boolean,
-    quote: MessageQuote,
+    quote: QuoteMessageData,
     modifier: Modifier = Modifier
 ){
     Row(
@@ -131,8 +138,8 @@ fun QuoteMessagePreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
+                layout = MessageLayout.INCOMING,
+                contentGroups = quoteGroup(text = "Quoting text")
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
@@ -140,8 +147,8 @@ fun QuoteMessagePreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
+                layout = MessageLayout.OUTGOING,
+                contentGroups = quoteGroup(text = "Quoting text")
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
@@ -150,8 +157,8 @@ fun QuoteMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.text(outgoing = false, text="Quoting a document"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Icon(R.drawable.ic_file))
+                layout = MessageLayout.INCOMING,
+                contentGroups = quoteGroup(icon = MessageQuoteIcon.Icon(R.drawable.ic_file), text = "Quoting a document")
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
@@ -159,11 +166,12 @@ fun QuoteMessagePreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = MessageType.RecipientMessage.Text(outgoing = true, AnnotatedString("Quoting audio")),
-                quote = PreviewMessageData.quote(
+                layout = MessageLayout.OUTGOING,
+                contentGroups = quoteGroup(
                     title = "You",
                     subtitle = "Audio message",
-                    icon = MessageQuoteIcon.Icon(R.drawable.ic_mic)
+                    icon = MessageQuoteIcon.Icon(R.drawable.ic_mic),
+                    text = "Quoting audio"
                 )
             ))
 
@@ -172,10 +180,9 @@ fun QuoteMessagePreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = MessageType.RecipientMessage.Text(outgoing = true, AnnotatedString("Quoting an image")),
-                quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
+                layout = MessageLayout.OUTGOING,
+                contentGroups = quoteGroup(icon = MessageQuoteIcon.Image("".toUri(), ""), text = "Quoting an image")
             ))
-
         }
     }
 }

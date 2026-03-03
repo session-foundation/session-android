@@ -27,6 +27,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -106,49 +107,73 @@ fun LinkMessagePreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                link = MessageLinkData(
-                    url = "https://getsession.org/",
-                    title = "Welcome to Session",
-                    imageUri = null
-                )
+                layout = MessageLayout.INCOMING,
+                contentGroups = listOf(
+                    composeContent(
+                        MessageContent.Link(
+                            MessageLinkData(
+                                url = "https://getsession.org/",
+                                title = "Welcome to Session",
+                                imageUri = null
+                            )
+                        ),
+                        PreviewMessageData.text(text = "Quoting text")
+                ))
             ))
 
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                link = MessageLinkData(
-                    url = "https://picsum.photos/id/0/367/267",
-                    title = "Welcome to Session with a very long name",
-                    imageUri = "https://picsum.photos/id/1/200/300"
-                )
+                layout = MessageLayout.OUTGOING,
+                contentGroups = listOf(
+                    composeContent(
+                        MessageContent.Link(
+                            MessageLinkData(
+                                url = "https://picsum.photos/id/0/367/267",
+                                title = "Welcome to Session with a very long name",
+                                imageUri = "https://picsum.photos/id/1/200/300"
+                            )
+                        ),
+                        PreviewMessageData.text(text = "Quoting text")
+                    ))
             ))
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                link = MessageLinkData(
-                    url = "https://getsession.org/",
-                    title = "Welcome to Session",
-                    imageUri = null
-                )
+                layout = MessageLayout.INCOMING,
+                contentGroups = listOf(
+                    composeContent(
+                        PreviewMessageData.quote(),
+                        MessageContent.Link(
+                            MessageLinkData(
+                                url = "https://getsession.org/",
+                                title = "Welcome to Session",
+                                imageUri = null
+                            )
+                        ),
+                        PreviewMessageData.text(text = "Quoting text")
+                    ))
             ))
 
 
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                link = MessageLinkData(
-                    url = "https://picsum.photos/id/0/367/267",
-                    title = "Welcome to Session with a very long name",
-                    imageUri = "https://picsum.photos/id/1/200/300"
-                )
+                layout = MessageLayout.OUTGOING,
+                contentGroups = listOf(
+                    composeContent(
+                        PreviewMessageData.quote(),
+                        MessageContent.Link(
+                            MessageLinkData(
+                                url = "https://picsum.photos/id/0/367/267",
+                                title = "Welcome to Session with a very long name",
+                                imageUri = "https://picsum.photos/id/1/200/300"
+                            )
+                        ),
+                        PreviewMessageData.text(text = "Quoting text")
+                    ))
             ))
         }
     }

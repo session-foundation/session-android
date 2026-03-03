@@ -86,20 +86,12 @@ fun Message(
     data: MessageViewData,
     modifier: Modifier = Modifier
 ) {
-    when(data.type){
-        is MessageType.RecipientMessage -> {
-            RecipientMessage(
-                data = data,
-                type = data.type,
-                modifier = modifier
-            )
+    when (data.layout) {
+        MessageLayout.CONTROL -> {
+            ControlMessage(data = data, modifier = modifier)
         }
-
-        is MessageType.ControlMessage -> {
-           /* ControlMessage(
-                data = data,
-                modifier = modifier
-            )*/
+        MessageLayout.INCOMING, MessageLayout.OUTGOING -> {
+            RecipientMessage(data = data, modifier = modifier)
         }
     }
 }
@@ -107,9 +99,10 @@ fun Message(
 @Composable
 fun RecipientMessage(
     data: MessageViewData,
-    type: MessageType.RecipientMessage,
     modifier: Modifier = Modifier
 ){
+    val outgoing = data.layout == MessageLayout.OUTGOING
+
     val bottomPadding = when (data.clusterPosition) {
         ClusterPosition.BOTTOM, ClusterPosition.ISOLATED -> LocalDimensions.current.smallSpacing // vertical space between mesasges of different authors
         ClusterPosition.TOP, ClusterPosition.MIDDLE -> LocalDimensions.current.xxxsSpacing // vertical space between cluster of messages from same author
@@ -127,11 +120,10 @@ fun RecipientMessage(
 
         RecipientMessageContent(
             modifier = Modifier
-                .align(if (type.outgoing) Alignment.CenterEnd else Alignment.CenterStart)
+                .align(if (outgoing) Alignment.CenterEnd else Alignment.CenterStart)
                 .widthIn(max = maxMessageWidth)
                 .wrapContentWidth(),
             data = data,
-            type = type,
             maxWidth = maxMessageWidth
         )
     }
@@ -143,14 +135,14 @@ fun RecipientMessage(
 @Composable
 fun RecipientMessageContent(
     data: MessageViewData,
-    type: MessageType.RecipientMessage,
     modifier: Modifier = Modifier,
     maxWidth: Dp
 ) {
+    val outgoing = data.layout == MessageLayout.OUTGOING
 
     Column(
         modifier = modifier,
-        horizontalAlignment = if (type.outgoing) Alignment.End else Alignment.Start
+        horizontalAlignment = if (outgoing) Alignment.End else Alignment.Start
     ) {
         Row {
             if (data.avatar !is MessageAvatar.None) {
@@ -171,7 +163,7 @@ fun RecipientMessageContent(
             }
 
             Column(
-                horizontalAlignment = if(type.outgoing) Alignment.End else Alignment.Start
+                horizontalAlignment = if(outgoing) Alignment.End else Alignment.Start
             )
             {
                 if (data.showDisplayName) {
@@ -198,102 +190,25 @@ fun RecipientMessageContent(
                     Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                 }
 
-                // There can be two bubbles in a message: First one contains quotes, links and message text
-                // The second one contains audio, document, images and video
-                val hasFirstBubble =
-                    data.quote != null || data.link != null || type.text != null
-                            || type is MessageType.RecipientMessage.CommunityInvite
-                val hasSecondBubble = data.type !is MessageType.RecipientMessage.Text
-                        && type !is MessageType.RecipientMessage.CommunityInvite
+                data.contentGroups.forEachIndexed { index, group ->
+                    if (index > 0) Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
 
-                // First bubble
-                if (hasFirstBubble) {
-                    MessageBubble(
-                        modifier = Modifier.accentHighlight(data.highlightKey),
-                        color = if (type.outgoing) LocalColors.current.accent
-                        else LocalColors.current.backgroundBubbleReceived
-                    ) {
-                        // community invites
-                        if (data.type is MessageType.RecipientMessage.CommunityInvite) {
-                            //todo convov3 add onclick for community invite
-                            CommunityInviteMessage(
-                                data = data,
-                                type = data.type,
-                                modifier = Modifier.accentHighlight(data.highlightKey),
-                            )
-                        } else { // regular recipient messages
-                            Column {
-                                // Display quote if there is one
-                                if (data.quote != null) {
-                                    MessageQuote(
-                                        modifier = Modifier.padding(
-                                            bottom =
-                                                if (data.link == null && type.text == null)
-                                                    defaultMessageBubblePadding().calculateBottomPadding()
-                                                else 0.dp
-                                        ),
-                                        outgoing = type.outgoing,
-                                        quote = data.quote
-                                    )
-                                }
-
-                                // display link data if any
-                                if (data.link != null) {
-                                    MessageLink(
-                                        modifier = Modifier.padding(top = if (data.quote != null) LocalDimensions.current.xxsSpacing else 0.dp),
-                                        data = data.link,
-                                        outgoing = type.outgoing
-                                    )
-                                }
-
-                                if (type.text != null) {
-                                    // Text messages
-                                    MessageText(
-                                        modifier = Modifier.padding(defaultMessageBubblePadding()),
-                                        text = type.text!!,
-                                        outgoing = type.outgoing
-                                    )
-                                }
+                    val contentColumn = @Composable {
+                        Column {
+                            group.contents.forEach { content ->
+                                MessageContentRenderer(content, data.layout, maxWidth)
                             }
                         }
                     }
-                }
 
-                // Second bubble
-                if (hasSecondBubble) {
-                    // add spacing if there is a first bubble
-                    if (hasFirstBubble) {
-                        Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
-                    }
-
-                    // images and videos are a special case and aren't actually surrounded in a visible bubble
-                    if (data.type is MessageType.RecipientMessage.Media) {
-                        MediaMessage(
-                            modifier = Modifier.accentHighlight(data.highlightKey),
-                            data = data.type,
-                            maxWidth = maxWidth
-                        )
-                    } else {
+                    if (group.showBubble) {
                         MessageBubble(
                             modifier = Modifier.accentHighlight(data.highlightKey),
-                            color = if (type.outgoing) LocalColors.current.accent
-                            else LocalColors.current.backgroundBubbleReceived
-                        ) {
-                            // Apply content based on message type
-                            when (data.type) {
-                                // Document messages
-                                is Document -> DocumentMessage(
-                                    data = data.type
-                                )
-
-                                // Audio messages
-                                is Audio -> AudioMessage(
-                                    data = data.type
-                                )
-
-                                else -> {}
-                            }
-                        }
+                            color = if (outgoing) LocalColors.current.accent else LocalColors.current.backgroundBubbleReceived,
+                            content = contentColumn
+                        )
+                    } else {
+                        contentColumn() // Render naked content (e.g., for media)
                     }
                 }
             }
@@ -301,25 +216,25 @@ fun RecipientMessageContent(
 
         //////// Below the Avatar + Message bubbles ////
 
-        val indentation = if(type.outgoing) 0.dp
+        val indentation = if(outgoing) 0.dp
         else if (data.avatar !is MessageAvatar.None) LocalDimensions.current.iconMediumAvatar + LocalDimensions.current.smallSpacing
         else 0.dp
 
         // reactions
-        if (data.reactionsState != null) {
+        if (data.reactions != null) {
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
             EmojiReactions(
                 modifier = Modifier.padding(start = indentation),
-                reactions = data.reactionsState.reactions,
-                isExpanded = data.reactionsState.isExtended,
-                outgoing = type.outgoing,
+                reactions = data.reactions.reactions,
+                isExpanded = data.reactions.isExtended,
+                outgoing = outgoing,
                 onReactionClick = {
                     //todo CONVOv3 implement
                 },
-                onExpandClick = {
+                onReactionExpandClick = {
                     //todo CONVOv3 implement
                 },
-                onShowLessClick = {
+                onReactionShowLessClick = {
                     //todo CONVOv3 implement
                 },
                 onReactionLongClick = {
@@ -335,10 +250,35 @@ fun RecipientMessageContent(
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.tinySpacing)
                     .padding(start = indentation)
-                    .align(if (type.outgoing) Alignment.End else Alignment.Start),
+                    .align(if (outgoing) Alignment.End else Alignment.Start),
                 data = data.status
             )
         }
+    }
+}
+
+@Composable
+fun MessageContentRenderer(content: MessageContent, layout: MessageLayout, maxWidth: Dp) {
+    val isOutgoing = layout == MessageLayout.OUTGOING
+    when (content) {
+        is MessageContent.Text -> MessageText(
+            text = content.text, outgoing = isOutgoing
+        )
+
+        is MessageContent.Quote -> MessageQuote(
+            modifier = Modifier.padding(
+                bottom = if (content.addBottomBubblePadding)
+                    defaultMessageBubblePadding().calculateBottomPadding()
+                else 0.dp
+            ),
+            quote = content.data,
+            outgoing = isOutgoing
+        )
+        is MessageContent.Link -> MessageLink(content.data, isOutgoing)
+        is MessageContent.Document -> DocumentMessage(content.data, isOutgoing)
+        is MessageContent.Audio -> AudioMessage(content.data, isOutgoing)
+        is MessageContent.CommunityInvite -> CommunityInviteMessage(content.name, content.url, isOutgoing)
+        is MessageContent.Media -> MediaMessage(content.items, content.loading, maxWidth)
     }
 }
 
@@ -402,7 +342,7 @@ fun MessageText(
     modifier: Modifier = Modifier
 ){
     Text(
-        modifier = modifier,
+        modifier = modifier.padding(defaultMessageBubblePadding()),
         text = text,
         style = LocalType.current.large,
         color = getTextColor(outgoing),
@@ -421,19 +361,39 @@ internal fun defaultMessageBubblePadding() = PaddingValues(
 
 data class MessageViewData(
     val id: MessageId,
-    val type: MessageType,
+    val layout: MessageLayout,
+    val contentGroups: List<MessageContentGroup>,
     val displayName: String,
-    val displayNameExtra: String? = null, // when you want to add extra text to the display name, like the blinded id - after the pro badge)
+    val displayNameExtra: String? = null,  // when you want to add extra text to the display name, like the blinded id - after the pro badge)
     val showDisplayName: Boolean = false,
     val showProBadge: Boolean = false,
     val avatar: MessageAvatar = MessageAvatar.None,
     val status: MessageViewStatus? = null,
-    val quote: MessageQuote? = null,
-    val link: MessageLinkData? = null,
-    val reactionsState: ReactionViewState? = null,
-    val highlightKey: HighlightMessage? = null,
+    val reactions: ReactionViewState? = null,
+    val highlightKey: Any? = null,
     val clusterPosition: ClusterPosition = ClusterPosition.ISOLATED
 )
+
+data class MessageContentGroup(
+    val contents: List<MessageContent>,
+    val showBubble: Boolean = true //whether the grouped content should be placed in a bubble
+)
+
+sealed interface MessageContent {
+    data class Text(val text: AnnotatedString) : MessageContent
+    data class Media(val items: List<MessageMediaItem>, val loading: Boolean) : MessageContent
+    data class Link(val data: MessageLinkData) : MessageContent
+    data class Quote(val data: QuoteMessageData, val addBottomBubblePadding: Boolean = false) : MessageContent
+    data class Document(val data: DocumentMessageData) : MessageContent
+    data class Audio(val data: AudioMessageData) : MessageContent
+    data class CommunityInvite(val name: String, val url: String) : MessageContent
+}
+
+enum class MessageLayout {
+    INCOMING,
+    OUTGOING,
+    CONTROL
+}
 
 data class HighlightMessage(val token: Long)
 
@@ -453,9 +413,6 @@ sealed interface MessageAvatar {
 data class ReactionViewState(
     val reactions: List<ReactionItem>,
     val isExtended: Boolean,
-    val onReactionClick: (String) -> Unit, //todo convov3 lift lambdas out
-    val onReactionLongClick: (String) -> Unit,
-    val onShowMoreClick: () -> Unit
 )
 
 data class ReactionItem(
@@ -464,7 +421,7 @@ data class ReactionItem(
     val selected: Boolean
 )
 
-data class MessageQuote(
+data class QuoteMessageData(
     val title: String,
     val subtitle: String,
     val icon: MessageQuoteIcon
@@ -489,37 +446,6 @@ sealed interface MessageViewStatusIcon{
     data object DisappearingMessageIcon: MessageViewStatusIcon
 }
 
-sealed interface MessageType{
-
-    sealed interface RecipientMessage: MessageType {
-        val outgoing: Boolean
-        val text: AnnotatedString?
-
-        data class Text(
-            override val outgoing: Boolean,
-            override val text: AnnotatedString
-        ) : RecipientMessage
-
-        data class Media(
-            override val outgoing: Boolean,
-            val items: List<MessageMediaItem>,
-            val loading: Boolean,
-            override val text: AnnotatedString? = null
-        ) : RecipientMessage
-
-        data class CommunityInvite(
-            override val outgoing: Boolean,
-            override val text: AnnotatedString = AnnotatedString(""),
-            val communityName: String,
-            val url: String
-        ) : RecipientMessage
-    }
-
-    sealed interface ControlMessage: MessageType {
-
-    }
-}
-
 /*@PreviewScreenSizes*/
 @Preview
 @Composable
@@ -538,7 +464,8 @@ fun MessagePreview(
                         displayName = "Toto",
                         showProBadge = true,
                         displayNameExtra = "(some extra text)",
-                        type = PreviewMessageData.text()
+                        layout = MessageLayout.OUTGOING,
+                        contentGroups = PreviewMessageData.textGroup(),
                     )
                 )
             }
@@ -550,10 +477,10 @@ fun MessagePreview(
                         displayName = "Toto",
                         showDisplayName = true,
                         avatar = PreviewMessageData.sampleAvatar,
-                        type = PreviewMessageData.text(
-                            outgoing = false,
+                        layout = MessageLayout.INCOMING,
+                        contentGroups = PreviewMessageData.textGroup(
                             text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
-                        )
+                        ),
                     )
                 )
             }
@@ -585,7 +512,8 @@ fun MessagePreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = PreviewMessageData.text(
+                layout = MessageLayout.OUTGOING,
+                contentGroups = PreviewMessageData.textGroup(
                     text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
                 ),
                 status = PreviewMessageData.sentStatus
@@ -597,10 +525,8 @@ fun MessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.text(
-                    outgoing = false,
-                    text = "Hello"
-                ),
+                layout = MessageLayout.INCOMING,
+                contentGroups = PreviewMessageData.textGroup(),
                 status = PreviewMessageData.sentStatus
             ))
         }
@@ -620,19 +546,17 @@ fun MessageReactionsPreview(
             Message(data = MessageViewData(
                 id = MessageId(0, false),
                 displayName = "Toto",
-                type = PreviewMessageData.text(
+                layout = MessageLayout.OUTGOING,
+                contentGroups = PreviewMessageData.textGroup(
                     text = "I have 3 emoji reactions"
                 ),
-                reactionsState = ReactionViewState(
+                reactions = ReactionViewState(
                     reactions = listOf(
                         ReactionItem("👍", 3, selected = true),
                         ReactionItem("❤️", 12, selected = false),
                         ReactionItem("😂", 1, selected = false),
                     ),
                     isExtended = false,
-                    onReactionClick = {},
-                    onReactionLongClick = {},
-                    onShowMoreClick = {}
                 )
             ))
 
@@ -642,11 +566,11 @@ fun MessageReactionsPreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.text(
-                    outgoing = false,
+                layout = MessageLayout.INCOMING,
+                contentGroups = PreviewMessageData.textGroup(
                     text = "I have lots of reactions - Closed"
                 ),
-                reactionsState = ReactionViewState(
+                reactions = ReactionViewState(
                     reactions = listOf(
                         ReactionItem("👍", 3, selected = true),
                         ReactionItem("❤️", 12, selected = false),
@@ -658,10 +582,7 @@ fun MessageReactionsPreview(
                         ReactionItem("🐙", 8, selected = false),
                         ReactionItem("✅", 8, selected = false),
                     ),
-                    isExtended = false,
-                    onReactionClick = {},
-                    onReactionLongClick = {},
-                    onShowMoreClick = {}
+                    isExtended = false
                 )
             ))
 
@@ -671,11 +592,11 @@ fun MessageReactionsPreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.text(
-                    outgoing = false,
+                layout = MessageLayout.INCOMING,
+                contentGroups = PreviewMessageData.textGroup(
                     text = "I have lots of reactions - Open"
                 ),
-                reactionsState = ReactionViewState(
+                reactions = ReactionViewState(
                     reactions = listOf(
                         ReactionItem("👍", 3, selected = true),
                         ReactionItem("❤️", 12, selected = false),
@@ -688,9 +609,6 @@ fun MessageReactionsPreview(
                         ReactionItem("✅", 8, selected = false),
                     ),
                     isExtended = true,
-                    onReactionClick = {},
-                    onReactionLongClick = {},
-                    onShowMoreClick = {}
                 )
             ))
         }
@@ -748,96 +666,81 @@ object PreviewMessageData {
         icon = MessageViewStatusIcon.DrawableIcon(icon = R.drawable.ic_circle_check)
     )
 
-    fun communityInvite(
-        outgoing: Boolean = true
-    ) = MessageType.RecipientMessage.CommunityInvite(
-        outgoing = outgoing,
-        text = AnnotatedString(""),
-        communityName = "Test Community",
-        url = "https://www.test-community-url.com/testing-the-url-look-and-feel",
+    fun textGroup(text: String = "Hi there") = listOf(
+        MessageContentGroup(listOf(text(text)), showBubble = true)
     )
 
-    fun text(
-        text: String = "Hi there",
-        outgoing: Boolean = true
-    ) = MessageType.RecipientMessage.Text(outgoing = outgoing, AnnotatedString(text))
-
-    fun document(
-        name: String = "Document name",
-        size: String = "5.4MB",
-        outgoing: Boolean = true,
-        loading: Boolean = false
-    ) = Document(
-        outgoing = outgoing,
-        name = name,
-        size = size,
-        loading = loading,
-        uri = ""
+    fun textGroup(text: AnnotatedString) = listOf(
+        MessageContentGroup(listOf(text(text)), showBubble = true)
     )
 
-    fun audio(
-        outgoing: Boolean = true,
+    fun audioGroup(
         title: String = "Voice Message",
-        speedText: String = "1x",
-        remainingText: String = "0:20",
-        durationMs: Long = 83_000L,
-        positionMs: Long = 23_000L,
-        bufferedPositionMs: Long = 35_000L,
-        playing: Boolean = true,
-        showLoader: Boolean = false
-    ) = Audio(
-        outgoing = outgoing,
-        title = title,
-        speedText = speedText,
-        remainingText = remainingText,
-        durationMs = durationMs,
-        positionMs = positionMs,
-        bufferedPositionMs = bufferedPositionMs,
-        isPlaying = playing,
-        showLoader = showLoader,
+        playing: Boolean = true
+    ) = listOf(
+        MessageContentGroup(listOf(MessageContent.Audio(AudioMessageData(
+            title = title, speedText = "1x", remainingText = "0:20",
+            durationMs = 83_000L, positionMs = 23_000L, isPlaying = playing, showLoader = false
+        ))), showBubble = true)
     )
 
-    fun image(
-        loading: Boolean = false,
-        width: Int = 100,
-        height: Int = 100,
-    ) = MessageMediaItem.Image(
-        "".toUri(),
-        "",
-        loading = loading,
-        width = width,
-        height = height
+    fun documentGroup(
+        name: String = "Document.pdf",
+        loading: Boolean = false
+    ) = listOf(
+        MessageContentGroup(listOf(document(name, loading)), showBubble = true)
     )
 
-    fun video(
-        loading: Boolean = false,
-        width: Int = 100,
-        height: Int = 100,
-    ) = MessageMediaItem.Video(
-        "".toUri(),
-        "",
-        loading = loading,
-        width = width,
-        height = height
-    )
+    fun mediaGroup(
+        items: List<MessageMediaItem>,
+        text: String? = null
+    ) = buildList {
+        if(text != null) add(MessageContentGroup(listOf(MessageContent.Text(AnnotatedString(text))), showBubble = true))
+        add(mediaGroup(items))
+    }
 
-    fun quote(
+    fun mediaGroup(
+        items: List<MessageMediaItem>,
+    ) = MessageContentGroup(listOf(MessageContent.Media(items, false)), showBubble = false)
+
+    fun quoteGroup(
+        icon: MessageQuoteIcon = MessageQuoteIcon.Bar,
         title: String = "Toto",
         subtitle: String = "This is a quote",
-        icon: MessageQuoteIcon = MessageQuoteIcon.Bar
-    ) = MessageQuote(
-        title = title,
-        subtitle = subtitle,
-        icon = icon
-    )
+        text: String? = null
+    ): List<MessageContentGroup> {
+        val group = mutableListOf<MessageContent>()
+        group.add(
+            quote(title = title, subtitle = subtitle, icon = icon)
+        )
 
-    fun quoteImage(
-        uri: Uri = "".toUri(),
-        filename: String = ""
-    ) = MessageQuoteIcon.Image(
-        uri = uri,
-        filename = filename
-    )
+        if(text != null) group.add(MessageContent.Text(AnnotatedString(text)))
+
+        return listOf(MessageContentGroup(group, showBubble = true))
+    }
+
+    // Individual item helpers
+    fun text(
+        text: String = "Hi there",
+    ) = MessageContent.Text(AnnotatedString(text))
+    fun text(
+        text: AnnotatedString,
+    ) = MessageContent.Text(text)
+
+    fun document(
+        name: String = "Document.pdf",
+        loading: Boolean = false
+    ) = MessageContent.Document(DocumentMessageData(
+        name = name, size = "5.4MB", uri = "", loading = loading
+    ))
+    fun image(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Image("".toUri(), "img.jpg", loading, width, height)
+    fun video(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Video("".toUri(), "vid.mp4", loading, width, height)
+    fun quote(title: String = "Toto", subtitle: String = "This is a quote", icon: MessageQuoteIcon = MessageQuoteIcon.Bar) =
+        MessageContent.Quote(QuoteMessageData(title, subtitle, icon))
+
+    fun composeContent(vararg content: MessageContent): MessageContentGroup {
+        return MessageContentGroup(content.toList())
+    }
 }
 
 

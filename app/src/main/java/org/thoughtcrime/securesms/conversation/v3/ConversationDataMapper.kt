@@ -12,16 +12,18 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.truncatedForDisplay
-import org.thoughtcrime.securesms.conversation.v3.compose.message.Audio
+import org.thoughtcrime.securesms.conversation.v3.compose.message.AudioMessageData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ClusterPosition
-import org.thoughtcrime.securesms.conversation.v3.compose.message.Document
+import org.thoughtcrime.securesms.conversation.v3.compose.message.DocumentMessageData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.HighlightMessage
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageAvatar
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageContent
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageContentGroup
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLayout
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLinkData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageMediaItem
-import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageQuote
+import org.thoughtcrime.securesms.conversation.v3.compose.message.QuoteMessageData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageQuoteIcon
-import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageType
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewStatus
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewStatusIcon
@@ -67,6 +69,12 @@ class ConversationDataMapper @Inject constructor(
     ): List<ConversationItem> {
         val isOutgoing = record.isOutgoing
 
+        val layout = when {
+            record.isControlMessage -> MessageLayout.CONTROL
+            isOutgoing -> MessageLayout.OUTGOING
+            else -> MessageLayout.INCOMING
+        }
+
         val senderName = record.individualRecipient.displayName()
         val extraDisplayName = when {
             record.recipient.address is Address.Blinded ->
@@ -105,16 +113,15 @@ class ConversationDataMapper @Inject constructor(
         val message = ConversationItem.Message(
             MessageViewData(
                 id = record.messageId,
-                type = mapMessageType(record, isOutgoing),
+                layout = layout,
                 displayName = senderName,
                 displayNameExtra = extraDisplayName,
                 showDisplayName = showAuthorName,
                 showProBadge = record.recipient.shouldShowProBadge,
                 avatar = avatar,
+                contentGroups = mapContentGroups(record),
                 status = if (showStatus && isOutgoing) mapStatus(record) else null,
-                quote = mapQuote(record),
-                link = mapLinkPreview(record),
-                reactionsState = mapReactions(record, localUserAddress),
+                reactions = mapReactions(record, localUserAddress),
                 highlightKey = highlightKey,
                 clusterPosition = clusterPosition
         ))
@@ -193,66 +200,77 @@ class ConversationDataMapper @Inject constructor(
                 || previous.isControlMessage
     }
 
-    // ---- Message type ----
+    // ---- Message content ----
 
-    private fun mapMessageType(record: MessageRecord, isOutgoing: Boolean): MessageType {
+    private fun mapContentGroups(record: MessageRecord): List<MessageContentGroup> {
+        val groups = mutableListOf<MessageContentGroup>()
         val mms = record as? MmsMessageRecord
-
-        // community invites
-        if(record.isOpenGroupInvitation){
-            val jsonData =  UpdateMessageData.fromJSON(json, record.body)
-            if(jsonData?.kind is UpdateMessageData.Kind.OpenGroupInvitation){
-                return MessageType.RecipientMessage.CommunityInvite(
-                    outgoing = isOutgoing,
-                    communityName = jsonData.kind.groupName,
-                    url = jsonData.kind.groupUrl
-                )
-            }
-        }
 
         // Deleted messages — check first; body is not meaningful for these
         if (record.isDeleted) {
-            return MessageType.RecipientMessage.Text(
-                outgoing = isOutgoing,
-                text = AnnotatedString(context.getString(R.string.deleteMessageDeletedGlobally)),
-            )
+            return listOf(MessageContentGroup(listOf(
+                MessageContent.Text(
+                    text = AnnotatedString(context.getString(R.string.deleteMessageDeletedGlobally)),
+                )
+            )))
         }
 
-        // Audio
-        //todo convov3 maybe this should be packed inside an audio composable to live listen to changes locally?
+        // Group 1: Quotes, Links, and Text
+        val primaryContent = mutableListOf<MessageContent>()
+
+        // quotes
+        mapQuote(record)?.let { primaryContent.add(MessageContent.Quote(it)) }
+
+        // links
+        mapLinkPreview(record)?.let { primaryContent.add(MessageContent.Link(it)) }
+
+        // todo CONVOv3: replace with spans for mentions, links, and markdown-style formatting
+        if (record.body.isNotBlank()) {
+            primaryContent.add(MessageContent.Text(AnnotatedString(record.body)))
+        }
+
+        if (record.isOpenGroupInvitation) {
+            val jsonData = UpdateMessageData.fromJSON(json, record.body)
+            if (jsonData?.kind is UpdateMessageData.Kind.OpenGroupInvitation) {
+                primaryContent.add(MessageContent.CommunityInvite(jsonData.kind.groupName, jsonData.kind.groupUrl))
+            }
+        }
+
+        if (primaryContent.isNotEmpty()) {
+            groups.add(MessageContentGroup(primaryContent, showBubble = true))
+        }
+
+        // Group 2: Media, Audio, or Documents
         val audioSlide = mms?.slideDeck?.audioSlide
         if (audioSlide != null) {
-            return Audio(
-                outgoing = isOutgoing,
-                title = audioSlide.filename, // todo CONVOv3: drive from playback state
-                speedText = "1x",             // todo CONVOv3: drive from playback state
-                remainingText = "",           // todo CONVOv3: drive from playback state
-                durationMs = 0L,             // todo CONVOv3: resolve from audio metadata
-                positionMs = 0L,             // todo CONVOv3: drive from playback state
-                isPlaying = false,           // todo CONVOv3: drive from playback state
-                showLoader = audioSlide.isInProgress || audioSlide.isPendingDownload,
-                text = record.body.takeIf { it.isNotBlank() }?.let { AnnotatedString(it) },
-            )
+            // Audio
+            //todo convov3 maybe this should be packed inside an audio composable to live listen to changes locally?
+            // todo CONVOv3: drive values from playback state
+            groups.add(
+                MessageContentGroup(listOf(MessageContent.Audio(
+                    AudioMessageData(
+                        title = audioSlide.filename,
+                        speedText = "1x",
+                        remainingText = "",
+                        durationMs = 0L,
+                        positionMs = 0L,
+                        isPlaying = false,
+                        showLoader = audioSlide.isInProgress
+            ))), showBubble = true))
         }
 
-        // Document
         val documentSlide = mms?.slideDeck?.documentSlide
         if (documentSlide != null) {
-            return Document(
-                outgoing = isOutgoing,
+            groups.add(MessageContentGroup(listOf(MessageContent.Document(DocumentMessageData(
                 name = documentSlide.filename,
                 size = Formatter.formatFileSize(context, documentSlide.fileSize),
-                loading = documentSlide.isInProgress || documentSlide.isPendingDownload,
                 uri = documentSlide.uri?.toString() ?: "",
-                text = record.body.takeIf { it.isNotBlank() }?.let { AnnotatedString(it) },
-            )
+                loading = documentSlide.isInProgress
+            ))), showBubble = true))
         }
 
-        // Images + video — MediaMmsMessageRecord specifically holds downloaded media
         if (record is MediaMmsMessageRecord) {
             val mediaSlides = record.slideDeck.slides.filter { it.hasImage() || it.hasVideo() }
-
-            //todo convoV3 map this properly
             if (mediaSlides.isNotEmpty()) {
                 val items = mediaSlides.map { slide ->
                     val uri = (slide.uri ?: slide.thumbnailUri) ?: "".toUri()
@@ -267,26 +285,16 @@ class ConversationDataMapper @Inject constructor(
                         MessageMediaItem.Image(uri, filename, loading, width, height)
                     }
                 }
-                return MessageType.RecipientMessage.Media(
-                    outgoing = isOutgoing,
-                    items = items,
-                    loading = items.any { it.loading },
-                    text = record.body.takeIf { it.isNotBlank() }?.let { AnnotatedString(it) },
-                )
+                groups.add(MessageContentGroup(listOf(MessageContent.Media(items, items.any { it.loading })), showBubble = false))
             }
         }
 
-        // Plain text
-        // todo CONVOv3: replace with spans for mentions, links, and markdown-style formatting
-        return MessageType.RecipientMessage.Text(
-            outgoing = isOutgoing,
-            text = AnnotatedString(record.body),
-        )
+        return groups
     }
 
     // ---- Quote ----
 // todo CONVOv3: sort out properly
-    private fun mapQuote(record: MessageRecord): MessageQuote? {
+    private fun mapQuote(record: MessageRecord): QuoteMessageData? {
         val quote = (record as? MmsMessageRecord)?.quote ?: return null
 
         val icon: MessageQuoteIcon = MessageQuoteIcon.Bar
@@ -299,7 +307,7 @@ class ConversationDataMapper @Inject constructor(
             else -> MessageQuoteIcon.Bar
         }*/
 
-        return MessageQuote(
+        return QuoteMessageData(
             title = quote.author.displayName(),
             subtitle = quote.text?.ifBlank { null }
                 ?: context.getString(R.string.document),

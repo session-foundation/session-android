@@ -49,7 +49,8 @@ private val playPauseSize = 36.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudioMessage(
-    data: Audio,
+    data: AudioMessageData,
+    outgoing: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -59,9 +60,9 @@ fun AudioMessage(
 
     ) {
 
-        val textColor = getTextColor(data.outgoing)
+        val textColor = getTextColor(outgoing)
 
-        val (color1, color2, trackEmptyColor) = if (data.outgoing) {
+        val (color1, color2, trackEmptyColor) = if (outgoing) {
             arrayOf(
                 LocalColors.current.backgroundSecondary,  // bg secondary
                 LocalColors.current.text, // text primary
@@ -154,8 +155,8 @@ fun AudioMessage(
         ) {
             PlaybackSpeedButton(
                 text = data.speedText,
-                bgColor = if (data.outgoing) color1 else color2,
-                textColor = if(data.outgoing) color2 else textColor,
+                bgColor = if (outgoing) color1 else color2,
+                textColor = if(outgoing) color2 else textColor,
                 onClick = {
                     //todo CONVOV3 implement
                 }
@@ -235,9 +236,7 @@ private fun PlaybackSpeedButton(
     }
 }
 
-data class Audio(
-    override val outgoing: Boolean,
-    override val text: AnnotatedString? = null,
+data class AudioMessageData(
     val title: String,
     val speedText: String,
     val remainingText: String,
@@ -246,45 +245,42 @@ data class Audio(
     val bufferedPositionMs: Long = 0L,
     val isPlaying: Boolean,
     val showLoader: Boolean,
-) : MessageType.RecipientMessage
+)
 
 @Preview
 @Composable
 fun AudioMessagePreview(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
+    fun audioMessage(
+        outgoing: Boolean = true,
+        title: String = "Voice Message",
+        playing: Boolean = true
+    ) = MessageViewData(
+        id = MessageId(0, false),
+        layout = if (outgoing) MessageLayout.OUTGOING else MessageLayout.INCOMING,
+        contentGroups = PreviewMessageData.audioGroup(title, playing),
+        displayName = "Toto"
+    )
+
     PreviewTheme(colors) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing)
 
         ) {
-            Message(data = MessageViewData(
-                id = MessageId(0, false),
-                displayName = "Toto",
-                type = PreviewMessageData.audio()
-            ))
+
+            Message(data = audioMessage())
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            Message(data = MessageViewData(
-                id = MessageId(0, false),
-                displayName = "Toto",
-                avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.audio(
-                    outgoing = false,
-                    title = "Audio with a really long name that should ellipsize once it reaches the max width",
-                )
-            ))
+            Message(data = audioMessage(
+                outgoing = false,
+                title = "Audio with a really long name that should ellipsize once it reaches the max width"
+            ).copy(avatar = PreviewMessageData.sampleAvatar))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            Message(data = MessageViewData(
-                id = MessageId(0, false),
-                displayName = "Toto",
-                type = PreviewMessageData.audio(
-                    playing = false
-                )
-            ))
+            Message(data = audioMessage(playing = false))
         }
     }
 }

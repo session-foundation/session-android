@@ -2,11 +2,9 @@ package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.content.MediaType.Companion.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,7 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import org.thoughtcrime.securesms.database.model.MessageId
+import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -34,13 +32,12 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.blackAlpha06
-import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.theme.bold
 
 @Composable
-fun ColumnScope.CommunityInviteMessage(
-    data: MessageViewData,
-    type: MessageType.RecipientMessage.CommunityInvite,
+fun CommunityInviteMessage(
+    name: String,
+    url: String,
+    outgoing: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -53,14 +50,14 @@ fun ColumnScope.CommunityInviteMessage(
             modifier = Modifier
                 .size(LocalDimensions.current.iconLarge)
                 .background(
-                    color = if(type.outgoing) blackAlpha06 else LocalColors.current.accent,
+                    color = if(outgoing) blackAlpha06 else LocalColors.current.accent,
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(
-                    id = if(type.outgoing) R.drawable.ic_globe else R.drawable.ic_plus
+                    id = if(outgoing) R.drawable.ic_globe else R.drawable.ic_plus
                 ),
                 contentDescription = null,
                 modifier = Modifier.size(LocalDimensions.current.iconSmall),
@@ -74,9 +71,9 @@ fun ColumnScope.CommunityInviteMessage(
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
         ) {
             Text(
-                text = type.communityName,
+                text = name,
                 style = LocalType.current.h6,
-                color = getTextColor(type.outgoing),
+                color = getTextColor(outgoing),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -84,15 +81,15 @@ fun ColumnScope.CommunityInviteMessage(
             Text(
                 text = stringResource(R.string.communityInvitation),
                 style = LocalType.current.base,
-                color = getTextColor(type.outgoing),
+                color = getTextColor(outgoing),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
             Text(
-                text = type.url,
+                text = url,
                 style = LocalType.current.small,
-                color = getTextColor(type.outgoing),
+                color = getTextColor(outgoing),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -105,20 +102,6 @@ fun ColumnScope.CommunityInviteMessage(
 fun CommunityInvitePreview(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
-    val outgoingInvite = MessageViewData(
-        id = MessageId(0, false),
-        displayName = "Toto",
-        type = PreviewMessageData.communityInvite()
-    )
-
-    val incomingInvite = MessageViewData(
-        id = MessageId(0, false),
-        displayName = "Toto",
-        type = PreviewMessageData.communityInvite(
-            outgoing = false
-        )
-    )
-
 
     PreviewTheme(colors) {
         Column (
@@ -131,8 +114,9 @@ fun CommunityInvitePreview(
             ) {
                 Column() {
                     CommunityInviteMessage(
-                        data = outgoingInvite,
-                        type = outgoingInvite.type as MessageType.RecipientMessage.CommunityInvite
+                        name = "Test Community",
+                        url = "https://www.test-community-url.com/testing-the-url-look-and-feel",
+                        outgoing = true
                     )
                 }
             }
@@ -144,8 +128,9 @@ fun CommunityInvitePreview(
             ) {
                 Column() {
                     CommunityInviteMessage(
-                        data = incomingInvite,
-                        type = incomingInvite.type as MessageType.RecipientMessage.CommunityInvite
+                        name = "Test Community",
+                        url = "https://www.test-community-url.com/testing-the-url-look-and-feel",
+                        outgoing = false
                     )
                 }
             }

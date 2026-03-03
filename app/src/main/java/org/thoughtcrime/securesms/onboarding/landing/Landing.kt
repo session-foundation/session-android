@@ -37,8 +37,9 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Message
-import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageType
+import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLayout
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewData
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.textGroup
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.TCPolicyDialog
@@ -74,34 +75,44 @@ internal fun LandingScreen(
     val messages = remember(context) {
         listOf(
             MessageViewData(
-                type = MessageType.RecipientMessage.Text(text = AnnotatedString(
-                    Phrase.from(context.getString(R.string.onboardingBubbleWelcomeToSession))
-                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                        .put(EMOJI_KEY, "\uD83D\uDC4B") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
-                        .format().toString()
-                ), outgoing = false),
+                layout = MessageLayout.INCOMING,
+                contentGroups = textGroup(
+                    text = AnnotatedString(
+                        Phrase.from(context.getString(R.string.onboardingBubbleWelcomeToSession))
+                            .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                            .put(EMOJI_KEY, "\uD83D\uDC4B") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
+                            .format().toString()
+                )),
                 displayName = "Test",
                 id = MessageId(0, false)
             ),
             MessageViewData(
-                type = MessageType.RecipientMessage.Text(text = AnnotatedString(
-                    Phrase.from(context.getString(R.string.onboardingBubbleSessionIsEngineered))
-                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                        .format().toString()), outgoing = true),
+                layout = MessageLayout.OUTGOING,
+                contentGroups = textGroup(
+                    text = AnnotatedString(
+                        Phrase.from(context.getString(R.string.onboardingBubbleSessionIsEngineered))
+                            .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                            .format().toString()
+                    )),
                 displayName = "Test",
                 id = MessageId(0, false)
             ),
             MessageViewData(
-                type = MessageType.RecipientMessage.Text(text = AnnotatedString(context.getString(R.string.onboardingBubbleNoPhoneNumber)), outgoing = false),
+                layout = MessageLayout.INCOMING,
+                contentGroups = textGroup(
+                    text = AnnotatedString(context.getString(R.string.onboardingBubbleNoPhoneNumber)
+                    )),
                 displayName = "Test",
                 id = MessageId(0, false)
             ),
             MessageViewData(
-                type = MessageType.RecipientMessage.Text(text = AnnotatedString(
-                    Phrase.from(context.getString(R.string.onboardingBubbleCreatingAnAccountIsEasy))
-                        .put(EMOJI_KEY, "\uD83D\uDC47") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
-                        .format().toString()
-                ), outgoing = true),
+                layout = MessageLayout.OUTGOING,
+                contentGroups = textGroup(
+                    text = AnnotatedString(
+                        Phrase.from(context.getString(R.string.onboardingBubbleCreatingAnAccountIsEasy))
+                            .put(EMOJI_KEY, "\uD83D\uDC47") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
+                            .format().toString()
+                    )),
                 displayName = "Test",
                 id = MessageId(0, false)
             ),
