@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.withTimeout
+
+import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE_BYTES
@@ -95,9 +96,11 @@ class MessageSendJob @AssistedInject constructor(
         try {
             // Shouldn't send message to group when the group has no keys available
             if (destination is Destination.ClosedGroup) {
-                withTimeout(20_000L) {
+                requireNotNull(withTimeoutOrNull(20_000L) {
                     configFactory
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
+                }) {
+                    "Timeout waiting for group keys to become available"
                 }
             }
 

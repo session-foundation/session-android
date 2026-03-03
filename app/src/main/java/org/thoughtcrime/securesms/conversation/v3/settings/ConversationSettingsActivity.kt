@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v2.settings
+package org.thoughtcrime.securesms.conversation.v3.settings
 
 import android.content.Context
 import android.content.Intent
@@ -7,6 +7,7 @@ import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 
 @AndroidEntryPoint
 class ConversationSettingsActivity: FullComposeScreenLockActivity() {
@@ -18,7 +19,7 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
         fun createIntent(
             context: Context,
             address: Address.Conversable,
-            startDestination: ConversationSettingsDestination = ConversationSettingsDestination.RouteConversationSettings
+            startDestination: ConversationV3Destination = ConversationV3Destination.RouteConversationSettings
         ): Intent {
             return Intent(context, ConversationSettingsActivity::class.java).apply {
                 putExtra(THREAD_ADDRESS, address)
@@ -32,8 +33,8 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
         val startDestination = IntentCompat.getParcelableExtra(
             intent,
             EXTRA_START_DESTINATION,
-            ConversationSettingsDestination::class.java
-        ) ?:  ConversationSettingsDestination.RouteConversationSettings
+            ConversationV3Destination::class.java
+        ) ?:  ConversationV3Destination.RouteConversationSettings
 
         ConversationSettingsNavHost(
             address = requireNotNull(IntentCompat.getParcelableExtra(intent, THREAD_ADDRESS, Address.Conversable::class.java)) {

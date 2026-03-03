@@ -1,12 +1,12 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /**
@@ -17,13 +17,17 @@ import javax.inject.Singleton
  */
 @Singleton
 class PollerManager @Inject constructor(
-    private val provider: Poller.Factory,
+    private val provider: Provider<Poller>,
 ) : AuthAwareComponent {
     private val currentPoller = MutableStateFlow<Poller?>(null)
 
-    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = coroutineScope {
-        val poller = provider.create(this)
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+        val poller = provider.get()
         currentPoller.value = poller
+    }
+
+    override fun onLoggedOut() {
+        currentPoller.value?.cancel()
     }
 
 

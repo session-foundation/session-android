@@ -30,7 +30,7 @@ class BuildResult:
     max_version_code: int
     version_name: str
     apk_paths: list[str]
-    bundle_path: str
+    bundle_path: str | None
     package_id: str
 
 @dataclass
@@ -46,7 +46,14 @@ class BuildCredentials:
         self.key_alias = credentials['key_alias']
         self.key_password = credentials['key_password']
 
-def build_releases(project_root: str, flavor: str, credentials_property_prefix: str, credentials: BuildCredentials, huawei: bool=False, build_type: string = 'release') -> BuildResult:
+def build_releases(project_root: str, 
+                   flavor: str, 
+                   credentials_property_prefix: str, 
+                   credentials: BuildCredentials, 
+                   extra_gradle_opts: str = '',
+                   build_type: string = 'release',
+                   build_bundle: bool = False,
+                   split_apks: bool = False) -> BuildResult:
     (keystore_fd, keystore_file) = tempfile.mkstemp(prefix='keystore_', suffix='.jks', dir=build_dir)
     try:
         with os.fdopen(keystore_fd, 'wb') as f:
@@ -56,16 +63,17 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
                     -P{credentials_property_prefix}_STORE_FILE='{keystore_file}'\
                     -P{credentials_property_prefix}_STORE_PASSWORD='{credentials.keystore_password}' \
                     -P{credentials_property_prefix}_KEY_ALIAS='{credentials.key_alias}' \
-                    -P{credentials_property_prefix}_KEY_PASSWORD='{credentials.key_password}'"""
+                    -P{credentials_property_prefix}_KEY_PASSWORD='{credentials.key_password}' {extra_gradle_opts}"""
         
-        if huawei:
-            gradle_commands += ' -Phuawei '
-
-        subprocess.run(f"""{gradle_commands} \
-                    assemble{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
-
-        subprocess.run(f"""{gradle_commands} \
+        if build_bundle:
+            bundle_path = os.path.join(project_root, f'app/build/outputs/bundle/{flavor}{build_type.capitalize()}/app-{flavor}-{build_type}.aab')
+            subprocess.run(f"""{gradle_commands} -PsplitApks=false \
                     bundle{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
+        else:
+            bundle_path = None
+
+        subprocess.run(f"""{gradle_commands} \
+                    assemble{flavor.capitalize()}{build_type.capitalize()} -PsplitApks={str(split_apks).lower()} --stacktrace""", shell=True, check=True, cwd=project_root)
 
         apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/{build_type}')
 
@@ -83,7 +91,7 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
                             apk_paths=apks, 
                             package_id=package_id, 
                             version_name=version_name,
-                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}{build_type.capitalize()}/app-{flavor}-{build_type}.aab'))
+                            bundle_path=bundle_path)
         
     finally:
         print(f'Cleaning up keystore file: {keystore_file}')
@@ -262,6 +270,8 @@ play_build_result = build_releases(
     credentials=BuildCredentials(credentials['build']['play']),
     credentials_property_prefix='SESSION',
     build_type=args.build_type,
+    build_bundle=True,
+    split_apks=True,
     )
 
 print("Building fdroid releases...")
@@ -271,6 +281,8 @@ fdroid_build_result = build_releases(
     credentials=BuildCredentials(credentials['build']['play']),
     credentials_property_prefix='SESSION',
     build_type=args.build_type,
+    build_bundle=False,
+    split_apks=True,
     )
 
 if not args.build_only:
@@ -283,8 +295,10 @@ huawei_build_result = build_releases(
     flavor='huawei',
     credentials=BuildCredentials(credentials['build']['huawei']),
     credentials_property_prefix='SESSION_HUAWEI',
-    huawei=True,
-    build_type=args.build_type
+    extra_gradle_opts='-Phuawei',
+    build_type=args.build_type,
+    build_bundle=False,
+    split_apks=False,
     )
 
 # If the a github release draft exists, upload the apks to the release

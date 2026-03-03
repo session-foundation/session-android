@@ -4,13 +4,19 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.ApiExecutor
 import org.thoughtcrime.securesms.api.ApiExecutorContext
-import java.time.Instant
+import kotlin.time.ComparableTimeMark
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 /**
  * An [ApiExecutor] that batches requests together based on a [Batcher.batchKey].
@@ -37,65 +43,79 @@ class BatchApiExecutor<Req, Res, T>(
         batchCommandSender = channel
 
         scope.launch {
+            val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic
+
             val pendingRequests = linkedMapOf<Any, BatchInfo<Req, Res>>()
-            var nextDeadline: Instant? = null
+            var nextDeadline: ComparableTimeMark? = null
 
-            while (true) {
-                val command: BatchCommand<Req, Res>? = if (nextDeadline == null) {
-                    channel.receive()
-                } else {
-                    val now = Instant.now()
-                    if (nextDeadline > now) {
-                        withTimeoutOrNull(nextDeadline.toEpochMilli() - now.toEpochMilli()) {
-                            channel.receive()
-                        }
+            while (isActive) {
+                try {
+                    val command: BatchCommand<Req, Res>? = if (nextDeadline == null) {
+                        channel.receive()
                     } else {
-                        // Deadline already reached
-                        null
-                    }
-                }
-
-                var calculateNextDeadline = false
-
-                when (command) {
-                    is BatchCommand.Send<Req, Res> -> {
-                        val existingBatch = pendingRequests[command.batchKey]
-                        if (existingBatch == null) {
-                            pendingRequests[command.batchKey] = BatchInfo(
-                                requests = arrayListOf(command),
-                                deadline = Instant.now().plusMillis(100L),
-                            )
-
-                            calculateNextDeadline = true
+                        val now = timeSource.markNow()
+                        if (nextDeadline > now) {
+                            select {
+                                channel.onReceive { it }
+                                onTimeout(nextDeadline - now) { null }
+                            }
                         } else {
-                            existingBatch.requests.add(command)
+                            // Deadline already reached
+                            null
                         }
                     }
 
-                    is BatchCommand.Cancel<Req, Res> -> {
-                        val existingBatch = pendingRequests[command.batchKey]
-                        if (existingBatch != null) {
-                            existingBatch.requests.removeIf { it.req == command.req }
-                            if (existingBatch.requests.isEmpty()) {
-                                pendingRequests.remove(command.batchKey)
+                    var calculateNextDeadline = false
+
+                    when (command) {
+                        is BatchCommand.Send<Req, Res> -> {
+                            val existingBatch = pendingRequests[command.batchKey]
+                            if (existingBatch == null) {
+                                pendingRequests[command.batchKey] = BatchInfo(
+                                    requests = arrayListOf(command),
+                                    deadline = timeSource.markNow() + 100.milliseconds
+                                )
+
                                 calculateNextDeadline = true
+                            } else {
+                                existingBatch.requests.add(command)
                             }
                         }
+
+                        is BatchCommand.Cancel<Req, Res> -> {
+                            val existingBatch = pendingRequests[command.batchKey]
+                            if (existingBatch != null) {
+                                existingBatch.requests.removeIf { it.req == command.req }
+                                if (existingBatch.requests.isEmpty()) {
+                                    pendingRequests.remove(command.batchKey)
+                                    calculateNextDeadline = true
+                                }
+                            }
+                        }
+
+                        null -> {
+                            // Deadline reached: it will be the first batch in the queue
+                            executeBatch(pendingRequests.removeFirst())
+                            calculateNextDeadline = true
+                        }
                     }
 
-                    null -> {
-                        // Deadline reached: it will be the first batch in the queue
-                        executeBatch(pendingRequests.removeFirst())
-                        calculateNextDeadline = true
+                    if (calculateNextDeadline) {
+                        nextDeadline = if (pendingRequests.isEmpty()) {
+                            null
+                        } else {
+                            pendingRequests.values.first().deadline
+                        }
                     }
-                }
-
-                if (calculateNextDeadline) {
-                    nextDeadline = if (pendingRequests.isEmpty()) {
-                        null
-                    } else {
-                        pendingRequests.values.first().deadline
-                    }
+                } catch (e: CancellationException) {
+                    Log.i(TAG, "Main loop cancelled")
+                    throw e
+                } catch (e: ClosedReceiveChannelException) {
+                    Log.e(TAG, "Channel no longer open. Stopping batch handling", e)
+                    break
+                } catch (e: Throwable) {
+                    Log.e(TAG, "Error in main loop. Retrying in 1s", e)
+                    delay(1000)
                 }
             }
         }
@@ -103,7 +123,7 @@ class BatchApiExecutor<Req, Res, T>(
 
     private class BatchInfo<Req, Res>(
         val requests: ArrayList<BatchCommand.Send<Req, Res>>,
-        val deadline: Instant,
+        val deadline: ComparableTimeMark,
     ) {
         init {
             check(requests.isNotEmpty()) {
@@ -123,8 +143,11 @@ class BatchApiExecutor<Req, Res, T>(
                 }
 
                 if (transformed.isFailure) {
+                    Log.d(TAG, "Transformation of request failed", transformed.exceptionOrNull())
                     // Notify individual request of failure
-                    r.callback.send(Result.failure(transformed.exceptionOrNull()!!))
+                    if (!r.callback.trySend(Result.failure(transformed.exceptionOrNull()!!)).isSuccess) {
+                        Log.w(TAG, "Unable to send transform result back")
+                    }
                     continue
                 }
 
@@ -150,14 +173,17 @@ class BatchApiExecutor<Req, Res, T>(
                     response = resp
                 )
 
-                check(responses.size == batch.requests.size) {
-                    "Batch response size ${responses.size} does not match request size ${batch.requests.size}"
+                check(responses.size == requestsToSend.size) {
+                    "Batch response size ${responses.size} does not match request size ${requestsToSend.size}"
                 }
 
-                for (i in batch.requests.indices) {
-                    val request = batch.requests[i]
+                for (i in requestsToSend.indices) {
+                    val (request, _) = requestsToSend[i]
                     val response = responses[i]
-                    request.callback.send(response)
+
+                    if (!request.callback.trySend(response).isSuccess) {
+                        Log.w(TAG, "Unable to send result back to individual request")
+                    }
                 }
 
             } catch (e: Throwable) {
@@ -165,7 +191,9 @@ class BatchApiExecutor<Req, Res, T>(
 
                 // Notify all requests of the failure
                 for (request in requestsToSend) {
-                    request.first.callback.send(Result.failure(e))
+                    if (!request.first.callback.trySend(Result.failure(e)).isSuccess) {
+                        Log.w(TAG, "Unable to send failure back to individual request")
+                    }
                 }
             }
         }
@@ -182,7 +210,7 @@ class BatchApiExecutor<Req, Res, T>(
         val batchKey = batcher.batchKey(req)
             ?: return actualExecutor.send(ctx, req)
 
-        val callback = Channel<Result<*>>(1)
+        val callback = Channel<Result<*>>(capacity = 1)
         batchCommandSender.send(BatchCommand.Send(
             ctx = ctx,
             batchKey = batchKey,

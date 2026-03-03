@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v2.settings.notification
+package org.thoughtcrime.securesms.conversation.v3.settings.notification
 
 import androidx.compose.runtime.Composable
 import androidx.core.content.IntentCompat
@@ -10,7 +10,7 @@ import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 /**
  * Forced to add an activity entry point for this screen
  * (which is otherwise accessed without an activity through the ConversationSettingsNavHost)
- * because this is navigated to from the conversation app bar
+ * because this is navigated to from the conversation app bar / home screen / settings screen
  */
 @AndroidEntryPoint
 class NotificationSettingsActivity: FullComposeScreenLockActivity() {

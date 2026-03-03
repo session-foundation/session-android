@@ -3,6 +3,7 @@ package org.session.libsession.network
 
 import android.os.SystemClock
 import dagger.Lazy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -14,7 +15,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
+
+import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.snode.GetInfoApi
@@ -114,7 +116,7 @@ class SnodeClock @Inject constructor(
      */
     private suspend fun performNetworkSync(): Boolean {
         return runCatching {
-            withTimeout(8_000L) {
+            requireNotNull(withTimeoutOrNull(8_000L) {
                 val nodes = pickDistinctRandomSnodes(count = 3)
 
                 val samples: List<Pair<Long, Long>> = supervisorScope {
@@ -124,7 +126,7 @@ class SnodeClock @Inject constructor(
                                 val requestStarted = SystemClock.elapsedRealtime()
                                 var networkTime = snodeApiExecutor.get().execute(
                                     SnodeApiRequest(
-                                        snode = snodeDirectory.getRandomSnode(),
+                                        snode = node,
                                         api = getInfoApi.get(),
                                     )
                                 ).timestamp.toEpochMilli()
@@ -139,9 +141,8 @@ class SnodeClock @Inject constructor(
                 }
 
                 // Check for empty samples to prevent IndexOutOfBoundsException
-                if (samples.isEmpty()) {
-                    Log.w("SnodeClock", "Resync failed: Unable to reach any Snodes.")
-                    return@withTimeout false
+                check(samples.isNotEmpty()) {
+                    "Resync failed: Unable to reach any Snodes."
                 }
 
                 val nowUptime = SystemClock.elapsedRealtime()
@@ -161,16 +162,17 @@ class SnodeClock @Inject constructor(
                 }
 
                 Log.d("SnodeClock", "Resynced. Network time: ${Date(medianNow)}, system time: ${Date()}")
-                true
+            }) {
+                "Timeout waiting for network sync"
             }
-        }.getOrElse { t ->
-            Log.w("SnodeClock", "Resync failed with exception", t)
-            false
-        }
+        }.onFailure { e ->
+            if (e is CancellationException) throw e
+            Log.w("SnodeClock", "Resync failed with exception", e)
+        }.isSuccess
     }
 
     private suspend fun pickDistinctRandomSnodes(count: Int): List<org.session.libsignal.utilities.Snode> {
-        val out = LinkedHashSet<org.session.libsignal.utilities.Snode>(count)
+        val out = ArrayList<org.session.libsignal.utilities.Snode>(count)
         var guard = 0
         // Added a sanity check for pool size to prevent infinite loops if pool is tiny
         val poolSize = snodeDirectory.getSnodePool().size
@@ -178,7 +180,7 @@ class SnodeClock @Inject constructor(
         while (out.size < count && out.size < poolSize && guard++ < 20) {
             out += snodeDirectory.getRandomSnode()
         }
-        return out.toList()
+        return out
     }
 
     /**

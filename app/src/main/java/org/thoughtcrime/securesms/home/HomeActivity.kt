@@ -33,8 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -69,13 +67,15 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
@@ -133,7 +133,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private val TAG = "HomeActivity"
 
     private lateinit var binding: ActivityHomeBinding
-    private lateinit var glide: RequestManager
 
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var storage: Storage
@@ -237,8 +236,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         setContentView(binding.root)
         // Set custom toolbar
         setSupportActionBar(binding.toolbar)
-        // Set up Glide
-        glide = Glide.with(this)
         // Set up toolbar buttons
         binding.profileButton.setThemedContent {
             val recipient by recipientRepository.observeSelf()
@@ -332,7 +329,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up recycler view
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
-        homeAdapter.glide = glide
         binding.conversationsRecyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
@@ -664,7 +660,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // region Interaction
 
     override fun onConversationClick(thread: ThreadRecord) {
-        push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        if(prefs[DebugMenuViewModel.useConvoV3]){
+            push(ConversationActivityV3.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        } else {
+            push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        }
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {

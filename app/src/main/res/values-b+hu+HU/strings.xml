@@ -216,8 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} alkalmazásnak kamera-hozzáférésre van szüksége a QR-kódok beolvasásához</string>
     <string name="cancel">Mégsem</string>
     <string name="cancelAccess">{pro} megszakítása</string>
-    <string name="cancelProPlatform">Szüntesse meg a {pro} előfizetést a {platform} weboldalon, azzal a {platform_account} fiókkal, amellyel regisztrált.</string>
-    <string name="cancelProPlatformStore">Szüntesse meg a {pro} előfizetést a {platform_store} weboldalon, azzal a {platform_account} fiókkal, amellyel regisztrált.</string>
     <string name="change">Módosítás</string>
     <string name="changePasswordFail">Jelszó módosítása sikertelen</string>
     <string name="changePasswordModalDescription">Módosítsa a(z) {app_name} jelszavát. A helyileg tárolt adatokat az alkalmazás újratitkosítja az új jelszavával.</string>

@@ -1110,10 +1110,12 @@ open class Storage @Inject constructor(
         mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
     }
 
-    override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
+    override fun insertCallMessage(
+        senderPublicKey: String, callMessageType: CallMessageType,
+        sentTimestamp: Long, expiryMode: ExpiryMode,
+    ) {
         val address = fromSerialized(senderPublicKey)
-        val recipient = recipientRepository.getRecipientSync(address)
-        val expiryMode = recipient.expiryMode.coerceSendToRead()
+
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMillis() else 0
         val callMessage = IncomingTextMessage(
