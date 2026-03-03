@@ -212,6 +212,7 @@ class ConversationDataMapper @Inject constructor(
         val groups = mutableListOf<MessageContentGroup>()
         val mms = record as? MmsMessageRecord
 
+        // Special cases - which preclude other content
         // Deleted messages — check first; body is not meaningful for these
         if (record.isDeleted) {
             addContentToGroup(
@@ -224,6 +225,21 @@ class ConversationDataMapper @Inject constructor(
             return groups
         }
 
+        // community invites
+        if (record.isOpenGroupInvitation) {
+            val jsonData = UpdateMessageData.fromJSON(json, record.body)
+            if (jsonData?.kind is UpdateMessageData.Kind.OpenGroupInvitation) {
+                addContentToGroup(
+                    groups,
+                    MessageContentData.CommunityInvite(
+                    jsonData.kind.groupName,
+                    jsonData.kind.groupUrl
+                ))
+
+                return groups
+            }
+        }
+
         // Group 1: Quotes, Links, and Text
         // We map the message content data first
         val primaryData = mutableListOf<MessageContentData>()
@@ -234,16 +250,6 @@ class ConversationDataMapper @Inject constructor(
         // todo CONVOv3: replace with spans for mentions, links, and markdown-style formatting
         if (record.body.isNotBlank()) {
             primaryData += MessageContentData.Text(AnnotatedString(record.body))
-        }
-
-        if (record.isOpenGroupInvitation) {
-            val jsonData = UpdateMessageData.fromJSON(json, record.body)
-            if (jsonData?.kind is UpdateMessageData.Kind.OpenGroupInvitation) {
-                primaryData += MessageContentData.CommunityInvite(
-                    jsonData.kind.groupName,
-                    jsonData.kind.groupUrl
-                )
-            }
         }
 
         // now we can map the message content data to message content, which is a wrapper

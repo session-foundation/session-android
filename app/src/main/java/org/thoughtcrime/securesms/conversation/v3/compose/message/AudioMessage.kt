@@ -56,7 +56,7 @@ fun AudioMessage(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = LocalDimensions.current.xxsSpacing),
+            .padding(vertical = LocalDimensions.current.messageVerticalPadding),
 
     ) {
 
