@@ -19,11 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.flow.Flow
 import network.loki.messenger.R
@@ -48,9 +45,7 @@ internal fun LoadAccountScreen(
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Scaffold(modifier = Modifier.semantics{
-        testTagsAsResourceId = true
-    }) { paddingValues ->
+    Scaffold{ paddingValues ->
         Column {
             SessionTabRow(pagerState, TITLES)
             HorizontalPager(
@@ -123,7 +118,6 @@ private fun RecoveryPassword(
                 text = state.recoveryPhrase,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("recoveryPhrase")
                     .qaTag(R.string.AccessibilityId_recoveryPasswordEnter),
                 placeholder = stringResource(R.string.recoveryPasswordEnter),
                 onChange = onChange,
@@ -136,10 +130,6 @@ private fun RecoveryPassword(
         Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         Spacer(Modifier.weight(2f))
 
-        ContinueAccentOutlineButton(
-            modifier = Modifier
-                .testTag("recoverContinue")
-                .align(Alignment.CenterHorizontally), onContinue
-        )
+        ContinueAccentOutlineButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }
