@@ -92,6 +92,9 @@ class SignalAudioManager(private val context: Context,
 
             setMicrophoneMute(false)
 
+            // Put AudioManager into communication mode early so AEC/NS can engage before speaker routing.
+            androidAudioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+
             audioDevices.clear()
 
             signalBluetoothManager.start()
@@ -323,6 +326,12 @@ class SignalAudioManager(private val context: Context,
         if (androidAudioManager.isSpeakerphoneOn != on) {
             androidAudioManager.isSpeakerphoneOn = on
         }
+
+        // Some OEMs temporarily drop out of communication mode during route changes.
+        // Re-assert while the call audio manager is running.
+        if (state == State.RUNNING && androidAudioManager.mode != AudioManager.MODE_IN_COMMUNICATION) {
+            androidAudioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        }
     }
 
     private fun setMicrophoneMute(on: Boolean) {
@@ -341,6 +350,14 @@ class SignalAudioManager(private val context: Context,
     private fun silenceIncomingRinger() {
         Log.i(TAG, "silenceIncomingRinger():")
         incomingRinger.stop()
+
+
+        // startIncomingRinger() forces MODE_RINGTONE. Restore communication mode immediately so
+        // device echo cancellation has a chance to engage (especially important on speakerphone).
+        if (state != State.UNINITIALIZED) {
+            androidAudioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            setMicrophoneMute(false)
+        }
     }
 
     private fun startOutgoingRinger(type: OutgoingRinger.Type) {
