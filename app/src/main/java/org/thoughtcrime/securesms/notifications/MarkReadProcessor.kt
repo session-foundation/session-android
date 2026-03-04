@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.getAddressAndLastSeen
 import org.thoughtcrime.securesms.database.getAllLastSeen
+import org.thoughtcrime.securesms.database.getRecipientAddress
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -165,7 +166,7 @@ class MarkReadProcessor @Inject constructor(
                             is MessageChanges -> {
                                 State(
                                     lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
-                                    updates = threadDb.getRecipientForThreadId(event.threadId)
+                                    updates = threadDb.getRecipientAddress(event.threadId)
                                         ?.takeIf(::eligibleForReadReceipt)
                                         ?.let { threadAddress ->
                                             val threadLastSeen =
@@ -281,7 +282,7 @@ class MarkReadProcessor @Inject constructor(
             .scan(State<ExpiryUpdates>(threadDb.getAllLastSeen())) { acc, event ->
                 when (event) {
                     is MessageChanges -> {
-                        if (threadDb.getRecipientForThreadId(event.threadId) is Address.GroupLike) {
+                        if (threadDb.getRecipientAddress(event.threadId) is Address.GroupLike) {
                             if (acc.updates != null) acc.copy(updates = null) else acc
                         } else {
                             val threadLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)

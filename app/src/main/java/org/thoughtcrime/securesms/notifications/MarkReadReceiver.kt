@@ -8,9 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getRecipientAddress
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import javax.inject.Inject
 
@@ -44,7 +44,7 @@ class MarkReadReceiver : BroadcastReceiver() {
             threadIds.forEach {
                 Log.i(TAG, "Marking as read: $it at timestamp $lastSeenTime")
                 storage.updateConversationLastSeenIfNeeded(
-                    threadAddress = threadDatabase.getRecipientForThreadId(it) as? Address.Conversable ?: return@forEach,
+                    threadAddress = threadDatabase.getRecipientAddress(it) ?: return@forEach,
                     lastSeenTime = lastSeenTime,
                 )
             }

@@ -62,6 +62,8 @@ import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
+import org.thoughtcrime.securesms.database.getThreads
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -250,7 +252,7 @@ class DefaultConversationRepository @Inject constructor(
 
     override fun inviteContactsToCommunity(
         communityRecipient: Recipient,
-        contacts: Collection<Address>
+        contacts: Collection<Address.Conversable>
     ) {
         val community = communityRecipient.data as? RecipientData.Community
         val info = community?.roomInfo ?: return

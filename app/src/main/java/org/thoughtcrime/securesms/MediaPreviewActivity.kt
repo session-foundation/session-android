@@ -119,7 +119,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private var initialMediaType: String? = null
     private var initialMediaSize: Long = 0
     private var initialCaption: String? = null
-    private var conversationAddress: Address? = null
+    private var conversationAddress: Address.Conversable? = null
     private var leftIsRecent = false
     private val viewModel: MediaPreviewViewModel by viewModels()
     private var viewPagerListener: ViewPagerListener? = null
@@ -382,7 +382,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private fun initializeResources() {
         conversationAddress = IntentCompat.getParcelableExtra(intent,
             ADDRESS_EXTRA,
-            Address::class.java
+            Address.Conversable::class.java
         )
 
         initialMediaUri = intent.data
@@ -884,7 +884,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             context: Context?,
             slide: Slide,
             mms: MmsMessageRecord,
-            threadRecipient: Address
+            threadRecipient: Address.Conversable
         ): Intent? {
             var previewIntent: Intent? = null
             if (isContentTypeSupported(slide.contentType) && slide.uri != null) {

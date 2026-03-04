@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.compose.multiSelectMemberList
 import org.thoughtcrime.securesms.ui.AlertDialog
@@ -179,7 +180,7 @@ private fun PreviewSelectContacts() {
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val contacts = List(20) {
         ContactItem(
-            address = Address.fromSerialized(random),
+            address = random.toConversableAddress(),
             name = "User $it",
             selected = it % 3 == 0,
             showProBadge = true,

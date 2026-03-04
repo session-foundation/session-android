@@ -8,6 +8,7 @@ import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getRecipientAddress
 
 /**
  * A job to delete open group messages given by their server IDs.
@@ -31,7 +32,7 @@ class OpenGroupDeleteJob @AssistedInject constructor(
     override var failureCount: Int = 0
     override val maxFailureCount: Int = 1
 
-    val address: Address.Community? = threadDatabase.getRecipientForThreadId(threadId) as? Address.Community
+    val address: Address.Community? = threadDatabase.getRecipientAddress(threadId) as? Address.Community
 
     override suspend fun execute(dispatcherName: String) {
         val numberToDelete = messageServerIds.size

@@ -51,6 +51,7 @@ import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getRecipientAddress
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -206,7 +207,7 @@ class ConversationReactionOverlay : FrameLayout {
     private fun showAfterLayout(messageRecord: MessageRecord,
                                 lastSeenDownPoint: PointF,
                                 isMessageOnLeft: Boolean) {
-        val recipient = threadDatabase.getRecipientForThreadId(messageRecord.threadId)
+        val recipient = threadDatabase.getRecipientAddress(messageRecord.threadId)
         val contextMenu = ConversationContextMenu(dropdownAnchor, recipient?.let { getMenuActionItems(messageRecord, it) }.orEmpty())
         this.contextMenu = contextMenu
 

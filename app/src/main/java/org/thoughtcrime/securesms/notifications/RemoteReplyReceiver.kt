@@ -37,6 +37,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -80,11 +81,10 @@ class RemoteReplyReceiver : BroadcastReceiver() {
 
         if (remoteInput == null) return
 
-        val address = intent.getParcelableExtra<Address?>(ADDRESS_EXTRA)
+        val address = intent.getParcelableExtra<Address.Conversable>(ADDRESS_EXTRA)!!
         val replyMethod = intent.getSerializableExtra(REPLY_METHOD) as ReplyMethod?
         val responseText = remoteInput.getCharSequence(NotificationProcessor.EXTRA_REMOTE_REPLY)
 
-        if (address == null) throw AssertionError("No address specified")
         if (replyMethod == null) throw AssertionError("No reply method specified")
 
         if (responseText != null) {

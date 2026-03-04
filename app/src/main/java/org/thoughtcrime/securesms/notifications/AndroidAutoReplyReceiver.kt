@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import javax.inject.Inject
@@ -80,7 +81,7 @@ class AndroidAutoReplyReceiver : BroadcastReceiver() {
 
         if (remoteInput == null) return
 
-        val address = intent.getParcelableExtra<Address?>(ADDRESS_EXTRA)
+        val address = intent.getParcelableExtra<Address.Conversable>(ADDRESS_EXTRA)!!
         val threadId = intent.getLongExtra(THREAD_ID_EXTRA, -1)
         val responseText = getMessageText(intent)
 

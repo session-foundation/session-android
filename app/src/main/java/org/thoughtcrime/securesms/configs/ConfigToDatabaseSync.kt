@@ -53,6 +53,7 @@ import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.ensureThreads
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.upsertThreadLastSeen
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -150,8 +151,8 @@ class ConfigToDatabaseSync @Inject constructor(
     private fun ensureConversations(addresses: Set<Address.Conversable>, myAccountId: AccountId) {
         val result = threadDatabase.ensureThreads(addresses)
 
-        if (result.deletedThreads.isNotEmpty()) {
-            val deletedThreadIDs = result.deletedThreads.values
+        if (result.deleted.isNotEmpty()) {
+            val deletedThreadIDs = result.deleted.map { it.first }
             smsDatabase.deleteThreads(deletedThreadIDs)
             mmsDatabase.deleteThreads(deletedThreadIDs, updateThread = false)
             draftDatabase.clearDrafts(deletedThreadIDs)
@@ -168,25 +169,21 @@ class ConfigToDatabaseSync @Inject constructor(
 
             // Remove all convo info
             configFactory.withMutableUserConfigs { configs ->
-                result.deletedThreads.keys.forEach { address ->
-                    if (address is Address.Conversable) {
-                        configs.convoInfoVolatile.erase(address)
-                    }
+                result.deleted.forEach { (_, address) ->
+                    configs.convoInfoVolatile.erase(address)
                 }
             }
 
             // Some type of convo require additional cleanup, we'll go through them here
-            for ((address, threadId) in result.deletedThreads) {
+            for ((threadId, address) in result.deleted) {
                 storage.cancelPendingMessageSendJobs(threadId)
 
                 when (address) {
                     is Address.Community -> deleteCommunityData(address, threadId)
                     is Address.LegacyGroup -> deleteLegacyGroupData(address, myAccountId)
                     is Address.Group -> deleteGroupData(address)
-                    is Address.Blinded,
                     is Address.CommunityBlindedId,
-                    is Address.Standard,
-                    is Address.Unknown -> {
+                    is Address.Standard -> {
                         // No additional cleanup needed for these types
                     }
                 }
@@ -198,15 +195,13 @@ class ConfigToDatabaseSync @Inject constructor(
 
         // If we created threads, we need to update the thread database with the creation date.
         // And possibly having to fill in some other data.
-        for ((address, threadId) in result.createdThreads) {
+        for ((threadId, address) in result.created) {
             when (address) {
                 is Address.Community -> onCommunityAdded(address, threadId)
                 is Address.Group -> onGroupAdded(address, threadId)
                 is Address.LegacyGroup -> onLegacyGroupAdded(address, threadId, myAccountId)
-                is Address.Blinded,
                 is Address.CommunityBlindedId,
-                is Address.Standard,
-                is Address.Unknown -> {
+                is Address.Standard -> {
                     // No additional action needed for these types
                 }
             }
@@ -250,18 +245,12 @@ class ConfigToDatabaseSync @Inject constructor(
         // Store the encryption key pair
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
         storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMillis())
-        threadDatabase.setCreationDate(threadId, formationTimestamp)
     }
 
     private fun onGroupAdded(
         address: Address.Group,
         threadId: Long
-    ) {
-        val joined = configFactory.getGroup(address.accountId)?.joinedAtSecs
-        if (joined != null && joined > 0L) {
-            threadDatabase.setCreationDate(threadId, joined * 1000L)
-        }
-    }
+    ) {}
 
     private fun onCommunityAdded(address: Address.Community, threadId: Long) {
         // Clear any existing data for this community

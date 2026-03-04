@@ -32,6 +32,7 @@ import org.thoughtcrime.securesms.database.MediaDatabase
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.util.AttachmentUtil
@@ -48,7 +49,7 @@ import java.util.Locale
 
 @HiltViewModel(assistedFactory = MediaOverviewViewModel.Factory::class)
 class MediaOverviewViewModel @AssistedInject constructor(
-    @Assisted private val address: Address,
+    @Assisted private val address: Address.Conversable,
     private val application: Application,
     private val threadDatabase: ThreadDatabase,
     private val mediaDatabase: MediaDatabase,
@@ -311,14 +312,12 @@ class MediaOverviewViewModel @AssistedInject constructor(
             mutableShowingActionProgress.value = application.getString(R.string.deleting)
 
             // Delete the selected media items, and retrieve the thread ID for the address if any
-            val threadId = withContext(Dispatchers.Default) {
+            withContext(Dispatchers.Default) {
                 for (media in selectedMedia) {
                     kotlin.runCatching {
                         AttachmentUtil.deleteAttachment(application, media.mediaRecord.attachment)
                     }
                 }
-
-                threadDatabase.getThreadIdIfExistsFor(address.toString())
             }
 
             mutableShowingActionProgress.value = null
@@ -358,7 +357,7 @@ class MediaOverviewViewModel @AssistedInject constructor(
 
     @dagger.assisted.AssistedFactory
     interface Factory {
-        fun create(address: Address): MediaOverviewViewModel
+        fun create(address: Address.Conversable): MediaOverviewViewModel
     }
 
 }

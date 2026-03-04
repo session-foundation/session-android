@@ -446,10 +446,15 @@ object MmsSmsDatabaseExt {
     }
 
     fun MmsSmsDatabase.getThreadId(messageId: MessageId): Long? {
-        if (messageId.mms) {
-            return mmsDatabase.get().getThreadIdForMessage(messageId.id)
+        return if (messageId.mms) {
+            mmsDatabase.get().getThreadIdForMessage(messageId.id)
         } else {
-            return smsDatabase.get().getThreadId(messageId.id)
+            smsDatabase.get().getThreadId(messageId.id)
         }
+    }
+
+    fun MmsSmsDatabase.trimThread(threadId: Long, timestamp: Long) {
+        smsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp)
+        mmsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp, false)
     }
 }

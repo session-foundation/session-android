@@ -101,7 +101,7 @@ class MessageRequestView : LinearLayout {
             text = messageFormatter.formatThreadSnippet(context, thread),
             formatOnly = true, // no styling here, only text formatting
             context = context
-        ).text
+        )
 
         binding.snippetTextView.apply {
             text = snippet

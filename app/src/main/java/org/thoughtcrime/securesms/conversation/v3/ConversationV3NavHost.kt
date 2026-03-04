@@ -22,6 +22,7 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
@@ -297,7 +298,7 @@ fun ConversationV3NavHost(
                     hiltViewModel<InviteMembersViewModel, InviteMembersViewModel.Factory> { factory ->
                         factory.create(
                             groupAddress = data.groupAddress,
-                            excludingAccountIDs = data.excludingAccountIDs.map(Address::fromSerialized).toSet()
+                            excludingAccountIDs = data.excludingAccountIDs.map { it.toConversableAddress() }.toSet()
                         )
                     }
 
@@ -363,7 +364,7 @@ fun ConversationV3NavHost(
                     hiltViewModel<InviteMembersViewModel, InviteMembersViewModel.Factory> { factory ->
                         factory.create(
                             groupAddress = data.groupAddress,
-                            excludingAccountIDs = data.excludingAccountIDs.map(Address::fromSerialized).toSet()
+                            excludingAccountIDs = data.excludingAccountIDs.map { it.toConversableAddress() }.toSet()
                         )
                     }
 

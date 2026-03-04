@@ -32,6 +32,7 @@ import org.thoughtcrime.securesms.api.server.ServerApiRequest
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.attachments.AttachmentProcessor
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getRecipientAddress
 
 class AttachmentUploadJob @AssistedInject constructor(
     @Assisted val attachmentID: Long,
@@ -78,7 +79,7 @@ class AttachmentUploadJob @AssistedInject constructor(
             val attachment = messageDataProvider.getScaledSignalAttachmentStream(attachmentID)
                 ?: return handleFailure(dispatcherName, Error.NoAttachment)
 
-            val threadAddress = threadDatabase.getRecipientForThreadId(threadID.toLong()) ?: return handlePermanentFailure(dispatcherName,
+            val threadAddress = threadDatabase.getRecipientAddress(threadID.toLong()) ?: return handlePermanentFailure(dispatcherName,
                 RuntimeException("Thread doesn't exist"))
 
             if (threadAddress is Address.Community) {
