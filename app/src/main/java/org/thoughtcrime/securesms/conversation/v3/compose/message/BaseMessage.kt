@@ -296,7 +296,12 @@ fun MessageContentRenderer(
 
             is MessageContentData.Quote -> MessageQuote(
                 quote = content.contentData.data,
-                outgoing = isOutgoing
+                outgoing = isOutgoing,
+                onQuoteTapped = { messageId ->
+                    sendCommand(
+                        ConversationV3ViewModel.Commands.ScrollToMessage(messageId)
+                    )
+                }
             )
 
             is MessageContentData.Link ->
@@ -468,13 +473,6 @@ data class ReactionItem(
     val emoji: String,
     val count: Int,
     val selected: Boolean
-)
-
-data class QuoteMessageData(
-    val title: String,
-    val subtitle: AnnotatedString,
-    val icon: MessageQuoteIcon,
-    val showProBadge: Boolean
 )
 
 sealed class MessageQuoteIcon {
@@ -788,7 +786,7 @@ object PreviewMessageData {
     fun image(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Image("".toUri(), "img.jpg", loading, width, height)
     fun video(width: Int = 100, height: Int = 100, loading: Boolean = false) = MessageMediaItem.Video("".toUri(), "vid.mp4", loading, width, height)
     fun quote(title: String = "Toto", subtitle: String = "This is a quote", icon: MessageQuoteIcon = MessageQuoteIcon.Bar, showProBadge: Boolean = false) =
-        MessageContentData.Quote(QuoteMessageData(title, AnnotatedString(subtitle), icon, showProBadge))
+        MessageContentData.Quote(QuoteMessageData(title, AnnotatedString(subtitle), icon, showProBadge, MessageId(0, false)))
 
     fun composeContent(vararg content: MessageContentData): MessageContentGroup {
         return MessageContentGroup(

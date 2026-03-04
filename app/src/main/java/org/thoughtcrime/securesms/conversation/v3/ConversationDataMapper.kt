@@ -147,6 +147,7 @@ class ConversationDataMapper @Inject constructor(
         )
 
         // unread marker, if needed
+        //todo convov3 it seems this is always added on the last message instead of higher up when needed
         if (showUnreadMarker) out += ConversationItem.UnreadMarker
     }
 
@@ -390,7 +391,8 @@ class ConversationDataMapper @Inject constructor(
             title = title,
             subtitle = subtitle,
             icon = icon,
-            showProBadge = quote.author.shouldShowProBadge
+            showProBadge = quote.author.shouldShowProBadge,
+            quotedMessageId = quote.quoteMessageId
         )
     }
 

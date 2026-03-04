@@ -148,7 +148,10 @@ private fun LazyPagingItems<ConversationItem>.findIndexOf(
 fun rememberConversationListState(): ConversationListState {
     val lazyListState = rememberLazyListState()
     val density = LocalDensity.current
-    val breathingRoomPx = remember(density) { with(density) { 32.dp.roundToPx() } }
+
+    // extra space to avoid having the  message right on the edge
+    //todo convov3 could we calculate this number instead of hardcoding a value? other compose way to center the scroll?
+    val breathingRoomPx = remember(density) { with(density) { 64.dp.roundToPx() } }
 
     return remember(lazyListState, breathingRoomPx) {
         ConversationListState(
