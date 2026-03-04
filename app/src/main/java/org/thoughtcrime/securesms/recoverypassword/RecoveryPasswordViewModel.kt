@@ -33,7 +33,7 @@ class RecoveryPasswordViewModel @Inject constructor(
         .map { it?.seeded?.seed?.data?.toHexString() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val mnemonic = seed.filterNotNull()
+    val mnemonic: StateFlow<String> = seed.filterNotNull()
         .map {
             MnemonicCodec {
                 MnemonicUtilities.loadFileContents(application, it)

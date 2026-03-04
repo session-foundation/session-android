@@ -93,7 +93,7 @@ class InputBar @JvmOverloads constructor(
         binding.inputBarEditText.setText(text, type)
     }
 
-    var voiceRecorderState = VoiceRecorderState.Idle
+    var voiceRecorderState: VoiceRecorderState = VoiceRecorderState.Idle
 
     @Inject
     lateinit var recipientRepository: RecipientRepository

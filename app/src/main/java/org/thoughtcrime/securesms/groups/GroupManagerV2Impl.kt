@@ -678,7 +678,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun respondToInvitation(groupId: AccountId, approved: Boolean) =
+    override suspend fun respondToInvitation(groupId: AccountId, approved: Boolean): Unit? =
         scope.launchAndWait(groupId, "Respond to invitation") {
             val group = requireNotNull(
                 configFactory.withUserConfigs { it.userGroups.getClosedGroup(groupId.hexString) }
