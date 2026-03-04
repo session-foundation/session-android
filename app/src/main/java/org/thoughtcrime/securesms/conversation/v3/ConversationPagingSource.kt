@@ -33,7 +33,7 @@ class ConversationPagingSource(
             val records = mmsSmsDatabase.getConversation(
                 threadId, reverse, offset.toLong(), params.loadSize.toLong()
             ).use { cursor ->
-                buildList {
+                buildList(cursor.count) {
                     val reader = mmsSmsDatabase.readerFor(cursor)
                     var record = reader.getNext()
                     while (record != null) {
@@ -43,15 +43,17 @@ class ConversationPagingSource(
                 }
             }
 
-            val mapped = records.flatMapIndexed { index, record ->
+            val mapped = mutableListOf<ConversationDataMapper.ConversationItem>()
+            for (i in records.indices) {
                 dataMapper.map(
-                    record = record,
-                    previous = records.getOrNull(index + 1),
-                    next = records.getOrNull(index - 1),
+                    record = records[i],
+                    previous = records.getOrNull(i - 1),
+                    next = records.getOrNull(i + 1),
                     threadRecipient = threadRecipient,
                     localUserAddress = localUserAddress,
-                    showStatus = record.messageId == lastSentMessageId,
-                    lastSeen = lastSeen
+                    showStatus = records[i].messageId == lastSentMessageId,
+                    lastSeen = lastSeen,
+                    out = mapped,
                 )
             }
 

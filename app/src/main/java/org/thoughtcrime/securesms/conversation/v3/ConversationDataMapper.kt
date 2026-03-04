@@ -72,7 +72,8 @@ class ConversationDataMapper @Inject constructor(
         lastSeen: Long?,
         highlightKey: HighlightMessage? = null,
         showStatus: Boolean = false,
-    ): List<ConversationItem> {
+        out: MutableList<ConversationItem>,
+    ) {
         val isOutgoing = record.isOutgoing
 
         val layout = when {
@@ -137,18 +138,16 @@ class ConversationDataMapper @Inject constructor(
                 && (previous == null || previous.timestamp <= lastSeen)
                 && !record.isOutgoing
 
-        return buildList {
-            add(message)
+        out += message
 
-            // Items added after message appear visually ABOVE it (with reverseLayout = true)
-            if (showDateBreak) add(ConversationItem.DateBreak(
-                messageId = message.data.id, // useful in case of repeated dates due to logic
-                date = dateUtils.getDisplayFormattedTimeSpanString(record.timestamp)
-            ))
+        // Items added after message appear visually ABOVE it (with reverseLayout = true)
+        if (showDateBreak) out += ConversationItem.DateBreak(
+            messageId = message.data.id,
+            date = dateUtils.getDisplayFormattedTimeSpanString(record.timestamp)
+        )
 
-            // unread marker, if needed
-            if (showUnreadMarker) add(ConversationItem.UnreadMarker)
-        }
+        // unread marker, if needed
+        if (showUnreadMarker) out += ConversationItem.UnreadMarker
     }
 
     private fun isStartOfCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
@@ -182,10 +181,7 @@ class ConversationDataMapper @Inject constructor(
         if (abs(t2 - t1) > 5 * 60 * 1000) return true
 
         // Rule 2: crossed midnight in local timezone
-        val day1 = ((t1 / 1000) + timeZoneOffsetSeconds) / 86400
-        val day2 = ((t2 / 1000) + timeZoneOffsetSeconds) / 86400
-
-        return day1 != day2
+        return !dateUtils.isSameDay(t1, t2)
     }
 
     private fun shouldShowAuthorName(
