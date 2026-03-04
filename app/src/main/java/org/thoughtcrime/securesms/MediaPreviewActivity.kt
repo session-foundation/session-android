@@ -84,8 +84,10 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.MediaView
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
+import org.thoughtcrime.securesms.database.MediaDatabase
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.loaders.PagingMediaLoader
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
@@ -142,6 +144,12 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
     @Inject
     lateinit var snodeClock: SnodeClock
+
+    @Inject
+    lateinit var threadDatabase: ThreadDatabase
+
+    @Inject
+    lateinit var mediaDatabase: MediaDatabase
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -647,7 +655,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Pair<Cursor, Int>?> {
         return PagingMediaLoader(
             this,
-            conversationAddress!!, initialMediaUri!!, leftIsRecent
+            conversationAddress!!, initialMediaUri!!, leftIsRecent,
+            threadDatabase,
+            mediaDatabase,
         )
     }
 

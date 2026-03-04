@@ -9,6 +9,7 @@ import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
+import org.thoughtcrime.securesms.database.ThreadDatabaseExtKt;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 
 import java.util.HashMap;
@@ -84,10 +85,9 @@ public class TypingStatusSender {
   }
 
   private void sendTyping(long threadId, boolean typingStarted) {
-    Address address = threadDatabase.getRecipientForThreadId(threadId);
+    Address.Conversable address = ThreadDatabaseExtKt.getRecipientAddress(threadDatabase, threadId);
     if (address == null) { return; }
     Recipient recipient = recipientRepository.getRecipientSync(address);
-    if (recipient == null) { return; }
 
     if (!SessionMetaProtocol.shouldSendTypingIndicator(recipient)) { return; }
     TypingIndicator typingIndicator;

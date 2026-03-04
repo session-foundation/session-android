@@ -30,9 +30,11 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.utilities.AccountId;
+import org.session.libsignal.utilities.AccountIdKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
@@ -345,8 +347,8 @@ public class MmsSmsDatabase extends Database {
 
 
   public void deleteGroupInfoMessage(AccountId groupId, Class<? extends UpdateMessageData.Kind> kind) {
-    long threadId = threadDatabase.get().getThreadIdIfExistsFor(groupId.getHexString());
-    if (threadId == -1) {
+    Long threadId = ThreadDatabaseExtKt.getThreadId(threadDatabase.get(), (Address.Conversable) Address.Companion.toAddress(groupId));
+    if (threadId == null) {
       Log.d(TAG, "No thread found for group info message deletion");
       return;
     }
