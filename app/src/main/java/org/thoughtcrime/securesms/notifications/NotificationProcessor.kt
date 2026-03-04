@@ -1,11 +1,23 @@
 package org.thoughtcrime.securesms.notifications
 
+import android.Manifest
 import android.app.Activity
+import android.app.Notification
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.service.notification.StatusBarNotification
 import androidx.collection.MutableLongObjectMap
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.Person
+import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
+import androidx.core.content.LocusIdCompat
+import androidx.core.graphics.drawable.IconCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.catch
@@ -13,6 +25,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
+import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.isCommunity
@@ -45,6 +58,9 @@ import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
+import androidx.core.graphics.createBitmap
+import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 
 /**
  * Reactive notification processor that replaces the poll-based DefaultMessageNotifier.
@@ -75,6 +91,7 @@ class NotificationProcessor @Inject constructor(
     private val messageFormatter: MessageFormatter,
     private val avatarUtils: AvatarUtils,
     private val offscreenAvatarRenderer: Provider<OffscreenAvatarRenderer>,
+    private val notificationChannels: NotificationChannels,
 ) : AuthAwareComponent {
     private val currentActivity: Activity? get() = currentActivityObserver.currentActivity.value
 
@@ -119,8 +136,10 @@ class NotificationProcessor @Inject constructor(
             // Do nothing if recipient is muted
             if (recipient.notifyType == NotifyType.NONE) return@mapNotNull null
 
-            val messages = mmsSmsDatabase.getIncomingMessages(changes.threadId, startMsExclusive = lastSeen)
-                .mapNotNull { r ->
+            val items = mutableListOf<NotificationMessageItem>()
+
+            mmsSmsDatabase.getIncomingMessages(changes.threadId, startMsExclusive = lastSeen)
+                .forEach { r ->
                     val body = MentionUtilities.highlightMentions(
                         recipientRepository = recipientRepository,
                         text = messageFormatter.formatMessageBody(context, r, recipient),
@@ -134,51 +153,51 @@ class NotificationProcessor @Inject constructor(
                         && !body.mentions.any { it.second.isSelf }) {
                         // The message doesn't mention us in MENTIONS only mode.
                         // Ignoring...
-                        return@mapNotNull null
+                        return@forEach
                     }
 
-                    MessageData(
+                    items += MessageData(
                         id = r.messageId,
                         body = body.text,
                         sentAt = Instant.ofEpochMilli(r.dateSent),
                         authorName = r.individualRecipient.displayName(),
                         authorAvatar = avatarUtils.getUIDataFromRecipient(r.individualRecipient),
+                        authorAddress = r.individualRecipient.address
                     )
                 }
 
             // No reaction handling for communities
-            val incomingReactionWithRecipient = if (!threadAddress.isCommunity &&
-                recipient.notifyType == NotifyType.ALL) {
+            if (!threadAddress.isCommunity && recipient.notifyType == NotifyType.ALL) {
                 reactionDatabase.getReactionsForThread(
                     threadId = changes.threadId,
                     minSendTimeMsExclusive = lastSeen
-                ).mapNotNull { record ->
+                ).forEach { record ->
                     val r = recipientRepository.getRecipientSync(record.author.toAddress())
                     // Ignore reactions from self
-                    if (r.isSelf) return@mapNotNull null
+                    if (r.isSelf) return@forEach
 
-                    ReactionData(
+                    items += ReactionData(
                         reactionId = record.id,
                         emoji = record.emoji,
                         authorName = r.displayName(),
                         authorAvatar = avatarUtils.getUIDataFromRecipient(r),
                         sentAt = Instant.ofEpochMilli(record.dateSent),
+                        authorAddress = r.address,
                     )
                 }
-            } else {
-                emptyList()
             }
 
-            if (messages.isEmpty() && incomingReactionWithRecipient.isEmpty()) {
+            if (items.isEmpty()) {
                 ThreadNotificationState.Empty(changes.threadId)
             } else {
+                items.sortBy { it.sentAt }
+
                 ThreadNotificationState.Visible(
                     threadId = changes.threadId,
                     threadAddress = threadAddress,
                     threadName = recipient.displayName(),
                     threadAvatar = avatarUtils.getUIDataFromRecipient(recipient),
-                    messages = messages,
-                    reactions = incomingReactionWithRecipient
+                    items = items,
                 )
             }
         }.catch { e ->
@@ -217,16 +236,117 @@ class NotificationProcessor @Inject constructor(
         })
     }
 
-    private fun updateNotification(
+    private suspend fun updateNotification(
         existingNotification: StatusBarNotification,
         value: ThreadNotificationState.Visible
     ) {
-        TODO("Not yet implemented")
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        notificationManager.notify(threadTag(value.threadId), NotificationId.MESSAGE_THREAD,
+            buildNotification(value, silent = true))
     }
 
-    private fun postNewNotification(value: ThreadNotificationState.Visible) {
-        TODO("Not yet implemented")
+    private suspend fun postNewNotification(value: ThreadNotificationState.Visible) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        val notification = buildNotification(value, silent = false)
+        notificationManager.notify(threadTag(value.threadId), NotificationId.MESSAGE_THREAD, notification)
     }
+
+    private suspend fun buildNotification(state: ThreadNotificationState.Visible, silent: Boolean): Notification {
+        val channelId = notificationChannels.messagesChannel
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(ContextCompat.getColor(context, R.color.textsecure_primary))
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setShortcutId(state.threadAddress.toString())
+            .setLocusId(LocusIdCompat(state.threadAddress.toString()))
+            .setOnlyAlertOnce(silent)
+            .setAutoCancel(true)
+
+        // MessagingStyle
+        val userPerson = Person.Builder()
+            .setName(context.getString(R.string.you))
+            .build()
+
+        val style = NotificationCompat.MessagingStyle(userPerson)
+            .setConversationTitle(state.threadName)
+            .setGroupConversation(state.threadAddress is Address.GroupLike)
+
+
+        // Cache for persons to avoid re-rendering avatars
+        val persons = mutableMapOf<Address, Person>()
+
+        for (item in state.items) {
+            val person = persons.getOrPut(item.authorAddress) {
+                Person.Builder()
+                    .setName(item.authorName)
+                    .setIcon(getIcon(item.authorAvatar))
+                    .build()
+            }
+            style.addMessage(item.body(context), item.sentAt.toEpochMilli(), person)
+        }
+
+        builder.setStyle(style)
+
+        // Large icon
+        builder.setLargeIcon(getBitmap(state.threadAvatar))
+
+        // Content Intent
+        val intent = ConversationActivityV2.createIntent(context, state.threadAddress)
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            state.threadId.toInt(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        builder.setContentIntent(pendingIntent)
+
+        // Mark Read Action
+        val markReadIntent = Intent(context, MarkReadReceiver::class.java).apply {
+            action = MarkReadReceiver.CLEAR_ACTION
+            putExtra(MarkReadReceiver.THREAD_IDS_EXTRA, longArrayOf(state.threadId))
+            putExtra(MarkReadReceiver.LATEST_TIMESTAMP_EXTRA, state.items.last().sentAt.toEpochMilli())
+        }
+        val markReadPendingIntent = PendingIntent.getBroadcast(
+            context,
+            state.threadId.toInt(),
+            markReadIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val markReadAction = NotificationCompat.Action.Builder(
+            R.drawable.ic_check,
+            context.getString(R.string.messageMarkRead),
+            markReadPendingIntent
+        ).build()
+        builder.addAction(markReadAction)
+
+        return builder.build()
+    }
+
+    private suspend fun getIcon(avatarUIData: AvatarUIData): IconCompat {
+        return IconCompat.createWithBitmap(getBitmap(avatarUIData))
+    }
+
+    private suspend fun getBitmap(avatarUIData: AvatarUIData): Bitmap {
+        val size = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+        val bitmap = createBitmap(size, size, Bitmap.Config.RGB_565)
+        offscreenAvatarRenderer.get().render(bitmap, avatarUIData)
+        return bitmap
+    }
+
 
     // ── Data classes ──
 
@@ -235,21 +355,42 @@ class NotificationProcessor @Inject constructor(
         val fromReaction: Boolean,
     )
 
+    private sealed interface NotificationMessageItem {
+        val sentAt: Instant
+        val authorName: String
+        val authorAvatar: AvatarUIData
+        val authorAddress: Address
+
+        fun body(context: Context): CharSequence
+    }
+
     private data class MessageData(
         val id: MessageId,
         val body: CharSequence,
-        val sentAt: Instant,
-        val authorName: String,
-        val authorAvatar: AvatarUIData,
-    )
+        override val sentAt: Instant,
+        override val authorAddress: Address,
+        override val authorName: String,
+        override val authorAvatar: AvatarUIData,
+    ) : NotificationMessageItem {
+        override fun body(context: Context): CharSequence {
+            return body
+        }
+    }
 
     private data class ReactionData(
         val reactionId: Long,
         val emoji: String,
-        val authorName: String,
-        val authorAvatar: AvatarUIData,
-        val sentAt: Instant,
-    )
+        override val authorAddress: Address,
+        override val authorName: String,
+        override val authorAvatar: AvatarUIData,
+        override val sentAt: Instant,
+    ) : NotificationMessageItem {
+        override fun body(context: Context): CharSequence {
+            return Phrase.from(context, R.string.emojiReactsNotification)
+                .put(EMOJI_KEY, emoji)
+                .format()
+        }
+    }
 
     private sealed interface ThreadNotificationState {
         val threadId: Long
@@ -261,28 +402,14 @@ class NotificationProcessor @Inject constructor(
             val threadAddress: Address.Conversable,
             val threadName: String,
             val threadAvatar: AvatarUIData,
-            val messages: List<MessageData>,
-            val reactions: List<ReactionData>,
+            val items: List<NotificationMessageItem>, // Must be sorted by sentAt
         ): ThreadNotificationState {
             init {
-                require(messages.isNotEmpty() || reactions.isNotEmpty()) {
-                    "At least one message or reaction is required for a visible state"
+                require(items.isNotEmpty()) {
+                    "At least one message item is required"
                 }
             }
 
-            private val lastMessageOrReactionSendDate: Instant get() {
-                val lastMessageSent = messages.lastOrNull()?.sentAt
-                val lastReactionSent = reactions.lastOrNull()?.sentAt
-
-                return when {
-                    lastMessageSent != null && lastReactionSent != null -> {
-                        maxOf(lastMessageSent, lastReactionSent)
-                    }
-
-                    lastMessageSent != null -> lastMessageSent
-                    else -> lastReactionSent!!
-                }
-            }
 
             /**
              * Return true when there is NO notification on the system for this thread AND this state
@@ -293,7 +420,7 @@ class NotificationProcessor @Inject constructor(
              */
             fun shouldPostNewNotification(prevState: Visible?): Boolean {
                 return prevState == null ||
-                        lastMessageOrReactionSendDate > prevState.lastMessageOrReactionSendDate
+                        items.last().sentAt > prevState.items.last().sentAt
             }
         }
     }
@@ -308,6 +435,8 @@ class NotificationProcessor @Inject constructor(
 
     companion object {
         private const val TAG = "NotificationProcessor"
+
+        const val EXTRA_REMOTE_REPLY = "extra_remote_reply"
 
         private fun threadTag(threadId: Long): String {
             return "thread-$threadId"

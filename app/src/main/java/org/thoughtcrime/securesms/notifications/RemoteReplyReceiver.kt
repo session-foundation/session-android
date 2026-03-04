@@ -47,6 +47,7 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class RemoteReplyReceiver : BroadcastReceiver() {
+    @Inject
     lateinit var threadDatabase: ThreadDatabase
 
     @Inject
