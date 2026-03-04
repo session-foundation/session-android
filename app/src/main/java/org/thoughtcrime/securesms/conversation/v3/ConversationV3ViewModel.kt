@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v3
 
 import android.content.Context
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -30,27 +29,31 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
+import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
 import org.session.libsession.utilities.toGroupString
+import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -58,13 +61,19 @@ import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.UserProfileModalCommands
+import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.mapToStateFlow
 
 
@@ -85,7 +94,12 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private val attachmentDatabase: AttachmentDatabase,
     private val reactionDb: ReactionDatabase,
     private val dataMapper: ConversationDataMapper,
-    ) : ViewModel() {
+    private val proStatusManager: ProStatusManager,
+    ) : InputbarViewModel(
+    context = context,
+    proStatusManager = proStatusManager,
+    recipientRepository = recipientRepository,
+) {
     //todo convov3 remove references to threadId once we have the notification refactor
     val threadIdFlow: StateFlow<Long?> = merge(
         // Initial lookup off main thread
@@ -102,6 +116,9 @@ class ConversationV3ViewModel @AssistedInject constructor(
         UIState()
     )
     val uiState: StateFlow<UIState> = _uiState
+
+    private val _dialogsState = MutableStateFlow(DialogsState())
+    val dialogsState: StateFlow<DialogsState> = _dialogsState
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
@@ -321,6 +338,121 @@ class ConversationV3ViewModel @AssistedInject constructor(
             is Commands.GoTo -> {
                 navigateTo(command.destination)
             }
+
+            is Commands.ShowOpenUrlDialog -> {
+                _dialogsState.update {
+                    it.copy(openLinkDialogUrl = command.url)
+                }
+            }
+
+            is Commands.HideDeleteEveryoneDialog -> {
+                _dialogsState.update {
+                    it.copy(deleteEveryone = null)
+                }
+            }
+
+            is Commands.HideClearEmoji -> {
+                _dialogsState.update {
+                    it.copy(clearAllEmoji = null)
+                }
+            }
+
+            is Commands.MarkAsDeletedLocally -> {
+                // hide dialog first
+                _dialogsState.update {
+                    it.copy(deleteEveryone = null)
+                }
+
+                //todo convov3 implement 'deleteLocally'
+                //deleteLocally(command.messages)
+            }
+            is Commands.MarkAsDeletedForEveryone -> {
+                //todo convov3 implement
+            }
+
+            is Commands.ClearEmoji -> {
+                //todo convov3 implement
+            }
+
+            Commands.HideRecreateGroupConfirm -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupConfirm = false)
+                }
+            }
+
+            Commands.ConfirmRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(
+                        recreateGroupConfirm = false,
+                        recreateGroupData = recipient.address.toString().let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
+                    )
+                }
+            }
+
+            Commands.HideRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupData = null)
+                }
+            }
+
+            is Commands.HideUserProfileModal -> {
+                _dialogsState.update { it.copy(userProfileModal = null) }
+            }
+
+            is Commands.HandleUserProfileCommand -> {
+                //todo convov3 implement
+                //userProfileModalUtils?.onCommand(command.upmCommand)
+            }
+
+            is Commands.JoinCommunity -> {
+                //todo convov3 implement
+                //joinCommunity(command.url)
+            }
+
+            is Commands.HideJoinCommunityDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        joinCommunity = null
+                    )
+                }
+            }
+
+            is Commands.DownloadAttachments -> {
+                viewModelScope.launch {
+                    val databaseAttachment = command.attachment
+
+                    storage.setAutoDownloadAttachments(recipient.address, true)
+
+                    val attachmentId = databaseAttachment.attachmentId.rowId
+                    if (databaseAttachment.transferState == AttachmentState.PENDING.value
+                        && storage.getAttachmentUploadJob(attachmentId) == null
+                    ) {
+                        //todo convov3 implement
+
+                        // start download
+                        /*jobQueue.get().add(
+                            attachmentDownloadJobFactory.create(
+                                attachmentId,
+                                databaseAttachment.mmsId
+                            )
+                        )*/
+                    }
+                }
+            }
+
+            is Commands.HideAttachmentDownloadDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        attachmentDownload = null
+                    )
+                }
+            }
+
+            Commands.HideSimpleDialog -> {
+                _dialogsState.update {
+                    it.copy(showSimpleDialog = null)
+                }
+            }
         }
     }
 
@@ -333,6 +465,31 @@ class ConversationV3ViewModel @AssistedInject constructor(
 
     sealed interface Commands {
         data class GoTo(val destination: ConversationV3Destination) : Commands
+
+        // Dialogs
+        data class ShowOpenUrlDialog(val url: String?) : Commands
+        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands
+        data object HideDeleteEveryoneDialog : Commands
+        data object HideClearEmoji : Commands
+        data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands
+        data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands
+
+        data class JoinCommunity(val url: String): Commands
+        data object HideJoinCommunityDialog: Commands
+
+        data class DownloadAttachments(val attachment: DatabaseAttachment): Commands
+        data object HideAttachmentDownloadDialog: Commands
+
+        data object HideSimpleDialog : Commands
+
+        data object ConfirmRecreateGroup : Commands
+        data object HideRecreateGroupConfirm : Commands
+        data object HideRecreateGroup : Commands
+
+        data object HideUserProfileModal: Commands
+        data class HandleUserProfileCommand(
+            val upmCommand: UserProfileModalCommands
+        ): Commands
     }
 
     @AssistedFactory
@@ -345,5 +502,46 @@ class ConversationV3ViewModel @AssistedInject constructor(
 
     data class UIState(
         val name: String = "",
+    )
+
+    // Dialogs
+    data class DialogsState(
+        val showSimpleDialog: SimpleDialogData? = null,
+        val openLinkDialogUrl: String? = null,
+        val clearAllEmoji: ClearAllEmoji? = null,
+        val deleteEveryone: DeleteForEveryoneDialogData? = null,
+        val recreateGroupConfirm: Boolean = false,
+        val recreateGroupData: RecreateGroupDialogData? = null,
+        val userProfileModal: UserProfileModalData? = null,
+        val joinCommunity: JoinCommunityDialogData? = null,
+        val attachmentDownload: ConfirmAttachmentDownloadDialogData? = null
+    )
+
+    data class JoinCommunityDialogData(
+        val communityName: String,
+        val communityUrl: String
+    )
+
+    data class ConfirmAttachmentDownloadDialogData(
+        val attachment: DatabaseAttachment,
+        val conversationName: String
+    )
+
+    data class RecreateGroupDialogData(
+        val legacyGroupId: String,
+    )
+
+    data class DeleteForEveryoneDialogData(
+        val messages: Set<MessageRecord>,
+        val messageType: MessageType,
+        val defaultToEveryone: Boolean,
+        val everyoneEnabled: Boolean,
+        val deleteForEveryoneLabel: String,
+        val warning: String? = null
+    )
+
+    data class ClearAllEmoji(
+        val emoji: String,
+        val messageId: MessageId
     )
 }

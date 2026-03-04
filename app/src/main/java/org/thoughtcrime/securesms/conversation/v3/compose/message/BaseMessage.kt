@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.min
 import androidx.core.net.toUri
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -85,14 +86,19 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 @Composable
 fun Message(
     data: MessageViewData,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sendCommand: (ConversationV3ViewModel.Commands) -> Unit = {}
 ) {
     when (data.layout) {
         MessageLayout.CONTROL -> {
             ControlMessage(data = data, modifier = modifier)
         }
         MessageLayout.INCOMING, MessageLayout.OUTGOING -> {
-            RecipientMessage(data = data, modifier = modifier)
+            RecipientMessage(
+                data = data,
+                modifier = modifier,
+                sendCommand = sendCommand
+            )
         }
     }
 }
@@ -100,6 +106,7 @@ fun Message(
 @Composable
 fun RecipientMessage(
     data: MessageViewData,
+    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     modifier: Modifier = Modifier
 ){
     val outgoing = data.layout == MessageLayout.OUTGOING
@@ -126,7 +133,8 @@ fun RecipientMessage(
                 .widthIn(max = maxMessageWidth)
                 .wrapContentWidth(),
             data = data,
-            maxWidth = maxMessageWidth
+            maxWidth = maxMessageWidth,
+            sendCommand = sendCommand
         )
     }
 }
@@ -137,8 +145,9 @@ fun RecipientMessage(
 @Composable
 fun RecipientMessageContent(
     data: MessageViewData,
-    modifier: Modifier = Modifier,
-    maxWidth: Dp
+    maxWidth: Dp,
+    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val outgoing = data.layout == MessageLayout.OUTGOING
 
@@ -198,7 +207,7 @@ fun RecipientMessageContent(
                     val contentColumn = @Composable {
                         Column {
                             group.contents.forEach { content ->
-                                MessageContentRenderer(content, data.layout, maxWidth)
+                                MessageContentRenderer(content, data.layout, maxWidth, sendCommand)
                             }
                         }
                     }
@@ -260,7 +269,12 @@ fun RecipientMessageContent(
 }
 
 @Composable
-fun MessageContentRenderer(content: MessageContent, layout: MessageLayout, maxWidth: Dp) {
+fun MessageContentRenderer(
+    content: MessageContent,
+    layout: MessageLayout,
+    maxWidth: Dp,
+    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+) {
     val isOutgoing = layout == MessageLayout.OUTGOING
     Box(
         modifier = Modifier.padding(
@@ -276,7 +290,7 @@ fun MessageContentRenderer(content: MessageContent, layout: MessageLayout, maxWi
                 isOutgoing = isOutgoing,
                 modifier = Modifier.padding(defaultMessageBubblePadding()),
                 onUrlClick = {
-                    //todo convov3 handle
+                    sendCommand(ConversationV3ViewModel.Commands.ShowOpenUrlDialog(it))
                 }
             )
 
@@ -288,7 +302,8 @@ fun MessageContentRenderer(content: MessageContent, layout: MessageLayout, maxWi
             is MessageContentData.Link ->
                 MessageLink(
                     data = content.contentData.data,
-                    outgoing = isOutgoing
+                    outgoing = isOutgoing,
+                    sendCommand = sendCommand
                 )
 
             is MessageContentData.Document ->

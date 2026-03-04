@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -42,12 +44,15 @@ import org.thoughtcrime.securesms.ui.theme.bold
 fun MessageLink(
     data: MessageLinkData,
     outgoing: Boolean,
+    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     modifier: Modifier = Modifier
 ){
     Row(
-        modifier = modifier.fillMaxWidth().background(
-            color = blackAlpha06
-        ),
+        modifier = modifier.fillMaxWidth()
+            .background(color = blackAlpha06)
+            .clickable {
+                sendCommand(ConversationV3ViewModel.Commands.ShowOpenUrlDialog(data.url))
+            },
     ) {
         Box(
             modifier = Modifier.size(100.dp)

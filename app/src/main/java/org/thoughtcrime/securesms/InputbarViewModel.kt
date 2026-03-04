@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms
 
-import android.app.Application
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ import org.thoughtcrime.securesms.util.NumberUtil
 private const  val CHARACTER_LIMIT_THRESHOLD = 200
 
 abstract class InputbarViewModel(
-    private val application: Application,
+    private val context: Context,
     private val proStatusManager: ProStatusManager,
     private val recipientRepository: RecipientRepository,
 ): ViewModel() {
@@ -103,15 +103,15 @@ abstract class InputbarViewModel(
             val charsLeft = _inputBarState.value.charLimitState?.count ?: 0
             it.copy(
                 showSimpleDialog = SimpleDialogData(
-                    title = application.getString(R.string.modalMessageCharacterDisplayTitle),
-                    message = application.resources.getQuantityString(
+                    title = context.getString(R.string.modalMessageCharacterDisplayTitle),
+                    message = context.resources.getQuantityString(
                         R.plurals.modalMessageCharacterDisplayDescription,
                         charsLeft, // quantity for plural
                         proStatusManager.getCharacterLimit(currentUser.isPro), // 1st arg: total character limit
                         charsLeft, // 2nd arg: chars left
                     ),
                     positiveStyleDanger = false,
-                    positiveText = application.getString(R.string.okay),
+                    positiveText = context.getString(R.string.okay),
                     onPositive = ::hideSimpleDialog
 
                 )
@@ -123,12 +123,12 @@ abstract class InputbarViewModel(
         _inputBarStateDialogsState.update {
             it.copy(
                 showSimpleDialog = SimpleDialogData(
-                    title = application.getString(R.string.modalMessageTooLongTitle),
-                    message = Phrase.from(application.getString(R.string.modalMessageCharacterTooLongDescription))
+                    title = context.getString(R.string.modalMessageTooLongTitle),
+                    message = Phrase.from(context.getString(R.string.modalMessageCharacterTooLongDescription))
                         .put(LIMIT_KEY, proStatusManager.getCharacterLimit(currentUser.isPro))
                         .format(),
                     positiveStyleDanger = false,
-                    positiveText = application.getString(R.string.okay),
+                    positiveText = context.getString(R.string.okay),
                     onPositive = ::hideSimpleDialog
                 )
             )
@@ -139,12 +139,12 @@ abstract class InputbarViewModel(
         _inputBarStateDialogsState.update {
             it.copy(
                 showSimpleDialog = SimpleDialogData(
-                    title = application.getString(R.string.modalMessageTooLongTitle),
-                    message = Phrase.from(application.getString(R.string.modalMessageTooLongDescription))
+                    title = context.getString(R.string.modalMessageTooLongTitle),
+                    message = Phrase.from(context.getString(R.string.modalMessageTooLongDescription))
                         .put(LIMIT_KEY, proStatusManager.getCharacterLimit(currentUser.isPro))
                         .format(),
                     positiveStyleDanger = false,
-                    positiveText = application.getString(R.string.okay),
+                    positiveText = context.getString(R.string.okay),
                     onPositive = ::hideSimpleDialog
                 )
             )

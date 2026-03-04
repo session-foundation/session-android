@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,9 +28,9 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.flowOf
+import org.thoughtcrime.securesms.conversation.v3.ConversationDataMapper.ConversationItem
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
-import org.thoughtcrime.securesms.conversation.v3.ConversationDataMapper.ConversationItem
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Message
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLayout
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewData
@@ -68,6 +69,22 @@ fun ConversationScreen(
         sendCommand = viewModel::onCommand,
         switchConvoVersion = switchConvoVersion,
         onBack = onBack,
+    )
+
+    val dialogsState by viewModel.dialogsState.collectAsState()
+    val inputBarDialogState by viewModel.inputBarStateDialogsState.collectAsState()
+
+    ConversationV3Dialogs(
+        dialogsState = dialogsState,
+        inputBarDialogsState = inputBarDialogState,
+        sendCommand = viewModel::onCommand,
+        sendInputBarCommand = viewModel::onInputBarCommand,
+        onPostUserProfileModalAction = {
+            // this function is to perform logic once an action
+            // has been taken in the UPM, like messaging a user
+            // in this case we want to make sure the reaction dialog is dismissed
+            //todo convov3 close reaction pager once it's added - once in compose we might have a better solution overall
+        }
     )
 }
 
@@ -133,8 +150,13 @@ fun Conversation(
                 }
             ) { index ->
                 when (val item = conversationItems[index]) {
-                    is ConversationItem.Message -> Message(data = item.data)
+                    is ConversationItem.Message -> Message(
+                        data = item.data,
+                        sendCommand = sendCommand
+                    )
+
                     is ConversationItem.DateBreak -> ConversationDateBreak(date = item.date)
+
                     is ConversationItem.UnreadMarker -> ConversationUnreadBreak()
                     null -> Unit
                 }
