@@ -128,9 +128,8 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
-
-    private val _scrollToBottomEvent = Channel<Unit>(Channel.CONFLATED)
-    val scrollToBottomEvent: Flow<Unit> = _scrollToBottomEvent.receiveAsFlow()
+    private val _scrollEvent = Channel<ScrollEvent>(Channel.CONFLATED)
+    val scrollEvent: Flow<ScrollEvent> = _scrollEvent.receiveAsFlow()
 
     private var scrollState: ConversationScrollState = ConversationScrollState(
         isNearBottom = true,
@@ -386,7 +385,17 @@ class ConversationV3ViewModel @AssistedInject constructor(
             is Commands.ScrollToBottom -> {
                 scrollState = scrollState.copy(isNearBottom = true, isFullyScrolled = true)
                 _uiState.update { it.copy(scrollToBottomButton = null) }
-                _scrollToBottomEvent.trySend(Unit)
+                _scrollEvent.trySend(ScrollEvent.ToBottom)
+            }
+
+            is Commands.ScrollToMessage -> {
+                _scrollEvent.trySend(
+                    ScrollEvent.ToMessage(
+                        messageId = command.messageId,
+                        smoothScroll = command.smoothScroll,
+                        highlight = command.highlight,
+                    )
+                )
             }
 
             // Dialog related
@@ -521,8 +530,13 @@ class ConversationV3ViewModel @AssistedInject constructor(
         /** Compose reports current scroll state — VM derives all scroll-dependent logic from this */
         data class OnScrollStateChanged(val scrollState: ConversationScrollState) : Commands
 
-        /** User tapped the scroll-to-bottom button */
         data object ScrollToBottom : Commands
+
+        data class ScrollToMessage(
+            val messageId: MessageId,
+            val smoothScroll: Boolean = true,
+            val highlight: Boolean = true,
+        ) : Commands
 
         // Dialogs
         data class ShowOpenUrlDialog(val url: String?) : Commands
@@ -612,4 +626,21 @@ class ConversationV3ViewModel @AssistedInject constructor(
         val lastVisibleIndex: Int,
         val totalItemCount: Int,
     )
+
+
+    /**
+     * One-shot event consumed by the Composable layer.
+     * Every scroll trigger in the app (notifications, search, quotes,
+     * scroll-to-bottom button) flows through this single type.
+     */
+    sealed interface ScrollEvent {
+        data object ToBottom : ScrollEvent
+
+        data class ToMessage(
+            val messageId: MessageId,
+            val smoothScroll: Boolean = true,
+            val highlight: Boolean = true,
+        ) : ScrollEvent
+    }
+
 }

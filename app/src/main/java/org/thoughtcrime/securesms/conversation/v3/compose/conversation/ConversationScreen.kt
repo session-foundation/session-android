@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.conversation
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -51,6 +49,7 @@ import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessage
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.textGroup
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionItem
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionViewState
+import org.thoughtcrime.securesms.conversation.v3.rememberConversationListState
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.AnimateFade
 import org.thoughtcrime.securesms.ui.components.ConversationAppBar
@@ -81,7 +80,7 @@ fun ConversationScreen(
         conversationState = conversationState,
         appBarData = appBarData,
         conversationItems = conversationItems,
-        scrollToBottomEvent = viewModel.scrollToBottomEvent,
+        scrollEvent = viewModel.scrollEvent,
         sendCommand = viewModel::onCommand,
         switchConvoVersion = switchConvoVersion,
         onBack = onBack,
@@ -110,22 +109,22 @@ fun Conversation(
     conversationState: ConversationV3ViewModel.UIState,
     appBarData: ConversationAppBarData,
     conversationItems: LazyPagingItems<ConversationItem>,
-    scrollToBottomEvent: Flow<Unit>,
+    scrollEvent: Flow<ConversationV3ViewModel.ScrollEvent>,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     switchConvoVersion: () -> Unit,
     onBack: () -> Unit,
 ) {
-    val listState = rememberLazyListState()
+    val listController = rememberConversationListState()
 
-    // One-shot scroll event
+    // Single collector for all scroll events
     LaunchedEffect(Unit) {
-        scrollToBottomEvent.collect {
-            listState.animateScrollToItem(0)
+        scrollEvent.collect { event ->
+            listController.handleScrollEvent(event, conversationItems)
         }
     }
 
     // Report scroll state to VM
-    val scrollState by listState.asConversationScrollState()
+    val scrollState by listController.lazyListState.asConversationScrollState()
     LaunchedEffect(scrollState) {
         sendCommand(ConversationV3ViewModel.Commands.OnScrollStateChanged(scrollState))
     }
@@ -163,7 +162,7 @@ fun Conversation(
                 contentPadding = PaddingValues(
                     horizontal = LocalDimensions.current.xsSpacing
                 ),
-                state = listState,
+                state = listController.lazyListState,
             ) {
                 items(
                     count = conversationItems.itemCount,
@@ -183,10 +182,17 @@ fun Conversation(
                     }
                 ) { index ->
                     when (val item = conversationItems[index]) {
-                        is ConversationItem.Message -> Message(
-                            data = item.data,
-                            sendCommand = sendCommand
-                        )
+                        is ConversationItem.Message -> {
+                            // Apply highlight only to the matching item
+                            val data = listController.highlightKeyFor(item.data.id)?.let { key ->
+                                item.data.copy(highlightKey = key)
+                            } ?: item.data
+
+                            Message(
+                                data = data,
+                                sendCommand = sendCommand,
+                            )
+                        }
 
                         is ConversationItem.DateBreak -> ConversationDateBreak(date = item.date)
 
@@ -292,7 +298,7 @@ fun PreviewConversation(
                     )
                 )
             ).collectAsLazyPagingItems(),
-            scrollToBottomEvent = flowOf(Unit),
+            scrollEvent = flowOf(),
             sendCommand = {},
             switchConvoVersion = {},
             onBack = {},
