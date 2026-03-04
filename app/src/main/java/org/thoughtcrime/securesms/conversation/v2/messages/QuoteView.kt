@@ -100,7 +100,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                 ProBadgeText(
                     modifier = modifier,
                     text = authorDisplayName,
-                    textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
+                    textStyle = LocalType.current.base.bold().copy(color = Color(textColor)),
                     showBadge = authorRecipient.shouldShowProBadge,
                     badgeColors = if(isOutgoingMessage && mode == Mode.Regular) proBadgeColorOutgoing()
                     else proBadgeColorStandard()

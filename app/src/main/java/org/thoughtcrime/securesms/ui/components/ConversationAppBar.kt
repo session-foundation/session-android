@@ -52,6 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SearchBar
@@ -80,6 +81,7 @@ fun ConversationAppBar(
     onBackPressed: () -> Unit,
     onCallPressed: () -> Unit,
     onAvatarPressed: () -> Unit,
+    switchConvoVersion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
@@ -131,6 +133,18 @@ fun ConversationAppBar(
                             AppBarBackIcon(onBack = onBackPressed)
                         },
                         actions = {
+                            if (BuildConfig.DEBUG) {
+                                IconButton(
+                                    onClick = switchConvoVersion
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_pro_sparkle_custom),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(LocalDimensions.current.iconMedium)
+                                    )
+                                }
+                            }
+
                             if (data.showCall) {
                                 IconButton(
                                     onClick = onCallPressed
@@ -492,6 +506,7 @@ fun ConversationTopBarPreview(
             onBackPressed = { /* no-op for preview */ },
             onCallPressed = { /* no-op for preview */ },
             onAvatarPressed = { /* no-op for preview */ },
+            switchConvoVersion = { /* no-op for preview */ },
             searchQuery = "",
             onSearchQueryChanged = {},
             onSearchQueryClear = {},

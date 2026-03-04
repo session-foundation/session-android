@@ -15,23 +15,6 @@ import androidx.core.text.toSpannable
 
 object TextUtilities {
 
-    fun getIntrinsicHeight(text: CharSequence, paint: TextPaint, width: Int): Int {
-        val builder = StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
-            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-            .setLineSpacing(0.0f, 1.0f)
-            .setIncludePad(false)
-        val layout = builder.build()
-        return layout.height
-    }
-
-    fun getIntrinsicLayout(text: CharSequence, paint: TextPaint, width: Int): StaticLayout {
-        val builder = StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                .setLineSpacing(0.0f, 1.0f)
-                .setIncludePad(false)
-        return builder.build()
-    }
-
     fun TextView.getIntersectedModalSpans(event: MotionEvent): List<ModalURLSpan> {
         val xInt = event.rawX.toInt()
         val yInt = event.rawY.toInt()
@@ -59,17 +42,5 @@ object TextUtilities {
 
     fun String.textSizeInBytes(): Int = this.toByteArray(Charsets.UTF_8).size
 
-    fun String.breakAt(vararg lengths: Int): String {
-        var cursor = 0
-        val out = StringBuilder()
-        for (len in lengths) {
-            val end = (cursor + len).coerceAtMost(length)
-            out.append(substring(cursor, end))
-            if (end < length) out.append('\n')
-            cursor = end
-        }
-        if (cursor < length) out.append('\n').append(substring(cursor))
-        return out.toString()
-    }
 
 }

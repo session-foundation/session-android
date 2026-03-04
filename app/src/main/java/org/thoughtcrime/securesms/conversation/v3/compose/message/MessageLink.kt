@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v3.compose
+package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +27,8 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -55,7 +57,7 @@ fun MessageLink(
                 Image(
                     painter = painterResource(id = R.drawable.ic_link),
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(LocalColors.current.text),
+                    colorFilter = ColorFilter.tint(getTextColor(outgoing)),
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
@@ -103,47 +105,74 @@ fun LinkMessagePreview(
 
         ) {
             Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                link = MessageLinkData(
-                    url = "https://getsession.org/",
-                    title = "Welcome to Session",
-                    imageUri = null
-                )
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.INCOMING,
+                contentGroups = listOf(
+                    composeContent(
+                        MessageContentData.Link(
+                            MessageLinkData(
+                                url = "https://getsession.org/",
+                                title = "Welcome to Session",
+                                imageUri = null
+                            )
+                        ),
+                        PreviewMessageData.text(text = "Quoting text")
+                ))
             ))
 
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                link = MessageLinkData(
-                    url = "https://picsum.photos/id/0/367/267",
-                    title = "Welcome to Session with a very long name",
-                    imageUri = "https://picsum.photos/id/1/200/300"
-                )
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = listOf(
+                    composeContent(
+                        MessageContentData.Link(
+                            MessageLinkData(
+                                url = "https://picsum.photos/id/0/367/267",
+                                title = "Welcome to Session with a very long name",
+                            )
+                        ),
+                        PreviewMessageData.text(text = "Quoting text")
+                    ))
             ))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                link = MessageLinkData(
-                    url = "https://getsession.org/",
-                    title = "Welcome to Session",
-                    imageUri = null
-                )
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.INCOMING,
+                contentGroups = listOf(
+                    composeContent(
+                        PreviewMessageData.quote(),
+                        MessageContentData.Link(
+                            MessageLinkData(
+                                url = "https://getsession.org/",
+                                title = "Welcome to Session",
+                                imageUri = null
+                            )
+                        ),
+                        PreviewMessageData.text(text = "Quoting text")
+                    ))
             ))
 
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                link = MessageLinkData(
-                    url = "https://picsum.photos/id/0/367/267",
-                    title = "Welcome to Session with a very long name",
-                    imageUri = "https://picsum.photos/id/1/200/300"
-                )
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = listOf(
+                    composeContent(
+                        PreviewMessageData.quote(),
+                        MessageContentData.Link(
+                            MessageLinkData(
+                                url = "https://picsum.photos/id/0/367/267",
+                                title = "Welcome to Session with a very long name",
+                                imageUri = "https://picsum.photos/id/1/200/300"
+                            )
+                        ),
+                        PreviewMessageData.text(text = "Quoting text")
+                    ))
             ))
         }
     }

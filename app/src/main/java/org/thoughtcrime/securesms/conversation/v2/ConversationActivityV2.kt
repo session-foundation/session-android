@@ -163,6 +163,7 @@ import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
+import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
@@ -1030,6 +1031,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 onSearchQueryChanged = ::onSearchQueryUpdated,
                 onSearchQueryClear = {  onSearchQueryUpdated("") },
                 onSearchCanceled = ::onSearchClosed,
+                switchConvoVersion = {
+                    startActivity(ConversationActivityV3.createIntent(this, address = IntentCompat.getParcelableExtra(intent,
+                        ADDRESS, Address.Conversable::class.java)!!))
+                    finish()
+                },
                 onAvatarPressed = {
                     val intent = ConversationSettingsActivity.createIntent(this, address)
                     settingsLauncher.launch(intent)
