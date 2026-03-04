@@ -19,10 +19,10 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.database.userAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.Log
@@ -35,7 +35,7 @@ import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.database.MessageChanges
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.findIncomingMessages
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getIncomingMessages
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getMessages
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
@@ -209,7 +209,7 @@ class MarkReadProcessor @Inject constructor(
                                             event.lastSeenMs
                                         ),
                                         updates = if (eligibleForReadReceipt(event.threadAddress)) {
-                                            mmsSmsDatabase.findIncomingMessages(
+                                            mmsSmsDatabase.getIncomingMessages(
                                                 event.threadId,
                                                 oldLastSeen,
                                                 event.lastSeenMs
@@ -301,7 +301,7 @@ class MarkReadProcessor @Inject constructor(
                         } else {
                             val oldLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
                             if (event.lastSeenMs > oldLastSeen) {
-                                val eligible = mmsSmsDatabase.findIncomingMessages(
+                                val eligible = mmsSmsDatabase.getIncomingMessages(
                                     event.threadId,
                                     oldLastSeen,
                                     event.lastSeenMs

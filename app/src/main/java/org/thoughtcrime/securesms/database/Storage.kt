@@ -40,7 +40,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.network.SnodeClock
@@ -74,8 +73,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
-import org.thoughtcrime.securesms.util.getOrConstructConvo
 import org.thoughtcrime.securesms.util.findCause
+import org.thoughtcrime.securesms.util.getOrConstructConvo
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -897,7 +896,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadIdForMms(mmsId: Long): Long {
-        return mmsDatabase.getThreadIdForMessage(mmsId)
+        return mmsDatabase.getThreadIdForMessage(mmsId) ?: -1L
     }
 
     override fun getRecipientForThread(threadId: Long): Recipient? {

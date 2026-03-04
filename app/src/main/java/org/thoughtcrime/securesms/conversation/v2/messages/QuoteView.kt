@@ -117,7 +117,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             isOutgoingMessage = isOutgoingMessage,
             isQuote = true,
             context = context
-        )
+        ).text
         binding.quoteViewBodyTextView.setTextColor(textColor)
         // Accent line / attachment preview
         val hasAttachments = (attachments != null && attachments.asAttachments().isNotEmpty()) && !isOriginalMissing

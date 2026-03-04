@@ -252,16 +252,13 @@ class MmsDatabase @Inject constructor(
         }
     }
 
-    fun getThreadIdForMessage(id: Long): Long {
-        val sql = "SELECT $THREAD_ID FROM $TABLE_NAME WHERE $ID = ?"
-        val sqlArgs = arrayOf(id.toString())
-        val db = readableDatabase
-        var cursor: Cursor? = null
-        return try {
-            cursor = db.rawQuery(sql, sqlArgs)
-            if (cursor != null && cursor.moveToFirst()) cursor.getLong(0) else -1
-        } finally {
-            cursor?.close()
+    fun getThreadIdForMessage(id: Long): Long? {
+        return readableDatabase.query("SELECT $THREAD_ID FROM $TABLE_NAME WHERE $ID = ?", arrayOf(id)).use {
+            if (it.moveToNext()) {
+                it.getLong(0)
+            } else {
+                null
+            }
         }
     }
 

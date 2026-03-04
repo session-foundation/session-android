@@ -114,7 +114,7 @@ class ConversationView : LinearLayout {
             formatOnly = true, // no styling here, only text formatting
             recipientRepository = recipientRepository,
             context = context
-        )
+        ).text
 
         binding.snippetTextView.apply {
             text = snippet

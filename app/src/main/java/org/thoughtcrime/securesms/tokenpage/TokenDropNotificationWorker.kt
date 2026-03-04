@@ -23,6 +23,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_LONG_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.notifications.NotificationId
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 
 @HiltWorker
@@ -36,7 +37,7 @@ class TokenDropNotificationWorker
 
     private val NOTIFICATION_CHANNEL_ID = "SessionTokenNotifications"
     private val NOTIFICATION_CHANNEL_NAME = "Session Token Notifications"
-    private val TOKEN_NOTIFICATION_ID = 777
+    private val TOKEN_NOTIFICATION_ID = NotificationId.TOKEN_DROP
 
     override suspend fun doWork(): Result {
         val isDebugNotification =

@@ -50,7 +50,6 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
-
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
@@ -67,8 +66,8 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
-import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -102,6 +101,7 @@ import org.thoughtcrime.securesms.ui.LatchedAnimatedVisibility
 import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.Avatar
+import org.thoughtcrime.securesms.ui.components.OffscreenAvatarRenderer
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -157,6 +157,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var prefs: PreferenceStorage
     @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
     @Inject lateinit var jobQueue: Provider<JobQueue>
+    @Inject lateinit var offscreenAvatarRenderer: OffscreenAvatarRenderer
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()

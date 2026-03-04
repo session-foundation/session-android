@@ -15,6 +15,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.notifications.NotificationChannels
+import org.thoughtcrime.securesms.notifications.NotificationId
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_DENY_CALL
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_IGNORE_CALL
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_LOCAL_HANGUP
@@ -22,7 +23,7 @@ import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_LOCAL
 class CallNotificationBuilder {
 
     companion object {
-        const val WEBRTC_NOTIFICATION = 313388
+        const val WEBRTC_NOTIFICATION = NotificationId.WEBRTC_CALL
 
         const val TYPE_OUTGOING_RINGING    = 2
         const val TYPE_ESTABLISHED         = 3

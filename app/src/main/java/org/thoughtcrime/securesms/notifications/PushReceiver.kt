@@ -225,7 +225,7 @@ class PushReceiver @Inject constructor(
             .setAutoCancel(true)
             .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
 
-        NotificationManagerCompat.from(context).notify(11111, builder.build())
+        NotificationManagerCompat.from(context).notify(NotificationId.LEGACY_PUSH, builder.build())
     }
 
     private fun Map<String, String>.asPushData(): PushData =

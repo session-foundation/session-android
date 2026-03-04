@@ -28,28 +28,31 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ServiceInfo;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ServiceCompat;
-import com.squareup.phrase.Phrase;
-import java.util.concurrent.TimeUnit;
 
-import network.loki.messenger.BuildConfig;
-import network.loki.messenger.R;
+import com.squareup.phrase.Phrase;
+
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.DatabaseUpgradeActivity;
 import org.thoughtcrime.securesms.DummyActivity;
 import org.thoughtcrime.securesms.home.HomeActivity;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
+import org.thoughtcrime.securesms.notifications.NotificationId;
+
+import java.util.concurrent.TimeUnit;
+
+import network.loki.messenger.BuildConfig;
+import network.loki.messenger.R;
 
 /**
  * Small service that stays running to keep a key cached in memory.
@@ -62,7 +65,7 @@ public class KeyCachingService extends Service {
 
   private static final String TAG = KeyCachingService.class.getSimpleName();
 
-  public static final int SERVICE_RUNNING_ID = 4141;
+  public static final int SERVICE_RUNNING_ID = NotificationId.KEY_CACHING_SERVICE;
 
   public  static final String KEY_PERMISSION           = "network.loki.messenger.ACCESS_SESSION_SECRETS" + BuildConfig.AUTHORITY_POSTFIX;
   public  static final String CLEAR_KEY_EVENT          = "org.thoughtcrime.securesms.service.action.CLEAR_KEY_EVENT";

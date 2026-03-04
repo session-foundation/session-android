@@ -15,9 +15,9 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
-import android.os.Parcelable
 import android.os.Handler
 import android.os.Looper
+import android.os.Parcelable
 import android.os.SystemClock
 import android.provider.Settings
 import android.text.Spannable
@@ -110,7 +110,6 @@ import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
@@ -161,12 +160,12 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
-import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsActivity
-import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -524,7 +523,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // region Settings
     companion object {
         // Extras
-        private const val ADDRESS = "address"
+        const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
         private const val CONVERSATION_SCROLL_STATE = "conversation_scroll_state"
 
@@ -2846,7 +2845,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 text = message.body,
                 formatOnly = true, // no styling here, only text formatting
                 context = this
-            )
+            ).text
 
             if (TextUtils.isEmpty(body)) { continue }
             if (messageSize > 1) {

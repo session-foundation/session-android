@@ -524,7 +524,7 @@ class VisibleMessageContentView : ConstraintLayout {
             text = body,
             isOutgoingMessage = message.isOutgoing,
             context = context
-        )
+        ).text
         body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
             {
                 BackgroundColorSpan(context.getColorFromAttr(R.attr.colorPrimary))

@@ -6,18 +6,30 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
-import android.util.Range
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionEditable
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.RoundedBackgroundSpan
 import org.thoughtcrime.securesms.util.getAccentColor
 import java.util.regex.Pattern
+
+/**
+ * The result of highlighting mentions in a text.
+ *
+ * @param text The text with mentions replaced by display names and optionally styled.
+ * @param mentions The recipients that were mentioned, in order of appearance.
+ */
+data class HighlightedMentionsResult(
+    val text: SpannableString,
+    val mentions: List<Pair<IntRange, Recipient>>,
+)
 
 object MentionUtilities {
 
@@ -50,6 +62,21 @@ object MentionUtilities {
             }
     }
 
+    /**
+     * Look for mentions in a given text
+     *
+     * @return a Sequence of found mentioned AccountID and its range inside the text
+     */
+    fun CharSequence.findMentions(): Sequence<Pair<AccountId, IntRange>> {
+        return sequence {
+            val matcher = pattern.matcher(this@findMentions)
+            while (matcher.find()) {
+                val accountId = AccountId(matcher.group(1)!!)
+                yield(accountId to matcher.start()..<matcher.end())
+            }
+        }
+    }
+
 
     /**
      * Highlights mentions in a given text.
@@ -70,36 +97,30 @@ object MentionUtilities {
         isQuote: Boolean = false,
         formatOnly: Boolean = false,
         context: Context
-    ): SpannableString {
-        @Suppress("NAME_SHADOWING") var text = text
-
-        var matcher = pattern.matcher(text)
-        val mentions = mutableListOf<Pair<Range<Int>, String>>()
-        var startIndex = 0
-
-        // Format the mention text
-        if (matcher.find(startIndex)) {
-            while (true) {
-                val publicKey = text.subSequence(matcher.start() + 1, matcher.end()).toString() // +1 to get rid of the @
-                val user = recipientRepository.getRecipientSync(publicKey.toAddress())
-
-                val userDisplayName: String = if (user.isSelf) {
-                    context.getString(R.string.you)
-                } else {
-                    user.displayName(attachesBlindedId = true)
-                }
-
-                val mention = "@$userDisplayName"
-                text = text.subSequence(0, matcher.start()).toString() + mention + text.subSequence(matcher.end(), text.length)
-                val endIndex = matcher.start() + 1 + userDisplayName.length
-                startIndex = endIndex
-                mentions.add(Pair(Range.create(matcher.start(), endIndex), publicKey))
-
-                matcher = pattern.matcher(text)
-                if (!matcher.find(startIndex)) { break }
-            }
+    ): HighlightedMentionsResult {
+        val foundMentions = text.findMentions().toList()
+        if (foundMentions.isEmpty()) {
+            return HighlightedMentionsResult(SpannableString(text), emptyList())
         }
-        val result = SpannableString(text)
+
+        // Replace back-to-front to preserve earlier indices
+        var replaced = text.toString()
+        val mentions = mutableListOf<Pair<IntRange, Recipient>>()
+
+        for ((accountId, range) in foundMentions.asReversed()) {
+            val user = recipientRepository.getRecipientSync(accountId.toAddress())
+            val userDisplayName = if (user.isSelf) {
+                context.getString(R.string.you)
+            } else {
+                user.displayName(attachesBlindedId = true)
+            }
+
+            val mention = "@$userDisplayName"
+            replaced = replaced.substring(0, range.first) + mention + replaced.substring(range.last + 1)
+            mentions.add(0, range.first..<range.first + mention.length to user)
+        }
+
+        val result = SpannableString(replaced)
 
         // apply styling if required
         // Normal text color: black in dark mode and primary text color for light mode
@@ -126,7 +147,7 @@ object MentionUtilities {
                     foregroundColor = if(isOutgoingMessage) null else highlightedTextColor
                 }
                 // incoming message mentioning you
-                else if (recipientRepository.getRecipientSync(mention.second.toAddress()).isSelf) {
+                else if (mention.second.isSelf) {
                     backgroundColor = context.getAccentColor()
                     foregroundColor = mainTextColor
                 }
@@ -150,7 +171,7 @@ object MentionUtilities {
                             textColor = mainTextColor,
                             backgroundColor = background
                         ),
-                        mention.first.lower, mention.first.upper, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        mention.first.first, mention.first.last + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
                 }
 
@@ -158,8 +179,8 @@ object MentionUtilities {
                 foregroundColor?.let {
                     result.setSpan(
                         ForegroundColorSpan(it),
-                        mention.first.lower,
-                        mention.first.upper,
+                        mention.first.first,
+                        mention.first.last + 1,
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
                 }
@@ -167,12 +188,15 @@ object MentionUtilities {
                 // apply bold on the mention
                 result.setSpan(
                     StyleSpan(Typeface.BOLD),
-                    mention.first.lower,
-                    mention.first.upper,
+                    mention.first.first,
+                    mention.first.last + 1,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                 )
             }
         }
-        return result
+        return HighlightedMentionsResult(
+            text = result,
+            mentions = mentions,
+        )
     }
 }
