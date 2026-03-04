@@ -49,7 +49,6 @@ import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessage
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.textGroup
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionItem
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ReactionViewState
-import org.thoughtcrime.securesms.conversation.v3.rememberConversationListState
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.AnimateFade
 import org.thoughtcrime.securesms.ui.components.ConversationAppBar

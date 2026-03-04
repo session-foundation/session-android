@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v3
+package org.thoughtcrime.securesms.conversation.v3.compose.conversation
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -21,7 +21,7 @@ import kotlin.math.abs
  * Single point of control for conversation list scrolling and highlighting.
  *
  * Any feature that needs "go to message X" or "go to bottom" calls
- * [handleScrollEvent]. Scrolling, index resolution, jump-then-animate
+ * [handleScrollEvent] — that's it. Scrolling, index resolution, jump-then-animate
  * optimisation, and highlight triggering are all internal details.
  *
  * Usage:
@@ -83,6 +83,11 @@ class ConversationListState(
             }
 
             is ScrollEvent.ToMessage -> {
+                // Clear any previous highlight before scrolling so stale keys
+                // don't trigger a premature animation as the target item
+                // comes into view mid-scroll.
+                currentHighlight = null
+
                 val index = pagingItems.findIndexOf(event.messageId) ?: return
 
                 scrollTo(
