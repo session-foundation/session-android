@@ -8,7 +8,9 @@ import androidx.core.content.IntentCompat
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.isBlinded
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.util.push
 
 class ConversationActivityV3 : FullComposeScreenLockActivity() {
 
@@ -48,6 +50,10 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
                 "ConversationV3Activity requires an Address to be passed in the intent."
             },
             startDestination = startDestination,
+            switchConvoVersion = {
+                startActivity(ConversationActivityV2.createIntent(this, address = IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)!!))
+                finish()
+            },
             onBack = this::finish
         )
     }

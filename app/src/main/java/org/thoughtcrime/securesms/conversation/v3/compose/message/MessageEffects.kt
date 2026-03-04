@@ -1,6 +1,7 @@
-package org.thoughtcrime.securesms.conversation.v3.compose
+package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import android.graphics.BlurMaskFilter
+import android.graphics.Paint
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
@@ -38,7 +39,7 @@ fun Modifier.accentHighlight(
     return this.drawBehind {
         if (alphaAnim.value > 0f) {
             drawIntoCanvas { canvas ->
-                val paint = android.graphics.Paint().apply {
+                val paint = Paint().apply {
                     isAntiAlias = true
                     color = accentColor.copy(alpha = alphaAnim.value).toArgb()
                     maskFilter = BlurMaskFilter(glowRadius.toPx(), BlurMaskFilter.Blur.OUTER)

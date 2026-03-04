@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v3.compose
+package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -34,6 +34,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.image
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.mediaGroup
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.text
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.video
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -42,7 +48,8 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
 @Composable
 fun MediaMessage(
-    data: MessageType.Media,
+    items: List<MessageMediaItem>,
+    loading: Boolean,
     maxWidth: Dp,
     modifier: Modifier = Modifier,
 ){
@@ -51,10 +58,10 @@ fun MediaMessage(
     ) {
         val itemSpacing: Dp = 2.dp
 
-        when (data.items.size) {
+        when (items.size) {
             1 -> {
                 MediaItem(
-                    data = data.items[0],
+                    data = items[0],
                     itemSize = MediaItemSize.AspectRatio(
                         minSize = LocalDimensions.current.minMessageWidth,
                         maxSize = maxWidth,
@@ -70,12 +77,12 @@ fun MediaMessage(
                     val cellSize = maxWidth * 0.5f - itemSpacing * 0.5f
 
                     MediaItem(
-                        data = data.items[0],
+                        data = items[0],
                         itemSize = MediaItemSize.SquareSize(size = cellSize),
                     )
 
                     MediaItem(
-                        data = data.items[1],
+                        data = items[1],
                         itemSize = MediaItemSize.SquareSize(size = cellSize),
                     )
                 }
@@ -89,7 +96,7 @@ fun MediaMessage(
                     val smallCellSize = largeCellSize * 0.5f - itemSpacing * 0.5f
 
                     MediaItem(
-                        data = data.items[0],
+                        data = items[0],
                         itemSize = MediaItemSize.SquareSize(size = largeCellSize),
                     )
 
@@ -97,12 +104,12 @@ fun MediaMessage(
                         verticalArrangement = Arrangement.spacedBy(itemSpacing),
                     ) {
                         MediaItem(
-                            data = data.items[1],
+                            data = items[1],
                             itemSize = MediaItemSize.SquareSize(size = smallCellSize),
                         )
 
                         MediaItem(
-                            data = data.items[2],
+                            data = items[2],
                             itemSize = MediaItemSize.SquareSize(size = smallCellSize),
                         )
                     }
@@ -164,40 +171,40 @@ fun MediaMessagePreview(
 
         ) {
             Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.image(
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = mediaGroup(
+                    listOf(image(
                         width = 50,
-                        height = 100
-                    )),
-                    loading = false
-                )
+                        height = 100,
+                        loading = false
+                    )), null
+                ),
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
-                    loading = false
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = mediaGroup(
+                    listOf(image(), video()), null)
                 )
-            ))
-
+            )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             var testData by remember {
                 mutableStateOf(
                     MessageViewData(
-                        author = "Toto",
-                        type = MessageType.Media(
-                            text = AnnotatedString("This also has text"),
-                            outgoing = true,
-                            items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                            loading = false
+                        id = MessageId(0, false),
+                        displayName = "Toto",
+                        layout = MessageLayout.OUTGOING,
+                        contentGroups = mediaGroup(
+                            items = listOf(video(), image(), image()),
+                            text = "This also has text"
                         )
                     )
                 )
@@ -208,7 +215,7 @@ fun MediaMessagePreview(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {
-                        testData = testData.copy(highlightKey = System.currentTimeMillis())
+                        testData = testData.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
                     }),
                 data = testData
             )
@@ -216,102 +223,24 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.image(true)),
-                    loading = false
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = listOf(
+                    composeContent(PreviewMessageData.quote()),
+                    mediaGroup(listOf(video(), image(), image()))
                 )
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(true), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Media(
-                    text = AnnotatedString("This also has text"),
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = MessageType.Media(
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
-                )
-            ))
-
-            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-            Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = MessageType.Media(
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.INCOMING,
+                contentGroups = listOf(
+                    composeContent(PreviewMessageData.quote()),
+                    mediaGroup(listOf(video(), image(), image()))
                 )
             ))
 
@@ -319,26 +248,24 @@ fun MediaMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = MessageType.Media(
-                    text = AnnotatedString("This also has text"),
-                    outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = listOf(
+                    composeContent(PreviewMessageData.quote(), text("This also has text")),
+                    mediaGroup(listOf(video(), image(), image()))
                 )
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = MessageType.Media(
-                    text = AnnotatedString("This also has text"),
-                    outgoing = false,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
-                    loading = false
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.INCOMING,
+                contentGroups = listOf(
+                    composeContent(PreviewMessageData.quote(), text("This also has text")),
+                    mediaGroup(listOf(video(), image(), image()))
                 )
             ))
         }

@@ -24,6 +24,7 @@ data class Dimensions(
     val minButtonWidth: Dp = 160.dp,
     val minSmallButtonWidth: Dp = 50.dp,
     val minMessageWidth: Dp = 200.dp,
+    val maxMessageWidth: Dp = 500.dp,
 
     val indicatorHeight: Dp = 4.dp,
 

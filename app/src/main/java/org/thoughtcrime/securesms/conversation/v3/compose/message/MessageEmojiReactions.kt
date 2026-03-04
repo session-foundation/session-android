@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v3.compose
+package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,8 +47,8 @@ fun EmojiReactions(
     modifier: Modifier = Modifier,
     onReactionClick: (emoji: String) -> Unit = {},
     onReactionLongClick: (emoji: String) -> Unit = {},
-    onExpandClick: () -> Unit = {},
-    onShowLessClick: () -> Unit = {},
+    onReactionExpandClick: () -> Unit = {},
+    onReactionShowLessClick: () -> Unit = {},
 ) {
     val hasOverflow = !isExpanded && reactions.size > REACTIONS_THRESHOLD
     // When collapsed: show the first (THRESHOLD - 1) pills then the overflow slot,
@@ -77,7 +77,7 @@ fun EmojiReactions(
             if (overflowReactions.isNotEmpty()) {
                 EmojiReactionOverflow(
                     reactions = overflowReactions.take(3), // only use first 3
-                    onClick = onExpandClick,
+                    onClick = onReactionExpandClick,
                 )
             }
         }
@@ -89,7 +89,7 @@ fun EmojiReactions(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onShowLessClick)
+                    .clickable(onClick = onReactionShowLessClick)
                     .padding(
                         vertical = LocalDimensions.current.xsSpacing,
                     ),
