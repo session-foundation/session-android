@@ -4,7 +4,6 @@ import android.provider.Settings
 import org.thoughtcrime.securesms.preferences.PreferenceKey
 
 object NotificationPreferences {
-    val ENABLE: PreferenceKey<Boolean> = PreferenceKey.boolean("pref_key_enable_notifications", defaultValue = true)
     val RINGTONE: PreferenceKey<String?> = PreferenceKey.string(
         name = "pref_key_ringtone",
         defaultValue = Settings.System.DEFAULT_NOTIFICATION_URI.toString()

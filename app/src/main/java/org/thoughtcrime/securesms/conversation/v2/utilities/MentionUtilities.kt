@@ -6,6 +6,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
+import androidx.collection.arrayMapOf
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -16,6 +17,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.RoundedBackgroundSpan
 import org.thoughtcrime.securesms.util.getAccentColor
 import network.loki.messenger.R
+import org.session.libsession.utilities.recipients.Recipient
 import java.util.regex.Pattern
 
 object MentionUtilities {
@@ -58,7 +60,7 @@ object MentionUtilities {
     )
 
     data class ParsedMentions(
-        val text: String,
+        val text: CharSequence,
         val mentions: List<MentionToken>
     )
 
@@ -71,25 +73,27 @@ object MentionUtilities {
      * - legacy XML span formatting
      * - Compose rich text formatting
      */
-    @JvmStatic
     fun parseAndSubstituteMentions(
         recipientRepository: RecipientRepository,
         input: CharSequence,
         context: Context
     ): ParsedMentions {
-        @Suppress("NAME_SHADOWING")
-        var text: CharSequence = input
-
-        var matcher = pattern.matcher(text)
-        val mentions = mutableListOf<MentionToken>()
+        var matcher = pattern.matcher(input)
         var startIndex = 0
 
         if (matcher.find(startIndex)) {
+            var text = input
+            val mentions = mutableListOf<MentionToken>()
+            val recipients = arrayMapOf<String, Recipient>()
+
             while (true) {
                 val publicKey =
                     text.subSequence(matcher.start() + 1, matcher.end()).toString() // drop '@'
 
-                val user = recipientRepository.getRecipientSync(publicKey.toAddress())
+                val user = recipients.getOrPut(publicKey) {
+                    recipientRepository.getRecipientSync(publicKey.toAddress())
+                }
+
                 val displayName = if (user.isSelf) {
                     context.getString(R.string.you)
                 } else {
@@ -122,11 +126,16 @@ object MentionUtilities {
                 matcher = pattern.matcher(text)
                 if (!matcher.find(startIndex)) break
             }
+
+            return ParsedMentions(
+                text = text,
+                mentions = mentions
+            )
         }
 
         return ParsedMentions(
-            text = text.toString(),
-            mentions = mentions
+            text = input,
+            mentions = emptyList()
         )
     }
 
@@ -142,7 +151,6 @@ object MentionUtilities {
      * @param formatOnly If true we only format the text itself,
      * for example resolving an accountID to a username. If false we also apply styling.
      */
-    @JvmStatic
     fun highlightMentions(
         recipientRepository: RecipientRepository,
         text: CharSequence,

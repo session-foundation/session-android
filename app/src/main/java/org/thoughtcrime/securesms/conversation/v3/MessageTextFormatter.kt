@@ -40,7 +40,7 @@ object MessageTextFormatter {
     ): AnnotatedString {
         // Insert spacing ONLY for bg mentions (incoming mentions of self)
         val remapped = buildTextWithOutsideSpacing(
-            text = parsed.text,
+            text = parsed.text.toString(),
             mentions = parsed.mentions.sortedBy { it.start },
             needsBg = { it.isSelf && !isOutgoing }
         )

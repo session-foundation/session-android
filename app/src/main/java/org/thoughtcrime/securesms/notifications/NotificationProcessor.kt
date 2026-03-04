@@ -37,9 +37,9 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
+import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getIncomingMessages
@@ -52,7 +52,6 @@ import org.thoughtcrime.securesms.database.getAddressAndLastSeen
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.home.HomeActivity
-import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.ui.components.OffscreenAvatarRenderer
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -73,8 +72,6 @@ import javax.inject.Singleton
  * - Dismissing a notification does NOT mark the thread as read
  * - "Mark Read" sets `lastSeen` to the latest message's `dateSent`
  * - When `lastSeen` advances, stale notifications auto-cancel
- *
- * Notification building and posting is delegated to [NotificationPoster].
  */
 @Singleton
 class NotificationProcessor @Inject constructor(
@@ -84,9 +81,7 @@ class NotificationProcessor @Inject constructor(
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
     private val recipientRepository: RecipientRepository,
-    private val loginStateRepository: LoginStateRepository,
     private val currentActivityObserver: CurrentActivityObserver,
-    private val prefs: PreferenceStorage,
     private val reactionDatabase: ReactionDatabase,
     private val messageFormatter: MessageFormatter,
     private val avatarUtils: AvatarUtils,
@@ -115,42 +110,39 @@ class NotificationProcessor @Inject constructor(
             reactionDatabase.changeNotification.mapNotNull { msgId ->
                 mmsSmsDatabase.getThreadId(msgId)?.let { Changes(it, true) }
             }
-        ).mapNotNull { changes ->
-            // Do nothing if we are on home screen
-            if (currentActivity is HomeActivity) return@mapNotNull null
-
-            // Do nothing if overall settings is off
-            if (!prefs[NotificationPreferences.ENABLE]) return@mapNotNull null
-
-            // Do nothing if notifications aren't even enabled
-            if (!notificationManager.areNotificationsEnabled()) return@mapNotNull null
+        ).map { changes ->
+            // Show nothing
+            if (!notificationManager.areNotificationsEnabled())
+                return@map ThreadNotificationState.Empty(changes.threadId)
 
             val (threadAddress, lastSeen) = threadDb.getAddressAndLastSeen(changes.threadId)
-                ?: return@mapNotNull null
+                ?: return@map ThreadNotificationState.Empty(changes.threadId)
 
-            if (threadAddress.isCommunity && changes.fromReaction) {
-                // We don't care about reaction changes from communities
-                return@mapNotNull null
-            }
-
-            // Do nothing if this conversation is in the foreground
-            if ((currentActivity as? ConversationActivityV2)?.threadAddress == threadAddress) {
-                return@mapNotNull null
-            }
-
-            val recipient = recipientRepository.getRecipientSync(threadAddress)
+            val threadRecipient = recipientRepository.getRecipientSync(threadAddress)
 
             // Do nothing if recipient is muted
-            if (recipient.notifyType == NotifyType.NONE) return@mapNotNull null
+            if (threadRecipient.notifyType == NotifyType.NONE)
+                return@map ThreadNotificationState.Empty(changes.threadId)
 
             val items = mutableListOf<NotificationMessageItem>()
 
             mmsSmsDatabase.getIncomingMessages(changes.threadId, startMsExclusive = lastSeen)
                 .forEach { r ->
-                    //TODO: mention handling
+                    val parsedResult = MentionUtilities.parseAndSubstituteMentions(
+                        recipientRepository = recipientRepository,
+                        input = messageFormatter.formatMessageBody(context, r, threadRecipient),
+                        context = context,
+                    )
+
+                    if (threadRecipient.notifyType == NotifyType.MENTIONS &&
+                        !parsedResult.mentions.any { it.isSelf }) {
+                        // Skip this message as it doesn't contain any mentions of us
+                        return@forEach
+                    }
+
                     items += MessageData(
                         id = r.messageId,
-                        body = r.body,
+                        body = parsedResult.text,
                         sentAt = Instant.ofEpochMilli(r.dateSent),
                         authorName = r.individualRecipient.displayName(),
                         authorAvatar = avatarUtils.getUIDataFromRecipient(r.individualRecipient),
@@ -159,7 +151,7 @@ class NotificationProcessor @Inject constructor(
                 }
 
             // No reaction handling for communities
-            if (!threadAddress.isCommunity && recipient.notifyType == NotifyType.ALL) {
+            if (!threadAddress.isCommunity && threadRecipient.notifyType == NotifyType.ALL) {
                 reactionDatabase.getReactionsForThread(
                     threadId = changes.threadId,
                     minSendTimeMsExclusive = lastSeen
@@ -187,8 +179,8 @@ class NotificationProcessor @Inject constructor(
                 ThreadNotificationState.Visible(
                     threadId = changes.threadId,
                     threadAddress = threadAddress,
-                    threadName = recipient.displayName(),
-                    threadAvatar = avatarUtils.getUIDataFromRecipient(recipient),
+                    threadName = threadRecipient.displayName(),
+                    threadAvatar = avatarUtils.getUIDataFromRecipient(threadRecipient),
                     items = items,
                 )
             }
@@ -198,7 +190,6 @@ class NotificationProcessor @Inject constructor(
             private val lastPostedStateByThreadIDs = MutableLongObjectMap<ThreadNotificationState.Visible>()
 
             override suspend fun emit(value: ThreadNotificationState) {
-
                 Log.d(TAG, "New state: $value")
 
                 when (value) {
@@ -211,13 +202,31 @@ class NotificationProcessor @Inject constructor(
                     }
 
                     is ThreadNotificationState.Visible -> {
-                        val existingNotification = notificationManager.activeNotifications
-                            .firstOrNull { it.id == NotificationId.MESSAGE_THREAD &&
+                        // Logic for showing notification:
+                        // 1. If a notification exists for this thread: update the notification
+                        //    contents, then depends on the screens we are on:
+                        //    a. if at home or this thread, silent update only.
+                        //    b. otherwise, notify loudly when a new message(or reaction) came through
+                        //
+                        // 2. If a notification does not exist, we'll create a notification when:
+                        //    a. Current screen is not home or this thread
+                        //    We will loudly notify user when the notification is created in this
+                        //    case.
+
+                        val hasExistingNotification = notificationManager.activeNotifications
+                            .any { it.id == NotificationId.MESSAGE_THREAD &&
                                     it.tag == threadTag(value.threadId) }
 
-                        val shouldPostNewNotification = value.shouldPostNewNotification(lastPostedStateByThreadIDs[value.threadId])
+                        val convoInForeground = when (val a = currentActivity) {
+                            is ConversationActivityV2 -> a.threadAddress == value.threadAddress
+                            is HomeActivity -> true
+                            else -> false
+                        }
 
-                        if (existingNotification != null) {
+                        val shouldPostNewNotification = !convoInForeground &&
+                                value.shouldPostNewNotification(lastPostedStateByThreadIDs[value.threadId])
+
+                        if (hasExistingNotification) {
                             postOrUpdateNotification(value, !shouldPostNewNotification)
                             lastPostedStateByThreadIDs.put(value.threadId, value)
                         } else if (shouldPostNewNotification) {
@@ -258,9 +267,9 @@ class NotificationProcessor @Inject constructor(
             .setOnlyAlertOnce(silent)
             .setAutoCancel(true)
 
-        // MessagingStyle
         val userPerson = Person.Builder()
             .setName(context.getString(R.string.you))
+            .setIcon(getIcon(avatarUtils.getUIDataFromRecipient(recipientRepository.getSelf())))
             .build()
 
         val style = NotificationCompat.MessagingStyle(userPerson)

@@ -29,6 +29,7 @@ import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
@@ -47,6 +48,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Lazy;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Triple;
 import kotlin.collections.CollectionsKt;
 import kotlinx.coroutines.channels.BufferOverflow;
@@ -59,7 +61,7 @@ import kotlinx.serialization.json.Json;
 public class ThreadDatabase extends Database {
 
 
-  private static final String TAG = ThreadDatabase.class.getSimpleName();
+  static final String TAG = ThreadDatabase.class.getSimpleName();
 
   // Map of threadID -> Address
 
@@ -192,23 +194,17 @@ public class ThreadDatabase extends Database {
 
   final Lazy<@NonNull RecipientRepository> recipientRepository;
   final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
-  private final Lazy<@NonNull MmsDatabase> mmsDatabase;
-  private final Lazy<@NonNull SmsDatabase> smsDatabase;
   @NonNull final Json json;
 
   @Inject
-  public ThreadDatabase(@dagger.hilt.android.qualifiers.ApplicationContext Context context,
+  public ThreadDatabase(@ApplicationContext Context context,
                         Provider<SQLCipherOpenHelper> databaseHelper,
                         Lazy<@NonNull RecipientRepository> recipientRepository,
                         Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase,
-                        Lazy<@NonNull MmsDatabase> mmsDatabase,
-                        Lazy<@NonNull SmsDatabase> smsDatabase,
                         @NonNull Json json) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.mmsSmsDatabase = mmsSmsDatabase;
-    this.mmsDatabase = mmsDatabase;
-    this.smsDatabase = smsDatabase;
     this.json = json;
   }
 
@@ -223,7 +219,8 @@ public class ThreadDatabase extends Database {
   }
 
   void notifyThreadUpdated(long threadId, Address.Conversable address) {
-    Log.d(TAG, "Notifying thread updated: " + threadId);
+    Log.d(TAG, "Notifying thread updated: " + threadId +
+            " address = " + address.getDebugString());
     updateNotifications.tryEmit(threadId);
     addressUpdateNotifications.tryEmit(address);
   }
