@@ -1,16 +1,8 @@
 package org.thoughtcrime.securesms.database
 
 import android.database.Cursor
-import android.database.sqlite.SQLiteDoneException
 import androidx.collection.LongLongMap
 import androidx.collection.MutableLongLongMap
-import androidx.collection.MutableLongSet
-import androidx.collection.MutableObjectLongMap
-import androidx.collection.ObjectLongMap
-import androidx.collection.mutableLongSetOf
-import androidx.collection.objectLongMap
-import androidx.collection.objectLongMapOf
-import androidx.compose.runtime.currentComposer
 import androidx.core.database.getStringOrNull
 import androidx.sqlite.db.transaction
 import org.session.libsession.utilities.Address
@@ -324,7 +316,7 @@ fun ThreadDatabase.getThreadId(address: Address.Conversable): ThreadId? {
 fun ThreadDatabase.getRecipientAddress(threadId: Long): Address.Conversable? {
     //language=roomsql
     readableDatabase.query("""
-        SELECT ${ThreadDatabase.ID} 
+        SELECT ${ThreadDatabase.ADDRESS} 
         FROM ${ThreadDatabase.TABLE_NAME} 
         WHERE ${ThreadDatabase.ID} = ?""",
         arrayOf(threadId)).use { cursor ->

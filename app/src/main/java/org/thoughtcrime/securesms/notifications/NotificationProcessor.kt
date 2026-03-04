@@ -315,6 +315,36 @@ class NotificationProcessor @Inject constructor(
         ).build()
         builder.addAction(markReadAction)
 
+        // Reply Action
+        val remoteInput = androidx.core.app.RemoteInput.Builder(EXTRA_REMOTE_REPLY)
+            .setLabel(context.getString(R.string.reply))
+            .build()
+
+        val replyMethod = ReplyMethod.forRecipient(context, recipientRepository.getRecipientSync(state.threadAddress))
+        val replyIntent = Intent(context, RemoteReplyReceiver::class.java).apply {
+            action = RemoteReplyReceiver.REPLY_ACTION
+            putExtra(RemoteReplyReceiver.ADDRESS_EXTRA, state.threadAddress)
+            putExtra(RemoteReplyReceiver.REPLY_METHOD, replyMethod)
+        }
+
+        val replyPendingIntent = PendingIntent.getBroadcast(
+            context,
+            state.threadId.toInt(),
+            replyIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        )
+
+        val replyAction = NotificationCompat.Action.Builder(
+            R.drawable.ic_reply,
+            context.getString(R.string.reply),
+            replyPendingIntent
+        ).addRemoteInput(remoteInput)
+            .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
+            .setShowsUserInterface(false)
+            .build()
+
+        builder.addAction(replyAction)
+
         return builder.build()
     }
 
