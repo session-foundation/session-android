@@ -175,9 +175,6 @@ class ConversationDataMapper @Inject constructor(
         // Always show before the first visible message (no previous)
         if (previous == null) return true
 
-        // Never show before control messages
-        if (current.isControlMessage) return false
-
         val t1 = previous.timestamp
         val t2 = current.timestamp
 

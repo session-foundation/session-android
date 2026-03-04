@@ -19,15 +19,6 @@ fun ControlMessage(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        data.contentGroups.forEach { group ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                group.contents.forEach { content ->
-                    // Cast to specific content types or render text
-                    if (content is MessageContentData.Text) {
-                        Text(text = content.text, style = LocalType.current.small)
-                    }
-                }
-            }
-        }
+        Text(text = "Control Message WIP", style = LocalType.current.small)
     }
 }
