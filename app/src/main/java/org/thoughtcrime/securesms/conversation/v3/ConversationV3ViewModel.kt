@@ -86,16 +86,17 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private val reactionDb: ReactionDatabase,
     private val dataMapper: ConversationDataMapper,
     ) : ViewModel() {
-
-    val threadIdFlow: StateFlow<Long?> =
-        storage.getThreadId(address)
-            ?.let { MutableStateFlow(it) }
-            ?: threadDb.updateNotifications
-                .map { storage.getThreadId(address) }
-                .flowOn(Dispatchers.Default)
-                .filterNotNull()
-                .take(1)
-                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    //todo convov3 remove references to threadId once we have the notification refactor
+    val threadIdFlow: StateFlow<Long?> = merge(
+        // Initial lookup off main thread
+        flow { emit(withContext(Dispatchers.IO) { storage.getThreadId(address) }) },
+        // Also listen for thread creation in case it doesn't exist yet
+        threadDb.updateNotifications
+            .map { withContext(Dispatchers.IO) { storage.getThreadId(address) } }
+    )
+        .filterNotNull()
+        .take(1)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
         UIState()
