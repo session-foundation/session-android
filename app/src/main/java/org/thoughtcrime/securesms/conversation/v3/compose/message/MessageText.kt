@@ -118,7 +118,7 @@ fun MessageText(
         displayText to bgRanges
     }
 
-    // -- Pill background drawing --
+    // -- Pill (mention bg) drawing --
 
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
 

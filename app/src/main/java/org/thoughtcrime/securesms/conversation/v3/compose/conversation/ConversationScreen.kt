@@ -200,7 +200,6 @@ fun Conversation(
                     }
                 }
 
-                // todo Convov3 do we want a loader for pagination?
                 if (conversationItems.loadState.append is LoadState.Loading) {
                     item(key = "loading_append") {
                         Box(

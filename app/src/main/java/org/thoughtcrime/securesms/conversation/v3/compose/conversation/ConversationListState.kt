@@ -20,9 +20,10 @@ import kotlin.math.abs
 /**
  * Single point of control for conversation list scrolling and highlighting.
  *
- * Any feature that needs "go to message X" or "go to bottom" calls
- * [handleScrollEvent] — that's it. Scrolling, index resolution, jump-then-animate
- * optimisation, and highlight triggering are all internal details.
+ * Any feature that needs "go to message X" or "go to bottom"  should call
+ * [handleScrollEvent].
+ * Scrolling, index resolution, jump-then-animate optimisation,
+ * and highlight triggering are all internal details.
  *
  * Usage:
  * ```
