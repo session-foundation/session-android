@@ -37,9 +37,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
@@ -62,7 +59,6 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
-import kotlin.math.min
 
 //todo CONVOv3 status animated icon for disappearing messages
 //todo CONVOv3 text formatting in bubble including mentions and links
@@ -275,7 +271,7 @@ fun MessageContentRenderer(content: MessageContent, layout: MessageLayout, maxWi
         )
     ) {
         when (content.contentData) {
-            is MessageContentData.Text -> RichText(
+            is MessageContentData.Text -> MessageText(
                 text = content.contentData.text,
                 isOutgoing = isOutgoing,
                 modifier = Modifier.padding(defaultMessageBubblePadding()),

@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.message
 
-import android.R.attr.textColor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,7 +22,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -33,12 +30,7 @@ import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
-import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.image
-import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.mediaGroup
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.quoteGroup
-import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.text
-import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.video
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.proBadgeColorOutgoing
@@ -123,7 +115,7 @@ fun MessageQuote(
             Spacer(Modifier.height(LocalDimensions.current.tinySpacing))
 
             //todo convov3 we shouldn't render/click links for quotes
-            RichText(
+            MessageText(
                 text = quote.subtitle,
                 isOutgoing = outgoing,
                 maxLines = 2,

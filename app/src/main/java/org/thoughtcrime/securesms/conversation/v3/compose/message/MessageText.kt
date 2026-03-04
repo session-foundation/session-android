@@ -10,7 +10,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.AnnotatedString.Range
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -21,8 +20,12 @@ import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalType
 
+/**
+ * Renders formatted message text with mention highlighting and optional link handling.
+ * Pass [onUrlClick] to enable clickable, underlined links; pass null to render plain text.
+ */
 @Composable
-fun RichText(
+fun MessageText(
     text: AnnotatedString,
     isOutgoing: Boolean,
     modifier: Modifier = Modifier,
@@ -32,32 +35,10 @@ fun RichText(
 ) {
     val colors = LocalColors.current
 
-    // Your rule:
     val mainTextColor = getTextColor(isOutgoing)
 
     // Keep latest callback without rebuilding annotations on lambda identity changes
     val onUrlClickState = rememberUpdatedState(onUrlClick)
-
-    // Mention foreground styling (your rule)
-    val withMentionColors = remember(text, isOutgoing, colors) {
-        buildAnnotatedString {
-            append(text)
-
-            val mentions = text.getStringAnnotations("mention_pk", 0, text.length)
-            for (m in mentions) {
-                val isSelf = text.getStringAnnotations("mention_self", m.start, m.end).isNotEmpty()
-
-                // Your rule:
-                val fg = if (!isSelf && !isOutgoing) colors.accentText else colors.textBubbleSent
-
-                addStyle(
-                    SpanStyle(color = fg, fontWeight = FontWeight.Bold),
-                    m.start,
-                    m.end
-                )
-            }
-        }
-    }
 
     val (displayText, bgRanges) =  remember(text, isOutgoing, colors, onUrlClick != null) {
         val withColors = buildAnnotatedString {
@@ -66,6 +47,8 @@ fun RichText(
             val mentions = text.getStringAnnotations("mention_pk", 0, text.length)
             for (m in mentions) {
                 val isSelf = text.getStringAnnotations("mention_self", m.start, m.end).isNotEmpty()
+
+                // mention text color
                 val fg = if (!isSelf && !isOutgoing) colors.accentText else colors.textBubbleSent
 
                 addStyle(
@@ -115,6 +98,7 @@ fun RichText(
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
 
     val density = LocalDensity.current
+    // size and spacing for the mention highlight bg
     val cornerPx = with(density) { 6.dp.toPx() }
     val padHPx = with(density) { 4.dp.toPx() }
     val padVPx = with(density) { 3.dp.toPx() }
@@ -182,8 +166,8 @@ private fun computeLineRectsForRange(
         val left = layout.getHorizontalPosition(segStart, usePrimaryDirection = true)
         val right = layout.getHorizontalPosition(segEnd, usePrimaryDirection = true)
 
-        val top = layout.getLineTop(line).toFloat()
-        val bottom = layout.getLineBottom(line).toFloat()
+        val top = layout.getLineTop(line)
+        val bottom = layout.getLineBottom(line)
 
         out += Rect(
             left = minOf(left, right),

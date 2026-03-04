@@ -2,9 +2,7 @@ package org.thoughtcrime.securesms.conversation.v3
 
 import android.content.Context
 import android.text.format.Formatter
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
@@ -40,7 +38,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.TimeZone
@@ -257,7 +254,7 @@ class ConversationDataMapper @Inject constructor(
                 input = record.body,
                 context = context
             )
-            val annotatedBody =  RichTextFormatter.formatMessage(
+            val annotatedBody =  MessageTextFormatter.formatMessage(
                 parsed = parsed,
                 isOutgoing = record.isOutgoing,
             )
@@ -374,7 +371,7 @@ class ConversationDataMapper @Inject constructor(
                 context = context
             )
 
-            RichTextFormatter.formatMessage(
+            MessageTextFormatter.formatMessage(
                 parsed = parsed,
                 isOutgoing = record.isOutgoing
             )

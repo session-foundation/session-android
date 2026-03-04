@@ -12,28 +12,26 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import java.util.EnumSet
 
 /**
- * Pure formatting only:
- * - No UI colors
- * - No click behavior (Compose injects)
+ * Pure text formatting for message content:
+ * - No UI colors (Compose layer handles those)
+ * - No click behavior (Compose layer injects handlers)
  *
- * Produces:
- * - LinkAnnotation.Clickable(tag=url) with underline style (no default open)
- * - Mention annotations:
- *    - "mention_pk" = publicKey
- *    - "mention_self" presence-only when true
- *    - "mention_bg" presence-only when mention should have pill background
+ * Produces an AnnotatedString with:
+ * - LinkAnnotation.Clickable(tag = url) with underline style
+ * - String annotations for mentions:
+ *    "mention_pk"   = publicKey
+ *    "mention_self" = presence-only, when mentioning local user
+ *    "mention_bg"   = presence-only, when pill background is needed
  *
- * Also:
- * - Inserts subtle OUTSIDE spacing around bg mentions (layout breathing room)
- * - Remaps mention ranges safely.
+ * Inserts thin-space padding around pill mentions for visual breathing room.
  */
-object RichTextFormatter {
+object MessageTextFormatter {
 
     private val linkExtractor: LinkExtractor = LinkExtractor.builder()
         .linkTypes(EnumSet.of(LinkType.URL, LinkType.WWW))
         .build()
 
-    // Layout spacing outside pill; hair space is subtle and works well.
+    // Spacing used around the mention highlight bg
     private const val OUTSIDE_SPACE: Char = '\u2009'
 
     fun formatMessage(
@@ -66,7 +64,7 @@ object RichTextFormatter {
         return b.toAnnotatedString()
     }
 
-    // ---------------- Links (no click behavior here) ----------------
+    // ------------ Link handling --------------------
 
     private fun addLinkAnnotationsWithAutolink(
         builder: AnnotatedString.Builder,
@@ -93,8 +91,7 @@ object RichTextFormatter {
                 clickable = LinkAnnotation.Clickable(
                     tag = url,
                     styles = styles,
-                    // required in your BOM; keep it no-op here
-                    linkInteractionListener = { /* no-op */ }
+                    linkInteractionListener = null
                 ),
                 start = start,
                 end = end
@@ -114,8 +111,10 @@ object RichTextFormatter {
     )
 
     /**
-     * Rebuilds the final text left-to-right, inserting OUTSIDE_SPACE before/after
-     * mentions that need a pill background. Mention ranges exclude the spaces.
+     * Mention ranges in the output exclude the inserted spaces.
+     *
+     * Rebuilds text left-to-right, inserting [OUTSIDE_SPACE] before/after
+     * mentions that need a pill background.
      */
     private fun buildTextWithOutsideSpacing(
         text: String,
