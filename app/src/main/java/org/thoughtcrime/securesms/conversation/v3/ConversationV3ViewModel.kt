@@ -17,6 +17,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
@@ -112,6 +114,12 @@ class ConversationV3ViewModel @AssistedInject constructor(
         .take(1)
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+
+    private val unreadCount: StateFlow<Int> = threadIdFlow
+        .filterNotNull()
+        .map { id -> withContext(Dispatchers.IO) { mmsSmsDatabase.getUnreadCount(id) } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
         UIState()
     )
@@ -119,6 +127,18 @@ class ConversationV3ViewModel @AssistedInject constructor(
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
+
+
+    private val _scrollToBottomEvent = Channel<Unit>(Channel.CONFLATED)
+    val scrollToBottomEvent: Flow<Unit> = _scrollToBottomEvent.receiveAsFlow()
+
+    private var scrollState: ConversationScrollState = ConversationScrollState(
+        isNearBottom = true,
+        isFullyScrolled = true,
+        firstVisibleIndex = 0,
+        lastVisibleIndex = 0,
+        totalItemCount = 0,
+    )
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
@@ -220,8 +240,23 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 pagingSource?.invalidate()
             }
         }
+
+        // listen to changes to the unread count
+        viewModelScope.launch {
+            unreadCount.collect { updateScrollToBottomButton() }
+        }
     }
 
+    private fun updateScrollToBottomButton() {
+        val count = unreadCount.value
+        val label: String? = when {
+            scrollState.isNearBottom -> null
+            count <= 0 -> ""
+            count < 10_000 -> count.toString()
+            else -> "9999+"
+        }
+        _uiState.update { it.copy(scrollToBottomButton = label) }
+    }
 
     private fun getAppBarData(conversation: Recipient, showSearch: Boolean): ConversationAppBarData {
         // sort out the pager data, if any
@@ -335,10 +370,26 @@ class ConversationV3ViewModel @AssistedInject constructor(
 
     fun onCommand(command: Commands) {
         when (command) {
+            // Navigation
             is Commands.GoTo -> {
                 navigateTo(command.destination)
             }
 
+            // Conversation screen
+            is Commands.OnScrollStateChanged -> {
+                if (command.scrollState != scrollState) {
+                    scrollState = command.scrollState
+                    updateScrollToBottomButton()
+                }
+            }
+
+            is Commands.ScrollToBottom -> {
+                scrollState = scrollState.copy(isNearBottom = true, isFullyScrolled = true)
+                _uiState.update { it.copy(scrollToBottomButton = null) }
+                _scrollToBottomEvent.trySend(Unit)
+            }
+
+            // Dialog related
             is Commands.ShowOpenUrlDialog -> {
                 _dialogsState.update {
                     it.copy(openLinkDialogUrl = command.url)
@@ -466,6 +517,13 @@ class ConversationV3ViewModel @AssistedInject constructor(
     sealed interface Commands {
         data class GoTo(val destination: ConversationV3Destination) : Commands
 
+        // Conversation screen
+        /** Compose reports current scroll state — VM derives all scroll-dependent logic from this */
+        data class OnScrollStateChanged(val scrollState: ConversationScrollState) : Commands
+
+        /** User tapped the scroll-to-bottom button */
+        data object ScrollToBottom : Commands
+
         // Dialogs
         data class ShowOpenUrlDialog(val url: String?) : Commands
         data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands
@@ -502,6 +560,8 @@ class ConversationV3ViewModel @AssistedInject constructor(
 
     data class UIState(
         val name: String = "",
+        /** null = hidden, "" = shown without badge, "8" / "9999+" = shown with badge */
+        val scrollToBottomButton: String? = null,
     )
 
     // Dialogs
@@ -543,5 +603,13 @@ class ConversationV3ViewModel @AssistedInject constructor(
     data class ClearAllEmoji(
         val emoji: String,
         val messageId: MessageId
+    )
+
+    data class ConversationScrollState(
+        val isNearBottom: Boolean,
+        val isFullyScrolled: Boolean,
+        val firstVisibleIndex: Int,
+        val lastVisibleIndex: Int,
+        val totalItemCount: Int,
     )
 }
