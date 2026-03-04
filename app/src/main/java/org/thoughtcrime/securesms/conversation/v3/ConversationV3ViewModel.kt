@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -58,6 +59,7 @@ import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getLastSeen
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
@@ -148,15 +150,12 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private var pagingSource: ConversationPagingSource? = null
 
     // obtain the last seen message id
-    private val lastSeen: StateFlow<Long?> = threadIdFlow
-        .filterNotNull()
-        .flatMapLatest { id ->
-            flow {
-                emit(withContext(Dispatchers.IO) {
-                    threadDb.getLastSeenAndHasSent(id).first().takeIf { it > 0 }
-                })
-            }
-        }
+    private val lastSeen: StateFlow<Long?> = combine(
+        threadIdFlow, threadDb.updateNotifications
+    ) { id, update ->
+        if (id != null && id == update) id else null
+    }.filterNotNull()
+        .mapNotNull { threadDb.getLastSeen(address)?.toEpochMilliseconds() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val conversationItems: Flow<PagingData<ConversationDataMapper.ConversationItem>> = combine(

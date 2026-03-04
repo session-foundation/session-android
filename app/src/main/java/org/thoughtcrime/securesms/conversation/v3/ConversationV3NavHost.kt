@@ -37,7 +37,7 @@ import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.Rout
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteManageMembers
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteNotifications
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RoutePromoteMembers
-import org.thoughtcrime.securesms.conversation.v3.compose.ConversationScreen
+import org.thoughtcrime.securesms.conversation.v3.compose.conversation.ConversationScreen
 import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel
 import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsScreen

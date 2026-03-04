@@ -2851,7 +2851,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 text = message.body,
                 formatOnly = true, // no styling here, only text formatting
                 context = this
-            ).text
+            )
 
             if (TextUtils.isEmpty(body)) { continue }
             if (messageSize > 1) {

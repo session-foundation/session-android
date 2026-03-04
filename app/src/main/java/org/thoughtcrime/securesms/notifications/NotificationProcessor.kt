@@ -8,7 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.service.notification.StatusBarNotification
+import android.graphics.Color
+import androidx.collection.LruCache
 import androidx.collection.MutableLongObjectMap
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -17,7 +18,9 @@ import androidx.core.app.Person
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.core.content.LocusIdCompat
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.IconCompat
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.catch
@@ -28,6 +31,7 @@ import kotlinx.coroutines.flow.scan
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.isCommunity
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.Log
@@ -36,7 +40,6 @@ import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
-import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getIncomingMessages
@@ -58,9 +61,6 @@ import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import androidx.core.graphics.createBitmap
-import com.squareup.phrase.Phrase
-import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 
 /**
  * Reactive notification processor that replaces the poll-based DefaultMessageNotifier.
@@ -98,6 +98,10 @@ class NotificationProcessor @Inject constructor(
     private val notificationManager: NotificationManagerCompat get() =
         NotificationManagerCompat.from(context)
 
+    private val avatarBitmapCache = object : LruCache<AvatarUIData, Bitmap>(4 * 1024 * 1024) {
+        override fun sizeOf(key: AvatarUIData, value: Bitmap): Int = value.allocationByteCount
+    }
+
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
         merge(
             // Thread changes
@@ -117,6 +121,9 @@ class NotificationProcessor @Inject constructor(
 
             // Do nothing if overall settings is off
             if (!prefs[NotificationPreferences.ENABLE]) return@mapNotNull null
+
+            // Do nothing if notifications aren't even enabled
+            if (!notificationManager.areNotificationsEnabled()) return@mapNotNull null
 
             val (threadAddress, lastSeen) = threadDb.getAddressAndLastSeen(changes.threadId)
                 ?: return@mapNotNull null
@@ -140,25 +147,10 @@ class NotificationProcessor @Inject constructor(
 
             mmsSmsDatabase.getIncomingMessages(changes.threadId, startMsExclusive = lastSeen)
                 .forEach { r ->
-                    val body = MentionUtilities.highlightMentions(
-                        recipientRepository = recipientRepository,
-                        text = messageFormatter.formatMessageBody(context, r, recipient),
-                        isOutgoingMessage = r.isOutgoing,
-                        formatOnly = true, // No colors for notification
-                        isQuote = false,
-                        context = context,
-                    )
-
-                    if (recipient.notifyType == NotifyType.MENTIONS
-                        && !body.mentions.any { it.second.isSelf }) {
-                        // The message doesn't mention us in MENTIONS only mode.
-                        // Ignoring...
-                        return@forEach
-                    }
-
+                    //TODO: mention handling
                     items += MessageData(
                         id = r.messageId,
-                        body = body.text,
+                        body = r.body,
                         sentAt = Instant.ofEpochMilli(r.dateSent),
                         authorName = r.individualRecipient.displayName(),
                         authorAvatar = avatarUtils.getUIDataFromRecipient(r.individualRecipient),
@@ -223,11 +215,13 @@ class NotificationProcessor @Inject constructor(
                             .firstOrNull { it.id == NotificationId.MESSAGE_THREAD &&
                                     it.tag == threadTag(value.threadId) }
 
+                        val shouldPostNewNotification = value.shouldPostNewNotification(lastPostedStateByThreadIDs[value.threadId])
+
                         if (existingNotification != null) {
-                            updateNotification(existingNotification, value)
+                            postOrUpdateNotification(value, !shouldPostNewNotification)
                             lastPostedStateByThreadIDs.put(value.threadId, value)
-                        } else if (value.shouldPostNewNotification(lastPostedStateByThreadIDs[value.threadId])) {
-                            postNewNotification(value)
+                        } else if (shouldPostNewNotification) {
+                            postOrUpdateNotification(value, false)
                             lastPostedStateByThreadIDs.put(value.threadId, value)
                         }
                     }
@@ -236,9 +230,9 @@ class NotificationProcessor @Inject constructor(
         })
     }
 
-    private suspend fun updateNotification(
-        existingNotification: StatusBarNotification,
-        value: ThreadNotificationState.Visible
+    private suspend fun postOrUpdateNotification(
+        state: ThreadNotificationState.Visible,
+        silent: Boolean
     ) {
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -248,22 +242,10 @@ class NotificationProcessor @Inject constructor(
             return
         }
 
-        notificationManager.notify(threadTag(value.threadId), NotificationId.MESSAGE_THREAD,
-            buildNotification(value, silent = true))
+        notificationManager.notify(threadTag(state.threadId), NotificationId.MESSAGE_THREAD,
+            buildNotification(state, silent = silent))
     }
 
-    private suspend fun postNewNotification(value: ThreadNotificationState.Visible) {
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-
-        val notification = buildNotification(value, silent = false)
-        notificationManager.notify(threadTag(value.threadId), NotificationId.MESSAGE_THREAD, notification)
-    }
 
     private suspend fun buildNotification(state: ThreadNotificationState.Visible, silent: Boolean): Notification {
         val channelId = notificationChannels.messagesChannel
@@ -282,7 +264,7 @@ class NotificationProcessor @Inject constructor(
             .build()
 
         val style = NotificationCompat.MessagingStyle(userPerson)
-            .setConversationTitle(state.threadName)
+            .setConversationTitle(state.threadName.takeIf { state.threadAddress is Address.GroupLike })
             .setGroupConversation(state.threadAddress is Address.GroupLike)
 
 
@@ -342,8 +324,15 @@ class NotificationProcessor @Inject constructor(
 
     private suspend fun getBitmap(avatarUIData: AvatarUIData): Bitmap {
         val size = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
-        val bitmap = createBitmap(size, size, Bitmap.Config.RGB_565)
+        val cached = avatarBitmapCache[avatarUIData]
+        if (cached != null) {
+            return cached
+        }
+
+        val bitmap = createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(Color.TRANSPARENT)
         offscreenAvatarRenderer.get().render(bitmap, avatarUIData)
+        avatarBitmapCache.put(avatarUIData, bitmap)
         return bitmap
     }
 
