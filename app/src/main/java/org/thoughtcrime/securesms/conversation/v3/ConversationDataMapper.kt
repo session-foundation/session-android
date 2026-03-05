@@ -131,7 +131,7 @@ class ConversationDataMapper @Inject constructor(
                 reactions = mapReactions(record, localUserAddress),
                 highlightKey = highlightKey,
                 clusterPosition = clusterPosition
-        ))
+            ))
 
         val showUnreadMarker = lastSeen != null
                 && record.timestamp > lastSeen
@@ -226,9 +226,9 @@ class ConversationDataMapper @Inject constructor(
                 addContentToGroup(
                     groups,
                     MessageContentData.CommunityInvite(
-                    jsonData.kind.groupName,
-                    jsonData.kind.groupUrl
-                ))
+                        jsonData.kind.groupName,
+                        jsonData.kind.groupUrl
+                    ))
 
                 return groups
             }

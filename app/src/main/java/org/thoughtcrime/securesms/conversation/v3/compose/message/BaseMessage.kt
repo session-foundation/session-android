@@ -87,7 +87,8 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 fun Message(
     data: MessageViewData,
     modifier: Modifier = Modifier,
-    sendCommand: (ConversationV3ViewModel.Commands) -> Unit = {}
+    sendCommand: (ConversationV3ViewModel.Commands) -> Unit = {},
+    onHighlightFinished: (MessageId, HighlightMessage) -> Unit = { _, _ -> }
 ) {
     when (data.layout) {
         MessageLayout.CONTROL -> {
@@ -97,7 +98,8 @@ fun Message(
             RecipientMessage(
                 data = data,
                 modifier = modifier,
-                sendCommand = sendCommand
+                sendCommand = sendCommand,
+                onHighlightFinished = onHighlightFinished
             )
         }
     }
@@ -107,6 +109,7 @@ fun Message(
 fun RecipientMessage(
     data: MessageViewData,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    onHighlightFinished: (MessageId, HighlightMessage) -> Unit,
     modifier: Modifier = Modifier
 ){
     val outgoing = data.layout == MessageLayout.OUTGOING
@@ -134,7 +137,8 @@ fun RecipientMessage(
                 .wrapContentWidth(),
             data = data,
             maxWidth = maxMessageWidth,
-            sendCommand = sendCommand
+            sendCommand = sendCommand,
+            onHighlightFinished = onHighlightFinished
         )
     }
 }
@@ -147,7 +151,8 @@ fun RecipientMessageContent(
     data: MessageViewData,
     maxWidth: Dp,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onHighlightFinished: (MessageId, HighlightMessage) -> Unit = { _, _ -> }
 ) {
     val outgoing = data.layout == MessageLayout.OUTGOING
 
@@ -213,12 +218,17 @@ fun RecipientMessageContent(
                     }
 
                     if (group.showBubble) {
+                        val key = data.highlightKey as? HighlightMessage
                         MessageBubble(
-                            modifier = Modifier.accentHighlight(data.highlightKey),
+                            modifier = Modifier.accentHighlight(
+                                trigger = key,
+                                onFinished = { if (key != null) onHighlightFinished(data.id, key) }
+                            ),
                             color = if (outgoing) LocalColors.current.accent else LocalColors.current.backgroundBubbleReceived,
                             content = contentColumn
                         )
                     } else {
+                        //todo convov3 this might currently lose the highlight
                         contentColumn() // Render naked content (e.g., for media)
                     }
                 }
@@ -794,6 +804,3 @@ object PreviewMessageData {
         )
     }
 }
-
-
-

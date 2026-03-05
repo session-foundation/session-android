@@ -190,6 +190,9 @@ fun Conversation(
                             Message(
                                 data = data,
                                 sendCommand = sendCommand,
+                                onHighlightFinished = { messageId, key ->
+                                    listController.clearHighlight(messageId, key)
+                                }
                             )
                         }
 
@@ -265,34 +268,34 @@ fun PreviewConversation(
                 PagingData.from(
                     data = listOf(
                         ConversationItem.Message(
-                        MessageViewData(
-                            id = MessageId(0, false),
-                            displayName = "Toto",
-                            layout = MessageLayout.OUTGOING,
-                            contentGroups = textGroup()
-                        )),
+                            MessageViewData(
+                                id = MessageId(0, false),
+                                displayName = "Toto",
+                                layout = MessageLayout.OUTGOING,
+                                contentGroups = textGroup()
+                            )),
                         ConversationItem.Message(
-                        MessageViewData(
-                            id = MessageId(0, false),
-                            displayName = "Toto",
-                            avatar = PreviewMessageData.sampleAvatar,
-                            layout = MessageLayout.INCOMING,
-                            contentGroups = textGroup("I have lots of reactions - Closed"),
-                            reactions = ReactionViewState(
-                                reactions = listOf(
-                                    ReactionItem("👍", 3, selected = true),
-                                    ReactionItem("❤️", 12, selected = false),
-                                    ReactionItem("😂", 1, selected = false),
-                                    ReactionItem("😮", 5, selected = false),
-                                    ReactionItem("😢", 2, selected = false),
-                                    ReactionItem("🔥", 8, selected = false),
-                                    ReactionItem("💕", 8, selected = false),
-                                    ReactionItem("🐙", 8, selected = false),
-                                    ReactionItem("✅", 8, selected = false),
-                                ),
-                                isExtended = false,
-                            )
-                        ))
+                            MessageViewData(
+                                id = MessageId(0, false),
+                                displayName = "Toto",
+                                avatar = PreviewMessageData.sampleAvatar,
+                                layout = MessageLayout.INCOMING,
+                                contentGroups = textGroup("I have lots of reactions - Closed"),
+                                reactions = ReactionViewState(
+                                    reactions = listOf(
+                                        ReactionItem("👍", 3, selected = true),
+                                        ReactionItem("❤️", 12, selected = false),
+                                        ReactionItem("😂", 1, selected = false),
+                                        ReactionItem("😮", 5, selected = false),
+                                        ReactionItem("😢", 2, selected = false),
+                                        ReactionItem("🔥", 8, selected = false),
+                                        ReactionItem("💕", 8, selected = false),
+                                        ReactionItem("🐙", 8, selected = false),
+                                        ReactionItem("✅", 8, selected = false),
+                                    ),
+                                    isExtended = false,
+                                )
+                            ))
                     )
                 )
             ).collectAsLazyPagingItems(),

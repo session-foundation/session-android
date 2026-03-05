@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.conversation
 
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -8,9 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
+import kotlinx.coroutines.yield
 import org.thoughtcrime.securesms.conversation.v3.ConversationDataMapper.ConversationItem
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.ScrollEvent
 import org.thoughtcrime.securesms.conversation.v3.compose.message.HighlightMessage
@@ -20,24 +20,19 @@ import kotlin.math.abs
 /**
  * Single point of control for conversation list scrolling and highlighting.
  *
- * Any feature that needs "go to message X" or "go to bottom"  should call
+ * Any feature that needs "go to message X" or "go to bottom" should call
  * [handleScrollEvent].
- * Scrolling, index resolution, jump-then-animate optimisation,
- * and highlight triggering are all internal details.
  *
- * Usage:
- * ```
- * val listController = rememberConversationListState()
- *
- * LaunchedEffect(Unit) {
- *     scrollEvents.collect { listController.handleScrollEvent(it, pagingItems) }
- * }
- * ```
+ * **Why `animateScrollBy` instead of `animateScrollToItem`:**
+ * Compose's `animateScrollToItem` estimates scroll distance from average
+ * item heights. With variable-height chat messages, date breaks, and a
+ * reversed layout, the estimate is often wrong — causing a visible
+ * two-step correction. `animateScrollBy` works in raw pixels and lets
+ * the list clamp at edges, avoiding this entirely.
  */
 @Stable
 class ConversationListState(
     val lazyListState: LazyListState,
-    private val breathingRoomPx: Int,
 ) {
     companion object {
         // how many messages needed before we jump to a  message instead of simply scrolling to it
@@ -45,10 +40,12 @@ class ConversationListState(
 
         // when jumping, how far away do we jump
         private const val JUMP_PROXIMITY = 10
+
+        // animateScrollBy clamps at list edges, so overshooting is safe.
+        private const val LARGE_SCROLL_PX = 1_000_000f
     }
 
     // ── Highlight ──
-
     /** Current highlight target. Composable reads this per-item via [highlightKeyFor]. */
     var currentHighlight by mutableStateOf<HighlightTarget?>(null)
         private set
@@ -66,10 +63,10 @@ class ConversationListState(
         val key: HighlightMessage,
     )
 
-    // ── Scrolling ──
-
+    // ── Public API ──
     /**
-     * Handle a scroll event. This is the **only** method external code needs to call.
+     * Handle a scroll event. This is the **only** method external code needs to call
+     * for scrolling.
      *
      * @param event        What to scroll to.
      * @param pagingItems  Current paging snapshot, needed for index resolution.
@@ -80,7 +77,9 @@ class ConversationListState(
     ) {
         when (event) {
             is ScrollEvent.ToBottom -> {
-                scrollTo(index = 0, smoothScroll = true)
+                jumpIfFar(targetIndex = 0)
+                // Overshoot toward bottom — list clamps at the edge.
+                lazyListState.animateScrollBy(-LARGE_SCROLL_PX)
             }
 
             is ScrollEvent.ToMessage -> {
@@ -91,11 +90,8 @@ class ConversationListState(
 
                 val index = pagingItems.findIndexOf(event.messageId) ?: return
 
-                scrollTo(
-                    index = index,
-                    smoothScroll = event.smoothScroll,
-                    scrollOffset = -breathingRoomPx,
-                )
+                jumpIfFar(targetIndex = index)
+                animateToCentered(index)
 
                 if (event.highlight) {
                     currentHighlight = HighlightTarget(
@@ -107,33 +103,65 @@ class ConversationListState(
         }
     }
 
+    fun clearHighlight(messageId: MessageId, key: HighlightMessage) {
+        val cur = currentHighlight ?: return
+        if (cur.messageId == messageId && cur.key == key) {
+            currentHighlight = null
+        }
+    }
+
     // ── Internal ──
 
-    private suspend fun scrollTo(
-        index: Int,
-        smoothScroll: Boolean,
-        scrollOffset: Int = 0,
-    ) {
-        if (!smoothScroll) {
-            lazyListState.scrollToItem(index, scrollOffset)
-            return
-        }
+    /**
+     * If the target is far away, jump close first and yield a frame
+     * so Compose lays out nearby items with their real heights.
+     */
+    private suspend fun jumpIfFar(targetIndex: Int) {
+        val firstVisible = lazyListState.firstVisibleItemIndex
+        val distance = abs(targetIndex - firstVisible)
 
-        val distance = abs(index - lazyListState.firstVisibleItemIndex)
         if (distance > JUMP_THRESHOLD) {
             val total = lazyListState.layoutInfo.totalItemsCount
-            val jumpTo = if (index > lazyListState.firstVisibleItemIndex) {
-                (index - JUMP_PROXIMITY).coerceAtLeast(0)
+            val jumpTo = if (targetIndex > firstVisible) {
+                (targetIndex - JUMP_PROXIMITY).coerceAtLeast(0)
             } else {
-                (index + JUMP_PROXIMITY).coerceAtMost((total - 1).coerceAtLeast(0))
+                (targetIndex + JUMP_PROXIMITY).coerceAtMost((total - 1).coerceAtLeast(0))
             }
             lazyListState.scrollToItem(jumpTo)
+            yield()
         }
+    }
 
-        lazyListState.animateScrollToItem(index, scrollOffset)
+    /**
+     * Animate the item into a centered position using exact pixel math.
+     *
+     * After [jumpIfFar], the target is nearby and typically in
+     * [visibleItemsInfo] so we can read its real offset and height.
+     * Short items get centered; tall items show the top.
+     */
+    private suspend fun animateToCentered(index: Int) {
+        val itemInfo = lazyListState.layoutInfo.visibleItemsInfo
+            .firstOrNull { it.index == index }
+
+        if (itemInfo != null) {
+            val viewportHeight = lazyListState.layoutInfo.viewportSize.height
+            val itemHeight = itemInfo.size
+
+            val centeringOffset = if (itemHeight < viewportHeight) {
+                (viewportHeight - itemHeight) / 2
+            } else {
+                viewportHeight * 7 / 8
+            }
+
+            lazyListState.animateScrollBy((itemInfo.offset - centeringOffset).toFloat())
+        } else {
+            // Fallback — item not visible after jump
+            lazyListState.animateScrollToItem(index)
+        }
     }
 }
 
+// ── Paging helpers ──
 /**
  * Find the index of a message in the currently loaded paging snapshot.
  * Returns null if the message hasn't been paged in yet.
@@ -150,19 +178,12 @@ private fun LazyPagingItems<ConversationItem>.findIndexOf(
     return null
 }
 
+// ── Remember ──
+
 @Composable
 fun rememberConversationListState(): ConversationListState {
     val lazyListState = rememberLazyListState()
-    val density = LocalDensity.current
-
-    // extra space to avoid having the  message right on the edge
-    //todo convov3 could we calculate this number instead of hardcoding a value? other compose way to center the scroll?
-    val breathingRoomPx = remember(density) { with(density) { 64.dp.roundToPx() } }
-
-    return remember(lazyListState, breathingRoomPx) {
-        ConversationListState(
-            lazyListState = lazyListState,
-            breathingRoomPx = breathingRoomPx,
-        )
+    return remember(lazyListState) {
+        ConversationListState(lazyListState = lazyListState)
     }
 }

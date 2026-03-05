@@ -23,16 +23,23 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 fun Modifier.accentHighlight(
     trigger: Any?,
     glowColor: Color? = null,
-    glowRadius: Dp = LocalDimensions.current.messageCornerRadius
+    glowRadius: Dp = LocalDimensions.current.messageCornerRadius,
+    onFinished: () -> Unit = {},
 ): Modifier {
     val accentColor = glowColor ?: LocalColors.current.accent
     val alphaAnim = remember { Animatable(0f) }
 
     LaunchedEffect(trigger) {
         if (trigger != null) {
-            alphaAnim.animateTo(1f, tween(150))
-            delay(500)
-            alphaAnim.animateTo(0f, tween(1500))
+            try {
+                alphaAnim.animateTo(1f, tween(150))
+                delay(500)
+                alphaAnim.animateTo(0f, tween(1500))
+            } finally {
+                // This guarantees the state clears even if the user
+                // scrolls the message off-screen mid-animation!
+                onFinished()
+            }
         }
     }
 
