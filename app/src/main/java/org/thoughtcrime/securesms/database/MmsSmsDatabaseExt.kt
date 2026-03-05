@@ -364,7 +364,7 @@ object MmsSmsDatabaseExt {
 
     /**
      * Find all incoming messages (including control messages) for the given thread within
-     * a time range.
+     * a time range. Ordered by date sent in ascending order.
      */
     fun MmsSmsDatabase.getIncomingMessages(
         threadId: Long,
@@ -376,7 +376,7 @@ object MmsSmsDatabaseExt {
             selection = "${MmsSmsColumns.THREAD_ID} = $threadId AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} > $startMsExclusive AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} <= $endMsInclusive AND NOT ${MmsSmsColumns.IS_DELETED} AND NOT ${MmsSmsColumns.IS_OUTGOING}",
             includeReactions = false,
             additionalReactionSelection = null,
-            order = null,
+            order = "${MmsSmsColumns.NORMALIZED_DATE_SENT} ASC",
             limit = null,
         ).use {
             val reader = readerFor(it)
@@ -384,6 +384,10 @@ object MmsSmsDatabaseExt {
         }
     }
 
+    /**
+     * Find all incoming messages (including control messages) for the given thread.
+     * Ordered by date sent in ascending order.
+     */
     fun MmsSmsDatabase.getIncomingMessages(threadId: Long, startMsExclusive: Long): List<MessageRecord> {
         return queryTables(
             projection = MmsSmsDatabase.PROJECTION_ALL,
@@ -395,7 +399,7 @@ object MmsSmsDatabaseExt {
             """,
             includeReactions = false,
             additionalReactionSelection = null,
-            order = null,
+            order = "${MmsSmsColumns.NORMALIZED_DATE_SENT} ASC",
             limit = null,
         ).use {
             val reader = readerFor(it)

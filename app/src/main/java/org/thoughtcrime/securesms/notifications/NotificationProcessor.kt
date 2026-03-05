@@ -118,54 +118,76 @@ class NotificationProcessor @Inject constructor(
 
             val threadRecipient = recipientRepository.getRecipientSync(threadAddress)
 
-            // Do nothing if recipient is muted
-            if (threadRecipient.notifyType == NotifyType.NONE)
+            // Do nothing if recipient is muted or blocked
+            if (threadRecipient.notifyType == NotifyType.NONE || threadRecipient.blocked)
                 return@map ThreadNotificationState.Empty(changes.threadId)
 
             val items = mutableListOf<NotificationMessageItem>()
 
-            mmsSmsDatabase.getIncomingMessages(changes.threadId, startMsExclusive = lastSeen)
-                .forEach { r ->
-                    val parsedResult = MentionUtilities.parseAndSubstituteMentions(
-                        recipientRepository = recipientRepository,
-                        input = messageFormatter.formatMessageBodyForNotification(context, r, threadRecipient),
-                        context = context,
-                    )
+            val newIncomingMessages =
+                mmsSmsDatabase.getIncomingMessages(changes.threadId, startMsExclusive = lastSeen)
 
-                    if (threadRecipient.notifyType == NotifyType.MENTIONS &&
-                        !parsedResult.mentions.any { it.isSelf }) {
-                        // Skip this message as it doesn't contain any mentions of us
-                        return@forEach
+            if (!threadRecipient.approved) {
+                // If this is a message request thread, only show a notification when we
+                // receive a new message
+                val lastMessage = newIncomingMessages.lastOrNull()
+                    ?: return@map ThreadNotificationState.Empty(changes.threadId)
+
+                items += MessageRequestData(
+                    sentAt = Instant.ofEpochMilli(lastMessage.dateSent),
+                    authorName = lastMessage.individualRecipient.displayName(),
+                    authorAvatar = avatarUtils.getUIDataFromRecipient(lastMessage.individualRecipient),
+                    authorAddress = lastMessage.individualRecipient.address
+                )
+            } else {
+                newIncomingMessages
+                    .forEach { r ->
+                        val parsedResult = MentionUtilities.parseAndSubstituteMentions(
+                            recipientRepository = recipientRepository,
+                            input = messageFormatter.formatMessageBodyForNotification(
+                                context,
+                                r,
+                                threadRecipient
+                            ),
+                            context = context,
+                        )
+
+                        if (threadRecipient.notifyType == NotifyType.MENTIONS &&
+                            !parsedResult.mentions.any { it.isSelf }
+                        ) {
+                            // Skip this message as it doesn't contain any mentions of us
+                            return@forEach
+                        }
+
+                        items += MessageData(
+                            id = r.messageId,
+                            body = parsedResult.text,
+                            sentAt = Instant.ofEpochMilli(r.dateSent),
+                            authorName = r.individualRecipient.displayName(),
+                            authorAvatar = avatarUtils.getUIDataFromRecipient(r.individualRecipient),
+                            authorAddress = r.individualRecipient.address
+                        )
                     }
 
-                    items += MessageData(
-                        id = r.messageId,
-                        body = parsedResult.text,
-                        sentAt = Instant.ofEpochMilli(r.dateSent),
-                        authorName = r.individualRecipient.displayName(),
-                        authorAvatar = avatarUtils.getUIDataFromRecipient(r.individualRecipient),
-                        authorAddress = r.individualRecipient.address
-                    )
-                }
+                // No reaction handling for communities
+                if (!threadAddress.isCommunity && threadRecipient.notifyType == NotifyType.ALL) {
+                    reactionDatabase.getReactionsForThread(
+                        threadId = changes.threadId,
+                        minSendTimeMsExclusive = lastSeen
+                    ).forEach { record ->
+                        val r = recipientRepository.getRecipientSync(record.author.toAddress())
+                        // Ignore reactions from self
+                        if (r.isSelf) return@forEach
 
-            // No reaction handling for communities
-            if (!threadAddress.isCommunity && threadRecipient.notifyType == NotifyType.ALL) {
-                reactionDatabase.getReactionsForThread(
-                    threadId = changes.threadId,
-                    minSendTimeMsExclusive = lastSeen
-                ).forEach { record ->
-                    val r = recipientRepository.getRecipientSync(record.author.toAddress())
-                    // Ignore reactions from self
-                    if (r.isSelf) return@forEach
-
-                    items += ReactionData(
-                        reactionId = record.id,
-                        emoji = record.emoji,
-                        authorName = r.displayName(),
-                        authorAvatar = avatarUtils.getUIDataFromRecipient(r),
-                        sentAt = Instant.ofEpochMilli(record.dateSent),
-                        authorAddress = r.address,
-                    )
+                        items += ReactionData(
+                            reactionId = record.id,
+                            emoji = record.emoji,
+                            authorName = r.displayName(),
+                            authorAvatar = avatarUtils.getUIDataFromRecipient(r),
+                            sentAt = Instant.ofEpochMilli(record.dateSent),
+                            authorAddress = r.address,
+                        )
+                    }
                 }
             }
 
@@ -312,19 +334,23 @@ class NotificationProcessor @Inject constructor(
             )
         ).build())
 
-        // Reply action
-        val (replyIntent, remoteInput) = NotificationActionReceiver.buildReplyIntent(
-            context = context,
-            threadAddress = state.threadAddress
-        )
-        builder.addAction(NotificationCompat.Action.Builder(
-            R.drawable.ic_reply,
-            context.getString(R.string.reply),
-            replyIntent
-        ).addRemoteInput(remoteInput)
-            .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
-            .setShowsUserInterface(false)
-            .build())
+        // Reply action (not applicable for message request thread)
+        if (!state.items.any { it is MessageRequestData }) {
+            val (replyIntent, remoteInput) = NotificationActionReceiver.buildReplyIntent(
+                context = context,
+                threadAddress = state.threadAddress
+            )
+            builder.addAction(
+                NotificationCompat.Action.Builder(
+                    R.drawable.ic_reply,
+                    context.getString(R.string.reply),
+                    replyIntent
+                ).addRemoteInput(remoteInput)
+                    .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
+                    .setShowsUserInterface(false)
+                    .build()
+            )
+        }
 
         return builder.build()
     }
@@ -389,6 +415,17 @@ class NotificationProcessor @Inject constructor(
             return Phrase.from(context, R.string.emojiReactsNotification)
                 .put(EMOJI_KEY, emoji)
                 .format()
+        }
+    }
+
+    private data class MessageRequestData(
+        override val sentAt: Instant,
+        override val authorName: String,
+        override val authorAvatar: AvatarUIData,
+        override val authorAddress: Address
+    ) : NotificationMessageItem {
+        override fun body(context: Context): CharSequence {
+            return context.getString(R.string.messageRequestsNew)
         }
     }
 
