@@ -141,7 +141,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         ): PendingIntent {
             return PendingIntent.getBroadcast(
                 context,
-                1,
+                threadAddress.hashCode(),
                 Intent(context, NotificationActionReceiver::class.java)
                     .setAction(ACTION_MARK_READ)
                     .putExtra(EXTRA_THREAD_ADDRESS, threadAddress)
@@ -165,7 +165,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
             return PendingIntent.getBroadcast(
                 context,
-                2,
+                threadAddress.hashCode(),
                 replyIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             ) to remoteInput

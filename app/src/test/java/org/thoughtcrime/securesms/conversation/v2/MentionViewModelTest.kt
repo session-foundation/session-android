@@ -30,6 +30,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
+import org.thoughtcrime.securesms.database.getRecipientAddress
 import org.thoughtcrime.securesms.util.AvatarUIData
 
 @RunWith(RobolectricTestRunner::class)
@@ -85,11 +86,8 @@ class MentionViewModelTest : BaseViewModelTest() {
     fun setUp() {
         @Suppress("UNCHECKED_CAST")
         mentionViewModel = MentionViewModel(
-            threadDatabase = mock {
-                on { getRecipientForThreadId(threadID) } doReturn communityRecipient.address
-            },
-            groupDatabase = mock {
-            },
+            threadDatabase = mock(),
+            groupDatabase = mock(),
             storage = mock {
                 on { getUserBlindedAccountId(any()) } doReturn myId
                 on { getUserPublicKey() } doReturn myId.hexString

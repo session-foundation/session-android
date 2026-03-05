@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
@@ -67,6 +68,7 @@ import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.castAwayType
 import org.thoughtcrime.securesms.util.mapToStateFlow
 
 
@@ -150,11 +152,10 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private var pagingSource: ConversationPagingSource? = null
 
     // obtain the last seen message id
-    private val lastSeen: StateFlow<Long?> = combine(
-        threadIdFlow, threadDb.updateNotifications
-    ) { id, update ->
-        if (id != null && id == update) id else null
-    }.filterNotNull()
+    private val lastSeen: StateFlow<Long?> = threadDb.addressUpdateNotifications
+        .filter { it == address }
+        .castAwayType()
+        .onStart { emit(Unit) }
         .mapNotNull { threadDb.getLastSeen(address)?.toEpochMilliseconds() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 

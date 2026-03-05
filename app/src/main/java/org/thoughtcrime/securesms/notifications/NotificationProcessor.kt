@@ -317,7 +317,7 @@ class NotificationProcessor @Inject constructor(
         val intent = ConversationActivityV2.createIntent(context, state.threadAddress)
         val pendingIntent = PendingIntent.getActivity(
             context,
-            state.threadId.toInt(),
+            state.threadAddress.hashCode(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

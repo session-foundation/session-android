@@ -239,7 +239,7 @@ fun ThreadDatabase.ensureThreads(addresses: Iterable<Address.Conversable>): Ensu
     return writableDatabase.transaction {
         // First store the addresses in a temp table for later use
         writableDatabase.execSQL("CREATE TEMP TABLE tmp_addresses (address TEXT NOT NULL PRIMARY KEY)")
-        writableDatabase.compileStatement("INSERT INTO tmp_addresses (address) VALUES (?)").use { stmt ->
+        writableDatabase.compileStatement("INSERT OR IGNORE INTO tmp_addresses (address) VALUES (?)").use { stmt ->
             addresses.forEach {
                 stmt.bindString(1, it.address)
                 stmt.execute()
@@ -281,7 +281,7 @@ fun ThreadDatabase.upsertThreadLastSeen(lastReads: Collection<Pair<Address.Conve
 
     val changes = writableDatabase.transaction {
         writableDatabase.execSQL("CREATE TEMP TABLE tmp_last_reads (address TEXT NOT NULL PRIMARY KEY, last_read INTEGER NOT NULL)")
-        writableDatabase.compileStatement("INSERT INTO tmp_last_reads (address, last_read) VALUES (?, ?)").use { stmt ->
+        writableDatabase.compileStatement("INSERT OR IGNORE INTO tmp_last_reads (address, last_read) VALUES (?, ?)").use { stmt ->
             lastReads.forEach { (address, lastRead) ->
                 stmt.bindString(1, address.address)
                 stmt.bindLong(2, lastRead.toEpochMilliseconds())
@@ -317,7 +317,7 @@ fun ThreadDatabase.getOrCreateThreadIdFor(address: Address.Conversable): ThreadI
         """
         INSERT INTO ${ThreadDatabase.TABLE_NAME} (${ThreadDatabase.ADDRESS})
         VALUES (?)
-        ON CONFLICT DO NOTHING
+        ON CONFLICT(${ThreadDatabase.ADDRESS}) DO SET ${ThreadDatabase.ADDRESS} = EXCLUDED.${ThreadDatabase.ADDRESS}
         RETURNING ${ThreadDatabase.ID}
     """, arrayOf(address.address)
     ).use { cursor ->

@@ -94,7 +94,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
             },
             groupDb = mock(),
             threadDb = mock {
-                on { getOrCreateThreadIdFor(recipient.address) } doReturn threadId
                 on { updateNotifications } doAnswer {
                     emptyFlow()
                 }
