@@ -1,34 +1,20 @@
-/*
- * Copyright (C) 2016 Open Whisper Systems
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package org.thoughtcrime.securesms.notifications
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.AsyncTask
 import androidx.core.app.RemoteInput
+import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
-import network.loki.messenger.libsession_util.util.ExpiryMode.AfterSend
-import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import network.loki.messenger.R
+import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
-
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
@@ -39,20 +25,17 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.mms.MmsException
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import javax.inject.Inject
 
 /**
- * Get the response text from the Wearable Device and sends an message as a reply
+ * Get the response text from the notification and sends an message as a reply
  */
 @AndroidEntryPoint
 class RemoteReplyReceiver : BroadcastReceiver() {
     @Inject
     lateinit var threadDatabase: ThreadDatabase
-
-    @Inject
-    lateinit var mmsDatabase: MmsDatabase
 
     @Inject
     lateinit var smsDatabase: SmsDatabase
@@ -69,98 +52,100 @@ class RemoteReplyReceiver : BroadcastReceiver() {
     @Inject
     lateinit var messageSender: MessageSender
 
-
     @Inject
     lateinit var proStatusManager: ProStatusManager
 
+    @Inject
+    @ManagerScope
+    lateinit var scope: CoroutineScope
+
     @SuppressLint("StaticFieldLeak")
     override fun onReceive(context: Context, intent: Intent) {
-        if (REPLY_ACTION != intent.getAction()) return
+        if (REPLY_ACTION != intent.action) return
+        val remoteInput = RemoteInput.getResultsFromIntent(intent) ?: return
 
-        val remoteInput = RemoteInput.getResultsFromIntent(intent)
+        val threadAddress = requireNotNull(
+            IntentCompat.getParcelableExtra(
+                intent,
+                ADDRESS_EXTRA,
+                Address.Conversable::class.java
+            )
+        ) {
+            "Address must be specified"
+        }
 
-        if (remoteInput == null) return
-
-        val address = intent.getParcelableExtra<Address.Conversable>(ADDRESS_EXTRA)!!
-        val replyMethod = intent.getSerializableExtra(REPLY_METHOD) as ReplyMethod?
-        val responseText = remoteInput.getCharSequence(NotificationProcessor.EXTRA_REMOTE_REPLY)
-
-        if (replyMethod == null) throw AssertionError("No reply method specified")
+        val responseText = remoteInput.getCharSequence(REPLY_TEXT)
 
         if (responseText != null) {
-            object : AsyncTask<Void?, Void?, Void?>() {
-                override fun doInBackground(vararg params: Void?): Void? {
-                    val threadId = threadDatabase.getOrCreateThreadIdFor(address)
+            val r = goAsync()
+
+            scope.launch {
+                try {
+                    val threadRecipient = recipientRepository.getRecipientSync(threadAddress)
+
                     val message = VisibleMessage()
                     message.sentTimestamp = clock.currentTimeMillis()
                     message.text = responseText.toString()
                     proStatusManager.addProFeatures(message)
-                    val expiryMode = recipientRepository.getRecipientSync(address).expiryMode
+                    message.applyExpiryMode(threadRecipient)
 
-                    val expiresInMillis = expiryMode.expiryMillis
-                    val expireStartedAt: Long =
-                        (if (expiryMode is AfterSend) message.sentTimestamp else 0L)!!
-                    when (replyMethod) {
-                        ReplyMethod.GroupMessage -> {
-                            val reply = OutgoingMediaMessage(
-                                message = message,
-                                recipient = address,
-                                attachments = listOf(),
-                                outgoingQuote = null,
-                                linkPreview = null,
-                                expiresInMillis = expiresInMillis,
-                                expireStartedAt = 0
-                            )
-                            try {
-                                message.id = MessageId(
-                                    mmsDatabase.insertMessageOutbox(
-                                        message = reply,
-                                        threadId = threadId,
-                                        forceSms = false
-                                    ), true
-                                )
-                                messageSender.send(message, address)
-                            } catch (e: MmsException) {
-                                Log.w(TAG, e)
-                            }
-                        }
+                    message.id = MessageId(
+                        smsDatabase.insertMessageOutbox(
+                            threadDatabase.getOrCreateThreadIdFor(threadAddress),
+                            OutgoingTextMessage(
+                                message,
+                                threadAddress,
+                                threadRecipient.expiryMode.expiryMillis,
+                                0L
+                            ),
+                            false,
+                            clock.currentTimeMillis()
+                        ),
+                        false
+                    )
 
-                        ReplyMethod.SecureMessage -> {
-                            val reply = OutgoingTextMessage(
-                                message = message,
-                                recipient = address,
-                                expiresInMillis = expiresInMillis,
-                                expireStartedAtMillis = expireStartedAt
-                            )
-                            message.id = MessageId(
-                                smsDatabase.insertMessageOutbox(
-                                    threadId,
-                                    reply,
-                                    false,
-                                    System.currentTimeMillis()
-                                ), false
-                            )
-                            messageSender.send(message, address)
-                        }
-                    }
+                    messageSender.send(message, threadAddress)
 
-                    if (address is Address.Conversable) {
-                        storage.updateConversationLastSeenIfNeeded(
-                            threadAddress = address,
-                            lastSeenTime = clock.currentTimeMillis()
-                        )
-                    }
-
-                    return null
+                    // By sending a message, we'll update the last seen also
+                    storage.updateConversationLastSeenIfNeeded(
+                        threadAddress = threadAddress,
+                        lastSeenTime = clock.currentTimeMillis()
+                    )
+                } catch (e: Throwable) {
+                    Log.e(TAG, "Error sending reply", e)
+                } finally {
+                    r.finish()
                 }
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+            }
         }
     }
 
     companion object {
-        val TAG: String = RemoteReplyReceiver::class.java.getSimpleName()
-        const val REPLY_ACTION: String = "network.loki.securesms.notifications.WEAR_REPLY"
-        const val ADDRESS_EXTRA: String = "address"
-        const val REPLY_METHOD: String = "reply_method"
+        private const val TAG: String = "RemoteReplyReceiver"
+        private const val REPLY_ACTION: String = "network.loki.securesms.notifications.WEAR_REPLY"
+        private const val REPLY_TEXT: String = "extra_remote_reply"
+        private const val ADDRESS_EXTRA: String = "address"
+
+        fun buildIntent(
+            context: Context,
+            threadAddress: Address.Conversable
+        ): Pair<PendingIntent, RemoteInput> {
+            // Reply Action
+            val remoteInput = RemoteInput.Builder(REPLY_TEXT)
+                .setLabel(context.getString(R.string.reply))
+                .build()
+
+            val replyIntent = Intent(context, RemoteReplyReceiver::class.java).apply {
+                action = REPLY_ACTION
+                putExtra(ADDRESS_EXTRA, threadAddress)
+            }
+
+            return PendingIntent.getBroadcast(
+                context,
+                1,
+                replyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            ) to remoteInput
+        }
     }
 }

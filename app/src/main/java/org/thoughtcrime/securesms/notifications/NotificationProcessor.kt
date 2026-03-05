@@ -306,53 +306,29 @@ class NotificationProcessor @Inject constructor(
         builder.setContentIntent(pendingIntent)
 
         // Mark Read Action
-        val markReadIntent = Intent(context, MarkReadReceiver::class.java).apply {
-            action = MarkReadReceiver.CLEAR_ACTION
-            putExtra(MarkReadReceiver.THREAD_IDS_EXTRA, longArrayOf(state.threadId))
-            putExtra(MarkReadReceiver.LATEST_TIMESTAMP_EXTRA, state.items.last().sentAt.toEpochMilli())
-        }
-        val markReadPendingIntent = PendingIntent.getBroadcast(
-            context,
-            state.threadId.toInt(),
-            markReadIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val markReadAction = NotificationCompat.Action.Builder(
+        builder.addAction(NotificationCompat.Action.Builder(
             R.drawable.ic_check,
             context.getString(R.string.messageMarkRead),
-            markReadPendingIntent
-        ).build()
-        builder.addAction(markReadAction)
+            MarkReadReceiver.buildIntent(
+                context = context,
+                threadAddress = state.threadAddress,
+                latestMessageTimestampMs = state.items.last().sentAt.toEpochMilli()
+            )
+        ).build())
 
-        // Reply Action
-        val remoteInput = androidx.core.app.RemoteInput.Builder(EXTRA_REMOTE_REPLY)
-            .setLabel(context.getString(R.string.reply))
-            .build()
-
-        val replyMethod = ReplyMethod.forRecipient(context, recipientRepository.getRecipientSync(state.threadAddress))
-        val replyIntent = Intent(context, RemoteReplyReceiver::class.java).apply {
-            action = RemoteReplyReceiver.REPLY_ACTION
-            putExtra(RemoteReplyReceiver.ADDRESS_EXTRA, state.threadAddress)
-            putExtra(RemoteReplyReceiver.REPLY_METHOD, replyMethod)
-        }
-
-        val replyPendingIntent = PendingIntent.getBroadcast(
-            context,
-            state.threadId.toInt(),
-            replyIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        // Reply action
+        val (replyIntent, remoteInput) = RemoteReplyReceiver.buildIntent(
+            context = context,
+            threadAddress = state.threadAddress
         )
-
-        val replyAction = NotificationCompat.Action.Builder(
+        builder.addAction(NotificationCompat.Action.Builder(
             R.drawable.ic_reply,
             context.getString(R.string.reply),
-            replyPendingIntent
+            replyIntent
         ).addRemoteInput(remoteInput)
             .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
             .setShowsUserInterface(false)
-            .build()
-
-        builder.addAction(replyAction)
+            .build())
 
         return builder.build()
     }
@@ -464,7 +440,6 @@ class NotificationProcessor @Inject constructor(
     companion object {
         private const val TAG = "NotificationProcessor"
 
-        const val EXTRA_REMOTE_REPLY = "extra_remote_reply"
 
         private fun threadTag(threadId: Long): String {
             return "thread-$threadId"
