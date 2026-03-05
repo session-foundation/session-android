@@ -37,11 +37,7 @@ import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.Rout
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteManageMembers
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RouteNotifications
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination.RoutePromoteMembers
-import org.thoughtcrime.securesms.conversation.v3.compose.ConversationScreen
-import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsScreen
-import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel
-import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsScreen
-import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsViewModel
+import org.thoughtcrime.securesms.conversation.v3.compose.conversation.ConversationScreen
 import org.thoughtcrime.securesms.groups.GroupMembersViewModel
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.groups.ManageGroupAdminsViewModel
@@ -167,6 +163,7 @@ sealed interface ConversationV3Destination: Parcelable {
 fun ConversationV3NavHost(
     address: Address.Conversable,
     startDestination: ConversationV3Destination = RouteConversation,
+    switchConvoVersion: () -> Unit,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
@@ -209,6 +206,7 @@ fun ConversationV3NavHost(
 
                 ConversationScreen(
                     viewModel = viewModel,
+                    switchConvoVersion = switchConvoVersion,
                     onBack = onBack,
                 )
             }
