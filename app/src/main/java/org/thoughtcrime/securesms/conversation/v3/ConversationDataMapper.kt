@@ -133,7 +133,7 @@ class ConversationDataMapper @Inject constructor(
 
         val showUnreadMarker = lastSeen != null
                 && record.timestamp > lastSeen
-                && (previous == null || previous.timestamp <= lastSeen)
+                && (next == null || next.timestamp <= lastSeen)
                 && !record.isOutgoing
 
         out += message
@@ -145,7 +145,7 @@ class ConversationDataMapper @Inject constructor(
         )
 
         // unread marker, if needed
-        //todo convov3 it seems this is always added on the last message instead of higher up when needed
+        //todo convov3 need to add scroll behaviour to this last seen when present
         if (showUnreadMarker) out += ConversationItem.UnreadMarker
     }
 
