@@ -309,7 +309,7 @@ class NotificationProcessor @Inject constructor(
         builder.addAction(NotificationCompat.Action.Builder(
             R.drawable.ic_check,
             context.getString(R.string.messageMarkRead),
-            MarkReadReceiver.buildIntent(
+            NotificationActionReceiver.buildMarkReadIntent(
                 context = context,
                 threadAddress = state.threadAddress,
                 latestMessageTimestampMs = state.items.last().sentAt.toEpochMilli()
@@ -317,7 +317,7 @@ class NotificationProcessor @Inject constructor(
         ).build())
 
         // Reply action
-        val (replyIntent, remoteInput) = RemoteReplyReceiver.buildIntent(
+        val (replyIntent, remoteInput) = NotificationActionReceiver.buildReplyIntent(
             context = context,
             threadAddress = state.threadAddress
         )

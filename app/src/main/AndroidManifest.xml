@@ -356,19 +356,12 @@
         </service>
 
         <receiver
-            android:name="org.thoughtcrime.securesms.notifications.MarkReadReceiver"
+            android:name="org.thoughtcrime.securesms.notifications.NotificationActionReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="network.loki.securesms.notifications.CLEAR" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name="org.thoughtcrime.securesms.notifications.RemoteReplyReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="network.loki.securesms.notifications.WEAR_REPLY" />
+                <action android:name="network.loki.securesms.notifications.MARK_READ" />
+                <action android:name="network.loki.securesms.notifications.REPLY" />
             </intent-filter>
         </receiver>
         <receiver android:name="org.thoughtcrime.securesms.service.ExpirationListener" />
