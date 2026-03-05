@@ -130,7 +130,7 @@ class NotificationProcessor @Inject constructor(
                 .forEach { r ->
                     val parsedResult = MentionUtilities.parseAndSubstituteMentions(
                         recipientRepository = recipientRepository,
-                        input = messageFormatter.formatMessageBody(context, r, threadRecipient),
+                        input = messageFormatter.formatMessageBodyForNotification(context, r, threadRecipient),
                         context = context,
                     )
 

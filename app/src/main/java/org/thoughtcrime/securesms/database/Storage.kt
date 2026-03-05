@@ -893,7 +893,8 @@ open class Storage @Inject constructor(
     }
 
     override fun getThreadId(address: Address): Long? {
-        return threadDatabase.getThreadId(address as Address.Conversable)
+        if (address !is Address.Conversable) return null
+        return threadDatabase.getThreadId(address)
     }
 
     override fun getThreadIdForMms(mmsId: Long): Long {
