@@ -5,7 +5,6 @@ import android.app.Activity
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -17,7 +16,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
-import androidx.core.content.LocusIdCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.IconCompat
 import com.squareup.phrase.Phrase
@@ -262,8 +260,6 @@ class NotificationProcessor @Inject constructor(
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(ContextCompat.getColor(context, R.color.textsecure_primary))
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .setShortcutId(state.threadAddress.toString())
-            .setLocusId(LocusIdCompat(state.threadAddress.toString()))
             .setOnlyAlertOnce(silent)
             .setAutoCancel(true)
 
