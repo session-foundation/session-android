@@ -285,9 +285,10 @@ class CallManager @Inject constructor(
 
             // Explicitly configure WebRTC audio. This helps reduce device-specific echo/robotic sounds
             // by avoiding inconsistent defaults across OEMs.
+            // Setting this to false will allow software AES/NS which is generally safer
             val adm = JavaAudioDeviceModule.builder(context)
-                .setUseHardwareAcousticEchoCanceler(true)
-                .setUseHardwareNoiseSuppressor(true)
+                .setUseHardwareAcousticEchoCanceler(false)
+                .setUseHardwareNoiseSuppressor(false)
                 .createAudioDeviceModule()
 
             audioDeviceModule = adm

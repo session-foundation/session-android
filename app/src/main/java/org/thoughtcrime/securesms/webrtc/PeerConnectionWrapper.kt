@@ -4,7 +4,6 @@ import android.content.Context
 import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SettableFuture
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.webrtc.video.Camera
 import org.thoughtcrime.securesms.webrtc.video.CameraEventListener
 import org.thoughtcrime.securesms.webrtc.video.CameraState
@@ -80,15 +79,6 @@ class PeerConnectionWrapper(private val context: Context,
     init {
         val audioConstraints = MediaConstraints().apply {
             optional.add(MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"))
-
-            // Request WebRTC audio processing. These are best-effort and may be ignored on some devices,
-            // but can significantly reduce acoustic echo on speaker when supported.
-            optional.add(MediaConstraints.KeyValuePair("googEchoCancellation", "true"))
-            optional.add(MediaConstraints.KeyValuePair("googEchoCancellation2", "true"))
-            optional.add(MediaConstraints.KeyValuePair("googNoiseSuppression", "true"))
-            optional.add(MediaConstraints.KeyValuePair("googNoiseSuppression2", "true"))
-            optional.add(MediaConstraints.KeyValuePair("googHighpassFilter", "true"))
-            optional.add(MediaConstraints.KeyValuePair("googTypingNoiseDetection", "true"))
         }
 
         mediaStream = factory.createLocalMediaStream("ARDAMS")

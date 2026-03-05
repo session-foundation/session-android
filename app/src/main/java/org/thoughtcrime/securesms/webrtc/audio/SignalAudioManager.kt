@@ -11,7 +11,6 @@ import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
-import org.thoughtcrime.securesms.webrtc.audio.SignalBluetoothManager.Companion
 import org.thoughtcrime.securesms.webrtc.audio.SignalBluetoothManager.State as BState
 
 private val TAG = Log.tag(SignalAudioManager::class.java)
@@ -134,6 +133,10 @@ class SignalAudioManager(private val context: Context,
         state = State.RUNNING
 
         androidAudioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        // Some devices won't fully apply a working input route until we explicitly refresh device state
+        // after entering MODE_IN_COMMUNICATION.
+        setMicrophoneMute(false)
+        updateAudioDeviceState()
 
         val volume: Float = androidAudioManager.ringVolumeWithMinimum()
         soundPool.play(connectedSoundId, volume, volume, 0, 0, 1.0f)
