@@ -92,15 +92,15 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         requireNotNull(args.getLong(ARG_THREAD_ID))
         val addressString = requireNotNull(args.getString(ARG_ADDRESS))
         val address = Address.fromSerialized(addressString)
-        val thread = conversationRepository.getConversationList().firstOrNull { it.recipient.address == address }
+        val threadFromDb = conversationRepository.getConversationList().firstOrNull { it.recipient.address == address }
 
-        if(thread == null){
+        if(threadFromDb == null){
             Log.w("", "Home conversation bottom sheet: Thread not found for address: $addressString" )
             dismiss()
             return
         }
 
-        this.thread = thread
+        this.thread = threadFromDb
 
         group = groupDatabase.getGroup(thread.recipient.address.toString())
     }

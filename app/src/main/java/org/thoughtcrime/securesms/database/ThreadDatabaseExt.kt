@@ -3,6 +3,8 @@ package org.thoughtcrime.securesms.database
 import android.database.Cursor
 import androidx.collection.LongLongMap
 import androidx.collection.MutableLongLongMap
+import androidx.collection.MutableLongSet
+import androidx.collection.mutableLongSetOf
 import androidx.core.database.getStringOrNull
 import androidx.sqlite.db.transaction
 import org.session.libsession.utilities.Address
@@ -18,6 +20,7 @@ fun ThreadDatabase.getThreads(addresses: Collection<Address.Conversable>): List<
 
     val addressAsJson = json.encodeToString(addresses)
 
+    //language=roomsql
     return readableDatabase.query(
         """
             SELECT 
@@ -125,6 +128,28 @@ fun ThreadDatabase.getThreads(addresses: Collection<Address.Conversable>): List<
                 )
             }
     }
+}
+
+fun ThreadDatabase.threadContainsOutgoingMessage(threadId: Long): Boolean {
+    //language=roomsql
+    val hasOutgoingSms = readableDatabase.rawQuery("""
+        SELECT 1 FROM ${SmsDatabase.TABLE_NAME}
+        WHERE ${SmsDatabase.THREAD_ID} = ?
+          AND ${SmsDatabase.IS_OUTGOING}
+          AND NOT ${MmsSmsColumns.IS_DELETED}
+        LIMIT 1
+    """, threadId).use { it.count > 0 }
+
+    if (hasOutgoingSms) return true
+
+    //language=roomsql
+    return readableDatabase.rawQuery("""
+        SELECT 1 FROM ${MmsDatabase.TABLE_NAME}
+        WHERE ${MmsSmsColumns.THREAD_ID} = ?
+          AND ${MmsSmsColumns.IS_OUTGOING}
+          AND NOT ${MmsSmsColumns.IS_DELETED}
+        LIMIT 1
+    """, threadId).use { it.count > 0 }
 }
 
 fun ThreadDatabase.getLastSeen(address: Address.Conversable): Instant? {

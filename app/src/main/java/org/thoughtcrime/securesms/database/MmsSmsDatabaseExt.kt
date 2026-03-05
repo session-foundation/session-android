@@ -1,10 +1,12 @@
 package org.thoughtcrime.securesms.database
 
 import android.database.Cursor
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.util.asSequence
 import org.thoughtcrime.securesms.util.get
 
 object MmsSmsDatabaseExt {
