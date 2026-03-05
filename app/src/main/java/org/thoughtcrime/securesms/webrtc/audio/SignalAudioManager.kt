@@ -132,7 +132,10 @@ class SignalAudioManager(private val context: Context,
 
         state = State.RUNNING
 
-        androidAudioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        if (androidAudioManager.mode != AudioManager.MODE_IN_COMMUNICATION) {
+            androidAudioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        }
+
         // Some devices won't fully apply a working input route until we explicitly refresh device state
         // after entering MODE_IN_COMMUNICATION.
         setMicrophoneMute(false)
