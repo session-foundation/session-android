@@ -197,8 +197,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(LokiMessageDatabase.getCreateMmsHashTableCommand());
     db.execSQL(LokiThreadDatabase.getCreateSessionResetTableCommand());
     db.execSQL(LokiThreadDatabase.getCreatePublicChatTableCommand());
-    db.execSQL(LokiUserDatabase.getCreateDisplayNameTableCommand());
-    db.execSQL(LokiBackupFilesDatabase.getCreateTableCommand());
+    db.execSQL(LokiUserDatabase.createDisplayNameTableCommand);
+    db.execSQL(LokiBackupFilesDatabase.createTableCommand);
     db.execSQL(SessionJobDatabase.getCreateSessionJobTableCommand());
     db.execSQL(LokiMessageDatabase.getUpdateMessageIDTableForType());
     db.execSQL(LokiMessageDatabase.getUpdateMessageMappingTable());
@@ -332,7 +332,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV14_BACKUP_FILES) {
-        db.execSQL(LokiBackupFilesDatabase.getCreateTableCommand());
+        db.execSQL(LokiBackupFilesDatabase.createTableCommand);
       }
 
       if (oldVersion < lokiV16) {

@@ -68,16 +68,24 @@ public class ThreadDatabase extends Database {
   public  static final String TABLE_NAME             = "thread";
   public  static final String ID                     = "_id";
   public  static final String THREAD_CREATION_DATE   = "date";
+  @Deprecated(forRemoval = true)
   public  static final String MESSAGE_COUNT          = "message_count";
   public  static final String ADDRESS                = "recipient_ids";
+  @Deprecated(forRemoval = true)
   public  static final String SNIPPET                = "snippet";
+  @Deprecated(forRemoval = true)
   private static final String SNIPPET_CHARSET        = "snippet_cs";
+  @Deprecated(forRemoval = true)
   public  static final String READ                   = "read";
+  @Deprecated(forRemoval = true)
   public  static final String UNREAD_COUNT           = "unread_count";
+  @Deprecated(forRemoval = true)
   public  static final String UNREAD_MENTION_COUNT   = "unread_mention_count";
   @Deprecated(forRemoval = true)
   public  static final String DISTRIBUTION_TYPE      = "type"; // See: DistributionTypes.kt
+  @Deprecated(forRemoval = true)
   private static final String ERROR                  = "error";
+  @Deprecated(forRemoval = true)
   public  static final String SNIPPET_TYPE           = "snippet_type";
   @Deprecated(forRemoval = true)
   public  static final String SNIPPET_URI            = "snippet_uri";
@@ -85,13 +93,18 @@ public class ThreadDatabase extends Database {
    * The column that hold a {@link MessageContent}. See {@link MmsDatabase#MESSAGE_CONTENT} for more information
    */
   public  static final String SNIPPET_CONTENT        = "snippet_content";
+  @Deprecated(forRemoval = true)
   public  static final String ARCHIVED               = "archived";
+  @Deprecated(forRemoval = true)
   public  static final String STATUS                 = "status";
+  @Deprecated(forRemoval = true)
   public  static final String DELIVERY_RECEIPT_COUNT = "delivery_receipt_count";
+  @Deprecated(forRemoval = true)
   public  static final String READ_RECEIPT_COUNT     = "read_receipt_count";
   @Deprecated(forRemoval = true)
   public  static final String EXPIRES_IN             = "expires_in";
   public  static final String LAST_SEEN              = "last_seen";
+  @Deprecated(forRemoval = true)
   public static final String HAS_SENT                = "has_sent";
 
   @Deprecated(forRemoval = true)
