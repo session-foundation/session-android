@@ -182,17 +182,10 @@ fun Conversation(
                 ) { index ->
                     when (val item = conversationItems[index]) {
                         is ConversationItem.Message -> {
-                            // Apply highlight only to the matching item
-                            val data = listController.highlightKeyFor(item.data.id)?.let { key ->
-                                item.data.copy(highlightKey = key)
-                            } ?: item.data
-
                             Message(
-                                data = data,
+                                data = item.data,
+                                highlight = listController.highlightKeyFor(item.data.id),
                                 sendCommand = sendCommand,
-                                onHighlightFinished = { messageId, key ->
-                                    listController.clearHighlight(messageId, key)
-                                }
                             )
                         }
 

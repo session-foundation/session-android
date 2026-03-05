@@ -103,13 +103,6 @@ class ConversationListState(
         }
     }
 
-    fun clearHighlight(messageId: MessageId, key: HighlightMessage) {
-        val cur = currentHighlight ?: return
-        if (cur.messageId == messageId && cur.key == key) {
-            currentHighlight = null
-        }
-    }
-
     // ── Internal ──
 
     /**

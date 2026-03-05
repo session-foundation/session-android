@@ -6,7 +6,11 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
@@ -17,29 +21,26 @@ import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.delay
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 
+@OptIn(ExperimentalAtomicApi::class)
 @Composable
 fun Modifier.accentHighlight(
-    trigger: Any?,
+    trigger: HighlightMessage?,
     glowColor: Color? = null,
-    glowRadius: Dp = LocalDimensions.current.messageCornerRadius,
-    onFinished: () -> Unit = {},
+    glowRadius: Dp = LocalDimensions.current.messageCornerRadius
 ): Modifier {
     val accentColor = glowColor ?: LocalColors.current.accent
     val alphaAnim = remember { Animatable(0f) }
 
     LaunchedEffect(trigger) {
-        if (trigger != null) {
-            try {
-                alphaAnim.animateTo(1f, tween(150))
-                delay(500)
-                alphaAnim.animateTo(0f, tween(1500))
-            } finally {
-                // This guarantees the state clears even if the user
-                // scrolls the message off-screen mid-animation!
-                onFinished()
-            }
+        // Cast it, and check if it has already been played
+        if (trigger is HighlightMessage && trigger.isConsumed.compareAndSet(false, newValue = true)) {
+            // Play animation
+            alphaAnim.animateTo(1f, tween(150))
+            delay(500)
+            alphaAnim.animateTo(0f, tween(1500))
         }
     }
 

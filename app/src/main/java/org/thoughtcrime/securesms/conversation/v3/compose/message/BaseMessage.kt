@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +61,8 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 //todo CONVOv3 status animated icon for disappearing messages
 //todo CONVOv3 text formatting in bubble including mentions and links
@@ -87,8 +90,8 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 fun Message(
     data: MessageViewData,
     modifier: Modifier = Modifier,
+    highlight: HighlightMessage? = null,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit = {},
-    onHighlightFinished: (MessageId, HighlightMessage) -> Unit = { _, _ -> }
 ) {
     when (data.layout) {
         MessageLayout.CONTROL -> {
@@ -99,7 +102,7 @@ fun Message(
                 data = data,
                 modifier = modifier,
                 sendCommand = sendCommand,
-                onHighlightFinished = onHighlightFinished
+                highlight = highlight
             )
         }
     }
@@ -109,8 +112,8 @@ fun Message(
 fun RecipientMessage(
     data: MessageViewData,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
-    onHighlightFinished: (MessageId, HighlightMessage) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    highlight: HighlightMessage? = null,
 ){
     val outgoing = data.layout == MessageLayout.OUTGOING
 
@@ -138,7 +141,7 @@ fun RecipientMessage(
             data = data,
             maxWidth = maxMessageWidth,
             sendCommand = sendCommand,
-            onHighlightFinished = onHighlightFinished
+            highlight = highlight
         )
     }
 }
@@ -152,7 +155,7 @@ fun RecipientMessageContent(
     maxWidth: Dp,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     modifier: Modifier = Modifier,
-    onHighlightFinished: (MessageId, HighlightMessage) -> Unit = { _, _ -> }
+    highlight: HighlightMessage? = null,
 ) {
     val outgoing = data.layout == MessageLayout.OUTGOING
 
@@ -218,12 +221,8 @@ fun RecipientMessageContent(
                     }
 
                     if (group.showBubble) {
-                        val key = data.highlightKey as? HighlightMessage
                         MessageBubble(
-                            modifier = Modifier.accentHighlight(
-                                trigger = key,
-                                onFinished = { if (key != null) onHighlightFinished(data.id, key) }
-                            ),
+                            modifier = Modifier.accentHighlight(trigger = highlight),
                             color = if (outgoing) LocalColors.current.accent else LocalColors.current.backgroundBubbleReceived,
                             content = contentColumn
                         )
@@ -424,7 +423,6 @@ data class MessageViewData(
     val avatar: MessageAvatar = MessageAvatar.None,
     val status: MessageViewStatus? = null,
     val reactions: ReactionViewState? = null,
-    val highlightKey: Any? = null,
     val clusterPosition: ClusterPosition = ClusterPosition.ISOLATED
 )
 
@@ -459,8 +457,15 @@ enum class MessageLayout {
     CONTROL
 }
 
-data class HighlightMessage(val token: Long)
-
+@Stable
+data class HighlightMessage(val token: Long) {
+    // Mutable flag intentionally hidden from Compose's stability checks.
+    // Prevents the highlight animation from replaying when the item
+    // is recycled in a LazyColumn — the flag survives disposal since
+    // it lives on the object, not in the Compose slot table.
+    @OptIn(ExperimentalAtomicApi::class)
+    val isConsumed = AtomicBoolean(false)
+}
 enum class ClusterPosition {
     TOP,
     MIDDLE,
@@ -515,43 +520,16 @@ fun MessagePreview(
             modifier = Modifier.fillMaxSize().padding(LocalDimensions.current.spacing)
 
         ) {
-            var testData by remember {
-                mutableStateOf(
-                    MessageViewData(
-                        id = MessageId(0, false),
-                        displayName = "Toto",
-                        showProBadge = true,
-                        displayNameExtra = "(some extra text)",
-                        layout = MessageLayout.OUTGOING,
-                        contentGroups = PreviewMessageData.textGroup(),
-                    )
-                )
-            }
+            var testData: HighlightMessage? by remember { mutableStateOf(null) }
 
-            var testData2 by remember {
-                mutableStateOf(
-                    MessageViewData(
-                        id = MessageId(0, false),
-                        displayName = "Toto",
-                        showDisplayName = true,
-                        avatar = PreviewMessageData.sampleAvatar,
-                        layout = MessageLayout.INCOMING,
-                        contentGroups = PreviewMessageData.textGroup(
-                            text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
-                        ),
-                    )
-                )
-            }
-
-            LaunchedEffect(Unit) {
-                delay(3000)
-
-                // to test out the selection
-                testData = testData.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
-                testData2 = testData2.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
-            }
-
-            Message(data = testData)
+            Message(data = MessageViewData(
+                id = MessageId(0, false),
+                displayName = "Toto",
+                showProBadge = true,
+                displayNameExtra = "(some extra text)",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = PreviewMessageData.textGroup(),
+            ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
@@ -560,9 +538,19 @@ fun MessagePreview(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {
-                    testData2 = testData2.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
+                    testData = HighlightMessage(System.currentTimeMillis())
                 }),
-                data = testData2
+                highlight = testData,
+                data = MessageViewData(
+                    id = MessageId(0, false),
+                    displayName = "Toto",
+                    showDisplayName = true,
+                    avatar = PreviewMessageData.sampleAvatar,
+                    layout = MessageLayout.INCOMING,
+                    contentGroups = PreviewMessageData.textGroup(
+                        text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
+                    ),
+                )
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))

@@ -70,7 +70,6 @@ class ConversationDataMapper @Inject constructor(
         threadRecipient: Recipient,
         localUserAddress: String,
         lastSeen: Long?,
-        highlightKey: HighlightMessage? = null,
         showStatus: Boolean = false,
         out: MutableList<ConversationItem>,
     ) {
@@ -129,7 +128,6 @@ class ConversationDataMapper @Inject constructor(
                 contentGroups = mapContentGroups(record),
                 status = if (showStatus && isOutgoing) mapStatus(record) else null,
                 reactions = mapReactions(record, localUserAddress),
-                highlightKey = highlightKey,
                 clusterPosition = clusterPosition
             ))
 

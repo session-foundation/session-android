@@ -196,28 +196,25 @@ fun MediaMessagePreview(
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            var testData by remember {
-                mutableStateOf(
-                    MessageViewData(
-                        id = MessageId(0, false),
-                        displayName = "Toto",
-                        layout = MessageLayout.OUTGOING,
-                        contentGroups = mediaGroup(
-                            items = listOf(video(), image(), image()),
-                            text = "This also has text"
-                        )
-                    )
-                )
-            }
+            var testData: HighlightMessage? by remember { mutableStateOf(null) }
 
             Message(
                 modifier = Modifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {
-                        testData = testData.copy(highlightKey = HighlightMessage(System.currentTimeMillis()))
+                        testData = HighlightMessage(System.currentTimeMillis())
                     }),
-                data = testData
+                data = MessageViewData(
+                    id = MessageId(0, false),
+                    displayName = "Toto",
+                    layout = MessageLayout.OUTGOING,
+                    contentGroups = mediaGroup(
+                        items = listOf(video(), image(), image()),
+                        text = "This also has text"
+                    )
+                ),
+                highlight = testData
             )
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
