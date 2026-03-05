@@ -134,12 +134,10 @@ class SignalAudioManager(private val context: Context,
 
         if (androidAudioManager.mode != AudioManager.MODE_IN_COMMUNICATION) {
             androidAudioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            // Some devices won't fully apply a working input route until we explicitly refresh device state
+            // after entering MODE_IN_COMMUNICATION.
+            updateAudioDeviceState()
         }
-
-        // Some devices won't fully apply a working input route until we explicitly refresh device state
-        // after entering MODE_IN_COMMUNICATION.
-        setMicrophoneMute(false)
-        updateAudioDeviceState()
 
         val volume: Float = androidAudioManager.ringVolumeWithMinimum()
         soundPool.play(connectedSoundId, volume, volume, 0, 0, 1.0f)
