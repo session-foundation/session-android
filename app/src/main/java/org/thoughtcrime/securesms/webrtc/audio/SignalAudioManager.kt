@@ -350,14 +350,6 @@ class SignalAudioManager(private val context: Context,
     private fun silenceIncomingRinger() {
         Log.i(TAG, "silenceIncomingRinger():")
         incomingRinger.stop()
-
-
-        // startIncomingRinger() forces MODE_RINGTONE. Restore communication mode immediately so
-        // device echo cancellation has a chance to engage (especially important on speakerphone).
-        if (state != State.UNINITIALIZED) {
-            androidAudioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-            setMicrophoneMute(false)
-        }
     }
 
     private fun startOutgoingRinger(type: OutgoingRinger.Type) {

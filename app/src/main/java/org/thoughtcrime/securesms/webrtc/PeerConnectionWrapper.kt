@@ -4,6 +4,7 @@ import android.content.Context
 import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SettableFuture
+import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.webrtc.video.Camera
 import org.thoughtcrime.securesms.webrtc.video.CameraEventListener
 import org.thoughtcrime.securesms.webrtc.video.CameraState
