@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v3.compose
+package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,11 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -37,7 +38,8 @@ import org.thoughtcrime.securesms.ui.theme.blackAlpha06
 
 @Composable
 fun DocumentMessage(
-    data: Document,
+    data: DocumentMessageData,
+    outgoing: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -54,12 +56,12 @@ fun DocumentMessage(
             contentAlignment = Alignment.Center
         ) {
             if (data.loading) {
-                SmallCircularProgressIndicator(color = getTextColor(data.outgoing))
+                SmallCircularProgressIndicator(color = getTextColor(outgoing))
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.ic_file),
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(getTextColor(data.outgoing)),
+                    colorFilter = ColorFilter.tint(getTextColor(outgoing)),
                     modifier = Modifier
                         .align(Alignment.Center)
                         .size(LocalDimensions.current.iconMedium)
@@ -80,27 +82,24 @@ fun DocumentMessage(
                 style = LocalType.current.large,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = getTextColor(data.outgoing)
+                color = getTextColor(outgoing)
             )
 
             Text(
                 text = data.size,
                 style = LocalType.current.small,
-                color = getTextColor(data.outgoing)
+                color = getTextColor(outgoing)
             )
         }
     }
 }
 
-data class Document(
-    override val outgoing: Boolean,
+data class DocumentMessageData(
     val name: String,
     val size: String,
     val uri: String,
     val loading: Boolean,
-    override val text: AnnotatedString? = null
-) : MessageType()
-
+)
 @Preview
 @Composable
 fun DocumentMessagePreview(
@@ -112,17 +111,20 @@ fun DocumentMessagePreview(
 
         ) {
             Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.document()
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = PreviewMessageData.documentGroup()
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
+                id = MessageId(0, false),
+                displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.document(
-                    outgoing = false,
+                layout = MessageLayout.INCOMING,
+                contentGroups = PreviewMessageData.documentGroup(
                     name = "Document with a really long name that should ellipsize once it reaches the max width"
                 )
             ))
@@ -130,32 +132,35 @@ fun DocumentMessagePreview(
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.document(
-                    loading = true
-                ))
-            )
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = PreviewMessageData.documentGroup(loading = true)
+            ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = PreviewMessageData.document(
-                    loading = true
-                ))
-            )
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = listOf(
+                    composeContent(PreviewMessageData.quote()),
+                    composeContent(PreviewMessageData.document(loading = true)),
+                )
+            ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
-                type = PreviewMessageData.document(
-                    outgoing = false,
-                    loading = true
-                ))
-            )
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.INCOMING,
+                contentGroups = listOf(
+                    composeContent(PreviewMessageData.quote()),
+                    composeContent(PreviewMessageData.document(loading = true)),
+                )
+            ))
         }
     }
 }
