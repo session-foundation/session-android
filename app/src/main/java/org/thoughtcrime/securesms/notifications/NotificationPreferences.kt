@@ -1,17 +1,15 @@
 package org.thoughtcrime.securesms.notifications
 
-import android.provider.Settings
+import network.loki.messenger.BuildConfig
 import org.thoughtcrime.securesms.preferences.PreferenceKey
 
 object NotificationPreferences {
-    val RINGTONE: PreferenceKey<String?> = PreferenceKey.string(
-        name = "pref_key_ringtone",
-        defaultValue = Settings.System.DEFAULT_NOTIFICATION_URI.toString()
+    val PRIVACY: PreferenceKey<NotificationPrivacy> = PreferenceKey.enum(
+        name = "notification.privacy",
+        defaultValue = NotificationPrivacy.ShowNameAndContent
     )
 
-    val ENABLE_VIBRATION: PreferenceKey<Boolean> = PreferenceKey.boolean("pref_key_vibrate", defaultValue = true)
-
-    val PRIVACY: PreferenceKey<String?> = PreferenceKey.string("pref_key_notification_privacy", defaultValue = "all")
-
-    val LED_COLOR: PreferenceKey<Int> = PreferenceKey.integer("pref_led_color_primary", 0)
+    val SOUND_WHEN_APP_OPEN: PreferenceKey<Boolean> = PreferenceKey.boolean("pref_sound_when_app_open", true)
+    val CHECKED_DOZE_WHITELIST: PreferenceKey<Boolean> = PreferenceKey.boolean("has_checked_doze_whitelist")
+    val PUSH_ENABLED: PreferenceKey<Boolean> = PreferenceKey.boolean("pref_is_using_fcm${BuildConfig.PUSH_KEY_SUFFIX}")
 }

@@ -46,11 +46,14 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.DummyActivity;
 import org.thoughtcrime.securesms.home.HomeActivity;
-import org.thoughtcrime.securesms.notifications.NotificationChannels;
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager;
 import org.thoughtcrime.securesms.notifications.NotificationId;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 
@@ -61,6 +64,7 @@ import network.loki.messenger.R;
  */
 // TODO: This service does only serve one purpose now - to track the screen lock state and handle the timer.
 // We need to refactor it and cleanup from all the old Signal code.
+@AndroidEntryPoint
 public class KeyCachingService extends Service {
 
   private static final String TAG = KeyCachingService.class.getSimpleName();
@@ -78,6 +82,9 @@ public class KeyCachingService extends Service {
   // This is a temporal drop off replacement for the refactoring time being.
   // This field only indicates if the app was unlocked or not (null means locked).
   private static Object masterSecret = null;
+
+  @Inject
+  NotificationChannelManager notificationChannelManager;
 
   /**
    * A temporal utility method to quickly call {@link KeyCachingService#setMasterSecret(Object)}
@@ -231,7 +238,8 @@ public class KeyCachingService extends Service {
     }
 
     Log.i(TAG, "foregrounding KCS");
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationChannels.LOCKED_STATUS);
+    NotificationCompat.Builder builder = new NotificationCompat.Builder(this,
+            notificationChannelManager.getNotificationChannelId(NotificationChannelManager.ChannelDescription.LOCK_STATUS));
 
     // Replace app name in title string
     Context c = getApplicationContext();

@@ -84,7 +84,7 @@ class NotificationProcessor @Inject constructor(
     private val messageFormatter: MessageFormatter,
     private val avatarUtils: AvatarUtils,
     private val offscreenAvatarRenderer: Provider<OffscreenAvatarRenderer>,
-    private val notificationChannels: NotificationChannels,
+    private val channels: NotificationChannelManager,
 ) : AuthAwareComponent {
     private val currentActivity: Activity? get() = currentActivityObserver.currentActivity.value
 
@@ -277,8 +277,15 @@ class NotificationProcessor @Inject constructor(
 
 
     private suspend fun buildNotification(state: ThreadNotificationState.Visible, silent: Boolean): Notification {
-        val channelId = notificationChannels.messagesChannel
-        val builder = NotificationCompat.Builder(context, channelId)
+        val channelDesc = when (state.threadAddress) {
+            is Address.Community -> NotificationChannelManager.ChannelDescription.COMMUNITY_MESSAGES
+            is Address.Group,
+            is Address.LegacyGroup -> NotificationChannelManager.ChannelDescription.GROUP_MESSAGES
+            is Address.CommunityBlindedId,
+            is Address.Standard -> NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES
+        }
+
+        val builder = NotificationCompat.Builder(context, channels.getNotificationChannelId(channelDesc))
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(ContextCompat.getColor(context, R.color.textsecure_primary))
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)

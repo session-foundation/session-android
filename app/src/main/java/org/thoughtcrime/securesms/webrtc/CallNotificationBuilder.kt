@@ -14,7 +14,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.thoughtcrime.securesms.notifications.NotificationChannels
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
 import org.thoughtcrime.securesms.notifications.NotificationId
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_DENY_CALL
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_IGNORE_CALL
@@ -23,7 +23,6 @@ import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.ACTION_LOCAL
 class CallNotificationBuilder {
 
     companion object {
-        const val WEBRTC_NOTIFICATION = NotificationId.WEBRTC_CALL
 
         const val TYPE_OUTGOING_RINGING    = 2
         const val TYPE_ESTABLISHED         = 3
@@ -37,12 +36,21 @@ class CallNotificationBuilder {
         }
 
         @JvmStatic
-        fun getCallInProgressNotification(context: Context, type: Int, recipient: Recipient?): Notification {
+        fun getCallInProgressNotification(
+            context: Context,
+            type: Int,
+            recipient: Recipient?,
+            channels: NotificationChannelManager
+        ): Notification {
             val contentIntent = WebRtcCallActivity.getCallActivityIntent(context)
 
             val pendingIntent = PendingIntent.getActivity(context, 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-            val builder = NotificationCompat.Builder(context, NotificationChannels.CALLS)
+            val channelId = channels.getNotificationChannelId(
+                NotificationChannelManager.ChannelDescription.CALLS
+            )
+
+            val builder = NotificationCompat.Builder(context, channelId)
                     .setSound(null)
                     .setSmallIcon(R.drawable.ic_phone)
                     .setContentIntent(pendingIntent)

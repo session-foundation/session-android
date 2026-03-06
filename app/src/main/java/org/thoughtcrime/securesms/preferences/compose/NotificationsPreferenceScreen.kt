@@ -1,12 +1,5 @@
 package org.thoughtcrime.securesms.preferences.compose
 
-import android.R.attr.onClick
-import android.app.Activity
-import android.media.RingtoneManager
-import android.net.Uri
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,25 +47,6 @@ fun NotificationsPreferenceScreen(
 
     val context = LocalContext.current
 
-    // Listener for ringtone
-    val ringtonePickerLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                result.data?.getParcelableExtra(
-                    RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
-                    Uri::class.java
-                )
-            } else {
-                result.data?.getParcelableExtra(
-                    RingtoneManager.EXTRA_RINGTONE_PICKED_URI
-                )
-            }
-            viewModel.onCommand(SetRingtone(uri))
-        }
-    }
-
     LaunchedEffect(Unit) {
         viewModel.uiEvents.collect { event ->
             when (event) {
@@ -86,10 +60,6 @@ fun NotificationsPreferenceScreen(
 
                 is NavigateToSystemBgWhitelist -> {
                     context.requestDozeWhitelist()
-                }
-
-                is StartRingtoneActivityForResult -> {
-                    ringtonePickerLauncher.launch(event.intent)
                 }
             }
         }
@@ -173,15 +143,6 @@ fun NotificationsPreference(
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    IconTextActionRowItem(
-                        title = annotatedStringResource(R.string.notificationsSound),
-                        qaTag = R.string.qa_preferences_ringtone,
-                        icon = R.drawable.ic_baseline_arrow_drop_down_24,
-                        endText = annotatedStringResource(uiState.ringtone.toString()),
-                        onClick = { sendCommand(RingtoneClicked) }
-                    )
-
-                    Divider()
 
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.notificationsSoundDescription),
@@ -191,15 +152,6 @@ fun NotificationsPreference(
                         onCheckedChange = {isEnabled -> sendCommand(ToggleSoundWhenOpen(isEnabled)) }
                     )
 
-                    Divider()
-
-                    SwitchActionRowItem(
-                        title = annotatedStringResource(R.string.notificationsVibrate),
-                        checked = uiState.vibrate,
-                        qaTag = R.string.qa_preferences_vibrate,
-                        switchQaTag = R.string.qa_preferences_vibrate_toggle,
-                        onCheckedChange = {isEnabled -> sendCommand(ToggleVibrate(isEnabled)) }
-                    )
                 }
             }
 

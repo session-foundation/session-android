@@ -50,6 +50,7 @@ class PushReceiver @Inject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     @param:ManagerScope private val scope: CoroutineScope,
     private val loginStateRepository: LoginStateRepository,
+    private val notificationChannelManager: NotificationChannelManager,
 ) {
 
     /**
@@ -213,7 +214,8 @@ class PushReceiver @Inject constructor(
             return
         }
 
-        val builder = NotificationCompat.Builder(context, NotificationChannels.OTHER)
+        val builder = NotificationCompat.Builder(context,
+            notificationChannelManager.getNotificationChannelId(NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES))
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(context.getColor(R.color.textsecure_primary))
             .setContentTitle(getString(context, R.string.app_name))

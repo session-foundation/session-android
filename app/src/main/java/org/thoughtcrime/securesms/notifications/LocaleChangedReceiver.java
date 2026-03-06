@@ -10,12 +10,12 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class LocaleChangedReceiver extends BroadcastReceiver {
-  @Inject NotificationChannels channels;
+  @Inject NotificationChannelManager channels;
 
   @Override
   public void onReceive(Context context, Intent intent) {
     if ("android.intent.action.LOCALE_CHANGED".equals(intent.getAction())) {
-      channels.recreate();
+      channels.onLocaleChanged();
     }
   }
 }

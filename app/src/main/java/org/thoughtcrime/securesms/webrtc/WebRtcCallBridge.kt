@@ -26,13 +26,14 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
+import org.thoughtcrime.securesms.notifications.NotificationId
 import org.thoughtcrime.securesms.service.CallForegroundService
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_ESTABLISHED
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_CONNECTING
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_PRE_OFFER
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_OUTGOING_RINGING
-import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.webrtc.audio.OutgoingRinger
 import org.thoughtcrime.securesms.webrtc.data.Event
 import org.webrtc.DataChannel
@@ -68,7 +69,8 @@ class WebRtcCallBridge @Inject constructor(
     private val networkConnectivity: NetworkConnectivity,
     private val recipientRepository: RecipientRepository,
     private val storage: StorageProtocol,
-    @ManagerScope private val scope: CoroutineScope,
+    @param:ManagerScope private val scope: CoroutineScope,
+    private val notificationChannelManager: NotificationChannelManager,
 ): CallManager.WebRtcListener, OnAppStartupComponent  {
 
     companion object {
@@ -121,7 +123,7 @@ class WebRtcCallBridge @Inject constructor(
     private fun terminate() {
         Log.d(TAG, "Terminating rtc service")
         context.stopService(Intent(context, CallForegroundService::class.java))
-        NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
+        NotificationManagerCompat.from(context).cancel(NotificationId.WEBRTC_CALL)
         callManager.stop()
         _hasAcceptedCall.value = false
         currentTimeouts = 0
@@ -567,8 +569,13 @@ class WebRtcCallBridge @Inject constructor(
     @SuppressLint("MissingPermission")
     private fun sendNotification(type: Int, recipient: Address?){
         NotificationManagerCompat.from(context).notify(
-            WEBRTC_NOTIFICATION,
-            CallNotificationBuilder.getCallInProgressNotification(context, type, recipient?.let(recipientRepository::getRecipientSync))
+            NotificationId.WEBRTC_CALL,
+            CallNotificationBuilder.getCallInProgressNotification(
+                context,
+                type,
+                recipient?.let(recipientRepository::getRecipientSync),
+                notificationChannelManager
+            )
         )
     }
 

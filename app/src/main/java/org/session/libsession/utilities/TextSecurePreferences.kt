@@ -2,8 +2,6 @@ package org.session.libsession.utilities
 
 import android.content.Context
 import android.hardware.Camera
-import android.net.Uri
-import android.provider.Settings
 import androidx.annotation.StyleRes
 import androidx.camera.core.CameraSelector
 import androidx.core.content.edit
@@ -39,7 +37,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
-import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_CHECKED_DOZE_WHITELIST
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
@@ -79,9 +76,6 @@ interface TextSecurePreferences {
 
     fun getConfigurationMessageSynced(): Boolean
     fun setConfigurationMessageSynced(value: Boolean)
-
-    fun setPushEnabled(value: Boolean)
-    val pushEnabled: StateFlow<Boolean>
 
     fun isScreenLockEnabled(): Boolean
     fun setScreenLockEnabled(value: Boolean)
@@ -129,8 +123,6 @@ interface TextSecurePreferences {
     fun isPassphraseTimeoutEnabled(): Boolean
     fun getPassphraseTimeoutInterval(): Int
     fun getLanguage(): String?
-    fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
-    fun isSoundWhenAppIsOpenEnabled(): Boolean
     fun setThreadLengthTrimmingEnabled(enabled : Boolean)
     fun isThreadLengthTrimmingEnabled(): Boolean
     fun getBooleanPreference(key: String?, defaultValue: Boolean): Boolean
@@ -209,8 +201,6 @@ interface TextSecurePreferences {
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
 
-    fun hasCheckedDozeWhitelist(): Boolean
-    fun setHasCheckedDozeWhitelist(hasChecked: Boolean)
     fun hasDonated(): Boolean
     fun setHasDonated(hasDonated: Boolean)
     fun hasCopiedDonationURL(): Boolean
@@ -260,14 +250,10 @@ interface TextSecurePreferences {
         internal val _events = MutableSharedFlow<String>(0, 64, BufferOverflow.DROP_OLDEST)
         val events get() = _events.asSharedFlow()
 
-        @JvmStatic
-        var pushSuffix = ""
-
 
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
         const val LAST_VERSION_CODE_PREF = "last_version_code"
-        const val SOUND_WHEN_OPEN = "pref_sound_when_app_open"
         const val PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval"
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
@@ -293,7 +279,6 @@ interface TextSecurePreferences {
         const val LINK_PREVIEWS = "pref_link_previews"
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
-        val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
@@ -373,7 +358,6 @@ interface TextSecurePreferences {
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
 
-        const val HAS_CHECKED_DOZE_WHITELIST = "has_checked_doze_whitelist"
 
         // Donation
         const val HAS_DONATED = "has_donated"
@@ -389,11 +373,6 @@ interface TextSecurePreferences {
 
         const val LAST_SNODE_POOL_REFRESH = "last_snode_pool_refresh"
         const val LAST_PATH_ROTATION = "last_path_rotation"
-
-        @JvmStatic
-        fun isPushEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, IS_PUSH_ENABLED, false)
-        }
 
         // endregion
         @JvmStatic
@@ -598,14 +577,6 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.CONFIGURATION_SYNCED)
     }
 
-    override val pushEnabled: MutableStateFlow<Boolean> = MutableStateFlow(
-        getBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, false)
-    )
-
-    override fun setPushEnabled(value: Boolean) {
-        setBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, value)
-        pushEnabled.value = value
-    }
 
     override fun isScreenLockEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.SCREEN_LOCK, false)
@@ -809,15 +780,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun getLanguage(): String? {
         return getStringPreference(TextSecurePreferences.LANGUAGE_PREF, "zz")
-    }
-
-    override fun setSoundWhenAppIsOpenEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, enabled)
-        _events.tryEmit(TextSecurePreferences.SOUND_WHEN_OPEN)
-    }
-
-    override fun isSoundWhenAppIsOpenEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, false)
     }
 
     override fun setThreadLengthTrimmingEnabled(enabled: Boolean) {
@@ -1139,7 +1101,6 @@ class AppTextSecurePreferences @Inject constructor(
      * Clear all prefs and reset our observables
      */
     override fun clearAll() {
-        pushEnabled.update { false }
         postProLaunchState.update { false }
         hiddenPasswordState.update { false }
 
@@ -1290,15 +1251,6 @@ class AppTextSecurePreferences @Inject constructor(
             })
         }
 
-    override fun hasCheckedDozeWhitelist(): Boolean {
-        return getBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, false)
-    }
-
-    override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
-        setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
-        _events.tryEmit(HAS_CHECKED_DOZE_WHITELIST)
-    }
-
     override fun hasDonated(): Boolean {
         return getBooleanPreference(HAS_DONATED, false)
     }
@@ -1385,14 +1337,4 @@ fun TextSecurePreferences.observeBooleanKey(
         .filter { it == key }
         .onStart { emit(key) } // trigger initial read
         .map { getBooleanPreference(key, default) }
-        .distinctUntilChanged()
-
-fun TextSecurePreferences.observeStringKey(
-    key: String,
-    default: String?
-): Flow<String?> =
-    TextSecurePreferences.events
-        .filter { it == key }
-        .onStart { emit(key) }
-        .map { getStringPreference(key, default) }
         .distinctUntilChanged()
