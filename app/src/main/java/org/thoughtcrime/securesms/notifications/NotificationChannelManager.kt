@@ -1,11 +1,9 @@
 package org.thoughtcrime.securesms.notifications
 
-import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.annotation.StringRes
-import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
@@ -25,6 +23,11 @@ class NotificationChannelManager @Inject constructor(
 
     init {
         if (!prefs[MIGRATED_FROM_OLD_CHANNELS]) {
+            // Delete all old notification channels first
+            notificationManager.notificationChannels.forEach {
+                notificationManager.deleteNotificationChannel(it.id)
+            }
+
             recreateChannel(true)
             prefs[MIGRATED_FROM_OLD_CHANNELS] = true
         } else {
@@ -79,7 +82,7 @@ class NotificationChannelManager @Inject constructor(
         ONE_TO_ONE_MESSAGES(R.string.sessionConversations, NotificationManager.IMPORTANCE_HIGH),
         GROUP_MESSAGES(R.string.conversationsGroups, NotificationManager.IMPORTANCE_DEFAULT),
         COMMUNITY_MESSAGES(R.string.conversationsCommunities, NotificationManager.IMPORTANCE_DEFAULT),
-        CALLS(R.string.call, NotificationManager.IMPORTANCE_HIGH),
+        CALLS(R.string.callsSettings, NotificationManager.IMPORTANCE_HIGH),
         LOCK_STATUS(R.string.lockAppStatus, NotificationManager.IMPORTANCE_LOW),
     }
 

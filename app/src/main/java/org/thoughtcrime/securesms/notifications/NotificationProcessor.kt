@@ -22,10 +22,12 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
@@ -50,6 +52,8 @@ import org.thoughtcrime.securesms.database.getAddressAndLastSeen
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.PRIVACY
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.ui.components.OffscreenAvatarRenderer
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -85,6 +89,7 @@ class NotificationProcessor @Inject constructor(
     private val avatarUtils: AvatarUtils,
     private val offscreenAvatarRenderer: Provider<OffscreenAvatarRenderer>,
     private val channels: NotificationChannelManager,
+    private val prefs: PreferenceStorage,
 ) : AuthAwareComponent {
     private val currentActivity: Activity? get() = currentActivityObserver.currentActivity.value
 
@@ -95,7 +100,53 @@ class NotificationProcessor @Inject constructor(
         override fun sizeOf(key: AvatarUIData, value: Bitmap): Int = value.allocationByteCount
     }
 
-    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
+        prefs.watch(this, PRIVACY)
+            .collectLatest { privacy ->
+                Log.d(TAG, "Start processing notification for $privacy")
+                when (privacy) {
+                    NotificationPrivacy.ShowNameAndContent -> processFullNotification()
+                    NotificationPrivacy.ShowNameOnly -> processNameOnlyNotification()
+                    NotificationPrivacy.ShowNoNameOrContent -> processShowNoNameOrContentNotification()
+                }
+            }
+    }
+
+    /**
+     * Process and show notification only saying the app has received a new message, without
+     * saying who sends it and what it is.
+     *
+     * In this mode, we'll do the following:
+     * 1. If there are new messages, notify user when they are not on home screen or the message
+     *    thread. The content of the notification is always "You received a new message", regardless
+     *    of the message thread (i.e. one notification for all)
+     * 2. When thread changes, we need to look at the overall picture and find out whether there
+     *    are still new messages around. If there isn't any new message, and we have an active
+     *    notification, cancel that notification. Otherwise, do nothing
+     */
+    private suspend fun processShowNoNameOrContentNotification() {
+        TODO("Not yet implemented")
+    }
+
+    /**
+     * Process and show per thread based notification, without any message contents.
+     *
+     * In this mode, we'll do the following:
+     * 1. If there are new messages, notify user when they are not on home screen or the message
+     *    thread. The notification will contain the thread's name and message as "You received a new
+     *    message". One notification per conversation(thread)
+     * 2. If thread changes, find out if there are still new messages for that thread, if not,
+     *    cancel the existing notification.
+     *
+     */
+    private suspend fun processNameOnlyNotification() {
+        TODO("Not yet implemented")
+    }
+
+    /**
+     * Process and show per thread based notification with detailed message contents.
+     */
+    private suspend fun processFullNotification() {
         merge(
             // Thread changes
             threadDb.updateNotifications.map { Changes(it, false) },
@@ -210,7 +261,9 @@ class NotificationProcessor @Inject constructor(
             private val lastPostedStateByThreadIDs = MutableLongObjectMap<ThreadNotificationState.Visible>()
 
             override suspend fun emit(value: ThreadNotificationState) {
-                Log.d(TAG, "New state: $value")
+                val notificationPrivacy = prefs[PRIVACY]
+
+                Log.d(TAG, "New state: $value, privacy = $notificationPrivacy")
 
                 when (value) {
                     is ThreadNotificationState.Empty -> {
@@ -257,6 +310,7 @@ class NotificationProcessor @Inject constructor(
                 }
             }
         })
+
     }
 
     private suspend fun postOrUpdateNotification(
