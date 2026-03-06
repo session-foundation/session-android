@@ -15,7 +15,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.thoughtcrime.securesms.notifications.NotificationPreferences
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.CHECKED_DOZE_WHITELIST
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.PRIVACY
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.PUSH_ENABLED
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.SOUND_WHEN_APP_OPEN
 import org.thoughtcrime.securesms.notifications.NotificationPrivacy
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
@@ -40,9 +43,9 @@ class NotificationsPreferenceViewModel @Inject constructor(
 
     private val notifPrefsFlow =
         combine(
-            prefs.watch(viewModelScope, NotificationPreferences.CHECKED_DOZE_WHITELIST),
-            prefs.watch(viewModelScope, NotificationPreferences.SOUND_WHEN_APP_OPEN),
-            prefs.watch(viewModelScope, NotificationPreferences.PRIVACY),
+            prefs.watch(viewModelScope, CHECKED_DOZE_WHITELIST),
+            prefs.watch(viewModelScope, SOUND_WHEN_APP_OPEN),
+            prefs.watch(viewModelScope, PRIVACY),
         ) { checkedDozeWhitelist, soundWhenOpen, notificationPrivacy ->
             NotifPrefsData(
                 checkedDozeWhitelist = checkedDozeWhitelist,
@@ -52,9 +55,8 @@ class NotificationsPreferenceViewModel @Inject constructor(
         }
 
     init {
-        combine(prefs.watch(viewModelScope,
-            NotificationPreferences.PUSH_ENABLED), notifPrefsFlow) { strategy, notif ->
-            strategy to notif
+        combine(prefs.watch(viewModelScope, PUSH_ENABLED),
+            notifPrefsFlow) { strategy, notif -> strategy to notif
         }.onEach { (isPushEnabled, notif) ->
             _uiState.update { old ->
                 old.copy(
@@ -108,11 +110,11 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 val currentState = uiState.value
                 val isEnabled = command.isEnabled
 
-                prefs[NotificationPreferences.PUSH_ENABLED] = isEnabled
+                prefs[PUSH_ENABLED] = isEnabled
 
                 if (!isEnabled && !currentState.checkedDozeWhitelist) {
                     _uiState.update { it.copy(showWhitelistEnableDialog = true) }
-                    prefs[NotificationPreferences.CHECKED_DOZE_WHITELIST] = true
+                    prefs[CHECKED_DOZE_WHITELIST] = true
                 }
             }
 
@@ -131,7 +133,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
 
 
             is Commands.ToggleSoundWhenOpen -> {
-                prefs[NotificationPreferences.SOUND_WHEN_APP_OPEN] = command.isEnabled
+                prefs[SOUND_WHEN_APP_OPEN] = command.isEnabled
             }
 
             Commands.OpenSystemBgWhitelist -> {
@@ -156,7 +158,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
             }
 
             is Commands.SelectNotificationPrivacyOption -> {
-                prefs[NotificationPreferences.PRIVACY] = command.option
+                prefs[PRIVACY] = command.option
                 hideNotificationPrivacyDialog()
             }
         }
