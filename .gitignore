@@ -22,3 +22,4 @@ release-creds.toml
 
 !/scripts/drone-static-upload.sh
 !/scripts/drone-upload-exists.sh
+/.claude
