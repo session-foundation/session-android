@@ -73,7 +73,6 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 //todo CONVOv3 text input
 //todo CONVOv3 voice recording
 //todo CONVOv3 collapsible + menu for attachments
-//todo CONVOv3 jump down to last message button
 //todo CONVOv3 attachment controls
 //todo CONVOv3 deleted messages
 //todo CONVOv3 swipe to reply
@@ -215,7 +214,7 @@ fun RecipientMessageContent(
                     val contentColumn = @Composable {
                         Column {
                             group.contents.forEach { content ->
-                                MessageContentRenderer(content, data.layout, maxWidth, sendCommand)
+                                MessageContentRenderer(content, data.layout, maxWidth, sendCommand, highlight)
                             }
                         }
                     }
@@ -227,7 +226,6 @@ fun RecipientMessageContent(
                             content = contentColumn
                         )
                     } else {
-                        //todo convov3 this might currently lose the highlight
                         contentColumn() // Render naked content (e.g., for media)
                     }
                 }
@@ -283,6 +281,7 @@ fun MessageContentRenderer(
     layout: MessageLayout,
     maxWidth: Dp,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    highlight: HighlightMessage? = null,
 ) {
     val isOutgoing = layout == MessageLayout.OUTGOING
     Box(
@@ -341,6 +340,7 @@ fun MessageContentRenderer(
 
             is MessageContentData.Media ->
                 MediaMessage(
+                    modifier = Modifier.accentHighlight(trigger = highlight),
                     items = content.contentData.items,
                     loading = content.contentData.loading,
                     maxWidth = maxWidth
