@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.v3.compose
+package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,14 +22,19 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.quoteGroup
+import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.proBadgeColorOutgoing
+import org.thoughtcrime.securesms.ui.proBadgeColorStandard
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -43,7 +47,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 @Composable
 fun MessageQuote(
     outgoing: Boolean,
-    quote: MessageQuote,
+    quote: QuoteMessageData,
     modifier: Modifier = Modifier
 ){
     Row(
@@ -100,18 +104,22 @@ fun MessageQuote(
         }
 
         Column{
-            Text(
+            ProBadgeText(
                 text = quote.title,
-                style = LocalType.current.base.bold(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = getTextColor(outgoing)
+                textStyle = LocalType.current.base.bold().copy(color = getTextColor(outgoing)),
+                showBadge = quote.showProBadge,
+                badgeColors = if(outgoing) proBadgeColorOutgoing() //todo convov3 xml quotes also checked for mode - regular here to distinguish form the quote used in the input
+                else proBadgeColorStandard()
             )
 
-            Text(
+            Spacer(Modifier.height(LocalDimensions.current.tinySpacing))
+
+            //todo convov3 we shouldn't render/click links for quotes
+            MessageText(
                 text = quote.subtitle,
-                style = LocalType.current.base,
-                color = getTextColor(outgoing)
+                isOutgoing = outgoing,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -128,48 +136,55 @@ fun QuoteMessagePreview(
 
         ) {
             Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.INCOMING,
+                contentGroups = quoteGroup(text = "Quoting text")
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = PreviewMessageData.text(text="Quoting text"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar)
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = quoteGroup(
+                    showProBadge = true,
+                    subtitle = "This is a long text efcwec wf fv d df klsdknvdslkvfds lk djvl jldfs vjldf jlkdfsv jldf jlkd jlkdf jlkdf jl kdvmkl dsfmkldmkldfmldflkdfmklfd lk mdfs fdmlkdfmklfd ml mlk mlkdf", text = "Quoting text")
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
+                id = MessageId(0, false),
+                displayName = "Toto",
                 avatar = PreviewMessageData.sampleAvatar,
-                type = PreviewMessageData.text(outgoing = false, text="Quoting a document"),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Icon(R.drawable.ic_file))
+                layout = MessageLayout.INCOMING,
+                contentGroups = quoteGroup(icon = MessageQuoteIcon.Icon(R.drawable.ic_file), showProBadge = true, text = "Quoting a document")
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Text(outgoing = true, AnnotatedString("Quoting audio")),
-                quote = PreviewMessageData.quote(
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = quoteGroup(
                     title = "You",
                     subtitle = "Audio message",
-                    icon = MessageQuoteIcon.Icon(R.drawable.ic_mic)
+                    icon = MessageQuoteIcon.Icon(R.drawable.ic_mic),
+                    text = "Quoting audio"
                 )
             ))
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
             Message(data = MessageViewData(
-                author = "Toto",
-                type = MessageType.Text(outgoing = true, AnnotatedString("Quoting an image")),
-                quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
+                id = MessageId(0, false),
+                displayName = "Toto",
+                layout = MessageLayout.OUTGOING,
+                contentGroups = quoteGroup(icon = MessageQuoteIcon.Image("".toUri(), ""), text = "Quoting an image")
             ))
-
         }
     }
 }
