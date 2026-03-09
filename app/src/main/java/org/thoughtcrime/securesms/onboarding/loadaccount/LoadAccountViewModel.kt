@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.mapNotNull
@@ -32,13 +35,13 @@ internal class LoadAccountViewModel @Inject constructor(
     private val application: Application
 ): AndroidViewModel(application) {
     private val state = MutableStateFlow(State())
-    val stateFlow = state.asStateFlow()
+    val stateFlow: StateFlow<State> = state.asStateFlow()
 
     private val _events = MutableSharedFlow<LoadAccountEvent>()
-    val events = _events.asSharedFlow()
+    val events: SharedFlow<LoadAccountEvent> = _events.asSharedFlow()
 
     private val _qrErrors = MutableSharedFlow<Throwable>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val qrErrors = _qrErrors.asSharedFlow()
+    val qrErrors: Flow<String> = _qrErrors.asSharedFlow()
         .mapNotNull { application.getString(R.string.qrNotRecoveryPassword) }
 
     private val codec by lazy { MnemonicCodec { MnemonicUtilities.loadFileContents(getApplication(), it) } }

@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -43,9 +44,9 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
             showDebugOptions = showDebugOptions
         )
     )
-    val state = _state.asStateFlow()
+    val state: StateFlow<State> = _state.asStateFlow()
 
-    val uiState = _state
+    val uiState: StateFlow<UiState> = _state
         .map(State::toUiState)
         .stateIn(viewModelScope, SharingStarted.Eagerly, UiState())
 

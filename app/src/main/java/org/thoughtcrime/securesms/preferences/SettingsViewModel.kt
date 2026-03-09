@@ -185,7 +185,7 @@ class SettingsViewModel @Inject constructor(
         return Phrase.from(context, R.string.updateVersion).put(VERSION_KEY, versionDetails).format()
     }
 
-    fun hasAvatar() = selfRecipient.value.avatar != null
+    fun hasAvatar(): Boolean = selfRecipient.value.avatar != null
 
     fun createTempFile(): File? {
         try {
@@ -199,7 +199,7 @@ class SettingsViewModel @Inject constructor(
         return tempFile
     }
 
-    fun getTempFile() = tempFile
+    fun getTempFile(): File? = tempFile
 
     fun onAvatarPicked(result: CropImageView.CropResult) {
         when {
@@ -381,10 +381,10 @@ class SettingsViewModel @Inject constructor(
 
     fun hasNetworkConnection(): Boolean = connectivity.networkAvailable.value
 
-    fun isAnimated(uri: Uri) = proStatusManager.isPostPro() // block animated avatars prior to pro
+    fun isAnimated(uri: Uri): Boolean = proStatusManager.isPostPro() // block animated avatars prior to pro
             && AnimatedImageUtils.isAnimated(context, uri)
 
-    fun isAnimated(rawImageData: ByteArray) = proStatusManager.isPostPro() // block animated avatars prior to pro
+    fun isAnimated(rawImageData: ByteArray): Boolean = proStatusManager.isPostPro() // block animated avatars prior to pro
             && AnimatedImageUtils.isAnimated(rawImageData)
 
     private fun showAnimatedProCTA() {
