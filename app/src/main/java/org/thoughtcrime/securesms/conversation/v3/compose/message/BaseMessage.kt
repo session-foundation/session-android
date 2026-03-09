@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import androidx.core.net.toUri
-import kotlinx.coroutines.delay
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -61,8 +59,6 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
-import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 //todo CONVOv3 status animated icon for disappearing messages
 //todo CONVOv3 text formatting in bubble including mentions and links
@@ -92,6 +88,11 @@ fun Message(
     highlight: HighlightMessage? = null,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit = {},
 ) {
+    val highlightAlpha = rememberHighlightAlpha(
+        messageId = data.id,
+        trigger = highlight,
+    )
+
     when (data.layout) {
         MessageLayout.CONTROL -> {
             ControlMessage(data = data, modifier = modifier)
@@ -101,7 +102,7 @@ fun Message(
                 data = data,
                 modifier = modifier,
                 sendCommand = sendCommand,
-                highlight = highlight
+                highlightAlpha = highlightAlpha
             )
         }
     }
@@ -112,7 +113,7 @@ fun RecipientMessage(
     data: MessageViewData,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     modifier: Modifier = Modifier,
-    highlight: HighlightMessage? = null,
+    highlightAlpha: Float = 0f,
 ){
     val outgoing = data.layout == MessageLayout.OUTGOING
 
@@ -140,7 +141,7 @@ fun RecipientMessage(
             data = data,
             maxWidth = maxMessageWidth,
             sendCommand = sendCommand,
-            highlight = highlight
+            highlightAlpha = highlightAlpha
         )
     }
 }
@@ -154,7 +155,7 @@ fun RecipientMessageContent(
     maxWidth: Dp,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     modifier: Modifier = Modifier,
-    highlight: HighlightMessage? = null,
+    highlightAlpha: Float = 0f,
 ) {
     val outgoing = data.layout == MessageLayout.OUTGOING
 
@@ -214,14 +215,20 @@ fun RecipientMessageContent(
                     val contentColumn = @Composable {
                         Column {
                             group.contents.forEach { content ->
-                                MessageContentRenderer(content, data.layout, maxWidth, sendCommand, highlight)
+                                MessageContentRenderer(
+                                    content = content,
+                                    layout = data.layout,
+                                    maxWidth = maxWidth,
+                                    sendCommand = sendCommand,
+                                    highlightAlpha = highlightAlpha
+                                )
                             }
                         }
                     }
 
                     if (group.showBubble) {
                         MessageBubble(
-                            modifier = Modifier.accentHighlight(trigger = highlight),
+                            modifier = Modifier.accentHighlight(alpha = highlightAlpha),
                             color = if (outgoing) LocalColors.current.accent else LocalColors.current.backgroundBubbleReceived,
                             content = contentColumn
                         )
@@ -281,7 +288,7 @@ fun MessageContentRenderer(
     layout: MessageLayout,
     maxWidth: Dp,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
-    highlight: HighlightMessage? = null,
+    highlightAlpha: Float = 0f,
 ) {
     val isOutgoing = layout == MessageLayout.OUTGOING
     Box(
@@ -340,7 +347,7 @@ fun MessageContentRenderer(
 
             is MessageContentData.Media ->
                 MediaMessage(
-                    modifier = Modifier.accentHighlight(trigger = highlight),
+                    modifier = Modifier.accentHighlight(alpha = highlightAlpha),
                     items = content.contentData.items,
                     loading = content.contentData.loading,
                     maxWidth = maxWidth
@@ -458,14 +465,7 @@ enum class MessageLayout {
 }
 
 @Stable
-data class HighlightMessage(val token: Long) {
-    // Mutable flag intentionally hidden from Compose's stability checks.
-    // Prevents the highlight animation from replaying when the item
-    // is recycled in a LazyColumn — the flag survives disposal since
-    // it lives on the object, not in the Compose slot table.
-    @OptIn(ExperimentalAtomicApi::class)
-    val isConsumed = AtomicBoolean(false)
-}
+data class HighlightMessage(val token: Long)
 enum class ClusterPosition {
     TOP,
     MIDDLE,
