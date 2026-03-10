@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -31,9 +32,9 @@ private const val MAX_COLLAPSED_LINE_COUNT = 25
  *
  * Expansion state is controlled by the parent message row so it survives lazy-list
  * disposal/rebinding and can be shared across multiple text blocks in the same message.
- * This composable decides whether "Read more" is needed and computes the extra height
- * that the list controller needs when it requests the expanded row's new placement in
- * the reversed conversation list.
+ * The actual collapsed text decides whether "Read more" is needed, while a separate
+ * measurement computes the extra height needed to keep the message anchored in the
+ * reversed conversation list when it expands.
  */
 @Composable
 fun ExpandableMessageText(
@@ -44,82 +45,98 @@ fun ExpandableMessageText(
     onUrlClick: ((String) -> Unit)? = null,
     onExpand: (Int) -> Unit = {},
 ) {
-    var showsReadMore by remember(text) { mutableStateOf(false) }
-    var textLayout by remember(text) { mutableStateOf<TextLayoutResult?>(null) }
-    val textMeasurer = rememberTextMeasurer()
     val textColor = getTextColor(isOutgoing)
-    val textStyle = LocalType.current.large.copy(color = textColor)
+    val textMeasurer = rememberTextMeasurer()
     val readMoreLabel = stringResource(R.string.messageBubbleReadMore)
     val readMoreTextStyle = LocalType.current.base.bold().copy(color = textColor)
     val readMoreTopPaddingPx = with(LocalDensity.current) {
         LocalDimensions.current.xxsSpacing.roundToPx()
     }
+    var collapsedLayout by remember(text, isOutgoing, onUrlClick != null) {
+        mutableStateOf<TextLayoutResult?>(null)
+    }
 
-    Column(modifier = modifier) {
-        MessageText(
-            text = text,
-            isOutgoing = isOutgoing,
-            overflow = if (isExpanded) TextOverflow.Clip else TextOverflow.Ellipsis,
-            maxLines = if (isExpanded) Int.MAX_VALUE else MAX_COLLAPSED_LINE_COUNT,
-            onUrlClick = onUrlClick,
-            onTextLayout = { layout ->
-                textLayout = layout
-                showsReadMore = !isExpanded && layout.hasVisualOverflow
-            }
-        )
+    BoxWithConstraints(modifier = modifier) {
+        val maxWidthPx = constraints.maxWidth
+        val showsReadMore = !isExpanded && (collapsedLayout?.hasVisualOverflow == true)
 
-        if (!isExpanded && showsReadMore) {
-            Text(
-                text = readMoreLabel,
-                style = readMoreTextStyle,
-                modifier = Modifier
-                    .clickable {
-                        val extraHeightPx = textLayout?.let { layout ->
-                            calculateExpandedTextDeltaPx(
-                                text = text,
-                                collapsedLayout = layout,
-                                textMeasurer = textMeasurer,
-                                textStyle = textStyle,
-                                readMoreLabel = readMoreLabel,
-                                readMoreTextStyle = readMoreTextStyle,
-                                readMoreTopPaddingPx = readMoreTopPaddingPx,
-                            )
-                        } ?: 0
-
-                        onExpand(extraHeightPx)
+        Column {
+            MessageText(
+                text = text,
+                isOutgoing = isOutgoing,
+                overflow = if (isExpanded) TextOverflow.Clip else TextOverflow.Ellipsis,
+                maxLines = if (isExpanded) Int.MAX_VALUE else MAX_COLLAPSED_LINE_COUNT,
+                onUrlClick = onUrlClick,
+                onTextLayout = { layout ->
+                    if (!isExpanded) {
+                        collapsedLayout = layout
                     }
-                    .padding(top = LocalDimensions.current.xxsSpacing)
+                }
             )
+
+            if (showsReadMore) {
+                Text(
+                    text = readMoreLabel,
+                    style = readMoreTextStyle,
+                    modifier = Modifier
+                        .clickable {
+                            val extraHeightPx = collapsedLayout?.let { layout ->
+                                calculateExpandedTextDeltaPx(
+                                    collapsedLayout = layout,
+                                    maxWidthPx = maxWidthPx,
+                                    textMeasurer = textMeasurer,
+                                    readMoreLabel = readMoreLabel,
+                                    readMoreTextStyle = readMoreTextStyle,
+                                    readMoreTopPaddingPx = readMoreTopPaddingPx,
+                                )
+                            } ?: 0
+
+                            onExpand(extraHeightPx)
+                        }
+                        .padding(top = LocalDimensions.current.xxsSpacing)
+                )
+            }
         }
     }
 }
 
+//todo convov3 this doesn't work for very long texts
 private fun calculateExpandedTextDeltaPx(
-    text: AnnotatedString,
     collapsedLayout: TextLayoutResult,
+    maxWidthPx: Int,
     textMeasurer: TextMeasurer,
-    textStyle: TextStyle,
     readMoreLabel: String,
     readMoreTextStyle: TextStyle,
     readMoreTopPaddingPx: Int,
 ): Int {
-    val availableWidthPx = collapsedLayout.size.width
-    if (availableWidthPx <= 0) return 0
+    if (maxWidthPx <= 0) return 0
 
-    val fullTextLayout = textMeasurer.measure(
-        text = text,
-        style = textStyle,
-        constraints = Constraints(maxWidth = availableWidthPx),
+    val input = collapsedLayout.layoutInput
+
+    val expandedTextLayout = textMeasurer.measure(
+        text = input.text,
+        style = input.style,
+        overflow = TextOverflow.Clip,
+        softWrap = input.softWrap,
+        maxLines = Int.MAX_VALUE,
+        placeholders = input.placeholders,
+        constraints = Constraints(maxWidth = maxWidthPx),
+        layoutDirection = input.layoutDirection,
+        density = input.density,
+        fontFamilyResolver = input.fontFamilyResolver,
     )
 
     val readMoreLayout = textMeasurer.measure(
         text = AnnotatedString(readMoreLabel),
         style = readMoreTextStyle,
-        constraints = Constraints(maxWidth = availableWidthPx),
+        constraints = Constraints(maxWidth = maxWidthPx),
+        layoutDirection = input.layoutDirection,
+        density = input.density,
+        fontFamilyResolver = input.fontFamilyResolver,
     )
 
     return (
-        fullTextLayout.size.height -
+        expandedTextLayout.size.height -
             collapsedLayout.size.height -
             readMoreLayout.size.height -
             readMoreTopPaddingPx

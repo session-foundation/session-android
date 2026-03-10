@@ -187,14 +187,10 @@ fun Conversation(
                                 highlight = listController.highlightKeyFor(item.data.id),
                                 sendCommand = sendCommand,
                                 onExpandText = { extraHeightPx ->
-                                    // when expanding the message, we need to scroll to leave
-                                    // the message visually where we were since the list is reverser
-                                    // otherwise it pushes the top of the message and leaves
-                                    // the bottom anchored
-                                    listController.scrollForMessageTextExpand(
-                                        index = index,
-                                        extraHeightPx = extraHeightPx,
-                                    )
+                                    // In the reversed conversation list, expanding text naturally
+                                    // keeps the bottom anchored. Pre-scroll by the measured growth
+                                    // so the visible message stays in place as it expands.
+                                    listController.scrollForMessageTextExpand(extraHeightPx)
                                 }
                             )
                         }

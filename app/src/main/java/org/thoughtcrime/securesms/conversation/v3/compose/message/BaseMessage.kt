@@ -28,6 +28,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,6 +61,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import kotlinx.coroutines.launch
 
 //todo CONVOv3 status animated icon for disappearing messages
 //todo CONVOv3 text formatting in bubble including mentions and links
@@ -87,12 +89,13 @@ fun Message(
     modifier: Modifier = Modifier,
     highlight: HighlightMessage? = null,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit = {},
-    onExpandText: (Int) -> Unit = {},
+    onExpandText: suspend (Int) -> Unit = {},
 ) {
     val highlightAlpha = rememberHighlightAlpha(
         messageId = data.id,
         trigger = highlight,
     )
+    val scope = rememberCoroutineScope()
 
     // Keeping some state in the composable to avoid rebuilding the conversation list each time
     // small UI state changes locally in a message, like this expanded state
@@ -110,8 +113,10 @@ fun Message(
                 sendCommand = sendCommand,
                 onExpandText = { extraHeightPx ->
                     if (!expandedText) {
-                        onExpandText(extraHeightPx)
-                        expandedText = true
+                        scope.launch {
+                            onExpandText(extraHeightPx)
+                            expandedText = true
+                        }
                     }
                 },
                 highlightAlpha = highlightAlpha

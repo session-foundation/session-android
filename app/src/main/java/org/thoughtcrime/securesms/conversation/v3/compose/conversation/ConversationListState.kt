@@ -12,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.paging.compose.LazyPagingItems
 import kotlinx.coroutines.yield
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v3.ConversationDataMapper.ConversationItem
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.ScrollEvent
 import org.thoughtcrime.securesms.conversation.v3.compose.message.HighlightMessage
@@ -103,22 +102,12 @@ class ConversationListState(
     }
 
     /**
-     * In this reversed conversation list, the item's start edge is its bottom.
-     * When a message expands, keeping the current offset would pin the bottom and let
-     * the top drift upward. Request a new offset for the next remeasure so the item's
-     * top stays visually anchored instead.
+     * Pre-scroll the reversed list by the exact amount the visible message is about to grow.
+     * This keeps the message visually in place while its text expands.
      */
-    fun scrollForMessageTextExpand(index: Int, extraHeightPx: Int) {
+    suspend fun scrollForMessageTextExpand(extraHeightPx: Int) {
         if (extraHeightPx <= 0) return
-        Log.w("", "*** scroll for expand $index $extraHeightPx")
-        val itemInfo = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
-            ?: return
-
-        Log.w("", "*** offset: ${itemInfo.offset - extraHeightPx}")
-        lazyListState.requestScrollToItem(
-            index = index,
-            scrollOffset = itemInfo.offset - extraHeightPx,
-        )
+        lazyListState.scrollBy(extraHeightPx.toFloat())
     }
 
     // ── Internal ──
