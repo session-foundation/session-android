@@ -36,6 +36,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.thoughtcrime.securesms.conversation.v3.ConversationDataMapper.ConversationItem
@@ -117,7 +118,7 @@ fun Conversation(
 
     // Single collector for all scroll events
     LaunchedEffect(Unit) {
-        scrollEvent.collect { event ->
+        scrollEvent.collectLatest { event ->
             listController.handleScrollEvent(event, conversationItems)
         }
     }

@@ -58,6 +58,7 @@ import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageVi
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -168,6 +169,8 @@ sealed interface ConversationV3Destination: Parcelable {
 fun ConversationV3NavHost(
     address: Address.Conversable,
     startDestination: ConversationV3Destination = RouteConversation,
+    pendingScrollMessageId: MessageId? = null,
+    onPendingScrollConsumed: () -> Unit = {},
     switchConvoVersion: () -> Unit,
     onBack: () -> Unit
 ){
@@ -208,6 +211,19 @@ fun ConversationV3NavHost(
                     hiltViewModel<ConversationV3ViewModel, ConversationV3ViewModel.Factory> { factory ->
                         factory.create(address, navigator)
                     }
+
+                LaunchedEffect(pendingScrollMessageId) {
+                    pendingScrollMessageId ?: return@LaunchedEffect
+
+                    viewModel.onCommand(
+                        ConversationV3ViewModel.Commands.ScrollToMessage(
+                            messageId = pendingScrollMessageId,
+                            smoothScroll = false,
+                            highlight = true,
+                        )
+                    )
+                    onPendingScrollConsumed()
+                }
 
                 ConversationScreen(
                     viewModel = viewModel,
