@@ -186,12 +186,13 @@ fun Conversation(
                                 data = item.data,
                                 highlight = listController.highlightKeyFor(item.data.id),
                                 sendCommand = sendCommand,
-                                onExpandText = { extraHeightPx ->
-                                    // In the reversed conversation list, expanding text naturally
-                                    // keeps the bottom anchored. Pre-scroll by the measured growth
-                                    // so the visible message stays in place as it expands.
-                                    listController.scrollForMessageTextExpand(extraHeightPx)
-                                }
+                                onExpandText = { messageId, extraHeightPx ->
+                                    listController.scrollForMessageExpansion(
+                                        messageId = messageId,
+                                        extraHeightPx = extraHeightPx,
+                                        pagingItems = conversationItems,
+                                    )
+                                },
                             )
                         }
 

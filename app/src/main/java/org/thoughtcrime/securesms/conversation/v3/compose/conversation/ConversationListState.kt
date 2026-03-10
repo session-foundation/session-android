@@ -102,12 +102,23 @@ class ConversationListState(
     }
 
     /**
-     * Pre-scroll the reversed list by the exact amount the visible message is about to grow.
-     * This keeps the message visually in place while its text expands.
+     * Offset the scroll to cater for the message expanding
      */
-    suspend fun scrollForMessageTextExpand(extraHeightPx: Int) {
-        if (extraHeightPx <= 0) return
-        lazyListState.scrollBy(extraHeightPx.toFloat())
+    fun scrollForMessageExpansion(
+        messageId: MessageId,
+        extraHeightPx: Int,
+        pagingItems: LazyPagingItems<ConversationItem>,
+    ) {
+        val index = pagingItems.findIndexOf(messageId) ?: return
+        val currentOffset = lazyListState.layoutInfo.visibleItemsInfo
+            .firstOrNull { it.index == index }
+            ?.offset
+            ?: return
+
+        lazyListState.requestScrollToItem(
+            index = index,
+            scrollOffset = extraHeightPx - currentOffset,
+        )
     }
 
     // ── Internal ──

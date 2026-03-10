@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -32,9 +31,9 @@ private const val MAX_COLLAPSED_LINE_COUNT = 25
  *
  * Expansion state is controlled by the parent message row so it survives lazy-list
  * disposal/rebinding and can be shared across multiple text blocks in the same message.
- * The actual collapsed text decides whether "Read more" is needed, while a separate
- * measurement computes the extra height needed to keep the message anchored in the
- * reversed conversation list when it expands.
+ * The collapsed layout decides whether "Read more" is needed, and a full-text
+ * measurement provides the growth delta so the parent list can preserve the
+ * bubble's bottom edge during the same remeasure that expands the text.
  */
 @Composable
 fun ExpandableMessageText(
@@ -56,51 +55,47 @@ fun ExpandableMessageText(
         mutableStateOf<TextLayoutResult?>(null)
     }
 
-    BoxWithConstraints(modifier = modifier) {
-        val maxWidthPx = constraints.maxWidth
-        val showsReadMore = !isExpanded && (collapsedLayout?.hasVisualOverflow == true)
+    val showsReadMore = !isExpanded && (collapsedLayout?.hasVisualOverflow == true)
 
-        Column {
-            MessageText(
-                text = text,
-                isOutgoing = isOutgoing,
-                overflow = if (isExpanded) TextOverflow.Clip else TextOverflow.Ellipsis,
-                maxLines = if (isExpanded) Int.MAX_VALUE else MAX_COLLAPSED_LINE_COUNT,
-                onUrlClick = onUrlClick,
-                onTextLayout = { layout ->
-                    if (!isExpanded) {
-                        collapsedLayout = layout
-                    }
+    Column(modifier = modifier) {
+        MessageText(
+            text = text,
+            isOutgoing = isOutgoing,
+            overflow = if (isExpanded) TextOverflow.Clip else TextOverflow.Ellipsis,
+            maxLines = if (isExpanded) Int.MAX_VALUE else MAX_COLLAPSED_LINE_COUNT,
+            onUrlClick = onUrlClick,
+            onTextLayout = { layout ->
+                if (!isExpanded) {
+                    collapsedLayout = layout
                 }
-            )
-
-            if (showsReadMore) {
-                Text(
-                    text = readMoreLabel,
-                    style = readMoreTextStyle,
-                    modifier = Modifier
-                        .clickable {
-                            val extraHeightPx = collapsedLayout?.let { layout ->
-                                calculateExpandedTextDeltaPx(
-                                    collapsedLayout = layout,
-                                    maxWidthPx = maxWidthPx,
-                                    textMeasurer = textMeasurer,
-                                    readMoreLabel = readMoreLabel,
-                                    readMoreTextStyle = readMoreTextStyle,
-                                    readMoreTopPaddingPx = readMoreTopPaddingPx,
-                                )
-                            } ?: 0
-
-                            onExpand(extraHeightPx)
-                        }
-                        .padding(top = LocalDimensions.current.xxsSpacing)
-                )
             }
+        )
+
+        if (showsReadMore) {
+            Text(
+                text = readMoreLabel,
+                style = readMoreTextStyle,
+                modifier = Modifier
+                    .clickable {
+                        val extraHeightPx = collapsedLayout?.let { layout ->
+                            calculateExpandedTextDeltaPx(
+                                collapsedLayout = layout,
+                                maxWidthPx = layout.size.width,
+                                textMeasurer = textMeasurer,
+                                readMoreLabel = readMoreLabel,
+                                readMoreTextStyle = readMoreTextStyle,
+                                readMoreTopPaddingPx = readMoreTopPaddingPx,
+                            )
+                        } ?: 0
+
+                        onExpand(extraHeightPx)
+                    }
+                    .padding(top = LocalDimensions.current.xxsSpacing)
+            )
         }
     }
 }
 
-//todo convov3 this doesn't work for very long texts
 private fun calculateExpandedTextDeltaPx(
     collapsedLayout: TextLayoutResult,
     maxWidthPx: Int,
