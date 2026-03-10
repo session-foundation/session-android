@@ -192,7 +192,7 @@ class ConversationViewModel @AssistedInject constructor(
     val threadIdFlow: StateFlow<Long?> =
         storage.getThreadId(address)
             ?.let { MutableStateFlow(it) }
-            ?: threadDb.updateNotifications
+            ?: threadDb.changeNotification
                 .map { storage.getThreadId(address) }
                 .flowOn(Dispatchers.Default)
                 .filterNotNull()
@@ -222,7 +222,7 @@ class ConversationViewModel @AssistedInject constructor(
                         smsDatabase.changeNotification
                     ).filter { it.threadId == threadId },
 
-                    threadDb.updateNotifications.filter { it == threadId }
+                    threadDb.changeNotification.filter { it.id == threadId }
                 )
            },
         recipientSettingsDatabase.changeNotification.filter { it == address },

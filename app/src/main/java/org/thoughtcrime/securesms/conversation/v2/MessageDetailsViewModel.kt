@@ -105,7 +105,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
             }
 
             // listen to conversation and attachments changes
-            (threadDb.updateNotifications.filter { it == messageRecord.threadId } as Flow<*>)
+            (threadDb.changeNotification.filter { it.id == messageRecord.threadId } as Flow<*>)
                     .debounce(200L)
                     .map {
                         withContext(Dispatchers.Default) {

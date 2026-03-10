@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
@@ -95,7 +94,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
         // Initial lookup off main thread
         flow { emit(withContext(Dispatchers.IO) { storage.getThreadId(address) }) },
         // Also listen for thread creation in case it doesn't exist yet
-        threadDb.updateNotifications
+        threadDb.changeNotification
             .map { withContext(Dispatchers.IO) { storage.getThreadId(address) } }
     )
         .filterNotNull()
@@ -152,8 +151,8 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private var pagingSource: ConversationPagingSource? = null
 
     // obtain the last seen message id
-    private val lastSeen: StateFlow<Long?> = threadDb.addressUpdateNotifications
-        .filter { it == address }
+    private val lastSeen: StateFlow<Long?> = threadDb.changeNotification
+        .filter { it.address == address }
         .castAwayType()
         .onStart { emit(Unit) }
         .mapNotNull { threadDb.getLastSeen(address)?.toEpochMilliseconds() }
@@ -188,7 +187,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
     val databaseChanges: SharedFlow<*> = merge(
         threadIdFlow
             .filterNotNull()
-            .flatMapLatest { id -> threadDb.updateNotifications.filter { it == id } },
+            .flatMapLatest { id -> threadDb.changeNotification.filter { it.id == id } },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,

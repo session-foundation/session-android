@@ -190,8 +190,8 @@ class ConversationReactionOverlay : FrameLayout {
 
         job = GlobalScope.launch {
             // Wait for the message to be deleted
-            threadDatabase.updateNotifications
-                .filter { it == messageRecord.threadId }
+            threadDatabase.changeNotification
+                .filter { it.id == messageRecord.threadId }
                 .first { mmsSmsDatabase.getMessageById(messageRecord.messageId) == null }
 
             withContext(Dispatchers.Main) {

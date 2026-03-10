@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.database
 
+import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.util.asSequence
 

@@ -21,27 +21,16 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
-import androidx.collection.ArrayMap;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-import org.thoughtcrime.securesms.database.model.ThreadRecord;
+import org.thoughtcrime.securesms.database.model.ThreadChanges;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -50,7 +39,6 @@ import javax.inject.Singleton;
 import dagger.Lazy;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Triple;
-import kotlin.collections.CollectionsKt;
 import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
@@ -199,10 +187,7 @@ public class ThreadDatabase extends Database {
   }
 
 
-  private final MutableSharedFlow<Long> updateNotifications
-          = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
-
-  final MutableSharedFlow<Address.Conversable> addressUpdateNotifications
+  private final MutableSharedFlow<ThreadChanges> changeNotification
           = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
 
   final Lazy<@NonNull RecipientRepository> recipientRepository;
@@ -222,19 +207,16 @@ public class ThreadDatabase extends Database {
   }
 
   @NonNull
-  public Flow<Long> getUpdateNotifications() {
-    return updateNotifications;
-  }
-
-  @NonNull
-  public Flow<Address.Conversable> getAddressUpdateNotifications() {
-    return addressUpdateNotifications;
+  public Flow<ThreadChanges> getChangeNotification() {
+    return changeNotification;
   }
 
   void notifyThreadUpdated(long threadId, Address.Conversable address) {
-    Log.d(TAG, "Notifying thread updated: " + threadId +
-            " address = " + address.getDebugString());
-    updateNotifications.tryEmit(threadId);
-    addressUpdateNotifications.tryEmit(address);
+    ThreadChanges changes = new ThreadChanges(threadId, address);
+    if (changeNotification.tryEmit(changes)) {
+      Log.d(TAG, "Notified thread changes: " + changes);
+    } else {
+      Log.w(TAG, "Unable to notify thread changes, flow full");
+    }
   }
 }

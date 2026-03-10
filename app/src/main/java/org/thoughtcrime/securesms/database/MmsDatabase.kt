@@ -44,6 +44,7 @@ import org.session.libsignal.utilities.ThreadUtils.queue
 import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
+import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -203,11 +204,13 @@ class MmsDatabase @Inject constructor(
                             "UPDATE $TABLE_NAME SET $columnName = $columnName + 1 WHERE $ID = ?",
                             arrayOf(id)
                         )
-                        _changeNotification.tryEmit(MessageChanges(
-                            changeType = MessageChanges.ChangeType.Updated,
-                            id = MessageId(id, true),
-                            threadId = threadId
-                        ))
+                        _changeNotification.tryEmit(
+                            MessageChanges(
+                                changeType = MessageChanges.ChangeType.Updated,
+                                id = MessageId(id, true),
+                                threadId = threadId
+                            )
+                        )
                     }
                 }
             }
@@ -237,11 +240,13 @@ class MmsDatabase @Inject constructor(
         ).use { cursor ->
             if (cursor.moveToFirst()) {
                 val threadId = cursor.getLong(0)
-                _changeNotification.tryEmit(MessageChanges(
-                    changeType = MessageChanges.ChangeType.Updated,
-                    id = MessageId(messageId, true),
-                    threadId = threadId
-                ))
+                _changeNotification.tryEmit(
+                    MessageChanges(
+                        changeType = MessageChanges.ChangeType.Updated,
+                        id = MessageId(messageId, true),
+                        threadId = threadId
+                    )
+                )
             }
         }
     }
@@ -455,11 +460,13 @@ class MmsDatabase @Inject constructor(
             contentValues = contentValues,
         )
 
-        _changeNotification.tryEmit(MessageChanges(
-            changeType = MessageChanges.ChangeType.Added,
-            id = MessageId(messageId, true),
-            threadId = contentValues.getAsLong(THREAD_ID)
-        ))
+        _changeNotification.tryEmit(
+            MessageChanges(
+                changeType = MessageChanges.ChangeType.Added,
+                id = MessageId(messageId, true),
+                threadId = contentValues.getAsLong(THREAD_ID)
+            )
+        )
 
         return InsertResult(messageId, threadId)
     }
@@ -561,11 +568,13 @@ class MmsDatabase @Inject constructor(
                 .getGroupMembers(message.recipient.toGroupString(), false)
         }
 
-        _changeNotification.tryEmit(MessageChanges(
-            changeType = MessageChanges.ChangeType.Added,
-            id = MessageId(messageId, true),
-            threadId = threadId
-        ))
+        _changeNotification.tryEmit(
+            MessageChanges(
+                changeType = MessageChanges.ChangeType.Added,
+                id = MessageId(messageId, true),
+                threadId = threadId
+            )
+        )
 
         return messageId
     }
@@ -667,11 +676,13 @@ class MmsDatabase @Inject constructor(
         }
 
         deletedByThreadIDs.forEach { threadId, deletedMessageIDs ->
-            _changeNotification.tryEmit(MessageChanges(
-                changeType = MessageChanges.ChangeType.Deleted,
-                ids = deletedMessageIDs,
-                threadId = threadId
-            ))
+            _changeNotification.tryEmit(
+                MessageChanges(
+                    changeType = MessageChanges.ChangeType.Deleted,
+                    ids = deletedMessageIDs,
+                    threadId = threadId
+                )
+            )
         }
 
         return deleted.isNotEmpty()

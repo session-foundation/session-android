@@ -1,6 +1,4 @@
-package org.thoughtcrime.securesms.database
-
-import org.thoughtcrime.securesms.database.model.MessageId
+package org.thoughtcrime.securesms.database.model
 
 data class MessageChanges(
     val changeType: ChangeType,
@@ -20,4 +18,3 @@ data class MessageChanges(
         Deleted,
     }
 }
-

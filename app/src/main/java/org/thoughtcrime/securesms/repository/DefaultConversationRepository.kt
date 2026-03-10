@@ -179,7 +179,7 @@ class DefaultConversationRepository @Inject constructor(
                     configFactory.configUpdateNotifications,
                     recipientDatabase.changeNotification.filter { it in allAddresses },
                     communityDatabase.changeNotification.filter { it in allAddresses },
-                    threadDb.updateNotifications,
+                    threadDb.changeNotification,
                     smsDb.changeNotification,
                     mmsDb.changeNotification,
                     // If pro status pref changes, the convo is likely needing changes too
@@ -305,7 +305,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun getLastSentMessageID(threadId: Long): Flow<MessageId?> {
-        return (threadDb.updateNotifications.filter { it == threadId } as Flow<*>)
+        return (threadDb.changeNotification.filter { it.id == threadId } as Flow<*>)
             .onStart { emit(Unit) }
             .map {
                 withContext(Dispatchers.Default) {

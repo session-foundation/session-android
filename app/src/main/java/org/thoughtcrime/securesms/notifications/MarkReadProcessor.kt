@@ -32,10 +32,10 @@ import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
-import org.thoughtcrime.securesms.database.MessageChanges
+import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getIncomingMessages
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getIncomingMessagesSorted
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getMessages
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
@@ -80,10 +80,10 @@ class MarkReadProcessor @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
-        val threadLastSeenFlow = threadDb.updateNotifications
+        val threadLastSeenFlow = threadDb.changeNotification
             .map { id ->
-                threadDb.getAddressAndLastSeen(id)?.let { (address, lastSeen) ->
-                    ThreadUpdated(id, address, lastSeen)
+                threadDb.getAddressAndLastSeen(id.id)?.let { (address, lastSeen) ->
+                    ThreadUpdated(id.id, address, lastSeen)
                 }
             }
             .filterNotNull()
@@ -210,7 +210,7 @@ class MarkReadProcessor @Inject constructor(
                                             event.lastSeenMs
                                         ),
                                         updates = if (eligibleForReadReceipt(event.threadAddress)) {
-                                            mmsSmsDatabase.getIncomingMessages(
+                                            mmsSmsDatabase.getIncomingMessagesSorted(
                                                 event.threadId,
                                                 oldLastSeen,
                                                 event.lastSeenMs
@@ -302,7 +302,7 @@ class MarkReadProcessor @Inject constructor(
                         } else {
                             val oldLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
                             if (event.lastSeenMs > oldLastSeen) {
-                                val eligible = mmsSmsDatabase.getIncomingMessages(
+                                val eligible = mmsSmsDatabase.getIncomingMessagesSorted(
                                     event.threadId,
                                     oldLastSeen,
                                     event.lastSeenMs

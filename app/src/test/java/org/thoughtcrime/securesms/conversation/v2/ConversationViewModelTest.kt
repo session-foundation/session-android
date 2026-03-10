@@ -94,7 +94,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
             },
             groupDb = mock(),
             threadDb = mock {
-                on { updateNotifications } doAnswer {
+                on { changeNotification } doAnswer {
                     emptyFlow()
                 }
             },

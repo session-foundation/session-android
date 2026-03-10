@@ -39,7 +39,7 @@ class GlobalSearchViewModel @Inject constructor(
     private val _queryText = MutableStateFlow<String>("")
 
     private fun observeChangesAffectingSearch(): Flow<*> = merge(
-        threadDatabase.updateNotifications,
+        threadDatabase.changeNotification,
         configFactory.configUpdateNotifications
     )
 
