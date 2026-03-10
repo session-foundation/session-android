@@ -1,8 +1,14 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.message
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -10,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -18,10 +25,16 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Constraints
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
 
 private const val MAX_COLLAPSED_LINE_COUNT = 25
@@ -57,8 +70,10 @@ fun ExpandableMessageText(
 
     val showsReadMore = !isExpanded && (collapsedLayout?.hasVisualOverflow == true)
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.width(IntrinsicSize.Max)) {
         MessageText(
+            modifier = Modifier.fillMaxWidth()
+            ,
             text = text,
             isOutgoing = isOutgoing,
             overflow = if (isExpanded) TextOverflow.Clip else TextOverflow.Ellipsis,
@@ -136,4 +151,98 @@ private fun calculateExpandedTextDeltaPx(
             readMoreLayout.size.height -
             readMoreTopPaddingPx
         ).coerceAtLeast(0)
+}
+
+
+@Preview
+@Composable
+fun PreviewExpText(    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        Box(Modifier.fillMaxSize()) {
+            MessageBubble(
+                modifier = Modifier,
+                color = LocalColors.current.accent,
+                content = {
+                    ExpandableMessageText(
+                        modifier = Modifier.padding(LocalDimensions.current.messageVerticalPadding),
+                        text = AnnotatedString("1\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!\n" +
+                                "!"),
+                        isOutgoing = true,
+                        isExpanded = false,
+                    )
+                }
+            )
+        }
+    }
 }
