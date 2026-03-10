@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.conversation
 
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -22,23 +23,17 @@ import kotlin.math.abs
  *
  * Any feature that needs "go to message X" or "go to bottom" should call
  * [handleScrollEvent].
- *
- * **Why `animateScrollBy` instead of `animateScrollToItem`:**
- * Compose's `animateScrollToItem` estimates scroll distance from average
- * item heights. With variable-height chat messages, date breaks, and a
- * reversed layout, the estimate is often wrong — causing a visible
- * two-step correction. `animateScrollBy` works in raw pixels and lets
- * the list clamp at edges, avoiding this entirely.
  */
 @Stable
 class ConversationListState(
     val lazyListState: LazyListState,
 ) {
     companion object {
-        // how many messages needed before we jump to a  message instead of simply scrolling to it
+        // How many messages away before we do an invisible jump first.
         private const val JUMP_THRESHOLD = 20
 
-        // when jumping, how far away do we jump
+        // When far away, jump close to the target so the final scroll still feels
+        // like a local movement instead of a whole-screen teleport.
         private const val JUMP_PROXIMITY = 10
 
         // animateScrollBy clamps at list edges, so overshooting is safe.
@@ -46,13 +41,15 @@ class ConversationListState(
     }
 
     // ── Highlight ──
-    /** Current highlight target. Composable reads this per-item via [highlightKeyFor]. */
+    /**
+     * Current highlight target. Message rows read this via [highlightKeyFor].
+     */
     var currentHighlight by mutableStateOf<HighlightTarget?>(null)
         private set
 
     /**
      * Returns a [HighlightMessage] key if [messageId] is the current highlight target,
-     * null otherwise. Cheap equality check — non-highlighted items skip recomposition.
+     * null otherwise.
      */
     fun highlightKeyFor(messageId: MessageId): HighlightMessage? {
         return currentHighlight?.takeIf { it.messageId == messageId }?.key
@@ -65,11 +62,10 @@ class ConversationListState(
 
     // ── Public API ──
     /**
-     * Handle a scroll event. This is the **only** method external code needs to call
-     * for scrolling.
+     * Handle a scroll event. This is the single entry point for list scrolling.
      *
-     * @param event        What to scroll to.
-     * @param pagingItems  Current paging snapshot, needed for index resolution.
+     * @param event What to scroll to.
+     * @param pagingItems Current paging snapshot, needed for index resolution.
      */
     suspend fun handleScrollEvent(
         event: ScrollEvent,
@@ -78,20 +74,22 @@ class ConversationListState(
         when (event) {
             is ScrollEvent.ToBottom -> {
                 jumpIfFar(targetIndex = 0)
-                // Overshoot toward bottom — list clamps at the edge.
                 lazyListState.animateScrollBy(-LARGE_SCROLL_PX)
             }
 
             is ScrollEvent.ToMessage -> {
-                // Clear any previous highlight before scrolling so stale keys
-                // don't trigger a premature animation as the target item
-                // comes into view mid-scroll.
                 currentHighlight = null
 
                 val index = pagingItems.findIndexOf(event.messageId) ?: return
 
-                jumpIfFar(targetIndex = index)
-                animateToCentered(index)
+                if (event.smoothScroll) {
+                    jumpIfFar(targetIndex = index)
+                    animateToPositioned(index)
+                } else {
+                    lazyListState.scrollToItem(index)
+                    yield()
+                    snapToPosition(index)
+                }
 
                 if (event.highlight) {
                     currentHighlight = HighlightTarget(
@@ -106,8 +104,9 @@ class ConversationListState(
     // ── Internal ──
 
     /**
-     * If the target is far away, jump close first and yield a frame
-     * so Compose lays out nearby items with their real heights.
+     * If the target is far away, jump close to it first so the visible pass still
+     * feels like a short local movement. If that still is not enough to materialize
+     * the real row, [ensureTargetAndGetDelta] will fall back to the exact item.
      */
     private suspend fun jumpIfFar(targetIndex: Int) {
         val firstVisible = lazyListState.firstVisibleItemIndex
@@ -120,44 +119,70 @@ class ConversationListState(
             } else {
                 (targetIndex + JUMP_PROXIMITY).coerceAtMost((total - 1).coerceAtLeast(0))
             }
-            lazyListState.scrollToItem(jumpTo)
+            lazyListState.scrollToItem(
+                index = jumpTo,
+                scrollOffset = scrollOffset(),
+            )
             yield()
         }
     }
 
     /**
-     * Animate the item into a centered position using exact pixel math.
+     * One visible positioning animation using the measured item height.
      *
-     * After [jumpIfFar], the target is nearby and typically in
-     * [visibleItemsInfo] so we can read its real offset and height.
-     * Short items get centered; tall items show the top.
+     * Short items are centered. Tall items bias toward showing the start of the
+     * message instead of trying to center the whole thing.
      */
-    private suspend fun animateToCentered(index: Int) {
-        val itemInfo = lazyListState.layoutInfo.visibleItemsInfo
-            .firstOrNull { it.index == index }
+    private suspend fun animateToPositioned(index: Int) {
+        val delta = ensureTargetAndGetDelta(index) ?: return
+        if (abs(delta) <= 1) return
+        lazyListState.animateScrollBy(delta.toFloat())
+    }
 
-        if (itemInfo != null) {
-            val viewportHeight = lazyListState.layoutInfo.viewportSize.height
-            val itemHeight = itemInfo.size
+    private suspend fun snapToPosition(index: Int) {
+        val delta = ensureTargetAndGetDelta(index) ?: return
+        if (abs(delta) <= 1) return
+        lazyListState.scrollBy(delta.toFloat())
+    }
 
-            val centeringOffset = if (itemHeight < viewportHeight) {
-                (viewportHeight - itemHeight) / 2
-            } else {
-                viewportHeight * 7 / 8
-            }
+    /**
+     * If the target still is not visible, materialize the exact item first, then read
+     * its measured geometry.
+     */
+    private suspend fun ensureTargetAndGetDelta(index: Int): Int? {
+        var itemInfo = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
 
-            lazyListState.animateScrollBy((itemInfo.offset - centeringOffset).toFloat())
-        } else {
-            // Fallback — item not visible after jump
-            lazyListState.animateScrollToItem(index)
+        if (itemInfo == null) {
+            lazyListState.scrollToItem(
+                index = index,
+                scrollOffset = scrollOffset(),
+            )
+            yield()
+            itemInfo = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
         }
+
+        val visibleItem = itemInfo ?: return null
+        val viewportHeight = lazyListState.layoutInfo.viewportSize.height
+        val itemHeight = visibleItem.size
+
+        val desiredOffset = if (itemHeight < viewportHeight) {
+            (viewportHeight - itemHeight) / 2
+        } else {
+            // Tall messages should reveal their start, not sit low in the viewport.
+            viewportHeight / 8
+        }
+
+        return visibleItem.offset - desiredOffset
+    }
+    
+    private fun scrollOffset(): Int {
+        return -(lazyListState.layoutInfo.viewportSize.height / 2)
     }
 }
 
-// ── Paging helpers ──
 /**
  * Find the index of a message in the currently loaded paging snapshot.
- * Returns null if the message hasn't been paged in yet.
+ * Returns null if the message has not been paged in yet.
  */
 private fun LazyPagingItems<ConversationItem>.findIndexOf(
     messageId: MessageId,
@@ -171,8 +196,9 @@ private fun LazyPagingItems<ConversationItem>.findIndexOf(
     return null
 }
 
-// ── Remember ──
-
+/**
+ * Remember the shared controller for scrolling and highlighting the conversation list.
+ */
 @Composable
 fun rememberConversationListState(): ConversationListState {
     val lazyListState = rememberLazyListState()
