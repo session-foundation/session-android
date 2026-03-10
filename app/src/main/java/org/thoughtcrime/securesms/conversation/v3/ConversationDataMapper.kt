@@ -55,8 +55,6 @@ class ConversationDataMapper @Inject constructor(
     private val json: Json,
     private val recipientRepository: RecipientRepository
 ) {
-    private val timeZoneOffsetSeconds = TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000
-
     sealed interface ConversationItem {
         data class Message(val data: MessageViewData) : ConversationItem
         data class DateBreak(val messageId: MessageId, val date: String) : ConversationItem

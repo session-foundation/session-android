@@ -28,6 +28,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,7 +75,6 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 swipe to reply
 //todo CONVOv3 inputbar quote/reply
 //todo CONVOv3 proper accessibility on overall message control
-//todo CONVOv3 new "read more" expandable feature
 //todo CONVOv3 verify immutability/stability of data classes
 
 /**
@@ -87,11 +87,16 @@ fun Message(
     modifier: Modifier = Modifier,
     highlight: HighlightMessage? = null,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit = {},
+    onExpandText: (Int) -> Unit = {},
 ) {
     val highlightAlpha = rememberHighlightAlpha(
         messageId = data.id,
         trigger = highlight,
     )
+
+    // Keeping some state in the composable to avoid rebuilding the conversation list each time
+    // small UI state changes locally in a message, like this expanded state
+    var expandedText by rememberSaveable(data.id.serialize()) { mutableStateOf(false) }
 
     when (data.layout) {
         MessageLayout.CONTROL -> {
@@ -101,7 +106,14 @@ fun Message(
             RecipientMessage(
                 data = data,
                 modifier = modifier,
+                expandedText = expandedText,
                 sendCommand = sendCommand,
+                onExpandText = { extraHeightPx ->
+                    if (!expandedText) {
+                        onExpandText(extraHeightPx)
+                        expandedText = true
+                    }
+                },
                 highlightAlpha = highlightAlpha
             )
         }
@@ -113,6 +125,8 @@ fun RecipientMessage(
     data: MessageViewData,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     modifier: Modifier = Modifier,
+    expandedText: Boolean = false,
+    onExpandText: (Int) -> Unit = {},
     highlightAlpha: Float = 0f,
 ){
     val outgoing = data.layout == MessageLayout.OUTGOING
@@ -140,7 +154,9 @@ fun RecipientMessage(
                 .wrapContentWidth(),
             data = data,
             maxWidth = maxMessageWidth,
+            expandedText = expandedText,
             sendCommand = sendCommand,
+            onExpandText = onExpandText,
             highlightAlpha = highlightAlpha
         )
     }
@@ -155,6 +171,8 @@ fun RecipientMessageContent(
     maxWidth: Dp,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
     modifier: Modifier = Modifier,
+    expandedText: Boolean = false,
+    onExpandText: (Int) -> Unit = {},
     highlightAlpha: Float = 0f,
 ) {
     val outgoing = data.layout == MessageLayout.OUTGOING
@@ -219,7 +237,9 @@ fun RecipientMessageContent(
                                     content = content,
                                     layout = data.layout,
                                     maxWidth = maxWidth,
+                                    expandedText = expandedText,
                                     sendCommand = sendCommand,
+                                    onExpandText = onExpandText,
                                     highlightAlpha = highlightAlpha
                                 )
                             }
@@ -287,7 +307,9 @@ fun MessageContentRenderer(
     content: MessageContent,
     layout: MessageLayout,
     maxWidth: Dp,
+    expandedText: Boolean,
     sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    onExpandText: (Int) -> Unit,
     highlightAlpha: Float = 0f,
 ) {
     val isOutgoing = layout == MessageLayout.OUTGOING
@@ -300,13 +322,15 @@ fun MessageContentRenderer(
         )
     ) {
         when (content.contentData) {
-            is MessageContentData.Text -> MessageText(
+            is MessageContentData.Text -> ExpandableMessageText(
                 text = content.contentData.text,
                 isOutgoing = isOutgoing,
+                isExpanded = expandedText,
                 modifier = Modifier.padding(defaultMessageBubblePadding()),
                 onUrlClick = {
                     sendCommand(ConversationV3ViewModel.Commands.ShowOpenUrlDialog(it))
-                }
+                },
+                onExpand = onExpandText
             )
 
             is MessageContentData.Quote -> MessageQuote(

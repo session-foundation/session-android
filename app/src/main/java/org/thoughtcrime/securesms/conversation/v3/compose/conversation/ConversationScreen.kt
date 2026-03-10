@@ -167,7 +167,7 @@ fun Conversation(
                     count = conversationItems.itemCount,
                     key = conversationItems.itemKey { item ->
                         when (item) {
-                            is ConversationItem.Message -> "msg_${item.data.id}"
+                            is ConversationItem.Message -> messageItemKey(item.data.id)
                             is ConversationItem.DateBreak -> "date_${item.date}_${item.messageId}"
                             is ConversationItem.UnreadMarker -> "unread"
                         }
@@ -186,6 +186,16 @@ fun Conversation(
                                 data = item.data,
                                 highlight = listController.highlightKeyFor(item.data.id),
                                 sendCommand = sendCommand,
+                                onExpandText = { extraHeightPx ->
+                                    // when expanding the message, we need to scroll to leave
+                                    // the message visually where we were since the list is reverser
+                                    // otherwise it pushes the top of the message and leaves
+                                    // the bottom anchored
+                                    listController.scrollForMessageTextExpand(
+                                        index = index,
+                                        extraHeightPx = extraHeightPx,
+                                    )
+                                }
                             )
                         }
 
