@@ -365,7 +365,8 @@ fun MessageContentRenderer(
                 CommunityInviteMessage(
                     name = content.contentData.name,
                     url = content.contentData.url,
-                    outgoing = isOutgoing
+                    outgoing = isOutgoing,
+                    onInviteClick = { sendCommand(ConversationCommand.HandleLink(it)) }
                 )
 
             is MessageContentData.Media ->
