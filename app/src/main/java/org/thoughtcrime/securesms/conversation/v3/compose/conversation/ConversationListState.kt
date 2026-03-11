@@ -95,7 +95,7 @@ class ConversationListState(
                     animateToPositioned(index)
                 } else {
                     lazyListState.scrollToItem(index)
-                    yield()
+                    yield() // let Compose remeasure before reading item geometry
                     snapToPosition(index)
                 }
 
