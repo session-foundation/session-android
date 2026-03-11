@@ -51,6 +51,10 @@ class InviteContactsJob @AssistedInject constructor(
     override var failureCount: Int = 0
     override val maxFailureCount: Int = 1
 
+    private fun handleSuccess(dispatcherName: String) {
+        delegate?.handleJobSucceeded(this, dispatcherName)
+    }
+
     override suspend fun execute(dispatcherName: String) {
         val group = requireNotNull(configFactory.getGroup(AccountId(groupSessionId))) {
             "Group must exist to invite"
@@ -118,8 +122,10 @@ class InviteContactsJob @AssistedInject constructor(
                 result.exceptionOrNull()?.let { err -> id to err }
             }
 
-            // if there are failed invites, display a message
             // assume job "success" even if we fail, the state of invites is tracked outside of this job
+            handleSuccess(dispatcherName)
+
+            // if there are failed invites, display a message
             if (failures.isNotEmpty()) {
                 // show the failure toast
                 val (_, firstError) = failures.first()
