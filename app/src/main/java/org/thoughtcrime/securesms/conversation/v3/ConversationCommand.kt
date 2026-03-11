@@ -38,7 +38,7 @@ sealed interface ConversationCommand {
     data class MarkAsDeletedLocally(val messages: Set<MessageRecord>) : DialogCommand
     data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData) : DialogCommand
 
-    data class JoinCommunity(val url: String) : DialogCommand
+    data class OpenOrJoinCommunity(val url: String) : DialogCommand
 
     data class DownloadAttachments(val attachment: DatabaseAttachment) : DialogCommand
     data object HideAttachmentDownloadDialog : DialogCommand

@@ -1229,7 +1229,7 @@ class ConversationViewModel @AssistedInject constructor(
         }
     }
 
-    private fun joinCommunity(url: String){
+    private fun openOrJoinCommunity(url: String){
         val openGroup = try {
             OpenGroupUrlParser.parseUrl(url)
         } catch (_: OpenGroupUrlParser.Error) {
@@ -1247,6 +1247,11 @@ class ConversationViewModel @AssistedInject constructor(
                     room = openGroup.room,
                     publicKey = openGroup.serverPublicKey,
                 )
+
+                // after joining or if already joined, open the conversation
+                _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(
+                    address = Address.Community(openGroup.server, openGroup.room),
+                ))
             } catch (e: Exception) {
                 Log.e("", "Error joining community", e)
                 withContext(Dispatchers.Main) {
@@ -1362,8 +1367,8 @@ class ConversationViewModel @AssistedInject constructor(
                 userProfileModalUtils?.onCommand(command.upmCommand)
             }
 
-            is Commands.JoinCommunity -> {
-                joinCommunity(command.url)
+            is Commands.OpenOrJoinCommunity -> {
+                openOrJoinCommunity(command.url)
             }
 
             is Commands.HideJoinCommunityDialog -> {
@@ -1650,7 +1655,7 @@ class ConversationViewModel @AssistedInject constructor(
             val upmCommand: UserProfileModalCommands
         ): Commands
 
-        data class JoinCommunity(val url: String): Commands
+        data class OpenOrJoinCommunity(val url: String): Commands
         data object HideJoinCommunityDialog: Commands
 
         data class DownloadAttachments(val attachment: DatabaseAttachment): Commands

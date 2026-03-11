@@ -26,10 +26,8 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands
 import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
 import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.ui.dialog.AlertDialog
-import org.thoughtcrime.securesms.ui.dialog.CommunityLinkAlertDialog
 import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
@@ -101,8 +99,8 @@ fun ConversationV2Dialogs(
                     // hide dialog
                     sendCommand(HideOpenUrlDialog)
                 },
-                joinCommunity = {
-                    sendCommand(JoinCommunity(it))
+                openOrJoinCommunity = {
+                    sendCommand(OpenOrJoinCommunity(it))
                 }
             )
         }

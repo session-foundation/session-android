@@ -68,7 +68,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.links.LinkChecker
-import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
@@ -377,7 +376,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
         }
     }
 
-    private fun joinCommunity(url: String) {
+    private fun openOrJoinCommunity(url: String) {
         val openGroup = try {
             OpenGroupUrlParser.parseUrl(url)
         } catch (_: OpenGroupUrlParser.Error) {
@@ -395,6 +394,12 @@ class ConversationV3ViewModel @AssistedInject constructor(
                     room = openGroup.room,
                     publicKey = openGroup.serverPublicKey,
                 )
+
+                // after joining or if already joined, open the conversation
+                //todo convov3 add a way to move from convo to convo
+               /* navigateTo(ConversationV3Destination.RouteConversation(
+                    Address.Community(openGroup.server, openGroup.room)
+                ))*/
             } catch (e: Exception) {
                 Log.e("ConversationV3ViewModel", "Error joining community", e)
                 Toast.makeText(context, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
@@ -504,8 +509,8 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 //userProfileModalUtils?.onCommand(command.upmCommand)
             }
 
-            is ConversationCommand.JoinCommunity -> {
-                joinCommunity(command.url)
+            is ConversationCommand.OpenOrJoinCommunity -> {
+                openOrJoinCommunity(command.url)
             }
 
             is ConversationCommand.DownloadAttachments -> {

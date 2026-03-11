@@ -35,7 +35,7 @@ import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideRecrea
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideRecreateGroupConfirm
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideSimpleDialog
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideUserProfileModal
-import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.JoinCommunity
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.OpenOrJoinCommunity
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.MarkAsDeletedForEveryone
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v3.ConversationDialogsState
@@ -44,7 +44,6 @@ import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
@@ -116,8 +115,8 @@ fun ConversationV3Dialogs(
                     // hide dialog
                     sendCommand(HideUrlDialog)
                 },
-                joinCommunity = {
-                    sendCommand(JoinCommunity(it))
+                openOrJoinCommunity = {
+                    sendCommand(OpenOrJoinCommunity(it))
                 }
             )
         }

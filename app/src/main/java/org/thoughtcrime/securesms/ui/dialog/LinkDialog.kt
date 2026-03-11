@@ -24,7 +24,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 fun LinkAlertDialog(
     data: LinkType,
     onDismissRequest: () -> Unit,
-    joinCommunity: (String) -> Unit,
+    openOrJoinCommunity: (String) -> Unit,
     modifier: Modifier = Modifier,
     onLinkOpened: (String) -> Unit = {},
     onLinkCopied: (String) -> Unit = {},
@@ -45,7 +45,8 @@ fun LinkAlertDialog(
             CommunityLinkAlertDialog(
                 data = data,
                 onDismissRequest = onDismissRequest,
-                joinCommunity = joinCommunity,
+                openOrJoinCommunity = openOrJoinCommunity,
+                canCopyUrl = true,
                 modifier = modifier
             )
     }
@@ -101,8 +102,9 @@ fun OpenURLAlertDialog(
 fun CommunityLinkAlertDialog(
     data: LinkType.CommunityLink,
     onDismissRequest: () -> Unit,
-    joinCommunity: (String) -> Unit,
+    openOrJoinCommunity: (String) -> Unit,
     modifier: Modifier = Modifier,
+    canCopyUrl: Boolean = false
 ) {
     //todo comlink I need to verify both the strings and buttons from design
     val context = LocalContext.current
@@ -120,44 +122,40 @@ fun CommunityLinkAlertDialog(
             .toString()
     }
 
-    val copyButton = DialogButtonData(
-        text = GetString(android.R.string.copyUrl),
-        onClick = {
-            context.copyURLToClipboard(data.url)
-            Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
-        }
+    val openOrJoinButton = DialogButtonData(
+        text = if(data.joined) GetString(R.string.open) else GetString(R.string.join),
+        onClick = { openOrJoinCommunity(data.url) }
     )
 
-    val buttons = if (data.joined) {
-        listOf(copyButton, DialogButtonData(text = GetString(android.R.string.ok)))
+    val buttons = if (canCopyUrl) {
+        listOf(
+            DialogButtonData(
+                text = GetString(android.R.string.copyUrl),
+                onClick = {
+                    context.copyURLToClipboard(data.url)
+                    Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
+                }
+            ),
+            openOrJoinButton
+        )
     } else {
         listOf(
             DialogButtonData(
-                text = GetString(R.string.join),
-                onClick = { joinCommunity(data.url) }
+                text = GetString(android.R.string.cancel)
             ),
-            copyButton
+            openOrJoinButton
         )
     }
+
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         title = title,
         text = text,
+        showCloseButton = canCopyUrl,
         buttons = buttons,
     )
-}
-
-@Preview
-@Composable
-fun PreviewOpenURLDialog() {
-    PreviewTheme {
-        OpenURLAlertDialog(
-            url = "https://getsession.org/",
-            onDismissRequest = {}
-        )
-    }
 }
 
 @Preview
@@ -170,7 +168,7 @@ fun PreviewNewCommunity() {
                 name = "Session",
                 joined = false,
             ),
-            joinCommunity = {},
+            openOrJoinCommunity = {},
             onDismissRequest = {},
         )
     }
@@ -186,8 +184,53 @@ fun PreviewExistingCommunity() {
                 name = "Session",
                 joined = true,
             ),
-            joinCommunity = {},
+            openOrJoinCommunity = {},
             onDismissRequest = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewNewCommunityCopy() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = false,
+            ),
+            canCopyUrl = true,
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewExistingCommunityCopy() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = true,
+            ),
+            canCopyUrl = true,
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewOpenURLDialog() {
+    PreviewTheme {
+        OpenURLAlertDialog(
+            url = "https://getsession.org/",
+            onDismissRequest = {}
         )
     }
 }
