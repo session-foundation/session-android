@@ -62,7 +62,7 @@ fun OpenURLAlertDialog(
     content: @Composable () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val unformattedText = Phrase.from(stringResource(R.string.urlOpenDescription))
+    val unformattedText = Phrase.from(context.getText(R.string.urlOpenDescription))
         .put(URL_KEY, url).format()
 
 
