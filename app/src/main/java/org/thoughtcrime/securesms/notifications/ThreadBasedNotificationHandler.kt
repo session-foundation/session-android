@@ -35,9 +35,8 @@ abstract class ThreadBasedNotificationHandler(
     private val channels: NotificationChannelManager,
     protected val recipientRepository: RecipientRepository,
     private val avatarBitmapCache: AvatarBitmapCache,
+    protected val notificationManager: NotificationManagerCompat,
 ) {
-    protected val notificationManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
-
     protected val currentActivity get() = currentActivityObserver.currentActivity.value
     protected val currentlyShowingConversation: Address.Conversable?
         get() = currentActivityObserver.currentlyShowingConversation

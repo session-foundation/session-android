@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.collection.MutableLongLongMap
 import androidx.collection.arrayMapOf
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -61,13 +62,15 @@ class FullNotificationHandler @Inject constructor(
     avatarUtils: AvatarUtils,
     avatarBitmapCache: AvatarBitmapCache,
     channels: NotificationChannelManager,
+    notificationManager: NotificationManagerCompat,
 ) : ThreadBasedNotificationHandler(
     context = context,
     currentActivityObserver = currentActivityObserver,
     avatarUtils = avatarUtils,
     channels = channels,
     recipientRepository = recipientRepository,
-    avatarBitmapCache = avatarBitmapCache
+    avatarBitmapCache = avatarBitmapCache,
+    notificationManager = notificationManager,
 ) {
 
     private sealed interface Event
@@ -140,7 +143,7 @@ class FullNotificationHandler @Inject constructor(
                 }
 
                 // Early exit if we don't have active notifications for updateOnly mode
-                if (updateOnly && !notificationManager.containsThreadNotification(threadId)) {
+                if (updateOnly && !this@FullNotificationHandler.notificationManager.containsThreadNotification(threadId)) {
                     Log.d(TAG, "threadId=$threadId: updateOnly=true but no active notification — skipping")
                     return
                 }

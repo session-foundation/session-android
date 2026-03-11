@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.preferences.compose
 import android.app.Application
 import android.app.KeyguardManager
 import android.content.Context
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +32,6 @@ import org.thoughtcrime.securesms.preferences.CommunicationPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.ShowCallsWarningDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
-import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
 import javax.inject.Inject
 
 @HiltViewModel
@@ -41,6 +41,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     private val configFactory: ConfigFactory,
     private val app: Application,
     private val typingStatusRepository: TypingStatusRepository,
+    private val notificationManager: NotificationManagerCompat,
 ) : ViewModel() {
 
     private val keyguardSecure = MutableStateFlow(true)
@@ -193,7 +194,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         when (command) {
             is Commands.ToggleCallsNotification -> {
                 prefs.setCallNotificationsEnabled(command.isEnabled)
-                if (command.isEnabled && !areNotificationsEnabled(app)) {
+                if (command.isEnabled && !notificationManager.areNotificationsEnabled()) {
                     _uiState.update { it.copy(showCallsNotificationDialog = true) }
                 }
             }

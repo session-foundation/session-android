@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,6 +29,9 @@ class CallForegroundService : Service() {
     @Inject
     lateinit var notificationChannelManager: NotificationChannelManager
 
+    @Inject
+    lateinit var notificationManager: NotificationManagerCompat
+
     companion object {
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
         const val EXTRA_TYPE = "CALL_STEP_TYPE"
@@ -48,7 +52,7 @@ class CallForegroundService : Service() {
     }
 
     private fun startForeground(type: Int, recipient: Recipient?) {
-        if (CallNotificationBuilder.areNotificationsEnabled(this)) {
+        if (notificationManager.areNotificationsEnabled()) {
             try {
                 ServiceCompat.startForeground(
                     this,

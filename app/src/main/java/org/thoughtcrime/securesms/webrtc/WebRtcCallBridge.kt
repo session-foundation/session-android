@@ -71,6 +71,7 @@ class WebRtcCallBridge @Inject constructor(
     private val storage: StorageProtocol,
     @param:ManagerScope private val scope: CoroutineScope,
     private val notificationChannelManager: NotificationChannelManager,
+    private val notificationManager: NotificationManagerCompat,
 ): CallManager.WebRtcListener, OnAppStartupComponent  {
 
     companion object {
@@ -123,7 +124,7 @@ class WebRtcCallBridge @Inject constructor(
     private fun terminate() {
         Log.d(TAG, "Terminating rtc service")
         context.stopService(Intent(context, CallForegroundService::class.java))
-        NotificationManagerCompat.from(context).cancel(NotificationId.WEBRTC_CALL)
+        notificationManager.cancel(NotificationId.WEBRTC_CALL)
         callManager.stop()
         _hasAcceptedCall.value = false
         currentTimeouts = 0
@@ -568,7 +569,7 @@ class WebRtcCallBridge @Inject constructor(
 
     @SuppressLint("MissingPermission")
     private fun sendNotification(type: Int, recipient: Address?){
-        NotificationManagerCompat.from(context).notify(
+        notificationManager.notify(
             NotificationId.WEBRTC_CALL,
             CallNotificationBuilder.getCallInProgressNotification(
                 context,

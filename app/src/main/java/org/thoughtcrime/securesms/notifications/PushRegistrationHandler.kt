@@ -39,7 +39,7 @@ class PushRegistrationHandler @Inject constructor(
     private val prefs: PreferenceStorage,
     private val tokenFetcher: TokenFetcher,
     @param:ApplicationContext private val context: Context,
-    @param:PushNotificationModule.PushProcessingSemaphore
+    @param:NotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
     private val pushRegistrationDatabase: PushRegistrationDatabase,
 ) : AuthAwareComponent {

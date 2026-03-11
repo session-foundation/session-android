@@ -52,10 +52,9 @@ class NoNameOrContentNotificationHandler @Inject constructor(
     private val recipientRepository: RecipientRepository,
     private val currentActivityObserver: CurrentActivityObserver,
     private val channels: NotificationChannelManager,
+    private val notificationManager: NotificationManagerCompat
 ) {
     private val currentActivity get() = currentActivityObserver.currentActivity.value
-    private val notificationManager: NotificationManagerCompat =
-        NotificationManagerCompat.from(context)
 
     suspend fun process() {
         merge(

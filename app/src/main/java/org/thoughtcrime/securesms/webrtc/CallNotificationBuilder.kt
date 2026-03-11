@@ -30,12 +30,6 @@ class CallNotificationBuilder {
         const val TYPE_INCOMING_PRE_OFFER  = 5
 
         @JvmStatic
-        fun areNotificationsEnabled(context: Context): Boolean {
-            val notificationManager = NotificationManagerCompat.from(context)
-            return notificationManager.areNotificationsEnabled()
-        }
-
-        @JvmStatic
         fun getCallInProgressNotification(
             context: Context,
             type: Int,

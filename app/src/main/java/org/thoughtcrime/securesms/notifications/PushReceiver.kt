@@ -51,6 +51,7 @@ class PushReceiver @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val loginStateRepository: LoginStateRepository,
     private val notificationChannelManager: NotificationChannelManager,
+    private val notificationManagerCompat: NotificationManagerCompat,
 ) {
 
     /**
@@ -227,7 +228,7 @@ class PushReceiver @Inject constructor(
             .setAutoCancel(true)
             .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
 
-        NotificationManagerCompat.from(context).notify(NotificationId.LEGACY_PUSH, builder.build())
+        notificationManagerCompat.notify(NotificationId.LEGACY_PUSH, builder.build())
     }
 
     private fun Map<String, String>.asPushData(): PushData =
