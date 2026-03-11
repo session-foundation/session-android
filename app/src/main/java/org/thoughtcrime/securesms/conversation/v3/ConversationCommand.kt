@@ -30,8 +30,8 @@ sealed interface ConversationCommand {
         val highlight: Boolean = true,
     ) : ScreenCommand, MessageCommand
 
-    data class OpenUrl(val url: String) : MessageCommand
-    data object HideOpenUrlDialog : DialogCommand
+    data class HandleLink(val url: String) : MessageCommand
+    data object HideUrlDialog : DialogCommand
     data class ClearEmoji(val emoji: String, val messageId: MessageId) : DialogCommand
     data object HideDeleteEveryoneDialog : DialogCommand
     data object HideClearEmoji : DialogCommand
@@ -39,7 +39,6 @@ sealed interface ConversationCommand {
     data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData) : DialogCommand
 
     data class JoinCommunity(val url: String) : DialogCommand
-    data object HideJoinCommunityDialog : DialogCommand
 
     data class DownloadAttachments(val attachment: DatabaseAttachment) : DialogCommand
     data object HideAttachmentDownloadDialog : DialogCommand

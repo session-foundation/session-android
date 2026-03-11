@@ -266,93 +266,7 @@ fun AlertDialogContent(
 
 }
 
-@Composable
-fun OpenURLAlertDialog(
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-    url: String,
-    onLinkOpened: (String) -> Unit = {},
-    onLinkCopied: (String) -> Unit = {},
-    content: @Composable () -> Unit = {}
-) {
-    val context = LocalContext.current
-    val unformattedText = Phrase.from(context.getText(R.string.urlOpenDescription))
-        .put(URL_KEY, url).format()
 
-
-    AlertDialog(
-        modifier = modifier,
-        title = AnnotatedString(stringResource(R.string.urlOpen)),
-        text = annotatedStringResource(text = unformattedText),
-        maxLines = 5,
-        showCloseButton = true, // display the 'x' button
-        buttons = listOf(
-            DialogButtonData(
-                text = GetString(R.string.open),
-                color = LocalColors.current.danger,
-                dismissOnClick = false,
-                onClick = {
-                    if(context.openUrl(url)){
-                        onLinkOpened(url)
-                        onDismissRequest()
-                    }
-                }
-            ),
-            DialogButtonData(
-                text = GetString(android.R.string.copyUrl),
-                onClick = {
-                    onLinkCopied(url)
-                    context.copyURLToClipboard(url)
-                    Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
-                }
-            )
-        ),
-        onDismissRequest = onDismissRequest,
-        content = content
-    )
-}
-
-@Composable
-fun CommunityLinkAlertDialog(
-    link: LinkType.CommunityLink,
-    onDismissRequest: () -> Unit,
-    onJoinCommunity: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val title = if (link.joined) {
-        stringResource(R.string.communityJoined)
-    } else {
-        stringResource(R.string.communityJoin)
-    }
-    val text = if (link.joined) {
-        stringResource(R.string.communityJoinedAlready)
-    } else {
-        Phrase.from(context, R.string.communityJoinDescription)
-            .put(COMMUNITY_NAME_KEY, link.name)
-            .format()
-            .toString()
-    }
-    val buttons = if (link.joined) {
-        listOf(DialogButtonData(text = GetString(android.R.string.ok)))
-    } else {
-        listOf(
-            DialogButtonData(
-                text = GetString(R.string.join),
-                onClick = { onJoinCommunity(link.url) }
-            ),
-            DialogButtonData(text = GetString(R.string.cancel))
-        )
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        modifier = modifier,
-        title = title,
-        text = text,
-        buttons = buttons,
-    )
-}
 
 @Composable
 fun DialogButton(
@@ -504,17 +418,6 @@ fun PreviewXCloseNoButtonsDialog() {
             title = stringResource(R.string.urlOpen),
             text = stringResource(R.string.urlOpenBrowser),
             showCloseButton = true, // display the 'x' button
-            onDismissRequest = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewOpenURLDialog() {
-    PreviewTheme {
-        OpenURLAlertDialog(
-            url = "https://getsession.org/",
             onDismissRequest = {}
         )
     }

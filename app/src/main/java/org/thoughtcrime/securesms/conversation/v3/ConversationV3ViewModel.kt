@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v3
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -44,17 +45,17 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
-import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
 import org.session.libsession.utilities.toGroupString
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -64,8 +65,10 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
+import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.links.LinkChecker
+import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
@@ -93,6 +96,8 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private val attachmentDatabase: AttachmentDatabase,
     private val reactionDb: ReactionDatabase,
     private val dataMapper: ConversationDataMapper,
+    private val openGroupManager: OpenGroupManager,
+    private val linkChecker: LinkChecker,
     private val proStatusManager: ProStatusManager,
     ) : InputbarViewModel(
     context = context,
@@ -364,6 +369,40 @@ class ConversationV3ViewModel @AssistedInject constructor(
         }
     }
 
+    private fun handleLink(url: String) {
+        _dialogsState.update {
+            it.copy(
+                urlDialog =  linkChecker.check(url),
+            )
+        }
+    }
+
+    private fun joinCommunity(url: String) {
+        val openGroup = try {
+            OpenGroupUrlParser.parseUrl(url)
+        } catch (_: OpenGroupUrlParser.Error) {
+            Toast.makeText(context, R.string.communityEnterUrlErrorInvalidDescription, Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
+
+        _dialogsState.update { it.copy(urlDialog = null) }
+
+        viewModelScope.launch {
+            try {
+                openGroupManager.add(
+                    server = openGroup.server,
+                    room = openGroup.room,
+                    publicKey = openGroup.serverPublicKey,
+                )
+            } catch (e: Exception) {
+                Log.e("ConversationV3ViewModel", "Error joining community", e)
+                Toast.makeText(context, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+
     fun onCommand(command: ConversationCommand) {
         when (command) {
             // Navigation
@@ -396,15 +435,13 @@ class ConversationV3ViewModel @AssistedInject constructor(
             }
 
             // Dialog related
-            is ConversationCommand.OpenUrl -> {
-                _dialogsState.update {
-                    it.copy(openLinkDialogUrl = command.url)
-                }
+            is ConversationCommand.HandleLink -> {
+                handleLink(command.url)
             }
 
-            ConversationCommand.HideOpenUrlDialog -> {
+            ConversationCommand.HideUrlDialog -> {
                 _dialogsState.update {
-                    it.copy(openLinkDialogUrl = null)
+                    it.copy(urlDialog = null)
                 }
             }
 
@@ -468,16 +505,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
             }
 
             is ConversationCommand.JoinCommunity -> {
-                //todo convov3 implement
-                //joinCommunity(command.url)
-            }
-
-            ConversationCommand.HideJoinCommunityDialog -> {
-                _dialogsState.update {
-                    it.copy(
-                        joinCommunity = null
-                    )
-                }
+                joinCommunity(command.url)
             }
 
             is ConversationCommand.DownloadAttachments -> {

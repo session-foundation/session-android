@@ -330,7 +330,7 @@ fun MessageContentRenderer(
                 isOutgoing = isOutgoing,
                 isExpanded = expandedText,
                 modifier = Modifier.padding(defaultMessageBubblePadding()),
-                onUrlClick = { sendCommand(ConversationCommand.OpenUrl(it)) },
+                onUrlClick = { sendCommand(ConversationCommand.HandleLink(it)) },
                 onExpand = onExpandText
             )
 

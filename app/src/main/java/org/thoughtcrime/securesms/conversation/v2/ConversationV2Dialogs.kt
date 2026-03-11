@@ -18,28 +18,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.InputBarDialogs
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.*
 import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
-import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.links.LinkType
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.CommunityLinkAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
-import kotlin.text.format
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,13 +93,16 @@ fun ConversationV2Dialogs(
             sendCommand = sendInputBarCommand
         )
 
-        // open link confirmation
-        if(!dialogsState.openLinkDialogUrl.isNullOrEmpty()){
-            OpenURLAlertDialog(
-                url = dialogsState.openLinkDialogUrl,
+        // Link dialogs
+        if(dialogsState.urlDialog != null){
+            LinkAlertDialog(
+                data = dialogsState.urlDialog,
                 onDismissRequest = {
                     // hide dialog
-                    sendCommand(ShowOpenUrlDialog(null))
+                    sendCommand(HideOpenUrlDialog)
+                },
+                joinCommunity = {
+                    sendCommand(JoinCommunity(it))
                 }
             )
         }
@@ -273,30 +276,6 @@ fun ConversationV2Dialogs(
             )
         }
 
-        // Join community
-        if(dialogsState.joinCommunity != null){
-            AlertDialog(
-                onDismissRequest = {
-                    // hide dialog
-                    sendCommand(HideJoinCommunityDialog)
-                },
-                title = stringResource(R.string.communityJoin),
-                text = Phrase.from(LocalContext.current, R.string.communityJoinDescription)
-                    .put(COMMUNITY_NAME_KEY, dialogsState.joinCommunity.communityName).format().toString(),
-                buttons = listOf(
-                    DialogButtonData(
-                        text = GetString(stringResource(id = R.string.join)),
-                        onClick = {
-                            sendCommand(JoinCommunity(dialogsState.joinCommunity.communityUrl))
-                        }
-                    ),
-                    DialogButtonData(
-                        GetString(stringResource(R.string.cancel))
-                    )
-                )
-            )
-        }
-
         // Attachment downloads
         if(dialogsState.attachmentDownload != null){
             AlertDialog(
@@ -333,7 +312,7 @@ fun PreviewURLDialog(){
     PreviewTheme {
         ConversationV2Dialogs(
             dialogsState = ConversationViewModel.DialogsState(
-                openLinkDialogUrl = "https://google.com"
+                urlDialog = LinkType.GenericLink("https://google.com")
             ),
             inputBarDialogsState = InputbarViewModel.InputBarDialogsState(),
             sendCommand = {},
