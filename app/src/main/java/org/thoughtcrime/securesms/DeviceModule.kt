@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import network.loki.messenger.BuildConfig
+import org.session.libsession.utilities.Device
 import javax.inject.Singleton
 
 @Module
@@ -12,5 +13,5 @@ import javax.inject.Singleton
 object DeviceModule {
     @Provides
     @Singleton
-    fun provides() = BuildConfig.DEVICE
+    fun provides(): Device = BuildConfig.DEVICE
 }

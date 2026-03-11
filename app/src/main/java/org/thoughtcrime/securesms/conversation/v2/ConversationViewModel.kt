@@ -94,6 +94,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.audio.AudioPlaybackManager
+import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindMappingRepository
@@ -183,7 +184,8 @@ class ConversationViewModel @AssistedInject constructor(
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
 
-    val audioPlaybackState = audioPlaybackManager.playbackState
+    val audioPlaybackState: StateFlow<AudioPlaybackState> = audioPlaybackManager.playbackState
+
 
     val threadIdFlow: StateFlow<Long?> =
         storage.getThreadId(address)

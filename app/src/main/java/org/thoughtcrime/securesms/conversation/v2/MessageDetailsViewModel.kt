@@ -80,10 +80,10 @@ class MessageDetailsViewModel @AssistedInject constructor(
     attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
 ) : ViewModel() {
     private val state = MutableStateFlow(MessageDetailsState())
-    val stateFlow = state.asStateFlow()
+    val stateFlow: StateFlow<MessageDetailsState> = state.asStateFlow()
 
     private val event = Channel<Event>()
-    val eventFlow = event.receiveAsFlow()
+    val eventFlow: Flow<Event> = event.receiveAsFlow()
 
     private val _dialogState: MutableStateFlow<DialogsState> = MutableStateFlow(DialogsState())
     val dialogState: StateFlow<DialogsState> = _dialogState

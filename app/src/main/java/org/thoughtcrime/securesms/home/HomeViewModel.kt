@@ -39,6 +39,7 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioPlaybackManager
+import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -112,7 +113,7 @@ class HomeViewModel @Inject constructor(
     )
     val uiEvents: SharedFlow<UiEvent> = _uiEvents
 
-    val audioPlaybackState = audioPlaybackManager.playbackState
+    val audioPlaybackState: StateFlow<AudioPlaybackState> = audioPlaybackManager.playbackState
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -285,7 +286,7 @@ class HomeViewModel @Inject constructor(
         .distinctUntilChanged()
 
 
-    fun tryReload() = manualReloadTrigger.tryEmit(Unit)
+    fun tryReload(): Boolean = manualReloadTrigger.tryEmit(Unit)
 
     fun onSearchClicked() {
         mutableIsSearchOpen.value = true
