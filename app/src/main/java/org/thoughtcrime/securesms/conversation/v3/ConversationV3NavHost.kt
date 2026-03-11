@@ -216,7 +216,7 @@ fun ConversationV3NavHost(
                     pendingScrollMessageId ?: return@LaunchedEffect
 
                     viewModel.onCommand(
-                        ConversationV3ViewModel.Commands.ScrollToMessage(
+                        ConversationCommand.ScrollToMessage(
                             messageId = pendingScrollMessageId,
                             smoothScroll = false,
                             highlight = true,

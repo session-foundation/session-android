@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.image
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.mediaGroup
@@ -48,7 +50,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
 @Composable
 fun MediaMessage(
-    items: List<MessageMediaItem>,
+    items: ImmutableList<MessageMediaItem>,
     loading: Boolean,
     maxWidth: Dp,
     modifier: Modifier = Modifier,
@@ -175,7 +177,7 @@ fun MediaMessagePreview(
                 displayName = "Toto",
                 layout = MessageLayout.OUTGOING,
                 contentGroups = mediaGroup(
-                    listOf(image(
+                    persistentListOf(image(
                         width = 50,
                         height = 100,
                         loading = false
@@ -190,7 +192,7 @@ fun MediaMessagePreview(
                 displayName = "Toto",
                 layout = MessageLayout.OUTGOING,
                 contentGroups = mediaGroup(
-                    listOf(image(), video()), null)
+                    persistentListOf(image(), video()), null)
                 )
             )
 
@@ -210,7 +212,7 @@ fun MediaMessagePreview(
                     displayName = "Toto",
                     layout = MessageLayout.OUTGOING,
                     contentGroups = mediaGroup(
-                        items = listOf(video(), image(), image()),
+                        items = persistentListOf(video(), image(), image()),
                         text = "This also has text"
                     )
                 ),
@@ -223,9 +225,9 @@ fun MediaMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.OUTGOING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(PreviewMessageData.quote()),
-                    mediaGroup(listOf(video(), image(), image()))
+                    mediaGroup(persistentListOf(video(), image(), image()))
                 )
             ))
 
@@ -235,9 +237,9 @@ fun MediaMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.INCOMING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(PreviewMessageData.quote()),
-                    mediaGroup(listOf(video(), image(), image()))
+                    mediaGroup(persistentListOf(video(), image(), image()))
                 )
             ))
 
@@ -248,9 +250,9 @@ fun MediaMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.OUTGOING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(PreviewMessageData.quote(), text("This also has text")),
-                    mediaGroup(listOf(video(), image(), image()))
+                    mediaGroup(persistentListOf(video(), image(), image()))
                 )
             ))
 
@@ -260,9 +262,9 @@ fun MediaMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.INCOMING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(PreviewMessageData.quote(), text("This also has text")),
-                    mediaGroup(listOf(video(), image(), image()))
+                    mediaGroup(persistentListOf(video(), image(), image()))
                 )
             ))
         }

@@ -39,10 +39,12 @@ import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.collections.immutable.persistentListOf
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand
 import org.thoughtcrime.securesms.conversation.v3.ConversationDataMapper.ConversationItem
+import org.thoughtcrime.securesms.conversation.v3.ConversationScrollState
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.ConversationScrollState
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Message
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLayout
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewData
@@ -110,7 +112,7 @@ fun Conversation(
     appBarData: ConversationAppBarData,
     conversationItems: LazyPagingItems<ConversationItem>,
     scrollEvent: Flow<ConversationV3ViewModel.ScrollEvent>,
-    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    sendCommand: (ConversationCommand) -> Unit,
     switchConvoVersion: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -126,7 +128,7 @@ fun Conversation(
     // Report scroll state to VM
     val scrollState by listController.lazyListState.asConversationScrollState()
     LaunchedEffect(scrollState) {
-        sendCommand(ConversationV3ViewModel.Commands.OnScrollStateChanged(scrollState))
+        sendCommand(ConversationCommand.OnScrollStateChanged(scrollState))
     }
 
     Scaffold(
@@ -142,7 +144,7 @@ fun Conversation(
                 switchConvoVersion = switchConvoVersion,
                 onAvatarPressed = {
                     sendCommand(
-                        ConversationV3ViewModel.Commands.GoTo(
+                        ConversationCommand.GoTo(
                             ConversationV3Destination.RouteConversationSettings
                         )
                     )
@@ -234,7 +236,7 @@ fun Conversation(
                     // buttonLabel is guaranteed non-null inside AnimatedVisibility when visible=true,
                     // but we provide a safe fallback anyway
                     unreadLabel = buttonLabel ?: "",
-                    onClick = { sendCommand(ConversationV3ViewModel.Commands.ScrollToBottom) },
+                    onClick = { sendCommand(ConversationCommand.ScrollToBottom) },
                 )
             }
         }
@@ -283,7 +285,7 @@ fun PreviewConversation(
                                 layout = MessageLayout.INCOMING,
                                 contentGroups = textGroup("I have lots of reactions - Closed"),
                                 reactions = ReactionViewState(
-                                    reactions = listOf(
+                                    reactions = persistentListOf(
                                         ReactionItem("👍", 3, selected = true),
                                         ReactionItem("❤️", 12, selected = false),
                                         ReactionItem("😂", 1, selected = false),

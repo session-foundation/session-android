@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,8 +46,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import androidx.core.net.toUri
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -86,7 +90,7 @@ fun Message(
     data: MessageViewData,
     modifier: Modifier = Modifier,
     highlight: HighlightMessage? = null,
-    sendCommand: (ConversationV3ViewModel.Commands) -> Unit = {},
+    sendCommand: (ConversationCommand.MessageCommand) -> Unit = {},
     onExpandText: (MessageId, Int) -> Unit = { _, _ -> },
 ) {
     val highlightAlpha = rememberHighlightAlpha(
@@ -123,7 +127,7 @@ fun Message(
 @Composable
 fun RecipientMessage(
     data: MessageViewData,
-    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    sendCommand: (ConversationCommand.MessageCommand) -> Unit,
     modifier: Modifier = Modifier,
     expandedText: Boolean = false,
     onExpandText: (Int) -> Unit = {},
@@ -169,7 +173,7 @@ fun RecipientMessage(
 fun RecipientMessageContent(
     data: MessageViewData,
     maxWidth: Dp,
-    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    sendCommand: (ConversationCommand.MessageCommand) -> Unit,
     modifier: Modifier = Modifier,
     expandedText: Boolean = false,
     onExpandText: (Int) -> Unit = {},
@@ -308,7 +312,7 @@ fun MessageContentRenderer(
     layout: MessageLayout,
     maxWidth: Dp,
     expandedText: Boolean,
-    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    sendCommand: (ConversationCommand.MessageCommand) -> Unit,
     onExpandText: (Int) -> Unit,
     highlightAlpha: Float = 0f,
 ) {
@@ -327,9 +331,7 @@ fun MessageContentRenderer(
                 isOutgoing = isOutgoing,
                 isExpanded = expandedText,
                 modifier = Modifier.padding(defaultMessageBubblePadding()),
-                onUrlClick = {
-                    sendCommand(ConversationV3ViewModel.Commands.ShowOpenUrlDialog(it))
-                },
+                onUrlClick = { sendCommand(ConversationCommand.OpenUrl(it)) },
                 onExpand = onExpandText
             )
 
@@ -337,17 +339,15 @@ fun MessageContentRenderer(
                 quote = content.contentData.data,
                 outgoing = isOutgoing,
                 onQuoteTapped = { messageId ->
-                    sendCommand(
-                        ConversationV3ViewModel.Commands.ScrollToMessage(messageId)
-                    )
-                }
+                    sendCommand(ConversationCommand.ScrollToMessage(messageId))
+                },
             )
 
             is MessageContentData.Link ->
                 MessageLink(
                     data = content.contentData.data,
                     outgoing = isOutgoing,
-                    sendCommand = sendCommand
+                    sendCommand = sendCommand,
                 )
 
             is MessageContentData.Document ->
@@ -443,10 +443,11 @@ internal fun defaultMessageBubblePadding() = PaddingValues(
     vertical = LocalDimensions.current.messageVerticalPadding
 )
 
+@Immutable
 data class MessageViewData(
     val id: MessageId,
     val layout: MessageLayout,
-    val contentGroups: List<MessageContentGroup>,
+    val contentGroups: ImmutableList<MessageContentGroup>,
     val displayName: String,
     val displayNameExtra: String? = null,  // when you want to add extra text to the display name, like the blinded id - after the pro badge)
     val showDisplayName: Boolean = false,
@@ -457,24 +458,28 @@ data class MessageViewData(
     val clusterPosition: ClusterPosition = ClusterPosition.ISOLATED
 )
 
+@Immutable
 data class MessageContentGroup(
-    val contents: List<MessageContent>,
+    val contents: ImmutableList<MessageContent>,
     val showBubble: Boolean = true //whether the grouped content should be placed in a bubble
 )
 
+@Immutable
 data class MessageContent(
     val contentData: MessageContentData,
     val extraPadding: MessageContentPadding = MessageContentPadding.None
 )
 
+@Immutable
 sealed interface MessageContentPadding{
     data object None: MessageContentPadding
     data object Bottom: MessageContentPadding
 }
 
+@Immutable
 sealed interface MessageContentData {
     data class Text(val text: AnnotatedString) : MessageContentData
-    data class Media(val items: List<MessageMediaItem>, val loading: Boolean) : MessageContentData
+    data class Media(val items: ImmutableList<MessageMediaItem>, val loading: Boolean) : MessageContentData
     data class Link(val data: MessageLinkData) : MessageContentData
     data class Quote(val data: QuoteMessageData) : MessageContentData
     data class Document(val data: DocumentMessageData) : MessageContentData
@@ -503,11 +508,13 @@ sealed interface MessageAvatar {
     data class Visible(val data: AvatarUIData): MessageAvatar
 }
 
+@Immutable
 data class ReactionViewState(
-    val reactions: List<ReactionItem>,
+    val reactions: ImmutableList<ReactionItem>,
     val isExtended: Boolean,
 )
 
+@Immutable
 data class ReactionItem(
     val emoji: String,
     val count: Int,
@@ -621,7 +628,7 @@ fun MessageReactionsPreview(
                     text = "I have 3 emoji reactions"
                 ),
                 reactions = ReactionViewState(
-                    reactions = listOf(
+                    reactions = persistentListOf(
                         ReactionItem("👍", 3, selected = true),
                         ReactionItem("❤️", 12, selected = false),
                         ReactionItem("😂", 1, selected = false),
@@ -641,7 +648,7 @@ fun MessageReactionsPreview(
                     text = "I have lots of reactions - Closed"
                 ),
                 reactions = ReactionViewState(
-                    reactions = listOf(
+                    reactions = persistentListOf(
                         ReactionItem("👍", 3, selected = true),
                         ReactionItem("❤️", 12, selected = false),
                         ReactionItem("😂", 1, selected = false),
@@ -667,7 +674,7 @@ fun MessageReactionsPreview(
                     text = "I have lots of reactions - Open"
                 ),
                 reactions = ReactionViewState(
-                    reactions = listOf(
+                    reactions = persistentListOf(
                         ReactionItem("👍", 3, selected = true),
                         ReactionItem("❤️", 12, selected = false),
                         ReactionItem("😂", 1, selected = false),
@@ -736,19 +743,19 @@ object PreviewMessageData {
         icon = MessageViewStatusIcon.DrawableIcon(icon = R.drawable.ic_circle_check)
     )
 
-    fun textGroup(text: String = "Hi there") = listOf(
-        MessageContentGroup(listOf(MessageContent(text(text))), showBubble = true)
+    fun textGroup(text: String = "Hi there") = persistentListOf(
+        MessageContentGroup(persistentListOf(MessageContent(text(text))), showBubble = true)
     )
 
-    fun textGroup(text: AnnotatedString) = listOf(
-        MessageContentGroup(listOf(MessageContent(text(text))), showBubble = true)
+    fun textGroup(text: AnnotatedString) = persistentListOf(
+        MessageContentGroup(persistentListOf(MessageContent(text(text))), showBubble = true)
     )
 
     fun audioGroup(
         title: String = "Voice Message",
         playing: Boolean = true
-    ) = listOf(
-        MessageContentGroup(listOf(MessageContent(MessageContentData.Audio(AudioMessageData(
+    ) = persistentListOf(
+        MessageContentGroup(persistentListOf(MessageContent(MessageContentData.Audio(AudioMessageData(
             title = title, speedText = "1x", remainingText = "0:20",
             durationMs = 83_000L, positionMs = 23_000L, isPlaying = playing, showLoader = false
         )))), showBubble = true)
@@ -757,22 +764,25 @@ object PreviewMessageData {
     fun documentGroup(
         name: String = "Document.pdf",
         loading: Boolean = false
-    ) = listOf(
-        MessageContentGroup(listOf(MessageContent(document(name, loading))), showBubble = true)
+    ) = persistentListOf(
+        MessageContentGroup(persistentListOf(MessageContent(document(name, loading))), showBubble = true)
     )
 
     fun mediaGroup(
-        items: List<MessageMediaItem>,
+        items: ImmutableList<MessageMediaItem>,
         text: String? = null
     ) = buildList {
         if(text != null) add(MessageContentGroup(
-            listOf(MessageContent(MessageContentData.Text(AnnotatedString(text)))), showBubble = true))
+            persistentListOf(MessageContent(MessageContentData.Text(AnnotatedString(text)))), showBubble = true))
         add(mediaGroup(items))
-    }
+    }.toImmutableList()
 
     fun mediaGroup(
-        items: List<MessageMediaItem>,
-    ) = MessageContentGroup(listOf(MessageContent(MessageContentData.Media(items, false))), showBubble = false)
+        items: ImmutableList<MessageMediaItem>,
+    ) = MessageContentGroup(
+        persistentListOf(MessageContent(MessageContentData.Media(items, false))),
+        showBubble = false,
+    )
 
     fun quoteGroup(
         icon: MessageQuoteIcon = MessageQuoteIcon.Bar,
@@ -780,7 +790,7 @@ object PreviewMessageData {
         subtitle: String = "This is a quote",
         text: String? = null,
         showProBadge: Boolean = false
-    ): List<MessageContentGroup> {
+    ): ImmutableList<MessageContentGroup> {
         val group = mutableListOf<MessageContentData>()
         group.add(
             quote(title = title, subtitle = subtitle, icon = icon, showProBadge = showProBadge)
@@ -788,7 +798,9 @@ object PreviewMessageData {
 
         if(text != null) group.add(MessageContentData.Text(AnnotatedString(text)))
 
-        return listOf(MessageContentGroup(group.map { MessageContent(it) }, showBubble = true))
+        return persistentListOf(
+            MessageContentGroup(group.map { MessageContent(it) }.toImmutableList(), showBubble = true)
+        )
     }
 
     // Individual item helpers
@@ -812,7 +824,7 @@ object PreviewMessageData {
 
     fun composeContent(vararg content: MessageContentData): MessageContentGroup {
         return MessageContentGroup(
-            contents = content.map { MessageContent(it) },
+            contents = content.map { MessageContent(it) }.toImmutableList(),
         )
     }
 }

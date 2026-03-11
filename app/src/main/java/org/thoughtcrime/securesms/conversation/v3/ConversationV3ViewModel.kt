@@ -67,15 +67,12 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
-import org.thoughtcrime.securesms.util.UserProfileModalCommands
-import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.mapToStateFlow
 
 
@@ -125,8 +122,8 @@ class ConversationV3ViewModel @AssistedInject constructor(
     )
     val uiState: StateFlow<UIState> = _uiState
 
-    private val _dialogsState = MutableStateFlow(DialogsState())
-    val dialogsState: StateFlow<DialogsState> = _dialogsState
+    private val _dialogsState = MutableStateFlow(ConversationDialogsState())
+    val dialogsState: StateFlow<ConversationDialogsState> = _dialogsState
 
     private val _scrollEvent = Channel<ScrollEvent>(Channel.CONFLATED)
     val scrollEvent: Flow<ScrollEvent> = _scrollEvent.receiveAsFlow()
@@ -367,28 +364,28 @@ class ConversationV3ViewModel @AssistedInject constructor(
         }
     }
 
-    fun onCommand(command: Commands) {
+    fun onCommand(command: ConversationCommand) {
         when (command) {
             // Navigation
-            is Commands.GoTo -> {
+            is ConversationCommand.GoTo -> {
                 navigateTo(command.destination)
             }
 
             // Conversation screen
-            is Commands.OnScrollStateChanged -> {
+            is ConversationCommand.OnScrollStateChanged -> {
                 if (command.scrollState != scrollState) {
                     scrollState = command.scrollState
                     updateScrollToBottomButton()
                 }
             }
 
-            is Commands.ScrollToBottom -> {
+            ConversationCommand.ScrollToBottom -> {
                 scrollState = scrollState.copy(isNearBottom = true, isFullyScrolled = true)
                 _uiState.update { it.copy(scrollToBottomButton = null) }
                 _scrollEvent.trySend(ScrollEvent.ToBottom)
             }
 
-            is Commands.ScrollToMessage -> {
+            is ConversationCommand.ScrollToMessage -> {
                 _scrollEvent.trySend(
                     ScrollEvent.ToMessage(
                         messageId = command.messageId,
@@ -399,25 +396,31 @@ class ConversationV3ViewModel @AssistedInject constructor(
             }
 
             // Dialog related
-            is Commands.ShowOpenUrlDialog -> {
+            is ConversationCommand.OpenUrl -> {
                 _dialogsState.update {
                     it.copy(openLinkDialogUrl = command.url)
                 }
             }
 
-            is Commands.HideDeleteEveryoneDialog -> {
+            ConversationCommand.HideOpenUrlDialog -> {
+                _dialogsState.update {
+                    it.copy(openLinkDialogUrl = null)
+                }
+            }
+
+            ConversationCommand.HideDeleteEveryoneDialog -> {
                 _dialogsState.update {
                     it.copy(deleteEveryone = null)
                 }
             }
 
-            is Commands.HideClearEmoji -> {
+            ConversationCommand.HideClearEmoji -> {
                 _dialogsState.update {
                     it.copy(clearAllEmoji = null)
                 }
             }
 
-            is Commands.MarkAsDeletedLocally -> {
+            is ConversationCommand.MarkAsDeletedLocally -> {
                 // hide dialog first
                 _dialogsState.update {
                     it.copy(deleteEveryone = null)
@@ -426,21 +429,21 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 //todo convov3 implement 'deleteLocally'
                 //deleteLocally(command.messages)
             }
-            is Commands.MarkAsDeletedForEveryone -> {
+            is ConversationCommand.MarkAsDeletedForEveryone -> {
                 //todo convov3 implement
             }
 
-            is Commands.ClearEmoji -> {
+            is ConversationCommand.ClearEmoji -> {
                 //todo convov3 implement
             }
 
-            Commands.HideRecreateGroupConfirm -> {
+            ConversationCommand.HideRecreateGroupConfirm -> {
                 _dialogsState.update {
                     it.copy(recreateGroupConfirm = false)
                 }
             }
 
-            Commands.ConfirmRecreateGroup -> {
+            ConversationCommand.ConfirmRecreateGroup -> {
                 _dialogsState.update {
                     it.copy(
                         recreateGroupConfirm = false,
@@ -449,27 +452,27 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 }
             }
 
-            Commands.HideRecreateGroup -> {
+            ConversationCommand.HideRecreateGroup -> {
                 _dialogsState.update {
                     it.copy(recreateGroupData = null)
                 }
             }
 
-            is Commands.HideUserProfileModal -> {
+            ConversationCommand.HideUserProfileModal -> {
                 _dialogsState.update { it.copy(userProfileModal = null) }
             }
 
-            is Commands.HandleUserProfileCommand -> {
+            is ConversationCommand.HandleUserProfileCommand -> {
                 //todo convov3 implement
                 //userProfileModalUtils?.onCommand(command.upmCommand)
             }
 
-            is Commands.JoinCommunity -> {
+            is ConversationCommand.JoinCommunity -> {
                 //todo convov3 implement
                 //joinCommunity(command.url)
             }
 
-            is Commands.HideJoinCommunityDialog -> {
+            ConversationCommand.HideJoinCommunityDialog -> {
                 _dialogsState.update {
                     it.copy(
                         joinCommunity = null
@@ -477,7 +480,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 }
             }
 
-            is Commands.DownloadAttachments -> {
+            is ConversationCommand.DownloadAttachments -> {
                 viewModelScope.launch {
                     val databaseAttachment = command.attachment
 
@@ -500,7 +503,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 }
             }
 
-            is Commands.HideAttachmentDownloadDialog -> {
+            ConversationCommand.HideAttachmentDownloadDialog -> {
                 _dialogsState.update {
                     it.copy(
                         attachmentDownload = null
@@ -508,7 +511,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 }
             }
 
-            Commands.HideSimpleDialog -> {
+            ConversationCommand.HideSimpleDialog -> {
                 _dialogsState.update {
                     it.copy(showSimpleDialog = null)
                 }
@@ -521,49 +524,6 @@ class ConversationV3ViewModel @AssistedInject constructor(
             navigator.navigate(destination)
         }
     }
-
-
-    sealed interface Commands {
-        data class GoTo(val destination: ConversationV3Destination) : Commands
-
-        // Conversation screen
-        /** Compose reports current scroll state — VM derives all scroll-dependent logic from this */
-        data class OnScrollStateChanged(val scrollState: ConversationScrollState) : Commands
-
-        data object ScrollToBottom : Commands
-
-        data class ScrollToMessage(
-            val messageId: MessageId,
-            val smoothScroll: Boolean = true,
-            val highlight: Boolean = true,
-        ) : Commands
-
-        // Dialogs
-        data class ShowOpenUrlDialog(val url: String?) : Commands
-        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands
-        data object HideDeleteEveryoneDialog : Commands
-        data object HideClearEmoji : Commands
-        data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands
-        data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands
-
-        data class JoinCommunity(val url: String): Commands
-        data object HideJoinCommunityDialog: Commands
-
-        data class DownloadAttachments(val attachment: DatabaseAttachment): Commands
-        data object HideAttachmentDownloadDialog: Commands
-
-        data object HideSimpleDialog : Commands
-
-        data object ConfirmRecreateGroup : Commands
-        data object HideRecreateGroupConfirm : Commands
-        data object HideRecreateGroup : Commands
-
-        data object HideUserProfileModal: Commands
-        data class HandleUserProfileCommand(
-            val upmCommand: UserProfileModalCommands
-        ): Commands
-    }
-
     @AssistedFactory
     interface Factory {
         fun create(
@@ -576,55 +536,6 @@ class ConversationV3ViewModel @AssistedInject constructor(
         val name: String = "",
         /** null = hidden, "" = shown without badge, "8" / "9999+" = shown with badge */
         val scrollToBottomButton: String? = null,
-    )
-
-    // Dialogs
-    data class DialogsState(
-        val showSimpleDialog: SimpleDialogData? = null,
-        val openLinkDialogUrl: String? = null,
-        val clearAllEmoji: ClearAllEmoji? = null,
-        val deleteEveryone: DeleteForEveryoneDialogData? = null,
-        val recreateGroupConfirm: Boolean = false,
-        val recreateGroupData: RecreateGroupDialogData? = null,
-        val userProfileModal: UserProfileModalData? = null,
-        val joinCommunity: JoinCommunityDialogData? = null,
-        val attachmentDownload: ConfirmAttachmentDownloadDialogData? = null
-    )
-
-    data class JoinCommunityDialogData(
-        val communityName: String,
-        val communityUrl: String
-    )
-
-    data class ConfirmAttachmentDownloadDialogData(
-        val attachment: DatabaseAttachment,
-        val conversationName: String
-    )
-
-    data class RecreateGroupDialogData(
-        val legacyGroupId: String,
-    )
-
-    data class DeleteForEveryoneDialogData(
-        val messages: Set<MessageRecord>,
-        val messageType: MessageType,
-        val defaultToEveryone: Boolean,
-        val everyoneEnabled: Boolean,
-        val deleteForEveryoneLabel: String,
-        val warning: String? = null
-    )
-
-    data class ClearAllEmoji(
-        val emoji: String,
-        val messageId: MessageId
-    )
-
-    data class ConversationScrollState(
-        val isNearBottom: Boolean,
-        val isFullyScrolled: Boolean,
-        val firstVisibleIndex: Int,
-        val lastVisibleIndex: Int,
-        val totalItemCount: Int,
     )
 
 

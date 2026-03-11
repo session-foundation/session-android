@@ -27,8 +27,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import kotlinx.collections.immutable.persistentListOf
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -44,14 +45,14 @@ import org.thoughtcrime.securesms.ui.theme.bold
 fun MessageLink(
     data: MessageLinkData,
     outgoing: Boolean,
-    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    sendCommand: (ConversationCommand.MessageCommand) -> Unit,
     modifier: Modifier = Modifier
 ){
     Row(
         modifier = modifier.fillMaxWidth()
             .background(color = blackAlpha06)
             .clickable {
-                sendCommand(ConversationV3ViewModel.Commands.ShowOpenUrlDialog(data.url))
+                sendCommand(ConversationCommand.OpenUrl(data.url))
             },
     ) {
         Box(
@@ -113,7 +114,7 @@ fun LinkMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.INCOMING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(
                         MessageContentData.Link(
                             MessageLinkData(
@@ -131,7 +132,7 @@ fun LinkMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.OUTGOING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(
                         MessageContentData.Link(
                             MessageLinkData(
@@ -147,7 +148,7 @@ fun LinkMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.INCOMING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(
                         PreviewMessageData.quote(),
                         MessageContentData.Link(
@@ -166,7 +167,7 @@ fun LinkMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.OUTGOING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(
                         PreviewMessageData.quote(),
                         MessageContentData.Link(

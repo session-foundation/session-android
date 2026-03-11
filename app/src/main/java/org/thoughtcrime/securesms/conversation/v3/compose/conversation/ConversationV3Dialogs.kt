@@ -23,23 +23,25 @@ import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.InputBarDialogs
 import org.thoughtcrime.securesms.InputbarViewModel
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.ClearEmoji
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.ConfirmRecreateGroup
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.DownloadAttachments
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HandleUserProfileCommand
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideAttachmentDownloadDialog
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideClearEmoji
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideDeleteEveryoneDialog
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideJoinCommunityDialog
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideOpenUrlDialog
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideRecreateGroup
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideRecreateGroupConfirm
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideSimpleDialog
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideUserProfileModal
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.JoinCommunity
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.MarkAsDeletedForEveryone
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.MarkAsDeletedLocally
+import org.thoughtcrime.securesms.conversation.v3.ConversationDialogsState
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.ClearEmoji
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.ConfirmRecreateGroup
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.DownloadAttachments
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HandleUserProfileCommand
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HideAttachmentDownloadDialog
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HideClearEmoji
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HideDeleteEveryoneDialog
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HideJoinCommunityDialog
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HideRecreateGroup
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HideRecreateGroupConfirm
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HideSimpleDialog
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.HideUserProfileModal
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.JoinCommunity
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.MarkAsDeletedForEveryone
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.MarkAsDeletedLocally
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -58,9 +60,9 @@ import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationV3Dialogs(
-    dialogsState: ConversationV3ViewModel.DialogsState,
+    dialogsState: ConversationDialogsState,
     inputBarDialogsState: InputbarViewModel.InputBarDialogsState,
-    sendCommand: (ConversationV3ViewModel.Commands) -> Unit,
+    sendCommand: (ConversationCommand) -> Unit,
     sendInputBarCommand: (InputbarViewModel.Commands) -> Unit,
     onPostUserProfileModalAction: () -> Unit // a function called in the User Profile Modal once an action has been taken
 ){
@@ -113,7 +115,7 @@ fun ConversationV3Dialogs(
                 url = dialogsState.openLinkDialogUrl,
                 onDismissRequest = {
                     // hide dialog
-                    sendCommand(ShowOpenUrlDialog(null))
+                    sendCommand(HideOpenUrlDialog)
                 }
             )
         }
@@ -346,7 +348,7 @@ fun ConversationV3Dialogs(
 fun PreviewURLDialog(){
     PreviewTheme {
         ConversationV3Dialogs(
-            dialogsState = ConversationV3ViewModel.DialogsState(
+            dialogsState = ConversationDialogsState(
                 openLinkDialogUrl = "https://google.com"
             ),
             inputBarDialogsState = InputbarViewModel.InputBarDialogsState(),

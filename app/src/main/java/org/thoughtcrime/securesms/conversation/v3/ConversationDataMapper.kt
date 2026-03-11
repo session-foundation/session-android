@@ -5,6 +5,9 @@ import android.text.format.Formatter
 import androidx.compose.ui.text.AnnotatedString
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.json.Json
 import network.loki.messenger.R
 import org.session.libsession.messaging.utilities.UpdateMessageData
@@ -153,7 +156,7 @@ class ConversationDataMapper @Inject constructor(
 
     // ---- Message content ----
 
-    private fun mapContentGroups(record: MessageRecord): List<MessageContentGroup> {
+    private fun mapContentGroups(record: MessageRecord): ImmutableList<MessageContentGroup> {
         val groups = mutableListOf<MessageContentGroup>()
         val mms = record as? MmsMessageRecord
 
@@ -167,7 +170,7 @@ class ConversationDataMapper @Inject constructor(
                 )
             )
 
-            return groups
+            return groups.toImmutableList()
         }
 
         // community invites
@@ -181,7 +184,7 @@ class ConversationDataMapper @Inject constructor(
                         jsonData.kind.groupUrl
                     ))
 
-                return groups
+                return groups.toImmutableList()
             }
         }
 
@@ -211,7 +214,7 @@ class ConversationDataMapper @Inject constructor(
         // that allows custom padding based on certain rules
         // for example used by quotes to change their paddings depending on neighboring content
         if (primaryData.isNotEmpty()) {
-            val primaryContents: List<MessageContent> =
+            val primaryContents: ImmutableList<MessageContent> =
                 primaryData.mapIndexed { index, data ->
                     val extraPadding =
                         if (data is MessageContentData.Quote) {
@@ -226,7 +229,7 @@ class ConversationDataMapper @Inject constructor(
                         }
 
                     MessageContent(contentData = data, extraPadding = extraPadding)
-                }
+                }.toImmutableList()
 
             groups.add(MessageContentGroup(primaryContents, showBubble = true))
         }
@@ -281,14 +284,23 @@ class ConversationDataMapper @Inject constructor(
                         MessageMediaItem.Image(uri, filename, loading, width, height)
                     }
                 }
-                groups.add(MessageContentGroup(listOf(MessageContent(
-                    MessageContentData.Media(items, items.any { it.loading })))
-                    , showBubble = false)
+                groups.add(
+                    MessageContentGroup(
+                        persistentListOf(
+                            MessageContent(
+                                MessageContentData.Media(
+                                    items.toImmutableList(),
+                                    items.any { it.loading },
+                                )
+                            )
+                        ),
+                        showBubble = false,
+                    )
                 )
             }
         }
 
-        return groups
+        return groups.toImmutableList()
     }
 
     private fun addContentToGroup(
@@ -298,7 +310,7 @@ class ConversationDataMapper @Inject constructor(
         paddingValues: MessageContentPadding = MessageContentPadding.None
     ){
         groups.add(
-            MessageContentGroup(listOf(MessageContent(contentData, paddingValues)), showBubble)
+            MessageContentGroup(persistentListOf(MessageContent(contentData, paddingValues)), showBubble)
         )
     }
 
@@ -390,7 +402,7 @@ class ConversationDataMapper @Inject constructor(
             }
 
         return ReactionViewState(
-            reactions = items,
+            reactions = items.toImmutableList(),
             isExtended = false,        // todo CONVOv3: drive from per-message expanded state in ViewModel
         )
     }
