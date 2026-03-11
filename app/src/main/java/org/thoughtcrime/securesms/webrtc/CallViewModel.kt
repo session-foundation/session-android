@@ -96,8 +96,8 @@ class CallViewModel @Inject constructor(
     val connectionState: StateFlow<org.thoughtcrime.securesms.webrtc.data.State>
         get() = callManager.currentConnectionStateFlow
 
-    val initialCallState = CallState("", "", false, false, false)
-    val initialAccumulator = CallAccumulator(emptySet(), initialCallState)
+    val initialCallState: CallState = CallState("", "", false, false, false)
+    val initialAccumulator: CallAccumulator = CallAccumulator(emptySet(), initialCallState)
 
     val callState: StateFlow<CallState> = callManager.callStateEvents
         .combine(rtcCallBridge.hasAcceptedCall) { state, accepted ->
@@ -216,24 +216,24 @@ class CallViewModel @Inject constructor(
     }
 
 
-    fun swapVideos() = callManager.swapVideos()
+    fun swapVideos(): Unit = callManager.swapVideos()
 
-    fun toggleMute() = callManager.toggleMuteAudio()
+    fun toggleMute(): Unit = callManager.toggleMuteAudio()
 
-    fun toggleSpeakerphone() = callManager.toggleSpeakerphone()
+    fun toggleSpeakerphone(): Unit = callManager.toggleSpeakerphone()
 
-    fun toggleVideo() = callManager.toggleVideo()
+    fun toggleVideo(): Unit = callManager.toggleVideo()
 
-    fun flipCamera() = callManager.flipCamera()
+    fun flipCamera(): Unit = callManager.flipCamera()
 
-    fun answerCall() = rtcCallBridge.handleAnswerCall()
+    fun answerCall(): Unit = rtcCallBridge.handleAnswerCall()
 
-    fun denyCall() = rtcCallBridge.handleDenyCall()
+    fun denyCall(): Unit = rtcCallBridge.handleDenyCall()
 
-    fun createCall(recipientAddress: Address) =
+    fun createCall(recipientAddress: Address): Unit =
         rtcCallBridge.handleOutgoingCall(recipientAddress)
 
-    fun hangUp() = rtcCallBridge.handleLocalHangup(null)
+    fun hangUp(): Unit = rtcCallBridge.handleLocalHangup(null)
 
     fun setDeviceOrientation(orientation: Orientation, autoRotateOn: Boolean) {
         deviceOrientation = orientation

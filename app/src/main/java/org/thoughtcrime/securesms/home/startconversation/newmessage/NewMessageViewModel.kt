@@ -9,6 +9,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -33,7 +35,7 @@ class NewMessageViewModel @Inject constructor(
     private val HELP_URL : String = "https://getsession.org/account-ids"
 
     private val _state = MutableStateFlow(State())
-    val state = _state.asStateFlow()
+    val state: StateFlow<State> = _state.asStateFlow()
 
     private val _success = MutableSharedFlow<Success>()
     val success get() = _success
@@ -42,7 +44,7 @@ class NewMessageViewModel @Inject constructor(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
-    val qrErrors = _qrErrors.asSharedFlow()
+    val qrErrors: SharedFlow<String> = _qrErrors.asSharedFlow()
 
     private var loadOnsJob: Job? = null
 
