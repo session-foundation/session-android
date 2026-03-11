@@ -1,10 +1,14 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.Manifest
+import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Bundle
+import androidx.collection.MutableLongLongMap
+import androidx.collection.arraySetOf
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -14,22 +18,31 @@ import org.session.libsignal.utilities.Log
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.merge
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.effectiveNotifyType
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
+import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.mentionsMe
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getMessages
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.ThreadId
 import org.thoughtcrime.securesms.database.getAddressAndLastSeen
+import org.thoughtcrime.securesms.database.getAllLastSeen
 import org.thoughtcrime.securesms.database.getLastSeen
 import org.thoughtcrime.securesms.database.model.MessageChanges
+import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadChanges
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.ThreadBasedNotificationHandler.Companion.currentlyShowingConversation
+import org.thoughtcrime.securesms.notifications.ThreadBasedNotificationHandler.Companion.getChannelIdFor
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -62,187 +75,164 @@ class NoNameOrContentNotificationHandler @Inject constructor(
             mmsDatabase.changeNotification,
             smsDatabase.changeNotification
         ).collect(object : FlowCollector<Any> {
-            private var lastNotified: NotifyState? = null
+            // It's ok to have this as memory state - because we are listening only to db
+            // changes - we won't be processing a message twice anyway
+            private val notifiedMessages = arraySetOf<MessageId>()
 
             override suspend fun emit(value: Any) {
                 when (value) {
                     is ThreadChanges -> {
-                        if (lastNotified == null || !hasGlobalNotification()) {
-                            Log.d(
-                                TAG,
-                                "ThreadChanges threadId=${value.id}: no active global notification — skipping"
-                            )
-                            return
-                        }
-
-                        // If we've got a new last seen time, and it's greater than currently notifying
-                        // time of sent, dismiss the notification
                         val newLastSeen =
-                            threadDb.getLastSeen(value.address)?.toEpochMilliseconds() ?: 0L
-                        if (value.id == lastNotified!!.threadId &&
-                            newLastSeen >= lastNotified!!.messageDateSentMs
-                        ) {
-                            Log.d(
-                                TAG,
-                                "ThreadChanges threadId=${value.id}: lastSeen=$newLastSeen >= notified ts=${lastNotified!!.messageDateSentMs} — cancelling global notification"
-                            )
-                            notificationManager.cancel(NotificationId.GLOBAL_MESSAGE)
+                            threadDb.getLastSeen(value.address)?.toEpochMilliseconds() ?: return
+
+                        var hasActiveMessageNotification = false
+                        // Remove message notifications where they have been marked as read
+                        notificationManager
+                            .activeNotifications
+                            .forEach { msg ->
+                                if (msg.notification.extras.getLong(MESSAGE_EXTRA_THREAD_ID) == value.id &&
+                                    msg.notification.`when` <= newLastSeen
+                                ) {
+                                    notificationManager.cancel(msg.tag, msg.id)
+                                } else if (msg.id == NotificationId.GLOBAL_MESSAGE) {
+                                    hasActiveMessageNotification = true
+                                }
+                            }
+
+                        if (!hasActiveMessageNotification) {
+                            // If we don't have any messages left, also try to cancel the group summary
+                            notificationManager.cancel(NotificationId.GLOBAL_MESSAGE_SUMMARY)
                         }
                     }
 
-                    is MessageChanges -> {
-                        if (value.changeType != MessageChanges.ChangeType.Added) {
-                            Log.d(
-                                TAG,
-                                "MessageChanges threadId=${value.threadId}: changeType=${value.changeType}, not Added — skipping"
+                    is MessageChanges if value.changeType == MessageChanges.ChangeType.Deleted -> {
+                        // Delete all related notifications belong to the deleted messages
+                        value.ids.forEach {
+                            notificationManager.cancel(
+                                messageTag(it),
+                                NotificationId.GLOBAL_MESSAGE
                             )
+                        }
+                    }
+
+                    is MessageChanges if value.changeType == MessageChanges.ChangeType.Added -> {
+                        if (currentActivity is HomeActivity) {
+                            // Don't bother notifying if we are on home screen
                             return
                         }
 
-                        val (address, lastSeen) = threadDb.getAddressAndLastSeen(value.threadId)
+                        val (threadAddress, lastSeen) = threadDb.getAddressAndLastSeen(value.threadId)
                             ?: run {
-                                Log.d(
-                                    TAG,
-                                    "MessageChanges threadId=${value.threadId}: no address/lastSeen found — skipping"
-                                )
+                                Log.w(TAG, "MessageChanges threadId=${value.threadId}: no address/lastSeen found — skipping")
                                 return
                             }
 
-                        val updateOnly = currentActivity is HomeActivity ||
-                                currentActivityObserver.currentlyShowingConversation == address
-
-                        if (updateOnly && !hasGlobalNotification()) {
-                            Log.d(
-                                TAG,
-                                "MessageChanges threadId=${value.threadId}: updateOnly=true but no active global notification — skipping"
-                            )
+                        if (currentActivityObserver.currentlyShowingConversation == threadAddress) {
+                            // Don't bother notifying if we are showing the conversation
                             return
                         }
 
-                        val recipient = recipientRepository.getRecipientSync(address)
+                        val threadRecipient = recipientRepository.getRecipient(threadAddress)
+                        val notifyType = threadRecipient.effectiveNotifyType()
 
-                        if (recipient.blocked) {
-                            Log.d(
-                                TAG,
-                                "MessageChanges threadId=${value.threadId}: recipient is blocked — skipping"
-                            )
+                        // No notification if this thread is blocked or notification disabled
+                        if (threadRecipient.blocked || notifyType == NotifyType.NONE) {
                             return
                         }
 
-                        val notifyType = recipient.effectiveNotifyType()
-
-                        if (notifyType == NotifyType.NONE) {
-                            Log.d(
-                                TAG,
-                                "MessageChanges threadId=${value.threadId}: notifyType=NONE — skipping"
-                            )
-                            return
-                        }
-
-                        val latestMessageSentMs = mmsSmsDatabase.getMessages(value.ids)
-                            .asSequence()
+                        val messages = mmsSmsDatabase.getMessages(value.ids)
                             .filter { msg ->
-                                !msg.isOutgoing &&
-                                        !msg.isDeleted &&
-                                        msg.dateSent > lastSeen &&
-                                        (notifyType != NotifyType.MENTIONS || containsMentionOfMe(
-                                            msg.body
-                                        ))
-                            }
-                            .maxOfOrNull { it.dateSent }
-                            ?: run {
-                                Log.d(
-                                    TAG,
-                                    "MessageChanges threadId=${value.threadId}: no qualifying messages (notifyType=$notifyType) — skipping"
-                                )
-                                return
+                                !msg.isOutgoing && !msg.isDeleted && msg.dateSent > lastSeen &&
+                                        msg.messageId !in notifiedMessages &&
+                                        (notifyType != NotifyType.MENTIONS ||
+                                                mentionsMe(msg.body, recipientRepository))
                             }
 
-                        if (lastNotified != null && latestMessageSentMs <= lastNotified!!.messageDateSentMs) {
-                            Log.d(
-                                TAG,
-                                "MessageChanges threadId=${value.threadId}: already notified for ts=$latestMessageSentMs — skipping"
-                            )
+                        if (messages.isEmpty()) {
+                            // Nothing to notify
                             return
                         }
 
-                        lastNotified = NotifyState(value.threadId, latestMessageSentMs)
                         if (ActivityCompat.checkSelfPermission(
                                 context,
                                 Manifest.permission.POST_NOTIFICATIONS
                             ) != PackageManager.PERMISSION_GRANTED
                         ) {
-                            Log.w(
-                                TAG,
-                                "MessageChanges threadId=${value.threadId}: POST_NOTIFICATIONS permission not granted — cannot post notification"
-                            )
+                            // No permission to show notifications
                             return
                         }
 
-                        Log.d(
-                            TAG,
-                            "MessageChanges threadId=${value.threadId}: posting global notification (ts=$latestMessageSentMs, updateOnly=$updateOnly)"
-                        )
-                        notificationManager.notify(
-                            NotificationId.GLOBAL_MESSAGE,
-                            NotificationCompat.Builder(
-                                context, channels.getNotificationChannelId(
-                                    NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES
+                        for (msg in messages) {
+                            notifiedMessages.add(msg.messageId)
+
+                            notificationManager.notify(
+                                messageTag(msg.messageId),
+                                NotificationId.GLOBAL_MESSAGE,
+                                buildNotification(
+                                    msg = msg,
+                                    threadId = value.threadId,
+                                    threadAddress = threadAddress
                                 )
                             )
+                        }
+
+                        notificationManager.notify(
+                            NotificationId.GLOBAL_MESSAGE_SUMMARY,
+                            NotificationCompat.Builder(context, channels.getNotificationChannelId(
+                                NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES))
                                 .setSmallIcon(R.drawable.ic_notification)
-                                .setColor(
-                                    ContextCompat.getColor(
-                                        context,
-                                        R.color.textsecure_primary
-                                    )
-                                )
-                                .setContentText(
-                                    context.resources.getQuantityString(
-                                        R.plurals.messageNewYouveGot,
-                                        1
-                                    )
-                                )
                                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                                .setContentIntent(
-                                    PendingIntent.getActivity(
-                                        context,
-                                        0,
-                                        Intent(context, HomeActivity::class.java),
-                                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                                    )
-                                )
+                                .setGroup(NOTIFICATION_GROUP_NAME)
+                                .setGroupSummary(true)
+                                .setContentIntent(PendingIntent.getActivity(
+                                    context,
+                                    0,
+                                    Intent(context, HomeActivity::class.java),
+                                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                                ))
                                 .setAutoCancel(true)
                                 .build()
                         )
                     }
-
-                    else -> error("Unexpected value: $value")
                 }
+            }
+
+            private fun buildNotification(
+                msg: MessageRecord,
+                threadId: ThreadId,
+                threadAddress: Address.Conversable
+            ): Notification {
+                return NotificationCompat.Builder(context, channels.getChannelIdFor(threadAddress))
+                    .setGroup(NOTIFICATION_GROUP_NAME)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle(context.resources.getQuantityString(R.plurals.messageNewYouveGot, 1))
+                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                    .setContentIntent(PendingIntent.getActivity(
+                        context,
+                        threadId.hashCode(),
+                        ConversationActivityV2.createIntent(context, threadAddress),
+                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                    ))
+                    .setWhen(msg.dateSent)
+                    .setExtras(Bundle(1).apply {
+                        putLong(MESSAGE_EXTRA_THREAD_ID, threadId)
+                    })
+                    .setAutoCancel(true)
+                    .build()
+
             }
         })
     }
 
-    private fun hasGlobalNotification(): Boolean {
-        return notificationManager.activeNotifications.any { it.id == NotificationId.GLOBAL_MESSAGE }
-    }
-
-    private fun containsMentionOfMe(input: CharSequence): Boolean {
-        return MentionUtilities.parseMentions(input)
-            ?.any { range ->
-                recipientRepository.fastIsSelf(
-                    input.substring(range.first + 1, range.last + 1).toAddress()
-                )
-            } == true
-    }
-
-    private data class NotifyState(
-        val threadId: Long,
-        val messageDateSentMs: Long
-    )
-
     companion object {
         private const val TAG = "NoNameOrContentNotificationHandler"
 
+        private const val NOTIFICATION_GROUP_NAME = "global_message_notification"
+
+        private const val MESSAGE_EXTRA_THREAD_ID = "thread_id"
+
+        private fun messageTag(id: MessageId): String {
+            return "${id.id}-${id.mms}"
+        }
     }
 }

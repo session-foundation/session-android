@@ -18,4 +18,5 @@ object NotificationId {
      * ID for global message notification (likely just a single message of "You've received a new message")
      */
     const val GLOBAL_MESSAGE = 6
+    const val GLOBAL_MESSAGE_SUMMARY = 7
 }

@@ -215,5 +215,18 @@ abstract class ThreadBasedNotificationHandler(
                     else -> null
                 }
             }
+
+        fun NotificationChannelManager.getChannelIdFor(address: Address.Conversable): String {
+            return getNotificationChannelId(
+                when (address) {
+                    is Address.LegacyGroup,
+                    is Address.Group -> NotificationChannelManager.ChannelDescription.GROUP_MESSAGES
+
+                    is Address.Community -> NotificationChannelManager.ChannelDescription.COMMUNITY_MESSAGES
+                    is Address.CommunityBlindedId,
+                    is Address.Standard -> NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES
+                }
+            )
+        }
     }
 }

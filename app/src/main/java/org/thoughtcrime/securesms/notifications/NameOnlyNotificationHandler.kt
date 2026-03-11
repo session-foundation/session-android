@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.merge
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
@@ -37,13 +38,15 @@ class NameOnlyNotificationHandler @Inject constructor(
     avatarUtils: AvatarUtils,
     avatarBitmapCache: AvatarBitmapCache,
     channels: NotificationChannelManager,
+    notificationManager: NotificationManagerCompat,
 ) : ThreadBasedNotificationHandler(
-    context,
-    currentActivityObserver,
-    avatarUtils,
-    channels,
-    recipientRepository,
-    avatarBitmapCache,
+    context = context,
+    currentActivityObserver = currentActivityObserver,
+    avatarUtils = avatarUtils,
+    channels = channels,
+    recipientRepository = recipientRepository,
+    avatarBitmapCache = avatarBitmapCache,
+    notificationManager = notificationManager
 ) {
     suspend fun process() {
         merge(
