@@ -837,7 +837,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         val intent = ConversationSettingsActivity.createIntent(
                             context = this@ConversationActivityV2,
                             address = event.address,
-                            startDestination = ConversationV3Destination.RouteDisappearingMessages
+                            startDestination = ConversationV3Destination.RouteDisappearingMessages(event.address)
                         )
                         startActivity(intent)
                     }

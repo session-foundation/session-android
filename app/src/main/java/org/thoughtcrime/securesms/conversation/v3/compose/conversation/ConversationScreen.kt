@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.collections.immutable.persistentListOf
+import org.session.libsession.utilities.Address
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand
 import org.thoughtcrime.securesms.conversation.v3.ConversationDataMapper.ConversationItem
 import org.thoughtcrime.securesms.conversation.v3.ConversationScrollState
@@ -70,6 +72,7 @@ import kotlin.math.absoluteValue
 @Composable
 fun ConversationScreen(
     viewModel: ConversationV3ViewModel,
+    address: Address.Conversable,
     switchConvoVersion: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -78,6 +81,7 @@ fun ConversationScreen(
     val conversationItems = viewModel.conversationItems.collectAsLazyPagingItems()
 
     Conversation(
+        address = address,
         conversationState = conversationState,
         appBarData = appBarData,
         conversationItems = conversationItems,
@@ -107,6 +111,7 @@ fun ConversationScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun Conversation(
+    address: Address.Conversable,
     conversationState: ConversationV3ViewModel.UIState,
     appBarData: ConversationAppBarData,
     conversationItems: LazyPagingItems<ConversationItem>,
@@ -144,7 +149,9 @@ fun Conversation(
                 onAvatarPressed = {
                     sendCommand(
                         ConversationCommand.GoTo(
-                            ConversationV3Destination.RouteConversationSettings
+                            ConversationV3Destination.RouteConversationSettings(
+                                address
+                            )
                         )
                     )
                 }
@@ -249,6 +256,7 @@ fun PreviewConversation(
 ) {
     PreviewTheme(colors) {
         Conversation(
+            address = Address.Standard(AccountId("053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144")),
             conversationState = ConversationV3ViewModel.UIState(),
             appBarData = ConversationAppBarData(
                 title ="Friendo",

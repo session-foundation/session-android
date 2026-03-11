@@ -19,7 +19,7 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
         fun createIntent(
             context: Context,
             address: Address.Conversable,
-            startDestination: ConversationV3Destination = ConversationV3Destination.RouteConversationSettings
+            startDestination: ConversationV3Destination = ConversationV3Destination.RouteConversationSettings(address)
         ): Intent {
             return Intent(context, ConversationSettingsActivity::class.java).apply {
                 putExtra(THREAD_ADDRESS, address)
@@ -30,16 +30,20 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
 
     @Composable
     override fun ComposeContent() {
+        val address = requireNotNull(
+            IntentCompat.getParcelableExtra(intent, THREAD_ADDRESS, Address.Conversable::class.java)
+        ) {
+            "ConversationSettingsActivity requires an Address to be passed in the intent."
+        }
+
         val startDestination = IntentCompat.getParcelableExtra(
             intent,
             EXTRA_START_DESTINATION,
             ConversationV3Destination::class.java
-        ) ?:  ConversationV3Destination.RouteConversationSettings
+        ) ?: ConversationV3Destination.RouteConversationSettings(address)
 
         ConversationSettingsNavHost(
-            address = requireNotNull(IntentCompat.getParcelableExtra(intent, THREAD_ADDRESS, Address.Conversable::class.java)) {
-                "ConversationSettingsActivity requires an Address to be passed in the intent."
-            },
+            initialAddress = address,
             startDestination = startDestination,
             returnResult = { code, value ->
                 setResult(RESULT_OK, Intent().putExtra(code, value))

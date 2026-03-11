@@ -51,24 +51,24 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
 
     @Composable
     override fun ComposeContent() {
+        val initialAddress: Address.Conversable? = IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)
+        if(initialAddress == null) finish()
+
         val startDestination = IntentCompat.getParcelableExtra(
             intent,
             EXTRA_START_DESTINATION,
             ConversationV3Destination::class.java
-        ) ?:  ConversationV3Destination.RouteConversation
+        ) ?: ConversationV3Destination.RouteConversation(initialAddress!!)
 
         ConversationV3NavHost(
-            //todo convov3 v2 convo would go back home if address is null - update this
-            address = requireNotNull(IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)) {
-                "ConversationV3Activity requires an Address to be passed in the intent."
-            },
+            initialAddress = initialAddress!!,
             startDestination = startDestination,
             pendingScrollMessageId = pendingScrollMessageId,
             onPendingScrollConsumed = {
                 pendingScrollMessageId = null
             },
-            switchConvoVersion = {
-                startActivity(ConversationActivityV2.createIntent(this, address = IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)!!))
+            switchConvoVersion = { address ->
+                startActivity(ConversationActivityV2.createIntent(this, address = address))
                 finish()
             },
             onBack = this::finish

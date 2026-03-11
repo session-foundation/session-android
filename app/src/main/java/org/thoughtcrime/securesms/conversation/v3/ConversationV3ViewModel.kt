@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v3
 
 import android.content.Context
 import android.widget.Toast
+import androidx.navigation.NavOptionsBuilder
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -292,7 +293,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
             pagerData += ConversationAppBarPagerData(
                 title = getNotificationStatusTitle(effectiveNotifyType),
                 action = {
-                    navigateTo(ConversationV3Destination.RouteNotifications)
+                    navigateTo(ConversationV3Destination.RouteNotifications(address))
                 }
             )
         }
@@ -315,7 +316,9 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 title = title,
                 action = {
                     // This pager title no longer actionable for legacy groups
-                    if (conversation.isCommunityRecipient) navigateTo(ConversationV3Destination.RouteConversationSettings)
+                    if (conversation.isCommunityRecipient) {
+                        navigateTo(ConversationV3Destination.RouteConversationSettings(address))
+                    }
                     else if (conversation.address is Address.Group) navigateTo(ConversationV3Destination.RouteGroupMembers(conversation.address))
                 },
             )
@@ -364,7 +367,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 }
             }
 
-            navigateTo(ConversationV3Destination.RouteDisappearingMessages)
+            navigateTo(ConversationV3Destination.RouteDisappearingMessages(address))
         }
     }
 
@@ -396,10 +399,15 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 )
 
                 // after joining or if already joined, open the conversation
-                //todo convov3 add a way to move from convo to convo
-               /* navigateTo(ConversationV3Destination.RouteConversation(
-                    Address.Community(openGroup.server, openGroup.room)
-                ))*/
+                val communityAddress = Address.Community(openGroup.server, openGroup.room)
+                navigateTo(
+                    destination = ConversationV3Destination.RouteConversation(communityAddress),
+                ) {
+                    //todo convov3 confirm that we want a new stack
+                    popUpTo(ConversationV3Destination.RouteConversation(address)) {
+                        inclusive = true
+                    }
+                }
             } catch (e: Exception) {
                 Log.e("ConversationV3ViewModel", "Error joining community", e)
                 Toast.makeText(context, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
@@ -552,9 +560,15 @@ class ConversationV3ViewModel @AssistedInject constructor(
         }
     }
 
-    private fun navigateTo(destination: ConversationV3Destination){
+    private fun navigateTo(
+        destination: ConversationV3Destination,
+        navOptions: NavOptionsBuilder.() -> Unit = {}
+    ){
         viewModelScope.launch {
-            navigator.navigate(destination)
+            navigator.navigate(
+                destination = destination,
+                navOptions = navOptions,
+            )
         }
     }
     @AssistedFactory
