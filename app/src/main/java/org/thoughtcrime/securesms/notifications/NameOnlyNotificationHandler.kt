@@ -1,8 +1,8 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
-import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.merge
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -25,27 +25,34 @@ import javax.inject.Singleton
  */
 @Singleton
 class NameOnlyNotificationHandler @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    @ApplicationContext context: Context,
     private val threadDb: ThreadDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
-    private val recipientRepository: RecipientRepository,
-    private val currentActivityObserver: CurrentActivityObserver,
+    recipientRepository: RecipientRepository,
+    currentActivityObserver: CurrentActivityObserver,
     private val reactionDatabase: ReactionDatabase,
     private val messageFormatter: MessageFormatter,
-    private val avatarUtils: AvatarUtils,
-    private val avatarBitmapCache: AvatarBitmapCache,
-    private val channels: NotificationChannelManager,
+    avatarUtils: AvatarUtils,
+    avatarBitmapCache: AvatarBitmapCache,
+    channels: NotificationChannelManager,
+) : ThreadBasedNotificationHandler(
+    context,
+    currentActivityObserver,
+    avatarUtils,
+    channels,
+    recipientRepository,
+    avatarBitmapCache,
 ) {
-    private val notificationManager: NotificationManagerCompat get() =
-        NotificationManagerCompat.from(context)
-
-    private val currentActivity get() = currentActivityObserver.currentActivity.value
-
     suspend fun process() {
+        merge(
+            threadDb.changeNotification,
+            mmsDatabase.changeNotification,
+            smsDatabase.changeNotification
+        ).collect {
+        }
     }
-
 
     companion object {
         private const val TAG = "NameOnlyNotificationHandler"

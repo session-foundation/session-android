@@ -35,7 +35,7 @@ object MessageTextFormatter {
     private const val OUTSIDE_SPACE: Char = '\u2009'
 
     fun formatMessage(
-        parsed: MentionUtilities.ParsedMentions,
+        parsed: MentionUtilities.SubstituteResult,
         isOutgoing: Boolean
     ): AnnotatedString {
         // Insert spacing ONLY for bg mentions (incoming mentions of self)
