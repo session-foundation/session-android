@@ -45,6 +45,7 @@ class ConversationUIRulesTest {
         val newestInCluster = record(timestamp = 11_000L, isOutgoing = true)
 
         every { dateUtils.isSameHour(any(), any()) } returns true
+        every { dateUtils.isSameDay(any(), any()) } returns true
 
         assertThat(
             ConversationUIRules.clusterPosition(
@@ -76,6 +77,7 @@ class ConversationUIRulesTest {
         val olderFromSenderB = record(timestamp = 10_000L, individualAddress = senderB)
 
         every { dateUtils.isSameHour(any(), any()) } returns true
+        every { dateUtils.isSameDay(any(), any()) } returns true
 
         assertThat(
             ConversationUIRules.clusterPosition(
@@ -86,6 +88,26 @@ class ConversationUIRulesTest {
                 dateUtils = dateUtils,
             )
         ).isEqualTo(ClusterPosition.TOP)
+    }
+
+    @Test
+    fun `clustering splits when messages are more than five minutes apart`() {
+        val olderInChunk = record(timestamp = 10_000L, isOutgoing = true)
+        val currentAtChunkEnd = record(timestamp = 11_000L, isOutgoing = true)
+        val newerAfterGap = record(timestamp = 11_000L + 6 * 60 * 1000L, isOutgoing = true)
+
+        every { dateUtils.isSameHour(any(), any()) } returns true
+        every { dateUtils.isSameDay(any(), any()) } returns true
+
+        assertThat(
+            ConversationUIRules.clusterPosition(
+                current = currentAtChunkEnd,
+                newer = newerAfterGap,
+                older = olderInChunk,
+                isGroupThread = false,
+                dateUtils = dateUtils,
+            )
+        ).isEqualTo(ClusterPosition.BOTTOM)
     }
 
     @Test

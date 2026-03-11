@@ -33,13 +33,7 @@ internal object ConversationUIRules {
         dateUtils: DateUtils,
     ): Boolean {
         if (older == null) return true
-
-        val currentTimestamp = current.timestamp
-        val olderTimestamp = older.timestamp
-
-        if (abs(currentTimestamp - olderTimestamp) > FIVE_MINUTES_MS) return true
-
-        return !dateUtils.isSameDay(currentTimestamp, olderTimestamp)
+        return hasVisualTimeBreak(current, older, dateUtils)
     }
 
     fun shouldShowAuthorNameAbove(
@@ -63,6 +57,7 @@ internal object ConversationUIRules {
         dateUtils: DateUtils,
     ): Boolean {
         if (neighbor.isControlMessage) return false
+        if (hasVisualTimeBreak(current, neighbor, dateUtils)) return false
         if (!dateUtils.isSameHour(current.timestamp, neighbor.timestamp)) return false
 
         return if (isGroupThread) {
@@ -70,6 +65,19 @@ internal object ConversationUIRules {
         } else {
             current.isOutgoing == neighbor.isOutgoing
         }
+    }
+
+    private fun hasVisualTimeBreak(
+        current: MessageRecord,
+        neighbor: MessageRecord,
+        dateUtils: DateUtils,
+    ): Boolean {
+        val currentTimestamp = current.timestamp
+        val neighborTimestamp = neighbor.timestamp
+
+        if (abs(currentTimestamp - neighborTimestamp) > FIVE_MINUTES_MS) return true
+
+        return !dateUtils.isSameDay(currentTimestamp, neighborTimestamp)
     }
 
     private const val FIVE_MINUTES_MS = 5 * 60 * 1000L
