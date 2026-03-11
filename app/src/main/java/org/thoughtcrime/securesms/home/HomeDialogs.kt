@@ -29,12 +29,12 @@ import org.thoughtcrime.securesms.home.HomeViewModel.Commands.OnLinkOpened
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.ShowDonationConfirmation
 import org.thoughtcrime.securesms.home.startconversation.StartConversationSheet
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
-import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.UserProfileModal

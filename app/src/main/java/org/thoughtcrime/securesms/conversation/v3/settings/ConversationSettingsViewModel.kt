@@ -64,7 +64,7 @@ import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData

@@ -42,6 +42,7 @@ import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -90,12 +91,14 @@ fun UserProfileModal(
             ProBadgeText(
                 text = data.name,
                 showBadge = data.showProBadge,
-                onBadgeClick = if(!data.currentUserPro){{
-                    sendCommand(UserProfileModalCommands.ShowProCTA)
-                }} else null
+                onBadgeClick = if (!data.currentUserPro) {
+                    {
+                        sendCommand(UserProfileModalCommands.ShowProCTA)
+                    }
+                } else null
             )
 
-            if(!data.subtitle.isNullOrEmpty()){
+            if (!data.subtitle.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                 Text(
                     text = data.subtitle,
@@ -107,7 +110,7 @@ fun UserProfileModal(
 
             // account ID
             AccountIdHeader(
-                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
+                text = if (data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
                 textStyle = LocalType.current.small,
                 textPaddingValues = PaddingValues(
                     horizontal = LocalDimensions.current.smallSpacing,
@@ -118,7 +121,7 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
             Row {
-                if(!data.tooltipText.isNullOrEmpty()){
+                if (!data.tooltipText.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.width(LocalDimensions.current.spacing))
                 }
 
@@ -131,7 +134,7 @@ fun UserProfileModal(
                     color = LocalColors.current.text
                 )
 
-                if(!data.tooltipText.isNullOrEmpty()){
+                if (!data.tooltipText.isNullOrEmpty()) {
                     val tooltipState = rememberTooltipState(isPersistent = true)
                     val scope = rememberCoroutineScope()
 
@@ -161,13 +164,13 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // show a message if the user can't be messaged
-            if(data.isBlinded && !data.enableMessage){
+            if (data.isBlinded && !data.enableMessage) {
                 Text(
                     modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing),
                     text = annotatedStringResource(
                         Phrase.from(LocalContext.current, R.string.messageRequestsTurnedOff)
-                        .put(NAME_KEY, data.name)
-                        .format()
+                            .put(NAME_KEY, data.name)
+                            .format()
                     ),
                     textAlign = TextAlign.Center,
                     style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
@@ -179,9 +182,9 @@ fun UserProfileModal(
             // buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-            ){
+            ) {
                 var buttonModifier: Modifier = Modifier
-                if(data.isBlinded){ // this means there is no copy button so the message button should be full width
+                if (data.isBlinded) { // this means there is no copy button so the message button should be full width
                     buttonModifier = buttonModifier.widthIn(LocalDimensions.current.minButtonWidth)
                 } else { // the copy button will be there so allow for a max stretch with weight = 1f
                     buttonModifier = buttonModifier.weight(1f)
@@ -207,7 +210,7 @@ fun UserProfileModal(
                     }
                 )
 
-                if(!data.isBlinded){
+                if (!data.isBlinded) {
                     Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
                     SlimOutlineCopyButton(
                         Modifier.weight(1f),

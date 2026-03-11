@@ -17,7 +17,7 @@ import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.Callbacks
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 
 @Composable
 internal fun InviteAccountIdScreen(

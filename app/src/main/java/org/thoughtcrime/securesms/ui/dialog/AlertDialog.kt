@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.ui
+package org.thoughtcrime.securesms.ui.dialog
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -44,10 +44,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
+import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.copyURLToClipboard
+import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.openUrl
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -301,6 +309,48 @@ fun OpenURLAlertDialog(
         ),
         onDismissRequest = onDismissRequest,
         content = content
+    )
+}
+
+@Composable
+fun CommunityLinkAlertDialog(
+    link: LinkType.CommunityLink,
+    onDismissRequest: () -> Unit,
+    onJoinCommunity: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val title = if (link.joined) {
+        stringResource(R.string.communityJoined)
+    } else {
+        stringResource(R.string.communityJoin)
+    }
+    val text = if (link.joined) {
+        stringResource(R.string.communityJoinedAlready)
+    } else {
+        Phrase.from(context, R.string.communityJoinDescription)
+            .put(COMMUNITY_NAME_KEY, link.name)
+            .format()
+            .toString()
+    }
+    val buttons = if (link.joined) {
+        listOf(DialogButtonData(text = GetString(android.R.string.ok)))
+    } else {
+        listOf(
+            DialogButtonData(
+                text = GetString(R.string.join),
+                onClick = { onJoinCommunity(link.url) }
+            ),
+            DialogButtonData(text = GetString(R.string.cancel))
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        title = title,
+        text = text,
+        buttons = buttons,
     )
 }
 

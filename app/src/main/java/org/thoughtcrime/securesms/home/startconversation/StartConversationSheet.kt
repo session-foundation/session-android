@@ -42,7 +42,7 @@ import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageVi
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.handleIntent
