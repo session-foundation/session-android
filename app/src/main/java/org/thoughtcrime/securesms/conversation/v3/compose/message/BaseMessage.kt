@@ -79,7 +79,6 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 swipe to reply
 //todo CONVOv3 inputbar quote/reply
 //todo CONVOv3 proper accessibility on overall message control
-//todo CONVOv3 verify immutability/stability of data classes
 
 /**
  * The overall Message composable
