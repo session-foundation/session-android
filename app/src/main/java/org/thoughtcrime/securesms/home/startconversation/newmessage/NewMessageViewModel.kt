@@ -4,6 +4,9 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -19,19 +22,27 @@ import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.PublicKeyValidation
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
 
-@HiltViewModel
-class NewMessageViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = NewMessageViewModel.Factory::class)
+class NewMessageViewModel @AssistedInject constructor(
+    @Assisted private val allowCommunityUrl: Boolean,
     private val application: Application,
     private val onsResolver: OnsResolver,
 ) : ViewModel(), Callbacks {
+    @AssistedFactory
+    interface Factory {
+        fun create(allowCommunityUrl: Boolean): NewMessageViewModel
+    }
+
     private val HELP_URL : String = "https://getsession.org/account-ids"
 
     private val _state = MutableStateFlow(State())
@@ -80,9 +91,23 @@ class NewMessageViewModel @Inject constructor(
             }
         }
 
-        if (PublicKeyValidation.hasValidLength(idOrONS)) {
-            if (PublicKeyValidation.isValid(idOrONS, isPrefixRequired = false)) {
-                onUnvalidatedPublicKey(idOrONS)
+        // check if we have a community URL
+        val isCommunityUrl: Boolean = if(allowCommunityUrl) {
+            try {
+                OpenGroupUrlParser.parseUrl(idOrONS)
+                true
+            } catch (_: OpenGroupUrlParser.Error) {
+                false
+            }
+        } else {
+            false
+        }
+
+        if (isCommunityUrl) {
+            onCommunityUrlEntered(idOrONS)
+        } else if (AccountId.hasValidLength(idOrONS)) {
+            if (isValidStandardAddress(idOrONS)) {
+                onPublicKey(idOrONS)
             } else {
                 _state.update {
                     it.copy(
@@ -101,11 +126,7 @@ class NewMessageViewModel @Inject constructor(
         val currentTime = System.currentTimeMillis()
         if (currentTime - lasQrScan > qrDebounceTime) {
             lasQrScan = currentTime
-            if (PublicKeyValidation.isValid(
-                    value,
-                    isPrefixRequired = false
-                ) && PublicKeyValidation.hasValidPrefix(value)
-            ) {
+            if (isValidStandardAddress(value)) {
                 onChange(value)
                 _state.update { it.copy(validIdFromQr = value) }
             } else {
@@ -114,6 +135,9 @@ class NewMessageViewModel @Inject constructor(
             }
         }
     }
+
+    private fun isValidStandardAddress(address: String): Boolean =
+        AccountId.fromStringOrNull(address)?.prefix == IdPrefix.STANDARD
 
     override fun onClearQrCode() {
         _state.update {it.copy(validIdFromQr = "") }
@@ -150,26 +174,26 @@ class NewMessageViewModel @Inject constructor(
         }
     }
 
+    private fun onCommunityUrlEntered(url: String){
+        _state.update { it.copy(loading = false) }
+
+
+    }
+
+    private fun onCommunityUrlScanned(url: String){
+
+    }
+
+    private fun openOrJoinCommunity(url: String){
+
+    }
+
     private fun onPublicKey(publicKey: String) {
         _state.update { it.copy(loading = false) }
 
         val address = publicKey.toAddress()
         if (address is Address.Standard) {
-            viewModelScope.launch { _success.emit(Success(address)) }
-        }
-    }
-
-    private fun onUnvalidatedPublicKey(publicKey: String) {
-        if (PublicKeyValidation.hasValidPrefix(publicKey)) {
-            onPublicKey(publicKey)
-        } else {
-            _state.update {
-                it.copy(
-                    isTextErrorColor = true,
-                    error = GetString(R.string.accountIdErrorInvalid),
-                    loading = false
-                )
-            }
+            viewModelScope.launch { _success.emit(Success.NewMessage(address)) }
         }
     }
 
@@ -214,4 +238,7 @@ data class State(
 }
 
 
-data class Success(val address: Address.Standard)
+sealed class Success{
+    data class NewMessage(val address: Address.Standard): Success()
+    data class Community(val address: Address.Standard): Success()
+}

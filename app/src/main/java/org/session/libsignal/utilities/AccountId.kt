@@ -50,5 +50,7 @@ data class AccountId(
                 null
             }
         }
+
+        fun hasValidLength(candidate: String) = candidate.length == 66
     }
 }

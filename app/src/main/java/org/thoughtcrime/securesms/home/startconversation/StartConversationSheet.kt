@@ -40,6 +40,7 @@ import org.thoughtcrime.securesms.home.startconversation.invitefriend.InviteFrie
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
+import org.thoughtcrime.securesms.home.startconversation.newmessage.Success
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
@@ -166,18 +167,29 @@ fun StartConversationNavHost(
 
         // New Message
         horizontalSlideComposable<StartConversationDestination.NewMessage> {
-            val viewModel = hiltViewModel<NewMessageViewModel>()
+            val viewModel = hiltViewModel<NewMessageViewModel, NewMessageViewModel.Factory>{ factory ->
+                factory.create(allowCommunityUrl = false)
+            }
+
             val uiState by viewModel.state.collectAsState(State())
 
                 LaunchedEffect(Unit) {
                     scope.launch {
                         viewModel.success.collect {
-                            context.startActivity(
-                                ConversationActivityV2.createIntent(
-                                    context,
-                                    address = it.address
-                                )
-                            )
+                            when(it){
+                                is Success.NewMessage -> {
+                                    context.startActivity(
+                                        ConversationActivityV2.createIntent(
+                                            context,
+                                            address = it.address
+                                        )
+                                    )
+                                }
+                                is Success.Community -> {
+
+                                }
+                            }
+
 
                             onClose()
                         }

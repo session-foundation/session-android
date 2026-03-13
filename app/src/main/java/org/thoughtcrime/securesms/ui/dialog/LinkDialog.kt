@@ -13,6 +13,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NA
 import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
 import org.thoughtcrime.securesms.copyURLToClipboard
 import org.thoughtcrime.securesms.links.LinkType
+import org.thoughtcrime.securesms.links.LinkType.CommunityLink.DisplayType.*
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.openUrl
@@ -46,7 +47,6 @@ fun LinkAlertDialog(
                 data = data,
                 onDismissRequest = onDismissRequest,
                 openOrJoinCommunity = openOrJoinCommunity,
-                canCopyUrl = true,
                 modifier = modifier
             )
     }
@@ -103,8 +103,7 @@ fun CommunityLinkAlertDialog(
     data: LinkType.CommunityLink,
     onDismissRequest: () -> Unit,
     openOrJoinCommunity: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    canCopyUrl: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     //todo comlink I need to verify both the strings and buttons from design
     val context = LocalContext.current
@@ -127,8 +126,8 @@ fun CommunityLinkAlertDialog(
         onClick = { openOrJoinCommunity(data.url) }
     )
 
-    val buttons = if (canCopyUrl) {
-        listOf(
+    val buttons = when (data.displayType) {
+        CONVERSATION -> listOf(
             DialogButtonData(
                 text = GetString(android.R.string.copyUrl),
                 onClick = {
@@ -138,13 +137,14 @@ fun CommunityLinkAlertDialog(
             ),
             openOrJoinButton
         )
-    } else {
-        listOf(
-            DialogButtonData(
-                text = GetString(android.R.string.cancel)
-            ),
-            openOrJoinButton
-        )
+
+        else  ->
+            listOf(
+                DialogButtonData(
+                    text = GetString(android.R.string.cancel)
+                ),
+                openOrJoinButton
+            )
     }
 
 
@@ -153,20 +153,21 @@ fun CommunityLinkAlertDialog(
         modifier = modifier,
         title = title,
         text = text,
-        showCloseButton = canCopyUrl,
+        showCloseButton = data.displayType == CONVERSATION,
         buttons = buttons,
     )
 }
 
 @Preview
 @Composable
-fun PreviewNewCommunity() {
+fun PreviewNewCommunityScanned() {
     PreviewTheme {
         CommunityLinkAlertDialog(
             data = LinkType.CommunityLink(
                 url = "https://getsession.org/",
                 name = "Session",
                 joined = false,
+                displayType = SCANNED
             ),
             openOrJoinCommunity = {},
             onDismissRequest = {},
@@ -176,13 +177,14 @@ fun PreviewNewCommunity() {
 
 @Preview
 @Composable
-fun PreviewExistingCommunity() {
+fun PreviewExistingCommunityScanned() {
     PreviewTheme {
         CommunityLinkAlertDialog(
             data = LinkType.CommunityLink(
                 url = "https://getsession.org/",
                 name = "Session",
                 joined = true,
+                displayType = SCANNED
             ),
             openOrJoinCommunity = {},
             onDismissRequest = {},
@@ -192,15 +194,15 @@ fun PreviewExistingCommunity() {
 
 @Preview
 @Composable
-fun PreviewNewCommunityCopy() {
+fun PreviewNewCommunityEntered() {
     PreviewTheme {
         CommunityLinkAlertDialog(
             data = LinkType.CommunityLink(
                 url = "https://getsession.org/",
                 name = "Session",
                 joined = false,
+                displayType = ENTERED
             ),
-            canCopyUrl = true,
             openOrJoinCommunity = {},
             onDismissRequest = {},
         )
@@ -209,15 +211,49 @@ fun PreviewNewCommunityCopy() {
 
 @Preview
 @Composable
-fun PreviewExistingCommunityCopy() {
+fun PreviewExistingCommunityEntered() {
     PreviewTheme {
         CommunityLinkAlertDialog(
             data = LinkType.CommunityLink(
                 url = "https://getsession.org/",
                 name = "Session",
                 joined = true,
+                displayType = ENTERED
             ),
-            canCopyUrl = true,
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewNewCommunityConvo() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = false,
+                displayType = CONVERSATION
+            ),
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewExistingCommunityConvo() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = true,
+                displayType = CONVERSATION
+            ),
             openOrJoinCommunity = {},
             onDismissRequest = {},
         )

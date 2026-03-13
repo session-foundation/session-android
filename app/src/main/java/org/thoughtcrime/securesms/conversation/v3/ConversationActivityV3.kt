@@ -39,6 +39,7 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // calling before onCreate to make sure the composeContent has the right value straight away
         pendingScrollMessageId = extractScrollMessageId(intent)
         super.onCreate(savedInstanceState)
     }

@@ -59,6 +59,7 @@ import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.home.startconversation.newmessage.Success
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -420,7 +421,10 @@ fun ConversationV3NavHost(
                         )
                     }
 
-                val newMessageViewModel = hiltViewModel<NewMessageViewModel>()
+                val newMessageViewModel = hiltViewModel<NewMessageViewModel, NewMessageViewModel.Factory>{ factory ->
+                    factory.create(allowCommunityUrl = false)
+                }
+
                 val uiState by newMessageViewModel.state.collectAsState(State())
 
                 // grab a hold of manage group's VM
@@ -434,11 +438,13 @@ fun ConversationV3NavHost(
 
                 LaunchedEffect(Unit) {
                     newMessageViewModel.success.collect { success ->
-                        viewModel.sendCommand(
-                            InviteMembersViewModel.Commands.HandleAccountId(
-                                address = success.address
+                        if (success is Success.NewMessage) {
+                            viewModel.sendCommand(
+                                InviteMembersViewModel.Commands.HandleAccountId(
+                                    address = success.address
+                                )
                             )
-                        )
+                        }
                     }
                 }
 

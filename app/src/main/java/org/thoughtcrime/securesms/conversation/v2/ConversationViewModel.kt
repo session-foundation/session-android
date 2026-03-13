@@ -1220,6 +1220,7 @@ class ConversationViewModel @AssistedInject constructor(
             url = communityUrl,
             name = resolvedName,
             joined = false,
+            displayType = LinkType.CommunityLink.DisplayType.CONVERSATION
         )
 
         _dialogsState.update {

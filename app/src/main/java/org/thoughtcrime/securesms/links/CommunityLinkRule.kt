@@ -31,6 +31,7 @@ class CommunityLinkRule @Inject constructor(
             url = url,
             name = name,
             joined = joinedCommunity != null,
+            displayType = LinkType.CommunityLink.DisplayType.CONVERSATION
         )
     }
 }
