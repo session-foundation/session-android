@@ -283,12 +283,12 @@ class CallManager @Inject constructor(
             val encoderFactory = DefaultVideoEncoderFactory(base.eglBaseContext, true, true)
             val decoderFactory = DefaultVideoDecoderFactory(base.eglBaseContext)
 
-            // Explicitly configure WebRTC audio. This helps reduce device-specific echo/robotic sounds
-            // by avoiding inconsistent defaults across OEMs.
-            // Setting this to false will allow software AES/NS which is generally safer
+            val useHardwareAec = JavaAudioDeviceModule.isBuiltInAcousticEchoCancelerSupported()
+            val useHardwareNs  = JavaAudioDeviceModule.isBuiltInNoiseSuppressorSupported()
+
             val adm = JavaAudioDeviceModule.builder(context)
-                .setUseHardwareAcousticEchoCanceler(false)
-                .setUseHardwareNoiseSuppressor(false)
+                .setUseHardwareAcousticEchoCanceler(useHardwareAec)
+                .setUseHardwareNoiseSuppressor(useHardwareNs)
                 .createAudioDeviceModule()
 
             audioDeviceModule = adm
