@@ -39,7 +39,6 @@ import org.thoughtcrime.securesms.groups.compose.ManageGroupMembersScreen
 import org.thoughtcrime.securesms.groups.compose.PromoteMembersScreen
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
-import org.thoughtcrime.securesms.home.startconversation.newmessage.Success
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
 import org.thoughtcrime.securesms.ui.NavigationAction
@@ -261,13 +260,11 @@ fun ConversationSettingsNavHost(
 
                 LaunchedEffect(Unit) {
                     newMessageViewModel.success.collect { success ->
-                        if (success is Success.NewMessage) {
-                            viewModel.sendCommand(
-                                InviteMembersViewModel.Commands.HandleAccountId(
-                                    address = success.address
-                                )
+                        viewModel.sendCommand(
+                            InviteMembersViewModel.Commands.HandleAccountId(
+                                address = success.address
                             )
-                        }
+                        )
                     }
                 }
 

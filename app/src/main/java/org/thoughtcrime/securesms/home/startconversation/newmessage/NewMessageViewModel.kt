@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.home.startconversation.newmessage
 
 import android.app.Application
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.phrase.Phrase
@@ -8,6 +9,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
@@ -28,6 +31,8 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
+import org.thoughtcrime.securesms.conversation.v2.ConversationUiEvent
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
@@ -37,6 +42,7 @@ class NewMessageViewModel @AssistedInject constructor(
     @Assisted private val allowCommunityUrl: Boolean,
     private val application: Application,
     private val onsResolver: OnsResolver,
+    private val openGroupManager: OpenGroupManager
 ) : ViewModel(), Callbacks {
     @AssistedFactory
     interface Factory {
@@ -177,7 +183,8 @@ class NewMessageViewModel @AssistedInject constructor(
     private fun onCommunityUrlEntered(url: String){
         _state.update { it.copy(loading = false) }
 
-
+        //todo comlink show confimration dialog here, instead of directly opening - TEMP only
+        openOrJoinCommunity(url)
     }
 
     private fun onCommunityUrlScanned(url: String){
@@ -185,7 +192,32 @@ class NewMessageViewModel @AssistedInject constructor(
     }
 
     private fun openOrJoinCommunity(url: String){
+        val openGroup = try {
+            OpenGroupUrlParser.parseUrl(url)
+        } catch (_: OpenGroupUrlParser.Error) {
+            Toast.makeText(application, R.string.communityEnterUrlErrorInvalidDescription, Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
 
+        viewModelScope.launch {
+            try {
+                openGroupManager.add(
+                    server = openGroup.server,
+                    room = openGroup.room,
+                    publicKey = openGroup.serverPublicKey,
+                )
+
+                // after joining or if already joined, open the conversation
+                _success.emit(Success(Address.Community(openGroup.server, openGroup.room)))
+            } catch (e: Exception) {
+                Log.e("", "Error joining community", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(application, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
     }
 
     private fun onPublicKey(publicKey: String) {
@@ -193,7 +225,7 @@ class NewMessageViewModel @AssistedInject constructor(
 
         val address = publicKey.toAddress()
         if (address is Address.Standard) {
-            viewModelScope.launch { _success.emit(Success.NewMessage(address)) }
+            viewModelScope.launch { _success.emit(Success(address)) }
         }
     }
 
@@ -238,7 +270,4 @@ data class State(
 }
 
 
-sealed class Success{
-    data class NewMessage(val address: Address.Standard): Success()
-    data class Community(val address: Address.Standard): Success()
-}
+data class Success(val address: Address.Conversable)
