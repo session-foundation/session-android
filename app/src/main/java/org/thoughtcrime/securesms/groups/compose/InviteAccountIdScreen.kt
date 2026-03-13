@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.emptyFlow
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.Callbacks
 import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessage
+import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageViewModel
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 
 @Composable
@@ -56,7 +58,7 @@ private fun InviteAccountId(
     onHelp: () -> Unit = {},
     onDismissHelpDialog: () -> Unit,
     onSendInvite: (Boolean) -> Unit,
-    onDismissInviteDialog: () -> Unit
+    onDismissInviteDialog: () -> Unit,
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -87,10 +89,11 @@ private fun InviteAccountId(
         )
     }
 
-    if(!state.showUrlDialog.isNullOrEmpty()) {
-        OpenURLAlertDialog(
-            url = state.showUrlDialog,
-            onDismissRequest = { onDismissHelpDialog() }
+    if (state.urlDialog != null) {
+        LinkAlertDialog(
+            data = state.urlDialog,
+            onDismissRequest = onDismissHelpDialog,
+            openOrJoinCommunity = {}//unused here
         )
     }
 }
@@ -104,7 +107,7 @@ fun PreviewInviteAccountId() {
             isTextErrorColor = false,
             error = null,
             loading = false,
-            showUrlDialog = null,
+            urlDialog = null,
             validIdFromQr = "",
         ),
         onBack = { },

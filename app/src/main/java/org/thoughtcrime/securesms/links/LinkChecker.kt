@@ -11,9 +11,9 @@ sealed class LinkType(open val url: String) {
 
     data class CommunityLink(
         override val url: String,
-        val name: String,
         val joined: Boolean,
-        val displayType: DisplayType
+        val displayType: DisplayType,
+        val name: String = ""
     ) : LinkType(url){
         enum class DisplayType{
             CONVERSATION, ENTERED, SCANNED

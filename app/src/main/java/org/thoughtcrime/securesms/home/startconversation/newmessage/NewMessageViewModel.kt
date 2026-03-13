@@ -33,6 +33,8 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.conversation.v2.ConversationUiEvent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.links.LinkChecker
+import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
 import javax.inject.Inject
@@ -42,7 +44,8 @@ class NewMessageViewModel @AssistedInject constructor(
     @Assisted private val allowCommunityUrl: Boolean,
     private val application: Application,
     private val onsResolver: OnsResolver,
-    private val openGroupManager: OpenGroupManager
+    private val openGroupManager: OpenGroupManager,
+    private val linkChecker: LinkChecker,
 ) : ViewModel(), Callbacks {
     @AssistedFactory
     interface Factory {
@@ -98,19 +101,10 @@ class NewMessageViewModel @AssistedInject constructor(
         }
 
         // check if we have a community URL
-        val isCommunityUrl: Boolean = if(allowCommunityUrl) {
-            try {
-                OpenGroupUrlParser.parseUrl(idOrONS)
-                true
-            } catch (_: OpenGroupUrlParser.Error) {
-                false
-            }
-        } else {
-            false
-        }
+        val communityLink = linkChecker.check(idOrONS) as? LinkType.CommunityLink
 
-        if (isCommunityUrl) {
-            onCommunityUrlEntered(idOrONS)
+        if (communityLink != null) {
+            onCommunityUrlEntered(communityLink)
         } else if (AccountId.hasValidLength(idOrONS)) {
             if (isValidStandardAddress(idOrONS)) {
                 onPublicKey(idOrONS)
@@ -180,11 +174,12 @@ class NewMessageViewModel @AssistedInject constructor(
         }
     }
 
-    private fun onCommunityUrlEntered(url: String){
+    private fun onCommunityUrlEntered(communityLink: LinkType.CommunityLink){
         _state.update { it.copy(loading = false) }
 
-        //todo comlink show confimration dialog here, instead of directly opening - TEMP only
-        openOrJoinCommunity(url)
+        _state.update {
+            it.copy(urlDialog = communityLink)
+        }
     }
 
     private fun onCommunityUrlScanned(url: String){
@@ -239,15 +234,19 @@ class NewMessageViewModel @AssistedInject constructor(
     fun onCommand(commands: Commands) {
         when (commands) {
             is Commands.ShowUrlDialog -> {
-                _state.update { it.copy(showUrlDialog = HELP_URL) }
+                _state.update { it.copy(urlDialog = LinkType.GenericLink(HELP_URL)) }
             }
 
             is Commands.DismissUrlDialog -> {
                 _state.update {
                     it.copy(
-                        showUrlDialog = null
+                        urlDialog = null
                     )
                 }
+            }
+
+            is Commands.OpenOrJoinCommunity -> {
+                openOrJoinCommunity(commands.url)
             }
         }
     }
@@ -255,6 +254,7 @@ class NewMessageViewModel @AssistedInject constructor(
     sealed interface Commands {
         data object ShowUrlDialog : Commands
         data object DismissUrlDialog : Commands
+        data class OpenOrJoinCommunity(val url: String) : Commands
     }
 }
 
@@ -263,7 +263,7 @@ data class State(
     val isTextErrorColor: Boolean = false,
     val error: GetString? = null,
     val loading: Boolean = false,
-    val showUrlDialog: String? = null,
+    val urlDialog: LinkType? = null,
     val validIdFromQr: String = "",
 ) {
     val isNextButtonEnabled: Boolean get() = newMessageIdOrOns.isNotBlank()
