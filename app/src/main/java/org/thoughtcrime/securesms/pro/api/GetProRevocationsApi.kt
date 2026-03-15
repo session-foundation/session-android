@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
 import java.time.Instant
+import kotlin.time.Duration
 
 class GetProRevocationApi @AssistedInject constructor(
     @Assisted private val ticket: Long?,
@@ -41,13 +42,19 @@ class GetProRevocationApi @AssistedInject constructor(
 @Serializable
 class ProRevocations(
     val ticket: Long,
-    val items: List<Item>
+    val items: List<Item>,
+    @SerialName("retry_in_s")
+    val retryInSeconds: Long,
 ) {
     @Serializable
     class Item(
         @Serializable(with = InstantAsMillisSerializer::class)
         @SerialName("expiry_unix_ts_ms")
         val expiry: Instant,
+
+        @Serializable(with = InstantAsMillisSerializer::class)
+        @SerialName("effective_unix_ts_ms")
+        val effectiveFrom: Instant,
 
         @SerialName("gen_index_hash")
         val genIndexHash: String,
