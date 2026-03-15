@@ -95,7 +95,7 @@ class ConversationListState(
                     animateToPositioned(index)
                 } else {
                     lazyListState.scrollToItem(index)
-                    yield()
+                    yield() // let Compose remeasure before reading item geometry
                     snapToPosition(index)
                 }
 
@@ -254,6 +254,7 @@ class ConversationListState(
         if (lastLoadedIndex < 0) return false
 
         val previousItemCount = itemCount
+        // Accessing the last item signals Paging 3 to schedule an append load for the next page.
         this[lastLoadedIndex]
 
         return awaitOlderPageResult(previousItemCount)
