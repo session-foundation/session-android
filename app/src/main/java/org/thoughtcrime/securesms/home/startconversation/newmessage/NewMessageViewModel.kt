@@ -31,13 +31,12 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
-import org.thoughtcrime.securesms.conversation.v2.ConversationUiEvent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.links.LinkChecker
 import org.thoughtcrime.securesms.links.LinkType
+import org.thoughtcrime.securesms.links.LinkType.CommunityLink.DisplayType.*
 import org.thoughtcrime.securesms.ui.GetString
 import java.net.IDN
-import javax.inject.Inject
 
 @HiltViewModel(assistedFactory = NewMessageViewModel.Factory::class)
 class NewMessageViewModel @AssistedInject constructor(
@@ -103,8 +102,8 @@ class NewMessageViewModel @AssistedInject constructor(
         // check if we have a community URL
         val communityLink = linkChecker.check(idOrONS) as? LinkType.CommunityLink
 
-        if (communityLink != null) {
-            onCommunityUrlEntered(communityLink)
+        if (communityLink != null && allowCommunityUrl) {
+            onCommunityUrlDetected(communityLink.copy(displayType = ENTERED))
         } else if (AccountId.hasValidLength(idOrONS)) {
             if (isValidStandardAddress(idOrONS)) {
                 onPublicKey(idOrONS)
@@ -126,7 +125,13 @@ class NewMessageViewModel @AssistedInject constructor(
         val currentTime = System.currentTimeMillis()
         if (currentTime - lasQrScan > qrDebounceTime) {
             lasQrScan = currentTime
-            if (isValidStandardAddress(value)) {
+
+            // check if we have a community URL
+            val communityLink = linkChecker.check(value) as? LinkType.CommunityLink
+
+            if(communityLink != null){
+                onCommunityUrlDetected(communityLink.copy(displayType = SCANNED))
+            } else if (isValidStandardAddress(value)) {
                 onChange(value)
                 _state.update { it.copy(validIdFromQr = value) }
             } else {
@@ -174,16 +179,12 @@ class NewMessageViewModel @AssistedInject constructor(
         }
     }
 
-    private fun onCommunityUrlEntered(communityLink: LinkType.CommunityLink){
+    private fun onCommunityUrlDetected(communityLink: LinkType.CommunityLink){
         _state.update { it.copy(loading = false) }
 
         _state.update {
             it.copy(urlDialog = communityLink)
         }
-    }
-
-    private fun onCommunityUrlScanned(url: String){
-
     }
 
     private fun openOrJoinCommunity(url: String){

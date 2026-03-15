@@ -16,7 +16,7 @@ sealed class LinkType(open val url: String) {
         val name: String = ""
     ) : LinkType(url){
         enum class DisplayType{
-            CONVERSATION, ENTERED, SCANNED
+            CONVERSATION, ENTERED, SCANNED, GROUP
         }
     }
 }

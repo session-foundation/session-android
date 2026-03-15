@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -39,6 +40,7 @@ import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -91,6 +93,16 @@ fun CreateGroupScreen(
         onCreateClicked = viewModel::onCreateClicked,
         onBack = onBack,
     )
+
+    // Dialogs
+    val urlDialog by viewModel.urlDialog.collectAsState()
+    if (urlDialog != null) {
+        LinkAlertDialog(
+            data = urlDialog!!,
+            onDismissRequest = viewModel::onDismissUrlDialog,
+            openOrJoinCommunity = viewModel::openOrJoinCommunity,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -262,6 +262,40 @@ fun PreviewExistingCommunityConvo() {
 
 @Preview
 @Composable
+fun PreviewNewCommunityGroup() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = false,
+                displayType = GROUP
+            ),
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewExistingCommunityGroup() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = true,
+                displayType = GROUP
+            ),
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Preview
+@Composable
 fun PreviewOpenURLDialog() {
     PreviewTheme {
         OpenURLAlertDialog(
