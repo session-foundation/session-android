@@ -5,6 +5,9 @@ import android.text.format.Formatter
 import androidx.compose.ui.text.AnnotatedString
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.json.Json
 import network.loki.messenger.R
 import org.session.libsession.messaging.utilities.UpdateMessageData
@@ -16,7 +19,6 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v3.compose.message.AudioMessageData
 import org.thoughtcrime.securesms.conversation.v3.compose.message.ClusterPosition
 import org.thoughtcrime.securesms.conversation.v3.compose.message.DocumentMessageData
-import org.thoughtcrime.securesms.conversation.v3.compose.message.HighlightMessage
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageAvatar
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageContent
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageContentData
@@ -40,11 +42,9 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
-import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.collections.mutableListOf
-import kotlin.math.abs
 
 
 @Singleton
@@ -55,8 +55,6 @@ class ConversationDataMapper @Inject constructor(
     private val json: Json,
     private val recipientRepository: RecipientRepository
 ) {
-    private val timeZoneOffsetSeconds = TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000
-
     sealed interface ConversationItem {
         data class Message(val data: MessageViewData) : ConversationItem
         data class DateBreak(val messageId: MessageId, val date: String) : ConversationItem
@@ -65,12 +63,11 @@ class ConversationDataMapper @Inject constructor(
 
     fun map(
         record: MessageRecord,
-        previous: MessageRecord?,
-        next: MessageRecord?,
+        newer: MessageRecord?,
+        older: MessageRecord?,
         threadRecipient: Recipient,
         localUserAddress: String,
         lastSeen: Long?,
-        highlightKey: HighlightMessage? = null,
         showStatus: Boolean = false,
         out: MutableList<ConversationItem>,
     ) {
@@ -92,15 +89,13 @@ class ConversationDataMapper @Inject constructor(
 
         val isGroup = threadRecipient.isGroupOrCommunityRecipient
 
-        val isStart = isStartOfCluster(record, previous, isGroup)
-        val isEnd = isEndOfCluster(record, next, isGroup)
-
-        val clusterPosition = when {
-            isStart && isEnd -> ClusterPosition.ISOLATED
-            isStart -> ClusterPosition.TOP
-            isEnd -> ClusterPosition.BOTTOM
-            else -> ClusterPosition.MIDDLE
-        }
+        val clusterPosition = ConversationUIRules.clusterPosition(
+            current = record,
+            newer = newer,
+            older = older,
+            isGroupThread = isGroup,
+            dateUtils = dateUtils,
+        )
 
         val avatar = when{
             // outgoing and non group conversations: No avatar
@@ -114,8 +109,17 @@ class ConversationDataMapper @Inject constructor(
             else -> MessageAvatar.Invisible
         }
 
-        val showDateBreak = shouldShowDateBreak(record, previous)
-        val showAuthorName = shouldShowAuthorName(record, previous, isGroup, showDateBreak)
+        val showDateBreak = ConversationUIRules.shouldShowDateBreakAbove(
+            current = record,
+            older = older,
+            dateUtils = dateUtils,
+        )
+        val showAuthorName = ConversationUIRules.shouldShowAuthorNameAbove(
+            current = record,
+            older = older,
+            isGroupThread = isGroup,
+            showDateBreakAbove = showDateBreak,
+        )
 
         val message = ConversationItem.Message(
             MessageViewData(
@@ -129,13 +133,12 @@ class ConversationDataMapper @Inject constructor(
                 contentGroups = mapContentGroups(record),
                 status = if (showStatus && isOutgoing) mapStatus(record) else null,
                 reactions = mapReactions(record, localUserAddress),
-                highlightKey = highlightKey,
                 clusterPosition = clusterPosition
-        ))
+            ))
 
         val showUnreadMarker = lastSeen != null
                 && record.timestamp > lastSeen
-                && (previous == null || previous.timestamp <= lastSeen)
+                && (older == null || older.timestamp <= lastSeen)
                 && !record.isOutgoing
 
         out += message
@@ -147,61 +150,13 @@ class ConversationDataMapper @Inject constructor(
         )
 
         // unread marker, if needed
+        //todo convov3 need to add scroll behaviour to this last seen when present
         if (showUnreadMarker) out += ConversationItem.UnreadMarker
-    }
-
-    private fun isStartOfCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
-        previous == null || previous.isControlMessage || !dateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
-            current.recipient.address != previous.recipient.address
-        } else {
-            current.isOutgoing != previous.isOutgoing
-        }
-
-    private fun isEndOfCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean {
-        if (next == null || next.isControlMessage) return true
-
-        // If there's a date break before the next message, this is the end of a cluster
-        if (shouldShowDateBreak(next, current)) return true
-
-        return if (isGroupThread) {
-            current.recipient.address != next.recipient.address
-        } else {
-            current.isOutgoing != next.isOutgoing
-        }
-    }
-
-    private fun shouldShowDateBreak(current: MessageRecord, previous: MessageRecord?): Boolean {
-        // Always show before the first visible message (no previous)
-        if (previous == null) return true
-
-        val t1 = previous.timestamp
-        val t2 = current.timestamp
-
-        // Rule 1: 5+ minute gap
-        if (abs(t2 - t1) > 5 * 60 * 1000) return true
-
-        // Rule 2: crossed midnight in local timezone
-        return !dateUtils.isSameDay(t1, t2)
-    }
-
-    private fun shouldShowAuthorName(
-        current: MessageRecord,
-        previous: MessageRecord?,
-        isGroupThread: Boolean,
-        showDateBreak: Boolean,
-    ): Boolean {
-        if (!isGroupThread) return false
-        if (current.isOutgoing) return false
-
-        // Show if there's a date break, the author changed, or previous was a control message
-        return (showDateBreak
-                || current.individualRecipient.address != previous?.individualRecipient?.address)
-                || previous.isControlMessage
     }
 
     // ---- Message content ----
 
-    private fun mapContentGroups(record: MessageRecord): List<MessageContentGroup> {
+    private fun mapContentGroups(record: MessageRecord): ImmutableList<MessageContentGroup> {
         val groups = mutableListOf<MessageContentGroup>()
         val mms = record as? MmsMessageRecord
 
@@ -215,7 +170,7 @@ class ConversationDataMapper @Inject constructor(
                 )
             )
 
-            return groups
+            return groups.toImmutableList()
         }
 
         // community invites
@@ -225,11 +180,11 @@ class ConversationDataMapper @Inject constructor(
                 addContentToGroup(
                     groups,
                     MessageContentData.CommunityInvite(
-                    jsonData.kind.groupName,
-                    jsonData.kind.groupUrl
-                ))
+                        jsonData.kind.groupName,
+                        jsonData.kind.groupUrl
+                    ))
 
-                return groups
+                return groups.toImmutableList()
             }
         }
 
@@ -259,7 +214,7 @@ class ConversationDataMapper @Inject constructor(
         // that allows custom padding based on certain rules
         // for example used by quotes to change their paddings depending on neighboring content
         if (primaryData.isNotEmpty()) {
-            val primaryContents: List<MessageContent> =
+            val primaryContents: ImmutableList<MessageContent> =
                 primaryData.mapIndexed { index, data ->
                     val extraPadding =
                         if (data is MessageContentData.Quote) {
@@ -274,7 +229,7 @@ class ConversationDataMapper @Inject constructor(
                         }
 
                     MessageContent(contentData = data, extraPadding = extraPadding)
-                }
+                }.toImmutableList()
 
             groups.add(MessageContentGroup(primaryContents, showBubble = true))
         }
@@ -329,14 +284,23 @@ class ConversationDataMapper @Inject constructor(
                         MessageMediaItem.Image(uri, filename, loading, width, height)
                     }
                 }
-                groups.add(MessageContentGroup(listOf(MessageContent(
-                    MessageContentData.Media(items, items.any { it.loading })))
-                    , showBubble = false)
+                groups.add(
+                    MessageContentGroup(
+                        persistentListOf(
+                            MessageContent(
+                                MessageContentData.Media(
+                                    items.toImmutableList(),
+                                    items.any { it.loading },
+                                )
+                            )
+                        ),
+                        showBubble = false,
+                    )
                 )
             }
         }
 
-        return groups
+        return groups.toImmutableList()
     }
 
     private fun addContentToGroup(
@@ -346,7 +310,7 @@ class ConversationDataMapper @Inject constructor(
         paddingValues: MessageContentPadding = MessageContentPadding.None
     ){
         groups.add(
-            MessageContentGroup(listOf(MessageContent(contentData, paddingValues)), showBubble)
+            MessageContentGroup(persistentListOf(MessageContent(contentData, paddingValues)), showBubble)
         )
     }
 
@@ -390,7 +354,8 @@ class ConversationDataMapper @Inject constructor(
             title = title,
             subtitle = subtitle,
             icon = icon,
-            showProBadge = quote.author.shouldShowProBadge
+            showProBadge = quote.author.shouldShowProBadge,
+            quotedMessageId = quote.quoteMessageId
         )
     }
 
@@ -437,7 +402,7 @@ class ConversationDataMapper @Inject constructor(
             }
 
         return ReactionViewState(
-            reactions = items,
+            reactions = items.toImmutableList(),
             isExtended = false,        // todo CONVOv3: drive from per-message expanded state in ViewModel
         )
     }

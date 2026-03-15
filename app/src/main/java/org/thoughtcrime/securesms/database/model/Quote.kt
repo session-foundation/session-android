@@ -6,6 +6,7 @@ import org.thoughtcrime.securesms.mms.SlideDeck
 
 data class Quote(
     val id: Long,
+    val quoteMessageId: MessageId?, //todo convov3 maybe I can remove the id and isOriginalMissing and rely on messageId only
     val author: Recipient,
     val text: String?,
     val isOriginalMissing: Boolean,
