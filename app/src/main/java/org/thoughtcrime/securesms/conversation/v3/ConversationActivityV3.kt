@@ -1,24 +1,26 @@
 package org.thoughtcrime.securesms.conversation.v3
 
-import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.content.IntentCompat
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.isBlinded
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.util.push
 
 class ConversationActivityV3 : FullComposeScreenLockActivity() {
+
+    private var pendingScrollMessageId: MessageId? by mutableStateOf(null)
 
     companion object {
         // Extras
         private const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
-        private const val CONVERSATION_SCROLL_STATE = "conversation_scroll_state"
         private const val EXTRA_START_DESTINATION = "conversation_start_destination"
 
         fun createIntent(
@@ -36,6 +38,17 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        pendingScrollMessageId = extractScrollMessageId(intent)
+        super.onCreate(savedInstanceState)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingScrollMessageId = extractScrollMessageId(intent)
+    }
+
     @Composable
     override fun ComposeContent() {
         val startDestination = IntentCompat.getParcelableExtra(
@@ -50,11 +63,19 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
                 "ConversationV3Activity requires an Address to be passed in the intent."
             },
             startDestination = startDestination,
+            pendingScrollMessageId = pendingScrollMessageId,
+            onPendingScrollConsumed = {
+                pendingScrollMessageId = null
+            },
             switchConvoVersion = {
                 startActivity(ConversationActivityV2.createIntent(this, address = IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)!!))
                 finish()
             },
             onBack = this::finish
         )
+    }
+
+    private fun extractScrollMessageId(intent: Intent): MessageId? {
+        return IntentCompat.getParcelableExtra(intent, SCROLL_MESSAGE_ID, MessageId::class.java)
     }
 }

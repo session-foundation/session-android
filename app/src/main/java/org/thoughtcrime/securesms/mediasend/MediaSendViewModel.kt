@@ -38,7 +38,7 @@ class MediaSendViewModel @Inject constructor(
     recipientRepository: RecipientRepository,
     private val context: ApplicationContext,
 ) : InputbarViewModel(
-    application = application,
+    context = application,
     proStatusManager = proStatusManager,
     recipientRepository = recipientRepository,
 ) {
