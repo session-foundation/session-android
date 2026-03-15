@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.collections.immutable.persistentListOf
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.composeContent
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -144,7 +145,7 @@ fun DocumentMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.OUTGOING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(PreviewMessageData.quote()),
                     composeContent(PreviewMessageData.document(loading = true)),
                 )
@@ -156,7 +157,7 @@ fun DocumentMessagePreview(
                 id = MessageId(0, false),
                 displayName = "Toto",
                 layout = MessageLayout.INCOMING,
-                contentGroups = listOf(
+                contentGroups = persistentListOf(
                     composeContent(PreviewMessageData.quote()),
                     composeContent(PreviewMessageData.document(loading = true)),
                 )

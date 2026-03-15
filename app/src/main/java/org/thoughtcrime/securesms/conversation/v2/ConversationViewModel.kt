@@ -170,7 +170,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val jobQueue: Provider<JobQueue>,
 ) : InputbarViewModel(
-    application = application,
+    context = application,
     proStatusManager = proStatusManager,
     recipientRepository = recipientRepository,
 ) {
