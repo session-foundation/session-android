@@ -108,17 +108,56 @@ fun CommunityLinkAlertDialog(
     //todo comlink I need to verify both the strings and buttons from design
     val context = LocalContext.current
     val title = if (data.joined) {
-        stringResource(R.string.communityJoined)
+        stringResource(R.string.openCommunity)
     } else {
         stringResource(R.string.communityJoin)
     }
-    val text = if (data.joined) {
-        stringResource(R.string.communityJoinedAlready)
-    } else {
-        Phrase.from(context, R.string.communityJoinDescription)
-            .put(COMMUNITY_NAME_KEY, data.name)
-            .format()
-            .toString()
+    val text: CharSequence = when(data.displayType){
+        CONVERSATION -> {
+            if (data.joined) {
+                Phrase.from(context, R.string.joinedCommunityOpen)
+                    .put(COMMUNITY_NAME_KEY, data.name)
+                    .format()
+            } else {
+                annotatedStringResource(R.string.joinThisCommunity)
+            }
+        }
+
+        ENTERED -> {
+            if (data.joined) {
+                Phrase.from(context, R.string.communityUrlOpenEntered)
+                    .put(COMMUNITY_NAME_KEY, data.name)
+                    .format()
+            } else {
+                annotatedStringResource(R.string.communityUrlJoinEntered)
+            }
+        }
+
+        SCANNED -> {
+            if (data.joined) {
+                Phrase.from(context, R.string.communityUrlOpenScanned)
+                    .put(COMMUNITY_NAME_KEY, data.name)
+                    .format()
+            } else {
+                annotatedStringResource(R.string.communitUrlJoinScanned)
+            }
+        }
+
+        GROUP -> {
+            if (data.joined) {
+                Phrase.from(context, R.string.groupNameContainedUrlOpenCommunity)
+                    .put(COMMUNITY_NAME_KEY, data.name)
+                    .format()
+            } else {
+                annotatedStringResource(R.string.groupNameContainedUrlJoinCommunity)
+            }
+        }
+
+        SEARCH -> {
+            Phrase.from(context, R.string.joinedCommunityOpen)
+                .put(COMMUNITY_NAME_KEY, data.name)
+                .format()
+        }
     }
 
     val openOrJoinButton = DialogButtonData(
@@ -155,11 +194,46 @@ fun CommunityLinkAlertDialog(
     AlertDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
-        title = title,
-        text = text,
+        title = annotatedStringResource(title),
+        text = annotatedStringResource(text),
         showCloseButton = data.displayType == CONVERSATION,
         buttons = buttons,
     )
+}
+
+
+@Preview
+@Composable
+fun PreviewNewCommunityConvo() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = false,
+                displayType = CONVERSATION
+            ),
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewExistingCommunityConvo() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = true,
+                displayType = CONVERSATION
+            ),
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
 }
 
 @Preview
@@ -232,40 +306,6 @@ fun PreviewExistingCommunityEntered() {
 
 @Preview
 @Composable
-fun PreviewNewCommunityConvo() {
-    PreviewTheme {
-        CommunityLinkAlertDialog(
-            data = LinkType.CommunityLink(
-                url = "https://getsession.org/",
-                name = "Session",
-                joined = false,
-                displayType = CONVERSATION
-            ),
-            openOrJoinCommunity = {},
-            onDismissRequest = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewExistingCommunityConvo() {
-    PreviewTheme {
-        CommunityLinkAlertDialog(
-            data = LinkType.CommunityLink(
-                url = "https://getsession.org/",
-                name = "Session",
-                joined = true,
-                displayType = CONVERSATION
-            ),
-            openOrJoinCommunity = {},
-            onDismissRequest = {},
-        )
-    }
-}
-
-@Preview
-@Composable
 fun PreviewNewCommunityGroup() {
     PreviewTheme {
         CommunityLinkAlertDialog(
@@ -297,6 +337,24 @@ fun PreviewExistingCommunityGroup() {
         )
     }
 }
+
+@Preview
+@Composable
+fun PreviewNewCommunitySearch() {
+    PreviewTheme {
+        CommunityLinkAlertDialog(
+            data = LinkType.CommunityLink(
+                url = "https://getsession.org/",
+                name = "Session",
+                joined = true,
+                displayType = SEARCH
+            ),
+            openOrJoinCommunity = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
 
 @Preview
 @Composable
