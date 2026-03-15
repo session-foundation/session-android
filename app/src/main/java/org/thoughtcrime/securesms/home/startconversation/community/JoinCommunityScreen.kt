@@ -52,6 +52,7 @@ import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -95,6 +96,19 @@ internal fun JoinCommunityScreen(
                 R.string.qrScan -> QRScannerScreen(errors = emptyFlow(), onScan = { sendCommand(OnQRScanned(it)) })
             }
         }
+    }
+
+    // Dialogs
+    if (state.urlDialog != null) {
+        LinkAlertDialog(
+            data = state.urlDialog,
+            onDismissRequest = {
+                sendCommand(JoinCommunityViewModel.Commands.OnDismissJoinedDialog)
+            },
+            openOrJoinCommunity = {
+                sendCommand(JoinCommunityViewModel.Commands.JoinCommunity(it))
+            },
+        )
     }
 }
 

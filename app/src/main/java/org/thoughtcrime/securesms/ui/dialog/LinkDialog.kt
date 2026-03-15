@@ -126,15 +126,19 @@ fun CommunityLinkAlertDialog(
         onClick = { openOrJoinCommunity(data.url) }
     )
 
+    val copyUrlButton = if(data.allowCopyUrl){
+        DialogButtonData(
+            text = GetString(android.R.string.copyUrl),
+            onClick = {
+                context.copyURLToClipboard(data.url)
+                Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
+            }
+        )
+    } else null
+
     val buttons = when (data.displayType) {
-        CONVERSATION -> listOf(
-            DialogButtonData(
-                text = GetString(android.R.string.copyUrl),
-                onClick = {
-                    context.copyURLToClipboard(data.url)
-                    Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
-                }
-            ),
+        CONVERSATION -> listOfNotNull(
+            copyUrlButton,
             openOrJoinButton
         )
 

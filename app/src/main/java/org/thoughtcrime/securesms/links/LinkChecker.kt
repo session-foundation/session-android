@@ -13,7 +13,8 @@ sealed class LinkType(open val url: String) {
         override val url: String,
         val joined: Boolean,
         val displayType: DisplayType,
-        val name: String = ""
+        val name: String = "",
+        val allowCopyUrl: Boolean = true
     ) : LinkType(url){
         enum class DisplayType{
             CONVERSATION, ENTERED, SCANNED, GROUP
