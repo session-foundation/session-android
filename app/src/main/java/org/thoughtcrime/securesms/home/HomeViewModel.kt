@@ -438,6 +438,28 @@ class HomeViewModel @Inject constructor(
             is Commands.ShowUrlDialog -> {
                 _dialogsState.update { it.copy(urlDialog = command.linkType) }
             }
+
+            is Commands.ShowNewConversationConfirmationDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = context.getString(R.string.conversationsStart),
+                            message = context.getString(R.string.globalSearchAccountId),
+                            negativeText = context.getString(R.string.conversationsStart),
+                            positiveText = context.getString(R.string.cancel),
+                            positiveStyleDanger = false,
+                            onNegative = {
+                                viewModelScope.launch {
+                                    _uiEvents.emit(UiEvent.OpenConversation(command.address))
+                                }
+                            },
+                            onPositive = {
+                                onCommand(Commands.HideSimpleDialog)
+                            },
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -582,6 +604,7 @@ class HomeViewModel @Inject constructor(
         data object HideUserProfileModal : Commands
         data object HideUrlDialog : Commands
         data class ShowUrlDialog(val linkType: LinkType) : Commands
+        data class ShowNewConversationConfirmationDialog(val address: Address.Conversable) : Commands
         data class OnLinkOpened(val url: String) : Commands
         data class OnLinkCopied(val url: String) : Commands
         data class OpenOrJoinCommunity(val url: String) : Commands

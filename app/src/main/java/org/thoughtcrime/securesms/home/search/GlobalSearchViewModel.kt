@@ -21,6 +21,8 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -78,7 +80,8 @@ class GlobalSearchViewModel @Inject constructor(
                 } else {
                     var results = searchRepository.query(query).toGlobalSearchResult()
 
-                    // add a special case for community URL
+                    // Special cases
+                    // community URL detected
                     val communityUrl = linkChecker.check(query) as? LinkType.CommunityLink
                     if(communityUrl != null){
                         // if the community is joined, add it to the result,
@@ -98,6 +101,13 @@ class GlobalSearchViewModel @Inject constructor(
                             // community not yet joined: show a confirmation dialog
                             _uiEvents.emit(UiEvent.ShowUrlDialog(communityUrl.copy(displayType = LinkType.CommunityLink.DisplayType.SEARCH)))
                         }
+                    }
+
+                    // Account ID detected, which is not a contact
+                    val accountId = AccountId.fromStringOrNull(query)
+                    val isStandardAccountId = accountId?.prefix == IdPrefix.STANDARD
+                    if(isStandardAccountId && !results.contacts.any { it.address.toString() == query }){
+                        _uiEvents.emit(UiEvent.ShowNewConversationDialog(Address.Standard(accountId)))
                     }
 
                     // show "Note to Self" is the user searches for parts of"Note to Self"
@@ -120,6 +130,7 @@ class GlobalSearchViewModel @Inject constructor(
 
     sealed interface UiEvent {
         data class ShowUrlDialog(val linkType: LinkType) : UiEvent
+        data class ShowNewConversationDialog(val address: Address.Conversable) : UiEvent
     }
 }
 

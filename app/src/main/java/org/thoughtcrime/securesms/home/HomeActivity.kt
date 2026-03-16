@@ -304,6 +304,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         is GlobalSearchViewModel.UiEvent.ShowUrlDialog -> {
                             homeViewModel.onCommand(HomeViewModel.Commands.ShowUrlDialog(event.linkType))
                         }
+
+                        is GlobalSearchViewModel.UiEvent.ShowNewConversationDialog -> {
+                            homeViewModel.onCommand(HomeViewModel.Commands.ShowNewConversationConfirmationDialog(event.address))
+                        }
                     }
                 }
             }
