@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
 import org.thoughtcrime.securesms.notifications.NotificationPreferences.CHECKED_DOZE_WHITELIST
 import org.thoughtcrime.securesms.notifications.NotificationPreferences.PRIVACY
 import org.thoughtcrime.securesms.notifications.NotificationPreferences.PUSH_ENABLED
@@ -28,6 +29,7 @@ import javax.inject.Inject
 class NotificationsPreferenceViewModel @Inject constructor(
     private val prefs: PreferenceStorage,
     val application: Application,
+    private val channels: NotificationChannelManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UIState())
@@ -148,9 +150,10 @@ class NotificationsPreferenceViewModel @Inject constructor(
                 }
             }
 
-            Commands.OpenSystemNotificationSettings -> {
+            is Commands.OpenSystemNotificationSettings -> {
                 val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                 intent.putExtra(Settings.EXTRA_APP_PACKAGE, application.packageName)
+                intent.putExtra(Settings.EXTRA_CHANNEL_ID, channels.getNotificationChannelId(command.channelDescription))
 
                 viewModelScope.launch {
                     _uiEvents.emit(NotificationPreferenceEvent.NavigateToActivity(intent))
@@ -192,7 +195,9 @@ class NotificationsPreferenceViewModel @Inject constructor(
 
         data object OpenBatteryOptimizationSettings : Commands
 
-        data object OpenSystemNotificationSettings : Commands
+        data class OpenSystemNotificationSettings(
+            val channelDescription: NotificationChannelManager.ChannelDescription
+        ) : Commands
 
         data class SelectNotificationPrivacyOption(val option: NotificationPrivacy) : Commands
     }

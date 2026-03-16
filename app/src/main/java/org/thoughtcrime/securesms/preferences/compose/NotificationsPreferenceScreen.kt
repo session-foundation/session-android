@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.compose
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -17,15 +19,16 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.NotificationPreferenceEvent.*
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.NotificationPrivacyOption
-import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.IconTextActionRowItem
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
@@ -77,6 +80,38 @@ fun NotificationsPreferenceScreen(
     )
 }
 
+private enum class NotificationChannelSettings(
+    val desc: NotificationChannelManager.ChannelDescription,
+    @get:StringRes val qaTag: Int,
+    @get:StringRes val title: Int,
+    val subtitle: String,
+) {
+    Conversations(
+        desc = NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES,
+        qaTag = R.string.qa_preferences_navigate_to_conversations,
+        title = R.string.sessionConversations,
+        subtitle = "Open device notification settings for Conversation Notifications"
+    ),
+    Groups(
+        desc = NotificationChannelManager.ChannelDescription.GROUP_MESSAGES,
+        qaTag = R.string.qa_preferences_navigate_to_groups,
+        title = R.string.conversationsGroups,
+        subtitle = "Open device notification settings for Groups Notifications"
+    ),
+    Communities(
+        desc = NotificationChannelManager.ChannelDescription.COMMUNITY_MESSAGES,
+        qaTag = R.string.qa_preferences_navigate_to_communities,
+        title = R.string.conversationsCommunities,
+        subtitle = "Open device notification settings for Communities Notifications"
+    ),
+    Calls(
+        desc = NotificationChannelManager.ChannelDescription.CALLS,
+        qaTag = R.string.qa_preferences_navigate_to_calls,
+        title = R.string.callsSettings,
+        subtitle = "Open device notification settings for Calls Notifications"
+    )
+}
+
 @Composable
 fun NotificationsPreference(
     uiState: NotificationsPreferenceViewModel.UIState,
@@ -121,14 +156,6 @@ fun NotificationsPreference(
                         switchQaTag = R.string.qa_preferences_whitelist_toggle,
                         onCheckedChange = { sendCommand(WhiteListClicked) }
                     )
-
-                    Divider()
-
-                    ActionRowItem(
-                        title = annotatedStringResource(R.string.notificationsGoToDevice),
-                        qaTag = R.string.qa_preferences_navigate_device_settings,
-                        onClick = { sendCommand(OpenSystemNotificationSettings) }
-                    )
                 }
             }
 
@@ -138,7 +165,7 @@ fun NotificationsPreference(
         item {
             CategoryCell(
                 modifier = Modifier,
-                title = GetString(R.string.notificationsStyle).string()
+                title = GetString(R.string.notificationsMessage).string()
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -152,6 +179,20 @@ fun NotificationsPreference(
                         onCheckedChange = {isEnabled -> sendCommand(ToggleSoundWhenOpen(isEnabled)) }
                     )
 
+                    for (channel in NotificationChannelSettings.entries) {
+                        Divider()
+
+                        IconActionRowItem(
+                            title = annotatedStringResource(channel.title),
+                            onClick = {
+                                sendCommand(OpenSystemNotificationSettings(channel.desc))
+                            },
+                            qaTag = channel.qaTag,
+                            subtitle = AnnotatedString(channel.subtitle),
+                            icon = R.drawable.ic_chevron_right,
+                            iconSize = LocalDimensions.current.iconSmall,
+                        )
+                    }
                 }
             }
 
