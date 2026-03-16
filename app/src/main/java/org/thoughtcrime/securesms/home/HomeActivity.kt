@@ -101,7 +101,6 @@ import org.thoughtcrime.securesms.ui.LatchedAnimatedVisibility
 import org.thoughtcrime.securesms.ui.PathDot
 import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.Avatar
-import org.thoughtcrime.securesms.ui.components.OffscreenAvatarRenderer
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -157,7 +156,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var prefs: PreferenceStorage
     @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
     @Inject lateinit var jobQueue: Provider<JobQueue>
-    @Inject lateinit var offscreenAvatarRenderer: OffscreenAvatarRenderer
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
