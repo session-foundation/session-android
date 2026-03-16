@@ -90,7 +90,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
-
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
     private val swarmApiExecutor: SwarmApiExecutor,
@@ -198,9 +197,9 @@ class ConfigToDatabaseSync @Inject constructor(
         for ((threadId, address) in result.created) {
             when (address) {
                 is Address.Community -> onCommunityAdded(address, threadId)
-                is Address.Group -> onGroupAdded(address, threadId)
                 is Address.LegacyGroup -> onLegacyGroupAdded(address, threadId, myAccountId)
                 is Address.CommunityBlindedId,
+                is Address.Group,
                 is Address.Standard -> {
                     // No additional action needed for these types
                 }
@@ -246,11 +245,6 @@ class ConfigToDatabaseSync @Inject constructor(
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
         storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMillis())
     }
-
-    private fun onGroupAdded(
-        address: Address.Group,
-        threadId: Long
-    ) {}
 
     private fun onCommunityAdded(address: Address.Community, threadId: Long) {
         // Clear any existing data for this community
