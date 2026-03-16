@@ -143,7 +143,7 @@ class FullNotificationHandler @Inject constructor(
                 }
 
                 // Early exit if we don't have active notifications for updateOnly mode
-                if (updateOnly && !this@FullNotificationHandler.notificationManager.containsThreadNotification(threadId)) {
+                if (updateOnly && getActiveThreadNotification(threadId) == null) {
                     Log.d(TAG, "threadId=$threadId: updateOnly=true but no active notification — skipping")
                     return
                 }

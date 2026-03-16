@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.pm.PackageManager
+import android.service.notification.StatusBarNotification
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -32,7 +33,7 @@ abstract class ThreadBasedNotificationHandler(
     protected val context: Context,
     protected val currentActivityObserver: CurrentActivityObserver,
     protected val avatarUtils: AvatarUtils,
-    private val channels: NotificationChannelManager,
+    protected val channels: NotificationChannelManager,
     protected val recipientRepository: RecipientRepository,
     private val avatarBitmapCache: AvatarBitmapCache,
     protected val notificationManager: NotificationManagerCompat,
@@ -45,8 +46,8 @@ abstract class ThreadBasedNotificationHandler(
         notificationManager.cancel(threadTag(threadId), NotificationId.MESSAGE_THREAD)
     }
 
-    protected fun NotificationManagerCompat.containsThreadNotification(threadId: Long): Boolean {
-        return activeNotifications.any {
+    protected fun getActiveThreadNotification(threadId: ThreadId): StatusBarNotification? {
+        return notificationManager.activeNotifications.firstOrNull {
             it.tag == threadTag(threadId) && it.id == NotificationId.MESSAGE_THREAD
         }
     }
@@ -191,7 +192,7 @@ abstract class ThreadBasedNotificationHandler(
     companion object {
         private const val TAG = "ThreadBasedNotificationHandler"
 
-        private fun threadTag(threadId: Long): String = "thread-$threadId"
+        fun threadTag(threadId: Long): String = "thread-$threadId"
 
         val ConversationActivityV2.threadAddress: Address.Conversable?
             get() = IntentCompat.getParcelableExtra(
