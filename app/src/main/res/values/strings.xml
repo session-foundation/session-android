@@ -433,6 +433,10 @@
     <string name="deleting">Deleting</string>
     <string name="developerToolsToggle">Toggle Developer Tools</string>
     <string name="deviceNotificationSettings">Device Notification Settings</string>
+    <string name="deviceSettingsCallNotifications">Open Device Settings for Call Notifications.</string>
+    <string name="deviceSettingsCommunityNotifications">Open Device Settings for Community Notifications.</string>
+    <string name="deviceSettingsConversationNotifications">Open Device Settings for Conversation Notifications.</string>
+    <string name="deviceSettingsGroupNotifications">Open Device Settings for Group Notifications.</string>
     <string name="dictationStart">Start Dictation...</string>
     <string name="disappearingMessages">Disappearing Messages</string>
     <string name="disappearingMessagesCountdownBig">Message will delete in {time_large}</string>
@@ -880,6 +884,7 @@
     <string name="notificationDisplay">Notification Display</string>
     <string name="notificationSenderNameAndPreview">Display the sender\'s name and a preview of the message content.</string>
     <string name="notificationSenderNameOnly">Display only the sender\'s name without any message content.</string>
+    <string name="notificationSettings">Notification Settings</string>
     <string name="notificationsAllMessages">All Messages</string>
     <string name="notificationsContent">Notification Content</string>
     <string name="notificationsContentDescription">The information shown in notifications.</string>

@@ -443,7 +443,7 @@ class RecipientRepository @Inject constructor(
 
         // Safety: Let's filter again for the flow logic to be 100% sure we are only setting timers for valid proofs
         val validProDataList = proDataContext?.proDataList?.filter {
-            !it.isExpired(now) && !proDatabase.isRevoked(it.genIndexHash)
+            !it.isExpired(now) && !proDatabase.isRevoked(it.genIndexHash, snodeClock.get().currentTime())
         }
 
         if (changeSources != null) {
@@ -485,7 +485,7 @@ class RecipientRepository @Inject constructor(
 
         // 1. Filter invalid proofs
         proDataList?.removeAll {
-            it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash)
+            it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash, snodeClock.get().currentTime())
         }
 
         // 2. Determine base Pro Data from valid proofs or ProStatusManager

@@ -284,7 +284,7 @@ class ProStatusManager @Inject constructor(
                             .asSequence()
                             .filterIsInstance<Conversation.WithProProofInfo>()
                             .filter { convo ->
-                                convo.proProofInfo?.genIndexHash?.let { proDatabase.isRevoked(it.data.toHexString()) } == true
+                                convo.proProofInfo?.genIndexHash?.let { proDatabase.isRevoked(it.data.toHexString(), snodeClock.currentTime()) } == true
                             }
                             .onEach { convo ->
                                 convo.proProofInfo = null
@@ -379,7 +379,7 @@ class ProStatusManager @Inject constructor(
                         .onStart { emit(Unit) },
 
                     { proofGenIndexHash, _ ->
-                        proofGenIndexHash.takeIf { proDatabase.isRevoked(it) }
+                        proofGenIndexHash.takeIf { proDatabase.isRevoked(it, snodeClock.currentTime()) }
                     }
                 )
                     .filterNotNull()

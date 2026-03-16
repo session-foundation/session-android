@@ -57,14 +57,16 @@ class ProDatabase @Inject constructor(
                 //language=roomsql
                 compileStatement(
                     """
-                INSERT INTO pro_revocations (gen_index_hash, expiry_ms)
-                VALUES (?, ?)
-                ON CONFLICT DO UPDATE SET expiry_ms=excluded.expiry_ms WHERE expiry_ms != excluded.expiry_ms
+                INSERT INTO pro_revocations (gen_index_hash, expiry_ms, effective_from_ms)
+                VALUES (?, ?, ?)
+                ON CONFLICT DO UPDATE SET expiry_ms=excluded.expiry_ms, effective_from_ms=excluded.effective_from_ms
+                WHERE expiry_ms != excluded.expiry_ms OR effective_from_ms != excluded.effective_from_ms
             """
                 ).use { stmt ->
                     for (item in data) {
                         stmt.bindString(1, item.genIndexHash)
                         stmt.bindLong(2, item.expiry.toEpochMilli())
+                        stmt.bindLong(3, item.effectiveFrom.toEpochMilli())
                         changes += stmt.executeUpdateDelete()
                         stmt.clearBindings()
                     }
@@ -109,7 +111,7 @@ class ProDatabase @Inject constructor(
         Log.d(TAG, "Pruned ${pruned.size} expired pro revocations")
     }
 
-    fun isRevoked(genIndexHash: String): Boolean {
+    fun isRevoked(genIndexHash: String, now: Instant): Boolean {
         if (cache[genIndexHash] != null) {
             return true
         }
@@ -117,9 +119,9 @@ class ProDatabase @Inject constructor(
         //language=roomsql
         readableDatabase.query("""
             SELECT 1 FROM pro_revocations
-            WHERE gen_index_hash = ?
+            WHERE gen_index_hash = ?1 AND ?2 >= effective_from_ms AND ?2 < expiry_ms 
             LIMIT 1
-        """, arrayOf(genIndexHash)).use { cursor ->
+        """, arrayOf<Any>(genIndexHash, now.toEpochMilli())).use { cursor ->
             if (cursor.moveToFirst()) {
                 cache.put(genIndexHash, Unit)
                 return true
@@ -136,10 +138,10 @@ class ProDatabase @Inject constructor(
     val proDetailsChangeNotification: SharedFlow<Unit> get() = mutableProDetailsChangeNotification
 
     fun getProDetailsAndLastUpdated(): Pair<ProDetails, Instant>? {
-        return readableDatabase.rawQuery("""
+        return readableDatabase.query("""
             SELECT name, value FROM pro_state
             WHERE name IN (?, ?)
-        """, STATE_PRO_DETAILS, STATE_PRO_DETAILS_UPDATED_AT).use { cursor ->
+        """, arrayOf(STATE_PRO_DETAILS, STATE_PRO_DETAILS_UPDATED_AT)).use { cursor ->
             var details: ProDetails? = null
             var updatedAt: Instant? = null
 
@@ -192,6 +194,7 @@ class ProDatabase @Inject constructor(
 
         fun createTable(db: SupportSQLiteDatabase) {
             // A table to hold the list of pro revocations
+            //language=roomsql
             db.execSQL("""
                 CREATE TABLE pro_revocations(
                     gen_index_hash TEXT NOT NULL PRIMARY KEY,
@@ -200,12 +203,21 @@ class ProDatabase @Inject constructor(
             """)
 
             // A table to hold state related to pro
+            //language=roomsql
             db.execSQL("""
                 CREATE TABLE pro_state(
                     name TEXT NOT NULL PRIMARY KEY,
                     value TEXT
                 ) WITHOUT ROWID"""
             )
+        }
+
+        fun addEffectiveFromColumn(db: SupportSQLiteDatabase) {
+            //language=roomsql
+            db.execSQL("""
+                ALTER TABLE pro_revocations
+                ADD COLUMN effective_from_ms INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP
+            """)
         }
     }
 }
