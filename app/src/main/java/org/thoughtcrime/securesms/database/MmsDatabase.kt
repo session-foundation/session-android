@@ -1062,8 +1062,10 @@ class MmsDatabase @Inject constructor(
                             .filter { it?.isQuote == true }
                             .let { SlideDeck(context, it) }
                     )
+            val quoteMessageId = retrievedQuote?.let { MessageId(it.id, it.isMms) }
             return Quote(
                 quoteId,
+                quoteMessageId,
                 recipientRepository.getRecipientSync(quoteAuthor.toAddress()),
                 quoteText,
                 quoteMissing,

@@ -1,7 +1,12 @@
 package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -41,6 +46,7 @@ fun MessageText(
     overflow: TextOverflow = TextOverflow.Clip,
     maxLines: Int = Int.MAX_VALUE,
     onUrlClick: ((String) -> Unit)? = null,
+    onTextLayout: ((TextLayoutResult) -> Unit)? = null,
 ) {
     val colors = LocalColors.current
     val mainTextColor = getTextColor(isOutgoing)
@@ -118,7 +124,7 @@ fun MessageText(
         displayText to bgRanges
     }
 
-    // -- Pill background drawing --
+    // -- Pill (mention bg) drawing --
 
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
 
@@ -153,7 +159,10 @@ fun MessageText(
         text = displayText,
         style = LocalType.current.large.copy(color = mainTextColor),
         modifier = modifierWithBg,
-        onTextLayout = { layout = it },
+        onTextLayout = {
+            layout = it
+            onTextLayout?.invoke(it)
+        },
         maxLines = maxLines,
         overflow = overflow
     )

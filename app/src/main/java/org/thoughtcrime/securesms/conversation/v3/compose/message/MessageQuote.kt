@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,12 +18,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -44,14 +48,33 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.blackAlpha06
 import org.thoughtcrime.securesms.ui.theme.bold
 
+data class QuoteMessageData(
+    val title: String,
+    val subtitle: AnnotatedString,
+    val icon: MessageQuoteIcon,
+    val showProBadge: Boolean,
+    val quotedMessageId: MessageId?,
+)
+
 @Composable
 fun MessageQuote(
     outgoing: Boolean,
     quote: QuoteMessageData,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onQuoteTapped: (MessageId) -> Unit = {},
 ){
     Row(
         modifier = modifier.height(IntrinsicSize.Min)
+            .then(
+                if (quote.quotedMessageId != null) {
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onQuoteTapped(quote.quotedMessageId) }
+                } else {
+                    Modifier
+                }
+            )
             .padding(horizontal = LocalDimensions.current.xsSpacing)
             .padding(top = LocalDimensions.current.xsSpacing),
         verticalAlignment = Alignment.CenterVertically,

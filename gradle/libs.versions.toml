@@ -10,7 +10,7 @@ assertjCoreVersion = "3.27.7"
 biometricVersion = "1.1.0"
 cameraCamera2Version = "1.5.3"
 cardviewVersion = "1.0.0"
-composeBomVersion = "2026.02.01"
+composeBomVersion = "2026.03.00"
 conscryptAndroidVersion = "2.5.3"
 conscryptJavaVersion = "2.5.2"
 constraintlayoutVersion = "2.2.1"
@@ -26,6 +26,7 @@ dependenciesAnalysisVersion = "3.6.1"
 googleServicesVersion = "4.4.4"
 junit = "1.3.0"
 kotlinVersion = "2.3.10"
+kotlinxImmutableVersion = "0.4.0"
 kryoVersion = "5.6.2"
 kspVersion = "2.3.6"
 legacySupportV13Version = "1.0.0"
@@ -147,6 +148,7 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "dagge
 dagger-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "daggerHiltVersion" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutinesVersion" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutinesVersion" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxImmutableVersion" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxJsonVersion" }
 kotlinx-coroutines-testing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesVersion" }
 material = { module = "com.google.android.material:material", version.ref = "materialVersion" }
