@@ -43,6 +43,8 @@ import org.thoughtcrime.securesms.database.model.ThreadChanges
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.ThreadBasedNotificationHandler.Companion.currentlyShowingConversation
 import org.thoughtcrime.securesms.notifications.ThreadBasedNotificationHandler.Companion.getChannelIdFor
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -65,7 +67,9 @@ class NoNameOrContentNotificationHandler @Inject constructor(
     private val recipientRepository: RecipientRepository,
     private val currentActivityObserver: CurrentActivityObserver,
     private val channels: NotificationChannelManager,
-    private val notificationManager: NotificationManagerCompat
+    private val notificationManager: NotificationManagerCompat,
+    private val prefs: PreferenceStorage,
+    private val appVisibilityManager: AppVisibilityManager,
 ) {
     private val currentActivity get() = currentActivityObserver.currentActivity.value
 
@@ -190,6 +194,7 @@ class NoNameOrContentNotificationHandler @Inject constructor(
                                     Intent(context, HomeActivity::class.java),
                                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                                 ))
+                                .setSilent(!prefs[NotificationPreferences.SOUND_WHEN_APP_OPEN] && appVisibilityManager.isAppVisible.value)
                                 .setAutoCancel(true)
                                 .build()
                         )

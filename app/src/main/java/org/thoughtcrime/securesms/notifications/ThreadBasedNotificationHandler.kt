@@ -24,6 +24,8 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
@@ -37,6 +39,8 @@ abstract class ThreadBasedNotificationHandler(
     protected val recipientRepository: RecipientRepository,
     private val avatarBitmapCache: AvatarBitmapCache,
     protected val notificationManager: NotificationManagerCompat,
+    protected val prefs: PreferenceStorage,
+    private val appVisibilityManager: AppVisibilityManager,
 ) {
     protected val currentActivity get() = currentActivityObserver.currentActivity.value
     protected val currentlyShowingConversation: Address.Conversable?
@@ -114,6 +118,7 @@ abstract class ThreadBasedNotificationHandler(
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setOnlyAlertOnce(silent)
                 .setAutoCancel(true)
+                .setSilent(!prefs[NotificationPreferences.SOUND_WHEN_APP_OPEN] && appVisibilityManager.isAppVisible.value)
 
         val userPerson = Person.Builder()
             .setName(context.getString(R.string.you))

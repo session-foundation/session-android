@@ -26,6 +26,8 @@ import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ThreadChanges
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
@@ -47,12 +49,12 @@ class NameOnlyNotificationHandler @Inject constructor(
     private val smsDatabase: SmsDatabase,
     recipientRepository: RecipientRepository,
     currentActivityObserver: CurrentActivityObserver,
-    private val reactionDatabase: ReactionDatabase,
-    private val messageFormatter: MessageFormatter,
     avatarUtils: AvatarUtils,
     avatarBitmapCache: AvatarBitmapCache,
     channels: NotificationChannelManager,
     notificationManager: NotificationManagerCompat,
+    prefs: PreferenceStorage,
+    appVisibilityManager: AppVisibilityManager,
 ) : ThreadBasedNotificationHandler(
     context = context,
     currentActivityObserver = currentActivityObserver,
@@ -60,7 +62,9 @@ class NameOnlyNotificationHandler @Inject constructor(
     channels = channels,
     recipientRepository = recipientRepository,
     avatarBitmapCache = avatarBitmapCache,
-    notificationManager = notificationManager
+    notificationManager = notificationManager,
+    prefs = prefs,
+    appVisibilityManager = appVisibilityManager,
 ) {
     suspend fun process() {
         merge(

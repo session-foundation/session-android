@@ -36,6 +36,8 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.database.model.ThreadChanges
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
@@ -63,6 +65,8 @@ class FullNotificationHandler @Inject constructor(
     avatarBitmapCache: AvatarBitmapCache,
     channels: NotificationChannelManager,
     notificationManager: NotificationManagerCompat,
+    prefs: PreferenceStorage,
+    appVisibilityManager: AppVisibilityManager,
 ) : ThreadBasedNotificationHandler(
     context = context,
     currentActivityObserver = currentActivityObserver,
@@ -71,6 +75,8 @@ class FullNotificationHandler @Inject constructor(
     recipientRepository = recipientRepository,
     avatarBitmapCache = avatarBitmapCache,
     notificationManager = notificationManager,
+    prefs = prefs,
+    appVisibilityManager = appVisibilityManager,
 ) {
 
     private sealed interface Event
