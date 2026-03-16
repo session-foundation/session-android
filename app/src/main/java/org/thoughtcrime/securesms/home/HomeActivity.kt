@@ -299,8 +299,24 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                globalSearchViewModel.uiEvents.collect { event ->
+                    when(event){
+                        is GlobalSearchViewModel.UiEvent.ShowUrlDialog -> {
+                            homeViewModel.onCommand(HomeViewModel.Commands.ShowUrlDialog(event.linkType))
+                        }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 homeViewModel.uiEvents.collect { event ->
                     when (event) {
+                        is HomeViewModel.UiEvent.OpenConversation-> {
+                            push(ConversationActivityV2.createIntent(this@HomeActivity, address = event.address))
+                        }
+
                         is HomeViewModel.UiEvent.OpenProSettings -> {
                             startActivity(
                                 ProSettingsActivity.createIntent(

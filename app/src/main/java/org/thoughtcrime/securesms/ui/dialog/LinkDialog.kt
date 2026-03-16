@@ -154,9 +154,7 @@ fun CommunityLinkAlertDialog(
         }
 
         SEARCH -> {
-            Phrase.from(context, R.string.joinedCommunityOpen)
-                .put(COMMUNITY_NAME_KEY, data.name)
-                .format()
+            annotatedStringResource(R.string.globalSearchUrlJoinCommunity)
         }
     }
 

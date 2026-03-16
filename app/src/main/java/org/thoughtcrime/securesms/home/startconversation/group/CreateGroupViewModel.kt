@@ -193,7 +193,7 @@ class CreateGroupViewModel @AssistedInject constructor(
                 mutableEvents.emit(CreateGroupEvent.NavigateToConversation(communityAddress))
 
             } catch (e: Exception) {
-                Log.e("ConversationV3ViewModel", "Error joining community", e)
+                Log.e("CreateGroupViewModel", "Error joining community", e)
                 Toast.makeText(appContext, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
                     .show()
             }
