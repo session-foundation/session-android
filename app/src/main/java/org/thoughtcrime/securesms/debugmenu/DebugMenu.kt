@@ -71,12 +71,12 @@ import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_2
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_3
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.SEEN_4
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Companion.TRUE
-import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.LoadingDialog
+import org.thoughtcrime.securesms.ui.dialog.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DropDown
@@ -779,14 +779,14 @@ fun DebugMenu(
                         onClick = {
                             if (showingDeprecatedTimePicker) {
                                 sendCommand(
-                                    DebugMenuViewModel.Commands.OverrideDeprecatedTime(
+                                    OverrideDeprecatedTime(
                                         getPickedTime()
                                     )
                                 )
                                 showingDeprecatedTimePicker = false
                             } else {
                                 sendCommand(
-                                    DebugMenuViewModel.Commands.OverrideDeprecatingStartTime(
+                                    OverrideDeprecatingStartTime(
                                         getPickedTime()
                                     )
                                 )

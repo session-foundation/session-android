@@ -53,8 +53,8 @@ import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationSettingsNavHost(
-    address: Address.Conversable,
-    startDestination: ConversationV3Destination = RouteConversationSettings,
+    initialAddress: Address.Conversable,
+    startDestination: ConversationV3Destination = RouteConversationSettings(initialAddress),
     returnResult: (String, Boolean) -> Unit,
     onBack: () -> Unit
 ){
@@ -94,10 +94,12 @@ fun ConversationSettingsNavHost(
 
         NavHost(navController = navController, startDestination = startDestination) {
             // Conversation Settings
-            horizontalSlideComposable<RouteConversationSettings> {
+            horizontalSlideComposable<RouteConversationSettings> { backStackEntry ->
+                val data: RouteConversationSettings = backStackEntry.toRoute()
+
                 val viewModel =
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
-                        factory.create(address, navigator)
+                        factory.create(data.address, navigator)
                     }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -208,9 +210,7 @@ fun ConversationSettingsNavHost(
 
                 // grab a hold of settings' VM
                 val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(
-                        RouteConversationSettings
-                    )
+                    navController.previousBackStackEntry ?: error("RouteConversationSettings not in backstack")
                 }
                 val settingsViewModel: ConversationSettingsViewModel = hiltViewModel(parentEntry)
 
@@ -243,7 +243,10 @@ fun ConversationSettingsNavHost(
                         )
                     }
 
-                val newMessageViewModel = hiltViewModel<NewMessageViewModel>()
+                val newMessageViewModel = hiltViewModel<NewMessageViewModel, NewMessageViewModel.Factory>{ factory ->
+                    factory.create(allowCommunityUrl = false)
+                }
+
                 val uiState by newMessageViewModel.state.collectAsState(State())
 
                 // grab a hold of manage group's VM
@@ -314,11 +317,13 @@ fun ConversationSettingsNavHost(
             }
 
             // Disappearing Messages
-            horizontalSlideComposable<RouteDisappearingMessages> {
+            horizontalSlideComposable<RouteDisappearingMessages> { backStackEntry ->
+                val data: RouteDisappearingMessages = backStackEntry.toRoute()
+
                 val viewModel: DisappearingMessagesViewModel =
                     hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
                         factory.create(
-                            address = address,
+                            address = data.address,
                             isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
                             showDebugOptions = BuildConfig.BUILD_TYPE != "release",
                             navigator = navigator
@@ -334,10 +339,12 @@ fun ConversationSettingsNavHost(
             }
 
             // All Media
-            horizontalSlideComposable<RouteAllMedia> {
+            horizontalSlideComposable<RouteAllMedia> { backStackEntry ->
+                val data: RouteAllMedia = backStackEntry.toRoute()
+
                 val viewModel =
                     hiltViewModel<MediaOverviewViewModel, MediaOverviewViewModel.Factory> { factory ->
-                        factory.create(address)
+                        factory.create(data.address)
                     }
 
                 MediaOverviewScreen(
@@ -349,10 +356,12 @@ fun ConversationSettingsNavHost(
             }
 
             // Notifications
-            horizontalSlideComposable<RouteNotifications> {
+            horizontalSlideComposable<RouteNotifications> { backStackEntry ->
+                val data: RouteNotifications = backStackEntry.toRoute()
+
                 val viewModel =
                     hiltViewModel<NotificationSettingsViewModel, NotificationSettingsViewModel.Factory> { factory ->
-                        factory.create(address)
+                        factory.create(data.address)
                     }
 
                 NotificationSettingsScreen(

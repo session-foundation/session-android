@@ -48,7 +48,7 @@ import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ExpandableText
 import org.thoughtcrime.securesms.ui.ItemButton
-import org.thoughtcrime.securesms.ui.LoadingDialog
+import org.thoughtcrime.securesms.ui.dialog.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource

@@ -52,7 +52,7 @@ fun MessageLink(
         modifier = modifier.fillMaxWidth()
             .background(color = blackAlpha06)
             .clickable {
-                sendCommand(ConversationCommand.OpenUrl(data.url))
+                sendCommand(ConversationCommand.HandleLink(data.url))
             },
     ) {
         Box(

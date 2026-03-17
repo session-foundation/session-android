@@ -65,16 +65,31 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
+private fun String.toConversableAddress(): Address.Conversable =
+    Address.fromSerialized(this) as? Address.Conversable
+        ?: error("Expected a conversable address but got: $this")
+
 // Destinations
 sealed interface ConversationV3Destination: Parcelable {
     @Serializable
     @Parcelize
-    data object RouteConversation: ConversationV3Destination
+    data class RouteConversation private constructor(
+        private val serializedAddress: String
+    ): ConversationV3Destination {
+        constructor(address: Address.Conversable): this(address.address)
 
+        val address: Address.Conversable get() = serializedAddress.toConversableAddress()
+    }
 
     @Serializable
     @Parcelize
-    data object RouteConversationSettings: ConversationV3Destination
+    data class RouteConversationSettings private constructor(
+        private val serializedAddress: String
+    ): ConversationV3Destination {
+        constructor(address: Address.Conversable): this(address.address)
+
+        val address: Address.Conversable get() = serializedAddress.toConversableAddress()
+    }
 
     @Serializable
     @Parcelize
@@ -134,15 +149,33 @@ sealed interface ConversationV3Destination: Parcelable {
 
     @Serializable
     @Parcelize
-    data object RouteDisappearingMessages: ConversationV3Destination
+    data class RouteDisappearingMessages private constructor(
+        private val serializedAddress: String
+    ): ConversationV3Destination {
+        constructor(address: Address.Conversable): this(address.address)
+
+        val address: Address.Conversable get() = serializedAddress.toConversableAddress()
+    }
 
     @Serializable
     @Parcelize
-    data object RouteAllMedia: ConversationV3Destination
+    data class RouteAllMedia private constructor(
+        private val serializedAddress: String
+    ): ConversationV3Destination {
+        constructor(address: Address.Conversable): this(address.address)
+
+        val address: Address.Conversable get() = serializedAddress.toConversableAddress()
+    }
 
     @Serializable
     @Parcelize
-    data object RouteNotifications: ConversationV3Destination
+    data class RouteNotifications private constructor(
+        private val serializedAddress: String
+    ): ConversationV3Destination {
+        constructor(address: Address.Conversable): this(address.address)
+
+        val address: Address.Conversable get() = serializedAddress.toConversableAddress()
+    }
 
     @Serializable
     @Parcelize
@@ -167,11 +200,11 @@ sealed interface ConversationV3Destination: Parcelable {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationV3NavHost(
-    address: Address.Conversable,
-    startDestination: ConversationV3Destination = RouteConversation,
+    initialAddress: Address.Conversable,
+    startDestination: ConversationV3Destination = RouteConversation(initialAddress),
     pendingScrollMessageId: MessageId? = null,
     onPendingScrollConsumed: () -> Unit = {},
-    switchConvoVersion: () -> Unit,
+    switchConvoVersion: (Address.Conversable) -> Unit,
     onBack: () -> Unit
 ){
     SharedTransitionLayout {
@@ -206,10 +239,12 @@ fun ConversationV3NavHost(
 
         NavHost(navController = navController, startDestination = startDestination) {
             // Main conversation screen
-            horizontalSlideComposable<RouteConversation> {
+            horizontalSlideComposable<RouteConversation> { backStackEntry ->
+                val data: RouteConversation = backStackEntry.toRoute()
+
                 val viewModel =
                     hiltViewModel<ConversationV3ViewModel, ConversationV3ViewModel.Factory> { factory ->
-                        factory.create(address, navigator)
+                        factory.create(data.address, navigator)
                     }
 
                 LaunchedEffect(pendingScrollMessageId) {
@@ -227,16 +262,19 @@ fun ConversationV3NavHost(
 
                 ConversationScreen(
                     viewModel = viewModel,
-                    switchConvoVersion = switchConvoVersion,
+                    address = data.address,
+                    switchConvoVersion = { switchConvoVersion(data.address) },
                     onBack = onBack,
                 )
             }
 
             // Conversation Settings
-            horizontalSlideComposable<RouteConversationSettings> {
+            horizontalSlideComposable<RouteConversationSettings> { backStackEntry ->
+                val data: RouteConversationSettings = backStackEntry.toRoute()
+
                 val viewModel =
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
-                        factory.create(address, navigator)
+                        factory.create(data.address, navigator)
                     }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -349,9 +387,7 @@ fun ConversationV3NavHost(
 
                 // grab a hold of settings' VM
                 val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(
-                        RouteConversationSettings
-                    )
+                    navController.previousBackStackEntry ?: error("RouteConversationSettings not in backstack")
                 }
                 val settingsViewModel: ConversationSettingsViewModel = hiltViewModel(parentEntry)
 
@@ -384,7 +420,10 @@ fun ConversationV3NavHost(
                         )
                     }
 
-                val newMessageViewModel = hiltViewModel<NewMessageViewModel>()
+                val newMessageViewModel = hiltViewModel<NewMessageViewModel, NewMessageViewModel.Factory>{ factory ->
+                    factory.create(allowCommunityUrl = false)
+                }
+
                 val uiState by newMessageViewModel.state.collectAsState(State())
 
                 // grab a hold of manage group's VM
@@ -455,11 +494,13 @@ fun ConversationV3NavHost(
             }
 
             // Disappearing Messages
-            horizontalSlideComposable<RouteDisappearingMessages> {
+            horizontalSlideComposable<RouteDisappearingMessages> { backStackEntry ->
+                val data: RouteDisappearingMessages = backStackEntry.toRoute()
+
                 val viewModel: DisappearingMessagesViewModel =
                     hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
                         factory.create(
-                            address = address,
+                            address = data.address,
                             isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
                             showDebugOptions = BuildConfig.BUILD_TYPE != "release",
                             navigator = navigator
@@ -475,10 +516,12 @@ fun ConversationV3NavHost(
             }
 
             // All Media
-            horizontalSlideComposable<RouteAllMedia> {
+            horizontalSlideComposable<RouteAllMedia> { backStackEntry ->
+                val data: RouteAllMedia = backStackEntry.toRoute()
+
                 val viewModel =
                     hiltViewModel<MediaOverviewViewModel, MediaOverviewViewModel.Factory> { factory ->
-                        factory.create(address)
+                        factory.create(data.address)
                     }
 
                 MediaOverviewScreen(
@@ -490,10 +533,12 @@ fun ConversationV3NavHost(
             }
 
             // Notifications
-            horizontalSlideComposable<RouteNotifications> {
+            horizontalSlideComposable<RouteNotifications> { backStackEntry ->
+                val data: RouteNotifications = backStackEntry.toRoute()
+
                 val viewModel =
                     hiltViewModel<NotificationSettingsViewModel, NotificationSettingsViewModel.Factory> { factory ->
-                        factory.create(address)
+                        factory.create(data.address)
                     }
 
                 NotificationSettingsScreen(

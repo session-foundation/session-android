@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.ui
+package org.thoughtcrime.securesms.ui.dialog
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -44,10 +44,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
+import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.copyURLToClipboard
+import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.openUrl
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -258,51 +266,7 @@ fun AlertDialogContent(
 
 }
 
-@Composable
-fun OpenURLAlertDialog(
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-    url: String,
-    onLinkOpened: (String) -> Unit = {},
-    onLinkCopied: (String) -> Unit = {},
-    content: @Composable () -> Unit = {}
-) {
-    val context = LocalContext.current
-    val unformattedText = Phrase.from(context.getText(R.string.urlOpenDescription))
-        .put(URL_KEY, url).format()
 
-
-    AlertDialog(
-        modifier = modifier,
-        title = AnnotatedString(stringResource(R.string.urlOpen)),
-        text = annotatedStringResource(text = unformattedText),
-        maxLines = 5,
-        showCloseButton = true, // display the 'x' button
-        buttons = listOf(
-            DialogButtonData(
-                text = GetString(R.string.open),
-                color = LocalColors.current.danger,
-                dismissOnClick = false,
-                onClick = {
-                    if(context.openUrl(url)){
-                        onLinkOpened(url)
-                        onDismissRequest()
-                    }
-                }
-            ),
-            DialogButtonData(
-                text = GetString(android.R.string.copyUrl),
-                onClick = {
-                    onLinkCopied(url)
-                    context.copyURLToClipboard(url)
-                    Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
-                }
-            )
-        ),
-        onDismissRequest = onDismissRequest,
-        content = content
-    )
-}
 
 @Composable
 fun DialogButton(
@@ -454,17 +418,6 @@ fun PreviewXCloseNoButtonsDialog() {
             title = stringResource(R.string.urlOpen),
             text = stringResource(R.string.urlOpenBrowser),
             showCloseButton = true, // display the 'x' button
-            onDismissRequest = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewOpenURLDialog() {
-    PreviewTheme {
-        OpenURLAlertDialog(
-            url = "https://getsession.org/",
             onDismissRequest = {}
         )
     }

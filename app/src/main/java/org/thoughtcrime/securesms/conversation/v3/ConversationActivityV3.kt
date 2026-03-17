@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -39,6 +40,7 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // calling before onCreate to make sure the composeContent has the right value straight away
         pendingScrollMessageId = extractScrollMessageId(intent)
         super.onCreate(savedInstanceState)
     }
@@ -51,24 +53,29 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
 
     @Composable
     override fun ComposeContent() {
+        val initialAddress: Address.Conversable? = IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)
+        if (initialAddress == null) {
+            LaunchedEffect(Unit) {
+                finish()
+            }
+            return
+        }
+
         val startDestination = IntentCompat.getParcelableExtra(
             intent,
             EXTRA_START_DESTINATION,
             ConversationV3Destination::class.java
-        ) ?:  ConversationV3Destination.RouteConversation
+        ) ?: ConversationV3Destination.RouteConversation(initialAddress)
 
         ConversationV3NavHost(
-            //todo convov3 v2 convo would go back home if address is null - update this
-            address = requireNotNull(IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)) {
-                "ConversationV3Activity requires an Address to be passed in the intent."
-            },
+            initialAddress = initialAddress,
             startDestination = startDestination,
             pendingScrollMessageId = pendingScrollMessageId,
             onPendingScrollConsumed = {
                 pendingScrollMessageId = null
             },
-            switchConvoVersion = {
-                startActivity(ConversationActivityV2.createIntent(this, address = IntentCompat.getParcelableExtra(intent, ADDRESS, Address.Conversable::class.java)!!))
+            switchConvoVersion = { address ->
+                startActivity(ConversationActivityV2.createIntent(this, address = address))
                 finish()
             },
             onBack = this::finish

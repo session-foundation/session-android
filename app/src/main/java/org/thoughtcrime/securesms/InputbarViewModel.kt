@@ -12,7 +12,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.util.NumberUtil
 
 // the amount of character left at which point we should show an indicator

@@ -4,7 +4,8 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.recipients.MessageType
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.links.LinkType
+import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.util.UserProfileModalData
 
 data class ConversationScrollState(
@@ -17,19 +18,13 @@ data class ConversationScrollState(
 
 data class ConversationDialogsState(
     val showSimpleDialog: SimpleDialogData? = null,
-    val openLinkDialogUrl: String? = null,
+    val urlDialog: LinkType? = null,
     val clearAllEmoji: ClearAllEmoji? = null,
     val deleteEveryone: DeleteForEveryoneDialogData? = null,
     val recreateGroupConfirm: Boolean = false,
     val recreateGroupData: RecreateGroupDialogData? = null,
     val userProfileModal: UserProfileModalData? = null,
-    val joinCommunity: JoinCommunityDialogData? = null,
     val attachmentDownload: ConfirmAttachmentDownloadDialogData? = null
-)
-
-data class JoinCommunityDialogData(
-    val communityName: String,
-    val communityUrl: String
 )
 
 data class ConfirmAttachmentDownloadDialogData(

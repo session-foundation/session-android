@@ -18,7 +18,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.InputBarDialogs
@@ -31,26 +30,25 @@ import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HandleUser
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideAttachmentDownloadDialog
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideClearEmoji
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideDeleteEveryoneDialog
-import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideJoinCommunityDialog
-import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideOpenUrlDialog
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideUrlDialog
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideRecreateGroup
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideRecreateGroupConfirm
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideSimpleDialog
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.HideUserProfileModal
-import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.JoinCommunity
+import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.OpenOrJoinCommunity
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.MarkAsDeletedForEveryone
 import org.thoughtcrime.securesms.conversation.v3.ConversationCommand.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v3.ConversationDialogsState
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3ViewModel
 import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupScreen
-import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.links.LinkType
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -109,13 +107,16 @@ fun ConversationV3Dialogs(
             sendCommand = sendInputBarCommand
         )
 
-        // open link confirmation
-        if(!dialogsState.openLinkDialogUrl.isNullOrEmpty()){
-            OpenURLAlertDialog(
-                url = dialogsState.openLinkDialogUrl,
+        // Link dialogs
+        if(dialogsState.urlDialog != null){
+            LinkAlertDialog(
+                data = dialogsState.urlDialog,
                 onDismissRequest = {
                     // hide dialog
-                    sendCommand(HideOpenUrlDialog)
+                    sendCommand(HideUrlDialog)
+                },
+                openOrJoinCommunity = {
+                    sendCommand(OpenOrJoinCommunity(it))
                 }
             )
         }
@@ -289,29 +290,6 @@ fun ConversationV3Dialogs(
             )
         }
 
-        // Join community
-        if(dialogsState.joinCommunity != null){
-            AlertDialog(
-                onDismissRequest = {
-                    // hide dialog
-                    sendCommand(HideJoinCommunityDialog)
-                },
-                title = stringResource(R.string.communityJoin),
-                text = Phrase.from(LocalContext.current, R.string.communityJoinDescription)
-                    .put(COMMUNITY_NAME_KEY, dialogsState.joinCommunity.communityName).format().toString(),
-                buttons = listOf(
-                    DialogButtonData(
-                        text = GetString(stringResource(id = R.string.join)),
-                        onClick = {
-                            sendCommand(JoinCommunity(dialogsState.joinCommunity.communityUrl))
-                        }
-                    ),
-                    DialogButtonData(
-                        GetString(stringResource(R.string.cancel))
-                    )
-                )
-            )
-        }
 
         // Attachment downloads
         if(dialogsState.attachmentDownload != null){
@@ -349,7 +327,7 @@ fun PreviewURLDialog(){
     PreviewTheme {
         ConversationV3Dialogs(
             dialogsState = ConversationDialogsState(
-                openLinkDialogUrl = "https://google.com"
+                urlDialog = LinkType.GenericLink("https://google.com")
             ),
             inputBarDialogsState = InputbarViewModel.InputBarDialogsState(),
             sendCommand = {},
