@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.links
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.junit.Test
@@ -14,7 +15,7 @@ import org.thoughtcrime.securesms.database.CommunityDatabase
 class LinkCheckerTest {
 
     @Test
-    fun `returns generic link when no rule matches`() {
+    fun `returns generic link when no rule matches`() = runTest {
         val checker = LinkChecker(rules = emptyList())
 
         assertThat(checker.check(" https://getsession.org ")).isEqualTo(
@@ -23,7 +24,7 @@ class LinkCheckerTest {
     }
 
     @Test
-    fun `returns generic link for a regular url`() {
+    fun `returns generic link for a regular url`() = runTest {
         val checker = checker(
             joinedCommunity = null,
             roomInfo = null,
@@ -35,7 +36,7 @@ class LinkCheckerTest {
     }
 
     @Test
-    fun `detects community links and falls back to room token when no local name exists`() {
+    fun `detects community links and falls back to room token when no local name exists`() = runTest {
         val checker = checker(
             joinedCommunity = null,
             roomInfo = null,
@@ -46,12 +47,13 @@ class LinkCheckerTest {
                 url = communityUrl(),
                 name = ROOM,
                 joined = false,
+                displayType = LinkType.CommunityLink.DisplayType.CONVERSATION,
             )
         )
     }
 
     @Test
-    fun `uses cached room name and joined flag when matching community already exists`() {
+    fun `uses cached room name and joined flag when matching community already exists`() = runTest {
         val checker = checker(
             joinedCommunity = mockJoinedCommunity(),
             roomInfo = roomInfo(name = "Session Lounge"),
@@ -62,6 +64,7 @@ class LinkCheckerTest {
                 url = communityUrl(),
                 name = "Session Lounge",
                 joined = true,
+                displayType = LinkType.CommunityLink.DisplayType.CONVERSATION,
             )
         )
     }

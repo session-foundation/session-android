@@ -255,9 +255,10 @@ class ConversationViewModelTest : BaseViewModelTest() {
             url = url,
             name = "Session Room",
             joined = false,
+            displayType = LinkType.CommunityLink.DisplayType.CONVERSATION,
         )
         val linkChecker = mock<LinkChecker> {
-            on { check(url) } doReturn communityLink
+            onBlocking { check(url) } doReturn communityLink
         }
         val viewModel = createViewModel(
             recipient = standardRecipient,
@@ -266,7 +267,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
 
         viewModel.onCommand(ConversationViewModel.Commands.HandleLink(url))
 
-        assertThat(viewModel.dialogsState.value.joinCommunity, equalTo(communityLink))
-        assertThat(viewModel.dialogsState.value.openLinkDialogUrl, nullValue())
+        assertThat(viewModel.dialogsState.value.urlDialog, equalTo(communityLink))
     }
 }
