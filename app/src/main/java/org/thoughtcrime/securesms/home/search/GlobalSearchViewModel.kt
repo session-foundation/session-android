@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,8 +14,11 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
@@ -32,7 +36,7 @@ import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.search.SearchRepository
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class GlobalSearchViewModel @Inject constructor(
     private val application: Application,
@@ -40,7 +44,7 @@ class GlobalSearchViewModel @Inject constructor(
     private val configFactory: ConfigFactory,
     private val threadDatabase: ThreadDatabase,
     private val linkChecker: LinkChecker,
-    recipientRepository: RecipientRepository
+    private val recipientRepository: RecipientRepository
 ) : ViewModel() {
 
     // The query text here is not the source of truth due to the limitation of Android view system
@@ -60,6 +64,25 @@ class GlobalSearchViewModel @Inject constructor(
         extraBufferCapacity = 1
     )
     val uiEvents: SharedFlow<UiEvent> = _uiEvents
+
+    init {
+        // Deriving UI events from query changes
+        _queryText
+            .debounce(300L)
+            .distinctUntilChanged()
+            .mapLatest { query ->
+                try {
+                    deriveUiEvents(query)
+                } catch (exception: Exception) {
+                    Log.e("GlobalSearchViewModel", "Error deriving UI events", exception)
+                    emptyList()
+                }
+            }
+            .onEach { events ->
+                events.forEach(_uiEvents::tryEmit)
+            }
+            .launchIn(viewModelScope)
+    }
 
     val result: SharedFlow<GlobalSearchResult> = combine(
         _queryText,
@@ -85,7 +108,7 @@ class GlobalSearchViewModel @Inject constructor(
                     val communityUrl = linkChecker.check(query) as? LinkType.CommunityLink
                     if(communityUrl != null){
                         // if the community is joined, add it to the result,
-                        // otherwise show a confirmation dialog
+                        // otherwise a dialog is handled by the query event flow
                         if(communityUrl.joined){
                             // community is already joined: add it to the result list
                             val openGroup = OpenGroupUrlParser.parseUrl(communityUrl.url)
@@ -97,17 +120,7 @@ class GlobalSearchViewModel @Inject constructor(
                                     )
                                 )
                             )
-                        } else {
-                            // community not yet joined: show a confirmation dialog
-                            _uiEvents.emit(UiEvent.ShowUrlDialog(communityUrl.copy(displayType = LinkType.CommunityLink.DisplayType.SEARCH)))
                         }
-                    }
-
-                    // Account ID detected, which is not a contact
-                    val accountId = AccountId.fromStringOrNull(query)
-                    val isStandardAccountId = accountId?.prefix == IdPrefix.STANDARD
-                    if(isStandardAccountId && !results.contacts.any { it.address.toString() == query }){
-                        _uiEvents.emit(UiEvent.ShowNewConversationDialog(Address.Standard(accountId)))
                     }
 
                     // show "Note to Self" is the user searches for parts of"Note to Self"
@@ -124,6 +137,31 @@ class GlobalSearchViewModel @Inject constructor(
         }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
 
+    private suspend fun deriveUiEvents(query: String): List<UiEvent> = withContext(Dispatchers.Default) {
+        if (query.isBlank()) {
+            return@withContext emptyList()
+        }
+
+        buildList {
+            val communityUrl = linkChecker.check(query) as? LinkType.CommunityLink
+            if (communityUrl != null && !communityUrl.joined) {
+                add(
+                    UiEvent.ShowUrlDialog(
+                        communityUrl.copy(displayType = LinkType.CommunityLink.DisplayType.SEARCH)
+                    )
+                )
+            }
+
+            val accountId = AccountId.fromStringOrNull(query)
+            if (accountId != null &&
+                accountId.prefix == IdPrefix.STANDARD &&
+                !searchRepository.queryContacts(query).any { it.address.toString() == query }
+            ) {
+                add(UiEvent.ShowNewConversationDialog(Address.Standard(accountId)))
+            }
+        }
+    }
+
     fun setQuery(charSequence: CharSequence) {
         _queryText.value = charSequence.toString()
     }
@@ -133,4 +171,3 @@ class GlobalSearchViewModel @Inject constructor(
         data class ShowNewConversationDialog(val address: Address.Conversable) : UiEvent
     }
 }
-

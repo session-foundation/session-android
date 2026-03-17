@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.links
 
-import androidx.compose.runtime.Composable
 import javax.inject.Inject
 import javax.inject.Singleton
 
