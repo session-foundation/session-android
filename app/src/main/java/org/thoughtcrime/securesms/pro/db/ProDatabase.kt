@@ -216,7 +216,7 @@ class ProDatabase @Inject constructor(
             //language=roomsql
             db.execSQL("""
                 ALTER TABLE pro_revocations
-                ADD COLUMN effective_from_ms INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP
+                ADD COLUMN effective_from_ms INTEGER NOT NULL DEFAULT 0
             """)
         }
     }
