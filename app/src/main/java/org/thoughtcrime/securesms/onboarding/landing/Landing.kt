@@ -42,7 +42,7 @@ import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageViewDat
 import org.thoughtcrime.securesms.conversation.v3.compose.message.PreviewMessageData.textGroup
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
-import org.thoughtcrime.securesms.ui.TCPolicyDialog
+import org.thoughtcrime.securesms.ui.dialog.TCPolicyDialog
 import org.thoughtcrime.securesms.ui.components.AccentFillButton
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.qaTag

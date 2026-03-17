@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
@@ -27,12 +28,12 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
@@ -41,11 +42,13 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.database.RecipientRepository
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
@@ -53,7 +56,7 @@ import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
-import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.DonationManager
@@ -85,6 +88,7 @@ class HomeViewModel @Inject constructor(
     private val dateUtils: DateUtils,
     private val donationManager: DonationManager,
     private val audioPlaybackManager: AudioPlaybackManager,
+    private val openGroupManager: OpenGroupManager,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -412,7 +416,7 @@ class HomeViewModel @Inject constructor(
             }
 
             is Commands.HideUrlDialog -> {
-                _dialogsState.update { it.copy(showUrlDialog = null) }
+                _dialogsState.update { it.copy(urlDialog = null) }
             }
 
             is Commands.OnLinkOpened -> {
@@ -428,6 +432,66 @@ class HomeViewModel @Inject constructor(
                     donationManager.onDonationCopied()
                 }
             }
+
+            is Commands.OpenOrJoinCommunity -> openOrJoinCommunity(command.url)
+
+            is Commands.ShowUrlDialog -> {
+                _dialogsState.update { it.copy(urlDialog = command.linkType) }
+            }
+
+            is Commands.ShowNewConversationConfirmationDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        showSimpleDialog = SimpleDialogData(
+                            title = context.getString(R.string.conversationsStart),
+                            message = context.getString(R.string.globalSearchAccountId),
+                            negativeText = context.getString(R.string.conversationsStart),
+                            positiveText = context.getString(R.string.cancel),
+                            positiveStyleDanger = false,
+                            onNegative = {
+                                viewModelScope.launch {
+                                    _uiEvents.emit(UiEvent.OpenConversation(command.address))
+                                }
+                            },
+                            onPositive = {
+                                onCommand(Commands.HideSimpleDialog)
+                            },
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun openOrJoinCommunity(url: String) {
+        val openGroup = try {
+            OpenGroupUrlParser.parseUrl(url)
+        } catch (_: OpenGroupUrlParser.Error) {
+            Toast.makeText(context, R.string.communityEnterUrlErrorInvalidDescription, Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
+
+        _dialogsState.update { it.copy(urlDialog = null) }
+        mutableIsSearchOpen.value = false
+
+        viewModelScope.launch {
+            try {
+                openGroupManager.add(
+                    server = openGroup.server,
+                    room = openGroup.room,
+                    publicKey = openGroup.serverPublicKey,
+                )
+
+                // after joining or if already joined, open the conversation
+                val communityAddress = Address.Community(openGroup.server, openGroup.room)
+                _uiEvents.emit(UiEvent.OpenConversation(communityAddress))
+
+            } catch (e: Exception) {
+                Log.e("HomeViewModel",  "Error joining community", e)
+                Toast.makeText(context, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
+                    .show()
+            }
         }
     }
 
@@ -437,7 +501,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun showUrlDialog(url: String) {
-        _dialogsState.update { it.copy(showUrlDialog = url) }
+        _dialogsState.update { it.copy(urlDialog = LinkType.GenericLink(url)) }
     }
 
 
@@ -504,7 +568,7 @@ class HomeViewModel @Inject constructor(
         val proExpiredCTA: Boolean = false,
         val showSimpleDialog: SimpleDialogData? = null,
         val donationCTA: Boolean = false,
-        val showUrlDialog: String? = null,
+        val urlDialog: LinkType? = null,
     )
 
     data class PinProCTA(
@@ -521,6 +585,7 @@ class HomeViewModel @Inject constructor(
     )
 
     sealed interface UiEvent {
+        data class OpenConversation(val address: Address.Conversable) : UiEvent
         data class OpenProSettings(val start: ProSettingsDestination) : UiEvent
         data object ShowWhiteListSystemDialog: UiEvent // once confirmed, this is for the system whitelist dialog
     }
@@ -538,8 +603,11 @@ class HomeViewModel @Inject constructor(
         data object HideDonationCTADialog : Commands
         data object HideUserProfileModal : Commands
         data object HideUrlDialog : Commands
+        data class ShowUrlDialog(val linkType: LinkType) : Commands
+        data class ShowNewConversationConfirmationDialog(val address: Address.Conversable) : Commands
         data class OnLinkOpened(val url: String) : Commands
         data class OnLinkCopied(val url: String) : Commands
+        data class OpenOrJoinCommunity(val url: String) : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ) : Commands

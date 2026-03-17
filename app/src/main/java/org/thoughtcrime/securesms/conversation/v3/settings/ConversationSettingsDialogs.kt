@@ -38,9 +38,9 @@ import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsV
 import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel.Commands.UpdateGroupName
 import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel.Commands.UpdateNickname
 import org.thoughtcrime.securesms.pro.ProStatus
-import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.CTAImage
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GenericProCTA
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.PinProCTA
