@@ -372,10 +372,12 @@ class ConversationV3ViewModel @AssistedInject constructor(
     }
 
     private fun handleLink(url: String) {
-        _dialogsState.update {
-            it.copy(
-                urlDialog =  linkChecker.check(url),
-            )
+        viewModelScope.launch {
+            _dialogsState.update {
+                it.copy(
+                    urlDialog = linkChecker.check(url),
+                )
+            }
         }
     }
 

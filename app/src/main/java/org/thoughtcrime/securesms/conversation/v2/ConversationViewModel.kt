@@ -1212,21 +1212,23 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     fun confirmCommunityJoin(communityName: String, communityUrl: String){
-        val detectedLink = linkChecker.check(communityUrl) as? LinkType.CommunityLink
-        val resolvedName = communityName.takeIf { it.isNotBlank() } ?: detectedLink?.name ?: communityUrl
-        val link = detectedLink?.copy(
-            name = resolvedName,
-        ) ?: LinkType.CommunityLink(
-            url = communityUrl,
-            name = resolvedName,
-            joined = false,
-            displayType = LinkType.CommunityLink.DisplayType.CONVERSATION
-        )
-
-        _dialogsState.update {
-            it.copy(
-                urlDialog = link,
+        viewModelScope.launch {
+            val detectedLink = linkChecker.check(communityUrl) as? LinkType.CommunityLink
+            val resolvedName = communityName.takeIf { it.isNotBlank() } ?: detectedLink?.name ?: communityUrl
+            val link = detectedLink?.copy(
+                name = resolvedName,
+            ) ?: LinkType.CommunityLink(
+                url = communityUrl,
+                name = resolvedName,
+                joined = false,
+                displayType = LinkType.CommunityLink.DisplayType.CONVERSATION
             )
+
+            _dialogsState.update {
+                it.copy(
+                    urlDialog = link,
+                )
+            }
         }
     }
 
@@ -1264,10 +1266,12 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private fun handleLink(url: String) {
-        _dialogsState.update {
-            it.copy(
-                urlDialog =  linkChecker.check(url),
-            )
+        viewModelScope.launch {
+            _dialogsState.update {
+                it.copy(
+                    urlDialog = linkChecker.check(url),
+                )
+            }
         }
     }
 

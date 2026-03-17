@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.links
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.OpenGroupUrlParser
@@ -12,11 +14,11 @@ class CommunityLinkRule @Inject constructor(
     private val communityDatabase: CommunityDatabase,
 ) : LinkRule {
 
-    override fun classify(url: String): LinkType? {
+    override suspend fun classify(url: String): LinkType? = withContext(Dispatchers.IO) {
         val openGroup = try {
             OpenGroupUrlParser.parseUrl(url)
         } catch (_: OpenGroupUrlParser.Error) {
-            return null
+            return@withContext null
         }
 
         val joinedCommunity = configFactory.withUserConfigs {
@@ -27,7 +29,7 @@ class CommunityLinkRule @Inject constructor(
             ?.takeIf { it.isNotBlank() }
             ?: openGroup.room
 
-        return LinkType.CommunityLink(
+        return@withContext LinkType.CommunityLink(
             url = url,
             name = name,
             joined = joinedCommunity != null,

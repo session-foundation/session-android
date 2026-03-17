@@ -83,41 +83,43 @@ class NewMessageViewModel @AssistedInject constructor(
     }
 
     override fun onContinue() {
-        val trimmed = state.value.newMessageIdOrOns.trim()
-        // Check if all characters are ASCII (code <= 127).
-        val idOrONS = if (trimmed.all { it.code <= 127 }) {
-            // Already ASCII (or punycode‐ready); no conversion needed.
-            trimmed
-        } else {
-            try {
-                // For non-ASCII input (e.g. with emojis), attempt to puny-encode
-                IDN.toASCII(trimmed, IDN.ALLOW_UNASSIGNED)
-            } catch (e: IllegalArgumentException) {
-                // if the above failed, resort to the original trimmed string
-                Log.w("", "IDN.toASCII failed. Returning: $trimmed")
+        viewModelScope.launch {
+            val trimmed = state.value.newMessageIdOrOns.trim()
+            // Check if all characters are ASCII (code <= 127).
+            val idOrONS = if (trimmed.all { it.code <= 127 }) {
+                // Already ASCII (or punycode-ready); no conversion needed.
                 trimmed
-            }
-        }
-
-        // check if we have a community URL
-        val communityLink = linkChecker.check(idOrONS) as? LinkType.CommunityLink
-
-        if (communityLink != null && allowCommunityUrl) {
-            onCommunityUrlDetected(communityLink.copy(displayType = ENTERED))
-        } else if (AccountId.hasValidLength(idOrONS)) {
-            if (isValidStandardAddress(idOrONS)) {
-                onPublicKey(idOrONS)
             } else {
-                _state.update {
-                    it.copy(
-                        isTextErrorColor = true,
-                        error = GetString(R.string.accountIdErrorInvalid),
-                        loading = false
-                    )
+                try {
+                    // For non-ASCII input (e.g. with emojis), attempt to puny-encode
+                    IDN.toASCII(trimmed, IDN.ALLOW_UNASSIGNED)
+                } catch (e: IllegalArgumentException) {
+                    // if the above failed, resort to the original trimmed string
+                    Log.w("", "IDN.toASCII failed. Returning: $trimmed")
+                    trimmed
                 }
             }
-        } else {
-            resolveONS(idOrONS)
+
+            // check if we have a community URL
+            val communityLink = linkChecker.check(idOrONS) as? LinkType.CommunityLink
+
+            if (communityLink != null && allowCommunityUrl) {
+                onCommunityUrlDetected(communityLink.copy(displayType = ENTERED))
+            } else if (AccountId.hasValidLength(idOrONS)) {
+                if (isValidStandardAddress(idOrONS)) {
+                    onPublicKey(idOrONS)
+                } else {
+                    _state.update {
+                        it.copy(
+                            isTextErrorColor = true,
+                            error = GetString(R.string.accountIdErrorInvalid),
+                            loading = false
+                        )
+                    }
+                }
+            } else {
+                resolveONS(idOrONS)
+            }
         }
     }
 
@@ -126,17 +128,19 @@ class NewMessageViewModel @AssistedInject constructor(
         if (currentTime - lasQrScan > qrDebounceTime) {
             lasQrScan = currentTime
 
-            // check if we have a community URL
-            val communityLink = linkChecker.check(value) as? LinkType.CommunityLink
+            viewModelScope.launch {
+                // check if we have a community URL
+                val communityLink = linkChecker.check(value) as? LinkType.CommunityLink
 
-            if(communityLink != null){
-                onCommunityUrlDetected(communityLink.copy(displayType = SCANNED))
-            } else if (isValidStandardAddress(value)) {
-                onChange(value)
-                _state.update { it.copy(validIdFromQr = value) }
-            } else {
-                _qrErrors.tryEmit(application.getString(R.string.qrNotAccountId))
-                _state.update { it.copy(validIdFromQr = "") }
+                if (communityLink != null) {
+                    onCommunityUrlDetected(communityLink.copy(displayType = SCANNED))
+                } else if (isValidStandardAddress(value)) {
+                    onChange(value)
+                    _state.update { it.copy(validIdFromQr = value) }
+                } else {
+                    _qrErrors.tryEmit(application.getString(R.string.qrNotAccountId))
+                    _state.update { it.copy(validIdFromQr = "") }
+                }
             }
         }
     }

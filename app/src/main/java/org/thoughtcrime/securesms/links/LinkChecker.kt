@@ -22,7 +22,7 @@ sealed class LinkType(open val url: String) {
 }
 
 internal fun interface LinkRule {
-    fun classify(url: String): LinkType?
+    suspend fun classify(url: String): LinkType?
 }
 
 @Singleton
@@ -34,11 +34,14 @@ class LinkChecker internal constructor(
         communityLinkRule: CommunityLinkRule,
     ) : this(listOf(communityLinkRule))
 
-    fun check(
+    suspend fun check(
         url: String
     ): LinkType {
         val normalizedUrl = url.trim()
-        return rules.firstNotNullOfOrNull { it.classify(normalizedUrl) }
-            ?: LinkType.GenericLink(normalizedUrl)
+        for (rule in rules) {
+            rule.classify(normalizedUrl)?.let { return it }
+        }
+
+        return LinkType.GenericLink(normalizedUrl)
     }
 }
