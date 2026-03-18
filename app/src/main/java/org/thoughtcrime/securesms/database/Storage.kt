@@ -40,13 +40,13 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
@@ -66,6 +66,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
 import org.thoughtcrime.securesms.auth.LoginStateRepository
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.trimThread
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -76,6 +77,7 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import org.thoughtcrime.securesms.util.getOrConstructConvo
 import org.thoughtcrime.securesms.util.findCause
+import org.thoughtcrime.securesms.util.getOrConstructConvo
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -99,7 +101,7 @@ open class Storage @Inject constructor(
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
     private val reactionDatabase: ReactionDatabase,
-    private val notificationManager: MessageNotifier,
+
     private val messageDataProvider: MessageDataProvider,
     private val clock: SnodeClock,
     private val recipientRepository: RecipientRepository,
@@ -147,9 +149,6 @@ open class Storage @Inject constructor(
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
         for (info in lokiMessageDatabase.getSendersForHashes(threadId, hashes.toSet())) {
             messageDataProvider.deleteMessage(info.messageId)
-            if (!info.isOutgoing) {
-                notificationManager.updateNotification(context)
-            }
         }
     }
 
@@ -214,7 +213,7 @@ open class Storage @Inject constructor(
         threadId: Long,
         lastSeenTime: Long
     ) {
-        val threadAddress = threadDatabase.getRecipientForThreadId(threadId) as? Address.Conversable ?: return
+        val threadAddress = threadDatabase.getRecipientAddress(threadId) ?: return
         updateConversationLastSeenIfNeeded(
             threadAddress = threadAddress,
             lastSeenTime = lastSeenTime
@@ -226,7 +225,7 @@ open class Storage @Inject constructor(
         if (maxTimestampMillsAndThreadId != null) {
             val threadId = maxTimestampMillsAndThreadId.second
             val maxTimestamp = maxTimestampMillsAndThreadId.first
-            val threadAddress = threadDatabase.getRecipientForThreadId(threadId) as? Address.Conversable ?: return
+            val threadAddress = threadDatabase.getRecipientAddress(threadId) ?: return
             updateConversationLastSeenIfNeeded(
                 threadAddress = threadAddress,
                 lastSeenTime = maxTimestamp
@@ -235,7 +234,7 @@ open class Storage @Inject constructor(
     }
 
     override fun markConversationAsUnread(threadId: Long) {
-        val threadAddress = threadDatabase.getRecipientForThreadId(threadId) ?: return
+        val threadAddress = threadDatabase.getRecipientAddress(threadId) ?: return
 
         // don't process configs for inbox recipients
         if (threadAddress.isCommunityInbox) return
@@ -891,20 +890,20 @@ open class Storage @Inject constructor(
     }
 
     override fun getOrCreateThreadIdFor(address: Address): Long {
-        return threadDatabase.getOrCreateThreadIdFor(address)
+        return threadDatabase.getOrCreateThreadIdFor(address as Address.Conversable)
     }
 
     override fun getThreadId(address: Address): Long? {
-        val threadID = threadDatabase.getThreadIdIfExistsFor(address.address)
-        return if (threadID < 0) null else threadID
+        if (address !is Address.Conversable) return null
+        return threadDatabase.getThreadId(address)
     }
 
     override fun getThreadIdForMms(mmsId: Long): Long {
-        return mmsDatabase.getThreadIdForMessage(mmsId)
+        return mmsDatabase.getThreadIdForMessage(mmsId) ?: -1L
     }
 
     override fun getRecipientForThread(threadId: Long): Recipient? {
-        return threadDatabase.getRecipientForThreadId(threadId)
+        return threadDatabase.getRecipientAddress(threadId)
             ?.let(recipientRepository::getRecipientSync)
     }
     override fun setAutoDownloadAttachments(
@@ -917,8 +916,7 @@ open class Storage @Inject constructor(
     }
 
     override fun trimThreadBefore(threadID: Long, timestamp: Long) {
-        val threadDB = threadDatabase
-        threadDB.trimThreadBefore(threadID, timestamp)
+        mmsSmsDatabase.trimThread(threadID, timestamp)
     }
 
     override fun getMessageCount(threadID: Long): Long {
@@ -1027,11 +1025,6 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun setThreadCreationDate(threadId: Long, newDate: Long) {
-        val threadDb = threadDatabase
-        threadDb.setCreationDate(threadId, newDate)
-    }
-
     override fun getLastLegacyRecipient(threadRecipient: String): String? =
         lokiAPIDatabase.getLastLegacySenderAddress(threadRecipient)
 
@@ -1123,7 +1116,7 @@ open class Storage @Inject constructor(
         senderPublicKey: String, callMessageType: CallMessageType,
         sentTimestamp: Long, expiryMode: ExpiryMode,
     ) {
-        val address = fromSerialized(senderPublicKey)
+        val address = senderPublicKey.toConversableAddress()
 
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMillis() else 0

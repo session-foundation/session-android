@@ -147,7 +147,6 @@ interface StorageProtocol {
     suspend fun getTotalSentProBadges(): Int
     suspend fun getTotalSentLongMessages(): Int
     fun setPinned(address: Address, isPinned: Boolean)
-    fun setThreadCreationDate(threadId: Long, newDate: Long)
     fun getLastLegacyRecipient(threadRecipient: String): String?
     fun setLastLegacyRecipient(threadRecipient: String, senderRecipient: String?)
     fun clearMessages(threadID: Long, fromUser: Address? = null): Boolean

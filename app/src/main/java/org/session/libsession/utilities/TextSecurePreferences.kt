@@ -2,8 +2,6 @@ package org.session.libsession.utilities
 
 import android.content.Context
 import android.hardware.Camera
-import android.net.Uri
-import android.provider.Settings
 import androidx.annotation.StyleRes
 import androidx.camera.core.CameraSelector
 import androidx.core.content.edit
@@ -39,10 +37,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SH
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
-import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_CHECKED_DOZE_WHITELIST
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_COPIED_DONATION_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_DONATED
-import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_SEEN_PRO_EXPIRING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
@@ -81,9 +77,6 @@ interface TextSecurePreferences {
     fun getConfigurationMessageSynced(): Boolean
     fun setConfigurationMessageSynced(value: Boolean)
 
-    fun setPushEnabled(value: Boolean)
-    val pushEnabled: StateFlow<Boolean>
-
     fun isScreenLockEnabled(): Boolean
     fun setScreenLockEnabled(value: Boolean)
     fun getScreenLockTimeout(): Long
@@ -112,8 +105,6 @@ interface TextSecurePreferences {
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
     fun getPreferredCameraDirection(): CameraSelector
-    fun setNotificationPrivacy(string : String)
-    fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
     fun isInThreadNotifications(): Boolean
     fun isUniversalUnidentifiedAccess(): Boolean
@@ -132,21 +123,8 @@ interface TextSecurePreferences {
     fun isPassphraseTimeoutEnabled(): Boolean
     fun getPassphraseTimeoutInterval(): Int
     fun getLanguage(): String?
-    fun isNotificationsEnabled(): Boolean
-    fun getNotificationRingtone(): Uri
-    fun removeNotificationRingtone()
-    fun setNotificationRingtone(ringtone: String?)
-    fun setNotificationVibrateEnabled(enabled: Boolean)
-    fun isNotificationVibrateEnabled(): Boolean
-    fun setSoundWhenAppIsOpenEnabled(enabled: Boolean)
-    fun isSoundWhenAppIsOpenEnabled(): Boolean
-    fun getNotificationLedColor(): Int
     fun setThreadLengthTrimmingEnabled(enabled : Boolean)
     fun isThreadLengthTrimmingEnabled(): Boolean
-    fun getNotificationChannelVersion(): Int
-    fun setNotificationChannelVersion(version: Int)
-    fun getNotificationMessagesChannelVersion(): Int
-    fun setNotificationMessagesChannelVersion(version: Int)
     fun getBooleanPreference(key: String?, defaultValue: Boolean): Boolean
     fun setBooleanPreference(key: String?, value: Boolean)
     fun getStringPreference(key: String, defaultValue: String?): String?
@@ -163,8 +141,6 @@ interface TextSecurePreferences {
     fun setLastOpenDate()
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
     fun setHasSeenLinkPreviewSuggestionDialog()
-    fun hasHiddenMessageRequests(): Boolean
-    fun setHasHiddenMessageRequests(hidden: Boolean)
     fun forceCurrentUserAsPro(): Boolean
     fun setForceCurrentUserAsPro(isPro: Boolean)
     fun forceOtherUsersAsPro(): Boolean
@@ -225,8 +201,6 @@ interface TextSecurePreferences {
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
 
-    fun hasCheckedDozeWhitelist(): Boolean
-    fun setHasCheckedDozeWhitelist(hasChecked: Boolean)
     fun hasDonated(): Boolean
     fun setHasDonated(hasDonated: Boolean)
     fun hasCopiedDonationURL(): Boolean
@@ -276,18 +250,10 @@ interface TextSecurePreferences {
         internal val _events = MutableSharedFlow<String>(0, 64, BufferOverflow.DROP_OLDEST)
         val events get() = _events.asSharedFlow()
 
-        @JvmStatic
-        var pushSuffix = ""
-
 
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
         const val LAST_VERSION_CODE_PREF = "last_version_code"
-        const val RINGTONE_PREF = "pref_key_ringtone"
-        const val VIBRATE_PREF = "pref_key_vibrate"
-        const val SOUND_WHEN_OPEN = "pref_sound_when_app_open"
-        const val NOTIFICATION_PREF = "pref_key_enable_notifications"
-        const val LED_COLOR_PREF_PRIMARY = "pref_led_color_primary"
         const val PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval"
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
@@ -298,7 +264,6 @@ interface TextSecurePreferences {
         const val MESSAGE_BODY_TEXT_SIZE_PREF = "pref_message_body_text_size"
         @Deprecated("No longer used, kept for migration purposes")
         const val REPEAT_ALERTS_PREF = "pref_repeat_alerts"
-        const val NOTIFICATION_PRIVACY_PREF = "pref_notification_privacy"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
         const val INCOGNITO_KEYBOARD_PREF = "pref_incognito_keyboard"
         const val NEEDS_SQLCIPHER_MIGRATION = "pref_needs_sql_cipher_migration"
@@ -309,18 +274,14 @@ interface TextSecurePreferences {
         const val BACKUP_SAVE_DIR = "pref_save_dir"
         const val SCREEN_LOCK = "pref_android_screen_lock"
         const val SCREEN_LOCK_TIMEOUT = "pref_android_screen_lock_timeout"
-        const val NOTIFICATION_CHANNEL_VERSION = "pref_notification_channel_version"
-        const val NOTIFICATION_MESSAGES_CHANNEL_VERSION = "pref_notification_messages_channel_version"
         const val UNIVERSAL_UNIDENTIFIED_ACCESS = "pref_universal_unidentified_access"
         const val TYPING_INDICATORS = "pref_typing_indicators"
         const val LINK_PREVIEWS = "pref_link_previews"
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
-        val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
-        const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
@@ -397,7 +358,6 @@ interface TextSecurePreferences {
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
 
-        const val HAS_CHECKED_DOZE_WHITELIST = "has_checked_doze_whitelist"
 
         // Donation
         const val HAS_DONATED = "has_donated"
@@ -413,11 +373,6 @@ interface TextSecurePreferences {
 
         const val LAST_SNODE_POOL_REFRESH = "last_snode_pool_refresh"
         const val LAST_PATH_ROTATION = "last_path_rotation"
-
-        @JvmStatic
-        fun isPushEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, IS_PUSH_ENABLED, false)
-        }
 
         // endregion
         @JvmStatic
@@ -456,11 +411,6 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun getNotificationPrivacy(context: Context): NotificationPrivacyPreference {
-            return NotificationPrivacyPreference(getStringPreference(context, NOTIFICATION_PRIVACY_PREF, "all"))
-        }
-
-        @JvmStatic
         fun isPasswordDisabled(context: Context): Boolean {
             return getBooleanPreference(context, DISABLE_PASSPHRASE_PREF, true)
         }
@@ -492,52 +442,8 @@ interface TextSecurePreferences {
         }
 
         @JvmStatic
-        fun isNotificationsEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, NOTIFICATION_PREF, true)
-        }
-
-        @JvmStatic
-        fun getNotificationRingtone(context: Context): Uri {
-            var result = getStringPreference(context, RINGTONE_PREF, Settings.System.DEFAULT_NOTIFICATION_URI.toString())
-            if (result != null && result.startsWith("file:")) {
-                result = Settings.System.DEFAULT_NOTIFICATION_URI.toString()
-            }
-            return Uri.parse(result)
-        }
-
-        @JvmStatic
-        fun isNotificationVibrateEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, VIBRATE_PREF, true)
-        }
-
-        @JvmStatic
-        fun getNotificationLedColor(context: Context): Int {
-            return getIntegerPreference(context, LED_COLOR_PREF_PRIMARY, ThemeUtil.getThemedColor(context, R.attr.colorAccent))
-        }
-
-        @JvmStatic
         fun isThreadLengthTrimmingEnabled(context: Context): Boolean {
             return getBooleanPreference(context, THREAD_TRIM_ENABLED, true)
-        }
-
-        @JvmStatic
-        fun getNotificationChannelVersion(context: Context): Int {
-            return getIntegerPreference(context, NOTIFICATION_CHANNEL_VERSION, 1)
-        }
-
-        @JvmStatic
-        fun setNotificationChannelVersion(context: Context, version: Int) {
-            setIntegerPreference(context, NOTIFICATION_CHANNEL_VERSION, version)
-        }
-
-        @JvmStatic
-        fun getNotificationMessagesChannelVersion(context: Context): Int {
-            return getIntegerPreference(context, NOTIFICATION_MESSAGES_CHANNEL_VERSION, 1)
-        }
-
-        @JvmStatic
-        fun setNotificationMessagesChannelVersion(context: Context, version: Int) {
-            setIntegerPreference(context, NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
         }
 
         @JvmStatic
@@ -597,12 +503,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getProfileExpiry(context: Context): Long{
             return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
-        }
-
-        @JvmStatic
-        fun removeHasHiddenMessageRequests(context: Context) {
-            removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
-            _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
         }
 
         @JvmStatic
@@ -677,14 +577,6 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.CONFIGURATION_SYNCED)
     }
 
-    override val pushEnabled: MutableStateFlow<Boolean> = MutableStateFlow(
-        getBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, false)
-    )
-
-    override fun setPushEnabled(value: Boolean) {
-        setBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, value)
-        pushEnabled.value = value
-    }
 
     override fun isScreenLockEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.SCREEN_LOCK, false)
@@ -809,16 +701,6 @@ class AppTextSecurePreferences @Inject constructor(
         }
     }
 
-    override fun setNotificationPrivacy(string: String) {
-        setStringPreference(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, string)
-        _events.tryEmit(TextSecurePreferences.NOTIFICATION_PRIVACY_PREF)
-    }
-
-    override fun getNotificationPrivacy(): NotificationPrivacyPreference {
-        return NotificationPrivacyPreference(getStringPreference(
-            TextSecurePreferences.NOTIFICATION_PRIVACY_PREF, "all"))
-    }
-
     override fun getRepeatAlertsCount(): Int {
         return try {
             getStringPreference(TextSecurePreferences.REPEAT_ALERTS_PREF, "0")!!.toInt()
@@ -900,50 +782,6 @@ class AppTextSecurePreferences @Inject constructor(
         return getStringPreference(TextSecurePreferences.LANGUAGE_PREF, "zz")
     }
 
-    override fun isNotificationsEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.NOTIFICATION_PREF, true)
-    }
-
-    override fun getNotificationRingtone(): Uri {
-        var result = getStringPreference(TextSecurePreferences.RINGTONE_PREF, Settings.System.DEFAULT_NOTIFICATION_URI.toString())
-        if (result != null && result.startsWith("file:")) {
-            result = Settings.System.DEFAULT_NOTIFICATION_URI.toString()
-        }
-        return Uri.parse(result)
-    }
-
-    override fun removeNotificationRingtone() {
-        removePreference(TextSecurePreferences.RINGTONE_PREF)
-        _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
-    }
-
-    override fun setNotificationRingtone(ringtone: String?) {
-        setStringPreference(TextSecurePreferences.RINGTONE_PREF, ringtone)
-        _events.tryEmit(TextSecurePreferences.RINGTONE_PREF)
-    }
-
-    override fun setNotificationVibrateEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.VIBRATE_PREF, enabled)
-        _events.tryEmit(TextSecurePreferences.VIBRATE_PREF)
-    }
-
-    override fun isNotificationVibrateEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.VIBRATE_PREF, true)
-    }
-
-    override fun setSoundWhenAppIsOpenEnabled(enabled: Boolean) {
-        setBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, enabled)
-        _events.tryEmit(TextSecurePreferences.SOUND_WHEN_OPEN)
-    }
-
-    override fun isSoundWhenAppIsOpenEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.SOUND_WHEN_OPEN, false)
-    }
-
-    override fun getNotificationLedColor(): Int {
-        return getIntegerPreference(TextSecurePreferences.LED_COLOR_PREF_PRIMARY, context.getColor(R.color.accent_green))
-    }
-
     override fun setThreadLengthTrimmingEnabled(enabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, enabled)
         _events.tryEmit(TextSecurePreferences.THREAD_TRIM_ENABLED)
@@ -951,22 +789,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isThreadLengthTrimmingEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, true)
-    }
-
-    override fun getNotificationChannelVersion(): Int {
-        return getIntegerPreference(TextSecurePreferences.NOTIFICATION_CHANNEL_VERSION, 1)
-    }
-
-    override fun setNotificationChannelVersion(version: Int) {
-        setIntegerPreference(TextSecurePreferences.NOTIFICATION_CHANNEL_VERSION, version)
-    }
-
-    override fun getNotificationMessagesChannelVersion(): Int {
-        return getIntegerPreference(TextSecurePreferences.NOTIFICATION_MESSAGES_CHANNEL_VERSION, 1)
-    }
-
-    override fun setNotificationMessagesChannelVersion(version: Int) {
-        setIntegerPreference(TextSecurePreferences.NOTIFICATION_MESSAGES_CHANNEL_VERSION, version)
     }
 
     override fun hasForcedNewConfig(): Boolean =
@@ -1120,14 +942,6 @@ class AppTextSecurePreferences @Inject constructor(
         return previousValue != setValue
     }
 
-    override fun hasHiddenMessageRequests(): Boolean {
-        return getBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, false)
-    }
-
-    override fun setHasHiddenMessageRequests(hidden: Boolean) {
-        setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
-        _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
-    }
     override fun forceCurrentUserAsPro(): Boolean {
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
     }
@@ -1287,7 +1101,6 @@ class AppTextSecurePreferences @Inject constructor(
      * Clear all prefs and reset our observables
      */
     override fun clearAll() {
-        pushEnabled.update { false }
         postProLaunchState.update { false }
         hiddenPasswordState.update { false }
 
@@ -1438,15 +1251,6 @@ class AppTextSecurePreferences @Inject constructor(
             })
         }
 
-    override fun hasCheckedDozeWhitelist(): Boolean {
-        return getBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, false)
-    }
-
-    override fun setHasCheckedDozeWhitelist(hasChecked: Boolean) {
-        setBooleanPreference(HAS_CHECKED_DOZE_WHITELIST, hasChecked)
-        _events.tryEmit(HAS_CHECKED_DOZE_WHITELIST)
-    }
-
     override fun hasDonated(): Boolean {
         return getBooleanPreference(HAS_DONATED, false)
     }
@@ -1533,14 +1337,4 @@ fun TextSecurePreferences.observeBooleanKey(
         .filter { it == key }
         .onStart { emit(key) } // trigger initial read
         .map { getBooleanPreference(key, default) }
-        .distinctUntilChanged()
-
-fun TextSecurePreferences.observeStringKey(
-    key: String,
-    default: String?
-): Flow<String?> =
-    TextSecurePreferences.events
-        .filter { it == key }
-        .onStart { emit(key) }
-        .map { getStringPreference(key, default) }
         .distinctUntilChanged()

@@ -10,6 +10,7 @@ import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.protos.SessionProtos
 import org.session.protos.SessionProtos.Content.ExpirationType
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -122,6 +123,12 @@ inline fun <reified M: Message> M.copyExpiration(proto: SessionProtos.Content): 
  * Apply ExpiryMode from the current setting.
  */
 inline fun <reified M: Message> M.applyExpiryMode(recipientAddress: Address): M = apply {
-    expiryMode = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(recipientAddress)
-        .expiryMode.coerceSendToRead(coerceDisappearAfterSendToRead)
+    applyExpiryMode(MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(recipientAddress))
+}
+
+/**
+ * Apply ExpiryMode from the current setting.
+ */
+inline fun <reified M: Message> M.applyExpiryMode(threadRecipient: Recipient): M = apply {
+    expiryMode = threadRecipient.expiryMode.coerceSendToRead(coerceDisappearAfterSendToRead)
 }

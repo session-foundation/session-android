@@ -6,12 +6,11 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getRecipientAddress
 
 class TrimThreadJob @AssistedInject constructor(
     @Assisted val threadId: Long,
@@ -33,7 +32,7 @@ class TrimThreadJob @AssistedInject constructor(
         const val THREAD_LENGTH_TRIGGER_SIZE = 2000
     }
 
-    val communityAddress: Address.Community? = threadDatabase.getRecipientForThreadId(threadId) as? Address.Community
+    val communityAddress: Address.Community? = threadDatabase.getRecipientAddress(threadId) as? Address.Community
 
     override suspend fun execute(dispatcherName: String) {
         val trimmingEnabled = TextSecurePreferences.isThreadLengthTrimmingEnabled(context)

@@ -30,9 +30,10 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
@@ -58,6 +59,7 @@ import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getLastSeen
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
@@ -65,6 +67,7 @@ import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.castAwayType
 import org.thoughtcrime.securesms.util.mapToStateFlow
 
 
@@ -91,7 +94,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
         // Initial lookup off main thread
         flow { emit(withContext(Dispatchers.IO) { storage.getThreadId(address) }) },
         // Also listen for thread creation in case it doesn't exist yet
-        threadDb.updateNotifications
+        threadDb.changeNotification
             .map { withContext(Dispatchers.IO) { storage.getThreadId(address) } }
     )
         .filterNotNull()
@@ -148,15 +151,11 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private var pagingSource: ConversationPagingSource? = null
 
     // obtain the last seen message id
-    private val lastSeen: StateFlow<Long?> = threadIdFlow
-        .filterNotNull()
-        .flatMapLatest { id ->
-            flow {
-                emit(withContext(Dispatchers.IO) {
-                    threadDb.getLastSeenAndHasSent(id).first().takeIf { it > 0 }
-                })
-            }
-        }
+    private val lastSeen: StateFlow<Long?> = threadDb.changeNotification
+        .filter { it.address == address }
+        .castAwayType()
+        .onStart { emit(Unit) }
+        .mapNotNull { threadDb.getLastSeen(address)?.toEpochMilliseconds() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val conversationItems: Flow<PagingData<ConversationDataMapper.ConversationItem>> = combine(
@@ -188,7 +187,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
     val databaseChanges: SharedFlow<*> = merge(
         threadIdFlow
             .filterNotNull()
-            .flatMapLatest { id -> threadDb.updateNotifications.filter { it == id } },
+            .flatMapLatest { id -> threadDb.changeNotification.filter { it.id == id } },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,

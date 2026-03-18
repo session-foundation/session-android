@@ -18,9 +18,6 @@ package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.ID;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.IS_OUTGOING;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.READ;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.THREAD_ID;
 
 import android.content.ContentValues;
@@ -33,9 +30,11 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.AddressKt;
 import org.session.libsession.utilities.ConfigFactoryProtocol;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.utilities.AccountId;
+import org.session.libsignal.utilities.AccountIdKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
@@ -75,8 +74,8 @@ public class MmsSmsDatabase extends Database {
 
   private final LoginStateRepository loginStateRepository;
   private final Lazy<@NonNull ThreadDatabase> threadDatabase;
-  private final Lazy<@NonNull MmsDatabase> mmsDatabase;
-  private final Lazy<@NonNull SmsDatabase> smsDatabase;
+  final Lazy<@NonNull MmsDatabase> mmsDatabase;
+  final Lazy<@NonNull SmsDatabase> smsDatabase;
   final Lazy<@NonNull ConfigFactoryProtocol> configFactory;
   @NonNull final Json json;
 
@@ -326,27 +325,6 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
-  public Cursor getUnreadIncomingForNotifications(int maxRows) {
-    String selection = "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + IS_OUTGOING + "))";
-    String order    = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String limitStr = maxRows > 0 ? String.valueOf(maxRows) : null;
-    return MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, order, limitStr);
-  }
-
-  public Cursor getOutgoingWithUnseenReactionsForNotifications(int maxRows) {
-    String lastSeenQuery =
-            "SELECT " + ThreadDatabase.LAST_SEEN +
-                    " FROM " + ThreadDatabase.TABLE_NAME +
-                    " WHERE " + ThreadDatabase.ID + " = " + MmsSmsColumns.THREAD_ID;
-
-    String reactionSelection = ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + " IS NOT NULL" +
-            " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + " > (" + lastSeenQuery + ")";
-
-    String order    = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String limitStr = maxRows > 0 ? String.valueOf(maxRows) : null;
-    return MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, IS_OUTGOING, true, reactionSelection, order, limitStr);
-  }
-
   public Set<Address> getAllReferencedAddresses() {
     final String projection = "DISTINCT " + MmsSmsColumns.ADDRESS;
     final String selection = MmsSmsColumns.ADDRESS + " IS NOT NULL" +
@@ -369,8 +347,8 @@ public class MmsSmsDatabase extends Database {
 
 
   public void deleteGroupInfoMessage(AccountId groupId, Class<? extends UpdateMessageData.Kind> kind) {
-    long threadId = threadDatabase.get().getThreadIdIfExistsFor(groupId.getHexString());
-    if (threadId == -1) {
+    Long threadId = ThreadDatabaseExtKt.getThreadId(threadDatabase.get(), (Address.Conversable) Address.Companion.toAddress(groupId));
+    if (threadId == null) {
       Log.d(TAG, "No thread found for group info message deletion");
       return;
     }

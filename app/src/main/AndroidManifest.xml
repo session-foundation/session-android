@@ -356,33 +356,12 @@
         </service>
 
         <receiver
-            android:name="org.thoughtcrime.securesms.notifications.MarkReadReceiver"
+            android:name="org.thoughtcrime.securesms.notifications.NotificationActionReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="network.loki.securesms.notifications.CLEAR" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name="org.thoughtcrime.securesms.notifications.RemoteReplyReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="network.loki.securesms.notifications.WEAR_REPLY" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name="org.thoughtcrime.securesms.notifications.AndroidAutoHeardReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="network.loki.securesms.notifications.ANDROID_AUTO_HEARD" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name="org.thoughtcrime.securesms.notifications.AndroidAutoReplyReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="network.loki.securesms.notifications.ANDROID_AUTO_REPLY" />
+                <action android:name="network.loki.securesms.notifications.MARK_READ" />
+                <action android:name="network.loki.securesms.notifications.REPLY" />
             </intent-filter>
         </receiver>
         <receiver android:name="org.thoughtcrime.securesms.service.ExpirationListener" />
@@ -435,9 +414,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
-        </receiver>
-        <receiver android:name="org.thoughtcrime.securesms.notifications.DeleteNotificationReceiver"
-            android:exported="false">
         </receiver>
         <receiver
             android:name="org.thoughtcrime.securesms.service.PanicResponderListener"

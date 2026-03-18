@@ -7,7 +7,6 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
-import android.graphics.drawable.BitmapDrawable
 import android.text.TextPaint
 import android.text.TextUtils
 import androidx.annotation.DrawableRes
@@ -68,7 +67,7 @@ class AvatarUtils @Inject constructor(
         val firstMember = groupData?.firstMember
         val secondMember = groupData?.secondMember
 
-        val elements = buildList {
+        val elements = buildList(2) {
             when {
                 // if we know we have a custom image, including for groups, use that
                 recipient.avatar != null -> {
@@ -86,7 +85,11 @@ class AvatarUtils @Inject constructor(
                     add(getUIElementForRecipient(firstMember))
                     add(
                         AvatarUIElement(
-                            color = Color(getColorFromKey(recipient.address.toString()))
+                            fallback = AvatarUIElement.Fallback(
+                                name = extractLabel(firstMember.displayName()),
+                                color = Color(getColorFromKey(recipient.address.toString()))
+                            ),
+                            content = null,
                         )
                     )
                 }
@@ -123,11 +126,16 @@ class AvatarUtils @Inject constructor(
         }
 
         return AvatarUIElement(
-            name = extractLabel(name),
-            color = color,
-            icon = customIcon,
-            remoteFile = remoteFile,
-            freezeFrame = proStatusManager.freezeFrameForUser(recipient)
+            fallback = AvatarUIElement.Fallback(
+                name = extractLabel(name),
+                color = color,
+                icon = customIcon,
+            ),
+
+            content = remoteFile?.let { AvatarUIElement.RemoteFileContent(
+                remoteFile = it,
+                freezeFrame = proStatusManager.freezeFrameForUser(recipient))
+            }
         )
     }
 
@@ -216,24 +224,23 @@ class AvatarUtils @Inject constructor(
     }
 }
 
-data class AvatarUIData(
-    val elements: List<AvatarUIElement>,
-){
-    /**
-     * Helper function to determine if an avatar is composed of a single element, which is
-     * a custom photo.
-     * This is used for example to know when to display a fullscreen avatar on tap
-     */
-    fun isSingleCustomAvatar() = elements.size == 1 && elements[0].remoteFile != null
-}
+data class AvatarUIData(val elements: List<AvatarUIElement>)
 
 data class AvatarUIElement(
-    val name: String? = null,
-    val color: Color? = null,
-    @DrawableRes val icon: Int? = null,
-    val remoteFile: RemoteFile? = null,
-    val freezeFrame: Boolean = true,
-)
+    val fallback: Fallback,
+    val content: Content? = null,
+) {
+    val remoteFile: RemoteFile? get() = (content as? RemoteFileContent)?.remoteFile
+
+    data class Fallback(val name: String?, val color: Color? = null, @get:DrawableRes val icon: Int? = null)
+
+    sealed interface Content
+
+    data class RemoteFileContent(val remoteFile: RemoteFile, val freezeFrame: Boolean): Content
+    data class BitmapContent(val bitmap: Bitmap): Content
+
+    constructor(name: String, color: Color?, icon: Int? = null): this(fallback = Fallback(name, color, icon))
+}
 
 sealed class AvatarBadge{
     data object None: AvatarBadge()

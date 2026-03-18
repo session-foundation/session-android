@@ -62,6 +62,8 @@ import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
+import org.thoughtcrime.securesms.database.getThreads
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -177,7 +179,7 @@ class DefaultConversationRepository @Inject constructor(
                     configFactory.configUpdateNotifications,
                     recipientDatabase.changeNotification.filter { it in allAddresses },
                     communityDatabase.changeNotification.filter { it in allAddresses },
-                    threadDb.updateNotifications,
+                    threadDb.changeNotification,
                     smsDb.changeNotification,
                     mmsDb.changeNotification,
                     // If pro status pref changes, the convo is likely needing changes too
@@ -250,7 +252,7 @@ class DefaultConversationRepository @Inject constructor(
 
     override fun inviteContactsToCommunity(
         communityRecipient: Recipient,
-        contacts: Collection<Address>
+        contacts: Collection<Address.Conversable>
     ) {
         val community = communityRecipient.data as? RecipientData.Community
         val info = community?.roomInfo ?: return
@@ -303,7 +305,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun getLastSentMessageID(threadId: Long): Flow<MessageId?> {
-        return (threadDb.updateNotifications.filter { it == threadId } as Flow<*>)
+        return (threadDb.changeNotification.filter { it.id == threadId } as Flow<*>)
             .onStart { emit(Unit) }
             .map {
                 withContext(Dispatchers.Default) {

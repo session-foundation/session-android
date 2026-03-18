@@ -52,7 +52,7 @@ class PushRegistrationWorker @AssistedInject constructor(
     private val pushRegistrationDatabase: PushRegistrationDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val loginStateRepository: LoginStateRepository,
-    @param:PushNotificationModule.PushProcessingSemaphore
+    @param:NotificationModule.PushProcessingSemaphore
     private val semaphore: Semaphore,
     pushApiBatcher: PushApiBatcher,
     serverApiExecutor: ServerApiExecutor,

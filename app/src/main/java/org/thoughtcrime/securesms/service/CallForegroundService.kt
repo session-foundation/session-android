@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
@@ -13,9 +14,10 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
+import org.thoughtcrime.securesms.notifications.NotificationId
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_CONNECTING
-import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -23,6 +25,12 @@ class CallForegroundService : Service() {
 
     @Inject
     lateinit var recipientRepository: RecipientRepository
+
+    @Inject
+    lateinit var notificationChannelManager: NotificationChannelManager
+
+    @Inject
+    lateinit var notificationManager: NotificationManagerCompat
 
     companion object {
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
@@ -44,12 +52,12 @@ class CallForegroundService : Service() {
     }
 
     private fun startForeground(type: Int, recipient: Recipient?) {
-        if (CallNotificationBuilder.areNotificationsEnabled(this)) {
+        if (notificationManager.areNotificationsEnabled()) {
             try {
                 ServiceCompat.startForeground(
                     this,
-                    WEBRTC_NOTIFICATION,
-                    CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
+                    NotificationId.WEBRTC_CALL,
+                    CallNotificationBuilder.getCallInProgressNotification(this, type, recipient, notificationChannelManager),
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
                     } else {

@@ -10,6 +10,7 @@ import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.tokenpage.TokenDataManager
@@ -40,6 +41,7 @@ class OnAppStartupComponents private constructor(
         authAwareHandler: AuthAwareComponentsHandler,
         snodeClock: SnodeClock,
         subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
+        notificationChannelManager: NotificationChannelManager,
     ): this(
         components = listOf(
             groupPollerManager,
@@ -55,7 +57,8 @@ class OnAppStartupComponents private constructor(
             emojiIndexLoader,
             subscriptionCoordinator,
             authAwareHandler,
-            snodeClock
+            snodeClock,
+            notificationChannelManager
         ) + subscriptionManagers
     )
 }

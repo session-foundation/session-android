@@ -21,36 +21,24 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
-import androidx.collection.ArrayMap;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.json.JSONArray;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.GroupUtil;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-import org.thoughtcrime.securesms.database.model.ThreadRecord;
+import org.thoughtcrime.securesms.database.model.ThreadChanges;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
-import org.thoughtcrime.securesms.notifications.MarkReadProcessor;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Lazy;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Triple;
-import kotlin.collections.CollectionsKt;
 import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
@@ -61,23 +49,31 @@ import kotlinx.serialization.json.Json;
 public class ThreadDatabase extends Database {
 
 
-  private static final String TAG = ThreadDatabase.class.getSimpleName();
+  static final String TAG = ThreadDatabase.class.getSimpleName();
 
   // Map of threadID -> Address
 
   public  static final String TABLE_NAME             = "thread";
   public  static final String ID                     = "_id";
   public  static final String THREAD_CREATION_DATE   = "date";
+  @Deprecated(forRemoval = true)
   public  static final String MESSAGE_COUNT          = "message_count";
   public  static final String ADDRESS                = "recipient_ids";
+  @Deprecated(forRemoval = true)
   public  static final String SNIPPET                = "snippet";
+  @Deprecated(forRemoval = true)
   private static final String SNIPPET_CHARSET        = "snippet_cs";
+  @Deprecated(forRemoval = true)
   public  static final String READ                   = "read";
+  @Deprecated(forRemoval = true)
   public  static final String UNREAD_COUNT           = "unread_count";
+  @Deprecated(forRemoval = true)
   public  static final String UNREAD_MENTION_COUNT   = "unread_mention_count";
   @Deprecated(forRemoval = true)
   public  static final String DISTRIBUTION_TYPE      = "type"; // See: DistributionTypes.kt
+  @Deprecated(forRemoval = true)
   private static final String ERROR                  = "error";
+  @Deprecated(forRemoval = true)
   public  static final String SNIPPET_TYPE           = "snippet_type";
   @Deprecated(forRemoval = true)
   public  static final String SNIPPET_URI            = "snippet_uri";
@@ -85,13 +81,18 @@ public class ThreadDatabase extends Database {
    * The column that hold a {@link MessageContent}. See {@link MmsDatabase#MESSAGE_CONTENT} for more information
    */
   public  static final String SNIPPET_CONTENT        = "snippet_content";
+  @Deprecated(forRemoval = true)
   public  static final String ARCHIVED               = "archived";
+  @Deprecated(forRemoval = true)
   public  static final String STATUS                 = "status";
+  @Deprecated(forRemoval = true)
   public  static final String DELIVERY_RECEIPT_COUNT = "delivery_receipt_count";
+  @Deprecated(forRemoval = true)
   public  static final String READ_RECEIPT_COUNT     = "read_receipt_count";
   @Deprecated(forRemoval = true)
   public  static final String EXPIRES_IN             = "expires_in";
   public  static final String LAST_SEEN              = "last_seen";
+  @Deprecated(forRemoval = true)
   public static final String HAS_SENT                = "has_sent";
 
   @Deprecated(forRemoval = true)
@@ -186,218 +187,36 @@ public class ThreadDatabase extends Database {
   }
 
 
-  private final MutableSharedFlow<Long> updateNotifications
+  private final MutableSharedFlow<ThreadChanges> changeNotification
           = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
 
   final Lazy<@NonNull RecipientRepository> recipientRepository;
   final Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase;
-  private final Lazy<@NonNull MmsDatabase> mmsDatabase;
-  private final Lazy<@NonNull SmsDatabase> smsDatabase;
   @NonNull final Json json;
 
   @Inject
-  public ThreadDatabase(@dagger.hilt.android.qualifiers.ApplicationContext Context context,
+  public ThreadDatabase(@ApplicationContext Context context,
                         Provider<SQLCipherOpenHelper> databaseHelper,
                         Lazy<@NonNull RecipientRepository> recipientRepository,
                         Lazy<@NonNull MmsSmsDatabase> mmsSmsDatabase,
-                        Lazy<@NonNull MmsDatabase> mmsDatabase,
-                        Lazy<@NonNull SmsDatabase> smsDatabase,
                         @NonNull Json json) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.mmsSmsDatabase = mmsSmsDatabase;
-    this.mmsDatabase = mmsDatabase;
-    this.smsDatabase = smsDatabase;
     this.json = json;
   }
 
   @NonNull
-  public Flow<Long> getUpdateNotifications() {
-    return updateNotifications;
+  public Flow<ThreadChanges> getChangeNotification() {
+    return changeNotification;
   }
 
-
-  public void deleteThread(long threadId) {
-    SQLiteDatabase db = getWritableDatabase();
-    if (db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""}) > 0) {
-      notifyThreadUpdated(threadId);
-    }
-  }
-
-  public static class EnsureThreadsResult {
-    @NonNull
-    public final Map<Address, Long> deletedThreads;
-
-    @NonNull
-    public final Map<Address, Long> createdThreads;
-
-    public EnsureThreadsResult(@NonNull Map<Address, Long> deletedThreads, @NonNull Map<Address, Long> createdThreads) {
-        this.deletedThreads = deletedThreads;
-        this.createdThreads = createdThreads;
-    }
-  }
-
-  /**
-   * This method ensures that the threads for the given addresses exist in the database, AND
-   * deletes any threads that are not in the given addresses.
-   *
-   * @return The list of thread IDs that were deleted.
-   */
-  @NonNull
-  public EnsureThreadsResult ensureThreads(@NonNull final Iterable<Address.Conversable> addresses) {
-    final SQLiteDatabase db = getWritableDatabase();
-
-    db.beginTransaction();
-
-    final Map<Address, Long> deletedThreads, createdThreads;
-
-    try {
-      // First delete threads that are not in the given addresses
-      final String deletionSql = "DELETE FROM " + TABLE_NAME + " " +
-              "WHERE " + ADDRESS + " NOT IN (SELECT value FROM json_each(?)) " +
-              "RETURNING " + ID + ", " + ADDRESS;
-      final String addressListAsJson = new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString();
-
-      try (final Cursor cursor = db.rawQuery(deletionSql, addressListAsJson)) {
-        deletedThreads = new ArrayMap<>(cursor.getCount());
-        while (cursor.moveToNext()) {
-          deletedThreads.put(
-              Address.fromSerialized(cursor.getString(1)),
-              cursor.getLong(0)
-          );
-        }
-      }
-
-      // Second, ensure that threads for the given addresses exist
-      final String insertionSql = "INSERT OR IGNORE INTO " + TABLE_NAME + " (" + ADDRESS + ") " +
-              "SELECT value FROM json_each(?) " +
-              "RETURNING " + ID + ", " + ADDRESS;
-
-      try (final Cursor cursor = db.rawQuery(insertionSql, addressListAsJson)) {
-        createdThreads = new ArrayMap<>(cursor.getCount());
-        while (cursor.moveToNext()) {
-          createdThreads.put(
-              Address.fromSerialized(cursor.getString(1)),
-              cursor.getLong(0)
-          );
-        }
-      }
-
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
-    }
-
-    // Notify that the threads were deleted
-    for (final Long deletedThread : deletedThreads.values()) {
-      notifyThreadUpdated(deletedThread);
-    }
-
-    // Notify that the threads were created
-    for (final Long createdThread : createdThreads.values()) {
-      notifyThreadUpdated(createdThread);
-    }
-
-    return new EnsureThreadsResult(deletedThreads, createdThreads);
-  }
-
-  public void trimThreadBefore(long threadId, long timestamp) {
-    Log.i("ThreadDatabase", "Trimming thread: " + threadId + " before :"+timestamp);
-    smsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp);
-    mmsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp, false);
-    notifyThreadUpdated(threadId);
-  }
-
-  public void setCreationDate(long threadId, long date) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(THREAD_CREATION_DATE, date);
-    SQLiteDatabase db = getWritableDatabase();
-    int updated = db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
-    if (updated > 0) notifyThreadUpdated(threadId);
-  }
-
-    @NonNull
-  public List<ThreadRecord> getThreads(@Nullable Collection<? extends Address.Conversable> addresses) {
-    if (addresses == null || addresses.isEmpty())
-      return Collections.emptyList();
-
-    return ThreadDatabaseExtKt.queryThreads(this, addresses);
-  }
-
-  public int getMessageCount(long threadId) {
-    SQLiteDatabase db      = getReadableDatabase();
-    String[]       columns = new String[]{MESSAGE_COUNT};
-    String[]       args    = new String[]{String.valueOf(threadId)};
-    try (Cursor cursor = db.query(TABLE_NAME, columns, ID_WHERE, args, null, null, null)) {
-      if (cursor != null && cursor.moveToFirst()) {
-        return cursor.getInt(0);
-      }
-
-      return 0;
-    }
-  }
-
-  public List<Long> getThreadIDsFor(Collection<? extends Address> addresses) {
-    final String where = ADDRESS + " IN (SELECT value FROM json_each(?))";
-    final String whereArg = new JSONArray(CollectionsKt.map(addresses, Address::getAddress)).toString();
-
-    try (final Cursor cursor = getReadableDatabase().query(TABLE_NAME, new String[]{ID}, where,
-            new String[]{whereArg}, null, null, null)) {
-      List<Long> threadIds = new ArrayList<>(cursor.getCount());
-      while (cursor.moveToNext()) {
-        threadIds.add(cursor.getLong(cursor.getColumnIndexOrThrow(ID)));
-      }
-      return threadIds;
-    }
-  }
-
-  public long getThreadIdIfExistsFor(String address) {
-    SQLiteDatabase db      = getReadableDatabase();
-    String where           = ADDRESS + " = ?";
-    String[] recipientsArg = new String[] {address};
-
-    try (final Cursor cursor = db.query(TABLE_NAME, new String[]{ID}, where, recipientsArg, null, null, null)) {
-      if (cursor.moveToFirst())
-        return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-      else
-        return -1L;
-    }
-  }
-
-  public long getOrCreateThreadIdFor(Address address) {
-    boolean created = false;
-
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(ADDRESS, address.toString());
-    long threadId = getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
-
-    if (threadId < 0) {
-      threadId = getThreadIdIfExistsFor(address.getAddress());
+  void notifyThreadUpdated(long threadId, Address.Conversable address) {
+    ThreadChanges changes = new ThreadChanges(threadId, address);
+    if (changeNotification.tryEmit(changes)) {
+      Log.d(TAG, "Notified thread changes: " + changes);
     } else {
-      created = true;
+      Log.w(TAG, "Unable to notify thread changes, flow full");
     }
-
-    if (created) {
-      updateNotifications.tryEmit(threadId);
-    }
-
-    return threadId;
-  }
-
-  public @Nullable Address getRecipientForThreadId(long threadId) {
-    SQLiteDatabase db = getReadableDatabase();
-
-    try (final Cursor cursor = db.query(TABLE_NAME, new String[] { ADDRESS }, ID + " = ?", new String[] { String.valueOf(threadId )}, null, null, null)) {
-      if (cursor != null && cursor.moveToFirst()) {
-        return Address.fromSerialized(cursor.getString(0));
-      }
-    }
-
-    return null;
-  }
-
-  void notifyThreadUpdated(long threadId) {
-    Log.d(TAG, "Notifying thread updated: " + threadId);
-    updateNotifications.tryEmit(threadId);
   }
 }

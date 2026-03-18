@@ -18,7 +18,6 @@ package org.thoughtcrime.securesms
 import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.os.AsyncTask
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -43,9 +42,7 @@ import network.loki.messenger.libsession_util.util.Logger
 import org.conscrypt.Conscrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuffix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider
@@ -59,7 +56,6 @@ import org.thoughtcrime.securesms.glide.RemoteFileLoader
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger
-import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.webrtc.PeerConnectionFactory
@@ -124,13 +120,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
             DatabaseComponent::class.java
         )
 
-    @get:Deprecated(message = "Use proper DI to inject this component")
-    @Inject lateinit var messageNotifier: MessageNotifier
 
 
     override fun onCreate() {
-        pushSuffix = BuildConfig.PUSH_KEY_SUFFIX
-
         init(this)
         configure(this)
         super<Application>.onCreate()
@@ -138,7 +130,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         initializeSecurityProvider()
         initializeLogging()
         initializeCrashHandling()
-        NotificationChannels.create(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         initializeWebRtc()
@@ -180,7 +171,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         isAppVisible = false
         Log.i(TAG, "App is no longer visible.")
         KeyCachingService.onAppBackgrounded(this)
-        messageNotifier.setVisibleThread(-1)
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {

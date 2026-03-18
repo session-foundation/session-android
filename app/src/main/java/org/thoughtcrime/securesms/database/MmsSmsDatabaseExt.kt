@@ -1,12 +1,10 @@
 package org.thoughtcrime.securesms.database
 
 import android.database.Cursor
-import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.withUserConfigs
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.util.asSequence
 import org.thoughtcrime.securesms.util.get
 
 object MmsSmsDatabaseExt {
@@ -366,19 +364,42 @@ object MmsSmsDatabaseExt {
 
     /**
      * Find all incoming messages (including control messages) for the given thread within
-     * a time range.
+     * a time range. Ordered by date sent in ascending order.
      */
-    fun MmsSmsDatabase.findIncomingMessages(
+    fun MmsSmsDatabase.getIncomingMessagesSorted(
         threadId: Long,
         startMsExclusive: Long,
         endMsInclusive: Long
     ): List<MessageRecord> {
         return queryTables(
             projection = MmsSmsDatabase.PROJECTION_ALL,
-            selection = "${MmsSmsColumns.THREAD_ID} = $threadId AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} > $startMsExclusive AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} <= $endMsInclusive",
+            selection = "${MmsSmsColumns.THREAD_ID} = $threadId AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} > $startMsExclusive AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} <= $endMsInclusive AND NOT ${MmsSmsColumns.IS_DELETED} AND NOT ${MmsSmsColumns.IS_OUTGOING}",
             includeReactions = false,
             additionalReactionSelection = null,
-            order = null,
+            order = "${MmsSmsColumns.NORMALIZED_DATE_SENT} ASC",
+            limit = null,
+        ).use {
+            val reader = readerFor(it)
+            generateSequence { reader.next }.toList()
+        }
+    }
+
+    /**
+     * Find all incoming messages (including control messages) for the given thread.
+     * Ordered by date sent in ascending order.
+     */
+    fun MmsSmsDatabase.getIncomingMessagesSorted(threadId: Long, startMsExclusive: Long): List<MessageRecord> {
+        return queryTables(
+            projection = MmsSmsDatabase.PROJECTION_ALL,
+            selection = """
+                ${MmsSmsColumns.THREAD_ID} = $threadId
+                    AND ${MmsSmsColumns.NORMALIZED_DATE_SENT} > $startMsExclusive 
+                    AND NOT ${MmsSmsColumns.IS_DELETED} 
+                    AND NOT ${MmsSmsColumns.IS_OUTGOING}
+            """,
+            includeReactions = false,
+            additionalReactionSelection = null,
+            order = "${MmsSmsColumns.NORMALIZED_DATE_SENT} ASC",
             limit = null,
         ).use {
             val reader = readerFor(it)
@@ -426,5 +447,18 @@ object MmsSmsDatabaseExt {
         }
 
         return records
+    }
+
+    fun MmsSmsDatabase.getThreadId(messageId: MessageId): Long? {
+        return if (messageId.mms) {
+            mmsDatabase.get().getThreadIdForMessage(messageId.id)
+        } else {
+            smsDatabase.get().getThreadId(messageId.id)
+        }
+    }
+
+    fun MmsSmsDatabase.trimThread(threadId: Long, timestamp: Long) {
+        smsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp)
+        mmsDatabase.get().deleteMessagesInThreadBeforeDate(threadId, timestamp, false)
     }
 }

@@ -19,10 +19,10 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.database.userAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.RecipientData
 import org.session.libsignal.utilities.Log
@@ -32,10 +32,10 @@ import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.AuthAwareComponent
 import org.thoughtcrime.securesms.auth.LoggedInState
-import org.thoughtcrime.securesms.database.MessageChanges
+import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.findIncomingMessages
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getIncomingMessagesSorted
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getMessages
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.getAddressAndLastSeen
 import org.thoughtcrime.securesms.database.getAllLastSeen
+import org.thoughtcrime.securesms.database.getRecipientAddress
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -79,10 +80,10 @@ class MarkReadProcessor @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
-        val threadLastSeenFlow = threadDb.updateNotifications
+        val threadLastSeenFlow = threadDb.changeNotification
             .map { id ->
-                threadDb.getAddressAndLastSeen(id)?.let { (address, lastSeen) ->
-                    ThreadUpdated(id, address, lastSeen)
+                threadDb.getAddressAndLastSeen(id.id)?.let { (address, lastSeen) ->
+                    ThreadUpdated(id.id, address, lastSeen)
                 }
             }
             .filterNotNull()
@@ -165,7 +166,7 @@ class MarkReadProcessor @Inject constructor(
                             is MessageChanges -> {
                                 State(
                                     lastSeenByThreadIDs = acc.lastSeenByThreadIDs,
-                                    updates = threadDb.getRecipientForThreadId(event.threadId)
+                                    updates = threadDb.getRecipientAddress(event.threadId)
                                         ?.takeIf(::eligibleForReadReceipt)
                                         ?.let { threadAddress ->
                                             val threadLastSeen =
@@ -209,7 +210,7 @@ class MarkReadProcessor @Inject constructor(
                                             event.lastSeenMs
                                         ),
                                         updates = if (eligibleForReadReceipt(event.threadAddress)) {
-                                            mmsSmsDatabase.findIncomingMessages(
+                                            mmsSmsDatabase.getIncomingMessagesSorted(
                                                 event.threadId,
                                                 oldLastSeen,
                                                 event.lastSeenMs
@@ -281,7 +282,7 @@ class MarkReadProcessor @Inject constructor(
             .scan(State<ExpiryUpdates>(threadDb.getAllLastSeen())) { acc, event ->
                 when (event) {
                     is MessageChanges -> {
-                        if (threadDb.getRecipientForThreadId(event.threadId) is Address.GroupLike) {
+                        if (threadDb.getRecipientAddress(event.threadId) is Address.GroupLike) {
                             if (acc.updates != null) acc.copy(updates = null) else acc
                         } else {
                             val threadLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
@@ -301,7 +302,7 @@ class MarkReadProcessor @Inject constructor(
                         } else {
                             val oldLastSeen = acc.lastSeenByThreadIDs.getOrDefault(event.threadId, 0L)
                             if (event.lastSeenMs > oldLastSeen) {
-                                val eligible = mmsSmsDatabase.findIncomingMessages(
+                                val eligible = mmsSmsDatabase.getIncomingMessagesSorted(
                                     event.threadId,
                                     oldLastSeen,
                                     event.lastSeenMs

@@ -6,6 +6,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
+import androidx.collection.arrayMapOf
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -16,6 +17,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.RoundedBackgroundSpan
 import org.thoughtcrime.securesms.util.getAccentColor
 import network.loki.messenger.R
+import org.session.libsession.utilities.recipients.Recipient
 import java.util.regex.Pattern
 
 object MentionUtilities {
@@ -57,10 +59,36 @@ object MentionUtilities {
         val isSelf: Boolean
     )
 
-    data class ParsedMentions(
-        val text: String,
+    data class SubstituteResult(
+        val text: CharSequence,
         val mentions: List<MentionToken>
     )
+
+    /**
+     * Parse an input and returns all occurrence of mention syntax: `@id`. The range will include
+     * the character '@'.
+     *
+     * @return null if no mention is found. Otherwise, returns a sequence of ranges of indices
+     * where the mention syntax is found, including the character '@'.
+     */
+    fun parseMentions(input: CharSequence): Sequence<IntRange>? {
+        val matcher = pattern.matcher(input)
+        if (!matcher.find()) return null
+
+        return generateSequence(matcher.start() until matcher.end()) {
+            if (matcher.find()) matcher.start() until matcher.end() else null
+        }
+    }
+
+    /**
+     * Check if the content has mentions of the current user.
+     */
+    fun mentionsMe(content: CharSequence, recipientRepository: RecipientRepository): Boolean {
+        return parseMentions(content)?.any { range ->
+            val address = content.substring(range.first + 1, range.last + 1).toAddress()
+            recipientRepository.fastIsSelf(address)
+        } == true
+    }
 
     /**
      * Shared core:
@@ -71,63 +99,63 @@ object MentionUtilities {
      * - legacy XML span formatting
      * - Compose rich text formatting
      */
-    @JvmStatic
+    /**
+     * Performs the text substitution given pre-parsed mention ranges, resolving each
+     * public key via [recipientRepository].
+     */
+    fun substituteMentions(
+        recipientRepository: RecipientRepository,
+        input: CharSequence,
+        mentionRanges: Sequence<IntRange>,
+        context: Context
+    ): SubstituteResult {
+        val mentions = mutableListOf<MentionToken>()
+        val recipients = arrayMapOf<String, Recipient>()
+        val result = StringBuilder(input.length)
+        var lastEnd = 0
+        var offset = 0
+
+        for (range in mentionRanges) {
+            val publicKey = input.subSequence(range.first + 1, range.last + 1).toString() // drop '@'
+
+            val user = recipients.getOrPut(publicKey) {
+                recipientRepository.getRecipientSync(publicKey.toAddress())
+            }
+
+            val displayName = if (user.isSelf) context.getString(R.string.you)
+                              else user.displayName(attachesBlindedId = true)
+            val replacement = "@$displayName"
+
+            result.append(input.subSequence(lastEnd, range.first))
+
+            val start = range.first + offset
+            result.append(replacement)
+
+            mentions += MentionToken(
+                start = start,
+                endExclusive = start + replacement.length,
+                publicKey = publicKey,
+                isSelf = user.isSelf
+            )
+
+            offset += replacement.length - (range.last + 1 - range.first)
+            lastEnd = range.last + 1
+        }
+
+        result.append(input.subSequence(lastEnd, input.length))
+
+        return SubstituteResult(text = result, mentions = mentions)
+    }
+
     fun parseAndSubstituteMentions(
         recipientRepository: RecipientRepository,
         input: CharSequence,
         context: Context
-    ): ParsedMentions {
-        @Suppress("NAME_SHADOWING")
-        var text: CharSequence = input
+    ): SubstituteResult {
+        val mentionRanges = parseMentions(input)
+            ?: return SubstituteResult(text = input, mentions = emptyList())
 
-        var matcher = pattern.matcher(text)
-        val mentions = mutableListOf<MentionToken>()
-        var startIndex = 0
-
-        if (matcher.find(startIndex)) {
-            while (true) {
-                val publicKey =
-                    text.subSequence(matcher.start() + 1, matcher.end()).toString() // drop '@'
-
-                val user = recipientRepository.getRecipientSync(publicKey.toAddress())
-                val displayName = if (user.isSelf) {
-                    context.getString(R.string.you)
-                } else {
-                    user.displayName(attachesBlindedId = true)
-                }
-
-                val replacement = "@$displayName"
-
-                val newText = buildString(
-                    text.length - (matcher.end() - matcher.start()) + replacement.length
-                ) {
-                    append(text.subSequence(0, matcher.start()))
-                    append(replacement)
-                    append(text.subSequence(matcher.end(), text.length))
-                }
-
-                val start = matcher.start()
-                val endExclusive = start + replacement.length
-
-                mentions += MentionToken(
-                    start = start,
-                    endExclusive = endExclusive,
-                    publicKey = publicKey,
-                    isSelf = user.isSelf
-                )
-
-                text = newText
-                startIndex = endExclusive
-
-                matcher = pattern.matcher(text)
-                if (!matcher.find(startIndex)) break
-            }
-        }
-
-        return ParsedMentions(
-            text = text.toString(),
-            mentions = mentions
-        )
+        return substituteMentions(recipientRepository, input, mentionRanges, context)
     }
 
     // ----------------------------
@@ -142,7 +170,6 @@ object MentionUtilities {
      * @param formatOnly If true we only format the text itself,
      * for example resolving an accountID to a username. If false we also apply styling.
      */
-    @JvmStatic
     fun highlightMentions(
         recipientRepository: RecipientRepository,
         text: CharSequence,

@@ -44,6 +44,7 @@ import org.session.libsignal.utilities.ThreadUtils.queue
 import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
+import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -71,7 +72,6 @@ class MmsDatabase @Inject constructor(
     databaseHelper: Provider<SQLCipherOpenHelper>,
     private val recipientRepository: RecipientRepository,
     private val json: Json,
-    private val groupReceiptDatabase: GroupReceiptDatabase,
     private val attachmentDatabase: AttachmentDatabase,
     private val reactionDatabase: ReactionDatabase,
     private val mmsSmsDatabase: Lazy<MmsSmsDatabase>,
@@ -199,21 +199,18 @@ class MmsDatabase @Inject constructor(
                     if (ourAddress.equals(theirAddress) || theirAddress.isGroupOrCommunity) {
                         val id = cursor.getLong(cursor.getColumnIndexOrThrow(ID))
                         val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
-                        val status =
-                            if (deliveryReceipt) GroupReceiptDatabase.STATUS_DELIVERED else GroupReceiptDatabase.STATUS_READ
                         found = true
                         database.execSQL(
                             "UPDATE $TABLE_NAME SET $columnName = $columnName + 1 WHERE $ID = ?",
                             arrayOf(id)
                         )
-                        groupReceiptDatabase
-                            .update(ourAddress, id, status, timestamp)
-
-                        _changeNotification.tryEmit(MessageChanges(
-                            changeType = MessageChanges.ChangeType.Updated,
-                            id = MessageId(id, true),
-                            threadId = threadId
-                        ))
+                        _changeNotification.tryEmit(
+                            MessageChanges(
+                                changeType = MessageChanges.ChangeType.Updated,
+                                id = MessageId(id, true),
+                                threadId = threadId
+                            )
+                        )
                     }
                 }
             }
@@ -243,25 +240,24 @@ class MmsDatabase @Inject constructor(
         ).use { cursor ->
             if (cursor.moveToFirst()) {
                 val threadId = cursor.getLong(0)
-                _changeNotification.tryEmit(MessageChanges(
-                    changeType = MessageChanges.ChangeType.Updated,
-                    id = MessageId(messageId, true),
-                    threadId = threadId
-                ))
+                _changeNotification.tryEmit(
+                    MessageChanges(
+                        changeType = MessageChanges.ChangeType.Updated,
+                        id = MessageId(messageId, true),
+                        threadId = threadId
+                    )
+                )
             }
         }
     }
 
-    fun getThreadIdForMessage(id: Long): Long {
-        val sql = "SELECT $THREAD_ID FROM $TABLE_NAME WHERE $ID = ?"
-        val sqlArgs = arrayOf(id.toString())
-        val db = readableDatabase
-        var cursor: Cursor? = null
-        return try {
-            cursor = db.rawQuery(sql, sqlArgs)
-            if (cursor != null && cursor.moveToFirst()) cursor.getLong(0) else -1
-        } finally {
-            cursor?.close()
+    fun getThreadIdForMessage(id: Long): Long? {
+        return readableDatabase.query("SELECT $THREAD_ID FROM $TABLE_NAME WHERE $ID = ?", arrayOf(id)).use {
+            if (it.moveToNext()) {
+                it.getLong(0)
+            } else {
+                null
+            }
         }
     }
 
@@ -464,11 +460,13 @@ class MmsDatabase @Inject constructor(
             contentValues = contentValues,
         )
 
-        _changeNotification.tryEmit(MessageChanges(
-            changeType = MessageChanges.ChangeType.Added,
-            id = MessageId(messageId, true),
-            threadId = contentValues.getAsLong(THREAD_ID)
-        ))
+        _changeNotification.tryEmit(
+            MessageChanges(
+                changeType = MessageChanges.ChangeType.Added,
+                id = MessageId(messageId, true),
+                threadId = contentValues.getAsLong(THREAD_ID)
+            )
+        )
 
         return InsertResult(messageId, threadId)
     }
@@ -568,28 +566,15 @@ class MmsDatabase @Inject constructor(
         if (message.recipient.isGroupOrCommunity) {
             val members = groupDatabase
                 .getGroupMembers(message.recipient.toGroupString(), false)
-            groupReceiptDatabase.insert(members,
-                messageId, GroupReceiptDatabase.STATUS_UNDELIVERED, message.sentTimeMillis
-            )
-            for (address in earlyDeliveryReceipts.keys) groupReceiptDatabase.update(
-                address,
-                messageId,
-                GroupReceiptDatabase.STATUS_DELIVERED,
-                -1
-            )
-            for (address in earlyReadReceipts.keys) groupReceiptDatabase.update(
-                address,
-                messageId,
-                GroupReceiptDatabase.STATUS_READ,
-                -1
-            )
         }
 
-        _changeNotification.tryEmit(MessageChanges(
-            changeType = MessageChanges.ChangeType.Added,
-            id = MessageId(messageId, true),
-            threadId = threadId
-        ))
+        _changeNotification.tryEmit(
+            MessageChanges(
+                changeType = MessageChanges.ChangeType.Added,
+                id = MessageId(messageId, true),
+                threadId = threadId
+            )
+        )
 
         return messageId
     }
@@ -685,18 +670,19 @@ class MmsDatabase @Inject constructor(
         // Delete messages related data from other tables
         if (deletedByThreadIDs.isNotEmpty()) {
             attachmentDatabase.deleteAttachmentsForMessages(deleted)
-            groupReceiptDatabase.deleteRowsForMessages(deleted)
 
             notifyStickerListeners()
             notifyStickerPackListeners()
         }
 
         deletedByThreadIDs.forEach { threadId, deletedMessageIDs ->
-            _changeNotification.tryEmit(MessageChanges(
-                changeType = MessageChanges.ChangeType.Deleted,
-                ids = deletedMessageIDs,
-                threadId = threadId
-            ))
+            _changeNotification.tryEmit(
+                MessageChanges(
+                    changeType = MessageChanges.ChangeType.Deleted,
+                    ids = deletedMessageIDs,
+                    threadId = threadId
+                )
+            )
         }
 
         return deleted.isNotEmpty()

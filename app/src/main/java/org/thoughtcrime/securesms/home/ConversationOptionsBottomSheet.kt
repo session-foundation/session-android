@@ -100,7 +100,8 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
             return
         }
 
-        thread = threadFromDb
+        this.thread = threadFromDb
+
         group = groupDatabase.getGroup(thread.recipient.address.toString())
     }
 

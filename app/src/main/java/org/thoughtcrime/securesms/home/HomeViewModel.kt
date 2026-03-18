@@ -45,7 +45,10 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.CHECKED_DOZE_WHITELIST
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.PUSH_ENABLED
 import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
+import org.thoughtcrime.securesms.preferences.AppPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.pro.ProStatus
@@ -143,9 +146,7 @@ class HomeViewModel @Inject constructor(
         observeTypingStatus(),
 
         // Third flow: whether the user has marked message requests as hidden
-        (TextSecurePreferences.events.filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS } as Flow<*>)
-            .onStart { emit(Unit) }
-            .map { prefs.hasHiddenMessageRequests() }
+        prefStorage.watch(viewModelScope, AppPreferences.HAS_HIDDEN_MESSAGE_REQUESTS),
     ) { (unapproveConvoCount, convoList), typingStatus, hiddenMessageRequest ->
         // check if we should show the recovery phrase backup banner:
         // - if the user has not yet seen the warning
@@ -183,11 +184,11 @@ class HomeViewModel @Inject constructor(
 
     init {
         // check for white list status in case of slow mode
-        if(!prefs.hasCheckedDozeWhitelist() // the user has not yet seen the dialog
-            && !prefs.pushEnabled.value // the user is in slow mode
+        if(!prefStorage[CHECKED_DOZE_WHITELIST] // the user has not yet seen the dialog
+            && !prefStorage[PUSH_ENABLED] // the user is in slow mode
             && !context.isWhitelistedFromDoze() // the user isn't yet whitelisted
         ){
-            prefs.setHasCheckedDozeWhitelist(true)
+            prefStorage[CHECKED_DOZE_WHITELIST] = true
             viewModelScope.launch {
                 delay(1500)
                 _dialogsState.update {

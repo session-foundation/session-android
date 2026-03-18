@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.database
 
+import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.util.asSequence
 
@@ -7,26 +8,43 @@ fun SmsDatabase.updateThreadId(fromId: Long, toId: Long) {
     if (fromId == toId) return
 
     //language=roomsql
-    val updatedMessageIds = writableDatabase.query("""
+    val updatedMessageIds = writableDatabase.query(
+        """
        UPDATE ${SmsDatabase.TABLE_NAME}
        SET ${SmsDatabase.THREAD_ID} = ?
        WHERE ${SmsDatabase.THREAD_ID} = ?
        RETURNING ${SmsDatabase.ID}
-    """, arrayOf(toId, fromId)).use { cursor ->
+    """, arrayOf(toId, fromId)
+    ).use { cursor ->
         cursor.asSequence().map { MessageId(it.getLong(0), false) }.toList()
     }
 
     if (updatedMessageIds.isNotEmpty()) {
-        changeNotification.tryEmit(MessageChanges(
-            changeType = MessageChanges.ChangeType.Deleted,
-            ids = updatedMessageIds,
-            threadId = fromId
-        ))
+        changeNotification.tryEmit(
+            MessageChanges(
+                changeType = MessageChanges.ChangeType.Deleted,
+                ids = updatedMessageIds,
+                threadId = fromId
+            )
+        )
 
-        changeNotification.tryEmit(MessageChanges(
-            changeType = MessageChanges.ChangeType.Added,
-            ids = updatedMessageIds,
-            threadId = toId
-        ))
+        changeNotification.tryEmit(
+            MessageChanges(
+                changeType = MessageChanges.ChangeType.Added,
+                ids = updatedMessageIds,
+                threadId = toId
+            )
+        )
     }
+}
+
+fun SmsDatabase.getThreadId(id: Long): Long? {
+    return readableDatabase.query("SELECT ${SmsDatabase.THREAD_ID} FROM ${SmsDatabase.TABLE_NAME} WHERE ${SmsDatabase.ID} = ?", arrayOf(id))
+        .use {
+            if (it.moveToNext()) {
+                it.getLong(0)
+            } else {
+                null
+            }
+        }
 }

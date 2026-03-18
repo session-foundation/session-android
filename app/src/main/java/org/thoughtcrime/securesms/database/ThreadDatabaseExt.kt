@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.database
 
-import android.database.sqlite.SQLiteDoneException
+import android.database.Cursor
 import androidx.collection.LongLongMap
 import androidx.collection.MutableLongLongMap
 import androidx.collection.MutableLongSet
@@ -9,12 +9,15 @@ import androidx.core.database.getStringOrNull
 import androidx.sqlite.db.transaction
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.session.libsession.utilities.recipients.RecipientData
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.util.asSequence
 import kotlin.time.Instant
 
-fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): List<ThreadRecord> {
+fun ThreadDatabase.getThreads(addresses: Collection<Address.Conversable>): List<ThreadRecord> {
+    if (addresses.isEmpty()) return emptyList()
+
     val addressAsJson = json.encodeToString(addresses)
 
     //language=roomsql
@@ -84,7 +87,8 @@ fun ThreadDatabase.queryThreads(addresses: Collection<Address.Conversable>): Lis
             ) AS mmsCount
         FROM ${ThreadDatabase.TABLE_NAME} AS threads
         WHERE ${ThreadDatabase.ADDRESS} IN (SELECT value FROM json_each(?))
-    """, arrayOf(addressAsJson)).use { cursor ->
+    """, arrayOf(addressAsJson)
+    ).use { cursor ->
         cursor.asSequence()
             .mapTo(ArrayList(cursor.count)) { cursor ->
                 val threadId = cursor.getLong(0)
@@ -150,7 +154,10 @@ fun ThreadDatabase.threadContainsOutgoingMessage(threadId: Long): Boolean {
 
 fun ThreadDatabase.getLastSeen(address: Address.Conversable): Instant? {
     return readableDatabase.query(
-        "SELECT ${ThreadDatabase.LAST_SEEN} FROM ${ThreadDatabase.TABLE_NAME} WHERE ${ThreadDatabase.ADDRESS} = ?",
+        """
+            SELECT ${ThreadDatabase.LAST_SEEN} 
+            FROM ${ThreadDatabase.TABLE_NAME} 
+            WHERE ${ThreadDatabase.ADDRESS} = ?""".trimIndent(),
         arrayOf(address.address)
     ).use { cursor ->
         if (cursor.moveToNext()) {
@@ -163,11 +170,14 @@ fun ThreadDatabase.getLastSeen(address: Address.Conversable): Instant? {
 
 fun ThreadDatabase.getAddressAndLastSeen(id: Long): Pair<Address.Conversable, Long>? {
     return readableDatabase.query(
-        "SELECT ${ThreadDatabase.ADDRESS}, ${ThreadDatabase.LAST_SEEN} FROM ${ThreadDatabase.TABLE_NAME} WHERE ${ThreadDatabase.ID} = ?",
+        """
+        SELECT ${ThreadDatabase.ADDRESS}, ${ThreadDatabase.LAST_SEEN} 
+        FROM ${ThreadDatabase.TABLE_NAME} 
+        WHERE ${ThreadDatabase.ID} = ?""",
         arrayOf(id)
-    ).use {
-        if (it.moveToNext()) {
-            (it.getString(0).toAddress() as Address.Conversable) to it.getLong(1)
+    ).use { cursor ->
+        if (cursor.moveToNext()) {
+            (cursor.getString(0).toConversableAddress()) to cursor.getLong(1)
         } else {
             null
         }
@@ -186,37 +196,180 @@ fun ThreadDatabase.getAllLastSeen(): LongLongMap {
     }
 }
 
+fun ThreadDatabase.deleteThread(id: Long) {
+    writableDatabase.query(
+        """
+        DELETE FROM ${ThreadDatabase.TABLE_NAME} WHERE ${ThreadDatabase.ID} = ?
+        RETURNING ${ThreadDatabase.ADDRESS}
+    """, arrayOf(id)
+    ).use { cursor ->
+        if (cursor.moveToNext()) {
+            notifyThreadUpdated(id, cursor.getString(0).toConversableAddress())
+        }
+    }
+}
+
+typealias ThreadId = Long
+
+class EnsureThreadsResult(
+    val deleted: List<Pair<ThreadId, Address.Conversable>>,
+    val created: List<Pair<ThreadId, Address.Conversable>>,
+)
+
+private fun Cursor.readIdAddressList(): List<Pair<ThreadId, Address.Conversable>> {
+    return buildList(count) {
+        while (moveToNext()) {
+            add(getLong(0) to getString(1).toConversableAddress())
+        }
+    }
+}
+
+private fun ThreadDatabase.notifyUpdated(changes: List<Pair<ThreadId, Address.Conversable>>) {
+    changes.forEach { (id, address) ->
+        notifyThreadUpdated(id, address)
+    }
+}
+
+
+/**
+ * This method ensures that the threads for the given addresses exist in the database, AND
+ * deletes any threads that are not in the given addresses.
+ */
+fun ThreadDatabase.ensureThreads(addresses: Iterable<Address.Conversable>): EnsureThreadsResult {
+    return writableDatabase.transaction {
+        // First store the addresses in a temp table for later use
+        writableDatabase.execSQL("CREATE TEMP TABLE tmp_addresses (address TEXT NOT NULL PRIMARY KEY)")
+        writableDatabase.compileStatement("INSERT OR IGNORE INTO tmp_addresses (address) VALUES (?)").use { stmt ->
+            addresses.forEach {
+                stmt.bindString(1, it.address)
+                stmt.execute()
+            }
+        }
+
+        // Delete threads that are not in the tmp_addresses
+        val deleted = writableDatabase.query(
+            """
+            DELETE FROM ${ThreadDatabase.TABLE_NAME} 
+            WHERE ${ThreadDatabase.ADDRESS} NOT IN (SELECT address FROM tmp_addresses)
+            RETURNING ${ThreadDatabase.ID}, ${ThreadDatabase.ADDRESS}
+        """
+        ).use(Cursor::readIdAddressList)
+
+        // Create threads
+        val created = writableDatabase.query(
+            """
+            INSERT OR IGNORE INTO ${ThreadDatabase.TABLE_NAME} (${ThreadDatabase.ADDRESS})
+            SELECT address FROM tmp_addresses
+            RETURNING ${ThreadDatabase.ID}, ${ThreadDatabase.ADDRESS}
+        """
+        ).use(Cursor::readIdAddressList)
+
+        writableDatabase.execSQL("DROP TABLE tmp_addresses")
+
+        EnsureThreadsResult(deleted = deleted, created = created)
+    }.also { result ->
+        notifyUpdated(result.deleted)
+        notifyUpdated(result.created)
+    }
+}
+
 /**
  * Update or create a thread record to store the given lastRead timestamp.
  */
-fun ThreadDatabase.upsertThreadLastSeen(lastReads: Iterable<Pair<Address.Conversable, Instant>>) {
-    var updatedThreadIDs: MutableLongSet? = null
+fun ThreadDatabase.upsertThreadLastSeen(lastReads: Collection<Pair<Address.Conversable, Instant>>) {
+    if (lastReads.isEmpty()) return
 
-    writableDatabase.compileStatement("""
-        INSERT INTO ${ThreadDatabase.TABLE_NAME} (${ThreadDatabase.ADDRESS}, ${ThreadDatabase.LAST_SEEN})
-        VALUES (?, ?)
-        ON CONFLICT (${ThreadDatabase.ADDRESS}) 
-            DO UPDATE SET ${ThreadDatabase.LAST_SEEN} = EXCLUDED.${ThreadDatabase.LAST_SEEN}
-            WHERE ${ThreadDatabase.LAST_SEEN} != EXCLUDED.${ThreadDatabase.LAST_SEEN}
-        RETURNING ${ThreadDatabase.ID}
-    """).use { stmt ->
-        lastReads.forEach { (address, lastRead) ->
-            stmt.clearBindings()
-            stmt.bindString(1, address.address)
-            stmt.bindLong(2, lastRead.toEpochMilliseconds())
-
-            try {
-                val threadId = stmt.simpleQueryForLong()
-                if (updatedThreadIDs == null) {
-                    updatedThreadIDs = mutableLongSetOf(threadId)
-                } else {
-                    updatedThreadIDs.add(threadId)
-                }
-            } catch (_: SQLiteDoneException) {
-                // This happens when we don't have an update for the thread
+    val changes = writableDatabase.transaction {
+        writableDatabase.execSQL("CREATE TEMP TABLE tmp_last_reads (address TEXT NOT NULL PRIMARY KEY, last_read INTEGER NOT NULL)")
+        writableDatabase.compileStatement("INSERT OR IGNORE INTO tmp_last_reads (address, last_read) VALUES (?, ?)").use { stmt ->
+            lastReads.forEach { (address, lastRead) ->
+                stmt.bindString(1, address.address)
+                stmt.bindLong(2, lastRead.toEpochMilliseconds())
+                stmt.execute()
             }
+        }
+
+        val r = writableDatabase.query(
+            """
+            INSERT INTO ${ThreadDatabase.TABLE_NAME} (${ThreadDatabase.ADDRESS}, ${ThreadDatabase.LAST_SEEN})
+            SELECT address, last_read FROM tmp_last_reads WHERE true
+            ON CONFLICT (${ThreadDatabase.ADDRESS}) 
+                DO UPDATE SET ${ThreadDatabase.LAST_SEEN} = EXCLUDED.${ThreadDatabase.LAST_SEEN}
+                WHERE ${ThreadDatabase.LAST_SEEN} != EXCLUDED.${ThreadDatabase.LAST_SEEN}
+            RETURNING ${ThreadDatabase.ID}, ${ThreadDatabase.ADDRESS}
+        """
+        ).use(Cursor::readIdAddressList)
+
+        writableDatabase.execSQL("DROP TABLE tmp_last_reads")
+
+        r
+    }
+
+    notifyUpdated(changes)
+}
+
+fun ThreadDatabase.getOrCreateThreadIdFor(address: Address.Conversable): ThreadId {
+    // Fast path without exclusive write lock:
+    getThreadId(address)?.let { return it }
+
+    // Slow path with exclusive lock:
+    writableDatabase.query(
+        """
+        INSERT INTO ${ThreadDatabase.TABLE_NAME} (${ThreadDatabase.ADDRESS})
+        VALUES (?)
+        ON CONFLICT(${ThreadDatabase.ADDRESS}) DO SET ${ThreadDatabase.ADDRESS} = EXCLUDED.${ThreadDatabase.ADDRESS}
+        RETURNING ${ThreadDatabase.ID}
+    """, arrayOf(address.address)
+    ).use { cursor ->
+        require(cursor.moveToNext()) { "Unable to insert a new thread" }
+        val threadId = cursor.getLong(0)
+        notifyThreadUpdated(threadId, address)
+        return threadId
+    }
+}
+
+fun ThreadDatabase.getThreadId(address: Address.Conversable): ThreadId? {
+    readableDatabase.query(
+        """
+        SELECT ${ThreadDatabase.ID} 
+        FROM ${ThreadDatabase.TABLE_NAME} 
+        WHERE ${ThreadDatabase.ADDRESS} = ?""",
+        arrayOf(address.address)
+    ).use { cursor ->
+        if (cursor.moveToNext()) {
+            return cursor.getLong(0)
         }
     }
 
-    updatedThreadIDs?.forEach { notifyThreadUpdated(it) }
+    return null
+}
+
+fun ThreadDatabase.getRecipientAddress(threadId: Long): Address.Conversable? {
+    readableDatabase.query(
+        """
+        SELECT ${ThreadDatabase.ADDRESS} 
+        FROM ${ThreadDatabase.TABLE_NAME} 
+        WHERE ${ThreadDatabase.ID} = ?""",
+        arrayOf(threadId)
+    ).use { cursor ->
+        if (cursor.moveToNext()) {
+            return cursor.getString(0).toConversableAddress()
+        }
+    }
+
+    return null
+}
+
+fun ThreadDatabase.getThreadIDs(addresses: Collection<Address.Conversable>): List<Pair<ThreadId, Address.Conversable>> {
+    if (addresses.isEmpty()) return emptyList()
+
+    val addressesAsJson = json.encodeToString(addresses)
+
+    return readableDatabase.query(
+        """
+        SELECT ${ThreadDatabase.ID}, ${ThreadDatabase.ADDRESS} 
+        FROM ${ThreadDatabase.TABLE_NAME} 
+        WHERE ${ThreadDatabase.ADDRESS} IN (SELECT value FROM json_each(?))""",
+        arrayOf(addressesAsJson)
+    ).use(Cursor::readIdAddressList)
 }

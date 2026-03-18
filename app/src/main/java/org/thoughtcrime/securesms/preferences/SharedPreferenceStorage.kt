@@ -100,7 +100,7 @@ class SharedPreferenceStorage @AssistedInject constructor(
                         }
                     } ?: strategy.defaultValue
                 } else {
-                    null
+                    strategy.defaultValue
                 }
             }
         } as T
