@@ -53,7 +53,7 @@ import kotlin.math.max
 @Singleton
 class FullNotificationHandler @Inject constructor(
     @ApplicationContext context: Context,
-    private val threadDb: ThreadDatabase,
+    threadDb: ThreadDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
@@ -77,6 +77,7 @@ class FullNotificationHandler @Inject constructor(
     notificationManager = notificationManager,
     prefs = prefs,
     appVisibilityManager = appVisibilityManager,
+    threadDatabase = threadDb,
 ) {
 
     private sealed interface Event
@@ -93,7 +94,7 @@ class FullNotificationHandler @Inject constructor(
             smsDatabase.changeNotification.map(::MessageUpdated),
             reactionDatabase.changeNotification.map(::ReactionUpdated),
         ).collect(object : FlowCollector<Event> {
-            private val lastPostedLatestMessageTimestampByThreadId = MutableLongLongMap()
+            private val lastPostedMessageTimestampByThreadId = MutableLongLongMap()
 
             override suspend fun emit(value: Event) {
                 // Whether this event can only update an existing notification (i.e. no action
@@ -167,7 +168,7 @@ class FullNotificationHandler @Inject constructor(
                     }
 
                     // If we aren't allowed notification...
-                    threadNotifyType == NotifyType.NONE || threadRecipient.blocked -> {
+                    threadNotifyType == NotifyType.NONE -> {
                         Log.d(TAG, "threadId=$threadId: notifyType=NONE — skipping")
                         // Do nothing, also don't need to cancel the existing notification
                         return
@@ -181,7 +182,7 @@ class FullNotificationHandler @Inject constructor(
                             threadAddress = threadAddress,
                             threadRecipient = threadRecipient,
                             updateOnly = updateOnly,
-                            lastPostedLatestMessageTimestampByThreadId = lastPostedLatestMessageTimestampByThreadId
+                            lastPostedMessageTimestampByThreadId = lastPostedMessageTimestampByThreadId
                         )
                     }
 
@@ -193,7 +194,7 @@ class FullNotificationHandler @Inject constructor(
                             threadRecipient = threadRecipient,
                             threadAddress = threadAddress,
                             updateOnly = updateOnly,
-                            lastPostedLatestMessageTimestampByThreadId = lastPostedLatestMessageTimestampByThreadId
+                            lastPostedMessageTimestampByThreadId = lastPostedMessageTimestampByThreadId
                         )
                     }
 
@@ -204,7 +205,7 @@ class FullNotificationHandler @Inject constructor(
                         threadAddress = threadAddress,
                         threadRecipient = threadRecipient,
                         updateOnly = updateOnly,
-                        lastPostedLatestMessageTimestampByThreadId = lastPostedLatestMessageTimestampByThreadId
+                        lastPostedLatestMessageTimestampByThreadId = lastPostedMessageTimestampByThreadId
                     )
                 }
             }
@@ -253,7 +254,7 @@ class FullNotificationHandler @Inject constructor(
         newMessages: List<MessageRecord>,
         newReactions: List<ReactionRecord>,
         threadRecipient: Recipient,
-        lastPostedLatestMessageTimestampByThreadId: MutableLongLongMap,
+        lastPostedMessageTimestampByThreadId: MutableLongLongMap,
         threadId: Long,
         threadAddress: Address.Conversable,
         updateOnly: Boolean
@@ -295,7 +296,7 @@ class FullNotificationHandler @Inject constructor(
             newReactions.lastOrNull()?.dateSent ?: 0L
         )
 
-        if (latestMessageTimestampMs <= lastPostedLatestMessageTimestampByThreadId.getOrDefault(
+        if (latestMessageTimestampMs <= lastPostedMessageTimestampByThreadId.getOrDefault(
                 threadId,
                 0L
             )
@@ -305,7 +306,7 @@ class FullNotificationHandler @Inject constructor(
             return
         }
 
-        lastPostedLatestMessageTimestampByThreadId.put(threadId, latestMessageTimestampMs)
+        lastPostedMessageTimestampByThreadId.put(threadId, latestMessageTimestampMs)
         postOrUpdateNotification(
             threadAddress = threadAddress,
             threadRecipient = threadRecipient,
@@ -323,7 +324,7 @@ class FullNotificationHandler @Inject constructor(
         threadRecipient: Recipient,
         threadAddress: Address.Conversable,
         updateOnly: Boolean,
-        lastPostedLatestMessageTimestampByThreadId: MutableLongLongMap
+        lastPostedMessageTimestampByThreadId: MutableLongLongMap
     ) {
         Log.d(TAG, "threadId=$threadId: notifyType=MENTIONS ")
         // The rule for a mentions only thread is: we'll notify the user only if the user is MENTIONED in
@@ -339,7 +340,7 @@ class FullNotificationHandler @Inject constructor(
         }
 
         // Now we need to inspect the unnotified new messages for any mentions
-        val lastPostedLatestMessageTimestamp = lastPostedLatestMessageTimestampByThreadId.getOrDefault(threadId, 0L)
+        val lastPostedLatestMessageTimestamp = lastPostedMessageTimestampByThreadId.getOrDefault(threadId, 0L)
         val unnotifiedMessagesContainMentions = allNewMessages.any { it.dateSent > lastPostedLatestMessageTimestamp &&
                 MentionUtilities.mentionsMe(it.body, recipientRepository) }
 
@@ -352,7 +353,7 @@ class FullNotificationHandler @Inject constructor(
             newMessages = allNewMessages,
             newReactions = reactionDatabase.getReactionsForThread(threadId, threadLastSeen),
             threadRecipient = threadRecipient,
-            lastPostedLatestMessageTimestampByThreadId = lastPostedLatestMessageTimestampByThreadId,
+            lastPostedMessageTimestampByThreadId = lastPostedMessageTimestampByThreadId,
             threadId = threadId,
             threadAddress = threadAddress,
             updateOnly = updateOnly
@@ -365,7 +366,7 @@ class FullNotificationHandler @Inject constructor(
         threadAddress: Address.Conversable,
         threadRecipient: Recipient,
         updateOnly: Boolean,
-        lastPostedLatestMessageTimestampByThreadId: MutableLongLongMap,
+        lastPostedMessageTimestampByThreadId: MutableLongLongMap,
     ) {
         Log.d(TAG, "threadId=$threadId: message request thread — showing generic 'new message request' notification")
         // The only thing we notify user for this convo
@@ -375,7 +376,7 @@ class FullNotificationHandler @Inject constructor(
             threadId,
             startMsExclusive = max(
                 threadLastSeen,
-                lastPostedLatestMessageTimestampByThreadId.getOrDefault(
+                lastPostedMessageTimestampByThreadId.getOrDefault(
                     threadId,
                     0L
                 )
@@ -388,7 +389,7 @@ class FullNotificationHandler @Inject constructor(
             return
         }
 
-        lastPostedLatestMessageTimestampByThreadId.put(threadId, newMessage.dateSent)
+        lastPostedMessageTimestampByThreadId.put(threadId, newMessage.dateSent)
         postOrUpdateNotification(
             threadAddress = threadAddress,
             threadRecipient = threadRecipient,

@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
@@ -28,6 +29,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.men
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getMessages
+import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -39,6 +41,7 @@ import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
+import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.database.model.ThreadChanges
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.ThreadBasedNotificationHandler.Companion.currentlyShowingConversation
@@ -48,6 +51,7 @@ import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.max
 
 /**
  * Handles notifications in [NotificationPrivacy.ShowNoNameOrContent] mode.
@@ -60,28 +64,30 @@ import javax.inject.Singleton
 @Singleton
 class NoNameOrContentNotificationHandler @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val threadDb: ThreadDatabase,
+    threadDb: ThreadDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
-    private val recipientRepository: RecipientRepository,
-    private val currentActivityObserver: CurrentActivityObserver,
+    private val reactionDatabase: ReactionDatabase,
+    recipientRepository: RecipientRepository,
+    currentActivityObserver: CurrentActivityObserver,
     private val channels: NotificationChannelManager,
     private val notificationManager: NotificationManagerCompat,
     private val prefs: PreferenceStorage,
     private val appVisibilityManager: AppVisibilityManager,
+): BaseNotificationHandler(
+    currentActivityObserver = currentActivityObserver,
+    threadDb = threadDb,
+    recipientRepository = recipientRepository,
 ) {
-    private val currentActivity get() = currentActivityObserver.currentActivity.value
-
     suspend fun process() {
         merge(
             threadDb.changeNotification,
             mmsDatabase.changeNotification,
-            smsDatabase.changeNotification
+            smsDatabase.changeNotification,
+            reactionDatabase.changeNotification,
         ).collect(object : FlowCollector<Any> {
-            // It's ok to have this as memory state - because we are listening only to db
-            // changes - we won't be processing a message twice anyway
-            private val notifiedMessages = arraySetOf<MessageId>()
+            private val lastNotifiedByThreadId = MutableLongLongMap()
 
             override suspend fun emit(value: Any) {
                 when (value) {
@@ -120,34 +126,13 @@ class NoNameOrContentNotificationHandler @Inject constructor(
                     }
 
                     is MessageChanges if value.changeType == MessageChanges.ChangeType.Added -> {
-                        if (currentActivity is HomeActivity) {
-                            // Don't bother notifying if we are on home screen
-                            return
-                        }
-
-                        val (threadAddress, lastSeen) = threadDb.getAddressAndLastSeen(value.threadId)
-                            ?: run {
-                                Log.w(TAG, "MessageChanges threadId=${value.threadId}: no address/lastSeen found — skipping")
-                                return
-                            }
-
-                        if (currentActivityObserver.currentlyShowingConversation == threadAddress) {
-                            // Don't bother notifying if we are showing the conversation
-                            return
-                        }
-
-                        val threadRecipient = recipientRepository.getRecipient(threadAddress)
-                        val notifyType = threadRecipient.effectiveNotifyType()
-
-                        // No notification if this thread is blocked or notification disabled
-                        if (threadRecipient.blocked || notifyType == NotifyType.NONE) {
-                            return
-                        }
+                        val (threadAddress, threadLastSeen, notifyType) = getThreadDataIfEligibleForNotification(value.threadId) ?: return
+                        val threadLastNotified = lastNotifiedByThreadId.getOrDefault(value.threadId, 0L)
 
                         val messages = mmsSmsDatabase.getMessages(value.ids)
                             .filter { msg ->
-                                !msg.isOutgoing && !msg.isDeleted && msg.dateSent > lastSeen &&
-                                        msg.messageId !in notifiedMessages &&
+                                !msg.isOutgoing && !msg.isDeleted &&
+                                        msg.dateSent > max(threadLastSeen, threadLastNotified) &&
                                         (notifyType != NotifyType.MENTIONS ||
                                                 mentionsMe(msg.body, recipientRepository))
                             }
@@ -167,43 +152,99 @@ class NoNameOrContentNotificationHandler @Inject constructor(
                         }
 
                         for (msg in messages) {
-                            notifiedMessages.add(msg.messageId)
-
                             notificationManager.notify(
                                 messageTag(msg.messageId),
                                 NotificationId.GLOBAL_MESSAGE,
                                 buildNotification(
-                                    msg = msg,
+                                    messageTimestamp = msg.dateSent,
                                     threadId = value.threadId,
                                     threadAddress = threadAddress
                                 )
                             )
                         }
 
-                        notificationManager.notify(
-                            NotificationId.GLOBAL_MESSAGE_SUMMARY,
-                            NotificationCompat.Builder(context, channels.getNotificationChannelId(
-                                NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES))
-                                .setSmallIcon(R.drawable.ic_notification)
-                                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                                .setGroup(NOTIFICATION_GROUP_NAME)
-                                .setGroupSummary(true)
-                                .setContentIntent(PendingIntent.getActivity(
-                                    context,
-                                    0,
-                                    Intent(context, HomeActivity::class.java),
-                                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                                ))
-                                .setSilent(!prefs[NotificationPreferences.SOUND_WHEN_APP_OPEN] && appVisibilityManager.isAppVisible.value)
-                                .setAutoCancel(true)
-                                .build()
+                        lastNotifiedByThreadId[value.threadId] = messages.maxOf { it.dateSent }
+                        notifyGroupSummary()
+                    }
+
+                    is MessageId -> {
+                        // Reaction has changed...
+                        val message = mmsSmsDatabase.getMessageById(value) ?: run {
+                            Log.w(TAG, "Unable to get message for id=$value")
+                            return
+                        }
+
+                        val (threadAddress, threadLastSeen, notifyType) = getThreadDataIfEligibleForNotification(message.threadId) ?: return
+                        if (notifyType != NotifyType.ALL || threadAddress is Address.Community) {
+                            // No need to notify
+                            return
+                        }
+
+                        val threadLastNotified = lastNotifiedByThreadId.getOrDefault(message.threadId, 0L)
+
+                        val newReactions = reactionDatabase.getReactionsForThread(
+                            message.threadId,
+                            max(threadLastSeen, threadLastNotified)
                         )
+
+                        if (newReactions.isEmpty()) {
+                            // Nothing to notify
+                            return
+                        }
+
+                        if (ActivityCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            // No permission to show notifications
+                            return
+                        }
+
+                        for (reaction in newReactions) {
+                            notificationManager.notify(
+                                reactionTag(reaction),
+                                NotificationId.GLOBAL_MESSAGE,
+                                buildNotification(
+                                    messageTimestamp = reaction.dateSent,
+                                    threadId = message.threadId,
+                                    threadAddress = threadAddress
+                                )
+                            )
+                        }
                     }
                 }
             }
 
+            @SuppressLint("MissingPermission")
+            private fun notifyGroupSummary() {
+                notificationManager.notify(
+                    NotificationId.GLOBAL_MESSAGE_SUMMARY,
+                    NotificationCompat.Builder(
+                        context, channels.getNotificationChannelId(
+                            NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES
+                        )
+                    )
+                        .setSmallIcon(R.drawable.ic_notification)
+                        .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                        .setGroup(NOTIFICATION_GROUP_NAME)
+                        .setGroupSummary(true)
+                        .setContentIntent(
+                            PendingIntent.getActivity(
+                                context,
+                                0,
+                                Intent(context, HomeActivity::class.java),
+                                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                            )
+                        )
+                        .setSilent(!prefs[NotificationPreferences.SOUND_WHEN_APP_OPEN] && appVisibilityManager.isAppVisible.value)
+                        .setAutoCancel(true)
+                        .build()
+                )
+            }
+
             private fun buildNotification(
-                msg: MessageRecord,
+                messageTimestamp: Long,
                 threadId: ThreadId,
                 threadAddress: Address.Conversable
             ): Notification {
@@ -218,7 +259,7 @@ class NoNameOrContentNotificationHandler @Inject constructor(
                         ConversationActivityV2.createIntent(context, threadAddress),
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                     ))
-                    .setWhen(msg.dateSent)
+                    .setWhen(messageTimestamp)
                     .setExtras(Bundle(1).apply {
                         putLong(MESSAGE_EXTRA_THREAD_ID, threadId)
                     })
@@ -238,6 +279,10 @@ class NoNameOrContentNotificationHandler @Inject constructor(
 
         private fun messageTag(id: MessageId): String {
             return "${id.id}-${id.mms}"
+        }
+
+        private fun reactionTag(reactionRecord: ReactionRecord): String {
+            return "${messageTag(reactionRecord.messageId)}-reaction-${reactionRecord.id}"
         }
     }
 }

@@ -21,6 +21,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -33,18 +34,21 @@ import kotlin.collections.forEach
 
 abstract class ThreadBasedNotificationHandler(
     protected val context: Context,
-    protected val currentActivityObserver: CurrentActivityObserver,
+    currentActivityObserver: CurrentActivityObserver,
     protected val avatarUtils: AvatarUtils,
     protected val channels: NotificationChannelManager,
-    protected val recipientRepository: RecipientRepository,
+    recipientRepository: RecipientRepository,
     private val avatarBitmapCache: AvatarBitmapCache,
     protected val notificationManager: NotificationManagerCompat,
     protected val prefs: PreferenceStorage,
     private val appVisibilityManager: AppVisibilityManager,
+    threadDatabase: ThreadDatabase,
+): BaseNotificationHandler(
+    currentActivityObserver = currentActivityObserver,
+    threadDb = threadDatabase,
+    recipientRepository = recipientRepository
 ) {
-    protected val currentActivity get() = currentActivityObserver.currentActivity.value
-    protected val currentlyShowingConversation: Address.Conversable?
-        get() = currentActivityObserver.currentlyShowingConversation
+
 
     protected fun cancelThreadNotification(threadId: Long) {
         notificationManager.cancel(threadTag(threadId), NotificationId.MESSAGE_THREAD)
@@ -73,8 +77,12 @@ abstract class ThreadBasedNotificationHandler(
         }
     }
 
-    protected suspend fun ReactionRecord.toPerson(personCache: MutableMap<Address, Person>): Person {
+    protected suspend fun ReactionRecord.toPerson(personCache: MutableMap<Address, Person>?): Person {
         val address = author.toAddress()
+        if (personCache == null) {
+            return recipientRepository.getRecipientSync(address).buildPerson()
+        }
+
         return personCache.getOrPut(address) {
             recipientRepository.getRecipientSync(address).buildPerson()
         }

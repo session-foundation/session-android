@@ -407,44 +407,6 @@ object MmsSmsDatabaseExt {
         }
     }
 
-    fun MmsSmsDatabase.getLatestUnreadIncomingMessageDateSentMs(): Long? {
-        return readableDatabase.query("""
-            WITH thread_max_unread_dates AS (
-                SELECT t.${ThreadDatabase.ID},
-                    MAX(
-                        IFNULL(
-                            (
-                                SELECT MAX(s.${MmsSmsColumns.NORMALIZED_DATE_SENT}) 
-                                FROM ${SmsDatabase.TABLE_NAME} s 
-                                WHERE s.${SmsDatabase.THREAD_ID} = t.${ThreadDatabase.ID}
-                                    AND NOT s.${MmsSmsColumns.IS_DELETED}
-                                    AND NOT s.${MmsSmsColumns.IS_OUTGOING}
-                            ),
-                            0
-                        ),
-                        IFNULL(
-                            (
-                                SELECT MAX(m.${MmsSmsColumns.NORMALIZED_DATE_SENT}) 
-                                FROM ${MmsDatabase.TABLE_NAME} m
-                                WHERE m.${MmsSmsColumns.THREAD_ID} = t.${ThreadDatabase.ID}
-                                    AND NOT m.${MmsSmsColumns.IS_DELETED}
-                                    AND NOT m.${MmsSmsColumns.IS_OUTGOING}
-                            ),
-                            0
-                        )
-                    ) AS latest_unread
-                FROM ${ThreadDatabase.TABLE_NAME} t    
-            )
-            SELECT MAX(latest_unread) FROM thread_max_unread_dates
-        """).use { cursor ->
-            if (cursor.moveToNext()) {
-                cursor.getLong(0)
-            } else {
-                null
-            }
-        }
-    }
-
     fun MmsSmsDatabase.getMessages(messageIds: List<MessageId>, includeReactions: Boolean = false): List<MessageRecord> {
         val records = ArrayList<MessageRecord>(messageIds.size)
 
