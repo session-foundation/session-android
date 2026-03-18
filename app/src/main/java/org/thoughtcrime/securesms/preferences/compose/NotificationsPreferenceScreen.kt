@@ -23,7 +23,6 @@ import org.thoughtcrime.securesms.notifications.NotificationChannelManager
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.NotificationPreferenceEvent.*
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.NotificationPrivacyOption
-import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
@@ -34,6 +33,7 @@ import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.openBatteryOptimizationSettings
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.theme.LocalColors

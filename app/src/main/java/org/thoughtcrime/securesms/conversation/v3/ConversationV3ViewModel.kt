@@ -63,6 +63,7 @@ import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getUnreadCount
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
@@ -81,6 +82,7 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.castAwayType
 import org.thoughtcrime.securesms.util.mapToStateFlow
+import kotlin.collections.emptyList
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -121,9 +123,11 @@ class ConversationV3ViewModel @AssistedInject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
 
-    private val unreadCount: StateFlow<Int> = threadIdFlow
+    private val unreadCount: StateFlow<Int> = mmsSmsDatabase
+        .messageChangesFlow
+        .filter { it.threadId == threadIdFlow.value }
         .filterNotNull()
-        .map { id -> withContext(Dispatchers.IO) { mmsSmsDatabase.getUnreadCount(id) } }
+        .map { id -> withContext(Dispatchers.Default) { mmsSmsDatabase.getUnreadCount(address) } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(

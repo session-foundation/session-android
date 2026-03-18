@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -180,8 +181,9 @@ class DefaultConversationRepository @Inject constructor(
                     recipientDatabase.changeNotification.filter { it in allAddresses },
                     communityDatabase.changeNotification.filter { it in allAddresses },
                     threadDb.changeNotification,
-                    smsDb.changeNotification,
-                    mmsDb.changeNotification,
+                    mmsSmsDb.messageChangesFlow.onEach {
+                        Log.d("DefaultThreads", "Message updated: $it")
+                    },
                     // If pro status pref changes, the convo is likely needing changes too
                     TextSecurePreferences.Companion.events.filter {
                         it == TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO ||
@@ -194,7 +196,9 @@ class DefaultConversationRepository @Inject constructor(
             }
             .map { addresses ->
                 withContext(Dispatchers.Default) {
-                    threadDb.getThreads(addresses).populateUnreadStatus()
+                    threadDb.getThreads(addresses).populateUnreadStatus().also {
+                        Log.d("DefaultThreads", "Re-querying threads")
+                    }
                 }
             }
     }

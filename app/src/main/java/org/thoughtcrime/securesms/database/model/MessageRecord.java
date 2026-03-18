@@ -25,7 +25,6 @@ import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import network.loki.messenger.libsession_util.protocol.ProFeature;
@@ -128,17 +127,6 @@ public abstract class MessageRecord extends DisplayRecord {
             message.getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
   }
 
-    @Override
-  public boolean equals(Object other) {
-    return other instanceof MessageRecord
-            && ((MessageRecord) other).getId() == getId()
-            && ((MessageRecord) other).isMms() == isMms();
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, isMms());
-  }
 
   public @NonNull List<ReactionRecord> getReactions() {
     return reactions;

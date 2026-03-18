@@ -39,6 +39,7 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.auth.LoginStateRepository;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+import org.thoughtcrime.securesms.database.model.MessageChanges;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 
@@ -58,6 +59,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 import kotlin.Pair;
 import kotlin.Triple;
 import kotlin.collections.CollectionsKt;
+import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.FlowKt;
 import kotlinx.serialization.json.Json;
 
 @Singleton
@@ -96,6 +99,13 @@ public class MmsSmsDatabase extends Database {
     this.smsDatabase = smsDatabase;
     this.configFactory = configFactory;
     this.json = json;
+  }
+
+  public @NonNull Flow<MessageChanges> getMessageChangesFlow() {
+    return FlowKt.merge(
+            mmsDatabase.get().getChangeNotification(),
+            smsDatabase.get().getChangeNotification()
+    );
   }
 
   public @Nullable MessageRecord getMessageForTimestamp(long threadId, long timestamp) {

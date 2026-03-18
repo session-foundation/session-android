@@ -317,7 +317,7 @@ fun ThreadDatabase.getOrCreateThreadIdFor(address: Address.Conversable): ThreadI
         """
         INSERT INTO ${ThreadDatabase.TABLE_NAME} (${ThreadDatabase.ADDRESS})
         VALUES (?)
-        ON CONFLICT(${ThreadDatabase.ADDRESS}) DO SET ${ThreadDatabase.ADDRESS} = EXCLUDED.${ThreadDatabase.ADDRESS}
+        ON CONFLICT(${ThreadDatabase.ADDRESS}) DO UPDATE SET ${ThreadDatabase.ADDRESS} = EXCLUDED.${ThreadDatabase.ADDRESS}
         RETURNING ${ThreadDatabase.ID}
     """, arrayOf(address.address)
     ).use { cursor ->
