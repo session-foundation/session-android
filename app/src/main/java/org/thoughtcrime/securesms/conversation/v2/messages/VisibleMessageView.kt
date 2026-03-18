@@ -106,7 +106,7 @@ class VisibleMessageView : FrameLayout {
     private var onDoubleTap: (() -> Unit)? = null
     private var isOutgoing: Boolean = false
 
-    var isMessageSelected = false
+    var isMessageSelected: Boolean = false
         set(value) {
             field = value
             handleIsSelectedChanged()
@@ -117,8 +117,8 @@ class VisibleMessageView : FrameLayout {
     val messageContentView: VisibleMessageContentView get() = binding.messageContentView.root
 
     // Prevent button spam
-    val MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS = 500L
-    var lastClickTimestampMS = 0L
+    val MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS: Long = 500L
+    var lastClickTimestampMS: Long = 0L
 
     companion object {
         const val swipeToReplyThreshold = 64.0f // dp

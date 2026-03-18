@@ -76,5 +76,5 @@ abstract class AppBindings {
 class ToasterModule {
     @Provides
     @Singleton
-    fun provideToaster(@ApplicationContext context: Context) = (context as org.thoughtcrime.securesms.ApplicationContext)
+    fun provideToaster(@ApplicationContext context: Context): org.thoughtcrime.securesms.ApplicationContext = (context as org.thoughtcrime.securesms.ApplicationContext)
 }

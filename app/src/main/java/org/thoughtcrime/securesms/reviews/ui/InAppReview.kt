@@ -33,11 +33,11 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.STORE_VARIANT_KEY
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
-import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.AlertDialogContent
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialogContent
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider

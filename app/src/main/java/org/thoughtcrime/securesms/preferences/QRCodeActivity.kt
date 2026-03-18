@@ -30,7 +30,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsignal.utilities.PublicKeyValidation
+import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -80,12 +81,12 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
     }
 
     private fun onScan(string: String) {
-        if (!PublicKeyValidation.isValid(string)) {
+        val accountId = AccountId.fromStringOrNull(string)
+        if (accountId?.prefix != IdPrefix.STANDARD) {
             errors.tryEmit(getString(R.string.qrNotAccountId))
         } else if (!isFinishing) {
-            val address = Address.fromSerialized(string) as Address.Conversable
             startActivity(
-                ConversationActivityV2.createIntent(this, address = address)
+                ConversationActivityV2.createIntent(this, address = Address.Standard(accountId))
                     .setDataAndType(intent.data, intent.type)
                     .addFlags(FLAG_ACTIVITY_SINGLE_TOP)
             )

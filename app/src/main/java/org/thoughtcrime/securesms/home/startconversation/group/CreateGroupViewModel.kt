@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.home.startconversation.group
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -18,13 +19,19 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
+import org.thoughtcrime.securesms.links.LinkChecker
+import org.thoughtcrime.securesms.links.LinkType
+import org.thoughtcrime.securesms.links.LinkType.CommunityLink.DisplayType.GROUP
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -35,6 +42,8 @@ class CreateGroupViewModel @AssistedInject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
+    private val linkChecker: LinkChecker,
+    private val openGroupManager: OpenGroupManager,
     avatarUtils: AvatarUtils,
     proStatusManager: ProStatusManager,
     groupDatabase: GroupDatabase,
@@ -62,6 +71,10 @@ class CreateGroupViewModel @AssistedInject constructor(
     // Output: loading state
     private val mutableIsLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> get() = mutableIsLoading
+
+    // Community dialog
+    private val mutableUrlDialog = MutableStateFlow<LinkType?>(null)
+    val urlDialog: StateFlow<LinkType?> get() = mutableUrlDialog
 
     // Events
     private val mutableEvents = MutableSharedFlow<CreateGroupEvent>()
@@ -97,6 +110,14 @@ class CreateGroupViewModel @AssistedInject constructor(
             val groupName = groupName.value.trim()
             if (groupName.isBlank()) {
                 mutableGroupNameError.value = appContext.getString(R.string.groupNameEnterPlease)
+                return@launch
+            }
+
+            // Special case: Check if someone entered a Community link
+            // If so show a dialog
+            val communityLink = linkChecker.check(groupName) as? LinkType.CommunityLink
+            if (communityLink != null) {
+                mutableUrlDialog.value = communityLink.copy(displayType = GROUP)
                 return@launch
             }
 
@@ -143,6 +164,41 @@ class CreateGroupViewModel @AssistedInject constructor(
         mutableGroupName.value = name
 
         mutableGroupNameError.value = ""
+    }
+
+    fun onDismissUrlDialog(){
+        mutableUrlDialog.value = null
+    }
+
+    fun openOrJoinCommunity(url: String) {
+        val openGroup = try {
+            OpenGroupUrlParser.parseUrl(url)
+        } catch (_: OpenGroupUrlParser.Error) {
+            Toast.makeText(appContext, R.string.communityEnterUrlErrorInvalidDescription, Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
+
+        onDismissUrlDialog()
+
+        viewModelScope.launch {
+            try {
+                openGroupManager.add(
+                    server = openGroup.server,
+                    room = openGroup.room,
+                    publicKey = openGroup.serverPublicKey,
+                )
+
+                // after joining or if already joined, open the conversation
+                val communityAddress = Address.Community(openGroup.server, openGroup.room)
+                mutableEvents.emit(CreateGroupEvent.NavigateToConversation(communityAddress))
+
+            } catch (e: Exception) {
+                Log.e("CreateGroupViewModel", "Error joining community", e)
+                Toast.makeText(appContext, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
     }
 
     @AssistedFactory

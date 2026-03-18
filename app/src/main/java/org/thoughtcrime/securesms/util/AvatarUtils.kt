@@ -11,6 +11,7 @@ import android.text.TextPaint
 import android.text.TextUtils
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
@@ -18,6 +19,8 @@ import coil3.decode.BitmapFactoryDecoder
 import coil3.request.ImageRequest
 import coil3.size.Precision
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -60,7 +63,7 @@ class AvatarUtils @Inject constructor(
 
     fun getUIDataFromRecipient(recipient: Recipient?): AvatarUIData {
         if (recipient == null) {
-            return AvatarUIData(elements = emptyList())
+            return AvatarUIData(emptyList())
         }
 
         val groupData = recipient.data as? RecipientData.GroupLike
@@ -100,7 +103,7 @@ class AvatarUtils @Inject constructor(
             }
         }
 
-        return AvatarUIData(elements = elements)
+        return AvatarUIData(elements = elements.toImmutableList())
     }
 
     private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {
@@ -224,8 +227,14 @@ class AvatarUtils @Inject constructor(
     }
 }
 
-data class AvatarUIData(val elements: List<AvatarUIElement>)
+@Immutable
+data class AvatarUIData(
+    val elements: ImmutableList<AvatarUIElement>,
+){
+    constructor(elements: List<AvatarUIElement>) : this(elements.toImmutableList())
+}
 
+@Immutable
 data class AvatarUIElement(
     val fallback: Fallback,
     val content: Content? = null,

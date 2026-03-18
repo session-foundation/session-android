@@ -29,16 +29,17 @@ import org.thoughtcrime.securesms.home.HomeViewModel.Commands.OnLinkOpened
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.ShowDonationConfirmation
 import org.thoughtcrime.securesms.home.startconversation.StartConversationSheet
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
-import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
 import org.thoughtcrime.securesms.ui.CTAFeature
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
@@ -234,12 +235,13 @@ fun HomeDialogs(
             )
         }
 
-        if(dialogsState.showUrlDialog != null){
-            OpenURLAlertDialog(
-                url = dialogsState.showUrlDialog,
-                onLinkOpened = { sendCommand(OnLinkOpened(dialogsState.showUrlDialog)) },
-                onLinkCopied = { sendCommand(OnLinkCopied(dialogsState.showUrlDialog)) },
-                onDismissRequest = { sendCommand(HideUrlDialog) }
+        if(dialogsState.urlDialog != null){
+            LinkAlertDialog(
+                data = dialogsState.urlDialog,
+                onLinkOpened = { sendCommand(OnLinkOpened(dialogsState.urlDialog.url)) },
+                onLinkCopied = { sendCommand(OnLinkCopied(dialogsState.urlDialog.url)) },
+                onDismissRequest = { sendCommand(HideUrlDialog) },
+                openOrJoinCommunity = { sendCommand(HomeViewModel.Commands.OpenOrJoinCommunity(it))}
             )
         }
     }

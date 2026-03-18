@@ -52,35 +52,35 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDraftDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = DraftDatabase(context, openHelper)
+    fun provideDraftDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): DraftDatabase = DraftDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideGroupDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>, loginStateRepository: LoginStateRepository)
+    fun provideGroupDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>, loginStateRepository: LoginStateRepository): GroupDatabase
         = GroupDatabase(context,openHelper, loginStateRepository)
     @Provides
     @Singleton
-    fun searchDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = SearchDatabase(context,openHelper)
+    fun searchDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): SearchDatabase = SearchDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideLokiApiDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiAPIDatabase(context,openHelper)
+    fun provideLokiApiDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): LokiAPIDatabase = LokiAPIDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideLokiMessageDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiMessageDatabase(context,openHelper)
+    fun provideLokiMessageDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): LokiMessageDatabase = LokiMessageDatabase(context,openHelper)
 
     @Provides
     @Singleton
-    fun provideGroupMemberDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = GroupMemberDatabase(context, openHelper)
+    fun provideGroupMemberDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): GroupMemberDatabase = GroupMemberDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideReactionDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = ReactionDatabase(context, openHelper)
+    fun provideReactionDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): ReactionDatabase = ReactionDatabase(context, openHelper)
 
     @Provides
     @Singleton
-    fun provideEmojiSearchDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = EmojiSearchDatabase(context, openHelper)
+    fun provideEmojiSearchDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>): EmojiSearchDatabase = EmojiSearchDatabase(context, openHelper)
 
     @Provides
     @Singleton

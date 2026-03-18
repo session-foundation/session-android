@@ -43,10 +43,10 @@ import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
-import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption

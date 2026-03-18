@@ -28,9 +28,9 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.PrivacySettingsPreferenceEvent.*
 import org.thoughtcrime.securesms.service.KeyCachingService
-import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.CategoryCell
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.TypingIndicator

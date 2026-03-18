@@ -140,7 +140,7 @@ import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HandleLink
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
@@ -557,7 +557,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
     // endregion
 
-    fun showOpenUrlDialog(url: String) = viewModel.onCommand(ShowOpenUrlDialog(url))
+    fun handleLink(url: String) = viewModel.onCommand(HandleLink(url))
 
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -831,7 +831,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         val intent = ConversationSettingsActivity.createIntent(
                             context = this@ConversationActivityV2,
                             address = event.address,
-                            startDestination = ConversationV3Destination.RouteDisappearingMessages
+                            startDestination = ConversationV3Destination.RouteDisappearingMessages(event.address)
                         )
                         startActivity(intent)
                     }
@@ -1234,7 +1234,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             }
 
                         binding.conversationHeader.outdatedGroupBanner.setOnClickListener {
-                            showOpenUrlDialog("https://getsession.org/groups")
+                            handleLink("https://getsession.org/groups")
                         }
                     }
                 }

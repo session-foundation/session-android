@@ -10,6 +10,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -31,10 +33,10 @@ class PickDisplayNameViewModel @AssistedInject constructor(
     private val isCreateAccount = !loadFailed
 
     private val _states = MutableStateFlow(if (loadFailed) pickNewNameState() else State())
-    val states = _states.asStateFlow()
+    val states: StateFlow<State> = _states.asStateFlow()
 
     private val _events = MutableSharedFlow<Event>()
-    val events = _events.asSharedFlow()
+    val events: SharedFlow<Event> = _events.asSharedFlow()
 
     fun onContinue() {
         _states.update { it.copy(displayName = it.displayName.trim()) }

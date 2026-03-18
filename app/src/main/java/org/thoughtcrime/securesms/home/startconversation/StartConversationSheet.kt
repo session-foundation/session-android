@@ -42,9 +42,10 @@ import org.thoughtcrime.securesms.home.startconversation.newmessage.NewMessageVi
 import org.thoughtcrime.securesms.home.startconversation.newmessage.State
 import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.handleIntent
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -166,7 +167,10 @@ fun StartConversationNavHost(
 
         // New Message
         horizontalSlideComposable<StartConversationDestination.NewMessage> {
-            val viewModel = hiltViewModel<NewMessageViewModel>()
+            val viewModel = hiltViewModel<NewMessageViewModel, NewMessageViewModel.Factory>{ factory ->
+                factory.create(allowCommunityUrl = true)
+            }
+
             val uiState by viewModel.state.collectAsState(State())
 
                 LaunchedEffect(Unit) {
@@ -192,10 +196,16 @@ fun StartConversationNavHost(
                     onClose = onClose,
                     onHelp = { viewModel.onCommand(NewMessageViewModel.Commands.ShowUrlDialog) }
                 )
-                if (uiState.showUrlDialog != null) {
-                    OpenURLAlertDialog(
-                        url = uiState.showUrlDialog!!,
-                        onDismissRequest = { viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog) }
+                if (uiState.urlDialog != null) {
+                    LinkAlertDialog(
+                        data = uiState.urlDialog!!,
+                        onDismissRequest = {
+                            // hide dialog
+                            viewModel.onCommand(NewMessageViewModel.Commands.DismissUrlDialog)
+                        },
+                        openOrJoinCommunity = {
+                            viewModel.onCommand(NewMessageViewModel.Commands.OpenOrJoinCommunity(it))
+                        }
                     )
                 }
             }

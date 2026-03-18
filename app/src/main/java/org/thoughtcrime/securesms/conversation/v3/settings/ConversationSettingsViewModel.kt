@@ -64,7 +64,7 @@ import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.ui.SimpleDialogData
+import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -134,7 +134,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             qaTag = R.string.qa_conversation_settings_disappearing,
             subtitleQaTag = R.string.qa_conversation_settings_disappearing_sub,
             onClick = {
-                navigateTo(ConversationV3Destination.RouteDisappearingMessages)
+                navigateTo(ConversationV3Destination.RouteDisappearingMessages(address))
             }
         )
     }
@@ -165,7 +165,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             qaTag = R.string.qa_conversation_settings_notifications,
             subtitleQaTag = R.string.qa_conversation_settings_notifications_sub,
             onClick = {
-                navigateTo(ConversationV3Destination.RouteNotifications)
+                navigateTo(ConversationV3Destination.RouteNotifications(address))
             }
         )
     }
@@ -176,7 +176,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             icon = R.drawable.ic_file,
             qaTag = R.string.qa_conversation_settings_attachments,
             onClick = {
-                navigateTo(ConversationV3Destination.RouteAllMedia)
+                navigateTo(ConversationV3Destination.RouteAllMedia(address))
             }
         )
     }

@@ -691,10 +691,6 @@ open class Storage @Inject constructor(
         groupDatabase.updateMembers(groupID, members)
     }
 
-    override fun isLegacyClosedGroup(publicKey: String): Boolean {
-        return lokiAPIDatabase.isClosedGroup(publicKey)
-    }
-
     override fun getClosedGroupEncryptionKeyPairs(groupPublicKey: String): MutableList<ECKeyPair> {
         return lokiAPIDatabase.getClosedGroupEncryptionKeyPairs(groupPublicKey).toMutableList()
     }
