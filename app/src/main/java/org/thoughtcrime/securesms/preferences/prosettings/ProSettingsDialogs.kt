@@ -4,11 +4,11 @@ import androidx.compose.runtime.Composable
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.HideTCPolicyDialog
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
-import org.thoughtcrime.securesms.ui.TCPolicyDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.TCPolicyDialog
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 

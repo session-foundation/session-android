@@ -1,7 +1,8 @@
 package org.thoughtcrime.securesms.conversation.v3
 
 import android.content.Context
-import androidx.lifecycle.ViewModel
+import android.widget.Toast
+import androidx.navigation.NavOptionsBuilder
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -18,6 +19,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -30,20 +32,23 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
+import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
@@ -51,6 +56,8 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsession.utilities.recipients.repeatedWithEffectiveNotifyTypeChange
 import org.session.libsession.utilities.toGroupString
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -58,7 +65,11 @@ import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.NotifyType
+import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.links.LinkChecker
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
@@ -85,7 +96,14 @@ class ConversationV3ViewModel @AssistedInject constructor(
     private val attachmentDatabase: AttachmentDatabase,
     private val reactionDb: ReactionDatabase,
     private val dataMapper: ConversationDataMapper,
-    ) : ViewModel() {
+    private val openGroupManager: OpenGroupManager,
+    private val linkChecker: LinkChecker,
+    private val proStatusManager: ProStatusManager,
+    ) : InputbarViewModel(
+    context = context,
+    proStatusManager = proStatusManager,
+    recipientRepository = recipientRepository,
+) {
     //todo convov3 remove references to threadId once we have the notification refactor
     val threadIdFlow: StateFlow<Long?> = merge(
         // Initial lookup off main thread
@@ -98,10 +116,30 @@ class ConversationV3ViewModel @AssistedInject constructor(
         .take(1)
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+
+    private val unreadCount: StateFlow<Int> = threadIdFlow
+        .filterNotNull()
+        .map { id -> withContext(Dispatchers.IO) { mmsSmsDatabase.getUnreadCount(id) } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
         UIState()
     )
     val uiState: StateFlow<UIState> = _uiState
+
+    private val _dialogsState = MutableStateFlow(ConversationDialogsState())
+    val dialogsState: StateFlow<ConversationDialogsState> = _dialogsState
+
+    private val _scrollEvent = Channel<ScrollEvent>(Channel.CONFLATED)
+    val scrollEvent: Flow<ScrollEvent> = _scrollEvent.receiveAsFlow()
+
+    private var scrollState: ConversationScrollState = ConversationScrollState(
+        isNearBottom = true,
+        isFullyScrolled = true,
+        firstVisibleIndex = 0,
+        lastVisibleIndex = 0,
+        totalItemCount = 0,
+    )
 
     val recipientFlow: StateFlow<Recipient> = recipientRepository.observeRecipient(address)
         .filterNotNull()
@@ -203,8 +241,23 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 pagingSource?.invalidate()
             }
         }
+
+        // listen to changes to the unread count
+        viewModelScope.launch {
+            unreadCount.collect { updateScrollToBottomButton() }
+        }
     }
 
+    private fun updateScrollToBottomButton() {
+        val count = unreadCount.value
+        val label: String? = when {
+            scrollState.isNearBottom -> null
+            count <= 0 -> ""
+            count < 10_000 -> count.toString()
+            else -> "9999+"
+        }
+        _uiState.update { it.copy(scrollToBottomButton = label) }
+    }
 
     private fun getAppBarData(conversation: Recipient, showSearch: Boolean): ConversationAppBarData {
         // sort out the pager data, if any
@@ -240,7 +293,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
             pagerData += ConversationAppBarPagerData(
                 title = getNotificationStatusTitle(effectiveNotifyType),
                 action = {
-                    navigateTo(ConversationV3Destination.RouteNotifications)
+                    navigateTo(ConversationV3Destination.RouteNotifications(address))
                 }
             )
         }
@@ -263,7 +316,9 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 title = title,
                 action = {
                     // This pager title no longer actionable for legacy groups
-                    if (conversation.isCommunityRecipient) navigateTo(ConversationV3Destination.RouteConversationSettings)
+                    if (conversation.isCommunityRecipient) {
+                        navigateTo(ConversationV3Destination.RouteConversationSettings(address))
+                    }
                     else if (conversation.address is Address.Group) navigateTo(ConversationV3Destination.RouteGroupMembers(conversation.address))
                 },
             )
@@ -312,29 +367,212 @@ class ConversationV3ViewModel @AssistedInject constructor(
                 }
             }
 
-            navigateTo(ConversationV3Destination.RouteDisappearingMessages)
+            navigateTo(ConversationV3Destination.RouteDisappearingMessages(address))
         }
     }
 
-    fun onCommand(command: Commands) {
-        when (command) {
-            is Commands.GoTo -> {
-                navigateTo(command.destination)
+    private fun handleLink(url: String) {
+        viewModelScope.launch {
+            _dialogsState.update {
+                it.copy(
+                    urlDialog = linkChecker.check(url),
+                )
             }
         }
     }
 
-    private fun navigateTo(destination: ConversationV3Destination){
+    private fun openOrJoinCommunity(url: String) {
+        val openGroup = try {
+            OpenGroupUrlParser.parseUrl(url)
+        } catch (_: OpenGroupUrlParser.Error) {
+            Toast.makeText(context, R.string.communityEnterUrlErrorInvalidDescription, Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
+
+        _dialogsState.update { it.copy(urlDialog = null) }
+
         viewModelScope.launch {
-            navigator.navigate(destination)
+            try {
+                openGroupManager.add(
+                    server = openGroup.server,
+                    room = openGroup.room,
+                    publicKey = openGroup.serverPublicKey,
+                )
+
+                // after joining or if already joined, open the conversation
+                val communityAddress = Address.Community(openGroup.server, openGroup.room)
+                navigateTo(
+                    destination = ConversationV3Destination.RouteConversation(communityAddress),
+                ) {
+                    //todo convov3 confirm that we want a new stack
+                    popUpTo(ConversationV3Destination.RouteConversation(address)) {
+                        inclusive = true
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ConversationV3ViewModel", "Error joining community", e)
+                Toast.makeText(context, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
+                    .show()
+            }
         }
     }
 
+    fun onCommand(command: ConversationCommand) {
+        when (command) {
+            // Navigation
+            is ConversationCommand.GoTo -> {
+                navigateTo(command.destination)
+            }
 
-    sealed interface Commands {
-        data class GoTo(val destination: ConversationV3Destination) : Commands
+            // Conversation screen
+            is ConversationCommand.OnScrollStateChanged -> {
+                if (command.scrollState != scrollState) {
+                    scrollState = command.scrollState
+                    updateScrollToBottomButton()
+                }
+            }
+
+            ConversationCommand.ScrollToBottom -> {
+                scrollState = scrollState.copy(isNearBottom = true, isFullyScrolled = true)
+                _uiState.update { it.copy(scrollToBottomButton = null) }
+                _scrollEvent.trySend(ScrollEvent.ToBottom)
+            }
+
+            is ConversationCommand.ScrollToMessage -> {
+                _scrollEvent.trySend(
+                    ScrollEvent.ToMessage(
+                        messageId = command.messageId,
+                        smoothScroll = command.smoothScroll,
+                        highlight = command.highlight,
+                    )
+                )
+            }
+
+            // Dialog related
+            is ConversationCommand.HandleLink -> {
+                handleLink(command.url)
+            }
+
+            ConversationCommand.HideUrlDialog -> {
+                _dialogsState.update {
+                    it.copy(urlDialog = null)
+                }
+            }
+
+            ConversationCommand.HideDeleteEveryoneDialog -> {
+                _dialogsState.update {
+                    it.copy(deleteEveryone = null)
+                }
+            }
+
+            ConversationCommand.HideClearEmoji -> {
+                _dialogsState.update {
+                    it.copy(clearAllEmoji = null)
+                }
+            }
+
+            is ConversationCommand.MarkAsDeletedLocally -> {
+                // hide dialog first
+                _dialogsState.update {
+                    it.copy(deleteEveryone = null)
+                }
+
+                //todo convov3 implement 'deleteLocally'
+                //deleteLocally(command.messages)
+            }
+            is ConversationCommand.MarkAsDeletedForEveryone -> {
+                //todo convov3 implement
+            }
+
+            is ConversationCommand.ClearEmoji -> {
+                //todo convov3 implement
+            }
+
+            ConversationCommand.HideRecreateGroupConfirm -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupConfirm = false)
+                }
+            }
+
+            ConversationCommand.ConfirmRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(
+                        recreateGroupConfirm = false,
+                        recreateGroupData = recipient.address.toString().let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
+                    )
+                }
+            }
+
+            ConversationCommand.HideRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupData = null)
+                }
+            }
+
+            ConversationCommand.HideUserProfileModal -> {
+                _dialogsState.update { it.copy(userProfileModal = null) }
+            }
+
+            is ConversationCommand.HandleUserProfileCommand -> {
+                //todo convov3 implement
+                //userProfileModalUtils?.onCommand(command.upmCommand)
+            }
+
+            is ConversationCommand.OpenOrJoinCommunity -> {
+                openOrJoinCommunity(command.url)
+            }
+
+            is ConversationCommand.DownloadAttachments -> {
+                viewModelScope.launch {
+                    val databaseAttachment = command.attachment
+
+                    storage.setAutoDownloadAttachments(recipient.address, true)
+
+                    val attachmentId = databaseAttachment.attachmentId.rowId
+                    if (databaseAttachment.transferState == AttachmentState.PENDING.value
+                        && storage.getAttachmentUploadJob(attachmentId) == null
+                    ) {
+                        //todo convov3 implement
+
+                        // start download
+                        /*jobQueue.get().add(
+                            attachmentDownloadJobFactory.create(
+                                attachmentId,
+                                databaseAttachment.mmsId
+                            )
+                        )*/
+                    }
+                }
+            }
+
+            ConversationCommand.HideAttachmentDownloadDialog -> {
+                _dialogsState.update {
+                    it.copy(
+                        attachmentDownload = null
+                    )
+                }
+            }
+
+            ConversationCommand.HideSimpleDialog -> {
+                _dialogsState.update {
+                    it.copy(showSimpleDialog = null)
+                }
+            }
+        }
     }
 
+    private fun navigateTo(
+        destination: ConversationV3Destination,
+        navOptions: NavOptionsBuilder.() -> Unit = {}
+    ){
+        viewModelScope.launch {
+            navigator.navigate(
+                destination = destination,
+                navOptions = navOptions,
+            )
+        }
+    }
     @AssistedFactory
     interface Factory {
         fun create(
@@ -345,5 +583,24 @@ class ConversationV3ViewModel @AssistedInject constructor(
 
     data class UIState(
         val name: String = "",
+        /** null = hidden, "" = shown without badge, "8" / "9999+" = shown with badge */
+        val scrollToBottomButton: String? = null,
     )
+
+
+    /**
+     * One-shot event consumed by the Composable layer.
+     * Every scroll trigger in the app (notifications, search, quotes,
+     * scroll-to-bottom button) flows through this single type.
+     */
+    sealed interface ScrollEvent {
+        data object ToBottom : ScrollEvent
+
+        data class ToMessage(
+            val messageId: MessageId,
+            val smoothScroll: Boolean = true,
+            val highlight: Boolean = true,
+        ) : ScrollEvent
+    }
+
 }

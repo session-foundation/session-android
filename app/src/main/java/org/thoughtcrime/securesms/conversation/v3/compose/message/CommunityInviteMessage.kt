@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v3.compose.message
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+import org.session.libsession.utilities.OpenGroupUrlParser
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -38,10 +40,13 @@ fun CommunityInviteMessage(
     name: String,
     url: String,
     outgoing: Boolean,
+    onInviteClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.padding(defaultMessageBubblePadding())
+        modifier = modifier
+            .clickable(onClick = { onInviteClick(url) })
+            .padding(defaultMessageBubblePadding())
             .padding(vertical = LocalDimensions.current.tinySpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -87,7 +92,7 @@ fun CommunityInviteMessage(
             )
 
             Text(
-                text = url,
+                text = OpenGroupUrlParser.trimQueryParameter(url),
                 style = LocalType.current.small,
                 color = getTextColor(outgoing),
                 maxLines = 2,
@@ -116,7 +121,8 @@ fun CommunityInvitePreview(
                     CommunityInviteMessage(
                         name = "Test Community",
                         url = "https://www.test-community-url.com/testing-the-url-look-and-feel",
-                        outgoing = true
+                        outgoing = true,
+                        onInviteClick = {}
                     )
                 }
             }
@@ -130,7 +136,8 @@ fun CommunityInvitePreview(
                     CommunityInviteMessage(
                         name = "Test Community",
                         url = "https://www.test-community-url.com/testing-the-url-look-and-feel",
-                        outgoing = false
+                        outgoing = false,
+                        onInviteClick = {}
                     )
                 }
             }

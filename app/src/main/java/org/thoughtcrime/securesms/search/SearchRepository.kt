@@ -97,10 +97,11 @@ class SearchRepository @Inject constructor(
             .filter {
                 searchName == null ||
                     when (it.data) {
-                        // Search contacts by both nickname and name
+                        // Search contacts by both nickname and name and ID
                         is RecipientData.Contact -> {
                             it.data.nickname?.contains(searchName, ignoreCase = true) == true ||
-                                    it.data.name.contains(searchName, ignoreCase = true)
+                                    it.data.name.contains(searchName, ignoreCase = true) ||
+                                    it.address.toString() == searchName
                         }
 
                         is RecipientData.BlindedContact -> {
