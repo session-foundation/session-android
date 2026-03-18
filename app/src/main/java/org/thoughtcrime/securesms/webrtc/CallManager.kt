@@ -59,6 +59,8 @@ import org.webrtc.RendererCommon
 import org.webrtc.RtpReceiver
 import org.webrtc.SessionDescription
 import org.webrtc.SurfaceViewRenderer
+import org.webrtc.audio.JavaAudioDeviceModule
+import org.webrtc.audio.AudioDeviceModule
 import java.nio.ByteBuffer
 import java.util.ArrayDeque
 import java.util.UUID
@@ -176,6 +178,7 @@ class CallManager @Inject constructor(
     var remoteRotationSink: RemoteRotationVideoProxySink? = null
     var fullscreenRenderer: SurfaceViewRenderer? = null
     private var peerConnectionFactory: PeerConnectionFactory? = null
+    private var audioDeviceModule: AudioDeviceModule? = null
 
     private val lockManager by lazy { LockManager(context) }
     private var uncaughtExceptionHandlerManager: UncaughtExceptionHandlerManager? = null
@@ -280,7 +283,18 @@ class CallManager @Inject constructor(
             val encoderFactory = DefaultVideoEncoderFactory(base.eglBaseContext, true, true)
             val decoderFactory = DefaultVideoDecoderFactory(base.eglBaseContext)
 
+            val useHardwareAec = JavaAudioDeviceModule.isBuiltInAcousticEchoCancelerSupported()
+            val useHardwareNs  = JavaAudioDeviceModule.isBuiltInNoiseSuppressorSupported()
+
+            val adm = JavaAudioDeviceModule.builder(context)
+                .setUseHardwareAcousticEchoCanceler(useHardwareAec)
+                .setUseHardwareNoiseSuppressor(useHardwareNs)
+                .createAudioDeviceModule()
+
+            audioDeviceModule = adm
+
             peerConnectionFactory = PeerConnectionFactory.builder()
+                    .setAudioDeviceModule(adm)
                     .setOptions(object: PeerConnectionFactory.Options() {
                         init {
                             networkIgnoreMask = 1 shl 4
@@ -446,6 +460,10 @@ class CallManager @Inject constructor(
             remoteRotationSink?.release()
             fullscreenRenderer?.release()
             eglBase?.release()
+            // Release WebRTC audio resources.
+            audioDeviceModule?.release()
+            audioDeviceModule = null
+            peerConnectionFactory = null
 
             floatingRenderer = null
             fullscreenRenderer = null
