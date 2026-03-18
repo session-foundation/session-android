@@ -84,31 +84,31 @@ private enum class NotificationChannelSettings(
     val desc: NotificationChannelManager.ChannelDescription,
     @get:StringRes val qaTag: Int,
     @get:StringRes val title: Int,
-    val subtitle: String,
+    @get:StringRes val subtitle: Int,
 ) {
     Conversations(
         desc = NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES,
         qaTag = R.string.qa_preferences_navigate_to_conversations,
         title = R.string.sessionConversations,
-        subtitle = "Open device notification settings for Conversation Notifications"
+        subtitle = R.string.deviceSettingsConversationNotifications
     ),
     Groups(
         desc = NotificationChannelManager.ChannelDescription.GROUP_MESSAGES,
         qaTag = R.string.qa_preferences_navigate_to_groups,
         title = R.string.conversationsGroups,
-        subtitle = "Open device notification settings for Groups Notifications"
+        subtitle = R.string.deviceSettingsGroupNotifications
     ),
     Communities(
         desc = NotificationChannelManager.ChannelDescription.COMMUNITY_MESSAGES,
         qaTag = R.string.qa_preferences_navigate_to_communities,
         title = R.string.conversationsCommunities,
-        subtitle = "Open device notification settings for Communities Notifications"
+        subtitle = R.string.deviceSettingsCommunityNotifications
     ),
     Calls(
         desc = NotificationChannelManager.ChannelDescription.CALLS,
         qaTag = R.string.qa_preferences_navigate_to_calls,
         title = R.string.callsSettings,
-        subtitle = "Open device notification settings for Calls Notifications"
+        subtitle = R.string.deviceSettingsCallNotifications
     )
 }
 
@@ -188,7 +188,7 @@ fun NotificationsPreference(
                                 sendCommand(OpenSystemNotificationSettings(channel.desc))
                             },
                             qaTag = channel.qaTag,
-                            subtitle = AnnotatedString(channel.subtitle),
+                            subtitle = annotatedStringResource(channel.subtitle),
                             icon = R.drawable.ic_chevron_right,
                             iconSize = LocalDimensions.current.iconSmall,
                         )
