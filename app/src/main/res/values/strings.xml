@@ -465,6 +465,9 @@
     <string name="displayNameVisible">Your Display Name is visible to users, groups, and communities you interact with.</string>
     <string name="document">Document</string>
     <string name="donate">Donate</string>
+    <string name="donateSessionAppealDescription">Eight years ago, {app_name} was founded with a mission to restore your privacy. Today, {app_name} faces a funding shortage which puts its very survival at risk.\n\nIf you’ve ever found value in {app_name} or its mission, please give me a moment of your time and read this appeal.</string>
+    <string name="donateSessionAppealReadMore">Read Appeal</string>
+    <string name="donateSessionAppealTitle"><font color="0">Please Read:</font>\nA Personal Appeal From {donate_appeal_name}</string>
     <string name="donateSessionDescription">Powerful forces are trying to weaken privacy, but we can’t continue this fight alone.\n\nDonating helps keep {app_name} secure, independent, and online.</string>
     <string name="donateSessionHelp">{app_name} Needs Your Help</string>
     <string name="done">Done</string>
