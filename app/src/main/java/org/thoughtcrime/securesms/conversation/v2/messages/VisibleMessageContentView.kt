@@ -331,7 +331,7 @@ class VisibleMessageContentView : ConstraintLayout {
                             binding.albumThumbnailView.root.calculateHitObject(
                                 event,
                                 message,
-                                thread.address,
+                                thread.address as Address.Conversable,
                                 downloadPendingAttachment
                             )
                         }

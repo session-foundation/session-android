@@ -2,7 +2,6 @@ package org.session.libsession.utilities;
 
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
@@ -25,11 +24,7 @@ public class ServiceUtil {
     return (ConnectivityManager) context.getSystemService(Activity.CONNECTIVITY_SERVICE);
   }
 
-  public static NotificationManager getNotificationManager(Context context) {
-    return (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-  }
-
-  public static TelephonyManager getTelephonyManager(Context context) {
+    public static TelephonyManager getTelephonyManager(Context context) {
     return (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
   }
 

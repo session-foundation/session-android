@@ -257,6 +257,14 @@ sealed interface Address : Parcelable, Comparable<Address> {
             return fromSerialized(this)
         }
 
+        /**
+         * Converts this string to a [Conversable] address. Throw if this string is not a valid
+         * address.
+         */
+        fun String.toConversableAddress(): Conversable {
+            return toAddress() as Conversable
+        }
+
         fun AccountId.toAddress(): Address {
             return when (prefix) {
                 IdPrefix.GROUP -> Group(this)

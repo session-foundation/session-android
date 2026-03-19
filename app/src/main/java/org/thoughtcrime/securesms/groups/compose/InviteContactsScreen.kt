@@ -20,18 +20,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
-import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.CloseFooter
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ContactItemClick
+import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.DismissSendInviteDialog
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.RemoveSearchState
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchFocusChange
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.SearchQueryChange
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ShowSendInviteDialog
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.ToggleFooter
-import org.thoughtcrime.securesms.groups.InviteMembersViewModel.Commands.DismissSendInviteDialog
-import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
@@ -194,7 +193,7 @@ private fun PreviewSelectContacts() {
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val contacts = List(20) {
         ContactItem(
-            address = Address.fromSerialized(random),
+            address = random.toConversableAddress(),
             name = "User $it",
             selected = it % 3 == 0,
             showProBadge = true,

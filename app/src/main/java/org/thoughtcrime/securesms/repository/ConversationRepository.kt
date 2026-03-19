@@ -24,7 +24,7 @@ interface ConversationRepository {
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
-    fun inviteContactsToCommunity(communityRecipient: Recipient, contacts: Collection<Address>)
+    fun inviteContactsToCommunity(communityRecipient: Recipient, contacts: Collection<Address.Conversable>)
     fun setBlocked(recipient: Address, blocked: Boolean)
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
     fun deleteMessages(messages: Set<MessageRecord>)

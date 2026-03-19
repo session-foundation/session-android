@@ -95,7 +95,7 @@ class BlindMappingRepository @Inject constructor(
         return mappings.value
             .asSequence()
             .mapNotNull { (url, mapping) ->
-                mapping.get(blindedAddress)?.let { url to it }
+                mapping[blindedAddress]?.let { url to it }
             }
     }
 

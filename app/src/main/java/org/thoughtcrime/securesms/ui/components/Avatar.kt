@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -155,56 +156,74 @@ private fun AvatarElement(
     maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
 ){
     // first attempt to display the custom image if there is one
-    if (data.remoteFile != null){
-        val maxSizePx = with(LocalDensity.current) {
-            maxSizeLoad.toPx().toInt().coerceAtLeast(size.toPx().toInt())
-        }
+    when (data.content) {
+        is AvatarUIElement.RemoteFileContent -> {
+            val maxSizePx = with(LocalDensity.current) {
+                maxSizeLoad.toPx().toInt().coerceAtLeast(size.toPx().toInt())
+            }
 
-        SubcomposeAsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(data.remoteFile)
-                .allowRgb565(true)
-                .avatarOptions(maxSizePx, freezeFrame = data.freezeFrame)
-                .build(),
-            modifier = modifier.size(size).clip(clip),
-            contentDescription = null,
-            contentScale = ContentScale.Crop
-        ) {
-            val scope = rememberCoroutineScope()
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(data.content.remoteFile)
+                    .allowRgb565(true)
+                    .avatarOptions(maxSizePx, freezeFrame = data.content.freezeFrame)
+                    .build(),
+                modifier = modifier.size(size).clip(clip),
+                contentDescription = null,
+                contentScale = ContentScale.Crop
+            ) {
+                val scope = rememberCoroutineScope()
 
-            val painterState = remember(painter.state) {
-                painter.state
-                    .transform { value ->
-                        if (value is AsyncImagePainter.State.Loading) {
-                            delay(200L) // Delay to avoid flickering when loading
+                val painterState = remember(painter.state) {
+                    painter.state
+                        .transform { value ->
+                            if (value is AsyncImagePainter.State.Loading) {
+                                delay(200L) // Delay to avoid flickering when loading
+                            }
+
+                            emit(value)
                         }
+                        .stateIn(scope, SharingStarted.Eagerly, painter.state.value)
+                }
 
-                        emit(value)
+                val state by painterState.collectAsState()
+
+                when (state) {
+                    is AsyncImagePainter.State.Success -> {
+                        SubcomposeAsyncImageContent()
                     }
-                    .stateIn(scope, SharingStarted.Eagerly, painter.state.value)
-            }
 
-            val state by painterState.collectAsState()
+                    AsyncImagePainter.State.Empty -> {
+                        // We should not show the fallback just in case we can
+                        // load the image very soon so we don't need to see the fallback
+                    }
 
-            when (state) {
-                is AsyncImagePainter.State.Success -> {
-                    SubcomposeAsyncImageContent()
-                }
-
-                AsyncImagePainter.State.Empty -> {
-                    // We should not show the fallback just in case we can
-                    // load the image very soon so we don't need to see the fallback
-                }
-
-                is AsyncImagePainter.State.Error,
-                is AsyncImagePainter.State.Loading -> {
-                    FallbackIcon(modifier = Modifier.fillMaxSize(), clip = clip, size = size, data = data)
+                    is AsyncImagePainter.State.Error,
+                    is AsyncImagePainter.State.Loading -> {
+                        FallbackIcon(
+                            modifier = Modifier.fillMaxSize(),
+                            clip = clip,
+                            size = size,
+                            data = data.fallback
+                        )
+                    }
                 }
             }
         }
-    } else { // second attempt to use the custom icon if there is one
-        FallbackIcon(modifier = modifier, clip = clip, size = size, data = data)
 
+        is AvatarUIElement.BitmapContent -> {
+            Image(
+                bitmap = data.content.bitmap.asImageBitmap(),
+                modifier = modifier
+                    .size(size)
+                    .clip(clip),
+                contentDescription = null
+            )
+        }
+
+        null -> {
+            FallbackIcon(modifier = modifier, clip = clip, size = size, data = data.fallback)
+        }
     }
 }
 
@@ -216,7 +235,7 @@ private fun FallbackIcon(
     modifier: Modifier,
     size: Dp,
     clip: Shape,
-    data: AvatarUIElement,
+    data: AvatarUIElement.Fallback,
 ) {
     Box(
         modifier = modifier
@@ -278,7 +297,6 @@ fun PreviewAvatarElement(
             data = AvatarUIElement(
                 name = "TO",
                 color = primaryGreen,
-                remoteFile = null
             )
         )
     }
@@ -294,7 +312,6 @@ fun PreviewAvatarSingleAdmin(){
                 listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
-                remoteFile = null
             ))),
             badge = AvatarBadge.ResourceBadge.Admin
         )
@@ -311,12 +328,10 @@ fun PreviewAvatarDouble(){
                 listOf(AvatarUIElement(
                     name = "FR",
                     color = primaryGreen,
-                    remoteFile = null
                 ),
                 AvatarUIElement(
                     name = "AT",
                     color = primaryBlue,
-                    remoteFile = null
                 )
             ))
         )
@@ -333,7 +348,6 @@ fun PreviewAvatarSingleUnknown(){
                 listOf(AvatarUIElement(
                 name = "",
                 color = null,
-                remoteFile = null
             )))
         )
     }
@@ -350,7 +364,6 @@ fun PreviewAvatarIconNoName(){
                     name = "",
                     icon = R.drawable.session_logo,
                     color = null,
-                    remoteFile = null
                 )))
         )
     }
@@ -367,7 +380,6 @@ fun PreviewAvatarIconWithName(){
                     name = "TO",
                     icon = R.drawable.session_logo,
                     color = null,
-                    remoteFile = null
                 )))
         )
     }
@@ -383,7 +395,6 @@ fun PreviewAvatarSinglePhoto(){
                 listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
-                remoteFile = null
             )))
         )
     }
@@ -398,7 +409,6 @@ fun PreviewAvatarElementUnclipped(){
             data = AvatarUIElement(
                 name = "TO",
                 color = primaryGreen,
-                remoteFile = null
             ),
             clip = RectangleShape
         )

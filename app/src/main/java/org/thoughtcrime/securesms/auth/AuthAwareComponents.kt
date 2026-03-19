@@ -10,6 +10,8 @@ import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync
 import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
+import org.thoughtcrime.securesms.notifications.MarkReadProcessor
+import org.thoughtcrime.securesms.notifications.NotificationProcessor
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
@@ -42,6 +44,8 @@ class AuthAwareComponents(
         proStatusManager: Lazy<ProStatusManager>,
         pollerManager: Lazy<PollerManager>,
         backgroundPollManager: Lazy<BackgroundPollManager>,
+        markReadProcessor: Lazy<MarkReadProcessor>,
+        notificationProcessor: Lazy<NotificationProcessor>,
         versionDataFetcher: Lazy<VersionDataFetcher>,
     ): this(
         components = listOf<Lazy<out AuthAwareComponent>>(
@@ -59,6 +63,8 @@ class AuthAwareComponents(
             pollerManager,
             backgroundPollManager,
             versionDataFetcher,
+            markReadProcessor,
+            notificationProcessor,
         )
     )
 }

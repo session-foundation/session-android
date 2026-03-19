@@ -20,7 +20,7 @@ class ConversationActivityV3 : FullComposeScreenLockActivity() {
 
     companion object {
         // Extras
-        private const val ADDRESS = "address"
+        const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
         private const val EXTRA_START_DESTINATION = "conversation_start_destination"
 

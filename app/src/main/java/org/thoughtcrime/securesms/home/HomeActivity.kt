@@ -50,7 +50,6 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
@@ -67,11 +66,12 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
-import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getUnreadCount
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -86,6 +86,7 @@ import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.AppPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
@@ -143,7 +144,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var clock: SnodeClock
-    @Inject lateinit var messageNotifier: MessageNotifier
+
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var storeReviewManager: StoreReviewManager
@@ -613,13 +614,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
         val unreadThreadMap = messages
-            .map { it.threadId }.toSet()
+            .asSequence()
+            .mapNotNull { it.conversationRecipient.address as? Address.Conversable }
+            .toSet()
             .associateWith { mmsSmsDatabase.getUnreadCount(it) }
 
         return messages.map {
             GlobalSearchAdapter.Model.Message(
                 messageResult = it,
-                unread = unreadThreadMap[it.threadId] ?: 0,
+                unread = unreadThreadMap[it.conversationRecipient.address] ?: 0,
                 isSelf = it.conversationRecipient.isLocalNumber,
                 showProBadge = it.conversationRecipient.shouldShowProBadge
             )
@@ -656,7 +659,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     override fun onResume() {
         super.onResume()
-        messageNotifier.setHomeScreenVisible(true)
         if (loginStateRepository.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
         if (prefs[HAS_VIEWED_SEED]) {
@@ -668,7 +670,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     override fun onPause() {
         super.onPause()
-        messageNotifier.setHomeScreenVisible(false)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -846,7 +847,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun markAllAsRead(thread: ThreadRecord) {
         lifecycleScope.launch(Dispatchers.Default) {
-            storage.markConversationAsRead(thread.threadId, clock.currentTimeMillis())
+            storage.updateConversationLastSeenIfNeeded(
+                thread.recipient.address as Address.Conversable,
+                clock.currentTimeMillis()
+            )
         }
     }
 
@@ -924,9 +928,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     }
                 }
 
-
-                // Update the badge count
-                messageNotifier.updateNotification(context)
 
                 // Notify the user
                 val toastMessage = if (recipient.isGroupOrCommunityRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted
@@ -1021,7 +1022,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             text(getString(R.string.hide))
             button(R.string.yes) {
-                textSecurePreferences.setHasHiddenMessageRequests(true)
+                prefs[AppPreferences.HAS_HIDDEN_MESSAGE_REQUESTS] = true
                 homeViewModel.tryReload()
             }
             button(R.string.no)
