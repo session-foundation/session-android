@@ -391,6 +391,9 @@
     <string name="displayNameVisible">您的顯示名稱對您互動的用戶、群組和社群可見。</string>
     <string name="document">文件</string>
     <string name="donate">捐款</string>
+    <string name="donateSessionAppealDescription">八年前，{app_name} 創立時肩負著恢復您隱私的使命。如今，{app_name} 面臨資金短缺，使其生存本身岌岌可危。\n\n如果您曾從 {app_name} 或其使命中獲得價值，請給我一點您的時間，讀一讀這份呼籲。</string>
+    <string name="donateSessionAppealReadMore">閱讀呼籲</string>
+    <string name="donateSessionAppealTitle"><font color="0">請閱讀：</font>\n來自 {donate_appeal_name} 的個人呼籲</string>
     <string name="done">完成</string>
     <string name="download">下載</string>
     <string name="downloading">下載中…</string>

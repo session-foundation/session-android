@@ -458,6 +458,9 @@
     <string name="displayNameVisible">Uw weergeven naam is zichtbaar voor gebruikers, groepen en gemeenschappen waarmee u communiceert.</string>
     <string name="document">Document</string>
     <string name="donate">Doneer</string>
+    <string name="donateSessionAppealDescription">Acht jaar geleden werd {app_name} opgericht met als missie uw privacy te herstellen. Vandaag kampt {app_name} met een financieringstekort, waardoor het voortbestaan ernstig in gevaar komt.\n\nAls u ooit waarde hebt gevonden in {app_name} of zijn missie, geef me dan alstublieft een moment van uw tijd en lees deze oproep.</string>
+    <string name="donateSessionAppealReadMore">Lees de oproep</string>
+    <string name="donateSessionAppealTitle"><font color="0">Lees alstublieft:</font>\nEen persoonlijke oproep van {donate_appeal_name}</string>
     <string name="donateSessionDescription">Krachtige machten proberen privacy te ondermijnen, maar we kunnen deze strijd niet alleen voeren.\n\nDonaties helpen om {app_name} veilig, onafhankelijk en online te houden.</string>
     <string name="donateSessionHelp">{app_name} heeft je hulp nodig</string>
     <string name="done">Klaar</string>
