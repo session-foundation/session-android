@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -62,7 +63,7 @@ fun MediaFolderCell(
     val context = LocalContext.current
     val thumbnailMimeType = thumbnailUri?.let { MediaUtil.getMimeType(context, it) }
 
-    // our thumbnails do not have file extensions so we need to check for the mimetype
+    // our URI does not have a file extension so we need to check for the mimetype
     // then explicitly set the decoder for the request
     val folderThumbnailRequest = ImageRequest.Builder(context)
         .data(thumbnailUri)
@@ -198,13 +199,14 @@ fun MediaPickerItemCell(
                     .align(Alignment.Center)
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(Color.White)
+                    .padding(start = LocalDimensions.current.xxxsSpacing),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(R.drawable.triangle_right),
                     contentDescription = null,
-                    modifier = Modifier.size(LocalDimensions.current.iconSmall),
+                    modifier = Modifier.height(LocalDimensions.current.iconXSmall),
                     colorFilter = ColorFilter.tint(LocalColors.current.accent) // match @color/core_blue-ish
                 )
             }
