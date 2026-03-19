@@ -458,6 +458,9 @@
     <string name="displayNameVisible">Seu Nome de Exibição é visível para usuários, grupos e comunidades com os quais você interage.</string>
     <string name="document">Documento</string>
     <string name="donate">Doar</string>
+    <string name="donateSessionAppealDescription">Há oito anos, o {app_name} foi fundado com a missão de restaurar a sua privacidade. Hoje, o {app_name} enfrenta uma falta de recursos que coloca em risco a sua própria sobrevivência.\n\nSe você já viu valor no {app_name} ou em sua missão, por favor, me conceda um momento do seu tempo e leia este apelo.</string>
+    <string name="donateSessionAppealReadMore">Ler apelo</string>
+    <string name="donateSessionAppealTitle"><font color="0">Leia, por favor:</font>\nUm apelo pessoal de {donate_appeal_name}</string>
     <string name="donateSessionDescription">Forças poderosas estão tentando enfraquecer a privacidade, mas não podemos continuar essa luta sozinhos.\n\nDoar ajuda a manter o {app_name} seguro, independente e online.</string>
     <string name="donateSessionHelp">{app_name} precisa da sua ajuda</string>
     <string name="done">Pronto</string>

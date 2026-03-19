@@ -486,6 +486,9 @@
     <string name="displayNameVisible">Wyświetlana nazwa użytkownika jest widoczna dla użytkowników, grup i społeczności, z którymi użytkownik wchodzi w interakcje.</string>
     <string name="document">Dokument</string>
     <string name="donate">Wspomóż</string>
+    <string name="donateSessionAppealDescription">Osiem lat temu {app_name} powstała z misją przywrócenia Ci prywatności. Dziś {app_name} boryka się z niedoborem funduszy, który zagraża jej dalszemu istnieniu.\n\nJeśli kiedykolwiek dostrzegłeś(-aś) wartość w {app_name} lub jej misji, poświęć mi proszę chwilę i przeczytaj ten apel.</string>
+    <string name="donateSessionAppealReadMore">Przeczytaj apel</string>
+    <string name="donateSessionAppealTitle"><font color="0">Prosimy przeczytać:</font>\nOsobisty apel od {donate_appeal_name}</string>
     <string name="donateSessionDescription">Potężne siły próbują osłabić prywatność, ale nie możemy prowadzić tej walki sami.\n\nTwoja darowizna pomoże utrzymać {app_name} jako bezpieczną, niezależną i działającą aplikację.</string>
     <string name="donateSessionHelp">{app_name} potrzebuje Twojej pomocy</string>
     <string name="done">Gotowe</string>

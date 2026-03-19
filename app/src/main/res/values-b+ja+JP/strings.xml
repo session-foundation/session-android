@@ -444,6 +444,9 @@
     <string name="displayNameVisible">あなたの表示名は、やり取りするユーザー、グループ、コミュニティに表示されます。</string>
     <string name="document">ドキュメント</string>
     <string name="donate">寄付</string>
+    <string name="donateSessionAppealDescription">8年前、{app_name}はあなたのプライバシーを取り戻すことを使命として設立されました。今日、{app_name}は資金不足に直面しており、その存続そのものが危機にさらされています。\n\n{app_name}やその使命に価値を感じたことがあるなら、少しだけお時間をいただき、この訴えをお読みください。</string>
+    <string name="donateSessionAppealReadMore">訴えを読む</string>
+    <string name="donateSessionAppealTitle"><font color="0">お読みください:</font>\n{donate_appeal_name}からの個人的な訴え</string>
     <string name="donateSessionDescription">強大な勢力がプライバシーの弱体化を試みていますが、私たちだけではこの戦いを続けられません。\n\n寄付により、{app_name}の安全性、独立性、そしてオンライン維持を支援できます。</string>
     <string name="donateSessionHelp">{app_name}へのご支援をお願いします</string>
     <string name="done">完了</string>

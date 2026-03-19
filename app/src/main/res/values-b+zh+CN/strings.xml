@@ -444,6 +444,9 @@
     <string name="displayNameVisible">您的显示名称对与您互动的用户、群组和社区可见。</string>
     <string name="document">文档</string>
     <string name="donate">捐赠</string>
+    <string name="donateSessionAppealDescription">八年前，{app_name} 带着恢复您的隐私这一使命成立。如今，{app_name} 面临资金短缺，这使其生存本身也岌岌可危。\n\n如果您曾从 {app_name} 或其使命中获得过价值，请给我一点时间，读一读这封呼吁。</string>
+    <string name="donateSessionAppealReadMore">阅读呼吁</string>
+    <string name="donateSessionAppealTitle"><font color="0">请阅读：</font>\n来自 {donate_appeal_name} 的个人呼吁</string>
     <string name="donateSessionDescription">有强大的势力正试图削弱隐私保护，但我们无法独自应对这场战斗。\n\n捐赠有助于保持 {app_name} 的安全性、独立性和在线状态。</string>
     <string name="donateSessionHelp">{app_name} 需要您的帮助</string>
     <string name="done">完成</string>
@@ -956,6 +959,7 @@
     <string name="preview">通知效果预览</string>
     <string name="previewNotification">预览通知</string>
     <string name="proAccessActivatedAutoShort">你的 {pro} 访问权限已激活！\n\n你的 {pro} 访问将在 <b>{date}</b> 自动续订 <b>{current_plan_length}</b>。</string>
+    <string name="proAccessActivatedNotAuto">您的 {pro} 访问权限将在 <b>{date}</b> 过期。\n\n请立即更新你的 {pro} 访问权限确保在你的 {pro} 访问权限到期前自动续订。</string>
     <string name="proAccessActivatesAuto">你的 {pro} 访问权限已激活！\n\n你的 {pro} 访问将在 <b>{date}</b> 自动续订 \n<b>{current_plan_length}</b>。你在此所做的更改将在下次续订时生效。</string>
     <string name="proAccessError">{pro} 访问错误</string>
     <string name="proAccessExpireDate">您的 {pro} 访问权限将于 <b>{date}</b> 到期。</string>
@@ -1004,7 +1008,9 @@
     <string name="proCallToActionPinnedConversationsMoreThan">想要固定超过 {limit} 个对话？\n使用 {app_pro} Beta 整理您的对话并解锁高级功能</string>
     <string name="proCancelSorry">很遗憾看到您取消 {pro}。在取消您的 {pro} 访问之前，请了解以下信息。</string>
     <string name="proCancellation">取消</string>
+    <string name="proCancellationDescription">取消 {pro} 访问将阻止在 {pro} 到期前自动续订。取消 {pro} <b>不</b>会导致退款。在您的 {pro} 到期之前，您仍然可以使用 {app_pro} 功能。\n\n由于您最初是通过 <b>{platform_account}</b> 注册 {app_pro} 的，您需要使用相同的 {platform_account} 来取消 {pro}。</string>
     <string name="proCancellationOptions">取消 {pro} 访问的两种方式：</string>
+    <string name="proCancellationShortDescription">取消 {pro} 访问权限将阻止在 {pro} 到期前自动续订。\n\n取消 {pro} <b>不会</b>导致退款。在 {pro} 到期前，您仍可继续使用 {app_pro} 功能。</string>
     <string name="proChooseAccess">选择适合您的 {pro} 访问选项。\n访问时间越长，折扣越大。</string>
     <string name="proClearAllDataDevice">您确定要从此设备中删除您的数据吗？\n\n<b>{app_pro}</b> 无法转移至其他账户。请务必保存您的恢复密码，以确保您之后可以恢复对 {pro} 的访问权限。</string>
     <string name="proClearAllDataNetwork">您确定要从网络中删除您的数据吗？继续操作将无法恢复您的消息或联系人。\n\n<b>{app_pro}</b> 无法转移至其他账户。请务必保存您的恢复密码，以确保您之后可以恢复对 {pro} 的访问权限。</string>
@@ -1096,6 +1102,7 @@
     <string name="proUnlimitedPins">无限置顶消息</string>
     <string name="proUnlimitedPinsDescription">使用无限置顶消息，整理你的所有聊天。</string>
     <string name="proUpdateAccessDescription">您当前的账单选项包括 <b>{current_plan_length}</b> 的 {pro} 访问权限。您确定要切换到 <b>{selected_plan_length_singular}</b> 的账单选项吗？\n\n更新后，您的 {pro} 访问权限将在 <b>{date}</b> 自动续订，新增 <b>{selected_plan_length}</b> 的 {pro} 访问时长。</string>
+    <string name="proUpdateAccessExpireDescription">您的 {pro} 访问权限将于 <b>{date}</b> 到期。\n\n更新后，您的 {pro} 访问权限将在 <b>{date}</b> 自动续订，延长 <b>{selected_plan_length}</b> 的 {pro} 使用时间。</string>
     <string name="proUpdatingAction">正在更新</string>
     <string name="proUpgradeAccess">升级至 {app_pro} Beta，获取大量专属福利和功能。</string>
     <string name="proUpgradeDesktopLinked">请在通过 {platform_store} 或 {platform_store_other} 安装了 {app_name} 的关联设备上的 {app_pro} 设置中升级至 {pro}。</string>
@@ -1136,6 +1143,8 @@
     <string name="rateSession">给 {app_name} 评分？</string>
     <string name="rateSessionApp">评分应用</string>
     <string name="rateSessionModalDescription">很高兴您喜欢 {app_name}，如果方便的话，请在 {storevariant} 上为我们评分，这将帮助他人发现私密、安全的消息方式！</string>
+    <string name="rateSessionModalDescriptionUpdated">{app_name} 不包含广告、不出售数据，并且只对用户负责。您在 {storevariant} 上的评分有助于更多人发现真正尊重隐私的消息应用。</string>
+    <string name="rateUs">为我们评分</string>
     <string name="read">已读</string>
     <string name="readReceipts">已读回执</string>
     <string name="readReceiptsDescription">显示您发送和接收的所有消息的已读回执。</string>

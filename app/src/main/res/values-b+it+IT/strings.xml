@@ -458,6 +458,9 @@
     <string name="displayNameVisible">Il tuo Nome Pubblico è visibile agli utenti, ai gruppi e alle comunità con cui interagisci.</string>
     <string name="document">Documento</string>
     <string name="donate">Dona</string>
+    <string name="donateSessionAppealDescription">Otto anni fa, {app_name} è stata fondata con la missione di ripristinare la tua privacy. Oggi, {app_name} si trova ad affrontare una carenza di fondi che mette a rischio la sua stessa sopravvivenza.\n\nSe {app_name} o la sua missione hanno mai avuto valore per te, ti prego di dedicarmi un momento del tuo tempo e leggere questo appello.</string>
+    <string name="donateSessionAppealReadMore">Leggi l\'appello</string>
+    <string name="donateSessionAppealTitle"><font color="0">Leggi attentamente:</font>\nUn appello personale da parte di {donate_appeal_name}</string>
     <string name="donateSessionDescription">Forze potenti stanno cercando di indebolire la privacy, ma non possiamo continuare questa battaglia da soli.\n\nDonare aiuta a mantenere {app_name} sicuro, indipendente e online.</string>
     <string name="donateSessionHelp">{app_name} ha bisogno del tuo aiuto</string>
     <string name="done">Fatto</string>
