@@ -113,21 +113,23 @@ class ConversationV3ViewModel @AssistedInject constructor(
     //todo convov3 remove references to threadId once we have the notification refactor
     val threadIdFlow: StateFlow<Long?> = merge(
         // Initial lookup off main thread
-        flow { emit(withContext(Dispatchers.IO) { storage.getThreadId(address) }) },
+        flow { emit(withContext(Dispatchers.Default) { storage.getThreadId(address) }) },
         // Also listen for thread creation in case it doesn't exist yet
         threadDb.changeNotification
-            .map { withContext(Dispatchers.IO) { storage.getThreadId(address) } }
+            .map { withContext(Dispatchers.Default) { storage.getThreadId(address) } }
     )
         .filterNotNull()
         .take(1)
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
 
-    private val unreadCount: StateFlow<Int> = mmsSmsDatabase
-        .messageChangesFlow
-        .filter { it.threadId == threadIdFlow.value }
-        .filterNotNull()
-        .map { id -> withContext(Dispatchers.Default) { mmsSmsDatabase.getUnreadCount(address) } }
+    private val unreadCount: StateFlow<Int> = merge(
+        threadDb.changeNotification.filter { it.address == address },
+        mmsSmsDatabase
+            .messageChangesFlow
+            .filter { it.threadId == threadIdFlow.value }
+    )
+        .map { withContext(Dispatchers.Default) { mmsSmsDatabase.getUnreadCount(address) } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(

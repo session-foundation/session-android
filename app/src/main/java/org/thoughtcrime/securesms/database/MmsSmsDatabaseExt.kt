@@ -324,36 +324,30 @@ object MmsSmsDatabaseExt {
     }
 
     fun MmsSmsDatabase.getUnreadCount(address: Address.Conversable): Int {
-        val lastRead = configFactory.get().withUserConfigs { it.convoInfoVolatile.get(address) }
-            ?.lastRead ?: 0L
-
         //language=roomsql
         return readableDatabase.rawQuery("""
         SELECT IFNULL(
             (
                  SELECT COUNT(*)
                  FROM ${SmsDatabase.TABLE_NAME} s
-                 WHERE s.${SmsDatabase.THREAD_ID} = (
-                    SELECT threads.${ThreadDatabase.ID}
-                    FROM ${ThreadDatabase.TABLE_NAME} AS threads
-                    WHERE threads.${ThreadDatabase.ADDRESS} = ?1
-                 )
-                 AND s.${SmsDatabase.DATE_SENT} > ?2
+                 INNER JOIN ${ThreadDatabase.TABLE_NAME} AS t 
+                    ON s.${SmsDatabase.THREAD_ID} = t.${ThreadDatabase.ID} 
+                        AND t.${ThreadDatabase.ADDRESS} = ?1
+                 WHERE 
+                 s.${SmsDatabase.DATE_SENT} > IFNULL(t.${ThreadDatabase.LAST_SEEN}, 0)
                  AND NOT s.${MmsSmsColumns.IS_OUTGOING}
                  AND NOT s.${MmsSmsColumns.IS_DELETED}
             ), 0) + IFNULL((
                 SELECT COUNT(*)
                     FROM ${MmsDatabase.TABLE_NAME} m
-                    WHERE m.${MmsSmsColumns.THREAD_ID} = (
-                        SELECT threads.${ThreadDatabase.ID}
-                        FROM ${ThreadDatabase.TABLE_NAME} AS threads
-                        WHERE threads.${ThreadDatabase.ADDRESS} = ?1
-                    )
-                    AND m.${MmsDatabase.DATE_SENT} > ?2
+                    INNER JOIN ${ThreadDatabase.TABLE_NAME} AS t 
+                        ON m.${MmsSmsColumns.THREAD_ID} = t.${ThreadDatabase.ID} 
+                            AND t.${ThreadDatabase.ADDRESS} = ?1
+                    WHERE m.${MmsDatabase.DATE_SENT} > IFNULL(t.${ThreadDatabase.LAST_SEEN}, 0)
                     AND NOT m.${MmsSmsColumns.IS_OUTGOING}
                     AND NOT m.${MmsSmsColumns.IS_DELETED}
             ), 0)
-    """, address.address, lastRead).use { cursor ->
+    """, address.address).use { cursor ->
             if (cursor.moveToFirst()) {
                 cursor.getInt(0)
             } else {
