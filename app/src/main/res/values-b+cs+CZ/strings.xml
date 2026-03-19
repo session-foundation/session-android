@@ -487,6 +487,9 @@
     <string name="displayNameVisible">Vaše zobrazované jméno je viditelné pro uživatele, skupiny a komunity, se kterými jste ve spojení.</string>
     <string name="document">Dokument</string>
     <string name="donate">Darovat</string>
+    <string name="donateSessionAppealDescription">Před osmi lety byla aplikace {app_name} založena s posláním obnovit vaše soukromí. Dnes aplikace {app_name} čelí nedostatku financí, který ohrožuje její samotnou existenci.\n\nPokud jste někdy v aplikaci {app_name} nebo v jejím poslání našli hodnotu, věnujte mi prosím chvilku svého času a přečtěte si tuto výzvu.</string>
+    <string name="donateSessionAppealReadMore">Přečíst výzvu</string>
+    <string name="donateSessionAppealTitle"><font color="0">Přečtěte si prosím:</font>\nOsobní výzva od {donate_appeal_name}</string>
     <string name="donateSessionDescription">Mocné síly se snaží oslabit soukromí, ale tento boj nemůžeme vést sami.\n\nPříspěvky pomáhají udržet aplikaci {app_name} bezpečnou, nezávislou a online.</string>
     <string name="donateSessionHelp">{app_name} potřebuje vaši pomoc</string>
     <string name="done">Hotovo</string>

@@ -460,6 +460,9 @@
     <string name="displayNameVisible">Ihr Anzeigename ist für Benutzer, Gruppen und Gemeinschaften sichtbar, mit denen Sie interagieren.</string>
     <string name="document">Dokument</string>
     <string name="donate">Spenden</string>
+    <string name="donateSessionAppealDescription">Vor acht Jahren wurde {app_name} mit der Mission gegründet, Ihre Privatsphäre wiederherzustellen. Heute hat {app_name} mit einem Finanzierungsengpass zu kämpfen, der das Überleben der App gefährdet.\n\nWenn {app_name} oder diese Mission für Sie jemals von Wert waren, bitte ich Sie um einen Moment Ihrer Zeit, diesen Spendenaufruf zu lesen.</string>
+    <string name="donateSessionAppealReadMore">Spendenaufruf lesen</string>
+    <string name="donateSessionAppealTitle"><font color="0">Bitte lesen:</font>\nEin persönlicher Spendenaufruf von {donate_appeal_name}</string>
     <string name="donateSessionDescription">Mächtige Kräfte versuchen, die Privatsphäre zu schwächen – aber wir können diesen Kampf nicht alleine führen.\n\nMit einer Spende hilfst du dabei, {app_name} sicher, unabhängig und online zu halten.</string>
     <string name="donateSessionHelp">{app_name} braucht deine Hilfe</string>
     <string name="done">Fertig</string>
@@ -1179,6 +1182,8 @@
     <string name="rateSession">{app_name} bewerten?</string>
     <string name="rateSessionApp">App bewerten</string>
     <string name="rateSessionModalDescription">Es freut uns, dass du {app_name} genießt! Wenn du einen Moment Zeit hast, hilft eine Bewertung im {storevariant} anderen dabei, private und sichere Nachrichten zu entdecken.</string>
+    <string name="rateSessionModalDescriptionUpdated">{app_name} schaltet keine Werbung, verkauft keine Nutzerdaten und ist nur seinen Nutzern gegenüber verantwortlich. Ihre Bewertung bei {storevariant} hilft anderen dabei, Nachrichtendienste zu finden, denen ihre Privatsphäre wirklich wichtig ist.</string>
+    <string name="rateUs">Bewerten Sie uns</string>
     <string name="read">Gelesen</string>
     <string name="readReceipts">Lesebestätigungen</string>
     <string name="readReceiptsDescription">Zeige Lesebestätigungen für alle Nachrichten, die du sendest und erhältst.</string>

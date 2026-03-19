@@ -460,6 +460,9 @@
     <string name="displayNameVisible">Az Ön megjelenítendő neve látható a felhaszálók, a csoportok és a közösségek számára, amelyekkel interakcióba lép.</string>
     <string name="document">Dokumentum</string>
     <string name="donate">Adományozás</string>
+    <string name="donateSessionAppealDescription">Nyolc évvel ezelőtt a(z) {app_name} azzal a küldetéssel jött létre, hogy helyreállítsa az Ön adatvédelmét. Ma a(z) {app_name} finanszírozási hiánnyal küzd, ami a fennmaradását is veszélyezteti.\n\nHa valaha értékesnek találta a(z) {app_name}-ot vagy annak küldetését, kérem, szánjon rám egy pillanatot, és olvassa el ezt a felhívást.</string>
+    <string name="donateSessionAppealReadMore">A felhívás elolvasása</string>
+    <string name="donateSessionAppealTitle"><font color="0">Kérjük, olvassa el:</font>\n{donate_appeal_name} személyes felhívása</string>
     <string name="donateSessionDescription">Hatalmas erők próbálják gyengíteni az adatvédelmet, de ezt a harcot nem tudjuk egyedül folytatni.\n\nA támogatásod segít megőrizni a(z) {app_name} biztonságát, függetlenségét és elérhetőségét.</string>
     <string name="donateSessionHelp">A(z) {app_name} a segítségedet kéri</string>
     <string name="done">Kész</string>

@@ -474,6 +474,9 @@
     <string name="displayNameVisible">Numele tău de afișare este vizibil utilizatorilor, grupurilor și comunităților cu care interacționezi.</string>
     <string name="document">Document</string>
     <string name="donate">Donează</string>
+    <string name="donateSessionAppealDescription">Acum opt ani, {app_name} a fost fondată cu misiunea de a vă reda confidențialitatea. Astăzi, {app_name} se confruntă cu un deficit de finanțare care îi pune însăși supraviețuirea în pericol.\n\nDacă {app_name} sau misiunea sa au avut vreodată valoare pentru dumneavoastră, vă rog să-mi acordați un moment din timpul dumneavoastră și să citiți acest apel.</string>
+    <string name="donateSessionAppealReadMore">Citiți apelul</string>
+    <string name="donateSessionAppealTitle"><font color="0">Vă rugăm să citiți:</font>\nUn apel personal din partea lui {donate_appeal_name}</string>
     <string name="donateSessionDescription">Forțe puternice încearcă să slăbească confidențialitatea, dar nu putem duce această luptă singuri.\n\nDonațiile ajută la menținerea {app_name} sigur, independent și online.</string>
     <string name="donateSessionHelp">{app_name} are nevoie de ajutorul tău</string>
     <string name="done">Terminat</string>
