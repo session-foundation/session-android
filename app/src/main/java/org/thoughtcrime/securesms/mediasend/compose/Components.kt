@@ -206,7 +206,7 @@ fun MediaPickerItemCell(
                 Image(
                     painter = painterResource(R.drawable.triangle_right),
                     contentDescription = null,
-                    modifier = Modifier.height(LocalDimensions.current.iconXSmall),
+                    modifier = Modifier.size(LocalDimensions.current.iconXSmall),
                     colorFilter = ColorFilter.tint(LocalColors.current.accent) // match @color/core_blue-ish
                 )
             }
