@@ -232,7 +232,12 @@ class ConversationV3ViewModel @AssistedInject constructor(
     val databaseChanges: SharedFlow<*> = merge(
         threadIdFlow
             .filterNotNull()
-            .flatMapLatest { id -> threadDb.changeNotification.filter { it.id == id } },
+            .flatMapLatest { id ->
+                merge(
+                    threadDb.changeNotification.filter { it.id == id },
+                    mmsSmsDatabase.messageChangesFlow.filter { it.threadId == id }
+                )
+           },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
