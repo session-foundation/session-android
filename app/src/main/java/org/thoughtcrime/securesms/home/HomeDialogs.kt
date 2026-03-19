@@ -345,7 +345,6 @@ fun DonationDialog(
                                 AccentFillButtonRect(
                                     modifier = Modifier
                                         .qaTag(R.string.qa_cta_button_positive)
-                                        .weight(1f)
                                         .shimmerOverlay(),
                                     text = stringResource(R.string.donateSessionAppealReadMore),
                                     onClick =  {
