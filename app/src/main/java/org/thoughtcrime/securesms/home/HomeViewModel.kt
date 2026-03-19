@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -406,8 +405,9 @@ class HomeViewModel @Inject constructor(
                 _dialogsState.update { it.copy(donationCTA = false) }
             }
 
-            is Commands.ShowDonationConfirmation -> {
-                showUrlDialog(URL_DONATE)
+            is Commands.OnDonationLinkClicked -> {
+                donationManager.onDonationSeen()
+                _dialogsState.update { it.copy(donationCTA = false) }
             }
 
             is Commands.HideUrlDialog -> {
@@ -533,7 +533,7 @@ class HomeViewModel @Inject constructor(
         data object HidePinCTADialog : Commands
         data object HideExpiringCTADialog : Commands
         data object HideExpiredCTADialog : Commands
-        data object ShowDonationConfirmation : Commands
+        data object OnDonationLinkClicked : Commands
         data object HideDonationCTADialog : Commands
         data object HideUserProfileModal : Commands
         data object HideUrlDialog : Commands
