@@ -52,7 +52,6 @@ import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUrlDialog
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUserProfileModal
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.OnLinkCopied
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.OnLinkOpened
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.ShowDonationConfirmation
 import org.thoughtcrime.securesms.home.startconversation.StartConversationSheet
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.ui.dialog.AlertDialog
@@ -62,20 +61,14 @@ import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.CTAImage
 import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.PinProCTA
-import org.thoughtcrime.securesms.ui.ProBadgeText
-import org.thoughtcrime.securesms.ui.ProCTAFeature
-import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
-import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.dialog.BasicSessionAlertDialog
 import org.thoughtcrime.securesms.ui.dialog.DialogBg
 import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
-import org.thoughtcrime.securesms.ui.proBadgeColorDisabled
-import org.thoughtcrime.securesms.ui.proBadgeColorStandard
+import org.thoughtcrime.securesms.ui.openUrl
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.shimmerOverlay
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -84,6 +77,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 import org.thoughtcrime.securesms.ui.theme.blackAlpha40
+import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 
 @Composable
 fun HomeDialogs(
@@ -279,14 +273,13 @@ fun DonationDialog(
         sendCommand(HideDonationCTADialog)
     }
 
-    val title = Phrase.from(context,R.string.donateSessionHelp) //todo DONV2 proper string
-        .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
+    val title = Phrase.from(context,R.string.donateSessionAppealTitle)
+        .put(StringSubstitutionConstants.DONATE_APPEAL_KEY, NonTranslatableStringConstants.DONATE_APPEAL_NAME)
         .format()
 
-    val text = Phrase.from(context,R.string.donateSessionDescription)  //todo DONV2 proper string
+    val text = Phrase.from(context,R.string.donateSessionAppealDescription)
         .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
-
 
     val titleColor: Color = LocalColors.current.text
 
@@ -355,10 +348,10 @@ fun DonationDialog(
                                         .qaTag(R.string.qa_cta_button_positive)
                                         .weight(1f)
                                         .shimmerOverlay(),
-                                    text = "Read Appeal", //stringResource(R.string.donate), //todo DONV2 proper string
+                                    text = stringResource(R.string.donateSessionAppealReadMore),
                                     onClick =  {
-                                        sendCommand(HideDonationCTADialog)
-                                        sendCommand(ShowDonationConfirmation)
+                                        context.openUrl(URL_DONATE)
+                                        sendCommand(HomeViewModel.Commands.OnDonationLinkClicked)
                                     }
                                 )
                             }
