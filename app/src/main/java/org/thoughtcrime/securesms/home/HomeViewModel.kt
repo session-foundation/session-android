@@ -263,7 +263,6 @@ class HomeViewModel @Inject constructor(
                 if(!showExpiring && !showExpired && donationManager.shouldShowDonationCTA()){
                     showDonationCTA()
                 }
-                showDonationCTA()
             }
         }
 
