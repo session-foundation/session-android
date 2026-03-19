@@ -49,7 +49,7 @@ class AlbumThumbnailView : RelativeLayout {
 
     // region Interaction
 
-    fun calculateHitObject(event: MotionEvent, mms: MmsMessageRecord, threadRecipient: Address, downloadPendingAttachment: (DatabaseAttachment) -> Unit) {
+    fun calculateHitObject(event: MotionEvent, mms: MmsMessageRecord, threadRecipient: Address.Conversable, downloadPendingAttachment: (DatabaseAttachment) -> Unit) {
         val rawXInt = event.rawX.toInt()
         val rawYInt = event.rawY.toInt()
         val eventRect = Rect(rawXInt, rawYInt, rawXInt, rawYInt)

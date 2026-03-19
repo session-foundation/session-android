@@ -24,17 +24,6 @@ data class MessageId(
   }
 
   companion object {
-    /**
-     * Returns null for invalid IDs. Useful when pulling a possibly-unset ID from a database, or something like that.
-     */
-    @JvmStatic
-    fun fromNullable(id: Long, mms: Boolean): MessageId? {
-      return if (id > 0) {
-        MessageId(id, mms)
-      } else {
-        null
-      }
-    }
 
     @JvmStatic
     fun deserialize(serialized: String): MessageId {

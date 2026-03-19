@@ -28,7 +28,6 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
-import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
@@ -44,6 +43,7 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getRecipientAddress
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -105,7 +105,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
             }
 
             // listen to conversation and attachments changes
-            (threadDb.updateNotifications.filter { it == messageRecord.threadId } as Flow<*>)
+            (threadDb.changeNotification.filter { it.id == messageRecord.threadId } as Flow<*>)
                     .debounce(200L)
                     .map {
                         withContext(Dispatchers.Default) {
@@ -129,7 +129,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
             state.value = messageRecord.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
-                val conversationAddress = threadDb.getRecipientForThreadId(threadId) as Address.Conversable
+                val conversationAddress = threadDb.getRecipientAddress(threadId)!!
                 val conversation = recipientRepository.getRecipient(conversationAddress)
                 val isDeprecatedLegacyGroup = conversationAddress.isLegacyGroup && deprecationManager.isDeprecated
 
@@ -269,7 +269,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         if(state.thread == null) return
 
         viewModelScope.launch {
-            MediaPreviewArgs(slide, state.mmsRecord, state.thread.address)
+            MediaPreviewArgs(slide, state.mmsRecord, state.thread.address as Address.Conversable)
                 .let(Event::StartMediaPreview)
                 .let { event.send(it) }
         }

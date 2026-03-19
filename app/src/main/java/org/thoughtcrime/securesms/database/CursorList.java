@@ -1,11 +1,12 @@
 package org.thoughtcrime.securesms.database;
 
-import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.ListIterator;
  *
  * Given that this is cursor-backed, it is effectively immutable.
  */
-public class CursorList<T> implements List<T>, ObservableContent {
+public class CursorList<T> implements List<T>, Closeable {
 
   private final Cursor          cursor;
   private final ModelBuilder<T> modelBuilder;
@@ -181,16 +182,6 @@ public class CursorList<T> implements List<T>, ObservableContent {
     if (!cursor.isClosed()) {
       cursor.close();
     }
-  }
-
-  @Override
-  public void registerContentObserver(@NonNull ContentObserver observer) {
-    cursor.registerContentObserver(observer);
-  }
-
-  @Override
-  public void unregisterContentObserver(@NonNull ContentObserver observer) {
-    cursor.unregisterContentObserver(observer);
   }
 
   private void forceQueryLoad() {

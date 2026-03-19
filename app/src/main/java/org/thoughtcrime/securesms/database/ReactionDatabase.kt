@@ -346,6 +346,26 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
     }
   }
 
+  fun getReactionsForThread(threadId: Long, minSendTimeMsExclusive: Long): List<ReactionRecord> {
+    //language=roomsql
+    return readableDatabase.query("""
+      SELECT * FROM $TABLE_NAME
+      WHERE ($MESSAGE_ID, $IS_MMS) IN (
+        SELECT m.${SmsDatabase.ID}, 0 FROM ${SmsDatabase.TABLE_NAME} m WHERE m.${SmsDatabase.THREAD_ID} = ?1
+        UNION ALL
+        SELECT m.${MmsSmsColumns.ID}, 1 FROM ${MmsDatabase.TABLE_NAME} m WHERE m.${MmsSmsColumns.THREAD_ID} = ?1
+      )
+      AND $DATE_SENT > ?2
+      ORDER BY $DATE_SENT, $SORT_ID
+    """, arrayOf(threadId, minSendTimeMsExclusive)).use { cursor ->
+      buildList(cursor.count) {
+        while (cursor.moveToNext()) {
+          add(readReaction(cursor))
+        }
+      }
+    }
+  }
+
   fun getReactionFor(timestamp: Long, sender: String): ReactionRecord? {
     val query = "$DATE_SENT = ? AND $AUTHOR_ID = ?"
     val args = arrayOf("$timestamp", sender)

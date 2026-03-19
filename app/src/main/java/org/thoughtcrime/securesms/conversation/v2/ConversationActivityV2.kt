@@ -15,9 +15,9 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
-import android.os.Parcelable
 import android.os.Handler
 import android.os.Looper
+import android.os.Parcelable
 import android.os.SystemClock
 import android.provider.Settings
 import android.text.Spannable
@@ -95,7 +95,6 @@ import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
@@ -111,7 +110,6 @@ import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
@@ -128,7 +126,6 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isBlinded
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
-import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
@@ -163,13 +160,13 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
-import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsActivity
-import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
 import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
 import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -225,7 +222,6 @@ import org.thoughtcrime.securesms.util.adapter.runWhenLaidOut
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
-import org.thoughtcrime.securesms.util.getConversationUnread
 import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isNearBottom
 import org.thoughtcrime.securesms.util.push
@@ -277,7 +273,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageSender: MessageSender
     @Inject lateinit var resendMessageUtilities: ResendMessageUtilities
-    @Inject lateinit var messageNotifier: MessageNotifier
+
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var snodeClock: SnodeClock
     @Inject lateinit var audioPlaybackManager: AudioPlaybackManager
@@ -403,8 +399,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val adapter by lazy {
         val adapter = ConversationAdapter(
             this,
-            originalLastSeen = viewModel.threadId
-                ?.let { storage.getLastSeen(it) },
+            storage.getLastSeen(viewModel.address),
             false,
             onItemPress = { message, position, view, event ->
                 handlePress(message, position, view, event)
@@ -529,7 +524,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // region Settings
     companion object {
         // Extras
-        private const val ADDRESS = "address"
+        const val ADDRESS = "address"
         private const val SCROLL_MESSAGE_ID = "scroll_message_id"
         private const val CONVERSATION_SCROLL_STATE = "conversation_scroll_state"
 
@@ -723,11 +718,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         try {
                             when (it) {
                                 is Long -> {
-                                    viewModel.threadId?.let { threadId ->
-                                        if (storage.getLastSeen(threadId) < it) {
-                                            storage.markConversationAsRead(threadId, it)
-                                        }
-                                    }
+                                    storage.updateConversationLastSeenIfNeeded(
+                                        viewModel.address,
+                                        it
+                                    )
                                 }
 
                                 is MessageId -> {
@@ -891,14 +885,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onResume() {
         super.onResume()
-        viewModel.threadId?.let { threadId ->
-            messageNotifier.setVisibleThread(threadId)
-        }
     }
 
     override fun onPause() {
         super.onPause()
-        messageNotifier.setVisibleThread(-1)
     }
 
     override fun getSystemService(name: String): Any? {
@@ -916,6 +906,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<ConversationLoader.Data> {
         return conversationLoaderFactory.create(
             threadID = viewModel.threadId,
+            threadAddress = viewModel.address,
             reverse = false,
         )
     }
@@ -957,26 +948,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     if (binding.conversationRecyclerView.isNearBottom &&
                         !binding.conversationRecyclerView.isFullyScrolled) {
                         gotoConversationEnd()
-                    }
-                }
-
-                // We should do this check regardless of whether we're restoring a saved scroll position.
-                if (firstLoad && unreadCount == 0 && adapter.itemCount > 0) {
-                    lifecycleScope.launch(Dispatchers.Default) {
-                        val isUnread = configFactory.withUserConfigs {
-                            it.convoInfoVolatile.getConversationUnread(
-                                viewModel.address,
-                            )
-                        }
-
-                        viewModel.threadId?.let { threadId ->
-                            if (isUnread) {
-                                storage.markConversationAsRead(
-                                    threadId,
-                                    clock.currentTimeMillis()
-                                )
-                            }
-                        }
                     }
                 }
 
@@ -1218,8 +1189,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun setUpOutdatedClientBanner() {
         val legacyRecipient = viewModel.legacyBannerRecipient(this)
 
-        val shouldShowLegacy = ExpirationConfiguration.isNewConfigEnabled &&
-                legacyRecipient != null
+        val shouldShowLegacy = legacyRecipient != null
 
         binding.conversationHeader.outdatedDisappearingBanner.isVisible = shouldShowLegacy
         if (shouldShowLegacy) {
@@ -1417,11 +1387,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         }
 
-        val threadId = viewModel.threadId
-        if (threadId == null) return // Maybe don't scroll
-
-        val lastSeenTimestamp = threadDb.getLastSeenAndHasSent(threadId).first()
-        val lastSeenItemPosition = adapter.findLastSeenItemPosition(lastSeenTimestamp) ?: return
+        val lastSeenTimestamp = storage.getLastSeen(viewModel.address)
+        val lastSeenItemPosition = lastSeenTimestamp?.let(adapter::findLastSeenItemPosition) ?: return
 
         binding.conversationRecyclerView.runWhenLaidOut {
             layoutManager?.scrollToPositionWithOffset(
@@ -1648,8 +1615,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     .put(GROUP_NAME_KEY, recipient.displayName())
                     .format()
                     .toString()
-
-                else -> ""
             }
             return
         }
@@ -2452,8 +2417,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 viewModel.threadIdFlow.filterNotNull().first(),
                 outgoingTextMessage,
                 false,
-                message.sentTimestamp!!,
-                true
+                message.sentTimestamp!!
             ), false)
 
             message.id?.let{
@@ -2539,8 +2503,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     mmsDb.insertMessageOutbox(
                         outgoingTextMessage,
                         viewModel.threadIdFlow.filterNotNull().first(),
-                        false,
-                        runThreadUpdate = true
+                        false
                     ), mms = true
                 )
 

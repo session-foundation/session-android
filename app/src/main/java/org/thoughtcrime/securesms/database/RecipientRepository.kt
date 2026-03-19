@@ -127,6 +127,26 @@ class RecipientRepository @Inject constructor(
         return getRecipientSync(loginStateRepository.requireLocalAccountId().toAddress())
     }
 
+    /**
+     * A fast way to check if the given address is ourselves. This method utilizes in-memory state
+     * to perform fast checks. This is recommended approach when you only care if an address
+     * is ourselves.
+     */
+    fun fastIsSelf(address: Address): Boolean {
+        val myAccountId = loginStateRepository.peekLoginState()?.accountId ?: return false
+
+        return when (address) {
+            is Address.Standard -> address.accountId == myAccountId
+
+            is Address.Blinded -> {
+                blindedIdMappingRepository.findMappings(address)
+                    .any { it.second.accountId == myAccountId }
+            }
+
+            else -> false
+        }
+    }
+
     // This function creates a flow that emits the recipient information for the given address,
     // the function itself must be fast, not directly access db and lock free, as it is called from a locked context.
     @OptIn(FlowPreview::class)
@@ -710,16 +730,8 @@ class RecipientRepository @Inject constructor(
                         }
 
                         RecipientData.Contact(
-                            name = contact.name,
-                            nickname = contact.nickname.takeIf { it.isNotBlank() },
-                            avatar = contact.profilePicture.toRemoteFile(),
-                            approved = contact.approved,
-                            approvedMe = contact.approvedMe,
-                            blocked = contact.blocked,
-                            expiryMode = contact.expiryMode,
-                            priority = contact.priority,
+                            configData = contact,
                             proData = null, // final ProData will be calculated later
-                            profileUpdatedAt = contact.profileUpdatedEpochSeconds.secondsToInstant(),
                         )
                     }
                 }

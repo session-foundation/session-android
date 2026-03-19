@@ -1,18 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-  <string-array name="pref_notification_privacy_entries">
-      <item>@string/notificationsContentShowNameAndContent</item>
-      <item>@string/notificationsContentShowNameOnly</item>
-      <item>@string/notificationsContentShowNoNameOrContent</item>
-  </string-array>
-
-  <string-array name="pref_notification_privacy_values">
-      <item>all</item>
-      <item>contact</item>
-      <item>none</item>
-  </string-array>
-
     <array name="scribble_colors">
         <item>#ffffff</item>
         <item>#ff0000</item>

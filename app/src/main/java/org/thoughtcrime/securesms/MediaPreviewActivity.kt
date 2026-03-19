@@ -84,8 +84,10 @@ import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.MediaView
 import org.thoughtcrime.securesms.components.dialogs.DeleteMediaPreviewDialog
+import org.thoughtcrime.securesms.database.MediaDatabase
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.loaders.PagingMediaLoader
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
@@ -119,7 +121,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private var initialMediaType: String? = null
     private var initialMediaSize: Long = 0
     private var initialCaption: String? = null
-    private var conversationAddress: Address? = null
+    private var conversationAddress: Address.Conversable? = null
     private var leftIsRecent = false
     private val viewModel: MediaPreviewViewModel by viewModels()
     private var viewPagerListener: ViewPagerListener? = null
@@ -142,6 +144,12 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
     @Inject
     lateinit var snodeClock: SnodeClock
+
+    @Inject
+    lateinit var threadDatabase: ThreadDatabase
+
+    @Inject
+    lateinit var mediaDatabase: MediaDatabase
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -382,7 +390,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     private fun initializeResources() {
         conversationAddress = IntentCompat.getParcelableExtra(intent,
             ADDRESS_EXTRA,
-            Address::class.java
+            Address.Conversable::class.java
         )
 
         initialMediaUri = intent.data
@@ -647,7 +655,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Pair<Cursor, Int>?> {
         return PagingMediaLoader(
             this,
-            conversationAddress!!, initialMediaUri!!, leftIsRecent
+            conversationAddress!!, initialMediaUri!!, leftIsRecent,
+            threadDatabase,
+            mediaDatabase,
         )
     }
 
@@ -884,7 +894,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             context: Context?,
             slide: Slide,
             mms: MmsMessageRecord,
-            threadRecipient: Address
+            threadRecipient: Address.Conversable
         ): Intent? {
             var previewIntent: Intent? = null
             if (isContentTypeSupported(slide.contentType) && slide.uri != null) {

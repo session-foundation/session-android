@@ -4,7 +4,6 @@ import android.content.Context
 import org.session.libsignal.crypto.shuffledRandom
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SettableFuture
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.webrtc.video.Camera
 import org.thoughtcrime.securesms.webrtc.video.CameraEventListener
 import org.thoughtcrime.securesms.webrtc.video.CameraState
@@ -80,6 +79,11 @@ class PeerConnectionWrapper(private val context: Context,
     init {
         val audioConstraints = MediaConstraints().apply {
             optional.add(MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"))
+
+            // Enable WebRTC’s software echo canceller, noise suppressor and AGC
+            optional.add(MediaConstraints.KeyValuePair("googEchoCancellation", "true"))
+            optional.add(MediaConstraints.KeyValuePair("googNoiseSuppression", "true"))
+            optional.add(MediaConstraints.KeyValuePair("googAutoGainControl", "true"))
         }
 
         mediaStream = factory.createLocalMediaStream("ARDAMS")

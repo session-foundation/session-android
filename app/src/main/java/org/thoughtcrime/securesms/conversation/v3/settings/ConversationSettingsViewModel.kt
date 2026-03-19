@@ -1484,7 +1484,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    fun inviteContactsToCommunity(contacts: Set<Address>) {
+    fun inviteContactsToCommunity(contacts: Set<Address.Conversable>) {
         val recipient = recipient?.takeIf { it.isCommunityRecipient } ?: return
         showLoading()
         viewModelScope.launch {

@@ -27,7 +27,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 @HiltViewModel(assistedFactory = InviteMembersViewModel.Factory::class)
 class InviteMembersViewModel @AssistedInject constructor(
     @Assisted private val groupAddress: Address.Group?,
-    @Assisted private val excludingAccountIDs: Set<Address>,
+    @Assisted private val excludingAccountIDs: Set<Address.Conversable>,
     @param:ApplicationContext private val context: Context,
     configFactory: ConfigFactory,
     avatarUtils: AvatarUtils,
@@ -186,9 +186,9 @@ class InviteMembersViewModel @AssistedInject constructor(
 
         data object ClearSelection : Commands
 
-        data class HandleAccountId(val address : Address) : Commands
+        data class HandleAccountId(val address : Address.Conversable) : Commands
 
-        data class ContactItemClick(val address: Address) : Commands
+        data class ContactItemClick(val address: Address.Conversable) : Commands
 
         data class SearchFocusChange(val focus: Boolean) : Commands
 
@@ -222,7 +222,7 @@ class InviteMembersViewModel @AssistedInject constructor(
     interface Factory {
         fun create(
             groupAddress: Address.Group? = null,
-            excludingAccountIDs: Set<Address> = emptySet(),
+            excludingAccountIDs: Set<Address.Conversable> = emptySet(),
         ): InviteMembersViewModel
     }
 }

@@ -100,9 +100,11 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
+import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -153,6 +155,8 @@ class ConversationViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
     private val callManager: CallManager,
+    private val mmsDatabase: MmsDatabase,
+    private val smsDatabase: SmsDatabase,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     val dateUtils: DateUtils,
     expiredGroupManager: ExpiredGroupManager,
@@ -193,7 +197,7 @@ class ConversationViewModel @AssistedInject constructor(
     val threadIdFlow: StateFlow<Long?> =
         storage.getThreadId(address)
             ?.let { MutableStateFlow(it) }
-            ?: threadDb.updateNotifications
+            ?: threadDb.changeNotification
                 .map { storage.getThreadId(address) }
                 .flowOn(Dispatchers.Default)
                 .filterNotNull()
@@ -216,10 +220,20 @@ class ConversationViewModel @AssistedInject constructor(
     val conversationReloadNotification: SharedFlow<*> = merge(
         threadIdFlow
             .filterNotNull()
-            .flatMapLatest { id -> threadDb.updateNotifications.filter { it == id } },
+            .flatMapLatest { threadId ->
+                merge(
+                    merge(
+                        mmsDatabase.changeNotification,
+                        smsDatabase.changeNotification
+                    ).filter { it.threadId == threadId },
+
+                    threadDb.changeNotification.filter { it.id == threadId }
+                )
+           },
         recipientSettingsDatabase.changeNotification.filter { it == address },
         attachmentDatabase.changesNotification,
         reactionDb.changeNotification,
+
     ).debounce(200L) // debounce to avoid too many reloads
         .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
