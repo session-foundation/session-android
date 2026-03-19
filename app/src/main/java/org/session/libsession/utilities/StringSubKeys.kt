@@ -65,4 +65,5 @@ object StringSubstitutionConstants {
     const val ACTION_TYPE_KEY: StringSubKey                = "action_type"
     const val ACTIVATION_TYPE_KEY: StringSubKey            = "activation_type"
     const val ENTITY_KEY: StringSubKey                     = "entity"
+    const val DONATE_APPEAL_KEY: StringSubKey                     = "donate_appeal_name"
 }
