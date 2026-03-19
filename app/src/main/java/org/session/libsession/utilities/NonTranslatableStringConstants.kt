@@ -17,5 +17,6 @@ object NonTranslatableStringConstants {
     const val PRO                        = "Pro"
     const val ENTITY_RANGEPROOF          = "Rangeproof PTY LTD"
     const val ENTITY_STF                 = "The Session Technology Foundation"
+    const val DONATE_APPEAL_NAME         = "Cofounder of Session Chris McCabe"
 }
 
