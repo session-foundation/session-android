@@ -406,8 +406,9 @@ class HomeViewModel @Inject constructor(
                 _dialogsState.update { it.copy(donationCTA = false) }
             }
 
-            is Commands.ShowDonationConfirmation -> {
-                showUrlDialog(URL_DONATE)
+            is Commands.OnDonationLinkClicked -> {
+                donationManager.onDonationSeen()
+                _dialogsState.update { it.copy(donationCTA = false) }
             }
 
             is Commands.HideUrlDialog -> {
@@ -533,7 +534,7 @@ class HomeViewModel @Inject constructor(
         data object HidePinCTADialog : Commands
         data object HideExpiringCTADialog : Commands
         data object HideExpiredCTADialog : Commands
-        data object ShowDonationConfirmation : Commands
+        data object OnDonationLinkClicked : Commands
         data object HideDonationCTADialog : Commands
         data object HideUserProfileModal : Commands
         data object HideUrlDialog : Commands

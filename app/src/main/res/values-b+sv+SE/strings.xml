@@ -460,6 +460,9 @@
     <string name="displayNameVisible">Ditt visningsnamn är synligt för användare, grupper och samhällen du interagerar med.</string>
     <string name="document">Dokument</string>
     <string name="donate">Donera</string>
+    <string name="donateSessionAppealDescription">För åtta år sedan grundades {app_name} med uppdraget att återställa din integritet. Idag står {app_name} inför en finansieringsbrist som riskerar dess överlevnad.\n\nOm du någonsin har sett värde i {app_name} eller dess uppdrag, ge mig gärna en stund av din tid och läs denna vädjan.</string>
+    <string name="donateSessionAppealReadMore">Läs vädjan</string>
+    <string name="donateSessionAppealTitle"><font color="0">Vänligen läs:</font>\nEn personlig vädjan från {donate_appeal_name}</string>
     <string name="donateSessionDescription">Starka krafter försöker försvaga den personliga integriteten, men vi kan inte fortsätta kampen ensamma.\n\nAtt donera hjälper till att hålla {app_name} säker, oberoende och online.</string>
     <string name="donateSessionHelp">{app_name} behöver din hjälp</string>
     <string name="done">Klar</string>

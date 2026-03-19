@@ -460,6 +460,9 @@
     <string name="displayNameVisible">आपका डिस्प्ले नाम उन उपयोगकर्ताओं, समूहों और समुदायों को दिखाई देता है जिनके साथ आप संपर्क करते हैं।</string>
     <string name="document">दस्तावेज़</string>
     <string name="donate">दान करें</string>
+    <string name="donateSessionAppealDescription">आठ साल पहले, {app_name} की स्थापना आपकी निजता को बहाल करने के मिशन के साथ की गई थी। आज, {app_name} को धन की कमी का सामना करना पड़ रहा है, जिससे उसके अस्तित्व पर ही खतरा मंडरा रहा है।\n\nअगर आपने कभी {app_name} या उसके मिशन में मूल्य पाया है, तो कृपया मुझे अपने समय का एक क्षण दें और इस अपील को पढ़ें।</string>
+    <string name="donateSessionAppealReadMore">अपील पढ़ें</string>
+    <string name="donateSessionAppealTitle"><font color="0">कृपया पढ़ें:</font>\n{donate_appeal_name} की ओर से एक व्यक्तिगत अपील</string>
     <string name="donateSessionDescription">शक्तिशाली ताकतें गोपनीयता को कमजोर करने का प्रयास कर रही हैं, लेकिन हम यह लड़ाई अकेले नहीं जारी रख सकते।\n\nदान करने से {app_name} को सुरक्षित, स्वतंत्र और ऑनलाइन बनाए रखने में मदद मिलती है।</string>
     <string name="donateSessionHelp">{app_name} को आपकी सहायता चाहिए</string>
     <string name="done">पूरा हुआ</string>
@@ -1219,6 +1222,10 @@
     <plurals name="removeMember">
         <item quantity="one">सदस्य हटाएँ</item>
         <item quantity="other">सदस्यों को हटाएँ</item>
+    </plurals>
+    <plurals name="removeMemberLowercase">
+        <item quantity="one">सदस्य को हटाएं</item>
+        <item quantity="other">सदस्यों को हटाएं</item>
     </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="one">सदस्य और उनके संदेशों को हटाएं</item>
