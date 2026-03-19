@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.video.VideoFrameDecoder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.mediasend.Media
@@ -58,6 +59,20 @@ fun MediaFolderCell(
     qaTag : String,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val thumbnailMimeType = thumbnailUri?.let { MediaUtil.getMimeType(context, it) }
+
+    // our thumbnails do not have file extensions so we need to check for the mimetype
+    // then explicitly set the decoder for the request
+    val folderThumbnailRequest = ImageRequest.Builder(context)
+        .data(thumbnailUri)
+        .apply {
+            if (MediaUtil.isVideoType(thumbnailMimeType)) {
+                decoderFactory(VideoFrameDecoder.Factory())
+            }
+        }
+        .build()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -68,9 +83,7 @@ fun MediaFolderCell(
         AsyncImage(
             modifier = Modifier.fillMaxWidth(),
             contentScale = ContentScale.Crop,
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(thumbnailUri)
-                .build(),
+            model = folderThumbnailRequest,
             contentDescription = null,
         )
 
@@ -169,6 +182,11 @@ fun MediaPickerItemCell(
             contentScale = ContentScale.Crop,
             model = ImageRequest.Builder(LocalContext.current)
                 .data(media.uri)
+                .apply {
+                    if (MediaUtil.isVideoType(media.mimeType)) {
+                        decoderFactory(VideoFrameDecoder.Factory())
+                    }
+                }
                 .build(),
             contentDescription = null,
         )
@@ -186,7 +204,7 @@ fun MediaPickerItemCell(
                 Image(
                     painter = painterResource(R.drawable.triangle_right),
                     contentDescription = null,
-                    modifier = Modifier.size(LocalDimensions.current.iconMedium),
+                    modifier = Modifier.size(LocalDimensions.current.iconSmall),
                     colorFilter = ColorFilter.tint(LocalColors.current.accent) // match @color/core_blue-ish
                 )
             }
