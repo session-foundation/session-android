@@ -153,6 +153,7 @@ interface TextSecurePreferences {
     fun setHasSeenProExpiring()
     fun hasSeenProExpired(): Boolean
     fun setHasSeenProExpired()
+    fun clearProExpiryView()
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
@@ -992,6 +993,11 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasSeenProExpired() {
         setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
+    }
+
+    override fun clearProExpiryView() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
     }
 
     override fun watchPostProStatus(): StateFlow<Boolean> {

@@ -232,7 +232,10 @@ class HomeViewModel @Inject constructor(
                 var showExpiring: Boolean = false
                 var showExpired: Boolean = false
 
-                if(subscription.type is ProStatus.Active.Expiring
+                if(subscription.type is ProStatus.Active &&
+                    (prefs.hasSeenProExpiring() || prefs.hasSeenProExpired())){
+                    prefs.clearProExpiryView() // reset expiry view if the user is active again
+                } else if(subscription.type is ProStatus.Active.Expiring
                     && !prefs.hasSeenProExpiring()
                 ){
                     val validUntil = subscription.type.renewingAt
