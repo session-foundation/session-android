@@ -128,7 +128,7 @@ class ConversationV3ViewModel @AssistedInject constructor(
         mmsSmsDatabase
             .messageChangesFlow
             .filter { it.threadId == threadIdFlow.value }
-    )
+    ).onStart { emit(Unit) }
         .map { withContext(Dispatchers.Default) { mmsSmsDatabase.getUnreadCount(address) } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
