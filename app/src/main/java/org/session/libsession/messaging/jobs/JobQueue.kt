@@ -42,7 +42,6 @@ class JobQueue @Inject constructor(
         for (job in channel) {
             if (!isActive) break
             val communityAddress = when (job) {
-                is OpenGroupDeleteJob -> job.address?.address
                 is TrimThreadJob -> job.communityAddress?.address
                 else -> null
             }
@@ -131,9 +130,6 @@ class JobQueue @Inject constructor(
                     is AttachmentDownloadJob -> {
                         mediaQueue.send(job)
                     }
-                    is OpenGroupDeleteJob -> {
-                        openGroupQueue.send(job)
-                    }
                     is TrimThreadJob -> {
                         if (job.communityAddress != null) {
                             openGroupQueue.send(job)
@@ -217,7 +213,6 @@ class JobQueue @Inject constructor(
             AttachmentUploadJob.KEY,
             AttachmentDownloadJob.KEY,
             MessageSendJob.KEY,
-            OpenGroupDeleteJob.KEY,
             InviteContactsJob.KEY,
         )
         allJobTypes.forEach { type ->
