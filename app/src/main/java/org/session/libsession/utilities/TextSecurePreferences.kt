@@ -153,6 +153,7 @@ interface TextSecurePreferences {
     fun setHasSeenProExpiring()
     fun hasSeenProExpired(): Boolean
     fun setHasSeenProExpired()
+    fun clearProExpiryView()
     fun watchPostProStatus(): StateFlow<Boolean>
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
@@ -360,11 +361,11 @@ interface TextSecurePreferences {
 
 
         // Donation
-        const val HAS_DONATED = "has_donated"
-        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url"
-        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount"
-        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta"
-        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review"
+        const val HAS_DONATED = "has_donated_v2"
+        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url_v2"
+        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount_v2"
+        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta_v2"
+        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review_v2"
 
         const val DEBUG_HAS_DONATED = "debug_has_donated"
         const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
@@ -992,6 +993,11 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHasSeenProExpired() {
         setBooleanPreference(HAS_SEEN_PRO_EXPIRED, true)
+    }
+
+    override fun clearProExpiryView() {
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
+        setBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
     }
 
     override fun watchPostProStatus(): StateFlow<Boolean> {

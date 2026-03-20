@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -42,7 +41,6 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioPlaybackManager
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
@@ -234,7 +232,10 @@ class HomeViewModel @Inject constructor(
                 var showExpiring: Boolean = false
                 var showExpired: Boolean = false
 
-                if(subscription.type is ProStatus.Active.Expiring
+                if(subscription.type is ProStatus.Active &&
+                    (prefs.hasSeenProExpiring() || prefs.hasSeenProExpired())){
+                    prefs.clearProExpiryView() // reset expiry view if the user is active again
+                } else if(subscription.type is ProStatus.Active.Expiring
                     && !prefs.hasSeenProExpiring()
                 ){
                     val validUntil = subscription.type.renewingAt
@@ -412,8 +413,9 @@ class HomeViewModel @Inject constructor(
                 _dialogsState.update { it.copy(donationCTA = false) }
             }
 
-            is Commands.ShowDonationConfirmation -> {
-                showUrlDialog(URL_DONATE)
+            is Commands.OnDonationLinkClicked -> {
+                donationManager.onDonationSeen()
+                _dialogsState.update { it.copy(donationCTA = false) }
             }
 
             is Commands.HideUrlDialog -> {
@@ -600,7 +602,7 @@ class HomeViewModel @Inject constructor(
         data object HidePinCTADialog : Commands
         data object HideExpiringCTADialog : Commands
         data object HideExpiredCTADialog : Commands
-        data object ShowDonationConfirmation : Commands
+        data object OnDonationLinkClicked : Commands
         data object HideDonationCTADialog : Commands
         data object HideUserProfileModal : Commands
         data object HideUrlDialog : Commands

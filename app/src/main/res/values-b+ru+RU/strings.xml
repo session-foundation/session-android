@@ -486,6 +486,9 @@
     <string name="displayNameVisible">Ваше отображаемое имя видно пользователям, группам и сообществам, с которыми вы взаимодействуете.</string>
     <string name="document">Документ</string>
     <string name="donate">Донат</string>
+    <string name="donateSessionAppealDescription">Восемь лет назад {app_name} был создан с миссией вернуть вам конфиденциальность. Сегодня {app_name} столкнулся с нехваткой финансирования, что ставит под угрозу само его существование.\n\nЕсли {app_name} или его миссия когда-либо были для вас ценны, пожалуйста, уделите мне немного времени и прочитайте это обращение.</string>
+    <string name="donateSessionAppealReadMore">Прочитать обращение</string>
+    <string name="donateSessionAppealTitle"><font color="0">Пожалуйста, прочитайте:</font>\nЛичное обращение от {donate_appeal_name}</string>
     <string name="donateSessionDescription">Могущественные силы пытаются ослабить конфиденциальность, но мы не можем продолжать эту борьбу в одиночку.\n\nВаши пожертвования помогают сохранять безопасность, независимость и доступность {app_name}.</string>
     <string name="donateSessionHelp">{app_name} нуждается в вашей помощи</string>
     <string name="done">Готово</string>

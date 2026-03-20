@@ -458,6 +458,9 @@
     <string name="displayNameVisible">Votre nom d\'affichage est visible par les utilisateurs, les groupes et les communautés avec lesquels vous interagissez.</string>
     <string name="document">Document</string>
     <string name="donate">Faire un don</string>
+    <string name="donateSessionAppealDescription">Il y a huit ans, {app_name} a été fondée avec pour mission de rétablir votre vie privée. Aujourd’hui, {app_name} fait face à un manque de financement qui met en péril sa survie même.\n\nSi {app_name} ou sa mission ont déjà eu de la valeur à vos yeux, accordez-moi un instant de votre temps et lisez cet appel.</string>
+    <string name="donateSessionAppealReadMore">Lire l’appel</string>
+    <string name="donateSessionAppealTitle"><font color="0">À lire :</font>\nAppel personnel de {donate_appeal_name}</string>
     <string name="donateSessionDescription">Des forces importantes cherchent à affaiblir la vie privée, mais nous ne pouvons poursuivre ce combat seuls.\n\nFaire un don permet à {app_name} de rester sécurisé, indépendant et accessible.</string>
     <string name="donateSessionHelp">{app_name} a besoin de votre aide</string>
     <string name="done">Terminé</string>

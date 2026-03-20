@@ -24,7 +24,9 @@ import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -53,7 +55,7 @@ import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import kotlin.time.Duration.Companion.milliseconds
 
-@Preview
+@Preview(heightDp = 800)
 @Composable
 private fun PreviewLandingScreen(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
@@ -139,25 +141,27 @@ internal fun LandingScreen(
     }
 
     Column {
+        Spacer(modifier = Modifier.height(LocalWindowInfo.current.containerDpSize.height / 40))
+
+        Text(
+            stringResource(R.string.onboardingBubblePrivacyInYourPocket),
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            style = LocalType.current.h4,
+            textAlign = TextAlign.Center
+        )
+
         Column(modifier = Modifier
             .weight(1f)
             .padding(horizontal = LocalDimensions.current.mediumSpacing)
+            .padding(top = LocalDimensions.current.xxxsSpacing),
+            verticalArrangement = Arrangement.Center
         ) {
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                stringResource(R.string.onboardingBubblePrivacyInYourPocket),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                style = LocalType.current.h4,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.weight(1f))
 
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .heightIn(min = 200.dp)
-                    .fillMaxWidth()
-                    .weight(3f),
+                    .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
                 items(
@@ -170,8 +174,6 @@ internal fun LandingScreen(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.weight(1f))
         }
 
         Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.xlargeSpacing)) {

@@ -7,7 +7,6 @@ class SessionJobManagerFactories @Inject constructor(
     private val attachmentUploadJobFactory: AttachmentUploadJob.Factory,
     private val trimThreadFactory: TrimThreadJob.Factory,
     private val messageSendJobFactory: MessageSendJob.Factory,
-    private val deleteJobFactory: OpenGroupDeleteJob.Factory,
     private val inviteContactsJobFactory: InviteContactsJob.Factory,
 ) {
 
@@ -17,7 +16,6 @@ class SessionJobManagerFactories @Inject constructor(
             AttachmentUploadJob.KEY to attachmentUploadJobFactory,
             MessageSendJob.KEY to messageSendJobFactory,
             TrimThreadJob.KEY to trimThreadFactory,
-            OpenGroupDeleteJob.KEY to deleteJobFactory,
             InviteContactsJob.KEY to inviteContactsJobFactory,
         )
     }
