@@ -312,6 +312,7 @@ fun DonationDialog(
                             // title
                             Text(
                                 modifier = Modifier
+                                    .qaTag(R.string.qa_pro_badge_text)
                                     .align(Alignment.CenterHorizontally),
                                 text = annotatedStringResource(title),
                                 textAlign = TextAlign.Center,
