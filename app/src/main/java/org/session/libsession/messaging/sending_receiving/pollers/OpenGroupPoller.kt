@@ -11,9 +11,9 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
 import org.session.libsession.messaging.jobs.TrimThreadJob
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
@@ -46,13 +46,13 @@ class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val trimThreadJobFactory: TrimThreadJob.Factory,
-    private val openGroupDeleteJobFactory: OpenGroupDeleteJob.Factory,
     private val communityDatabase: CommunityDatabase,
     private val receivedMessageProcessor: ReceivedMessageProcessor,
     private val communityApiExecutor: CommunityApiExecutor,
     private val getRoomMessagesFactory: GetRoomMessagesApi.Factory,
     private val getDirectMessageFactory: GetDirectMessagesApi.Factory,
     private val pollRoomInfoFactory: PollRoomApi.Factory,
+    private val messageDataProvider: MessageDataProvider,
     private val getCapsApi: Provider<GetCapsApi>,
     networkConnectivity: NetworkConnectivity,
     appVisibilityManager: AppVisibilityManager,
@@ -254,12 +254,23 @@ class OpenGroupPoller @AssistedInject constructor(
         }
 
         if (deletions.isNotEmpty()) {
-            jobQueue.get().add(
-                openGroupDeleteJobFactory.create(
-                    messageServerIds = LongArray(deletions.size) { i -> deletions[i].id },
-                    threadId = threadId
-                )
-            )
+            try {
+                val (smsMessages, mmsMessages) = messageDataProvider.getMessageIDs(deletions.map { it.id }, threadId)
+
+                // Delete the SMS messages
+                if (smsMessages.isNotEmpty()) {
+                    messageDataProvider.deleteMessages(smsMessages, true)
+                }
+
+                // Delete the MMS messages
+                if (mmsMessages.isNotEmpty()) {
+                    messageDataProvider.deleteMessages(mmsMessages, false)
+                }
+            } catch (e: Exception) {
+                logE("Error deleting open group messages", e)
+            } finally {
+                storage.setLastMessageServerID(roomToken, server, deletions.maxOf { it.seqno })
+            }
         }
     }
 
