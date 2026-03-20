@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,16 +64,20 @@ fun MediaFolderCell(
     val context = LocalContext.current
     val thumbnailMimeType = thumbnailUri?.let { MediaUtil.getMimeType(context, it) }
 
+    val videoDecoderFactory = remember { VideoFrameDecoder.Factory() }
+
     // our URI does not have a file extension so we need to check for the mimetype
     // then explicitly set the decoder for the request
-    val folderThumbnailRequest = ImageRequest.Builder(context)
-        .data(thumbnailUri)
-        .apply {
-            if (MediaUtil.isVideoType(thumbnailMimeType)) {
-                decoderFactory(VideoFrameDecoder.Factory())
+    val folderThumbnailRequest = remember(context, thumbnailUri) {
+        ImageRequest.Builder(context)
+            .data(thumbnailUri)
+            .apply {
+                if (MediaUtil.isVideoType(thumbnailMimeType)) {
+                    decoderFactory(videoDecoderFactory)
+                }
             }
-        }
-        .build()
+            .build()
+    }
 
     Box(
         modifier = Modifier
@@ -156,6 +161,21 @@ fun MediaPickerItemCell(
     showSelectionOn: Boolean = false,
     canLongPress: Boolean = true
 ) {
+    val context = LocalContext.current
+
+    val videoDecoderFactory = remember { VideoFrameDecoder.Factory() }
+
+    val mediaRequest = remember(context, media.uri, media.mimeType) {
+        ImageRequest.Builder(context)
+            .data(media.uri)
+            .apply {
+                if (MediaUtil.isVideoType(media.mimeType)) {
+                    decoderFactory(videoDecoderFactory)
+                }
+            }
+            .build()
+    }
+
     Box(
         modifier = modifier
             .aspectRatio(1f)
@@ -181,14 +201,7 @@ fun MediaPickerItemCell(
         AsyncImage(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(media.uri)
-                .apply {
-                    if (MediaUtil.isVideoType(media.mimeType)) {
-                        decoderFactory(VideoFrameDecoder.Factory())
-                    }
-                }
-                .build(),
+            model = mediaRequest,
             contentDescription = null,
         )
 
