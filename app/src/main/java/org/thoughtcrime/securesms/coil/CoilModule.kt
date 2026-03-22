@@ -9,6 +9,7 @@ import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
+import coil3.video.VideoFrameDecoder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -50,6 +51,7 @@ class CoilModule {
                 }
 
                 add(BitmapFactoryDecoder.Factory())
+                add(VideoFrameDecoder.Factory())
             }
             .build()
     }
