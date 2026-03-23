@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.onboarding.messagenotifications
 
-import android.R.attr.checked
-import android.R.attr.onClick
 import androidx.annotation.StringRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -43,7 +41,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 @Composable
 internal fun MessageNotificationsScreen(
     state: UiState = UiState(),
-    setEnabled: (Boolean) -> Unit = {},
+    selectFastMode: (Boolean) -> Unit = {},
     onContinue: () -> Unit = {},
     quit: () -> Unit = {},
     dismissDialog: () -> Unit = {}
@@ -95,9 +93,10 @@ internal fun MessageNotificationsScreen(
                     modifier = Modifier
                         .qaTag(R.string.AccessibilityId_notificationsFastMode)
                         .fillMaxWidth(),
-                    tag = R.string.recommended,
-                    checked = state.pushEnabled,
-                    onClick = { setEnabled(true) }
+                    tag = if(state.fastModeAvailable) R.string.recommended else R.string.unavailable,
+                    checked = state.fastModeSelected,
+                    enabled = state.fastModeAvailable,
+                    onClick = { selectFastMode(true) }
                 )
 
                 // spacing between buttons is provided by ripple/downstate of NotificationRadioButton
@@ -113,8 +112,9 @@ internal fun MessageNotificationsScreen(
                     modifier = Modifier
                         .qaTag(R.string.AccessibilityId_notificationsSlowMode)
                         .fillMaxWidth(),
-                    checked = state.pushDisabled,
-                    onClick = { setEnabled(false) }
+                    checked = state.slowModeSelected,
+                    enabled = true,
+                    onClick = { selectFastMode(false) }
                 )
             }
         }
@@ -130,6 +130,7 @@ private fun NotificationRadioButton(
     modifier: Modifier = Modifier,
     @StringRes tag: Int? = null,
     checked: Boolean = false,
+    enabled: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     // Pass-through from this string ID version to the version that takes strings
@@ -139,6 +140,7 @@ private fun NotificationRadioButton(
         modifier = modifier,
         tag = tag,
         checked = checked,
+        enabled = enabled,
         onClick = onClick
     )
 }
@@ -150,12 +152,14 @@ private fun NotificationRadioButton(
     modifier: Modifier = Modifier,
     @StringRes tag: Int? = null,
     checked: Boolean = false,
+    enabled: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     RadioButton(
         onClick = onClick,
         modifier = modifier,
         selected = checked,
+        enabled = enabled,
         contentPadding = PaddingValues(
             vertical = 7.dp
         )
@@ -190,7 +194,7 @@ private fun NotificationRadioButton(
                     Text(
                         stringResource(it),
                         modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
-                        color = LocalColors.current.accent,
+                        color = if(enabled) LocalColors.current.accent else LocalColors.current.disabled,
                         style = LocalType.current.h9
                     )
                 }
