@@ -200,6 +200,7 @@ import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.PUSH_ENABLED
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -1681,6 +1682,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // if the user is blocked, show unblock modal
         if(viewModel.recipient.blocked){
             unblock()
+            return
+        }
+
+        // if the user is using slow mode, show a warning
+        if(!textSecurePreferences.hasSeenSlowModeCallWarning() && !viewModel.fastModeEnabled()){
+            showSessionDialog {
+                title(R.string.warning)
+                text(R.string.temp)
+                button(R.string.okay, R.string.okay) {
+                    callRecipient()
+                }
+            }
+
+            // mark warning as seen
+            textSecurePreferences.setHasSeenSlowModeCallWarning(true)
+
             return
         }
 

@@ -116,6 +116,8 @@ import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.PUSH_ENABLED
+import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
@@ -176,6 +178,7 @@ class ConversationViewModel @AssistedInject constructor(
     private val audioPlaybackManager: AudioPlaybackManager,
     private val loginStateRepository: LoginStateRepository,
     private val jobQueue: Provider<JobQueue>,
+    private val prefStorage: PreferenceStorage
 ) : InputbarViewModel(
     context = application,
     proStatusManager = proStatusManager,
@@ -1611,6 +1614,8 @@ class ConversationViewModel @AssistedInject constructor(
     fun cyclePlaybackSpeed(){
         audioPlaybackManager.cyclePlaybackSpeed()
     }
+
+    fun fastModeEnabled() = prefStorage[PUSH_ENABLED]
 
     @AssistedFactory
     interface Factory {
