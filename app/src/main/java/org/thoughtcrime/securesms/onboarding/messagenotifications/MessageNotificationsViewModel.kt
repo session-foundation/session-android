@@ -26,21 +26,31 @@ internal class MessageNotificationsViewModel(
     private val createAccountManager: CreateAccountManager,
     private val clearDataUtils: ClearDataUtils,
 ): AndroidViewModel(application) {
-    private val _uiStates = MutableStateFlow(UiState())
+    private val _uiStates = MutableStateFlow(createInitialState())
     val uiStates = _uiStates.asStateFlow()
 
     private val _events = MutableSharedFlow<Event>()
     val events = _events.asSharedFlow()
 
-    fun setEnabled(enabled: Boolean) {
-        _uiStates.update { UiState(pushEnabled = enabled) }
+    private fun createInitialState(): UiState {
+        val fastModeAvailable = application.isFastModeAvailable()
+        return UiState(
+            fastModeSelected = fastModeAvailable,
+            fastModeAvailable = fastModeAvailable,
+        )
+    }
+
+    fun selectFastMode(enabled: Boolean) {
+        _uiStates.update {
+            it.copy(fastModeSelected = enabled && it.fastModeAvailable)
+        }
     }
 
     fun onContinue() {
         viewModelScope.launch {
             if (state is State.CreateAccount) createAccountManager.createAccount(state.displayName)
 
-            prefs[PUSH_ENABLED] = uiStates.value.pushEnabled
+            prefs[PUSH_ENABLED] = uiStates.value.fastModeSelected
 
             _events.emit(
                 when (state) {
@@ -78,11 +88,12 @@ internal class MessageNotificationsViewModel(
     }
 
     data class UiState(
-        val pushEnabled: Boolean = true,
+        val fastModeSelected: Boolean = true,
         val showingBackWarningDialogText: Int? = null,
-        val clearData: Boolean = false
+        val clearData: Boolean = false,
+        val fastModeAvailable: Boolean = false,
     ) {
-        val pushDisabled get() = !pushEnabled
+        val slowModeSelected get() = !fastModeSelected
     }
 
     sealed interface State {
