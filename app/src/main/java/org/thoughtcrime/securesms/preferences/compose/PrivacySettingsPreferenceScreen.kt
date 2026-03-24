@@ -308,7 +308,25 @@ fun PrivacySettingsPreference(
         }
     }
 
-    if (uiState.showCallsWarningDialog) {
+    if(uiState.showSlowModeCallsWarningDialog){
+        AlertDialog(
+            onDismissRequest = {
+                // hide dialog
+                sendCommand(HideSlowModeCallsWarningDialog)
+            },
+            title = stringResource(R.string.warning),
+            text = stringResource(R.string.temp),
+            buttons = listOf(
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.okay)),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_enable),
+                    onClick = {
+                        sendCommand(ShowCallsWarningDialog)
+                    }
+                ),
+            )
+        )
+    } else if (uiState.showCallsWarningDialog) {
         AlertDialog(
             onDismissRequest = {
                 // hide dialog
@@ -370,7 +388,9 @@ fun PrivacySettingsPreference(
 @Composable
 fun PreviewPrivacySettingsPreference() {
     PrivacySettingsPreference(
-        uiState = PrivacySettingsPreferenceViewModel.UIState(),
+        uiState = PrivacySettingsPreferenceViewModel.UIState(
+            showCallsWarningDialog = true
+        ),
         sendCommand = {},
         onBackPressed = {},
         listState = LazyListState()

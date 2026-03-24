@@ -150,7 +150,6 @@ class ConversationViewModelTest : BaseViewModelTest() {
             smsDatabase = mock {
                 on { changeNotification } doReturn MutableSharedFlow()
             },
-            prefStorage = mock()
         )
     }
 

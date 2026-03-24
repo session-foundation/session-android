@@ -28,11 +28,13 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.LINK_PRE
 import org.session.libsession.utilities.observeBooleanKey
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.notifications.NotificationPreferences.PUSH_ENABLED
 import org.thoughtcrime.securesms.preferences.CommunicationPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.ShowCallsWarningDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import javax.inject.Inject
+import kotlin.collections.get
 
 @HiltViewModel
 class PrivacySettingsPreferenceViewModel @Inject constructor(
@@ -41,7 +43,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     private val configFactory: ConfigFactory,
     private val app: Application,
     private val typingStatusRepository: TypingStatusRepository,
-    private val notificationManager: NotificationManagerCompat,
+    private val notificationManager: NotificationManagerCompat
 ) : ViewModel() {
 
     private val keyguardSecure = MutableStateFlow(true)
@@ -115,6 +117,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
 
     init {
         _uiState.update { it.copy(allowCommunityMessageRequests = isCommunityMessageRequestsEnabled) }
+        prefs.setHasSeenSlowModeCallWarning(false)
 
         prefsUiState
             .onEach { prefState ->
@@ -129,11 +132,6 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
                         typingIndicators = prefState.typingIndicators,
                         linkPreviewEnabled = prefState.linkPreviewEnabled,
                         incognitoKeyboardEnabled = prefState.incognitoKeyboardEnabled,
-
-                        // keep these as-is (not derived from prefs flow)
-                        allowCommunityMessageRequests = current.allowCommunityMessageRequests,
-                        showCallsWarningDialog = current.showCallsWarningDialog,
-                        showCallsNotificationDialog = current.showCallsNotificationDialog,
                     )
                 }
             }
@@ -189,6 +187,8 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
     private fun clearScrollActions() {
         _scrollAction.value = ScrollAction()
     }
+
+    fun fastModeEnabled() = prefStorage[PUSH_ENABLED]
 
     fun onCommand(command: Commands) {
         when (command) {
@@ -255,10 +255,37 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
                 }
             }
 
-            ShowCallsWarningDialog -> {
+            Commands.HideSlowModeCallsWarningDialog -> {
                 _uiState.update {
                     it.copy(
-                        showCallsWarningDialog = true
+                        showSlowModeCallsWarningDialog = false
+                    )
+                }
+            }
+
+            ShowCallsWarningDialog -> {
+                // There are two warnings
+                // 1. The first one is shown only once, in case the user is using slow mode
+                // which doesn't work well with calls
+                if(!prefs.hasSeenSlowModeCallWarning() && !fastModeEnabled()) {
+                    _uiState.update {
+                        it.copy(
+                            showSlowModeCallsWarningDialog = true,
+                            showCallsWarningDialog = false
+                        )
+                    }
+
+                    // mark warning as seen
+                    prefs.setHasSeenSlowModeCallWarning(true)
+
+                    return
+                }
+
+                // 2. The second is the "always shown" warning regarding calls
+                _uiState.update {
+                    it.copy(
+                        showCallsWarningDialog = true,
+                        showSlowModeCallsWarningDialog = false
                     )
                 }
             }
@@ -294,6 +321,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         data object NavigateToAppNotificationsSettings : Commands
 
         // Dialog for Calls warning
+        data object HideSlowModeCallsWarningDialog : Commands
         data object HideCallsWarningDialog : Commands
         data object ShowCallsWarningDialog : Commands
 
@@ -324,6 +352,7 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         val allowCommunityMessageRequests: Boolean = false, // Get from userConfigs
 
         val showCallsWarningDialog: Boolean = false,
+        val showSlowModeCallsWarningDialog: Boolean = false,
         val showCallsNotificationDialog: Boolean = false
     )
 

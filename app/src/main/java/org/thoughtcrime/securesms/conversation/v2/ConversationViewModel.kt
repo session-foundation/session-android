@@ -110,19 +110,18 @@ import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.links.LinkChecker
-import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.links.LinkChecker
+import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.notifications.NotificationPreferences.PUSH_ENABLED
-import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
+import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -178,7 +177,6 @@ class ConversationViewModel @AssistedInject constructor(
     private val audioPlaybackManager: AudioPlaybackManager,
     private val loginStateRepository: LoginStateRepository,
     private val jobQueue: Provider<JobQueue>,
-    private val prefStorage: PreferenceStorage
 ) : InputbarViewModel(
     context = application,
     proStatusManager = proStatusManager,
@@ -1614,8 +1612,6 @@ class ConversationViewModel @AssistedInject constructor(
     fun cyclePlaybackSpeed(){
         audioPlaybackManager.cyclePlaybackSpeed()
     }
-
-    fun fastModeEnabled() = prefStorage[PUSH_ENABLED]
 
     @AssistedFactory
     interface Factory {
