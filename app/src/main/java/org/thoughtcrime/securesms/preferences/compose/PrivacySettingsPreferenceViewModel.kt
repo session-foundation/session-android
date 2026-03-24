@@ -34,7 +34,6 @@ import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.ShowCallsWarningDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import javax.inject.Inject
-import kotlin.collections.get
 
 @HiltViewModel
 class PrivacySettingsPreferenceViewModel @Inject constructor(
@@ -117,7 +116,6 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
 
     init {
         _uiState.update { it.copy(allowCommunityMessageRequests = isCommunityMessageRequestsEnabled) }
-        prefs.setHasSeenSlowModeCallWarning(false)
 
         prefsUiState
             .onEach { prefState ->
@@ -241,9 +239,15 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
                 }
             }
 
-            Commands.NavigateToAppNotificationsSettings -> {
+            Commands.NavigateToSystemNotificationsSettings -> {
                 viewModelScope.launch {
-                    _uiEvents.emit(PrivacySettingsPreferenceEvent.OpenAppNotificationSettings)
+                    _uiEvents.emit(PrivacySettingsPreferenceEvent.OpenSystemNotificationSettings)
+                }
+            }
+
+            Commands.NavigateToNotificationsSettings -> {
+                viewModelScope.launch {
+                    _uiEvents.emit(PrivacySettingsPreferenceEvent.OpenNotificationsSettings)
                 }
             }
 
@@ -318,7 +322,8 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
         data class ToggleIncognitoKeyboard(val isEnabled : Boolean) : Commands
 
         data object AskMicPermission : Commands
-        data object NavigateToAppNotificationsSettings : Commands
+        data object NavigateToSystemNotificationsSettings : Commands
+        data object NavigateToNotificationsSettings : Commands
 
         // Dialog for Calls warning
         data object HideSlowModeCallsWarningDialog : Commands
@@ -332,8 +337,9 @@ class PrivacySettingsPreferenceViewModel @Inject constructor(
 
     sealed interface PrivacySettingsPreferenceEvent {
         data object StartLockToggledService : PrivacySettingsPreferenceEvent
-        data object OpenAppNotificationSettings : PrivacySettingsPreferenceEvent
+        data object OpenSystemNotificationSettings : PrivacySettingsPreferenceEvent
         data object AskMicrophonePermission : PrivacySettingsPreferenceEvent
+        data object OpenNotificationsSettings : PrivacySettingsPreferenceEvent
 
         data class ScrollToIndex(val index: Int) : PrivacySettingsPreferenceEvent
     }

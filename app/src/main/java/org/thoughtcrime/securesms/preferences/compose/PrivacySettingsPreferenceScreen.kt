@@ -25,6 +25,7 @@ import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_F
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SESSION_FOUNDATION_KEY
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.NotificationSettingsActivity
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.PrivacySettingsPreferenceEvent.*
 import org.thoughtcrime.securesms.service.KeyCachingService
@@ -58,12 +59,16 @@ fun PrivacySettingsPreferenceScreen(
     LaunchedEffect(Unit) {
         viewModel.uiEvents.collect { event ->
             when (event) {
-                is OpenAppNotificationSettings -> {
+                is OpenSystemNotificationSettings -> {
                     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(Settings.EXTRA_APP_PACKAGE, BuildConfig.APPLICATION_ID)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         .takeIf { IntentUtils.isResolvable(context, it) }
                         ?.let { context.startActivity(it, null) }
+                }
+
+                is OpenNotificationsSettings -> {
+                    context.startActivity(Intent(context, NotificationSettingsActivity::class.java))
                 }
 
                 AskMicrophonePermission -> {
@@ -318,7 +323,14 @@ fun PrivacySettingsPreference(
             text = stringResource(R.string.temp),
             buttons = listOf(
                 DialogButtonData(
-                    text = GetString(stringResource(R.string.okay)),
+                    text = GetString(stringResource(R.string.change)),
+                    qaTag = stringResource(R.string.qa_preferences_dialog_enable),
+                    onClick = {
+                        sendCommand(NavigateToNotificationsSettings)
+                    }
+                ),
+                DialogButtonData(
+                    text = GetString(stringResource(R.string.temp2)),
                     qaTag = stringResource(R.string.qa_preferences_dialog_enable),
                     onClick = {
                         sendCommand(ShowCallsWarningDialog)
@@ -369,7 +381,7 @@ fun PrivacySettingsPreference(
                     text = GetString(stringResource(R.string.enable)),
                     qaTag = stringResource(R.string.qa_preferences_dialog_enable),
                     onClick = {
-                        sendCommand(NavigateToAppNotificationsSettings)
+                        sendCommand(NavigateToSystemNotificationsSettings)
                     }
                 ),
                 DialogButtonData(
@@ -389,7 +401,7 @@ fun PrivacySettingsPreference(
 fun PreviewPrivacySettingsPreference() {
     PrivacySettingsPreference(
         uiState = PrivacySettingsPreferenceViewModel.UIState(
-            showCallsWarningDialog = true
+            showSlowModeCallsWarningDialog = true
         ),
         sendCommand = {},
         onBackPressed = {},
