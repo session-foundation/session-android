@@ -4,9 +4,11 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +33,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.sp
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -38,7 +41,9 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel.Commands.ShowProBadgeCTA
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -88,20 +93,24 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // title
-            ProBadgeText(
+            AnnotatedTextWithIcon(
+                modifier = Modifier.qaTag(stringResource(R.string.qa_pro_badge_text))
+                    .fillMaxWidth()
+                    .safeContentWidth(),
                 text = data.name,
-                showBadge = data.showProBadge,
-                onBadgeClick = if (!data.currentUserPro) {
-                    {
-                        sendCommand(UserProfileModalCommands.ShowProCTA)
-                    }
-                } else null
+                iconRes = if(data.showProBadge ) R.drawable.ic_pro_badge else null,
+                onIconClick = {
+                    sendCommand(UserProfileModalCommands.ShowProCTA)
+                },
+                iconSize = 58.sp to 24.sp,
+                style = LocalType.current.h4,
             )
 
             if (!data.subtitle.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                 Text(
                     text = data.subtitle,
+                    textAlign = TextAlign.Center,
                     style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
                 )
             }
