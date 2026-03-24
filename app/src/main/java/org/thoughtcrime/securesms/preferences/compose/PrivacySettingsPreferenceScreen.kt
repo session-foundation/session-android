@@ -319,8 +319,10 @@ fun PrivacySettingsPreference(
                 // hide dialog
                 sendCommand(HideSlowModeCallsWarningDialog)
             },
-            title = stringResource(R.string.warning),
-            text = stringResource(R.string.temp),
+            title = stringResource(R.string.notificationWarning),
+            text = Phrase.from(context, R.string.notificationWarningDescription)
+                .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                .format().toString(),
             buttons = listOf(
                 DialogButtonData(
                     text = GetString(stringResource(R.string.change)),
@@ -330,7 +332,7 @@ fun PrivacySettingsPreference(
                     }
                 ),
                 DialogButtonData(
-                    text = GetString(stringResource(R.string.temp2)),
+                    text = GetString(stringResource(R.string.skip)),
                     qaTag = stringResource(R.string.qa_preferences_dialog_enable),
                     onClick = {
                         sendCommand(ShowCallsWarningDialog)
