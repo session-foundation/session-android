@@ -327,11 +327,9 @@ class FullNotificationHandler @Inject constructor(
         lastPostedMessageTimestampByThreadId: MutableLongLongMap
     ) {
         Log.d(TAG, "threadId=$threadId: notifyType=MENTIONS ")
-        // The rule for a mentions only thread is: we'll notify the user only if the user is MENTIONED in
-        // the newly added message, but once we are notifying the user, we show all new messages,
-        // not only the mentioned ones. i.e. the mention is only a trigger
 
         val allNewMessages = mmsSmsDatabase.getIncomingMessagesSorted(threadId, threadLastSeen)
+            .filter { MentionUtilities.mentionsMe(it.body, recipientRepository) }
 
         if (allNewMessages.isEmpty()) {
             Log.d(TAG, "threadId=$threadId: no new messages — cancelling notification")
@@ -339,19 +337,9 @@ class FullNotificationHandler @Inject constructor(
             return
         }
 
-        // Now we need to inspect the unnotified new messages for any mentions
-        val lastPostedLatestMessageTimestamp = lastPostedMessageTimestampByThreadId.getOrDefault(threadId, 0L)
-        val unnotifiedMessagesContainMentions = allNewMessages.any { it.dateSent > lastPostedLatestMessageTimestamp &&
-                MentionUtilities.mentionsMe(it.body, recipientRepository) }
-
-        if (!unnotifiedMessagesContainMentions) {
-            Log.d(TAG, "threadId=$threadId: no new self-mention messages, ignoring")
-            return
-        }
-
         doNotify(
             newMessages = allNewMessages,
-            newReactions = reactionDatabase.getReactionsForThread(threadId, threadLastSeen),
+            newReactions = emptyList(),
             threadRecipient = threadRecipient,
             lastPostedMessageTimestampByThreadId = lastPostedMessageTimestampByThreadId,
             threadId = threadId,
