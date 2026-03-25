@@ -26,7 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
-import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.CommunityUrlParser
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -92,7 +92,7 @@ fun CommunityInviteMessage(
             )
 
             Text(
-                text = OpenGroupUrlParser.trimQueryParameter(url),
+                text = CommunityUrlParser.trimQueryParameter(url),
                 style = LocalType.current.small,
                 color = getTextColor(outgoing),
                 maxLines = 2,

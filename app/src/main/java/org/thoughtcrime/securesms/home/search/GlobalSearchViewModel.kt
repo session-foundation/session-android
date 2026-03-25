@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.CommunityUrlParser
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -111,12 +111,12 @@ class GlobalSearchViewModel @Inject constructor(
                         // otherwise a dialog is handled by the query event flow
                         if(communityUrl.joined){
                             // community is already joined: add it to the result list
-                            val openGroup = OpenGroupUrlParser.parseUrl(communityUrl.url)
+                            val communityInfo = CommunityUrlParser.parse(communityUrl.url)
                             results = results.copy(
                                 threads = results.threads + recipientRepository.getRecipientSync(
                                     Address.Community(
-                                        serverUrl = openGroup.server,
-                                        room = openGroup.room
+                                        serverUrl = communityInfo.baseUrl,
+                                        room = communityInfo.room
                                     )
                                 )
                             )

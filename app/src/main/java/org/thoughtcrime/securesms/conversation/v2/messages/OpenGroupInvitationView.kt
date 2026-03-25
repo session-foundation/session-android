@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewOpenGroupInvitationBinding
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.CommunityUrlParser
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.util.getAccentColor
 import javax.inject.Inject
@@ -42,7 +42,7 @@ class OpenGroupInvitationView : LinearLayout {
             openGroupInvitationIconImageView.setImageResource(iconID)
             openGroupInvitationIconBackground.backgroundTintList = ColorStateList.valueOf(backgroundColor)
             openGroupTitleTextView.text = data.groupName
-            openGroupURLTextView.text = OpenGroupUrlParser.trimQueryParameter(data.groupUrl)
+            openGroupURLTextView.text = CommunityUrlParser.trimQueryParameter(data.groupUrl)
             openGroupTitleTextView.setTextColor(textColor)
             openGroupJoinMessageTextView.setTextColor(textColor)
             openGroupURLTextView.setTextColor(textColor)
