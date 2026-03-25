@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.preferences
 import android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -17,39 +18,62 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.min
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.CommunityUrlParser
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.home.startconversation.newmessage.Success
+import org.thoughtcrime.securesms.links.LinkChecker
+import org.thoughtcrime.securesms.links.LinkType
+import org.thoughtcrime.securesms.links.LinkType.CommunityLink.DisplayType.SCANNED
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
+import javax.inject.Inject
 
 private val TITLES = listOf(R.string.view, R.string.scan)
 
 @AndroidEntryPoint
 class QRCodeActivity : ScreenLockActionBarActivity() {
+
+    @Inject lateinit var linkChecker: LinkChecker
+    @Inject lateinit var openGroupManager: OpenGroupManager
+
+    private var urlDialog: LinkType? by mutableStateOf(null)
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -77,21 +101,77 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
                 errors.asSharedFlow(),
                 onScan = ::onScan
             )
+
+            if (urlDialog != null) {
+                LinkAlertDialog(
+                    data = urlDialog!!,
+                    onDismissRequest = {
+                        urlDialog = null
+                    },
+                    openOrJoinCommunity = ::openOrJoinCommunity
+                )
+            }
         }
     }
 
-    private fun onScan(string: String) {
-        val accountId = AccountId.fromStringOrNull(string)
-        if (accountId?.prefix != IdPrefix.STANDARD) {
-            errors.tryEmit(getString(R.string.qrNotAccountId))
-        } else if (!isFinishing) {
-            startActivity(
-                ConversationActivityV2.createIntent(this, address = Address.Standard(accountId))
-                    .setDataAndType(intent.data, intent.type)
-                    .addFlags(FLAG_ACTIVITY_SINGLE_TOP)
-            )
+    private fun onScan(value: String) {
+        lifecycleScope.launch {
+            val accountId = AccountId.fromStringOrNull(value)
 
-            finish()
+            // check if we have a community URL
+            val communityLink = linkChecker.check(value) as? LinkType.CommunityLink
+
+            if (communityLink != null) {
+                onCommunityUrlDetected(communityLink.copy(displayType = SCANNED))
+            } else if (accountId?.prefix != IdPrefix.STANDARD) {
+                errors.tryEmit(getString(R.string.qrNotAccountId))
+            } else if (!isFinishing) {
+                openConversation(Address.Standard(accountId))
+            }
+        }
+    }
+
+    private fun openConversation(address: Address.Conversable){
+        startActivity(
+            ConversationActivityV2.createIntent(this, address = address)
+                .setDataAndType(intent.data, intent.type)
+                .addFlags(FLAG_ACTIVITY_SINGLE_TOP)
+        )
+
+        finish()
+    }
+
+    private fun onCommunityUrlDetected(communityLink: LinkType.CommunityLink){
+        // show confirmation dialog for community
+        urlDialog = communityLink
+    }
+
+    private fun openOrJoinCommunity(url: String){
+        val communityInfo = try {
+            CommunityUrlParser.parse(url)
+        } catch (_: CommunityUrlParser.Error) {
+            Toast.makeText(application, R.string.communityEnterUrlErrorInvalidDescription, Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
+
+        lifecycleScope.launch {
+            try {
+                openGroupManager.add(
+                    server = communityInfo.baseUrl,
+                    room = communityInfo.room,
+                    publicKey = communityInfo.pubKeyHex,
+                )
+
+                // after joining or if already joined, open the conversation
+                openConversation(Address.Community(communityInfo.baseUrl, communityInfo.room))
+            } catch (e: Exception) {
+                Log.e("", "Error joining community", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(application, R.string.communityErrorDescription, Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
         }
     }
 

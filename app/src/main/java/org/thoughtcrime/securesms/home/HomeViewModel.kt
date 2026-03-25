@@ -32,7 +32,7 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.CommunityUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
@@ -467,9 +467,9 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun openOrJoinCommunity(url: String) {
-        val openGroup = try {
-            OpenGroupUrlParser.parseUrl(url)
-        } catch (_: OpenGroupUrlParser.Error) {
+        val communityInfo = try {
+            CommunityUrlParser.parse(url)
+        } catch (_: CommunityUrlParser.Error) {
             Toast.makeText(context, R.string.communityEnterUrlErrorInvalidDescription, Toast.LENGTH_SHORT)
                 .show()
             return
@@ -481,13 +481,13 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 openGroupManager.add(
-                    server = openGroup.server,
-                    room = openGroup.room,
-                    publicKey = openGroup.serverPublicKey,
+                    server = communityInfo.baseUrl,
+                    room = communityInfo.room,
+                    publicKey = communityInfo.pubKeyHex,
                 )
 
                 // after joining or if already joined, open the conversation
-                val communityAddress = Address.Community(openGroup.server, openGroup.room)
+                val communityAddress = Address.Community(communityInfo.baseUrl, communityInfo.room)
                 _uiEvents.emit(UiEvent.OpenConversation(communityAddress))
 
             } catch (e: Exception) {
