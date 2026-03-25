@@ -10,6 +10,7 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.json.JSONArray
 import org.json.JSONException
 import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.SaneJSONObject
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -263,6 +264,35 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
         query = query,
         args = args.toTypedArray()
       )
+  }
+
+  /**
+   * Get the latest reaction timestamp for the given thread.
+   *
+   * @return The latest reaction timestamp, or null if there are no reactions.
+   */
+  fun getLatestReactionTimestamp(threadAddress: Address.Conversable): Long? {
+    return readableDatabase.query("""
+      SELECT MAX(r.$DATE_SENT)
+      FROM $TABLE_NAME r
+      WHERE (r.$MESSAGE_ID, r.$IS_MMS) IN (
+        SELECT m.${SmsDatabase.ID}, 0 FROM ${SmsDatabase.TABLE_NAME} m
+        INNER JOIN ${ThreadDatabase.TABLE_NAME} t ON m.${SmsDatabase.THREAD_ID} = t.${ThreadDatabase.ID}
+        WHERE t.${ThreadDatabase.ADDRESS} = ?1
+      
+        UNION ALL
+      
+        SELECT m.${MmsSmsColumns.ID}, 1 FROM ${MmsDatabase.TABLE_NAME} m
+        INNER JOIN ${ThreadDatabase.TABLE_NAME} t ON m.${MmsSmsColumns.THREAD_ID} = t.${ThreadDatabase.ID}
+        WHERE t.${ThreadDatabase.ADDRESS} = ?1
+     )
+    """, arrayOf(threadAddress)).use { cursor ->
+      if (cursor.moveToNext()) {
+        cursor.getLong(0)
+      } else {
+        null
+      }
+    }
   }
 
     /**

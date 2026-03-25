@@ -115,7 +115,6 @@ class NameOnlyNotificationHandler @Inject constructor(
                             threadAddress = threadAddress,
                             threadRecipient = threadRecipient,
                             threadId = value.threadId,
-                            latestMessageTimestampMs = latestMessage.dateSent,
                             messages = listOf(NotificationCompat.MessagingStyle.Message(
                                 context.resources.getQuantityText(R.plurals.messageNew, 1),
                                 latestMessage.dateSent,
@@ -163,7 +162,6 @@ class NameOnlyNotificationHandler @Inject constructor(
                             threadAddress = threadAddress,
                             threadRecipient = threadRecipient,
                             threadId = message.threadId,
-                            latestMessageTimestampMs = notified.dateSent,
                             messages = listOf(NotificationCompat.MessagingStyle.Message(
                                 context.resources.getQuantityText(R.plurals.messageNew, 1),
                                 notified.dateSent,

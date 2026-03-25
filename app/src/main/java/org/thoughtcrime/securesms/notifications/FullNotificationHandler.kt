@@ -317,7 +317,6 @@ class FullNotificationHandler @Inject constructor(
             threadAddress = threadAddress,
             threadRecipient = threadRecipient,
             threadId = threadId,
-            latestMessageTimestampMs = latestMessageTimestampMs,
             messages = messages,
             canReply = true,
             silent = updateOnly
@@ -388,7 +387,6 @@ class FullNotificationHandler @Inject constructor(
             threadAddress = threadAddress,
             threadRecipient = threadRecipient,
             threadId = threadId,
-            latestMessageTimestampMs = newMessage.dateSent,
             messages = listOf(
                 NotificationCompat.MessagingStyle.Message(
                     context.getText(R.string.messageRequestsNew),

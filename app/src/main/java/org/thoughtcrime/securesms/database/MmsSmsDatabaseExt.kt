@@ -379,6 +379,31 @@ object MmsSmsDatabaseExt {
     }
 
     /**
+     * Find the latest message timestamp in a thread.
+     *
+     * @return The latest message timestamp in a thread, or 0 if there are no messages in the thread.
+     */
+    fun MmsSmsDatabase.getLatestMessageTimestamp(threadAddress: Address.Conversable): Long {
+        return readableDatabase.query("""
+            WITH sms_max AS (
+                SELECT MAX(m.${SmsDatabase.DATE_SENT}) AS last
+                FROM ${SmsDatabase.TABLE_NAME} m
+                INNER JOIN ${ThreadDatabase.TABLE_NAME} t ON m.${SmsDatabase.THREAD_ID} = t.${ThreadDatabase.ID}
+                WHERE t.${ThreadDatabase.ADDRESS} = ?1
+            ), mms_max AS (
+                SELECT MAX(m.${MmsDatabase.DATE_SENT}) AS last
+                FROM ${MmsDatabase.TABLE_NAME} m
+                INNER JOIN ${ThreadDatabase.TABLE_NAME} t ON m.${MmsSmsColumns.THREAD_ID} = t.${ThreadDatabase.ID}
+                WHERE t.${ThreadDatabase.ADDRESS} = ?1
+            )
+            SELECT MAX(IFNULL((SELECT last FROM sms_max LIMIT 1), 0), IFNULL((SELECT last FROM mms_max LIMIT 1), 0))
+        """, arrayOf(threadAddress.address)).use { cursor ->
+            require(cursor.moveToNext())
+            cursor.getLong(0)
+        }
+    }
+
+    /**
      * Find all incoming messages (including control messages) for the given thread.
      * Ordered by date sent in ascending order.
      */
