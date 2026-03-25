@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.json.JSONArray
 import org.json.JSONException
+import org.session.libsignal.utilities.AccountId
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.SaneJSONObject
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
@@ -376,18 +377,29 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
     }
   }
 
-  fun getReactionsForThread(threadId: Long, minSendTimeMsExclusive: Long): List<ReactionRecord> {
+  fun getIncomingReactionsForMyMessages(
+      threadId: Long,
+      minSendTimeMsExclusive: Long,
+      myId: AccountId
+  ): List<ReactionRecord> {
     //language=roomsql
     return readableDatabase.query("""
       SELECT * FROM $TABLE_NAME
       WHERE ($MESSAGE_ID, $IS_MMS) IN (
-        SELECT m.${SmsDatabase.ID}, 0 FROM ${SmsDatabase.TABLE_NAME} m WHERE m.${SmsDatabase.THREAD_ID} = ?1
+        SELECT m.${SmsDatabase.ID}, 0 FROM ${SmsDatabase.TABLE_NAME} m 
+        WHERE m.${SmsDatabase.THREAD_ID} = ?1
+            AND m.${SmsDatabase.IS_OUTGOING}
+        
         UNION ALL
-        SELECT m.${MmsSmsColumns.ID}, 1 FROM ${MmsDatabase.TABLE_NAME} m WHERE m.${MmsSmsColumns.THREAD_ID} = ?1
+        
+        SELECT m.${MmsSmsColumns.ID}, 1 FROM ${MmsDatabase.TABLE_NAME} m 
+        WHERE m.${MmsSmsColumns.THREAD_ID} = ?1
+            AND m.${MmsSmsColumns.IS_OUTGOING}
       )
+      AND $AUTHOR_ID != ?3
       AND $DATE_SENT > ?2
       ORDER BY $DATE_SENT, $SORT_ID
-    """, arrayOf(threadId, minSendTimeMsExclusive)).use { cursor ->
+    """, arrayOf<Any>(threadId, minSendTimeMsExclusive, myId.hexString)).use { cursor ->
       buildList(cursor.count) {
         while (cursor.moveToNext()) {
           add(readReaction(cursor))

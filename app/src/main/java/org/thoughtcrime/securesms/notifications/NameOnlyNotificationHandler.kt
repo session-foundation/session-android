@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.merge
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -46,6 +47,7 @@ class NameOnlyNotificationHandler @Inject constructor(
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
     private val reactionDb: ReactionDatabase,
+    private val loginStateRepository: LoginStateRepository,
     recipientRepository: RecipientRepository,
     currentActivityObserver: CurrentActivityObserver,
     avatarUtils: AvatarUtils,
@@ -139,12 +141,13 @@ class NameOnlyNotificationHandler @Inject constructor(
                         // Only notify reaction when notify type is ALL
                         if (threadNotifyType != NotifyType.ALL) return
 
-                        val reactions = reactionDb.getReactionsForThread(
+                        val reactions = reactionDb.getIncomingReactionsForMyMessages(
                             threadId = message.threadId,
                             minSendTimeMsExclusive = max(
                                 lastSeen,
                                 lastNotifiedMessageTimestamp.getOrDefault(message.threadId, 0L)
-                            )
+                            ),
+                            myId = loginStateRepository.requireLocalAccountId(),
                         )
 
                         if (reactions.isEmpty()) {
