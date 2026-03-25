@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.json.JSONArray
 import org.json.JSONException
+import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.SaneJSONObject
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -264,6 +266,35 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
       )
   }
 
+  /**
+   * Get the latest reaction timestamp for the given thread.
+   *
+   * @return The latest reaction timestamp, or null if there are no reactions.
+   */
+  fun getLatestReactionTimestamp(threadAddress: Address.Conversable): Long? {
+    return readableDatabase.query("""
+      SELECT MAX(r.$DATE_SENT)
+      FROM $TABLE_NAME r
+      WHERE (r.$MESSAGE_ID, r.$IS_MMS) IN (
+        SELECT m.${SmsDatabase.ID}, 0 FROM ${SmsDatabase.TABLE_NAME} m
+        INNER JOIN ${ThreadDatabase.TABLE_NAME} t ON m.${SmsDatabase.THREAD_ID} = t.${ThreadDatabase.ID}
+        WHERE t.${ThreadDatabase.ADDRESS} = ?1
+      
+        UNION ALL
+      
+        SELECT m.${MmsSmsColumns.ID}, 1 FROM ${MmsDatabase.TABLE_NAME} m
+        INNER JOIN ${ThreadDatabase.TABLE_NAME} t ON m.${MmsSmsColumns.THREAD_ID} = t.${ThreadDatabase.ID}
+        WHERE t.${ThreadDatabase.ADDRESS} = ?1
+     )
+    """, arrayOf(threadAddress)).use { cursor ->
+      if (cursor.moveToNext()) {
+        cursor.getLong(0)
+      } else {
+        null
+      }
+    }
+  }
+
     /**
      * Update the count for all reactions with the given emoji on the specified message.
      * Note this should ONLY be used on community reactions as each reaction record contains the
@@ -346,18 +377,29 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
     }
   }
 
-  fun getReactionsForThread(threadId: Long, minSendTimeMsExclusive: Long): List<ReactionRecord> {
+  fun getIncomingReactionsForMyMessages(
+      threadId: Long,
+      minSendTimeMsExclusive: Long,
+      myId: AccountId
+  ): List<ReactionRecord> {
     //language=roomsql
     return readableDatabase.query("""
       SELECT * FROM $TABLE_NAME
       WHERE ($MESSAGE_ID, $IS_MMS) IN (
-        SELECT m.${SmsDatabase.ID}, 0 FROM ${SmsDatabase.TABLE_NAME} m WHERE m.${SmsDatabase.THREAD_ID} = ?1
+        SELECT m.${SmsDatabase.ID}, 0 FROM ${SmsDatabase.TABLE_NAME} m 
+        WHERE m.${SmsDatabase.THREAD_ID} = ?1
+            AND m.${SmsDatabase.IS_OUTGOING}
+        
         UNION ALL
-        SELECT m.${MmsSmsColumns.ID}, 1 FROM ${MmsDatabase.TABLE_NAME} m WHERE m.${MmsSmsColumns.THREAD_ID} = ?1
+        
+        SELECT m.${MmsSmsColumns.ID}, 1 FROM ${MmsDatabase.TABLE_NAME} m 
+        WHERE m.${MmsSmsColumns.THREAD_ID} = ?1
+            AND m.${MmsSmsColumns.IS_OUTGOING}
       )
+      AND $AUTHOR_ID != ?3
       AND $DATE_SENT > ?2
       ORDER BY $DATE_SENT, $SORT_ID
-    """, arrayOf(threadId, minSendTimeMsExclusive)).use { cursor ->
+    """, arrayOf<Any>(threadId, minSendTimeMsExclusive, myId.hexString)).use { cursor ->
       buildList(cursor.count) {
         while (cursor.moveToNext()) {
           add(readReaction(cursor))

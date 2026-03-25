@@ -888,6 +888,8 @@
     <string name="notificationSenderNameAndPreview">Display the sender\'s name and a preview of the message content.</string>
     <string name="notificationSenderNameOnly">Display only the sender\'s name without any message content.</string>
     <string name="notificationSettings">Notification Settings</string>
+    <string name="notificationWarning">Notification Warning</string>
+    <string name="notificationWarningDescription">Fast Mode notifications must be turned on to receive reliable call notifications when {app_name} is closed. This device is currently using Slow Mode notifications.\n\nWould you like to change your notification settings?</string>
     <string name="notificationsAllMessages">All Messages</string>
     <string name="notificationsContent">Notification Content</string>
     <string name="notificationsContentDescription">The information shown in notifications.</string>
@@ -1407,6 +1409,7 @@
     <string name="showLess">Show Less</string>
     <string name="showNoteToSelf">Show Note to Self</string>
     <string name="showNoteToSelfDescription">Are you sure you want to show <b>Note to Self</b> in your conversation list?</string>
+    <string name="skip">Skip</string>
     <string name="spellChecker">Spell Checker</string>
     <string name="stickers">Stickers</string>
     <string name="strength">Strength</string>
