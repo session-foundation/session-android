@@ -9,22 +9,17 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.collection.MutableLongLongMap
-import androidx.collection.arraySetOf
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.session.libsignal.utilities.Log
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.merge
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.toAddress
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.effectiveNotifyType
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.mentionsMe
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
@@ -34,17 +29,13 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadId
-import org.thoughtcrime.securesms.database.getAddressAndLastSeen
-import org.thoughtcrime.securesms.database.getAllLastSeen
 import org.thoughtcrime.securesms.database.getLastSeen
 import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.NotifyType
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.database.model.ThreadChanges
 import org.thoughtcrime.securesms.home.HomeActivity
-import org.thoughtcrime.securesms.notifications.ThreadBasedNotificationHandler.Companion.currentlyShowingConversation
 import org.thoughtcrime.securesms.notifications.ThreadBasedNotificationHandler.Companion.getChannelIdFor
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.util.AppVisibilityManager
@@ -75,6 +66,7 @@ class NoNameOrContentNotificationHandler @Inject constructor(
     private val notificationManager: NotificationManagerCompat,
     private val prefs: PreferenceStorage,
     private val appVisibilityManager: AppVisibilityManager,
+    private val loginStateRepository: LoginStateRepository,
 ): BaseNotificationHandler(
     currentActivityObserver = currentActivityObserver,
     threadDb = threadDb,
@@ -182,9 +174,10 @@ class NoNameOrContentNotificationHandler @Inject constructor(
 
                         val threadLastNotified = lastNotifiedByThreadId.getOrDefault(message.threadId, 0L)
 
-                        val newReactions = reactionDatabase.getReactionsForThread(
-                            message.threadId,
-                            max(threadLastSeen, threadLastNotified)
+                        val newReactions = reactionDatabase.getIncomingReactionsForMyMessages(
+                            threadId = message.threadId,
+                            minSendTimeMsExclusive = max(threadLastSeen, threadLastNotified),
+                            myId = loginStateRepository.requireLocalAccountId()
                         )
 
                         if (newReactions.isEmpty()) {

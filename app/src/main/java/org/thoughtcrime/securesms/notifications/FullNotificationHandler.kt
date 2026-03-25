@@ -17,6 +17,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.effectiveNotifyType
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -55,6 +56,7 @@ class FullNotificationHandler @Inject constructor(
     @ApplicationContext context: Context,
     threadDb: ThreadDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
+    private val loginStateRepository: LoginStateRepository,
     private val mmsDatabase: MmsDatabase,
     private val smsDatabase: SmsDatabase,
     recipientRepository: RecipientRepository,
@@ -228,7 +230,11 @@ class FullNotificationHandler @Inject constructor(
             // No reactions for communities are notified...
             emptyList()
         } else {
-            reactionDatabase.getReactionsForThread(threadId, threadLastSeen)
+            reactionDatabase.getIncomingReactionsForMyMessages(
+                threadId = threadId,
+                minSendTimeMsExclusive = threadLastSeen,
+                myId = loginStateRepository.requireLocalAccountId()
+            )
         }
 
         Log.d(TAG, "threadId=$threadId: found ${newMessages.size} message(s), ${newReactions.size} reaction(s) since lastSeen=$threadLastSeen")
