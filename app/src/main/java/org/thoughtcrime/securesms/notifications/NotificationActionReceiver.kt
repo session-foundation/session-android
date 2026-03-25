@@ -17,6 +17,9 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getLatestMessageTimestamp
+import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -26,6 +29,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import javax.inject.Inject
+import kotlin.math.max
 
 /**
  * A [BroadcastReceiver] that handles notification actions: marking a conversation as read,
@@ -55,20 +59,23 @@ class NotificationActionReceiver : BroadcastReceiver() {
     lateinit var proStatusManager: ProStatusManager
 
     @Inject
+    lateinit var mmsSmsDatabase: MmsSmsDatabase
+
+    @Inject
+    lateinit var reactionDatabase: ReactionDatabase
+
+    @Inject
     @ManagerScope
     lateinit var scope: CoroutineScope
 
     override fun onReceive(context: Context, intent: Intent) {
-        val handler: (suspend () -> Unit) = when (intent.action) {
-            ACTION_MARK_READ -> ({ handleMarkRead(intent) })
-            ACTION_REPLY -> ({ handleReply(intent) })
-            else -> return
-        }
-
         val result = goAsync()
         scope.launch {
             try {
-                handler()
+                when (intent.action) {
+                    ACTION_MARK_READ -> handleMarkRead(intent)
+                    ACTION_REPLY -> handleReply(intent)
+                }
             } catch (e: Throwable) {
                 Log.e(TAG, "Error handling notification action: ${intent.action}", e)
             } finally {
@@ -82,8 +89,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
             IntentCompat.getParcelableExtra(intent, EXTRA_THREAD_ADDRESS, Address.Conversable::class.java)
         ) { "Missing thread address" }
 
-        val lastSeenTime = intent.getLongExtra(EXTRA_LATEST_MESSAGE_TIMESTAMP, 0L)
-        storage.updateConversationLastSeenIfNeeded(threadAddress, lastSeenTime)
+        val latestMessageTimestamp = mmsSmsDatabase.getLatestMessageTimestamp(threadAddress)
+        val latestReactionTimestamp = reactionDatabase.getLatestReactionTimestamp(threadAddress) ?: 0L
+
+        storage.updateConversationLastSeenIfNeeded(threadAddress,
+            lastSeenTime = max(a = latestReactionTimestamp, b = latestMessageTimestamp)
+        )
     }
 
     private fun handleReply(intent: Intent) {
@@ -131,21 +142,18 @@ class NotificationActionReceiver : BroadcastReceiver() {
         private const val ACTION_REPLY = "network.loki.securesms.notifications.REPLY"
 
         private const val EXTRA_THREAD_ADDRESS = "thread_address"
-        private const val EXTRA_LATEST_MESSAGE_TIMESTAMP = "latest_timestamp"
         private const val EXTRA_REPLY_TEXT = "extra_reply_text"
 
         fun buildMarkReadIntent(
             context: Context,
-            threadAddress: Address.Conversable,
-            latestMessageTimestampMs: Long
+            threadAddress: Address.Conversable
         ): PendingIntent {
             return PendingIntent.getBroadcast(
                 context,
                 threadAddress.hashCode(),
                 Intent(context, NotificationActionReceiver::class.java)
                     .setAction(ACTION_MARK_READ)
-                    .putExtra(EXTRA_THREAD_ADDRESS, threadAddress)
-                    .putExtra(EXTRA_LATEST_MESSAGE_TIMESTAMP, latestMessageTimestampMs),
+                    .putExtra(EXTRA_THREAD_ADDRESS, threadAddress),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }

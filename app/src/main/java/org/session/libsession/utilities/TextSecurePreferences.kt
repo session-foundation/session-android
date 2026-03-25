@@ -155,6 +155,8 @@ interface TextSecurePreferences {
     fun setHasSeenProExpired()
     fun clearProExpiryView()
     fun watchPostProStatus(): StateFlow<Boolean>
+    fun hasSeenSlowModeCallWarning(): Boolean
+    fun setHasSeenSlowModeCallWarning(value: Boolean)
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
     fun setCallNotificationsEnabled(enabled : Boolean)
@@ -289,6 +291,7 @@ interface TextSecurePreferences {
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
         const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
         const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
+        const val SHOWN_SLOW_MODE_CALL_WARNING = "has_seen_slow_mode_call_warning"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -891,6 +894,14 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isCallNotificationsEnabled(): Boolean {
         return getBooleanPreference(CALL_NOTIFICATIONS_ENABLED, false)
+    }
+
+    override fun hasSeenSlowModeCallWarning(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.SHOWN_SLOW_MODE_CALL_WARNING, false)
+    }
+
+    override fun setHasSeenSlowModeCallWarning(value: Boolean) {
+        setBooleanPreference(TextSecurePreferences.SHOWN_SLOW_MODE_CALL_WARNING, value)
     }
 
     override fun getLastVacuum(): Long {
