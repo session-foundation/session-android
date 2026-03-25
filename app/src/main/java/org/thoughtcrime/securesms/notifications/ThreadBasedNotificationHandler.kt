@@ -92,7 +92,6 @@ abstract class ThreadBasedNotificationHandler(
         threadAddress: Address.Conversable,
         threadRecipient: Recipient,
         threadId: ThreadId,
-        latestMessageTimestampMs: Long,
         messages: List<NotificationCompat.MessagingStyle.Message>,
         canReply: Boolean,
         silent: Boolean
@@ -166,8 +165,7 @@ abstract class ThreadBasedNotificationHandler(
                 context.getString(R.string.messageMarkRead),
                 NotificationActionReceiver.buildMarkReadIntent(
                     context = context,
-                    threadAddress = threadAddress,
-                    latestMessageTimestampMs = latestMessageTimestampMs
+                    threadAddress = threadAddress
                 )
             ).build()
         )
