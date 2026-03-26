@@ -21,6 +21,7 @@ import org.thoughtcrime.securesms.notifications.NotificationPreferences.PRIVACY
 import org.thoughtcrime.securesms.notifications.NotificationPreferences.PUSH_ENABLED
 import org.thoughtcrime.securesms.notifications.NotificationPreferences.SOUND_WHEN_APP_OPEN
 import org.thoughtcrime.securesms.notifications.NotificationPrivacy
+import org.thoughtcrime.securesms.onboarding.messagenotifications.isFastModeAvailable
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.ui.isWhitelistedFromDoze
 import javax.inject.Inject
@@ -32,7 +33,9 @@ class NotificationsPreferenceViewModel @Inject constructor(
     private val channels: NotificationChannelManager,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(UIState())
+    private val _uiState = MutableStateFlow(UIState(
+        fastModeEnabled = application.isFastModeAvailable()
+    ))
     val uiState: StateFlow<UIState> get() = _uiState
 
     private val _uiEvents = MutableSharedFlow<NotificationPreferenceEvent>()
@@ -63,7 +66,7 @@ class NotificationsPreferenceViewModel @Inject constructor(
             _uiState.update { old ->
                 old.copy(
                     // strategy
-                    isPushEnabled = isPushEnabled,
+                    fastModeSelected = isPushEnabled,
                     checkedDozeWhitelist = notif.checkedDozeWhitelist,
 
                     // keep the current doze whitelist status; you refresh it separately
@@ -204,7 +207,8 @@ class NotificationsPreferenceViewModel @Inject constructor(
 
     data class UIState(
         // Strategy
-        val isPushEnabled: Boolean = false,
+        val fastModeSelected: Boolean = false,
+        val fastModeEnabled: Boolean = false,
         val isWhitelistedFromDoze: Boolean = false, // run in background
         val checkedDozeWhitelist: Boolean = false, // whitelist dialog's first time
         // style/behavior
