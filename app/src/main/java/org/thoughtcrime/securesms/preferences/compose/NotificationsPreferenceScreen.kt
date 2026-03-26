@@ -11,7 +11,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -141,7 +140,8 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.useFastMode),
                         subtitle = annotatedStringResource(fastModeDescription),
                         subtitleStyle = LocalType.current.large,
-                        checked = uiState.isPushEnabled,
+                        checked = uiState.fastModeSelected,
+                        enabled = uiState.fastModeEnabled,
                         qaTag = R.string.qa_preferences_enable_push,
                         switchQaTag = R.string.qa_preferences_enable_push_toggle,
                         onCheckedChange = {isEnabled -> sendCommand(TogglePushEnabled(isEnabled)) }
