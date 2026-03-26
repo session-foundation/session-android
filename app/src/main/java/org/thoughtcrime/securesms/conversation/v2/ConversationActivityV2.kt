@@ -1155,11 +1155,19 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                                 liveData.observe(this@ConversationActivityV2) { state ->
                                     val recipients = state?.typists ?: emptyList()
 
-                                    // Quick-fix behavior kept as-is
-                                    val viewContainer = binding.typingIndicatorViewContainer
-                                    viewContainer.isVisible =
-                                        recipients.isNotEmpty() && isScrolledToBottom
-                                    viewContainer.setTypists(recipients)
+                                    val shouldShowTypingIndicator = recipients.isNotEmpty() &&
+                                            isScrolledToBottom
+
+                                    if (shouldShowTypingIndicator) {
+                                        binding.typingIndicatorViewContainer.isVisible = true
+                                        binding.typingIndicatorViewContainer.startAnimation()
+
+                                        // Make sure we are actually at the end
+                                        gotoConversationEnd(smoothScroll = false)
+                                    } else {
+                                        binding.typingIndicatorViewContainer.stopAnimation()
+                                        binding.typingIndicatorViewContainer.isVisible = false
+                                    }
                                 }
                             }
                     }
