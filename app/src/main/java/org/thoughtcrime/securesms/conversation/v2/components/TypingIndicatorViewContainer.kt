@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import network.loki.messenger.databinding.ViewConversationTypingContainerBinding
-import org.session.libsession.utilities.Address
 
 class TypingIndicatorViewContainer : LinearLayout {
     private lateinit var binding: ViewConversationTypingContainerBinding
@@ -16,11 +15,6 @@ class TypingIndicatorViewContainer : LinearLayout {
 
     private fun initialize() {
         binding = ViewConversationTypingContainerBinding.inflate(LayoutInflater.from(context), this, true)
-    }
-
-    fun setTypists(typists: List<Address>) {
-        if (typists.isEmpty()) { stopAnimation(); return }
-        startAnimation()
     }
 
     fun startAnimation() = binding.typingIndicator.root.startAnimation()
