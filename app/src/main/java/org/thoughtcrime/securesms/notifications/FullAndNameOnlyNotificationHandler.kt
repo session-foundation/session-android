@@ -46,13 +46,13 @@ import javax.inject.Singleton
 import kotlin.math.max
 
 /**
- * Handles notifications in [NotificationPrivacy.ShowNameAndContent] mode.
+ * Handles notifications in [NotificationPrivacy.ShowNameAndContent]/[NotificationPrivacy.ShowNameOnly] mode.
  *
- * Shows one per-thread notification with the sender's name, avatar, and full message body,
+ * Shows one per-thread notification with the sender's name, avatar, and full message body if turned on,
  * using [NotificationCompat.MessagingStyle]. Reactions are also included.
  */
 @Singleton
-class FullNotificationHandler @Inject constructor(
+class FullAndNameOnlyNotificationHandler @Inject constructor(
     @ApplicationContext context: Context,
     threadDb: ThreadDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
@@ -269,17 +269,25 @@ class FullNotificationHandler @Inject constructor(
             ArrayList<NotificationCompat.MessagingStyle.Message>(newMessages.size + newReactions.size)
         val personCache = arrayMapOf<Address, Person>()
 
+        val nameOnlyMessageContent = if (prefs[NotificationPreferences.PRIVACY] == NotificationPrivacy.ShowNameOnly) {
+            context.resources.getQuantityText(R.plurals.messageNew, 1)
+        } else {
+            null
+        }
+
         for (msg in newMessages) {
+            val text = nameOnlyMessageContent ?: MentionUtilities.parseAndSubstituteMentions(
+                recipientRepository = recipientRepository,
+                input = nameOnlyMessageContent ?: messageFormatter.formatMessageBodyForNotification(
+                    context,
+                    msg,
+                    threadRecipient
+                ),
+                context = context
+            ).text
+
             messages += NotificationCompat.MessagingStyle.Message(
-                MentionUtilities.parseAndSubstituteMentions(
-                    recipientRepository = recipientRepository,
-                    input = messageFormatter.formatMessageBodyForNotification(
-                        context,
-                        msg,
-                        threadRecipient
-                    ),
-                    context = context
-                ).text,
+                text,
                 msg.dateSent,
                 msg.toPerson(personCache)
             )

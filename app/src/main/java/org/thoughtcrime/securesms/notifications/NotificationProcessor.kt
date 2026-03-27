@@ -14,8 +14,8 @@ import javax.inject.Singleton
  * Reactive notification processor that replaces the poll-based DefaultMessageNotifier.
  *
  * Watches the user's notification privacy preference and delegates to the appropriate handler:
- * - [NotificationPrivacy.ShowNameAndContent] → [FullNotificationHandler]
- * - [NotificationPrivacy.ShowNameOnly]       → [NameOnlyNotificationHandler]
+ * - [NotificationPrivacy.ShowNameAndContent] → [FullAndNameOnlyNotificationHandler]
+ * - [NotificationPrivacy.ShowNameOnly]       → [FullAndNameOnlyNotificationHandler]
  * - [NotificationPrivacy.ShowNoNameOrContent] → [NoNameOrContentNotificationHandler]
  *
  * Key behaviours:
@@ -27,8 +27,7 @@ import javax.inject.Singleton
 @Singleton
 class NotificationProcessor @Inject constructor(
     private val prefs: PreferenceStorage,
-    private val fullHandler: FullNotificationHandler,
-    private val nameOnlyHandler: NameOnlyNotificationHandler,
+    private val fullHandler: FullAndNameOnlyNotificationHandler,
     private val noNameOrContentHandler: NoNameOrContentNotificationHandler,
 ) : AuthAwareComponent {
 
@@ -37,8 +36,7 @@ class NotificationProcessor @Inject constructor(
             .collectLatest { privacy ->
                 Log.d(TAG, "Start processing notification for $privacy")
                 when (privacy) {
-                    NotificationPrivacy.ShowNameAndContent -> fullHandler.process()
-                    NotificationPrivacy.ShowNameOnly -> nameOnlyHandler.process()
+                    NotificationPrivacy.ShowNameOnly, NotificationPrivacy.ShowNameAndContent -> fullHandler.process()
                     NotificationPrivacy.ShowNoNameOrContent -> noNameOrContentHandler.process()
                 }
             }
