@@ -1,10 +1,19 @@
 package org.thoughtcrime.securesms.notifications
 
+import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat.getString
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
@@ -26,6 +35,7 @@ import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupRevokedMessageHandler
+import org.thoughtcrime.securesms.home.HomeActivity
 import javax.inject.Inject
 
 private const val TAG = "PushHandler"
@@ -40,6 +50,8 @@ class PushReceiver @Inject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     @param:ManagerScope private val scope: CoroutineScope,
     private val loginStateRepository: LoginStateRepository,
+    private val notificationChannelManager: NotificationChannelManager,
+    private val notificationManagerCompat: NotificationManagerCompat,
 ) {
 
     /**
@@ -79,6 +91,7 @@ class PushReceiver @Inject constructor(
 
                     // send a generic notification if we have no data
                     if (pushData.data == null) {
+                        sendGenericNotification()
                         return
                     }
 
@@ -146,6 +159,10 @@ class PushReceiver @Inject constructor(
                 namespace == Namespace.DEFAULT() || pushData?.metadata == null -> {
                     if (pushData?.data == null) {
                         Log.d(TAG, "Push data is null")
+                        if(pushData?.metadata?.data_too_long != true) {
+                            Log.d(TAG, "Sending a generic notification (data_too_long was false)")
+                            sendGenericNotification()
+                        }
                         return
                     }
 
@@ -185,6 +202,33 @@ class PushReceiver @Inject constructor(
             Log.d(TAG, "Failed to unwrap data for message due to error.", e)
         }
 
+    }
+
+
+    private fun sendGenericNotification() {
+        // no need to do anything if notification permissions are not granted
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        val builder = NotificationCompat.Builder(context,
+            notificationChannelManager.getNotificationChannelId(NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES))
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(context.getColor(R.color.textsecure_primary))
+            .setContentTitle(getString(context, R.string.app_name))
+
+            // Note: We set the count to 1 in the below plurals string so it says "You've got a new message" (singular)
+            .setContentText(context.resources.getQuantityString(R.plurals.messageNewYouveGot, 1, 1))
+
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
+
+        notificationManagerCompat.notify(NotificationId.LEGACY_PUSH, builder.build())
     }
 
     private fun Map<String, String>.asPushData(): PushData =
