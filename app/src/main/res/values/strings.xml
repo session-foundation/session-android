@@ -265,6 +265,7 @@
     <string name="clearOnThisDevice">Clear on this device</string>
     <string name="close">Close</string>
     <string name="closeApp">Close App</string>
+    <string name="closeFocusedConversation">Close Focused Conversation</string>
     <string name="closeWindow">Close Window</string>
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
     <string name="communitUrlJoinScanned">Looks like you scanned a Community URL.\n\nWould you like to join this Community?</string>
