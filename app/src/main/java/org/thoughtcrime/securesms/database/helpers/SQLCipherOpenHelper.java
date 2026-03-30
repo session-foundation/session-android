@@ -108,9 +108,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV56                          = 77;
   private static final int lokiV57                          = 78;
   private static final int lokiV58                          = 79;
+  private static final int lokiV59                          = 80;
+  private static final int lokiV60                          = 81;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV58;
+  private static final int    DATABASE_VERSION         = lokiV60;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -196,8 +198,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(LokiMessageDatabase.getCreateMmsHashTableCommand());
     db.execSQL(LokiThreadDatabase.getCreateSessionResetTableCommand());
     db.execSQL(LokiThreadDatabase.getCreatePublicChatTableCommand());
-    db.execSQL(LokiUserDatabase.getCreateDisplayNameTableCommand());
-    db.execSQL(LokiBackupFilesDatabase.getCreateTableCommand());
+    db.execSQL(LokiUserDatabase.createDisplayNameTableCommand);
+    db.execSQL(LokiBackupFilesDatabase.createTableCommand);
     db.execSQL(SessionJobDatabase.getCreateSessionJobTableCommand());
     db.execSQL(LokiMessageDatabase.getUpdateMessageIDTableForType());
     db.execSQL(LokiMessageDatabase.getUpdateMessageMappingTable());
@@ -279,6 +281,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     RecipientSettingsDatabase.Companion.migrateProStatusToProData(db);
 
     SnodeDatabase.Companion.createTableAndMigrateData(db, true);
+
+    ProDatabase.Companion.addEffectiveFromColumn(db);
+
+    SmsDatabase.addOutgoingColumn(db);
+    MmsDatabase.Companion.addOutgoingColumn(db);
   }
 
   @Override
@@ -328,7 +335,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV14_BACKUP_FILES) {
-        db.execSQL(LokiBackupFilesDatabase.getCreateTableCommand());
+        db.execSQL(LokiBackupFilesDatabase.createTableCommand);
       }
 
       if (oldVersion < lokiV16) {
@@ -631,6 +638,15 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < lokiV58) {
           SnodeDatabase.Companion.createTableAndMigrateData(db, true);
+      }
+
+      if (oldVersion < lokiV59) {
+        ProDatabase.Companion.addEffectiveFromColumn(db);
+      }
+
+      if (oldVersion < lokiV60) {
+        SmsDatabase.addOutgoingColumn(db);
+        MmsDatabase.Companion.addOutgoingColumn(db);
       }
 
       db.setTransactionSuccessful();

@@ -2,22 +2,18 @@ package org.thoughtcrime.securesms.database
 
 import android.content.ContentValues
 import android.content.Context
-import androidx.collection.arrayMapOf
 import androidx.sqlite.db.SupportSQLiteDatabase
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.PublicKeyValidation
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.util.asSequence
-import java.util.Date
 import javax.inject.Provider
 
 class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper), LokiAPIDatabaseProtocol {
@@ -67,7 +63,7 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         @JvmStatic val createOpenGroupAuthTokenTableCommand = "CREATE TABLE $openGroupAuthTokenTable ($server TEXT PRIMARY KEY, $token TEXT);"
         // Last message server IDs
         private const val lastMessageServerIDTable = "loki_api_last_message_server_id_cache"
-        private val lastMessageServerIDTableIndex = "loki_api_last_message_server_id_cache_index"
+        private const val lastMessageServerIDTableIndex = "loki_api_last_message_server_id_cache_index"
         private const val lastMessageServerID = "last_message_server_id"
         @JvmStatic val createLastMessageServerIDTableCommand = "CREATE TABLE $lastMessageServerIDTable ($lastMessageServerIDTableIndex STRING PRIMARY KEY, $lastMessageServerID INTEGER DEFAULT 0);"
         // Last deletion server IDs
@@ -297,11 +293,17 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         }?.toLong()
     }
 
+    /**
+     * Attempts to set the last message server ID for the given room and server, but
+     * only if the new value is more recent than the previous value.
+     */
     override fun setLastMessageServerID(room: String, server: String, newValue: Long) {
-        val database = writableDatabase
-        val index = "$server.$room"
-        val row = wrap(mapOf( lastMessageServerIDTableIndex to index, lastMessageServerID to newValue.toString() ))
-        database.insertOrUpdate(lastMessageServerIDTable, row, "$lastMessageServerIDTableIndex = ?", wrap(index))
+        writableDatabase.execSQL("""
+           INSERT INTO $lastMessageServerIDTable ($lastMessageServerIDTableIndex, $lastMessageServerID)
+           VALUES (?1, ?2)
+           ON CONFLICT($lastMessageServerIDTableIndex) DO UPDATE SET $lastMessageServerID = EXCLUDED.$lastMessageServerID 
+           WHERE EXCLUDED.$lastMessageServerID > $lastMessageServerID
+        """, arrayOf<Any>("$server.$room", newValue))
     }
 
     fun removeLastMessageServerID(room: String, server:String) {
@@ -436,11 +438,6 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         return database.getAll(closedGroupPublicKeysTable, null, null) { cursor ->
             cursor.getString(cursor.getColumnIndexOrThrow(Companion.groupPublicKey))
         }.toSet()
-    }
-
-    override fun isClosedGroup(groupPublicKey: String): Boolean {
-        if (!PublicKeyValidation.isValid(groupPublicKey)) { return false }
-        return getAllClosedGroupPublicKeys().contains(groupPublicKey)
     }
 
     fun removeClosedGroupPublicKey(groupPublicKey: String) {

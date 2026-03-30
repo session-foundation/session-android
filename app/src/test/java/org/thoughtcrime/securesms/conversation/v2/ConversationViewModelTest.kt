@@ -7,8 +7,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Rule
@@ -33,6 +35,8 @@ import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.links.LinkChecker
+import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -64,16 +68,17 @@ class ConversationViewModelTest : BaseViewModelTest() {
     private val standardRecipient = Recipient(
         address = STANDARD_ADDRESS,
         data = RecipientData.Contact(
-            name = "Test User",
-            nickname = "Test User",
-            avatar = null,
-            approved = true,
-            approvedMe = true,
-            blocked = false,
-            expiryMode = ExpiryMode.NONE,
-            1,
+            configData = Contact(
+                id = "contact-1",
+                name = "Test User",
+                nickname = "Test User",
+                approved = true,
+                approvedMe = true,
+                blocked = false,
+                expiryMode = ExpiryMode.NONE,
+                createdEpochSeconds = System.currentTimeMillis() / 1000L,
+            ),
             proData = null,
-            profileUpdatedAt = null
         )
     )
 
@@ -84,7 +89,10 @@ class ConversationViewModelTest : BaseViewModelTest() {
 
     private val threadId = 12345L
 
-    private fun createViewModel(recipient: Recipient): ConversationViewModel {
+    private fun createViewModel(
+        recipient: Recipient,
+        linkChecker: LinkChecker = mock(),
+    ): ConversationViewModel {
         return ConversationViewModel(
             repository = repository,
             storage = mock{
@@ -92,8 +100,7 @@ class ConversationViewModelTest : BaseViewModelTest() {
             },
             groupDb = mock(),
             threadDb = mock {
-                on { getOrCreateThreadIdFor(recipient.address) } doReturn threadId
-                on { updateNotifications } doAnswer {
+                on { changeNotification } doAnswer {
                     emptyFlow()
                 }
             },
@@ -130,11 +137,19 @@ class ConversationViewModelTest : BaseViewModelTest() {
                 on { changesNotification } doReturn MutableSharedFlow()
             },
             openGroupManager = mock(),
+            linkChecker = linkChecker,
             attachmentDownloadJobFactory = mock(),
             communityApiExecutor = mock(),
             deleteAllReactionsApiFactory = mock(),
             loginStateRepository = mock(),
             audioPlaybackManager = mock(),
+            jobQueue = mock(),
+            mmsDatabase = mock {
+                on { changeNotification } doReturn MutableSharedFlow()
+            },
+            smsDatabase = mock {
+                on { changeNotification } doReturn MutableSharedFlow()
+            },
         )
     }
 
@@ -238,5 +253,27 @@ class ConversationViewModelTest : BaseViewModelTest() {
         viewModel.messageShown(viewModel.uiMessages.value.first().id)
         // Then it should be removed
         assertThat(viewModel.uiMessages.value.size, equalTo(0))
+    }
+
+    @Test
+    fun `handle link shows community dialog when checker detects community`() = runBlockingTest {
+        val url = "https://session.example/room?public_key=${"a".repeat(64)}"
+        val communityLink = LinkType.CommunityLink(
+            url = url,
+            name = "Session Room",
+            joined = false,
+            displayType = LinkType.CommunityLink.DisplayType.CONVERSATION,
+        )
+        val linkChecker = mock<LinkChecker> {
+            onBlocking { check(url) } doReturn communityLink
+        }
+        val viewModel = createViewModel(
+            recipient = standardRecipient,
+            linkChecker = linkChecker,
+        )
+
+        viewModel.onCommand(ConversationViewModel.Commands.HandleLink(url))
+
+        assertThat(viewModel.dialogsState.value.urlDialog, equalTo(communityLink))
     }
 }

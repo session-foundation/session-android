@@ -213,8 +213,6 @@
     <string name="cameraGrantAccessQr">{app_name} tarvitsee kameran käyttöoikeuden skannatakseen QR- koodeja</string>
     <string name="cancel">Peruuta</string>
     <string name="cancelAccess">Peruuta {pro}</string>
-    <string name="cancelProPlatform">Peru tilaamasi {pro}-palvelu {platform}-verkkosivustolla käyttämällä {platform_account}-tiliä, jolla rekisteröidyit.</string>
-    <string name="cancelProPlatformStore">Peru tilaamasi {pro}-palvelu {platform_store}-verkkosivustolla käyttämällä {platform_account}-tiliä, jolla rekisteröidyit.</string>
     <string name="change">Vaihda</string>
     <string name="changePasswordFail">Salasanan vaihtaminen epäonnistui</string>
     <string name="changePasswordModalDescription">Vaihda salasanasi sovellukselle {app_name}. Paikallisesti tallennetut tiedot salataan uudelleen uudella salasanallasi.</string>

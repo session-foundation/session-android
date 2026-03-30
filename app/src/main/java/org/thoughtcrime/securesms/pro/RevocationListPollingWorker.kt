@@ -6,7 +6,9 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -32,7 +34,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @HiltWorker
 class RevocationListPollingWorker @AssistedInject constructor(
-    @Assisted context: Context,
+    @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val proDatabase: ProDatabase,
     private val getProRevocationApiFactory: GetProRevocationApi.Factory,
@@ -56,6 +58,19 @@ class RevocationListPollingWorker @AssistedInject constructor(
 
             proDatabase.pruneRevocations(snodeClock.currentTime())
 
+            // Arrange next polling
+            WorkManager.getInstance(context)
+                .beginUniqueWork(WORK_NAME, ExistingWorkPolicy.APPEND,
+                    OneTimeWorkRequestBuilder<RevocationListPollingWorker>()
+                        .setInitialDelay(response.retryInSeconds, TimeUnit.SECONDS)
+                        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(10))
+                        .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+                        .build()
+                )
+                .enqueue()
+
+            Log.d(TAG, "Arranged next polling in ${response.retryInSeconds} seconds")
+
             return Result.success()
         } catch (e: Exception) {
             if (e is CancellationException) {
@@ -78,14 +93,16 @@ class RevocationListPollingWorker @AssistedInject constructor(
 
         suspend fun schedule(context: Context) {
             WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP,
-                    PeriodicWorkRequestBuilder<RevocationListPollingWorker>(Duration.ofMinutes(15))
-                        .setInitialDelay(0L, TimeUnit.MILLISECONDS)
+                .beginUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP,
+                    OneTimeWorkRequestBuilder<RevocationListPollingWorker>()
                         .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(10))
                         .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                         .build()
                 )
+                .enqueue()
                 .await()
+
+            WorkManager.getInstance(context)
         }
 
         suspend fun cancel(context: Context) {

@@ -228,8 +228,6 @@
     <string name="cameraGrantAccessQr">{app_name} يحتاج إذن الوصول إلى الكاميرا لمسح رموز QR</string>
     <string name="cancel">إلغاء</string>
     <string name="cancelAccess">إلغاء {pro}</string>
-    <string name="cancelProPlatform">قم بالإلغاء على موقع {platform} باستخدام الحساب {platform_account} الذي استخدمته للتسجيل في {pro}.</string>
-    <string name="cancelProPlatformStore">قم بالإلغاء على موقع {platform_store} باستخدام الحساب {platform_account} الذي استخدمته للتسجيل في {pro}.</string>
     <string name="change">تغيير</string>
     <string name="changePasswordFail">فشل في تغيير كلمة المرور</string>
     <string name="changePasswordModalDescription">قم بتغيير كلمة المرور لـ {app_name}. سيتم إعادة تشفير البيانات المخزنة محليًا باستخدام كلمة المرور الجديدة.</string>

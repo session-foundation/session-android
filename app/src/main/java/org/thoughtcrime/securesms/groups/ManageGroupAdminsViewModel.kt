@@ -20,7 +20,7 @@ import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
@@ -38,7 +38,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 @HiltViewModel(assistedFactory = ManageGroupAdminsViewModel.Factory::class)
 class ManageGroupAdminsViewModel @AssistedInject constructor(
     @Assisted private val groupAddress: Address.Group,
-    @Assisted private val navigator: UINavigator<ConversationSettingsDestination>,
+    @Assisted private val navigator: UINavigator<ConversationV3Destination>,
     @Assisted private val openPromoteMembers: Boolean,
     @ApplicationContext private val context: Context,
     storage: StorageProtocol,
@@ -112,7 +112,7 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
     private fun navigateToPromoteMembers() {
         viewModelScope.launch {
             navigator.navigate(
-                destination = ConversationSettingsDestination.RoutePromoteMembers(groupAddress),
+                destination = ConversationV3Destination.RoutePromoteMembers(groupAddress),
                 debounce = false
             )
         }
@@ -287,7 +287,7 @@ class ManageGroupAdminsViewModel @AssistedInject constructor(
     interface Factory {
         fun create(
             groupAddress: Address.Group,
-            navigator: UINavigator<ConversationSettingsDestination>,
+            navigator: UINavigator<ConversationV3Destination>,
             navigateToPromoteMembers: Boolean
         ): ManageGroupAdminsViewModel
     }

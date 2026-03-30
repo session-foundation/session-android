@@ -4,9 +4,11 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +33,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.sp
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -38,10 +41,13 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v3.settings.ConversationSettingsViewModel.Commands.ShowProBadgeCTA
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.SlimAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -87,18 +93,24 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // title
-            ProBadgeText(
+            AnnotatedTextWithIcon(
+                modifier = Modifier.qaTag(stringResource(R.string.qa_pro_badge_text))
+                    .fillMaxWidth()
+                    .safeContentWidth(),
                 text = data.name,
-                showBadge = data.showProBadge,
-                onBadgeClick = if(!data.currentUserPro){{
+                iconRes = if(data.showProBadge ) R.drawable.ic_pro_badge else null,
+                onIconClick = {
                     sendCommand(UserProfileModalCommands.ShowProCTA)
-                }} else null
+                },
+                iconSize = 58.sp to 24.sp,
+                style = LocalType.current.h4,
             )
 
-            if(!data.subtitle.isNullOrEmpty()){
+            if (!data.subtitle.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                 Text(
                     text = data.subtitle,
+                    textAlign = TextAlign.Center,
                     style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
                 )
             }
@@ -107,7 +119,7 @@ fun UserProfileModal(
 
             // account ID
             AccountIdHeader(
-                text = if(data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
+                text = if (data.isBlinded) stringResource(R.string.blindedId) else stringResource(R.string.accountId),
                 textStyle = LocalType.current.small,
                 textPaddingValues = PaddingValues(
                     horizontal = LocalDimensions.current.smallSpacing,
@@ -118,7 +130,7 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
             Row {
-                if(!data.tooltipText.isNullOrEmpty()){
+                if (!data.tooltipText.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.width(LocalDimensions.current.spacing))
                 }
 
@@ -131,7 +143,7 @@ fun UserProfileModal(
                     color = LocalColors.current.text
                 )
 
-                if(!data.tooltipText.isNullOrEmpty()){
+                if (!data.tooltipText.isNullOrEmpty()) {
                     val tooltipState = rememberTooltipState(isPersistent = true)
                     val scope = rememberCoroutineScope()
 
@@ -161,13 +173,13 @@ fun UserProfileModal(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             // show a message if the user can't be messaged
-            if(data.isBlinded && !data.enableMessage){
+            if (data.isBlinded && !data.enableMessage) {
                 Text(
                     modifier = Modifier.padding(horizontal = LocalDimensions.current.xsSpacing),
                     text = annotatedStringResource(
                         Phrase.from(LocalContext.current, R.string.messageRequestsTurnedOff)
-                        .put(NAME_KEY, data.name)
-                        .format()
+                            .put(NAME_KEY, data.name)
+                            .format()
                     ),
                     textAlign = TextAlign.Center,
                     style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
@@ -179,9 +191,9 @@ fun UserProfileModal(
             // buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-            ){
+            ) {
                 var buttonModifier: Modifier = Modifier
-                if(data.isBlinded){ // this means there is no copy button so the message button should be full width
+                if (data.isBlinded) { // this means there is no copy button so the message button should be full width
                     buttonModifier = buttonModifier.widthIn(LocalDimensions.current.minButtonWidth)
                 } else { // the copy button will be there so allow for a max stretch with weight = 1f
                     buttonModifier = buttonModifier.weight(1f)
@@ -207,7 +219,7 @@ fun UserProfileModal(
                     }
                 )
 
-                if(!data.isBlinded){
+                if (!data.isBlinded) {
                     Spacer(modifier = Modifier.width(LocalDimensions.current.xsSpacing))
                     SlimOutlineCopyButton(
                         Modifier.weight(1f),

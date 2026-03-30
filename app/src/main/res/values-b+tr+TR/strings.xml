@@ -216,8 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name}, QR kodlarını taramak için kamera erişimine ihtiyaç duyar.</string>
     <string name="cancel">İptal</string>
     <string name="cancelAccess">{pro}\'yu İptal Et</string>
-    <string name="cancelProPlatform">{pro} için kaydolduğunuz {platform_account} hesabını kullanarak {platform} web sitesinde iptal edin.</string>
-    <string name="cancelProPlatformStore">{pro} için kaydolduğunuz {platform_account} hesabını kullanarak {platform_store} web sitesinde iptal edin.</string>
     <string name="change">Değiştir</string>
     <string name="changePasswordFail">Parola değiştirilemedi</string>
     <string name="changePasswordModalDescription">{app_name} için parolanızı değiştirin. Yerel olarak saklanan veriler yeni parolanızla yeniden şifrelenecektir.</string>

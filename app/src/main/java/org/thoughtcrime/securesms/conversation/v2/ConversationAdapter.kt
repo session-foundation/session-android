@@ -17,6 +17,7 @@ import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import java.util.TreeSet
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
@@ -36,7 +37,7 @@ class ConversationAdapter(
     private val threadRecipientProvider: () -> Recipient,
     val messageDB: MmsSmsDatabase,
 ) : CursorRecyclerViewAdapter<ViewHolder>(context) {
-    var selectedItems = mutableSetOf<MessageRecord>()
+    var selectedItems = TreeSet(compareBy<MessageRecord> { it.id }.thenComparing { it.isMms })
     var isAdmin: Boolean = false
     private var searchQuery: String? = null
     var visibleMessageViewDelegate: VisibleMessageViewDelegate? = null

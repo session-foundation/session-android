@@ -17,7 +17,7 @@ class MediaOverviewActivity : FullComposeScreenLockActivity() {
     override fun ComposeContent() {
         val viewModel = hiltViewModel<MediaOverviewViewModel, MediaOverviewViewModel.Factory> { factory ->
             factory.create(
-                IntentCompat.getParcelableExtra(intent, EXTRA_ADDRESS, Address::class.java)!!
+                IntentCompat.getParcelableExtra(intent, EXTRA_ADDRESS, Address.Conversable::class.java)!!
             )
         }
 
@@ -28,7 +28,7 @@ class MediaOverviewActivity : FullComposeScreenLockActivity() {
         private const val EXTRA_ADDRESS = "address"
 
         @JvmStatic
-        fun createIntent(context: Context, address: Address): Intent {
+        fun createIntent(context: Context, address: Address.Conversable): Intent {
             return Intent(context, MediaOverviewActivity::class.java).apply {
                 putExtra(EXTRA_ADDRESS, address)
             }

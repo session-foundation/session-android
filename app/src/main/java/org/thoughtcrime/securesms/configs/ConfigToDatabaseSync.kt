@@ -7,18 +7,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarCacheCleaner
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.Address
@@ -55,14 +53,17 @@ import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.database.RecipientSettingsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.ensureThreads
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.database.upsertThreadLastSeen
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import org.thoughtcrime.securesms.util.castAwayType
-import java.util.EnumSet
+import org.thoughtcrime.securesms.util.erase
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.Instant
 
 private const val TAG = "ConfigToDatabaseSync"
 
@@ -89,38 +90,69 @@ class ConfigToDatabaseSync @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
-    private val messageNotifier: MessageNotifier,
     private val recipientSettingsDatabase: RecipientSettingsDatabase,
     private val avatarCacheCleaner: AvatarCacheCleaner,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val deleteMessageApiFactory: DeleteMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : AuthAwareComponent {
-    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState) {
-        combine(
-            conversationRepository.conversationListAddressesFlow,
-            configFactory.userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE))
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
+        launch {
+            conversationRepository.conversationListAddressesFlow
+                .collectLatest { conversations ->
+                    try {
+                        ensureConversations(conversations, loggedInState.accountId)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error updating conversations from config", e)
+                    }
+                }
+        }
+
+        launch {
+            configFactory.userConfigsChanged(onlyConfigTypes = setOf(UserConfigType.CONVO_INFO_VOLATILE))
                 .castAwayType()
                 .onStart { emit(Unit) }
-                .map { _ -> configFactory.withUserConfigs { it.convoInfoVolatile.all() } },
-            ::Pair
-        ).distinctUntilChanged()
-            .collectLatest { (conversations, convoInfo) ->
-                try {
-                    ensureConversations(conversations, loggedInState.accountId)
-                    updateConvoVolatile(convoInfo)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error updating conversations from config", e)
+                .collectLatest {
+                    try {
+                        ensureThreadLastReads()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error updating thread last reads from config", e)
+                    }
                 }
+        }
+    }
+
+    // Read conversation last reads from config system then sync to local db.
+    private fun ensureThreadLastReads() {
+        val lastReads = configFactory.withUserConfigs { it.convoInfoVolatile.all() }
+            .asSequence()
+            .mapNotNull { convo ->
+                val address = when (convo) {
+                    is Conversation.ClosedGroup -> convo.accountId.toAddress() as Address.Group
+                    is Conversation.Community -> Address.Community(
+                        convo.baseCommunityInfo.baseUrl,
+                        convo.baseCommunityInfo.room,
+                    )
+                    is Conversation.LegacyGroup -> Address.LegacyGroup(convo.groupId)
+                    is Conversation.OneToOne -> convo.accountId.toAddress() as Address.Standard
+                    is Conversation.BlindedOneToOne, null -> return@mapNotNull null
+                }
+
+                address to Instant.fromEpochMilliseconds(convo.lastRead)
             }
+            .toList()
+
+        if (lastReads.isNotEmpty()) {
+            threadDatabase.upsertThreadLastSeen(lastReads)
+        }
     }
 
     private fun ensureConversations(addresses: Set<Address.Conversable>, myAccountId: AccountId) {
         val result = threadDatabase.ensureThreads(addresses)
 
-        if (result.deletedThreads.isNotEmpty()) {
-            val deletedThreadIDs = result.deletedThreads.values
-            smsDatabase.deleteThreads(deletedThreadIDs, false)
+        if (result.deleted.isNotEmpty()) {
+            val deletedThreadIDs = result.deleted.map { it.first }
+            smsDatabase.deleteThreads(deletedThreadIDs)
             mmsDatabase.deleteThreads(deletedThreadIDs, updateThread = false)
             draftDatabase.clearDrafts(deletedThreadIDs)
 
@@ -134,18 +166,23 @@ class ConfigToDatabaseSync @Inject constructor(
             // If you can find out what it does, please remove it.
             SessionMetaProtocol.clearReceivedMessages()
 
+            // Remove all convo info
+            configFactory.withMutableUserConfigs { configs ->
+                result.deleted.forEach { (_, address) ->
+                    configs.convoInfoVolatile.erase(address)
+                }
+            }
+
             // Some type of convo require additional cleanup, we'll go through them here
-            for ((address, threadId) in result.deletedThreads) {
+            for ((threadId, address) in result.deleted) {
                 storage.cancelPendingMessageSendJobs(threadId)
 
                 when (address) {
                     is Address.Community -> deleteCommunityData(address, threadId)
                     is Address.LegacyGroup -> deleteLegacyGroupData(address, myAccountId)
                     is Address.Group -> deleteGroupData(address)
-                    is Address.Blinded,
                     is Address.CommunityBlindedId,
-                    is Address.Standard,
-                    is Address.Unknown -> {
+                    is Address.Standard -> {
                         // No additional cleanup needed for these types
                     }
                 }
@@ -157,15 +194,13 @@ class ConfigToDatabaseSync @Inject constructor(
 
         // If we created threads, we need to update the thread database with the creation date.
         // And possibly having to fill in some other data.
-        for ((address, threadId) in result.createdThreads) {
+        for ((threadId, address) in result.created) {
             when (address) {
                 is Address.Community -> onCommunityAdded(address, threadId)
-                is Address.Group -> onGroupAdded(address, threadId)
                 is Address.LegacyGroup -> onLegacyGroupAdded(address, threadId, myAccountId)
-                is Address.Blinded,
                 is Address.CommunityBlindedId,
-                is Address.Standard,
-                is Address.Unknown -> {
+                is Address.Group,
+                is Address.Standard -> {
                     // No additional action needed for these types
                 }
             }
@@ -209,17 +244,6 @@ class ConfigToDatabaseSync @Inject constructor(
         // Store the encryption key pair
         val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
         storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMillis())
-        threadDatabase.setCreationDate(threadId, formationTimestamp)
-    }
-
-    private fun onGroupAdded(
-        address: Address.Group,
-        threadId: Long
-    ) {
-        val joined = configFactory.getGroup(address.accountId)?.joinedAtSecs
-        if (joined != null && joined > 0L) {
-            threadDatabase.setCreationDate(threadId, joined * 1000L)
-        }
     }
 
     private fun onCommunityAdded(address: Address.Community, threadId: Long) {
@@ -258,7 +282,6 @@ class ConfigToDatabaseSync @Inject constructor(
         // Remove the key pairs
         storage.removeAllClosedGroupEncryptionKeyPairs(address.groupPublicKeyHex)
         storage.removeMember(address.address, myAccountId.toAddress())
-        messageNotifier.updateNotification(context)
     }
 
     fun syncGroupConfigs(groupId: AccountId) {
@@ -352,32 +375,4 @@ class ConfigToDatabaseSync @Inject constructor(
     private val MmsMessageRecord.containsAttachment: Boolean
         get() = this.slideDeck.slides.isNotEmpty() && !this.slideDeck.isVoiceNote
 
-
-    private fun updateConvoVolatile(convos: List<Conversation?>) {
-        for (conversation in convos.asSequence().filterNotNull()) {
-            val address: Address.Conversable = when (conversation) {
-                is Conversation.OneToOne -> Address.Standard(AccountId(conversation.accountId))
-                is Conversation.LegacyGroup -> Address.LegacyGroup(conversation.groupId)
-                is Conversation.Community -> Address.Community(serverUrl = conversation.baseCommunityInfo.baseUrl, room = conversation.baseCommunityInfo.room)
-                is Conversation.ClosedGroup -> Address.Group(AccountId(conversation.accountId)) // New groups will be managed bia libsession
-                is Conversation.BlindedOneToOne -> {
-                    // Not supported yet
-                    continue
-                }
-            }
-
-            val threadId = storage.getThreadId(address)
-
-            if (threadId != null) {
-                if (conversation.lastRead > storage.getLastSeen(threadId)) {
-                    storage.markConversationAsRead(
-                        threadId,
-                        conversation.lastRead,
-                        force = true
-                    )
-                    storage.updateThread(threadId, false)
-                }
-            }
-        }
-    }
 }

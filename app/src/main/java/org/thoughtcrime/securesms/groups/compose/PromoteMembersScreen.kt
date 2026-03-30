@@ -36,10 +36,10 @@ import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.Search
 import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ShowConfirmDialog
 import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ShowPromoteDialog
 import org.thoughtcrime.securesms.groups.PromoteMembersViewModel.Commands.ToggleFooter
-import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource

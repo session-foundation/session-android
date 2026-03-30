@@ -97,6 +97,8 @@ import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
+import org.thoughtcrime.securesms.ui.dialog.BasicSessionAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.DialogBg
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -271,8 +273,10 @@ fun SessionProCTA(
                 DialogBg {
                     BoxWithConstraints(Modifier.fillMaxWidth()) {
                         val heroMaxHeight = maxHeight * 0.4f
-                        Column(modifier = Modifier.fillMaxWidth()
-                            .verticalScroll(rememberScrollState())) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                        ) {
                             // hero image
                             BottomFadingEdgeBox(
                                 modifier = Modifier.heightIn(max = heroMaxHeight),
@@ -335,10 +339,10 @@ fun SessionProCTA(
                                             modifier = Modifier
                                                 .qaTag(R.string.qa_cta_button_positive)
                                                 .then(
-                                                if (negativeButtonText != null)
-                                                    Modifier.weight(1f)
-                                                else Modifier
-                                            ).shimmerOverlay(),
+                                                    if (negativeButtonText != null)
+                                                        Modifier.weight(1f)
+                                                    else Modifier
+                                                ).shimmerOverlay(),
                                             text = it,
                                             onClick = onUpgrade ?: defaultUpgrade
                                         )
@@ -349,10 +353,10 @@ fun SessionProCTA(
                                             modifier = Modifier
                                                 .qaTag(R.string.qa_cta_button_negative)
                                                 .then(
-                                                if (positiveButtonText != null)
-                                                    Modifier.weight(1f)
-                                                else Modifier
-                                            ),
+                                                    if (positiveButtonText != null)
+                                                        Modifier.weight(1f)
+                                                    else Modifier
+                                                ),
                                             text = it,
                                             onClick = onCancel
                                         )

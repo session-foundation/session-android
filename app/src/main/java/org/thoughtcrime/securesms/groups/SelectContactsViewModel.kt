@@ -39,7 +39,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val avatarUtils: AvatarUtils,
     private val proStatusManager: ProStatusManager,
-    @Assisted private val excludingAccountIDs: Set<Address>,
+    @Assisted private val excludingAccountIDs: Set<Address.Conversable>,
     @Assisted private val contactFiltering: (Recipient) -> Boolean, //  default will filter out blocked and unapproved contacts
     private val recipientRepository: RecipientRepository,
     @param:ApplicationContext private val context: Context,
@@ -52,7 +52,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
 
     // Input: The manually added items to select from. This will be combined (and deduped) with the contacts
     // the user has. This is useful for selecting contacts that are not in the user's contacts list.
-    private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<Address>())
+    private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<Address.Conversable>())
 
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
@@ -75,7 +75,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     val selectedContacts: StateFlow<Set<SelectedContact>> = mutableSelectedContacts
 
     // Output : snapshot helper
-    val currentSelected: Set<Address>
+    val currentSelected: Set<Address.Conversable>
         get() = mutableSelectedContacts.value.map { it.address }.toSet()
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -117,7 +117,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
                 items.add(
                     ContactItem(
                         name = contact.searchName,
-                        address = contact.address,
+                        address = contact.address as Address.Conversable,
                         avatarUIData = avatarData,
                         selected = selectedAddresses.contains(contact.address),
                         showProBadge = contact.shouldShowProBadge
@@ -128,12 +128,12 @@ open class SelectContactsViewModel @AssistedInject constructor(
         return items.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
-    fun setManuallyAddedContacts(accountIDs: Set<Address>) {
+    fun setManuallyAddedContacts(accountIDs: Set<Address.Conversable>) {
         mutableManuallyAddedContacts.value = accountIDs
     }
 
     // Used when getting results from a QR or AccountId input field
-    fun setManuallySelectedAddress(address : Address){
+    fun setManuallySelectedAddress(address : Address.Conversable){
         val selectedItem = SelectedContact(address, "")
         mutableSelectedContacts.value = setOf(selectedItem)
     }
@@ -155,7 +155,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
         mutableSelectedContacts.value = newSet
     }
 
-    fun selectAccountIDs(accountIDs: Set<Address>) {
+    fun selectAccountIDs(accountIDs: Set<Address.Conversable>) {
         val toAdd = accountIDs.map { address -> SelectedContact(address) }.toSet()
         mutableSelectedContacts.update { (it + toAdd).toSet() }
     }
@@ -167,7 +167,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(
-            excludingAccountIDs: Set<Address> = emptySet(),
+            excludingAccountIDs: Set<Address.Conversable> = emptySet(),
             contactFiltering: (Recipient) -> Boolean = defaultFiltering,
         ): SelectContactsViewModel
 
@@ -178,7 +178,7 @@ open class SelectContactsViewModel @AssistedInject constructor(
 }
 
 data class ContactItem(
-    val address: Address,
+    val address: Address.Conversable,
     val name: String,
     val avatarUIData: AvatarUIData,
     val selected: Boolean,
@@ -186,6 +186,6 @@ data class ContactItem(
 )
 
 data class SelectedContact(
-    val address: Address,
+    val address: Address.Conversable,
     val name: String = ""
 )

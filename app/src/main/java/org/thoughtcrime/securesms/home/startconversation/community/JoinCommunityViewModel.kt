@@ -20,10 +20,15 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.open_groups.OfficialCommunityRepository
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.CommunityUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
+import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.home.startconversation.group.CreateGroupEvent
+import org.thoughtcrime.securesms.links.LinkChecker
+import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.State
 import javax.inject.Inject
@@ -33,7 +38,9 @@ class JoinCommunityViewModel @Inject constructor(
     @param:ApplicationContext private val appContext: Context,
     private val openGroupManager: OpenGroupManager,
     private val officialCommunityRepository: OfficialCommunityRepository,
-): ViewModel() {
+    private val linkChecker: LinkChecker,
+
+    ): ViewModel() {
 
     private val _state = MutableStateFlow(JoinCommunityState(defaultCommunities = State.Loading))
     val state: StateFlow<JoinCommunityState> = _state
@@ -67,45 +74,42 @@ class JoinCommunityViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             _state.update { it.copy(loading = true) }
 
-            val openGroup = try {
-                OpenGroupUrlParser.parseUrl(url)
-            } catch (e: OpenGroupUrlParser.Error) {
+            val communityInfo = try {
+                CommunityUrlParser.parse(url)
+            } catch (e: CommunityUrlParser.Error) {
                 _state.update { it.copy(loading = false) }
-                when (e) {
-                    is OpenGroupUrlParser.Error.MalformedURL, OpenGroupUrlParser.Error.NoRoom -> {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                appContext,
-                                appContext.getString(R.string.communityJoinError),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        return@launch
-                    }
-
-                    is OpenGroupUrlParser.Error.InvalidPublicKey, OpenGroupUrlParser.Error.NoPublicKey -> {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                appContext,
-                                appContext.getString(R.string.communityEnterUrlErrorInvalidDescription),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        return@launch
-                    }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        appContext,
+                        appContext.getString(
+                            when (e) {
+                                CommunityUrlParser.Error.InvalidUrl -> R.string.communityJoinError
+                                CommunityUrlParser.Error.InvalidPublicKey -> R.string.communityEnterUrlErrorInvalidDescription
+                            }
+                        ),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
+                return@launch
+            }
+
+            // Check if we've already joined this community
+            val communityLink = linkChecker.check(url) as? LinkType.CommunityLink
+
+            if (communityLink?.joined == true) {
+                _state.update { it.copy(urlDialog = communityLink.copy(allowCopyUrl = false)) }
+                return@launch
             }
 
             try {
-                val sanitizedServer = openGroup.server.removeSuffix("/")
                 openGroupManager.add(
-                    sanitizedServer,
-                    openGroup.room,
-                    openGroup.serverPublicKey,
+                    server = communityInfo.baseUrl,
+                    room = communityInfo.room,
+                    publicKey = communityInfo.pubKeyHex,
                 )
 
                 _uiEvents.emit(UiEvent.NavigateToConversation(
-                    address = Address.Community(openGroup.server, openGroup.room),
+                    address = Address.Community(communityInfo.baseUrl, communityInfo.room),
                 ))
             } catch (e: Exception) {
                 Log.e("Loki", "Couldn't join community.", e)
@@ -142,6 +146,10 @@ class JoinCommunityViewModel @Inject constructor(
                     )
                 }
             }
+
+            is Commands.OnDismissJoinedDialog -> {
+                _state.update { it.copy(urlDialog = null) }
+            }
         }
     }
 
@@ -149,13 +157,15 @@ class JoinCommunityViewModel @Inject constructor(
         val loading: Boolean = false,
         val isJoinButtonEnabled: Boolean = false,
         val communityUrl: String = "",
-        val defaultCommunities: State<List<OpenGroupApi.DefaultGroup>>
+        val defaultCommunities: State<List<OpenGroupApi.DefaultGroup>>,
+        val urlDialog: LinkType? = null
     )
 
     sealed interface Commands {
         data class OnQRScanned(val qr: String) : Commands
         data class JoinCommunity(val url: String): Commands
         data class OnUrlChanged(val url: String): Commands
+        data object OnDismissJoinedDialog: Commands
     }
 
     sealed interface UiEvent {

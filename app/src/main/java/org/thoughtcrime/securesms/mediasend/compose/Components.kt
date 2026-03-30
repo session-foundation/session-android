@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.video.VideoFrameDecoder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.mediasend.Media
@@ -58,6 +61,24 @@ fun MediaFolderCell(
     qaTag : String,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val thumbnailMimeType = thumbnailUri?.let { MediaUtil.getMimeType(context, it) }
+
+    val videoDecoderFactory = remember { VideoFrameDecoder.Factory() }
+
+    // our URI does not have a file extension so we need to check for the mimetype
+    // then explicitly set the decoder for the request
+    val folderThumbnailRequest = remember(context, thumbnailUri) {
+        ImageRequest.Builder(context)
+            .data(thumbnailUri)
+            .apply {
+                if (MediaUtil.isVideoType(thumbnailMimeType)) {
+                    decoderFactory(videoDecoderFactory)
+                }
+            }
+            .build()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -68,9 +89,7 @@ fun MediaFolderCell(
         AsyncImage(
             modifier = Modifier.fillMaxWidth(),
             contentScale = ContentScale.Crop,
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(thumbnailUri)
-                .build(),
+            model = folderThumbnailRequest,
             contentDescription = null,
         )
 
@@ -142,6 +161,21 @@ fun MediaPickerItemCell(
     showSelectionOn: Boolean = false,
     canLongPress: Boolean = true
 ) {
+    val context = LocalContext.current
+
+    val videoDecoderFactory = remember { VideoFrameDecoder.Factory() }
+
+    val mediaRequest = remember(context, media.uri, media.mimeType) {
+        ImageRequest.Builder(context)
+            .data(media.uri)
+            .apply {
+                if (MediaUtil.isVideoType(media.mimeType)) {
+                    decoderFactory(videoDecoderFactory)
+                }
+            }
+            .build()
+    }
+
     Box(
         modifier = modifier
             .aspectRatio(1f)
@@ -167,9 +201,7 @@ fun MediaPickerItemCell(
         AsyncImage(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(media.uri)
-                .build(),
+            model = mediaRequest,
             contentDescription = null,
         )
 
@@ -180,13 +212,14 @@ fun MediaPickerItemCell(
                     .align(Alignment.Center)
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(Color.White)
+                    .padding(start = LocalDimensions.current.xxxsSpacing),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(R.drawable.triangle_right),
                     contentDescription = null,
-                    modifier = Modifier.size(LocalDimensions.current.iconMedium),
+                    modifier = Modifier.size(LocalDimensions.current.iconXSmall),
                     colorFilter = ColorFilter.tint(LocalColors.current.accent) // match @color/core_blue-ish
                 )
             }

@@ -23,7 +23,7 @@ class PreferenceKey<T>(
         class PrimitiveBoolean(val defaultValue: Boolean) : Strategy<Boolean>
         class PrimitiveString(val defaultValue: String?) : Strategy<String?>
         object Bytes : Strategy<ByteArray?>
-        class Enum<T : kotlin.Enum<*>>(val choices: List<T>, val defaultValue: T?) : Strategy<T?>
+        class Enum<T : kotlin.Enum<*>>(val choices: List<T>, val defaultValue: T) : Strategy<T>
         class Json<T>(val serializer: KSerializer<T>) : Strategy<T?>
     }
 
@@ -34,7 +34,7 @@ class PreferenceKey<T>(
         fun string(name: String, defaultValue: String? = null): PreferenceKey<String?> =
             PreferenceKey(name, Strategy.PrimitiveString(defaultValue))
 
-        fun int(name: String, defaultValue: Int): PreferenceKey<Int> =
+        fun integer(name: String, defaultValue: Int): PreferenceKey<Int> =
             PreferenceKey(name, Strategy.PrimitiveInt(defaultValue))
 
         fun long(name: String, defaultValue: Long): PreferenceKey<Long> =
@@ -51,8 +51,8 @@ class PreferenceKey<T>(
 
         inline fun <reified T : Enum<*>> enum(
             name: String,
-            defaultValue: T? = null
-        ): PreferenceKey<T?> {
+            defaultValue: T
+        ): PreferenceKey<T> {
             return PreferenceKey(
                 name,
                 Strategy.Enum(T::class.java.enumConstants!!.toList(), defaultValue)

@@ -68,7 +68,6 @@ class HomeDiffUtil(
                 oldItem.isDelivered == newItem.isDelivered &&
                 oldItem.isSent == newItem.isSent &&
                 oldItem.isPending == newItem.isPending &&
-                oldItem.lastSeen == newItem.lastSeen &&
                 oldItem.isUnread == newItem.isUnread &&
                 old.isTyping == new.isTyping
             )

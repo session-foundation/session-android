@@ -50,6 +50,8 @@ class PushReceiver @Inject constructor(
     private val receivedMessageHashDatabase: ReceivedMessageHashDatabase,
     @param:ManagerScope private val scope: CoroutineScope,
     private val loginStateRepository: LoginStateRepository,
+    private val notificationChannelManager: NotificationChannelManager,
+    private val notificationManagerCompat: NotificationManagerCompat,
 ) {
 
     /**
@@ -213,7 +215,8 @@ class PushReceiver @Inject constructor(
             return
         }
 
-        val builder = NotificationCompat.Builder(context, NotificationChannels.OTHER)
+        val builder = NotificationCompat.Builder(context,
+            notificationChannelManager.getNotificationChannelId(NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES))
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(context.getColor(R.color.textsecure_primary))
             .setContentTitle(getString(context, R.string.app_name))
@@ -225,7 +228,7 @@ class PushReceiver @Inject constructor(
             .setAutoCancel(true)
             .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
 
-        NotificationManagerCompat.from(context).notify(11111, builder.build())
+        notificationManagerCompat.notify(NotificationId.LEGACY_PUSH, builder.build())
     }
 
     private fun Map<String, String>.asPushData(): PushData =

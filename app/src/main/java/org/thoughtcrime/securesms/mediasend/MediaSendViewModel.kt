@@ -38,7 +38,7 @@ class MediaSendViewModel @Inject constructor(
     recipientRepository: RecipientRepository,
     private val context: ApplicationContext,
 ) : InputbarViewModel(
-    application = application,
+    context = application,
     proStatusManager = proStatusManager,
     recipientRepository = recipientRepository,
 ) {
@@ -68,9 +68,6 @@ class MediaSendViewModel @Inject constructor(
 
     private val positionLiveData: LiveData<Int> =
         uiState.map { it.position }.asLiveData()
-
-    private val foldersLiveData: LiveData<List<MediaFolder>> =
-        uiState.map { it.folders }.asLiveData()
 
     private val countButtonStateLiveData: LiveData<CountButtonState> =
         uiState.map { CountButtonState(it.count, it.countVisibility) }
@@ -376,13 +373,6 @@ class MediaSendViewModel @Inject constructor(
             _uiState.update { it.copy(bucketMedia = value) }
         }
         return uiState.map { it.bucketMedia }.asLiveData()
-    }
-
-    fun getFolders(): LiveData<List<MediaFolder>> {
-        repository.getFolders(context) { value ->
-            _uiState.update { it.copy(folders = value) }
-        }
-        return foldersLiveData
     }
 
     fun getCountButtonState(): LiveData<CountButtonState> {

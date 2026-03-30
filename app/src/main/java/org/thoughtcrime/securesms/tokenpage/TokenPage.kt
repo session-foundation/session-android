@@ -71,7 +71,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.STAKING_REWA
 import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_LONG_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_SHORT_KEY
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
 import org.thoughtcrime.securesms.ui.adaptive.getAdaptiveInfo
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect

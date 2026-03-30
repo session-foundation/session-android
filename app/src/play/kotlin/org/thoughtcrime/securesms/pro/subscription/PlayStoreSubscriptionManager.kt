@@ -28,11 +28,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.pro.PlayStoreAccountId
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
@@ -188,12 +188,11 @@ class PlayStoreSubscriptionManager @Inject constructor(
     }
 
     private fun obfuscatedProId(): String {
-        val input = requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey?.toHexString()) {
+        val proMasterPrivateKey = requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
             "User must be logged in to access Pro"
         }
-        val md = java.security.MessageDigest.getInstance("SHA-256")
-        val digest = md.digest(input.toByteArray(Charsets.UTF_8))
-        return Hex.toStringCondensed(digest)
+
+        return PlayStoreAccountId.fromProMasterPrivateKey(proMasterPrivateKey)
     }
 
     private suspend fun getProductDetails(): ProductDetailsResult? {

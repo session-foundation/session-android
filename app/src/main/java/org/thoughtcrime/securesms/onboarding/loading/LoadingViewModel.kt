@@ -10,6 +10,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
@@ -58,10 +60,10 @@ internal class LoadingViewModel @Inject constructor(
     private val state = MutableStateFlow(State.LOADING)
 
     private val _progress = MutableStateFlow(0f)
-    val progress = _progress.asStateFlow()
+    val progress: StateFlow<Float> = _progress.asStateFlow()
 
     private val _events = MutableSharedFlow<Event>()
-    val events = _events.asSharedFlow()
+    val events: SharedFlow<Event> = _events.asSharedFlow()
 
     init {
         viewModelScope.launch {

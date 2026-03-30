@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -29,8 +30,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.compose.GroupMinimumVersionBanner
 import org.thoughtcrime.securesms.groups.compose.multiSelectMemberList
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.LoadingArcOr
@@ -39,6 +40,7 @@ import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
+import org.thoughtcrime.securesms.ui.dialog.LinkAlertDialog
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -91,6 +93,16 @@ fun CreateGroupScreen(
         onCreateClicked = viewModel::onCreateClicked,
         onBack = onBack,
     )
+
+    // Dialogs
+    val urlDialog by viewModel.urlDialog.collectAsState()
+    if (urlDialog != null) {
+        LinkAlertDialog(
+            data = urlDialog!!,
+            onDismissRequest = viewModel::onDismissUrlDialog,
+            openOrJoinCommunity = viewModel::openOrJoinCommunity,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -217,7 +229,7 @@ private fun CreateGroupPreview(
 ) {
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val previewMembers = listOf(
-        ContactItem(address = Address.fromSerialized(random), name = "Alice", selected = false,
+        ContactItem(address = random.toConversableAddress(), name = "Alice", selected = false,
             showProBadge = true,
             avatarUIData = AvatarUIData(
                 listOf(
@@ -228,7 +240,7 @@ private fun CreateGroupPreview(
                 )
             ),
         ),
-        ContactItem(address = Address.fromSerialized(random), name = "Bob", selected = true,
+        ContactItem(address = random.toConversableAddress(), name = "Bob", selected = true,
             showProBadge = false,
             avatarUIData = AvatarUIData(
                 listOf(

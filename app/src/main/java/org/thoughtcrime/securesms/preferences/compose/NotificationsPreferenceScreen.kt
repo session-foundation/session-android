@@ -1,12 +1,6 @@
 package org.thoughtcrime.securesms.preferences.compose
 
-import android.R.attr.onClick
-import android.app.Activity
-import android.media.RingtoneManager
-import android.net.Uri
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,20 +18,21 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.NotificationPreferenceEvent.*
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.NotificationPrivacyOption
-import org.thoughtcrime.securesms.ui.ActionRowItem
-import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CategoryCell
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.IconActionRowItem
 import org.thoughtcrime.securesms.ui.IconTextActionRowItem
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.openBatteryOptimizationSettings
 import org.thoughtcrime.securesms.ui.requestDozeWhitelist
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -54,25 +49,6 @@ fun NotificationsPreferenceScreen(
 
     val context = LocalContext.current
 
-    // Listener for ringtone
-    val ringtonePickerLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                result.data?.getParcelableExtra(
-                    RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
-                    Uri::class.java
-                )
-            } else {
-                result.data?.getParcelableExtra(
-                    RingtoneManager.EXTRA_RINGTONE_PICKED_URI
-                )
-            }
-            viewModel.onCommand(SetRingtone(uri))
-        }
-    }
-
     LaunchedEffect(Unit) {
         viewModel.uiEvents.collect { event ->
             when (event) {
@@ -87,10 +63,6 @@ fun NotificationsPreferenceScreen(
                 is NavigateToSystemBgWhitelist -> {
                     context.requestDozeWhitelist()
                 }
-
-                is StartRingtoneActivityForResult -> {
-                    ringtonePickerLauncher.launch(event.intent)
-                }
             }
         }
     }
@@ -104,6 +76,38 @@ fun NotificationsPreferenceScreen(
         uiState = uiState, sendCommand = viewModel::onCommand,
         onBackPressed = onBackPressed,
         privacyOptions = notificationPrivacyOptions
+    )
+}
+
+private enum class NotificationChannelSettings(
+    val desc: NotificationChannelManager.ChannelDescription,
+    @get:StringRes val qaTag: Int,
+    @get:StringRes val title: Int,
+    @get:StringRes val subtitle: Int,
+) {
+    Conversations(
+        desc = NotificationChannelManager.ChannelDescription.ONE_TO_ONE_MESSAGES,
+        qaTag = R.string.qa_preferences_navigate_to_conversations,
+        title = R.string.sessionConversations,
+        subtitle = R.string.deviceSettingsConversationNotifications
+    ),
+    Groups(
+        desc = NotificationChannelManager.ChannelDescription.GROUP_MESSAGES,
+        qaTag = R.string.qa_preferences_navigate_to_groups,
+        title = R.string.conversationsGroups,
+        subtitle = R.string.deviceSettingsGroupNotifications
+    ),
+    Communities(
+        desc = NotificationChannelManager.ChannelDescription.COMMUNITY_MESSAGES,
+        qaTag = R.string.qa_preferences_navigate_to_communities,
+        title = R.string.conversationsCommunities,
+        subtitle = R.string.deviceSettingsCommunityNotifications
+    ),
+    Calls(
+        desc = NotificationChannelManager.ChannelDescription.CALLS,
+        qaTag = R.string.qa_preferences_navigate_to_calls,
+        title = R.string.callsSettings,
+        subtitle = R.string.deviceSettingsCallNotifications
     )
 }
 
@@ -136,7 +140,8 @@ fun NotificationsPreference(
                         title = annotatedStringResource(R.string.useFastMode),
                         subtitle = annotatedStringResource(fastModeDescription),
                         subtitleStyle = LocalType.current.large,
-                        checked = uiState.isPushEnabled,
+                        checked = uiState.fastModeSelected,
+                        enabled = uiState.fastModeEnabled,
                         qaTag = R.string.qa_preferences_enable_push,
                         switchQaTag = R.string.qa_preferences_enable_push_toggle,
                         onCheckedChange = {isEnabled -> sendCommand(TogglePushEnabled(isEnabled)) }
@@ -151,14 +156,6 @@ fun NotificationsPreference(
                         switchQaTag = R.string.qa_preferences_whitelist_toggle,
                         onCheckedChange = { sendCommand(WhiteListClicked) }
                     )
-
-                    Divider()
-
-                    ActionRowItem(
-                        title = annotatedStringResource(R.string.notificationsGoToDevice),
-                        qaTag = R.string.qa_preferences_navigate_device_settings,
-                        onClick = { sendCommand(OpenSystemNotificationSettings) }
-                    )
                 }
             }
 
@@ -168,20 +165,11 @@ fun NotificationsPreference(
         item {
             CategoryCell(
                 modifier = Modifier,
-                title = GetString(R.string.notificationsStyle).string()
+                title = GetString(R.string.notificationsMessage).string()
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    IconTextActionRowItem(
-                        title = annotatedStringResource(R.string.notificationsSound),
-                        qaTag = R.string.qa_preferences_ringtone,
-                        icon = R.drawable.ic_baseline_arrow_drop_down_24,
-                        endText = annotatedStringResource(uiState.ringtone.toString()),
-                        onClick = { sendCommand(RingtoneClicked) }
-                    )
-
-                    Divider()
 
                     SwitchActionRowItem(
                         title = annotatedStringResource(R.string.notificationsSoundDescription),
@@ -191,15 +179,20 @@ fun NotificationsPreference(
                         onCheckedChange = {isEnabled -> sendCommand(ToggleSoundWhenOpen(isEnabled)) }
                     )
 
-                    Divider()
+                    for (channel in NotificationChannelSettings.entries) {
+                        Divider()
 
-                    SwitchActionRowItem(
-                        title = annotatedStringResource(R.string.notificationsVibrate),
-                        checked = uiState.vibrate,
-                        qaTag = R.string.qa_preferences_vibrate,
-                        switchQaTag = R.string.qa_preferences_vibrate_toggle,
-                        onCheckedChange = {isEnabled -> sendCommand(ToggleVibrate(isEnabled)) }
-                    )
+                        IconActionRowItem(
+                            title = annotatedStringResource(channel.title),
+                            onClick = {
+                                sendCommand(OpenSystemNotificationSettings(channel.desc))
+                            },
+                            qaTag = channel.qaTag,
+                            subtitle = annotatedStringResource(channel.subtitle),
+                            icon = R.drawable.ic_chevron_right,
+                            iconSize = LocalDimensions.current.iconSmall,
+                        )
+                    }
                 }
             }
 

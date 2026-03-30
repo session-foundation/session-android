@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.NO_ID
-import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewMessageRequestBannerBinding
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
@@ -41,8 +40,6 @@ class HomeAdapter(
             is HomeViewModel.Item.Thread          -> item.thread.threadId
         }
     }
-
-    lateinit var glide: RequestManager
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         when (viewType) {

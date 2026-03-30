@@ -33,7 +33,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.ui.CollapsibleFooterItemData
 import org.thoughtcrime.securesms.ui.GetString
@@ -44,7 +44,7 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 @HiltViewModel(assistedFactory = ManageGroupMembersViewModel.Factory::class)
 class ManageGroupMembersViewModel @AssistedInject constructor(
     @Assisted private val groupAddress: Address.Group,
-    @Assisted private val navigator: UINavigator<ConversationSettingsDestination>,
+    @Assisted private val navigator: UINavigator<ConversationV3Destination>,
     @param:ApplicationContext private val context: Context,
     storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
@@ -133,7 +133,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     private fun navigateToInviteContacts() {
         viewModelScope.launch {
             navigator.navigate(
-                ConversationSettingsDestination.RouteInviteToGroup(
+                ConversationV3Destination.RouteInviteToGroup(
                     groupAddress,
                     excludingAccountIDsFromContactSelection.toList()
                 )
@@ -144,7 +144,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     private fun navigateToInviteAccountId(){
         viewModelScope.launch {
             navigator.navigate(
-                ConversationSettingsDestination.RouteInviteAccountIdToGroup(
+                ConversationV3Destination.RouteInviteAccountIdToGroup(
                     groupAddress,
                     excludingAccountIDsFromContactSelection.toList()
                 )
@@ -443,7 +443,7 @@ class ManageGroupMembersViewModel @AssistedInject constructor(
     interface Factory {
         fun create(
             groupAddress: Address.Group,
-            navigator: UINavigator<ConversationSettingsDestination>
+            navigator: UINavigator<ConversationV3Destination>
         ): ManageGroupMembersViewModel
     }
 }

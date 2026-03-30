@@ -3,20 +3,19 @@ package org.thoughtcrime.securesms.reactions
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.schedulers.Schedulers
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil
+import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ReactionsRepository @Inject constructor(
     private val recipientRepository: RecipientRepository,
+    private val reactionDatabase: ReactionDatabase,
 ) {
 
     fun getReactions(messageId: MessageId): Observable<List<ReactionDetails>> {
@@ -26,8 +25,7 @@ class ReactionsRepository @Inject constructor(
     }
 
     private fun fetchReactionDetails(messageId: MessageId): List<ReactionDetails> {
-        val context = MessagingModuleConfiguration.shared.context
-        val reactions: List<ReactionRecord> = DatabaseComponent.get(context).reactionDatabase().getReactions(messageId)
+        val reactions: List<ReactionRecord> = reactionDatabase.getReactions(messageId)
 
         return reactions.map { reaction ->
             val authorAddress = Address.fromSerialized(reaction.author)

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
@@ -25,13 +26,14 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
+import org.thoughtcrime.securesms.notifications.NotificationId
 import org.thoughtcrime.securesms.service.CallForegroundService
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_ESTABLISHED
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_CONNECTING
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_PRE_OFFER
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_OUTGOING_RINGING
-import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.webrtc.audio.OutgoingRinger
 import org.thoughtcrime.securesms.webrtc.data.Event
 import org.webrtc.DataChannel
@@ -67,7 +69,9 @@ class WebRtcCallBridge @Inject constructor(
     private val networkConnectivity: NetworkConnectivity,
     private val recipientRepository: RecipientRepository,
     private val storage: StorageProtocol,
-    @ManagerScope private val scope: CoroutineScope,
+    @param:ManagerScope private val scope: CoroutineScope,
+    private val notificationChannelManager: NotificationChannelManager,
+    private val notificationManager: NotificationManagerCompat,
 ): CallManager.WebRtcListener, OnAppStartupComponent  {
 
     companion object {
@@ -120,7 +124,7 @@ class WebRtcCallBridge @Inject constructor(
     private fun terminate() {
         Log.d(TAG, "Terminating rtc service")
         context.stopService(Intent(context, CallForegroundService::class.java))
-        NotificationManagerCompat.from(context).cancel(WEBRTC_NOTIFICATION)
+        notificationManager.cancel(NotificationId.WEBRTC_CALL)
         callManager.stop()
         _hasAcceptedCall.value = false
         currentTimeouts = 0
@@ -141,7 +145,7 @@ class WebRtcCallBridge @Inject constructor(
 
             if (!hasAcceptedCall.value) {
                 callManager.recipient?.let { recipient ->
-                    insertMissedCall(recipient, true)
+                    insertMissedCall(recipient, callManager.currentRemoteExpiry())
                 }
             }
 
@@ -155,7 +159,7 @@ class WebRtcCallBridge @Inject constructor(
     }
 
     private fun handleBusyCall(address: Address) {
-        insertMissedCall(address, false)
+        insertMissedCall(address, callManager.currentRemoteExpiry())
     }
 
     private fun handleNewOffer(address: Address, sdp: String, callId: UUID) {
@@ -200,7 +204,7 @@ class WebRtcCallBridge @Inject constructor(
 
             if (isIncomingMessageExpired(callTime)) {
                 Log.d(TAG, "Pre offer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - callTime}s")
-                insertMissedCall(address, true)
+                insertMissedCall(address, callManager.currentRemoteExpiry())
                 terminate()
                 return@execute
             }
@@ -263,8 +267,9 @@ class WebRtcCallBridge @Inject constructor(
                 callManager.startOutgoingRinger(OutgoingRinger.Type.RINGING)
                 setCallNotification(TYPE_OUTGOING_RINGING, callManager.recipient)
                 callManager.insertCallMessage(
-                    recipient.address.toString(),
-                    CallMessageType.CALL_OUTGOING
+                    recipient.address,
+                    CallMessageType.CALL_OUTGOING,
+                    recipientRepository.getRecipientSync(recipient).expiryMode
                 )
                 scheduledTimeout = timeoutExecutor.schedule(
                     TimeoutRunnable(callId, ::handleCheckTimeout),
@@ -328,7 +333,7 @@ class WebRtcCallBridge @Inject constructor(
                     Log.d(TAG, "Answer expired - message timestamp was deemed expired: ${System.currentTimeMillis() - timestamp}s")
                     insertMissedCall(
                         recipient,
-                        true
+                        callManager.currentRemoteExpiry()
                     ) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
                     terminate()
                 }
@@ -369,7 +374,7 @@ class WebRtcCallBridge @Inject constructor(
                         ) {
                             insertMissedCall(
                                 recipient,
-                                true
+                                callManager.currentRemoteExpiry()
                             ) //todo PHONE do we want a missed call in this case? Or just [xxx] called you ?
                         }
 
@@ -564,9 +569,14 @@ class WebRtcCallBridge @Inject constructor(
 
     @SuppressLint("MissingPermission")
     private fun sendNotification(type: Int, recipient: Address?){
-        NotificationManagerCompat.from(context).notify(
-            WEBRTC_NOTIFICATION,
-            CallNotificationBuilder.getCallInProgressNotification(context, type, recipient?.let(recipientRepository::getRecipientSync))
+        notificationManager.notify(
+            NotificationId.WEBRTC_CALL,
+            CallNotificationBuilder.getCallInProgressNotification(
+                context,
+                type,
+                recipient?.let(recipientRepository::getRecipientSync),
+                notificationChannelManager
+            )
         )
     }
 
@@ -583,11 +593,11 @@ class WebRtcCallBridge @Inject constructor(
         }
     }
 
-    private fun insertMissedCall(recipient: Address, signal: Boolean) {
+    private fun insertMissedCall(recipient: Address, expiryMode: ExpiryMode) {
         callManager.insertCallMessage(
-            threadPublicKey = recipient.address.toString(),
+            threadPublicKey = recipient.address,
             callMessageType = CallMessageType.CALL_MISSED,
-            signal = signal
+            expiryMode = expiryMode
         )
     }
 

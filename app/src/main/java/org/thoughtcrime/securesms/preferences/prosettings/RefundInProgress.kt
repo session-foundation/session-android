@@ -106,7 +106,7 @@ fun RefundInProgress(
             Text(
                 modifier = Modifier.clickable(
                         onClick = {
-                            sendCommand(ShowOpenUrlDialog(subscription.providerData.refundSupportUrl))
+                            sendCommand(ShowOpenUrlDialog(subscription.providerData.refundStatusUrl))
                         }
                     ),
                 text = annotatedStringResource(

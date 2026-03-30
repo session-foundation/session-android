@@ -5,15 +5,23 @@ import android.graphics.drawable.AnimationDrawable
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.network.SnodeClock
+import javax.inject.Inject
 import kotlin.math.round
 
+@AndroidEntryPoint
 class ExpirationTimerView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : AppCompatImageView(context, attrs, defStyleAttr) {
+
+    @Inject
+    lateinit var snodeClock: SnodeClock
+
     private val frames = intArrayOf(
         R.drawable.ic_clock_0,
         R.drawable.ic_clock_1,
@@ -46,7 +54,7 @@ class ExpirationTimerView @JvmOverloads constructor(
             return
         }
 
-        val elapsedTime = MessagingModuleConfiguration.shared.snodeClock.currentTimeMillis() - startedAt
+        val elapsedTime = snodeClock.currentTimeMillis() - startedAt
         val remainingTime = expiresIn - elapsedTime
         val remainingPercent = (remainingTime / expiresIn.toFloat()).coerceIn(0f, 1f)
 

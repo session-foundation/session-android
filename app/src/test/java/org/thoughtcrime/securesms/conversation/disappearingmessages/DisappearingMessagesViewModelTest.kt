@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.Bytes
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.junit.Rule
@@ -23,7 +24,7 @@ import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
+import org.thoughtcrime.securesms.conversation.v3.ConversationV3Destination
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.UINavigator
@@ -44,7 +45,7 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
     @Mock lateinit var application: Application
     @Mock lateinit var disappearingMessages: DisappearingMessages
-    @Mock lateinit var navigator: UINavigator<ConversationSettingsDestination>
+    @Mock lateinit var navigator: UINavigator<ConversationV3Destination>
 
     @Test
     fun `note to self, off, new config`() = runTest {
@@ -246,16 +247,12 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.NONE,
-                priority = 1,
-                proData = null,
-                profileUpdatedAt = null
+                configData = Contact(
+                    id = "contact-id",
+                    name = "Contact",
+                    expiryMode = ExpiryMode.NONE
+                ),
+                proData = null
             )
         )
         )
@@ -300,16 +297,12 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
-                priority = 1,
+                configData = Contact(
+                    id = "contact-id",
+                    name = "Contact",
+                    expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
+                ),
                 proData = null,
-                profileUpdatedAt = null
             )
         )
         )
@@ -361,16 +354,12 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
-                priority = 1,
+                configData = Contact(
+                    id = "contact-id",
+                    name = "Contact",
+                    expiryMode = ExpiryMode.AfterSend(time.inWholeSeconds),
+                ),
                 proData = null,
-                profileUpdatedAt = null
             )
         )
         )
@@ -422,16 +411,12 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
-                priority = 1,
+                configData = Contact(
+                    id = "contact-id",
+                    name = "Contact",
+                    expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
+                ),
                 proData = null,
-                profileUpdatedAt = null
             )
         )
         )
@@ -485,16 +470,11 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         val viewModel = createViewModel(Recipient(
             address = STANDARD_ADDRESS,
             data = RecipientData.Contact(
-                name = "Contact",
-                nickname = null,
-                avatar = null,
-                approved = true,
-                approvedMe = true,
-                blocked = false,
-                expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
-                priority = 1,
+                configData = Contact(
+                    id = "contact-id",
+                    expiryMode = ExpiryMode.AfterRead(time.inWholeSeconds),
+                ),
                 proData = null,
-                profileUpdatedAt = null
             )
         )
         )
@@ -564,7 +544,6 @@ class DisappearingMessagesViewModelTest : BaseViewModelTest() {
         context = application,
         disappearingMessages = disappearingMessages,
         navigator = navigator,
-        isNewConfigEnabled = true,
         showDebugOptions = false,
         recipientRepository = mock {
             onBlocking { getRecipient(recipient.address) } doReturn recipient

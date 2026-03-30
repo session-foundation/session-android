@@ -1,7 +1,7 @@
 package org.session.libsession.messaging.messages
 
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withUserConfigs
 
 sealed class Destination {
@@ -26,7 +26,9 @@ sealed class Destination {
 
     companion object {
 
-        fun from(address: Address, fileIds: List<String> = emptyList()): Destination {
+        fun from(address: Address,
+                 configFactory: ConfigFactoryProtocol,
+                 fileIds: List<String> = emptyList()): Destination {
             return when (address) {
                 is Address.Standard -> {
                     Contact(address.address)
@@ -35,7 +37,7 @@ sealed class Destination {
                     OpenGroup(roomToken = address.room, server = address.serverUrl, fileIds = fileIds)
                 }
                 is Address.CommunityBlindedId -> {
-                    val serverPublicKey = MessagingModuleConfiguration.shared.configFactory
+                    val serverPublicKey = configFactory
                         .withUserConfigs { configs ->
                             configs.userGroups.allCommunityInfo()
                                 .first { it.community.baseUrl == address.serverUrl }
