@@ -29,8 +29,9 @@ public abstract class MmsMessageRecord extends MessageRecord {
                      @Nullable Quote quote,
                      @NonNull List<LinkPreview> linkPreviews, List<ReactionRecord> reactions, boolean hasMention,
                      @Nullable MessageContent messageContent,
-                     Set<ProFeature> proFeatures) {
-        super(id, body, conversationRecipient, individualRecipient, dateSent, dateReceived, threadId, deliveryStatus, deliveryReceiptCount, type, expiresIn, expireStarted, readReceiptCount, reactions, hasMention, messageContent, proFeatures);
+                     Set<ProFeature> proFeatures,
+                     @Nullable String serverHash) {
+        super(id, body, conversationRecipient, individualRecipient, dateSent, dateReceived, threadId, deliveryStatus, deliveryReceiptCount, type, expiresIn, expireStarted, readReceiptCount, reactions, hasMention, messageContent, proFeatures, serverHash);
         this.slideDeck = slideDeck;
         this.quote = quote;
         this.linkPreviews.addAll(linkPreviews);

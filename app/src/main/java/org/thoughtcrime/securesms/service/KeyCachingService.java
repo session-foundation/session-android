@@ -28,28 +28,34 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ServiceInfo;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ServiceCompat;
-import com.squareup.phrase.Phrase;
-import java.util.concurrent.TimeUnit;
 
-import network.loki.messenger.BuildConfig;
-import network.loki.messenger.R;
+import com.squareup.phrase.Phrase;
+
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.DatabaseUpgradeActivity;
 import org.thoughtcrime.securesms.DummyActivity;
 import org.thoughtcrime.securesms.home.HomeActivity;
-import org.thoughtcrime.securesms.notifications.NotificationChannels;
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager;
+import org.thoughtcrime.securesms.notifications.NotificationId;
+
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import network.loki.messenger.BuildConfig;
+import network.loki.messenger.R;
 
 /**
  * Small service that stays running to keep a key cached in memory.
@@ -58,11 +64,12 @@ import org.thoughtcrime.securesms.notifications.NotificationChannels;
  */
 // TODO: This service does only serve one purpose now - to track the screen lock state and handle the timer.
 // We need to refactor it and cleanup from all the old Signal code.
+@AndroidEntryPoint
 public class KeyCachingService extends Service {
 
   private static final String TAG = KeyCachingService.class.getSimpleName();
 
-  public static final int SERVICE_RUNNING_ID = 4141;
+  public static final int SERVICE_RUNNING_ID = NotificationId.KEY_CACHING_SERVICE;
 
   public  static final String KEY_PERMISSION           = "network.loki.messenger.ACCESS_SESSION_SECRETS" + BuildConfig.AUTHORITY_POSTFIX;
   public  static final String CLEAR_KEY_EVENT          = "org.thoughtcrime.securesms.service.action.CLEAR_KEY_EVENT";
@@ -75,6 +82,9 @@ public class KeyCachingService extends Service {
   // This is a temporal drop off replacement for the refactoring time being.
   // This field only indicates if the app was unlocked or not (null means locked).
   private static Object masterSecret = null;
+
+  @Inject
+  NotificationChannelManager notificationChannelManager;
 
   /**
    * A temporal utility method to quickly call {@link KeyCachingService#setMasterSecret(Object)}
@@ -125,15 +135,7 @@ public class KeyCachingService extends Service {
 
       foregroundService();
 
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... params) {
-          if (!DatabaseUpgradeActivity.isUpdate(KeyCachingService.this)) {
-            ApplicationContext.getInstance(KeyCachingService.this).getMessageNotifier().updateNotification(KeyCachingService.this);
-          }
-          return null;
-        }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      // Notifications are now handled reactively by NotificationProcessor
     }
   }
 
@@ -192,13 +194,7 @@ public class KeyCachingService extends Service {
 
     sendBroadcast(intent, KEY_PERMISSION);
 
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        ApplicationContext.getInstance(KeyCachingService.this).getMessageNotifier().updateNotification(KeyCachingService.this);
-        return null;
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    // Notifications are now handled reactively by NotificationProcessor
   }
 
   private void handleLockToggled() {
@@ -242,7 +238,8 @@ public class KeyCachingService extends Service {
     }
 
     Log.i(TAG, "foregrounding KCS");
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationChannels.LOCKED_STATUS);
+    NotificationCompat.Builder builder = new NotificationCompat.Builder(this,
+            notificationChannelManager.getNotificationChannelId(NotificationChannelManager.ChannelDescription.LOCK_STATUS));
 
     // Replace app name in title string
     Context c = getApplicationContext();

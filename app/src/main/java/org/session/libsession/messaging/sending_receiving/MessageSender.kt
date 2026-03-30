@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
@@ -56,6 +55,7 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.copyFromLibSession
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreview
@@ -77,6 +77,7 @@ class MessageSender @Inject constructor(
     private val storeSnodeMessageApiFactory: StoreMessageApi.Factory,
     @param:ManagerScope private val scope: CoroutineScope,
     private val loginStateRepository: LoginStateRepository,
+    private val jobQueue: Provider<JobQueue>,
 ) {
 
     // Error
@@ -547,9 +548,9 @@ class MessageSender @Inject constructor(
         val threadID = storage.getThreadId(address)
         message.applyExpiryMode(address)
         message.threadID = threadID
-        val destination = Destination.from(address)
+        val destination = Destination.from(address, configFactory)
         val job = messageSendJobFactory.create(message, destination, statusCallback)
-        JobQueue.shared.add(job)
+        jobQueue.get().add(job)
 
         // if we are sending a 'Note to Self' make sure it is not hidden
         if( message is VisibleMessage &&
@@ -573,7 +574,7 @@ class MessageSender @Inject constructor(
     suspend fun sendNonDurably(message: Message, address: Address, isSyncMessage: Boolean) {
         val threadID = storage.getThreadId(address)
         message.threadID = threadID
-        val destination = Destination.from(address)
+        val destination = Destination.from(address, configFactory)
         sendNonDurably(message, destination, isSyncMessage)
     }
 }

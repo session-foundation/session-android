@@ -4,13 +4,13 @@ import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.network.SnodeClock
 import org.thoughtcrime.securesms.auth.AuthAwareComponentsHandler
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.disguise.AppDisguiseManager
 import org.thoughtcrime.securesms.emoji.EmojiIndexLoader
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
+import org.thoughtcrime.securesms.notifications.NotificationChannelManager
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
 import org.thoughtcrime.securesms.tokenpage.TokenDataManager
@@ -36,12 +36,12 @@ class OnAppStartupComponents private constructor(
         persistentLogger: PersistentLogger,
         appDisguiseManager: AppDisguiseManager,
         tokenFetcher: TokenFetcher,
-        threadDatabase: ThreadDatabase,
         emojiIndexLoader: EmojiIndexLoader,
         subscriptionCoordinator: SubscriptionCoordinator,
         authAwareHandler: AuthAwareComponentsHandler,
         snodeClock: SnodeClock,
         subscriptionManagers: Set<@JvmSuppressWildcards SubscriptionManager>,
+        notificationChannelManager: NotificationChannelManager,
     ): this(
         components = listOf(
             groupPollerManager,
@@ -54,11 +54,11 @@ class OnAppStartupComponents private constructor(
             persistentLogger,
             appDisguiseManager,
             tokenFetcher,
-            threadDatabase,
             emojiIndexLoader,
             subscriptionCoordinator,
             authAwareHandler,
-            snodeClock
+            snodeClock,
+            notificationChannelManager
         ) + subscriptionManagers
     )
 }

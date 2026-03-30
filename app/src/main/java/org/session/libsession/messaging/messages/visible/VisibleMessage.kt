@@ -74,7 +74,7 @@ data class VisibleMessage(
         // Text
         if (text != null) { dataMessage.body = text }
         // Quote
-        val quoteProto = quote?.toProto()
+        val quoteProto = quote?.toProto(messageDataProvider)
         if (quoteProto != null) {
             dataMessage.quote = quoteProto
         }
@@ -84,7 +84,7 @@ data class VisibleMessage(
             dataMessage.reaction = reactionProto
         }
         // Link preview
-        val linkPreviewProto = linkPreview?.toProto()
+        val linkPreviewProto = linkPreview?.toProto(messageDataProvider)
         if (linkPreviewProto != null) {
             dataMessage.addAllPreview(listOf(linkPreviewProto))
         }

@@ -22,6 +22,9 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.deleteThread
+import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
+import org.thoughtcrime.securesms.database.getThreadIDs
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -173,7 +176,6 @@ class MessageRequestResponseHandler @Inject constructor(
                             dataExtractionNotification = null
                         ),
                         threadId,
-                        runThreadUpdate = true,
                     )
                 }
 
@@ -188,10 +190,10 @@ class MessageRequestResponseHandler @Inject constructor(
                         )
                     }
 
-                val existingBlindedThreadIDs = threadDatabase.getThreadIDsFor(blindedConversationAddresses)
-                existingBlindedThreadIDs
-                    .forEach { blindedThreadId ->
-                        moveConversation(fromThreadId = blindedThreadId, toThreadId = threadId)
+                val existingBlindedThreads = threadDatabase.getThreadIDs(blindedConversationAddresses)
+                existingBlindedThreads
+                    .forEach { blindedThread ->
+                        moveConversation(fromThreadId = blindedThread.first, toThreadId = threadId)
                     }
 
                 configFactory.withMutableUserConfigs { configs ->
@@ -199,7 +201,7 @@ class MessageRequestResponseHandler @Inject constructor(
                     // sure we have set "approved" to true for them, because when we started the blinded
                     // conversation, we didn't know their real standard addresses, so we didn't say
                     // we have approved them, but now that we do, we need to approve them.
-                    if (existingBlindedThreadIDs.isNotEmpty()) {
+                    if (existingBlindedThreads.isNotEmpty()) {
                         configs.contacts.updateContact(messageSender.address) {
                             approved = true
                         }

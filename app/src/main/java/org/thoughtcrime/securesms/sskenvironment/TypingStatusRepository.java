@@ -8,7 +8,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.SSKEnvironment;
+import org.session.libsession.utilities.TypingIndicatorsProtocol;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.auth.LoginStateRepository;
@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 
 @SuppressLint("UseSparseArrays")
 @Singleton
-public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsProtocol {
+public class TypingStatusRepository implements TypingIndicatorsProtocol {
 
   private static final String TAG = TypingStatusRepository.class.getSimpleName();
 

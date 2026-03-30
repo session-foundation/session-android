@@ -331,7 +331,7 @@ class VisibleMessageContentView : ConstraintLayout {
                             binding.albumThumbnailView.root.calculateHitObject(
                                 event,
                                 message,
-                                thread.address,
+                                thread.address as Address.Conversable,
                                 downloadPendingAttachment
                             )
                         }
@@ -540,7 +540,7 @@ class VisibleMessageContentView : ConstraintLayout {
             val updatedUrl = urlSpan.url.toHttpUrlOrNull()?.toString() ?: urlSpan.url
             val replacementSpan = ModalURLSpan(updatedUrl) { url ->
                 val activity = context as? ConversationActivityV2
-                activity?.showOpenUrlDialog(url)
+                activity?.handleLink(url)
             }
             val start = body.getSpanStart(urlSpan)
             val end = body.getSpanEnd(urlSpan)

@@ -22,6 +22,7 @@
     </plurals>
     <string name="addAdminSingular">Add Admin</string>
     <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
+    <string name="admin">Admin</string>
     <string name="adminCannotBeDemoted">Admins cannot be demoted or removed from the group.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> and <b>{count} others</b> were promoted to Admin.</string>
@@ -155,6 +156,7 @@
     <string name="authenticateNotAccessed">Authentication could not be accessed.</string>
     <string name="authenticateToOpen">Authenticate to open {app_name}.</string>
     <string name="back">Back</string>
+    <string name="banAndUnbanUsers">Ban &amp;amp; unban users</string>
     <string name="banDeleteAll">Ban and Delete All</string>
     <string name="banErrorFailed">Ban failed</string>
     <string name="banUnbanErrorFailed">Unban failed</string>
@@ -217,11 +219,12 @@
     <string name="cameraGrantAccessQr">{app_name} needs camera access to scan QR codes</string>
     <string name="cancel">Cancel</string>
     <string name="cancelAccess">Cancel {pro}</string>
-    <string name="cancelProPlatform">Cancel on the {platform} website, using the {platform_account} you signed up for {pro} with.</string>
-    <string name="cancelProPlatformStore">Cancel on the {platform_store} website, using the {platform_account} you signed up for {pro} with.</string>
+    <string name="cancelProPlatform">Cancel on the <b><font color="0">{platform} website</font></b>, using the {platform_account} you signed up for {pro} with.</string>
+    <string name="cancelProPlatformStore">Cancel on the <b><font color="0">{platform_store} website</font></b>, using the {platform_account} you signed up for {pro} with.</string>
     <string name="change">Change</string>
     <string name="changePasswordFail">Failed to change password</string>
     <string name="changePasswordModalDescription">Change your password for {app_name}. Locally stored data will be re-encrypted with your new password.</string>
+    <string name="changeScope">Change Scope</string>
     <string name="changeSetting">Change Setting</string>
     <string name="checkingProStatus">Checking {pro} Status</string>
     <string name="checkingProStatusContinue">Checking your {pro} status. You\'ll be able to continue once this check is complete.</string>
@@ -262,8 +265,10 @@
     <string name="clearOnThisDevice">Clear on this device</string>
     <string name="close">Close</string>
     <string name="closeApp">Close App</string>
+    <string name="closeFocusedConversation">Close Focused Conversation</string>
     <string name="closeWindow">Close Window</string>
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
+    <string name="communitUrlJoinScanned">Looks like you scanned a Community URL.\n\nWould you like to join this Community?</string>
     <string name="communityBanDeleteDescription">This will ban the selected user from this Community and delete all their messages. Are you sure you want to continue?</string>
     <string name="communityBanDescription">This will ban the selected user from this Community. Are you sure you want to continue?</string>
     <string name="communityBanUserDescription">Are you sure you want to ban <b>{name}</b> from this Community?</string>
@@ -282,12 +287,20 @@
     <string name="communityJoinedAlready">You are already a member of this community.</string>
     <string name="communityLeave">Leave Community</string>
     <string name="communityLeaveError">Failed to leave {community_name}</string>
+    <string name="communityModLegacyHostedServer">This Community is hosted on a server running legacy {app_name} software and will become read-only unless upgraded {icon}</string>
+    <string name="communityModModeratorCannotManage">As a moderator, you cannot manage other user\'s roles. Only admins have this permission.</string>
+    <string name="communityModOtherBlindedId">Other Community members will see your Blinded ID.</string>
+    <string name="communityModSelfManagement">Self-management of your role is coming in a future update.</string>
     <string name="communityNameEnter">Enter a community name</string>
     <string name="communityNameEnterPlease">Please enter a community name</string>
+    <string name="communityReadOnly">This Community is now read-only. The server hosting this Community must upgrade its {app_name} software to restore access {icon}</string>
     <string name="communityUnbanUserDescription">Are you sure you want to unban <b>{name}</b> from this Community?</string>
     <string name="communityUnknown">Unknown Community</string>
     <string name="communityUrl">Community URL</string>
     <string name="communityUrlCopy">Copy Community URL</string>
+    <string name="communityUrlJoinEntered">Looks like you entered a Community URL.\n\nWould you like to join this Community?</string>
+    <string name="communityUrlOpenEntered">Looks like you entered a Community URL.\n\nYou are already a member of the <b>{community_name}</b> Community. Would you like to open this Community?</string>
+    <string name="communityUrlOpenScanned">Looks like you scanned a Community URL.\n\nYou are already a member of the <b>{community_name}</b> Community. Would you like to open this Community?</string>
     <string name="confirm">Confirm</string>
     <string name="confirmPromotion">Confirm Promotion</string>
     <string name="confirmPromotionDescription">Are you sure? Admins cannot be demoted or removed from the group.</string>
@@ -344,6 +357,7 @@
     <string name="creatingCall">Creating Call</string>
     <string name="currentBilling">Current Billing</string>
     <string name="currentPassword">Current Password</string>
+    <string name="currentRole">Current Role</string>
     <string name="cut">Cut</string>
     <string name="darkMode">Dark Mode</string>
     <string name="databaseErrorClearDataWarning">Are you sure you want to delete all messages, attachments, and account data from this device and create a new account?</string>
@@ -414,10 +428,16 @@
         <item quantity="one">This message cannot be deleted for everyone</item>
         <item quantity="other">Some of the messages you have selected cannot be deleted for everyone</item>
     </plurals>
+    <string name="deleteMessagesAndReactions">Delete messages &amp;amp; reactions</string>
     <string name="deleteMessagesDescriptionEveryone">Are you sure you want to delete these messages for everyone?</string>
+    <string name="deleteTheirMessages">Delete all their messages</string>
     <string name="deleting">Deleting</string>
     <string name="developerToolsToggle">Toggle Developer Tools</string>
     <string name="deviceNotificationSettings">Device Notification Settings</string>
+    <string name="deviceSettingsCallNotifications">Open Device Settings for Call Notifications.</string>
+    <string name="deviceSettingsCommunityNotifications">Open Device Settings for Community Notifications.</string>
+    <string name="deviceSettingsConversationNotifications">Open Device Settings for Conversation Notifications.</string>
+    <string name="deviceSettingsGroupNotifications">Open Device Settings for Group Notifications.</string>
     <string name="dictationStart">Start Dictation...</string>
     <string name="disappearingMessages">Disappearing Messages</string>
     <string name="disappearingMessagesCountdownBig">Message will delete in {time_large}</string>
@@ -475,6 +495,7 @@
     <string name="downloading">Downloading...</string>
     <string name="draft">Draft</string>
     <string name="edit">Edit</string>
+    <string name="editCommunityDetails">Edit Community details</string>
     <string name="emojiAndSymbols">Emoji and Symbols</string>
     <string name="emojiCategoryActivities">Activities</string>
     <string name="emojiCategoryAnimals">Animals and Nature</string>
@@ -540,6 +561,8 @@
     <string name="giphyWarningDescription">{app_name} will connect to Giphy to provide search results. You will not have full metadata protection when sending GIFs.</string>
     <string name="giveFeedback">Give Feedback?</string>
     <string name="giveFeedbackDescription">Sorry to hear your {app_name} experience hasn’t been ideal. We\'d be grateful if you could take a moment to share your thoughts in a brief survey</string>
+    <string name="globalSearchAccountId">The search term you entered contained an Account ID.\n\nWould you like to start a conversation with this Account ID?</string>
+    <string name="globalSearchUrlJoinCommunity">The search term you entered contained a Community URL.\n\nWould you like to join this Community?</string>
     <string name="groupAddMemberMaximum">Groups have a maximum of 100 members</string>
     <string name="groupCreate">Create Group</string>
     <string name="groupCreateErrorNoMembers">Please pick at least one other group member.</string>
@@ -599,6 +622,8 @@
     <string name="groupMembers">Group Members</string>
     <string name="groupMembersNone">There are no other members in this group.</string>
     <string name="groupName">Group Name</string>
+    <string name="groupNameContainedUrlJoinCommunity">The group name you entered contained a Community URL.\n\nWould you like to join this Community instead of creating a new group?</string>
+    <string name="groupNameContainedUrlOpenCommunity">The group name you entered contained a Community URL.\n\nYou have already joined the <b>{community_name}</b> Community, would you like to open this Community conversation instead of creating a new group?</string>
     <string name="groupNameEnter">Enter a group name</string>
     <string name="groupNameEnterPlease">Please enter a group name.</string>
     <string name="groupNameEnterShorter">Please enter a shorter group name</string>
@@ -678,6 +703,8 @@
     <string name="inviteNewMemberGroupLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code {icon}</string>
     <string name="inviteNewMemberGroupNoLink">Invite a new member to the group by entering your friend\'s Account ID, ONS or scanning their QR code</string>
     <string name="join">Join</string>
+    <string name="joinThisCommunity">Would you like to join this Community?</string>
+    <string name="joinedCommunityOpen">You have already joined the <b>{community_name}</b> Community.\n\nWould you like to open this Community?</string>
     <string name="keyboardShortcuts">Keyboard Shortcuts</string>
     <string name="later">Later</string>
     <string name="launchOnStartDescriptionDesktop">Launch {app_name} automatically when your computer starts up.</string>
@@ -726,9 +753,15 @@
     <string name="manageAdmins">Manage Admins</string>
     <string name="manageMembers">Manage Members</string>
     <string name="managePro">Manage {pro}</string>
+    <string name="manageRole">Manage Role</string>
+    <string name="manageRoles">Manage roles</string>
+    <string name="manageSelf">Manage Self</string>
+    <string name="manageUser">Manage User</string>
+    <string name="manageYourRole">Manage Your Role</string>
     <string name="max">Max</string>
     <string name="maybeLater">Maybe Later</string>
     <string name="media">Media</string>
+    <string name="member">Member</string>
     <plurals name="memberSelected">
         <item quantity="one">%1$d Member Selected</item>
         <item quantity="other">%1$d Members Selected</item>
@@ -815,6 +848,7 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Voice Message</string>
     <string name="messages">Messages</string>
     <string name="minimize">Minimize</string>
+    <string name="missingServerWideAdminPermissions">You are unable to manage this user’s role because you are missing server wide admin permissions.</string>
     <plurals name="modalMessageCharacterDisplayDescription">
         <item quantity="one">Messages have a character limit of %1$s characters. You have %2$d character remaining.</item>
         <item quantity="other">Messages have a character limit of %1$s characters. You have %2$d characters remaining.</item>
@@ -824,6 +858,12 @@
     <string name="modalMessageCharacterTooLongTitle">Message Too Long</string>
     <string name="modalMessageTooLongDescription">Please shorten your message to {limit} characters or less.</string>
     <string name="modalMessageTooLongTitle">Message Too Long</string>
+    <string name="moderator">Moderator</string>
+    <string name="nameAdminCommunities">{name} is an <b>admin</b> in all Communities hosted by this server.</string>
+    <string name="nameAdminCommunity">{name} is an <b>admin</b> in this Community.</string>
+    <string name="nameAdminGroup">{name} is an <b>admin</b> in this group.</string>
+    <string name="nameModeratorCommunities">{name} is a <b>moderator</b> in all Communities hosted by this server.</string>
+    <string name="nameModeratorCommunity">{name} is a <b>moderator</b> in this Community.</string>
     <string name="newPassword">New Password</string>
     <string name="next">Next</string>
     <string name="nextSteps">Next Steps</string>
@@ -848,6 +888,9 @@
     <string name="notificationDisplay">Notification Display</string>
     <string name="notificationSenderNameAndPreview">Display the sender\'s name and a preview of the message content.</string>
     <string name="notificationSenderNameOnly">Display only the sender\'s name without any message content.</string>
+    <string name="notificationSettings">Notification Settings</string>
+    <string name="notificationWarning">Notification Warning</string>
+    <string name="notificationWarningDescription">Fast Mode notifications must be turned on to receive reliable call notifications when {app_name} is closed. This device is currently using Slow Mode notifications.\n\nWould you like to change your notification settings?</string>
     <string name="notificationsAllMessages">All Messages</string>
     <string name="notificationsContent">Notification Content</string>
     <string name="notificationsContentDescription">The information shown in notifications.</string>
@@ -918,6 +961,7 @@
     <string name="onsErrorNotRecognized">We couldn\'t recognize this ONS. Please check it and try again.</string>
     <string name="onsErrorUnableToSearch">We were unable to search for this ONS. Please try again later.</string>
     <string name="open">Open</string>
+    <string name="openCommunity">Open Community</string>
     <string name="openMessageContextMenu">Open Message Context Menu</string>
     <string name="openPlatformStoreWebsite">Open {platform_store} Website</string>
     <string name="openPlatformWebsite">Open {platform} Website</string>
@@ -1321,6 +1365,7 @@
         <item quantity="other">Sending Promotions</item>
     </plurals>
     <string name="sent">Sent:</string>
+    <string name="serverWide">Server Wide</string>
     <string name="sessionAppearance">Appearance</string>
     <string name="sessionClearData">Clear Data</string>
     <string name="sessionConversations">Conversations</string>
@@ -1345,6 +1390,7 @@
     <string name="sessionSettings">Settings</string>
     <string name="set">Set</string>
     <string name="setCommunityDisplayPicture">Set Community Display Picture</string>
+    <string name="setIcon">Set {icon}</string>
     <string name="setPasswordModalDescription">Set a password for {app_name}. Locally stored data will be encrypted with this password. You will be asked to enter this password each time {app_name} starts.</string>
     <string name="settingsCannotChangeDesktop">Cannot Update Setting</string>
     <string name="settingsRestartDescription">You must restart {app_name} to apply your new settings.</string>
@@ -1364,6 +1410,7 @@
     <string name="showLess">Show Less</string>
     <string name="showNoteToSelf">Show Note to Self</string>
     <string name="showNoteToSelfDescription">Are you sure you want to show <b>Note to Self</b> in your conversation list?</string>
+    <string name="skip">Skip</string>
     <string name="spellChecker">Spell Checker</string>
     <string name="stickers">Stickers</string>
     <string name="strength">Strength</string>
@@ -1376,6 +1423,7 @@
     <string name="theError">Error</string>
     <string name="theReturn">Return</string>
     <string name="themePreview">Theme Preview</string>
+    <string name="thisCommunity">This Community</string>
     <string name="toggleEmojiPicker">Toggle Emoji Picker</string>
     <string name="toggleReactionBarMessage">Toggle Reaction Bar for Message</string>
     <string name="toggleReplyMessage">Toggle Reply for Message</string>
@@ -1434,6 +1482,7 @@
     <string name="view">View</string>
     <string name="viewLess">View Less</string>
     <string name="viewMore">View More</string>
+    <string name="viewReactions">View Reactions</string>
     <string name="waitFewMinutes">This can take a few minutes.</string>
     <string name="waitOneMoment">One moment please...</string>
     <string name="warning">Warning</string>
@@ -1443,6 +1492,7 @@
     <string name="you">You</string>
     <string name="yourCpuIsUnsupportedSSE42">Your CPU does not support SSE 4.2 instructions, which are required by {app_name} on Linux x64 operating systems to process images. Please upgrade to a compatible CPU or use a different operating system.</string>
     <string name="yourRecoveryPassword">Your Recovery Password</string>
+    <string name="yourRole">Your Role</string>
     <string name="zoomFactor">Zoom Factor</string>
     <string name="zoomFactorDescription">Adjust the size of text and visual elements.</string>
 </resources>

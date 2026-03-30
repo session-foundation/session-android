@@ -87,7 +87,7 @@ class LinkPreviewView : LinearLayout {
     private fun openURL() {
         val url = this.url ?: return Log.w("LinkPreviewView", "Cannot open a null URL")
         val activity = context as? ConversationActivityV2
-        activity?.showOpenUrlDialog(url)
+        activity?.handleLink(url)
     }
     // endregion
 }

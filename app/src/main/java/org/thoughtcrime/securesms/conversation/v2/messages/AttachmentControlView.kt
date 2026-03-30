@@ -43,7 +43,7 @@ class AttachmentControlView: LinearLayout {
     // endregion
     @Inject lateinit var storage: StorageProtocol
 
-    val separator = " • "
+    val separator: String = " • "
 
     // region Updating
     private fun getAttachmentData(attachmentType: AttachmentType, messageTotalAttachment: Int): Pair<Int, Int> {

@@ -219,8 +219,6 @@
     <string name="cameraGrantAccessQr">{app_name} are nevoie de acces la cameră pentru a scana coduri QR</string>
     <string name="cancel">Anulare</string>
     <string name="cancelAccess">Anulează {pro}</string>
-    <string name="cancelProPlatform">Anulează pe site-ul {platform}, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
-    <string name="cancelProPlatformStore">Anulează pe site-ul {platform_store}, folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
     <string name="change">Schimba</string>
     <string name="changePasswordFail">Eroare la modificarea parolei</string>
     <string name="changePasswordModalDescription">Modifică parola ta pentru {app_name}. Datele stocate local vor fi re-criptate cu noua ta parolă.</string>

@@ -26,14 +26,15 @@ import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
-import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TypingIndicatorsProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -50,6 +51,7 @@ import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -68,13 +70,13 @@ class ReceivedMessageProcessor @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val threadDatabase: ThreadDatabase,
     private val readReceiptManager: Provider<ReadReceiptManager>,
-    private val typingIndicators: Provider<SSKEnvironment.TypingIndicatorsProtocol>,
+    private val typingIndicators: Provider<TypingIndicatorsProtocol>,
     private val prefs: TextSecurePreferences,
     private val groupMessageHandler: Provider<GroupMessageHandler>,
-    private val messageExpirationManager: Provider<SSKEnvironment.MessageExpirationManagerProtocol>,
+    private val messageExpirationManager: Provider<MessageExpirationManagerProtocol>,
     private val messageDataProvider: MessageDataProvider,
     @param:ManagerScope private val scope: CoroutineScope,
-    private val notificationManager: MessageNotifier,
+
     private val messageRequestResponseHandler: Provider<MessageRequestResponseHandler>,
     private val visibleMessageHandler: Provider<VisibleMessageHandler>,
     private val blindMappingRepository: BlindMappingRepository,
@@ -106,19 +108,11 @@ class ReceivedMessageProcessor @Inject constructor(
         try {
             return block(context)
         } finally {
-            for (threadId in context.threadIDs.values) {
-                if (context.maxOutgoingMessageTimestamp > 0L &&
-                    context.maxOutgoingMessageTimestamp > storage.getLastSeen(threadId)
-                ) {
-                    storage.markConversationAsRead(
-                        threadId,
-                        context.maxOutgoingMessageTimestamp,
-                        force = true
-                    )
-                }
-
-                storage.updateThread(threadId, true)
-                notificationManager.updateNotification(this.context, threadId)
+            for ((threadAddress, _) in context.threadIDs) {
+                storage.updateConversationLastSeenIfNeeded(
+                    threadAddress = threadAddress,
+                    context.maxOutgoingMessageTimestamp,
+                )
             }
 
             // Handle pending community reactions
@@ -488,11 +482,6 @@ class ReceivedMessageProcessor @Inject constructor(
 
         // delete reactions
         storage.deleteReactions(messageToDelete.messageId)
-
-        // update notification
-        if (!messageToDelete.isOutgoing) {
-            notificationManager.updateNotification(context)
-        }
 
         return messageIdToDelete
     }

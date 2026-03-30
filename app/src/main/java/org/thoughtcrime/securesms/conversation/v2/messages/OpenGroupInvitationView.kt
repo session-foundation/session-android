@@ -6,17 +6,23 @@ import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.json.Json
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewOpenGroupInvitationBinding
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.CommunityUrlParser
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.util.getAccentColor
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class OpenGroupInvitationView : LinearLayout {
     private val binding: ViewOpenGroupInvitationBinding by lazy { ViewOpenGroupInvitationBinding.bind(this) }
     private var data: UpdateMessageData.Kind.OpenGroupInvitation? = null
+
+    @Inject
+    lateinit var json: Json
 
     constructor(context: Context): super(context)
     constructor(context: Context, attrs: AttributeSet?): super(context, attrs)
@@ -24,7 +30,7 @@ class OpenGroupInvitationView : LinearLayout {
 
     fun bind(message: MessageRecord, @ColorInt textColor: Int) {
         // FIXME: This is a really weird approach...
-        val umd = UpdateMessageData.fromJSON(MessagingModuleConfiguration.shared.json, message.body)!!
+        val umd = UpdateMessageData.fromJSON(json, message.body)!!
         val data = umd.kind as UpdateMessageData.Kind.OpenGroupInvitation
         this.data = data
         val iconID = if (message.isOutgoing) R.drawable.ic_globe else R.drawable.ic_plus
@@ -36,7 +42,7 @@ class OpenGroupInvitationView : LinearLayout {
             openGroupInvitationIconImageView.setImageResource(iconID)
             openGroupInvitationIconBackground.backgroundTintList = ColorStateList.valueOf(backgroundColor)
             openGroupTitleTextView.text = data.groupName
-            openGroupURLTextView.text = OpenGroupUrlParser.trimQueryParameter(data.groupUrl)
+            openGroupURLTextView.text = CommunityUrlParser.trimQueryParameter(data.groupUrl)
             openGroupTitleTextView.setTextColor(textColor)
             openGroupJoinMessageTextView.setTextColor(textColor)
             openGroupURLTextView.setTextColor(textColor)

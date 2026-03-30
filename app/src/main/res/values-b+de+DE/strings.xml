@@ -216,8 +216,6 @@
     <string name="cameraGrantAccessQr">{app_name} benötigt Kamera-Zugriff um QR-Codes zu scannen</string>
     <string name="cancel">Abbrechen</string>
     <string name="cancelAccess">{pro} kündigen</string>
-    <string name="cancelProPlatform">Kündigen Sie auf der {platform}-Website, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
-    <string name="cancelProPlatformStore">Kündigen Sie auf der {platform_store}-Website, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="change">Ändern</string>
     <string name="changePasswordFail">Passwortänderung fehlgeschlagen</string>
     <string name="changePasswordModalDescription">Ändere dein Passwort für {app_name}. Lokal gespeicherte Dateien werden mit deinem neuen Passwort entschlüsselt.</string>

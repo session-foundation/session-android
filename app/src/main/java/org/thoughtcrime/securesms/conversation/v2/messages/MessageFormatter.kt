@@ -147,6 +147,47 @@ class MessageFormatter @Inject constructor(
         return SpannableString(message.body)
     }
 
+    // This is used to show a placeholder text for MMS messages in the snippet,
+    // for example, "<image> Attachment"
+    private fun replaceMmsAttachment(
+        context: Context,
+        message: MessageRecord,
+        threadRecipient: Recipient
+    ): CharSequence {
+
+        val mmsPlaceholderBody = (message as? MmsMessageRecord)?.slideDeck?.body
+
+        val bodyText = formatMessageBody(context, message, threadRecipient)
+
+        return when {
+            // If both body and placeholder are blank, return empty string
+            bodyText.isBlank() && mmsPlaceholderBody.isNullOrBlank() -> ""
+
+            // If both body and placeholder are non-blank, combine them
+            bodyText.isNotBlank() && !mmsPlaceholderBody.isNullOrBlank() ->
+                SpannableStringBuilder(mmsPlaceholderBody)
+                    .append(": ")
+                    .append(bodyText)
+
+            // If only placeholder is non-blank, use it
+            !mmsPlaceholderBody.isNullOrBlank() -> mmsPlaceholderBody
+
+            // Otherwise, use the body text
+            else -> bodyText
+        }
+    }
+
+    fun formatMessageBodyForNotification(
+        context: Context,
+        message: MessageRecord,
+        threadRecipient: Recipient
+    ): CharSequence {
+        return when {
+            message.isOpenGroupInvitation -> context.getString(R.string.communityInvitation)
+            else -> replaceMmsAttachment(context, message, threadRecipient)
+        }
+    }
+
     fun formatThreadSnippet(
         context: Context,
         thread: ThreadRecord
@@ -179,32 +220,7 @@ class MessageFormatter @Inject constructor(
             }
 
             else -> {
-                val bodyText = formatMessageBody(
-                    context = context,
-                    message = lastMessage,
-                    threadRecipient = thread.recipient
-                )
-
-                // This is used to show a placeholder text for MMS messages in the snippet,
-                // for example, "<image> Attachment"
-                val mmsPlaceholderBody = (lastMessage as? MmsMessageRecord)?.slideDeck?.body
-
-                val text = when {
-                    // If both body and placeholder are blank, return empty string
-                    bodyText.isBlank() && mmsPlaceholderBody.isNullOrBlank() -> ""
-
-                    // If both body and placeholder are non-blank, combine them
-                    bodyText.isNotBlank() && !mmsPlaceholderBody.isNullOrBlank() ->
-                        SpannableStringBuilder(mmsPlaceholderBody)
-                            .append(": ")
-                            .append(bodyText)
-
-                    // If only placeholder is non-blank, use it
-                    !mmsPlaceholderBody.isNullOrBlank() -> mmsPlaceholderBody
-
-                    // Otherwise, use the body text
-                    else -> bodyText
-                }
+                val text = replaceMmsAttachment(context, lastMessage, thread.recipient)
 
                 when {
                     // There are certain messages that we want to keep their formatting

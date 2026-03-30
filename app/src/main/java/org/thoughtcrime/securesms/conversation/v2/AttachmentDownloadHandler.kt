@@ -21,6 +21,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.flatten
 import org.thoughtcrime.securesms.util.timedBuffer
+import javax.inject.Provider
 
 /**
  * [AttachmentDownloadHandler] is responsible for handling attachment download requests. These
@@ -33,7 +34,8 @@ class AttachmentDownloadHandler @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
     @Assisted private val scope: CoroutineScope,
-    private val downloadJobFactory: AttachmentDownloadJob.Factory
+    private val downloadJobFactory: AttachmentDownloadJob.Factory,
+    private val jobQueue: Provider<JobQueue>,
 ) {
     companion object {
         private const val BUFFER_TIMEOUT_MILLS = 500L
@@ -42,7 +44,6 @@ class AttachmentDownloadHandler @AssistedInject constructor(
     }
 
     private val downloadRequests = Channel<DatabaseAttachment>(UNLIMITED)
-    private val jobQueue: JobQueue = JobQueue.shared
 
     init {
         scope.launch(Dispatchers.Default) {
@@ -52,7 +53,7 @@ class AttachmentDownloadHandler @AssistedInject constructor(
                 .map(::filterEligibleAttachments)
                 .flatten()
                 .collect { attachment ->
-                    jobQueue.add(
+                    jobQueue.get().add(
                         downloadJobFactory.create(
                             attachmentID = attachment.attachmentId.rowId,
                             mmsMessageId = attachment.mmsId

@@ -68,7 +68,7 @@ class MessageNotificationsActivity : BaseActionBarActivity() {
         val uiState by viewModel.uiStates.collectAsState()
         MessageNotificationsScreen(
             uiState,
-            setEnabled = viewModel::setEnabled,
+            selectFastMode = viewModel::selectFastMode,
             onContinue = viewModel::onContinue,
             quit = viewModel::quit,
             dismissDialog = viewModel::dismissDialog

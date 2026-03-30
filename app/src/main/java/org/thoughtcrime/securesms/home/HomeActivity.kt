@@ -10,14 +10,11 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.LocalActivity
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -36,8 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +50,6 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
@@ -70,17 +64,18 @@ import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.audio.model.AudioPlaybackState
-import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.MessageFormatter
-import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v3.ConversationActivityV3
+import org.thoughtcrime.securesms.conversation.v3.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getUnreadCount
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
@@ -91,6 +86,7 @@ import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SEED
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.AppPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
@@ -123,6 +119,7 @@ import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import javax.inject.Inject
+import javax.inject.Provider
 
 // Intent extra keys so we know where we came from
 private const val NEW_ACCOUNT = "HomeActivity_NEW_ACCOUNT"
@@ -137,9 +134,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private val TAG = "HomeActivity"
 
     private lateinit var binding: ActivityHomeBinding
-    private lateinit var glide: RequestManager
 
-    @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var storage: Storage
     @Inject lateinit var groupDatabase: GroupDatabase
@@ -149,17 +144,18 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var clock: SnodeClock
-    @Inject lateinit var messageNotifier: MessageNotifier
+
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var storeReviewManager: StoreReviewManager
     @Inject lateinit var proStatusManager: ProStatusManager
     @Inject lateinit var recipientRepository: RecipientRepository
     @Inject lateinit var avatarUtils: AvatarUtils
-    @Inject lateinit var loginStateRepository: LoginStateRepository
     @Inject lateinit var messageFormatter: MessageFormatter
     @Inject lateinit var pathManager: PathManager
     @Inject lateinit var prefs: PreferenceStorage
+    @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
+    @Inject lateinit var jobQueue: Provider<JobQueue>
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -179,7 +175,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val globalSearchAdapter by lazy {
         GlobalSearchAdapter(
-            dateUtils = dateUtils,
+            contentViewFactory = contentViewFactory,
             onContactClicked = { model ->
                 val intent = when (model) {
                     is GlobalSearchAdapter.Model.Message -> ConversationActivityV2
@@ -241,8 +237,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         setContentView(binding.root)
         // Set custom toolbar
         setSupportActionBar(binding.toolbar)
-        // Set up Glide
-        glide = Glide.with(this)
         // Set up toolbar buttons
         binding.profileButton.setThemedContent {
             val recipient by recipientRepository.observeSelf()
@@ -306,8 +300,28 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                globalSearchViewModel.uiEvents.collect { event ->
+                    when(event){
+                        is GlobalSearchViewModel.UiEvent.ShowUrlDialog -> {
+                            homeViewModel.onCommand(HomeViewModel.Commands.ShowUrlDialog(event.linkType))
+                        }
+
+                        is GlobalSearchViewModel.UiEvent.ShowNewConversationDialog -> {
+                            homeViewModel.onCommand(HomeViewModel.Commands.ShowNewConversationConfirmationDialog(event.address))
+                        }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 homeViewModel.uiEvents.collect { event ->
                     when (event) {
+                        is HomeViewModel.UiEvent.OpenConversation-> {
+                            push(ConversationActivityV2.createIntent(this@HomeActivity, address = event.address))
+                        }
+
                         is HomeViewModel.UiEvent.OpenProSettings -> {
                             startActivity(
                                 ProSettingsActivity.createIntent(
@@ -336,7 +350,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up recycler view
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
-        homeAdapter.glide = glide
         binding.conversationsRecyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
@@ -438,7 +451,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (loginStateRepository.getLocalNumber() != null) {
-                    JobQueue.shared.resumePendingJobs()
+                    jobQueue.get().resumePendingJobs()
                 }
             }
 
@@ -601,13 +614,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
         val unreadThreadMap = messages
-            .map { it.threadId }.toSet()
+            .asSequence()
+            .mapNotNull { it.conversationRecipient.address as? Address.Conversable }
+            .toSet()
             .associateWith { mmsSmsDatabase.getUnreadCount(it) }
 
         return messages.map {
             GlobalSearchAdapter.Model.Message(
                 messageResult = it,
-                unread = unreadThreadMap[it.threadId] ?: 0,
+                unread = unreadThreadMap[it.conversationRecipient.address] ?: 0,
                 isSelf = it.conversationRecipient.isLocalNumber,
                 showProBadge = it.conversationRecipient.shouldShowProBadge
             )
@@ -644,7 +659,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     override fun onResume() {
         super.onResume()
-        messageNotifier.setHomeScreenVisible(true)
         if (loginStateRepository.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
         if (prefs[HAS_VIEWED_SEED]) {
@@ -656,7 +670,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     override fun onPause() {
         super.onPause()
-        messageNotifier.setHomeScreenVisible(false)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -668,7 +681,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // region Interaction
 
     override fun onConversationClick(thread: ThreadRecord) {
-        push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        if(prefs[DebugMenuViewModel.useConvoV3]){
+            push(ConversationActivityV3.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        } else {
+            push(ConversationActivityV2.createIntent(this, address = thread.recipient.address as Address.Conversable))
+        }
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {
@@ -830,7 +847,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private fun markAllAsRead(thread: ThreadRecord) {
         lifecycleScope.launch(Dispatchers.Default) {
-            storage.markConversationAsRead(thread.threadId, clock.currentTimeMillis())
+            storage.updateConversationLastSeenIfNeeded(
+                thread.recipient.address as Address.Conversable,
+                clock.currentTimeMillis()
+            )
         }
     }
 
@@ -908,9 +928,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     }
                 }
 
-
-                // Update the badge count
-                messageNotifier.updateNotification(context)
 
                 // Notify the user
                 val toastMessage = if (recipient.isGroupOrCommunityRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted
@@ -1005,7 +1022,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             text(getString(R.string.hide))
             button(R.string.yes) {
-                textSecurePreferences.setHasHiddenMessageRequests(true)
+                prefs[AppPreferences.HAS_HIDDEN_MESSAGE_REQUESTS] = true
                 homeViewModel.tryReload()
             }
             button(R.string.no)

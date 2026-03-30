@@ -16,11 +16,13 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
 import com.google.android.flexbox.JustifyContent
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
@@ -28,7 +30,9 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.util.NumberUtil.getFormattedNumber
 import java.util.Date
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class EmojiReactionsView : ConstraintLayout, OnTouchListener {
     companion object {
         private const val DEFAULT_THRESHOLD = 5
@@ -50,6 +54,8 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
     private var extended = false
 
     private val overflowItemSize = ViewUtil.dpToPx(24)
+
+    @Inject lateinit var loginStateRepository: LoginStateRepository
 
     constructor(context: Context) : super(context) { init(null) }
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) { init(attrs) }
@@ -100,9 +106,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
     }
 
     private fun displayReactions(messageId: MessageId, threadRecipient: Recipient, threshold: Int) {
-        val userPublicKey = (context.applicationContext as ApplicationContext).loginStateRepository
-            .get()
-            .getLocalNumber()
+        val userPublicKey = loginStateRepository.getLocalNumber()
 
         val reactions = buildSortedReactionsList(
             messageId = messageId,

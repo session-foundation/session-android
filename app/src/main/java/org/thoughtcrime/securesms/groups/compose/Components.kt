@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -40,13 +39,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.toConversableAddress
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.groups.InviteMembersViewModel
-import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.CollapsibleFooterAction
 import org.thoughtcrime.securesms.ui.CollapsibleFooterActionData
-import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.RadioOption
@@ -186,7 +186,7 @@ fun RadioMemberItem(
 fun LazyListScope.multiSelectMemberList(
     contacts: List<ContactItem>,
     modifier: Modifier = Modifier,
-    onContactItemClicked: (address: Address) -> Unit,
+    onContactItemClicked: (address: Address.Conversable) -> Unit,
     enabled: Boolean = true,
 ) {
     items(contacts.size) { index ->
@@ -395,7 +395,7 @@ fun PreviewMemberList() {
             multiSelectMemberList(
                 contacts = listOf(
                     ContactItem(
-                        address = Address.fromSerialized(random),
+                        address = random.toConversableAddress(),
                         name = "Person",
                         avatarUIData = AvatarUIData(
                             listOf(
@@ -409,7 +409,7 @@ fun PreviewMemberList() {
                         showProBadge = false,
                     ),
                     ContactItem(
-                        address = Address.fromSerialized(random),
+                        address = random.toConversableAddress(),
                         name = "Cow",
                         avatarUIData = AvatarUIData(
                             listOf(

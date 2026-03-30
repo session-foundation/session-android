@@ -222,8 +222,6 @@
     <string name="cameraGrantAccessQr">{app_name} требуется доступ к камере для сканирования QR-кодов</string>
     <string name="cancel">Отмена</string>
     <string name="cancelAccess">Отменить {pro}</string>
-    <string name="cancelProPlatform">Отмените на сайте {platform}, используя учётную запись {platform_account}, с которой вы оформили подписку на {pro}.</string>
-    <string name="cancelProPlatformStore">Отмените на сайте {platform_store}, используя учётную запись {platform_account}, с которой вы оформили подписку на {pro}.</string>
     <string name="change">Изменить</string>
     <string name="changePasswordFail">Не удалось изменить пароль</string>
     <string name="changePasswordModalDescription">Измените пароль для {app_name}. Локально сохранённые данные будут повторно зашифрованы с использованием нового пароля.</string>

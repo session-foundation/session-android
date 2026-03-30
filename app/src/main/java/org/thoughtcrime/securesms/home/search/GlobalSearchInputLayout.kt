@@ -45,7 +45,6 @@ class GlobalSearchInputLayout @JvmOverloads constructor(
         super.onAttachedToWindow()
         binding.searchInput.onFocusChangeListener = this
         binding.searchInput.setOnEditorActionListener(this)
-        binding.searchInput.filters = arrayOf<InputFilter>(LengthFilter(100)) // 100 char search limit
         binding.searchCancel.setOnClickListener {
             clearSearch()
             listener?.onCancelClicked()

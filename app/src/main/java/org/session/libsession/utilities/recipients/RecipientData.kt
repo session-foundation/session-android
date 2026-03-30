@@ -9,7 +9,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.util.DateUtils.Companion.secondsToInstant
 import java.time.Instant
 
 /**
@@ -134,17 +136,24 @@ sealed interface RecipientData {
      * A recipient that was saved in your contact config.
      */
     data class Contact(
-        val name: String,
-        val nickname: String?,
-        override val avatar: RemoteFile.Encrypted?,
-        val approved: Boolean,
-        val approvedMe: Boolean,
-        val blocked: Boolean,
-        val expiryMode: ExpiryMode,
-        override val priority: Long,
+        private val configData: network.loki.messenger.libsession_util.util.Contact,
         override val proData: ProData?,
-        override val profileUpdatedAt: Instant?,
     ) : RecipientData {
+        val name: String get() = configData.name
+        val nickname: String? get() = configData.nickname.takeIf { it.isNotBlank() }
+        val approved: Boolean get() = configData.approved
+        val approvedMe: Boolean get() = configData.approvedMe
+        val blocked: Boolean get() = configData.blocked
+        val createdAt: Instant get() = Instant.ofEpochSecond(configData.createdEpochSeconds)
+        override val priority: Long get() = configData.priority
+        override val profileUpdatedAt: Instant? get() = configData.profileUpdatedEpochSeconds
+            .secondsToInstant()
+
+        val expiryMode: ExpiryMode get() = configData.expiryMode
+
+        override val avatar: RemoteFile?
+            get() = configData.profilePicture.toRemoteFile()
+
         val displayName: String
             get() = nickname?.takeIf { it.isNotBlank() } ?: name
 
@@ -186,6 +195,7 @@ sealed interface RecipientData {
         val destroyed: Boolean get() = groupInfo.destroyed
         val shouldPoll: Boolean get() = groupInfo.shouldPoll
         override val proData: ProData? get() = null //todo LARGE GROUP hiding group pro status until we enable large groups
+        val joinedAt: Instant get() = Instant.ofEpochSecond(groupInfo.joinedAtSecs)
 
         override val profileUpdatedAt: Instant?
             get() = null
