@@ -37,17 +37,13 @@ class FirebaseTokenFetcher @Inject constructor(
                 if (token.value == null || it == TokenResetRequest) {
                     try {
                         Log.d("FirebaseTokenFetcher", "Fetching Firebase token")
-                        onNewToken(fetchToken())
+                        onNewToken(FirebaseMessaging.getInstance().token.await())
                     } catch (ec: Throwable) {
                         Log.w("FirebaseTokenFetcher", "Failed to fetch token", ec)
                     }
                 }
             }
         }
-    }
-
-    private suspend fun fetchToken(): String {
-        return FirebaseMessaging.getInstance().token.await()
     }
 
     override fun onNewToken(token: String) {
