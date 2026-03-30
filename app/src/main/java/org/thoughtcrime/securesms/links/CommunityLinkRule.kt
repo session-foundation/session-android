@@ -21,9 +21,14 @@ class CommunityLinkRule @Inject constructor(
             return@withContext null
         }
 
-        val joinedCommunity = configFactory.withUserConfigs {
-            it.userGroups.getCommunityInfo(communityInfo.baseUrl, communityInfo.room)
+        val joinedCommunity = try {
+            configFactory.withUserConfigs {
+                it.userGroups.getCommunityInfo(communityInfo.baseUrl, communityInfo.room)
+            }
+        } catch (_: Exception){
+            null
         }
+
         val roomInfo = communityDatabase.getRoomInfo(Address.Community(communityInfo.baseUrl, communityInfo.room))
         val name = roomInfo?.details?.name
             ?.takeIf { it.isNotBlank() }
