@@ -44,7 +44,7 @@ junitVersion = "4.13.2"
 kotlinxJsonVersion = "1.10.0"
 opencsvVersion = "5.12.0"
 orchestratorVersion = "1.6.1"
-photoviewVersion = "2.3.0"
+photoviewVersion = "1.0.3"
 phraseVersion = "1.2.0"
 lifecycleVersion = "2.10.0"
 materialVersion = "1.13.0"
@@ -156,7 +156,7 @@ mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlinVersion" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttpVersion" }
 opencsv = { module = "com.opencsv:opencsv", version.ref = "opencsvVersion" }
-photoview = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoviewVersion" }
+photoview = { module = "io.getstream:photoview", version.ref = "photoviewVersion" }
 phrase = { module = "com.squareup.phrase:phrase", version.ref = "phraseVersion" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectricVersion" }
 roundedimageview = { module = "com.makeramen:roundedimageview", version.ref = "roundedimageviewVersion" }
