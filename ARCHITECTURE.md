@@ -560,7 +560,7 @@ Most persistent app data lives in a single SQLCipher-encrypted SQLite database o
 
 | Area | Purpose |
 |---|---|
-| `ThreadDatabase` | Conversation threads |
+| `ThreadDatabase` | Conversation threads: last seen most importantly |
 | `SmsDatabase` / `MmsDatabase` / `MmsSmsDatabase` | Message storage and querying |
 | `GroupDatabase` / `GroupMemberDatabase` | Group and community membership state |
 | `LokiAPIDatabase` | Swarm, path, server, and polling state |
