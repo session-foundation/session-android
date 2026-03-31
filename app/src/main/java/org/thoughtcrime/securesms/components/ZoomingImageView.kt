@@ -2,12 +2,10 @@ package org.thoughtcrime.securesms.components
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.PointF
 import android.media.ExifInterface
 import android.net.Uri
 import android.os.AsyncTask
 import android.util.AttributeSet
-import android.util.Pair
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.FrameLayout
@@ -17,17 +15,15 @@ import com.bumptech.glide.request.target.Target
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.davemorrissey.labs.subscaleview.decoder.DecoderFactory
-import com.github.chrisbanes.photoview.PhotoView
+import io.getstream.photoview.PhotoView
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.subsampling.AttachmentBitmapDecoder
 import org.thoughtcrime.securesms.components.subsampling.AttachmentRegionDecoder
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.MediaUtil
-import java.io.IOException
 
 class ZoomingImageView @JvmOverloads constructor(
     context: Context,
