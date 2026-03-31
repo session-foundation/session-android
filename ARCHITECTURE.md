@@ -76,7 +76,7 @@ The app has several local secure-state stores:
 - `LoginStateRepository` stores the logged-in account state as Keystore-sealed JSON
 - regular user preferences live in `PreferenceStorage` / shared preferences and are used for purely local settings such as UI and notification preferences
 
-This distinction matters during handover:
+Distinctions to note:
 
 - account identity and database access are securely persisted
 - app preferences are local-only and not part of cross-device config sync
@@ -198,8 +198,6 @@ There are two important write patterns:
 
 ### Source-of-truth boundaries
 
-For handover purposes, the cleanest model is:
-
 - config objects are the source of truth for cross-device user state
 - SQLCipher tables are local projections optimized for queries, joins, and UI rendering
 - shared preferences store local-only application settings
@@ -284,14 +282,12 @@ Error handling is layered as well. Each level classifies failures and communicat
 
 Some features use a separate server-API stack rather than swarm storage. The most important example is Pro. These APIs are still typed and injected, and under the default executor they are normally sent through the onion transport as `HttpServerRequest`s, but the backend authority and data model are server-backed rather than decentralized across the user's swarm.
 
-This distinction should be made explicit in handover discussions because debugging "networking" in Session can mean either:
+Debugging "networking" in Session can mean either:
 
 - onion-routed decentralized swarm/snode traffic, or
 - onion-routed or direct server-backed API traffic, depending on executor choice
 
 ## 7. Message Ingress, Processing, and Egress
-
-The message pipeline is another handover-critical area.
 
 ### Incoming message sources
 
@@ -633,8 +629,6 @@ The most important architectural convention here is not just "use Hilt", but "in
 
 ## 14. Other Important Runtime Components
 
-Some subsystems do not justify their own section but are still important during handover:
-
 - `ExpiringMessageManager`: disappearing-message lifecycle
 - `AvatarUploadManager`: avatar upload/sync behavior
 - `CallMessageProcessor` and WebRTC bridge: call signaling/runtime integration
@@ -699,9 +693,9 @@ User action
   -> reactive flows refresh UI
 ```
 
-## 16. Practical Handover Notes
+## 16. Practical Notes for new Developers
 
-For a new team, the highest-value mental model is:
+For a new developer, the highest-value mental model is:
 
 1. shared state usually starts in config, not SQLite
 2. most runtime behavior is implemented as long-lived reactive managers
