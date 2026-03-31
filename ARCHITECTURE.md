@@ -230,7 +230,7 @@ Important details:
 `ConfigToDatabaseSync` listens to config and conversation flows and keeps the relational model in sync. It is responsible for tasks such as:
 
 - ensuring threads exist for all config-backed conversations
-- applying last-read values from `Convo Info Volatile`
+- applying last-read values from `ConvoInfoVolatile`
 - pruning DB rows and recipient settings when conversations disappear from config
 - cleaning up community/group-specific local state when configs remove them
 
