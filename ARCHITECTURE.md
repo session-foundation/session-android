@@ -346,6 +346,8 @@ Key characteristics:
 
 This queue is the main reliability mechanism for send/upload/download work and should be treated as part of core message delivery architecture, not as an implementation detail.
 
+It's worth noting that we have plans to remove the `JobQueue` system and use the standard worker system instead. This plan has yet made it to actual implementation.
+
 ## 8. Pollers and Background Sync
 
 The app has multiple poller families because different conversation types have different transport semantics.
