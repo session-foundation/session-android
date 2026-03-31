@@ -12,17 +12,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewGroupCompat
-import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.EntryPointAccessors
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
-import org.thoughtcrime.securesms.dependencies.EarlyActivityEntryPoint
 import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.UiModeUtilities.isDayUiMode
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.themeState
-import javax.inject.Inject
 
 private val DefaultLightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 private val DefaultDarkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
@@ -32,9 +28,8 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
 
     private var modifiedTheme: Resources.Theme? = null
 
-    private val preferences: TextSecurePreferences by lazy {
-        EntryPointAccessors.fromActivity(this, EarlyActivityEntryPoint::class.java)
-            .prefs
+    private val preferences: TextSecurePreferences get() {
+        return (applicationContext as ApplicationContext).textSecurePreferences.get()
     }
 
     // Whether to apply default window insets to the decor view
