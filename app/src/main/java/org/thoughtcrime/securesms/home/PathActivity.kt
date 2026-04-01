@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -48,6 +50,7 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.openUrl
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.IP2Country
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.PathDotView
 import org.thoughtcrime.securesms.util.UiModeUtilities
 import org.thoughtcrime.securesms.util.animateSizeChange
@@ -71,6 +74,9 @@ class PathActivity : ScreenLockActionBarActivity() {
 
     @Inject
     lateinit var iP2Country: IP2Country
+
+    @Inject
+    lateinit var networkConnectivity: NetworkConnectivity
 
     private val pathState: StateFlow<List<Pair<Snode, CountryName?>>> by lazy {
         pathManager
@@ -131,14 +137,20 @@ class PathActivity : ScreenLockActionBarActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                pathState.map { it.isEmpty() }
-                    .collectLatest { isLoading ->
-                        if (isLoading) {
-                            binding.spinner.fadeIn()
-                        } else {
-                            binding.spinner.fadeOut()
-                        }
+                combine(
+                    pathState,
+                    networkConnectivity.networkAvailable
+                ) { path, hasNetwork ->
+                    path.isEmpty() || !hasNetwork
+                }.collectLatest { isLoading ->
+                    if (isLoading) {
+                        binding.spinner.fadeIn()
+                    } else {
+                        binding.spinner.fadeOut()
                     }
+
+                    binding.pathRowsContainer.isVisible = !isLoading
+                }
             }
         }
     }
