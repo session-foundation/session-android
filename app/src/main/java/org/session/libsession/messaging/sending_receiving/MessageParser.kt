@@ -227,7 +227,7 @@ class MessageParser @Inject constructor(
         return parseMessage(
             decodedEnvelope = decoded,
             relaxSignatureCheck = false,
-            checkForBlockStatus = false,
+            checkForBlockStatus = true,
             isForGroup = true,
             senderIdPrefix = IdPrefix.STANDARD,
             currentUserId = currentUserId,
