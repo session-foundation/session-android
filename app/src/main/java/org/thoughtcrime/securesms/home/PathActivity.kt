@@ -22,35 +22,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityPathBinding
+import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.openUrl
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.IP2Country
-import org.thoughtcrime.securesms.util.NetworkConnectivity
 import org.thoughtcrime.securesms.util.PathDotView
 import org.thoughtcrime.securesms.util.UiModeUtilities
 import org.thoughtcrime.securesms.util.animateSizeChange
@@ -74,9 +68,6 @@ class PathActivity : ScreenLockActionBarActivity() {
 
     @Inject
     lateinit var iP2Country: IP2Country
-
-    @Inject
-    lateinit var networkConnectivity: NetworkConnectivity
 
     private val pathState: StateFlow<List<Pair<Snode, CountryName?>>> by lazy {
         pathManager
@@ -137,12 +128,9 @@ class PathActivity : ScreenLockActionBarActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                combine(
-                    pathState,
-                    networkConnectivity.networkAvailable
-                ) { path, hasNetwork ->
-                    path.isEmpty() || !hasNetwork
-                }.collectLatest { isLoading ->
+                pathManager.status
+                    .map { it == PathStatus.BUILDING || it == PathStatus.ERROR }
+                    .collectLatest { isLoading ->
                     if (isLoading) {
                         binding.spinner.fadeIn()
                     } else {
