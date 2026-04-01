@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.network
 
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -15,6 +16,7 @@ import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.database.SnodeDatabase
 import org.thoughtcrime.securesms.database.SnodeDatabaseTest
 import org.thoughtcrime.securesms.util.MockLoggingRule
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 
 @RunWith(RobolectricTestRunner::class)
 @Config(minSdk = 36) // Setting min sdk 36 to use recent sqlite version as we use some modern features in the app code
@@ -25,9 +27,15 @@ class PathManagerTest {
 
     lateinit var snodeDb: SnodeDatabase
 
+    private lateinit var networkConnectivity: NetworkConnectivity
+
     @Before
     fun setUp() {
         snodeDb = SnodeDatabaseTest.createInMemorySnodeDatabase()
+
+        networkConnectivity = mock {
+            on { networkAvailable } doReturn MutableStateFlow(true)
+        }
     }
 
     private fun snode(id: String): Snode =
@@ -57,6 +65,7 @@ class PathManagerTest {
             prefs = mock(),
             snodeApiExecutor = { mock() },
             getInfoApi = { mock() },
+            networkConnectivity = networkConnectivity,
         )
 
         val chosen = pm.getPath(exclude = b)
@@ -83,6 +92,7 @@ class PathManagerTest {
             prefs = mock(),
             snodeApiExecutor = { mock() },
             getInfoApi = { mock() },
+            networkConnectivity = networkConnectivity,
         )
 
         pm.handleBadSnode(snode = b, forceRemove = true)
@@ -115,6 +125,7 @@ class PathManagerTest {
             prefs = mock(),
             snodeApiExecutor = { mock() },
             getInfoApi = { mock() },
+            networkConnectivity = networkConnectivity,
         )
 
         pm.handleBadSnode(snode = b, forceRemove = true)

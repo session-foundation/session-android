@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -21,28 +22,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityPathBinding
+import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.openUrl
@@ -131,14 +128,17 @@ class PathActivity : ScreenLockActionBarActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                pathState.map { it.isEmpty() }
+                pathManager.status
+                    .map { it == PathStatus.BUILDING || it == PathStatus.ERROR }
                     .collectLatest { isLoading ->
-                        if (isLoading) {
-                            binding.spinner.fadeIn()
-                        } else {
-                            binding.spinner.fadeOut()
-                        }
+                    if (isLoading) {
+                        binding.spinner.fadeIn()
+                    } else {
+                        binding.spinner.fadeOut()
                     }
+
+                    binding.pathRowsContainer.isVisible = !isLoading
+                }
             }
         }
     }

@@ -33,6 +33,7 @@ import org.thoughtcrime.securesms.api.snode.GetInfoApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.execute
+import org.thoughtcrime.securesms.util.NetworkConnectivity
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Provider
@@ -48,6 +49,7 @@ open class PathManager @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val snodeApiExecutor: Provider<SnodeApiExecutor>,
     private val getInfoApi: Provider<GetInfoApi>,
+    private val networkConnectivity: NetworkConnectivity,
 ) {
     companion object {
         private const val STRIKE_THRESHOLD = 3
@@ -75,10 +77,10 @@ open class PathManager @Inject constructor(
 
     @OptIn(FlowPreview::class)
     val status: StateFlow<PathStatus> =
-        combine(_paths, _isBuilding) { paths, building ->
+        combine(_paths, _isBuilding, networkConnectivity.networkAvailable) { paths, building, hasNetwork ->
             when {
-                building -> PathStatus.BUILDING
-                paths.isEmpty() -> PathStatus.ERROR
+                hasNetwork && building -> PathStatus.BUILDING
+                !hasNetwork || paths.isEmpty() -> PathStatus.ERROR
                 else -> PathStatus.READY
             }
         }
