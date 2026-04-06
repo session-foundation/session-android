@@ -13,10 +13,10 @@ import com.bumptech.glide.load.model.MultiModelLoaderFactory;
 
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
-public class DecryptableStreamUriLoader implements ModelLoader<DecryptableUri, InputStream> {
+public class DecryptableStreamUriLoader implements ModelLoader<DecryptableUri, ByteBuffer> {
 
   private final Context context;
 
@@ -26,7 +26,7 @@ public class DecryptableStreamUriLoader implements ModelLoader<DecryptableUri, I
 
   @Nullable
   @Override
-  public LoadData<InputStream> buildLoadData(@NonNull DecryptableUri decryptableUri, int width, int height, @NonNull Options options) {
+  public LoadData<ByteBuffer> buildLoadData(@NonNull DecryptableUri decryptableUri, int width, int height, @NonNull Options options) {
     return new LoadData<>(decryptableUri, new DecryptableStreamLocalUriFetcher(context, decryptableUri.uri));
   }
 
@@ -35,7 +35,7 @@ public class DecryptableStreamUriLoader implements ModelLoader<DecryptableUri, I
     return true;
   }
 
-  static class Factory implements ModelLoaderFactory<DecryptableUri, InputStream> {
+  static class Factory implements ModelLoaderFactory<DecryptableUri, ByteBuffer> {
 
     private final Context context;
 
@@ -44,7 +44,7 @@ public class DecryptableStreamUriLoader implements ModelLoader<DecryptableUri, I
     }
 
     @Override
-    public @NonNull ModelLoader<DecryptableUri, InputStream> build(@NonNull MultiModelLoaderFactory multiFactory) {
+    public @NonNull ModelLoader<DecryptableUri, ByteBuffer> build(@NonNull MultiModelLoaderFactory multiFactory) {
       return new DecryptableStreamUriLoader(context);
     }
 
@@ -83,4 +83,3 @@ public class DecryptableStreamUriLoader implements ModelLoader<DecryptableUri, I
     }
   }
 }
-

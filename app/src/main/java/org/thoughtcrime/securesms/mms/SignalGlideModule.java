@@ -37,6 +37,7 @@ import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 @GlideModule
 public class SignalGlideModule extends AppGlideModule {
@@ -67,7 +68,7 @@ public class SignalGlideModule extends AppGlideModule {
     registry.append(RemoteFile.class, InputStream.class, new RemoteFileLoader.Factory(
             ((ApplicationContext) (context.getApplicationContext())).getRemoteFileLoader()
     ));
-    registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
+    registry.append(DecryptableUri.class, ByteBuffer.class, new DecryptableStreamUriLoader.Factory(context));
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
   }

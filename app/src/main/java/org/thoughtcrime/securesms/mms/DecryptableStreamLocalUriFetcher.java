@@ -1,49 +1,81 @@
 package org.thoughtcrime.securesms.mms;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
+
+import androidx.annotation.NonNull;
+
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.data.DataFetcher;
+
 import org.session.libsignal.utilities.Log;
-
-import com.bumptech.glide.load.data.StreamLocalUriFetcher;
-
 import org.thoughtcrime.securesms.util.MediaUtil;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-class DecryptableStreamLocalUriFetcher extends StreamLocalUriFetcher {
+class DecryptableStreamLocalUriFetcher implements DataFetcher<ByteBuffer> {
 
   private static final String TAG = DecryptableStreamLocalUriFetcher.class.getSimpleName();
 
-  private Context context;
+  private final Context context;
+  private final Uri uri;
 
   DecryptableStreamLocalUriFetcher(Context context, Uri uri) {
-    super(context.getContentResolver(), uri);
-    this.context      = context;
+    this.context = context;
+    this.uri = uri;
   }
 
   @Override
-  protected InputStream loadResource(Uri uri, ContentResolver contentResolver) throws FileNotFoundException {
+  public void loadData(@NonNull Priority priority, @NonNull DataCallback<? super ByteBuffer> callback) {
+    try {
+      callback.onDataReady(ByteBuffer.wrap(readAllBytes()));
+    } catch (IOException e) {
+      Log.w(TAG, e);
+      callback.onLoadFailed(e);
+    }
+  }
+
+  private byte[] readAllBytes() throws IOException {
     if (MediaUtil.hasVideoThumbnail(uri)) {
       Bitmap thumbnail = MediaUtil.getVideoThumbnail(context, uri);
-
       if (thumbnail != null) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        return new ByteArrayInputStream(baos.toByteArray());
+        return baos.toByteArray();
       }
     }
 
-    try {
-      return PartAuthority.getAttachmentStream(context, uri);
-    } catch (IOException ioe) {
-      Log.w(TAG, ioe);
-      throw new FileNotFoundException("PartAuthority couldn't load Uri resource.");
+    try (InputStream stream = PartAuthority.getAttachmentStream(context, uri)) {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      byte[] chunk = new byte[8192];
+      int bytesRead;
+      while ((bytesRead = stream.read(chunk)) != -1) {
+        buffer.write(chunk, 0, bytesRead);
+      }
+      return buffer.toByteArray();
     }
+  }
+
+  @Override
+  public void cleanup() {}
+
+  @Override
+  public void cancel() {}
+
+  @NonNull
+  @Override
+  public Class<ByteBuffer> getDataClass() {
+    return ByteBuffer.class;
+  }
+
+  @NonNull
+  @Override
+  public DataSource getDataSource() {
+    return DataSource.LOCAL;
   }
 }
