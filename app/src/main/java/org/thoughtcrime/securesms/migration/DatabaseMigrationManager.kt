@@ -41,18 +41,11 @@ class DatabaseMigrationManager @Inject constructor(
     val openHelper: SQLCipherOpenHelper by lazy {
         requestMigration(false)
 
-        // First perform a cheap check to see if the migration is done, if so we can skip the wait.
-        if (mutableMigrationState.value != MigrationState.Completed) {
-            // Wait until the migration is done. This is a semi-expensive call but it's necessary
-            // to block the callers from accessing the database until we have sorted out the migration
-            // process. Note that we don't pass in errors here as the callers of this function
-            // don't expect the exceptions at all so we have no choice but to block them.
-            runBlocking {
-                migrationState.first { it == MigrationState.Completed }
-            }
+        when (val state = awaitMigrationState()) {
+            MigrationState.Completed -> SQLCipherOpenHelper(application, dbSecret, jsonProvider)
+            is MigrationState.Error -> throw state.throwable.asRuntimeException()
+            else -> error("Unexpected migration state while opening database: $state")
         }
-
-        SQLCipherOpenHelper(application, dbSecret, jsonProvider)
     }
 
     private val mutableMigrationState = MutableStateFlow<MigrationState>(MigrationState.Idle)
@@ -90,6 +83,8 @@ class DatabaseMigrationManager @Inject constructor(
         mutableMigrationState.value = MigrationState.Migrating(steps.toList())
 
         try {
+            dbSecret.asBytes()
+
             for ((index, desc) in stepDescriptors.withIndex()) {
                 Log.d(TAG, "Starting migration step: ${desc.name}")
                 val stepStartedAt = SystemClock.elapsedRealtime()
@@ -108,6 +103,7 @@ class DatabaseMigrationManager @Inject constructor(
 
             mutableMigrationState.value = MigrationState.Completed
         } catch (ec: Exception) {
+            Log.e(TAG, "Database migration failed", ec)
             mutableMigrationState.value = MigrationState.Error(ec)
             return
         }
@@ -221,6 +217,18 @@ class DatabaseMigrationManager @Inject constructor(
         }
     }
 
+    private fun awaitMigrationState(): MigrationState {
+        mutableMigrationState.value.let { state ->
+            if (state == MigrationState.Completed || state is MigrationState.Error) {
+                return state
+            }
+        }
+
+        return runBlocking {
+            migrationState.first { it == MigrationState.Completed || it is MigrationState.Error }
+        }
+    }
+
     private data class ProgressStepDescriptor(
         val name: String,
 
@@ -260,4 +268,8 @@ class DatabaseMigrationManager @Inject constructor(
 
         private const val TAG = "DatabaseMigrationManager"
     }
+}
+
+private fun Throwable.asRuntimeException(): RuntimeException {
+    return this as? RuntimeException ?: RuntimeException(this)
 }

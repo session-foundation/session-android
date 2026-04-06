@@ -49,7 +49,7 @@ public final class KeyStoreHelper {
         return new SealedData(iv, data);
       }
     } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-      throw new AssertionError(e);
+      throw failure("seal", e);
     }
   }
 
@@ -67,7 +67,7 @@ public final class KeyStoreHelper {
         return cipher.doFinal(sealedData.getData());
       }
     } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-      throw new AssertionError(e);
+      throw failure("unseal", e);
     }
   }
 
@@ -88,7 +88,7 @@ public final class KeyStoreHelper {
 
       return keyGenerator.generateKey();
     } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
-      throw new AssertionError(e);
+      throw failure("create keystore entry", e);
     }
   }
 
@@ -103,7 +103,7 @@ public final class KeyStoreHelper {
         // Attempt 2
         return getSecretKey(keyStore);
       } catch (UnrecoverableKeyException e2) {
-        throw new AssertionError(e2);
+        throw failure("load keystore entry", e2);
       }
     }
   }
@@ -115,7 +115,7 @@ public final class KeyStoreHelper {
     } catch (UnrecoverableKeyException e) {
       throw e;
     } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableEntryException e) {
-      throw new AssertionError(e);
+      throw failure("read keystore entry", e);
     }
   }
 
@@ -125,7 +125,7 @@ public final class KeyStoreHelper {
       keyStore.load(null);
       return keyStore;
     } catch (KeyStoreException | CertificateException | IOException | NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
+      throw failure("load keystore", e);
     }
   }
 
@@ -136,8 +136,12 @@ public final class KeyStoreHelper {
 
       return ks.containsAlias(KEY_ALIAS) && ks.entryInstanceOf(KEY_ALIAS, KeyStore.SecretKeyEntry.class);
     } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-      throw new AssertionError(e);
+      throw failure("inspect keystore", e);
     }
+  }
+
+  private static KeyStoreAccessException failure(@NonNull String operation, @NonNull Exception e) {
+    return new KeyStoreAccessException("Failed to " + operation + " using Android Keystore", e);
   }
 
 }
