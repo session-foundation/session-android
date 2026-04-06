@@ -209,10 +209,14 @@ open class ThumbnailView @JvmOverloads constructor(
             }.let { into(it) }
         }
 
-    private fun <T> RequestBuilder<T>.overrideDimensions() =
-        dimensDelegate.resourceSize().takeIf { 0 !in it }
-            ?.let { override(it[WIDTH], it[HEIGHT]) }
-            ?: override(getDefaultWidth(), getDefaultHeight())
+    private fun <T> RequestBuilder<T>.overrideDimensions(): RequestBuilder<T> {
+        val size = dimensDelegate.resourceSize()
+        if (0 !in size) return override(size[WIDTH], size[HEIGHT])
+        val w = getDefaultWidth()
+        val h = getDefaultHeight()
+        if (w > 0 && h > 0) return override(w, h)
+        return this
+    }
 }
 
 private fun <T> RequestBuilder<T>.missingThumbnailPicture(
