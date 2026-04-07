@@ -904,18 +904,31 @@ public class AttachmentDatabase extends Database {
 
       EncryptedMediaDataSource dataSource = new EncryptedMediaDataSource(attachmentSecret.get(), dataInfo.file, dataInfo.random, dataInfo.length);
       MediaMetadataRetriever   retriever  = new MediaMetadataRetriever();
-      retriever.setDataSource(dataSource);
-
-      Bitmap bitmap = retriever.getFrameAtTime(1000);
 
       try {
-        retriever.close();
-      } catch (IOException e) {
-        Log.w(TAG, "Error while closing the retriever in AttachmentDatabase > generateVideoThumbnail: "+e.toString());
-      }
+        retriever.setDataSource(dataSource);
 
-      Log.i(TAG, "Generated video thumbnail...");
-      return new ThumbnailData(bitmap);
+        Bitmap bitmap = retriever.getFrameAtTime(1000);
+
+        if (bitmap == null) {
+          Log.w(TAG, "Failed to generate video thumbnail: null frame");
+          return null;
+        }
+
+        Log.i(TAG, "Generated video thumbnail...");
+        return new ThumbnailData(bitmap);
+      } catch (RuntimeException e) {
+        Log.w(TAG, "Failed to generate video thumbnail", e);
+        return null;
+      } finally {
+        try {
+          retriever.release();
+        } catch (IOException e) {
+          Log.w(TAG, "Error releasing MediaMetadataRetriever", e);
+        } catch (RuntimeException e) {
+          Log.w(TAG, "Error releasing MediaMetadataRetriever", e);
+        }
+      }
     }
   }
 
