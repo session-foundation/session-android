@@ -35,6 +35,7 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.LogLevel
@@ -134,7 +135,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
         initializeWebRtc()
         initializeBlobProvider()
-        refresh()
+        refresh(this)
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
@@ -157,8 +158,13 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         // they are initialised.
         workerFactory.get()
 
-        startupComponents.get()
-            .onPostAppStarted()
+        // Defer the app started callback until next frame
+        GlobalScope.launch {
+            withContext(Dispatchers.Main) {
+                startupComponents.get()
+                    .onPostAppStarted()
+            }
+        }
     }
 
     override fun onStart(owner: LifecycleOwner) {

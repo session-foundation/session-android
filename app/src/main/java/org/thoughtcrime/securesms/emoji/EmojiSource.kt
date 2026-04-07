@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.annotation.WorkerThread
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import kotlinx.serialization.json.Json
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.emoji.Emoji
 import org.thoughtcrime.securesms.components.emoji.EmojiPageModel
@@ -12,6 +12,7 @@ import org.thoughtcrime.securesms.components.emoji.StaticEmojiPageModel
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiDrawInfo
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiTree
 import org.thoughtcrime.securesms.util.ScreenDensity
+import android.content.Context
 import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
@@ -82,6 +83,10 @@ class EmojiSource(
   }
 
   companion object {
+    private val parserJson = Json {
+      ignoreUnknownKeys = true
+      isLenient = true
+    }
 
     private val emojiSource = AtomicReference<EmojiSource>()
     private val emojiLatch = CountDownLatch(1)
@@ -95,22 +100,22 @@ class EmojiSource(
 
     @JvmStatic
     @WorkerThread
-    fun refresh() {
-      emojiSource.set(getEmojiSource())
+    fun refresh(context: Context) {
+      emojiSource.set(getEmojiSource(context))
       emojiLatch.countDown()
     }
 
-    private fun getEmojiSource(): EmojiSource {
-      return loadAssetBasedEmojis()
+    private fun getEmojiSource(context: Context): EmojiSource {
+      return loadAssetBasedEmojis(context)
     }
 
-    private fun loadAssetBasedEmojis(): EmojiSource {
-      val context = MessagingModuleConfiguration.shared.context
-      val emojiData: InputStream = ApplicationContext.getInstance(context).assets.open("emoji/emoji_data.json")
+    private fun loadAssetBasedEmojis(context: Context): EmojiSource {
+      val appContext = ApplicationContext.getInstance(context)
+      val emojiData: InputStream = appContext.assets.open("emoji/emoji_data.json")
 
       emojiData.use {
         val parsedData: ParsedEmojiData = EmojiJsonParser.parse(
-            json = MessagingModuleConfiguration.shared.json,
+            json = parserJson,
             body = it,
             uriFactory = ::getAssetsUri
         ).getOrThrow()
