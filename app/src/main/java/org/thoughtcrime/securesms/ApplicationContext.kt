@@ -134,7 +134,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
 
         initializeWebRtc()
         initializeBlobProvider()
-        refresh()
+        refresh(this)
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
