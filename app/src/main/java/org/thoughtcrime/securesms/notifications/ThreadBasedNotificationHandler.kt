@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.notifications
 import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.service.notification.StatusBarNotification
 import androidx.core.app.ActivityCompat
@@ -25,6 +26,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -150,11 +152,16 @@ abstract class ThreadBasedNotificationHandler(
             )
         )
 
-        val intent = ConversationActivityV2.createIntent(context, threadAddress)
-        val pendingIntent = PendingIntent.getActivity(
+        val pendingIntent = PendingIntent.getActivities(
             context,
             threadAddress.hashCode(),
-            intent,
+            arrayOf(
+                HomeActivity.createIntent(context,
+                    isFromOnboarding = false,
+                    isNewAccount = false
+                ),
+                ConversationActivityV2.createIntent(context, threadAddress)
+            ),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         builder.setContentIntent(pendingIntent)
