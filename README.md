@@ -12,6 +12,10 @@ Session integrates directly with [Oxen Service Nodes](https://docs.oxen.io/about
 
 <img src="https://i.imgur.com/wcdAGBh.png" width="320" />
 
+## Architecture and documentation
+
+You can refer to [this document](ARCHITECTURE.md) to learn about the app's architecture and to get an overview of the important parts of the code and how they fit together.
+
 ## Want to contribute? Found a bug or have a feature request?
 
 Please search for any [existing issues](https://github.com/session-foundation/session-android/issues) that describe your bugs in order to avoid duplicate submissions. Submissions can be made by making a pull request to our `dev` branch. If you don't know where to start contributing, try reading the Github issues page for ideas.

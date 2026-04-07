@@ -1047,12 +1047,18 @@ class HomeActivity : ScreenLockActionBarActivity(),
             extraBottom = resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
         )
     }
+
+    companion object {
+        fun createIntent(context: Context, isFromOnboarding: Boolean, isNewAccount: Boolean): Intent {
+            return Intent(context, HomeActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(NEW_ACCOUNT, isNewAccount)
+                putExtra(FROM_ONBOARDING, isFromOnboarding)
+            }
+        }
+    }
 }
 
 fun Context.startHomeActivity(isFromOnboarding: Boolean, isNewAccount: Boolean) {
-    Intent(this, HomeActivity::class.java).apply {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        putExtra(NEW_ACCOUNT, isNewAccount)
-        putExtra(FROM_ONBOARDING, isFromOnboarding)
-    }.also(::startActivity)
+   startActivity(HomeActivity.createIntent(this, isFromOnboarding, isNewAccount))
 }
