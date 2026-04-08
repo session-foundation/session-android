@@ -20,20 +20,18 @@ class SearchBottomBar : LinearLayout {
 
     fun initialize() {
         binding = ViewSearchBottomBarBinding.inflate(LayoutInflater.from(context), this, true)
+
+        binding.searchUp.setOnClickListener {
+            eventListener?.onSearchMoveUpPressed()
+        }
+
+        binding.searchDown.setOnClickListener {
+            eventListener?.onSearchMoveDownPressed()
+        }
     }
 
     fun setData(position: Int, count: Int, searchQuery: String?) = with(binding) {
         binding.loading.visibility = GONE
-        searchUp.setOnClickListener { v: View? ->
-            if (eventListener != null) {
-                eventListener!!.onSearchMoveUpPressed()
-            }
-        }
-        searchDown.setOnClickListener { v: View? ->
-            if (eventListener != null) {
-                eventListener!!.onSearchMoveDownPressed()
-            }
-        }
         if (count > 0) { // we have results
             searchPosition.text = resources.getQuantityString(R.plurals.searchMatches, count, position + 1, count)
         } else if ( // we have a legitimate query but no results

@@ -1384,6 +1384,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 }
             }
         }
+
+        // bottom search bar
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.searchOpened.collectLatest { isSearchOpen ->
+
+                    if (isSearchOpen) {
+                        binding.searchBottomBar.visibility = View.VISIBLE
+                    } else {
+                        binding.searchBottomBar.visibility = View.GONE
+
+                        adapter.onSearchQueryUpdated(null)
+                        invalidateOptionsMenu()
+                    }
+
+                    binding.root.requestApplyInsets()
+                }
+            }
+        }
     }
 
     private fun scrollToFirstUnreadMessageOrBottom() {
@@ -3095,36 +3114,44 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // region Search
     private fun setUpSearchResultObserver() {
-        searchViewModel.searchResults.observe(this, Observer { result: SearchViewModel.SearchResult? ->
-            if (result == null) return@Observer
-            if (result.getResults().isNotEmpty()) {
-                result.getResults()[result.position]?.let {
-                    if(!gotoMessageById(it.messageId, smoothScroll = false, highlight = true)) {
-                        searchViewModel.onMissingResult()
+        searchViewModel.searchResults.observe(this) { result ->
+            if (result == null) return@observe
+
+            val query = searchViewModel.searchQuery.value
+
+            try {
+                val results = result.getResults()
+                val size = results.size
+                val position = result.position
+
+                if (position in 0 until size) {
+                    results[position]?.let { message ->
+                        if (!gotoMessageById(message.messageId, smoothScroll = false, highlight = true)) {
+                            searchViewModel.onMissingResult()
+                        }
                     }
                 }
-            }
 
-            binding.searchBottomBar.setData(result.position, result.getResults().size, searchViewModel.searchQuery.value)
-        })
+                binding.searchBottomBar.setData(position, size, query)
+            } catch (e: android.database.StaleDataException) {
+                binding.searchBottomBar.setData(0, 0, query)
+            }
+        }
     }
 
     fun onSearchOpened() {
         viewModel.onSearchOpened()
         searchViewModel.onSearchOpened()
-        binding.searchBottomBar.visibility = View.VISIBLE
-        binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
-        binding.root.requestApplyInsets()
-
+        binding.searchBottomBar.setData(
+            0,
+            0,
+            searchViewModel.searchQuery.value
+        )
     }
 
     fun onSearchClosed() {
         viewModel.onSearchClosed()
         searchViewModel.onSearchClosed()
-        binding.searchBottomBar.visibility = View.GONE
-        binding.root.requestApplyInsets()
-        adapter.onSearchQueryUpdated(null)
-        invalidateOptionsMenu()
     }
 
     fun onSearchQueryUpdated(query: String) {
