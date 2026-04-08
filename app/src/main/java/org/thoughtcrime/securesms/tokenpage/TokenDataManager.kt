@@ -14,12 +14,14 @@ import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 
 @Singleton
 class TokenDataManager @Inject constructor(
     private val loginStateRepository: LoginStateRepository,
-    private val tokenRepository: TokenRepository,
+    private val tokenRepository: Provider<TokenRepository>,
     @param:ManagerScope private val scope: CoroutineScope
 ) : OnAppStartupComponent {
     private val TAG = "TokenDataManager"
@@ -65,7 +67,7 @@ class TokenDataManager @Inject constructor(
         return try {
             // Fetch the InfoResponse on an IO dispatcher
             val response = withContext(Dispatchers.IO) {
-                tokenRepository.getInfoResponse()
+                tokenRepository.get().getInfoResponse()
             }
             // Ensure the minimum delay to avoid janky UI updates
             forceWaitAtLeast500ms(requestStartTimestamp)
@@ -77,8 +79,10 @@ class TokenDataManager @Inject constructor(
             updateLastUpdateTimeMillis()
             Log.w(TAG, "Fetched infoResponse: $response")
         } catch (e: Exception) {
-            Log.w(TAG, "InfoResponse error: $e")
-            _infoResponse.value =InfoResponseState.Failure(e)
+            if (e is CancellationException) throw e
+
+            Log.w(TAG, "InfoResponse error", e)
+            _infoResponse.value = InfoResponseState.Failure(e)
         }
     }
 
@@ -145,5 +149,4 @@ class TokenDataManager @Inject constructor(
         data class Data(val data: InfoResponse) : InfoResponseState()
         data class Failure(val exception: Exception) : InfoResponseState()
     }
-
 }
