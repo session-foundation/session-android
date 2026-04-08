@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/searchBottomBarConstraintLayout"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/input_bar_height"
+    android:background="?backgroundSecondary"
+    android:orientation="vertical">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/separator" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/searchUp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="48dp"
+                android:padding="4dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:contentDescription="@string/qa_conversation_search_up"
+                android:src="@drawable/ic_chevron_up"
+                android:tint="?colorAccent"
+                tools:ignore="UseAppTint" />
+
+            <ImageView
+                android:id="@+id/searchDown"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="4dp"
+                android:layout_gravity="center_vertical"
+                android:background="?selectableItemBackgroundBorderless"
+                android:contentDescription="@string/qa_conversation_search_down"
+                android:src="@drawable/ic_chevron_down"
+                android:tint="?colorAccent"
+                tools:ignore="UseAppTint" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/searchPosition"
+            style="@style/Signal.Text.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="37 of 73"
+            android:textStyle="bold"/>
+
+
+        <LinearLayout
+            android:id="@+id/loading"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:background="?backgroundSecondary"
+            android:visibility="gone"
+            android:layout_centerInParent="true">
+
+            <TextView
+                android:id="@+id/searching"
+                style="@style/Signal.Text.Body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/searchSearching"
+                android:textStyle="bold"/>
+
+            <ProgressBar
+                android:id="@+id/searchProgressWheel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="@dimen/medium_spacing"
+                android:indeterminateTint="?colorAccent"
+                android:indeterminate="true"
+                android:contentDescription="@string/qa_conversation_search_loading" />
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</LinearLayout>

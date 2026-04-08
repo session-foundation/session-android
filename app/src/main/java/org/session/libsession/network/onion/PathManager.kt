@@ -2,7 +2,9 @@ package org.session.libsession.network.onion
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsession.network.model.Path
 import org.session.libsession.network.model.PathStatus
@@ -59,9 +61,7 @@ open class PathManager @Inject constructor(
     private val pathSize: Int = 3
     private val targetPathCount: Int = 2
 
-    private val _paths = MutableStateFlow(
-        sanitizePaths(storage.getOnionRequestPaths())
-    )
+    private val _paths = MutableStateFlow<List<Path>>(emptyList())
     val paths: StateFlow<List<Path>> = _paths.asStateFlow()
 
     // Used for synchronization
@@ -91,17 +91,22 @@ open class PathManager @Inject constructor(
                 if (_paths.value.isEmpty()) PathStatus.ERROR else PathStatus.READY
             )
 
+    // Warm up from persisted paths without blocking construction.
+    // Stored as a Deferred so getPath() can await it for deterministic completion.
+    private val warmUpJob: Deferred<Unit> = scope.async {
+        val persisted = sanitizePaths(storage.getOnionRequestPaths())
+        _paths.update { current -> if (current.isEmpty()) persisted else current }
+    }
+
     init {
         // persist to DB whenever paths change
         scope.launch {
             _paths.drop(1).collectLatest { paths ->
-                if (paths.isEmpty()) storage.clearOnionRequestPaths()
-                else {
-                    try {
-                        storage.setOnionRequestPaths(paths)
-                    } catch (e: Exception) {
-                        Log.e("Onion Request", "Failed to persist paths to storage, keeping in-memory only", e)
-                    }
+                try {
+                    if (paths.isEmpty()) storage.clearOnionRequestPaths()
+                    else storage.setOnionRequestPaths(paths)
+                } catch (e: Exception) {
+                    Log.e("Onion Request", "Failed to persist paths to storage, keeping in-memory only", e)
                 }
             }
         }
@@ -112,6 +117,9 @@ open class PathManager @Inject constructor(
     // -----------------------------
 
     suspend fun getPath(exclude: Snode? = null): Path {
+        // Ensure persisted paths are loaded before checking. No-op after first completion.
+        warmUpJob.await()
+
         directory.refreshPoolIfStaleAsync()
         rotatePathsIfStale()
 
@@ -374,7 +382,6 @@ open class PathManager @Inject constructor(
             }
 
             _paths.value = storage.getOnionRequestPaths()
-
         }
     }
 
