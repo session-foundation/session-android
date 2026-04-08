@@ -551,6 +551,8 @@
     <string name="feedbackDescription">Share your experience with {app_name} by completing a short survey.</string>
     <string name="file">File</string>
     <string name="files">Files</string>
+    <string name="finalAppeal"><font color="0">Our Final Appeal:</font>\n{app_name} is shutting down in 90 days</string>
+    <string name="finalAppealDescription">Your donations have helped, but the {entity_stf_short} has only received enough funding to support critical operations until the 8th of July.\n\nDevelopment has been paused, and without additional funding the STF will shut down, resulting in {app_name} being removed from the app stores and essential services going offline.\n\nPlease help us secure Session\'s future.</string>
     <string name="focusTextArea">Focus Text Area</string>
     <string name="followSystemSettings">Follow system settings.</string>
     <string name="forever">Forever</string>
@@ -1243,6 +1245,7 @@
     <string name="rateSessionModalDescriptionUpdated">{app_name} runs no ads, sells no data, and answers only to its users. Your {storevariant} rating helps more people find messaging that actually respects their privacy.</string>
     <string name="rateUs">Rate Us</string>
     <string name="read">Read</string>
+    <string name="readMoreCapital">Read More</string>
     <string name="readReceipts">Read Receipts</string>
     <string name="readReceiptsDescription">Show read receipts for all messages you send and receive.</string>
     <string name="received">Received:</string>
