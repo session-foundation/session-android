@@ -260,6 +260,7 @@ class ConversationViewModel @AssistedInject constructor(
     }
 
     private val _searchOpened = MutableStateFlow(false)
+    val searchOpened : StateFlow<Boolean> get() = _searchOpened
 
     val appBarData: StateFlow<ConversationAppBarData> = combine(
         recipientFlow.repeatedWithEffectiveNotifyTypeChange(),
