@@ -71,7 +71,7 @@ public final class KeyStoreHelper {
     }
   }
 
-  private static SecretKey getOrCreateKeyStoreEntry() {
+  private synchronized static SecretKey getOrCreateKeyStoreEntry() {
     if (hasKeyStoreEntry()) return getKeyStoreEntry();
     else                    return createKeyStoreEntry();
   }
