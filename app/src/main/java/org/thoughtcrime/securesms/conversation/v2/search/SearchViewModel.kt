@@ -27,6 +27,7 @@ class SearchViewModel @Inject constructor(
     private val debouncer: Debouncer = Debouncer(200)
     private var searchOpen = false
     private var activeThreadId: Long = 0
+    private var currentPosition: Int = 0
     val searchResults: LiveData<SearchResult>
         get() = result
 
@@ -42,21 +43,25 @@ class SearchViewModel @Inject constructor(
 
     fun onMissingResult() {
         if (mutableSearchQuery.value != null) {
-            updateQuery(mutableSearchQuery.value!!, activeThreadId)
+            updateQuery(mutableSearchQuery.value!!, activeThreadId, currentPosition)
         }
     }
 
     fun onMoveUp() {
         debouncer.clear()
-        val messages = result.value!!.getResults() as CursorList<MessageResult?>
-        val position = Math.min(result.value!!.position + 1, messages.size - 1)
+        val currentResult = result.value ?: return
+        val messages = currentResult.getResults() as CursorList<MessageResult?>
+        val position = minOf(currentResult.position + 1, messages.size - 1)
+        currentPosition = position
         result.setValue(SearchResult(messages, position), false)
     }
 
     fun onMoveDown() {
         debouncer.clear()
-        val messages = result.value!!.getResults() as CursorList<MessageResult?>
-        val position = Math.max(result.value!!.position - 1, 0)
+        val currentResult = result.value ?: return
+        val messages = currentResult.getResults() as CursorList<MessageResult?>
+        val position = maxOf(currentResult.position - 1, 0)
+        currentPosition = position
         result.setValue(SearchResult(messages, position), false)
     }
 
@@ -67,6 +72,7 @@ class SearchViewModel @Inject constructor(
     fun onSearchClosed() {
         searchOpen = false
         mutableSearchQuery.value = null
+        currentPosition = 0
         debouncer.clear()
         result.close()
     }
@@ -76,11 +82,12 @@ class SearchViewModel @Inject constructor(
         result.close()
     }
 
-    private fun updateQuery(query: String, threadId: Long) {
+    private fun updateQuery(query: String, threadId: Long, requestedPosition: Int = currentPosition) {
         mutableSearchQuery.value = query
         activeThreadId = threadId
 
         if(query.length < MIN_QUERY_SIZE) {
+            currentPosition = 0
             result.value = SearchResult(CursorList.emptyList(), 0)
             return
         }
@@ -89,7 +96,13 @@ class SearchViewModel @Inject constructor(
             searchRepository.query(query, threadId) { messages: CursorList<MessageResult?> ->
                 runOnMain {
                     if (searchOpen && query == mutableSearchQuery.value) {
-                        result.setValue(SearchResult(messages, 0))
+                        val position = if (messages.isEmpty()) {
+                            0
+                        } else {
+                            requestedPosition.coerceIn(0, messages.size - 1)
+                        }
+                        currentPosition = position
+                        result.setValue(SearchResult(messages, position))
                     } else {
                         messages.close()
                     }
