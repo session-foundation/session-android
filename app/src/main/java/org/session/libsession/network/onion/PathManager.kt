@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsession.network.model.Path
@@ -59,9 +62,7 @@ open class PathManager @Inject constructor(
     private val pathSize: Int = 3
     private val targetPathCount: Int = 2
 
-    private val _paths = MutableStateFlow(
-        sanitizePaths(storage.getOnionRequestPaths())
-    )
+    private val _paths = MutableStateFlow<List<Path>>(emptyList())
     val paths: StateFlow<List<Path>> = _paths.asStateFlow()
 
     // Used for synchronization
@@ -92,16 +93,22 @@ open class PathManager @Inject constructor(
             )
 
     init {
+        // Warm up from persisted paths without blocking construction
+        scope.launch {
+            val persisted = withContext(Dispatchers.IO) {
+                sanitizePaths(storage.getOnionRequestPaths())
+            }
+            _paths.update { current -> if (current.isEmpty()) persisted else current }
+        }
+
         // persist to DB whenever paths change
         scope.launch {
             _paths.drop(1).collectLatest { paths ->
-                if (paths.isEmpty()) storage.clearOnionRequestPaths()
-                else {
-                    try {
-                        storage.setOnionRequestPaths(paths)
-                    } catch (e: Exception) {
-                        Log.e("Onion Request", "Failed to persist paths to storage, keeping in-memory only", e)
-                    }
+                try {
+                    if (paths.isEmpty()) storage.clearOnionRequestPaths()
+                    else storage.setOnionRequestPaths(paths)
+                } catch (e: Exception) {
+                    Log.e("Onion Request", "Failed to persist paths to storage, keeping in-memory only", e)
                 }
             }
         }
@@ -374,7 +381,6 @@ open class PathManager @Inject constructor(
             }
 
             _paths.value = storage.getOnionRequestPaths()
-
         }
     }
 
