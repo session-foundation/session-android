@@ -474,10 +474,11 @@ fun SimpleSessionProCTA(
 
 @Composable
 fun CTAImage(
+    modifier: Modifier = Modifier,
     @DrawableRes heroImage: Int,
 ){
     AsyncImage(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(LocalColors.current.accent),
         contentScale = ContentScale.FillWidth,
