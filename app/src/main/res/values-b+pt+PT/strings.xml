@@ -523,6 +523,8 @@
     <string name="feedbackDescription">Compartilhe sua experiência com o {app_name} respondendo a uma breve pesquisa.</string>
     <string name="file">Ficheiro</string>
     <string name="files">Ficheiros</string>
+    <string name="finalAppeal"><font color="0">Nosso apelo final:</font>\n{app_name} será descontinuado em 90 dias</string>
+    <string name="finalAppealDescription">As suas doações ajudaram, mas a {entity_stf_short} só recebeu financiamento suficiente para apoiar operações críticas até 8 de julho.\n\nO desenvolvimento foi pausado e, sem financiamento adicional, a STF será descontinuada, resultando na remoção de {app_name} das lojas de aplicativos e na desativação dos serviços essenciais.\n\nPor favor, ajude-nos a garantir o futuro da Session.</string>
     <string name="followSystemSettings">Alinhar com definições do sistema.</string>
     <string name="forever">Para sempre</string>
     <string name="from">De:</string>
@@ -1180,6 +1182,7 @@
     <string name="rateSessionApp">Avaliar aplicação</string>
     <string name="rateSessionModalDescription">Ficamos felizes por estar a gostar do {app_name}. Se tiver um momento, dar-nos uma avaliação na {storevariant} ajuda outros a descobrir mensagens privadas e seguras!</string>
     <string name="read">Lida</string>
+    <string name="readMoreCapital">Ler Mais</string>
     <string name="readReceipts">Recibos de Leitura</string>
     <string name="readReceiptsDescription">Exibir confirmações de leitura para todas as mensagens que você enviar e receber.</string>
     <string name="received">Recebida:</string>

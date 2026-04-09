@@ -435,6 +435,8 @@
     <string name="failures">失敗</string>
     <string name="file">檔案</string>
     <string name="files">檔案</string>
+    <string name="finalAppeal"><font color="0">我們最後的呼籲：</font>\n{app_name} 將在 90 天後停止服務</string>
+    <string name="finalAppealDescription">您的捐款已帶來幫助，但 {entity_stf_short} 目前只獲得足以支應關鍵營運至 7 月 8 日的資金。\n\n開發已暫停，若沒有額外資金，STF 將停止運作，導致 {app_name} 從應用程式商店下架，且必要服務離線。\n\n請幫助我們確保 Session 的未來。</string>
     <string name="forever">永遠</string>
     <string name="from">來自：</string>
     <string name="fullScreenToggle">切換全螢幕</string>
@@ -841,6 +843,7 @@
     <string name="rateSessionApp">評分應用程式</string>
     <string name="rateSessionModalDescription">很高興您喜歡使用 {app_name}，如果有空，請在 {storevariant} 中給我們評分，幫助更多人找到私密、安全的訊息工具！</string>
     <string name="read">已讀</string>
+    <string name="readMoreCapital">了解更多</string>
     <string name="readReceipts">已讀回條</string>
     <string name="readReceiptsDescription">顯示您傳送和接收的所有訊息的已讀回執。</string>
     <string name="received">接收於：</string>

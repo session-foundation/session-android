@@ -523,6 +523,8 @@
     <string name="feedbackDescription">Dela med dig av din upplevelse med {app_name} genom att fylla i en kort undersökning.</string>
     <string name="file">Fil</string>
     <string name="files">Filer</string>
+    <string name="finalAppeal"><font color="0">Vår sista vädjan:</font>\n{app_name} stängs ner om 90 dagar</string>
+    <string name="finalAppealDescription">Dina donationer har hjälpt, men {entity_stf_short} har bara fått tillräcklig finansiering för att stödja kritisk verksamhet fram till den 8 juli.\n\nUtvecklingen har pausats, och utan ytterligare finansiering kommer STF att stängas ner, vilket innebär att {app_name} tas bort från appbutikerna och att viktiga tjänster slutar fungera.\n\nHjälp oss att säkra Sessions framtid.</string>
     <string name="followSystemSettings">Följ systeminställningen.</string>
     <string name="forever">För alltid</string>
     <string name="from">Från:</string>
@@ -1179,6 +1181,7 @@
     <string name="rateSessionApp">Betygsätt appen</string>
     <string name="rateSessionModalDescription">Vi är glada att du gillar {app_name}, om du har en stund hjälper det andra att upptäcka privat och säker meddelandehantering om du betygsätter oss i {storevariant}!</string>
     <string name="read">Läst</string>
+    <string name="readMoreCapital">Läs mer</string>
     <string name="readReceipts">Läskvitton</string>
     <string name="readReceiptsDescription">Visa läskvitton för alla meddelanden du skickar och tar emot.</string>
     <string name="received">Mottaget:</string>

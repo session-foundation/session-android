@@ -523,6 +523,8 @@
     <string name="feedbackDescription">Condividi la tua esperienza con {app_name} compilando un breve sondaggio.</string>
     <string name="file">File</string>
     <string name="files">File</string>
+    <string name="finalAppeal"><font color="0">Il nostro appello finale:</font>\n{app_name} chiuderà tra 90 giorni</string>
+    <string name="finalAppealDescription">Le tue donazioni sono state d\'aiuto, ma {entity_stf_short} ha ricevuto fondi sufficienti a sostenere le operazioni critiche solo fino all\'8 luglio.\n\nLo sviluppo è stato sospeso e, senza finanziamenti aggiuntivi, STF chiuderà, con il risultato che {app_name} verrà rimossa dagli app store e i servizi essenziali andranno offline.\n\nPer favore, aiutaci a garantire il futuro di Session.</string>
     <string name="followSystemSettings">Utilizza le impostazioni di sistema.</string>
     <string name="forever">Per sempre</string>
     <string name="from">Da:</string>
@@ -1180,6 +1182,7 @@
     <string name="rateSessionApp">Valuta app</string>
     <string name="rateSessionModalDescription">Siamo felici che ti stia piacendo {app_name}. Se hai un momento, lascia una valutazione su {storevariant}, aiuterà altri a scoprire la messaggistica privata e sicura!</string>
     <string name="read">Letto</string>
+    <string name="readMoreCapital">Scopri di più</string>
     <string name="readReceipts">Conferme di lettura</string>
     <string name="readReceiptsDescription">Mostra le conferme di lettura per tutti i messaggi inviati e ricevuti.</string>
     <string name="received">Ricevuto:</string>

@@ -523,6 +523,8 @@
     <string name="feedbackDescription">Deel je ervaring met {app_name} door een korte enquête in te vullen.</string>
     <string name="file">Bestand</string>
     <string name="files">Bestanden</string>
+    <string name="finalAppeal"><font color="0">Onze laatste oproep:</font>\n{app_name} wordt over 90 dagen stopgezet</string>
+    <string name="finalAppealDescription">Je donaties hebben geholpen, maar de {entity_stf_short} heeft slechts voldoende financiering ontvangen om kritieke activiteiten te ondersteunen tot 8 juli.\n\nDe ontwikkeling is gepauzeerd en zonder aanvullende financiering zal de STF worden stopgezet, waardoor {app_name} uit de appstores wordt verwijderd en essentiële diensten offline gaan.\n\nHelp ons alsjeblieft de toekomst van Session veilig te stellen.</string>
     <string name="followSystemSettings">Systeeminstellingen volgen.</string>
     <string name="forever">Voor altijd</string>
     <string name="from">Van:</string>
@@ -1180,6 +1182,7 @@
     <string name="rateSessionApp">App beoordelen</string>
     <string name="rateSessionModalDescription">Fijn dat je {app_name} leuk vindt! Als je een momentje hebt, helpt een beoordeling in de {storevariant} anderen om privé en veilig berichten te ontdekken!</string>
     <string name="read">Gelezen</string>
+    <string name="readMoreCapital">Lees meer</string>
     <string name="readReceipts">Leesbevestigingen</string>
     <string name="readReceiptsDescription">Toon leesbevestigingen voor alle berichten die je verstuurt en ontvangt.</string>
     <string name="received">Ontvangen:</string>

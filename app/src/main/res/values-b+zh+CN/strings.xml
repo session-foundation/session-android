@@ -508,6 +508,8 @@
     <string name="feedbackDescription">通过完成一份简短的调查问卷分享您对 {app_name} 的使用体验。</string>
     <string name="file">文件</string>
     <string name="files">文件</string>
+    <string name="finalAppeal"><font color="0">我们最后的呼吁：</font>\n{app_name} 将在 90 天后停止服务</string>
+    <string name="finalAppealDescription">您的捐款已经有所帮助，但 {entity_stf_short} 目前收到的资金仅够支持关键运营直到 7 月 8 日。\n\n开发已暂停，如果没有额外资金，STF 将停止运营，导致 {app_name} 从应用商店下架，且关键服务离线。\n\n请帮助我们保障 Session 的未来。</string>
     <string name="followSystemSettings">跟随系统设置。</string>
     <string name="forever">永久</string>
     <string name="from">发送自：</string>
@@ -1146,6 +1148,7 @@
     <string name="rateSessionModalDescriptionUpdated">{app_name} 不包含广告、不出售数据，并且只对用户负责。您在 {storevariant} 上的评分有助于更多人发现真正尊重隐私的消息应用。</string>
     <string name="rateUs">为我们评分</string>
     <string name="read">已读</string>
+    <string name="readMoreCapital">了解更多</string>
     <string name="readReceipts">已读回执</string>
     <string name="readReceiptsDescription">显示您发送和接收的所有消息的已读回执。</string>
     <string name="received">已接收:</string>
