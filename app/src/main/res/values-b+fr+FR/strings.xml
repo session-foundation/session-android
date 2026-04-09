@@ -523,6 +523,8 @@
     <string name="feedbackDescription">Partagez votre expérience avec {app_name} en répondant à un court sondage.</string>
     <string name="file">Fichier</string>
     <string name="files">Fichiers</string>
+    <string name="finalAppeal"><font color="0">Notre dernier appel :</font>\n{app_name} fermera dans 90 jours</string>
+    <string name="finalAppealDescription">Vos dons ont aidé, mais le {entity_stf_short} n’a reçu que suffisamment de financement pour soutenir les opérations critiques jusqu’au 8 juillet.\n\nLe développement a été suspendu, et sans financement supplémentaire, le STF cessera ses activités, ce qui entraînera la suppression de {app_name} des boutiques d’applications et la mise hors ligne des services essentiels.\n\nVeuillez nous aider à assurer l’avenir de Session.</string>
     <string name="followSystemSettings">Faire correspondre aux paramètres systèmes.</string>
     <string name="forever">Définitivement</string>
     <string name="from">De :</string>
@@ -1181,6 +1183,7 @@
     <string name="rateSessionApp">Noter l’application</string>
     <string name="rateSessionModalDescription">Nous sommes ravis que vous appréciiez {app_name}. Si vous avez un instant, une évaluation sur {storevariant} aiderait d\'autres personnes à découvrir la messagerie privée et sécurisée !</string>
     <string name="read">Lu</string>
+    <string name="readMoreCapital">En savoir plus</string>
     <string name="readReceipts">Accusés de lecture</string>
     <string name="readReceiptsDescription">Afficher les accusés de réception pour tous les messages que vous envoyez et recevez.</string>
     <string name="received">Reçu :</string>
