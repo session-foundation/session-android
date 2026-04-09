@@ -273,11 +273,12 @@ fun DonationDialog(
         sendCommand(HideDonationCTADialog)
     }
 
-    val title = Phrase.from(context,R.string.donateSessionAppealTitle)
-        .put(StringSubstitutionConstants.DONATE_APPEAL_KEY, NonTranslatableStringConstants.DONATE_APPEAL_NAME)
+    val title = Phrase.from(context,R.string.finalAppeal)
+        .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
 
-    val text = Phrase.from(context,R.string.donateSessionAppealDescription)
+    val text = Phrase.from(context,R.string.finalAppealDescription)
+        .put(StringSubstitutionConstants.ENTITY_STF_SHORT_KEY, NonTranslatableStringConstants.ENTITY_STF_SHORT)
         .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
 
@@ -348,7 +349,7 @@ fun DonationDialog(
                                     modifier = Modifier
                                         .qaTag(R.string.qa_cta_button_positive)
                                         .shimmerOverlay(),
-                                    text = stringResource(R.string.donateSessionAppealReadMore),
+                                    text = stringResource(R.string.readMoreCapital),
                                     onClick =  {
                                         context.openUrl(URL_DONATE)
                                         sendCommand(HomeViewModel.Commands.OnDonationLinkClicked)
