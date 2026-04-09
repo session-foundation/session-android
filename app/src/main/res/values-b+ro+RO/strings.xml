@@ -538,6 +538,8 @@
     <string name="feedbackDescription">Împărtășește experiența ta cu {app_name} completând un scurt sondaj.</string>
     <string name="file">Fișier</string>
     <string name="files">Fișiere</string>
+    <string name="finalAppeal"><font color="0">Ultimul nostru apel:</font>\n{app_name} se va închide în 90 de zile</string>
+    <string name="finalAppealDescription">Donațiile tale au ajutat, dar {entity_stf_short} a primit finanțare suficientă doar pentru a susține operațiunile critice până pe 8 iulie.\n\nDezvoltarea a fost întreruptă și, fără finanțare suplimentară, STF se va închide, ceea ce va duce la eliminarea {app_name} din magazinele de aplicații și la indisponibilitatea serviciilor esențiale.\n\nTe rugăm să ne ajuți să asigurăm viitorul Session.</string>
     <string name="followSystemSettings">Urmărește setările sistemului.</string>
     <string name="forever">Pentru totdeauna</string>
     <string name="from">De la:</string>
@@ -1217,6 +1219,7 @@
     <string name="rateSessionApp">Evaluează aplicația</string>
     <string name="rateSessionModalDescription">Ne bucurăm că îți place {app_name}, dacă ai un minut, o evaluare în {storevariant} îi ajută și pe alții să descopere mesageria privată și sigură!</string>
     <string name="read">Citit</string>
+    <string name="readMoreCapital">Informații suplimentare</string>
     <string name="readReceipts">Confirmări de citire</string>
     <string name="readReceiptsDescription">Afișează confirmările de citire pentru toate mesajele trimise și primite.</string>
     <string name="received">Primit:</string>

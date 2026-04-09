@@ -552,6 +552,8 @@
     <string name="feedbackDescription">Podělte se o své zkušenosti s {app_name} vyplněním krátkého dotazníku.</string>
     <string name="file">Soubor</string>
     <string name="files">Soubory</string>
+    <string name="finalAppeal"><font color="0">Naše poslední výzva:</font>\n{app_name} bude za 90 dní ukončena</string>
+    <string name="finalAppealDescription">Vaše dary pomohly, ale {entity_stf_short} získala pouze tolik prostředků, aby podpořila kritické operace do 8. července.\n\nVývoj byl pozastaven a bez dodatečného financování bude STF ukončena, což povede k odstranění aplikace {app_name} z obchodů s aplikacemi a k vypnutí základních služeb.\n\nPomozte nám prosím zajistit budoucnost Session.</string>
     <string name="followSystemSettings">Použít nastavení systému.</string>
     <string name="forever">Navždy</string>
     <string name="from">Od:</string>
@@ -1254,6 +1256,7 @@
     <string name="rateSessionApp">Ohodnotit aplikaci</string>
     <string name="rateSessionModalDescription">Jsme rádi, že se vám {app_name} líbí. Pokud máte chvíli času, ohodnoťte nás na {storevariant} abyste ostatním pomohli objevit soukromou a bezpečnou komunikaci!</string>
     <string name="read">Přečteno</string>
+    <string name="readMoreCapital">Další informace</string>
     <string name="readReceipts">Potvrzení o přečtení</string>
     <string name="readReceiptsDescription">Zobrazit potvrzení o přečtení pro všechny zprávy, které posíláte a přijímáte.</string>
     <string name="received">Přijato:</string>

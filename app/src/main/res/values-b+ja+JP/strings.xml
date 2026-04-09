@@ -508,6 +508,8 @@
     <string name="feedbackDescription">簡単なアンケートにお答えいただくことで、{app_name} に関するご意見をお聞かせください。</string>
     <string name="file">ファイル</string>
     <string name="files">ファイル</string>
+    <string name="finalAppeal"><font color="0">最後のお願い:</font>\n{app_name} は90日後に終了します</string>
+    <string name="finalAppealDescription">皆さまからのご寄付は助けになりましたが、{entity_stf_short} が受け取った資金は、重要な運営を7月8日まで維持するのに十分な額しかありません。\n\n開発は停止しており、追加の資金がなければSTFは閉鎖され、その結果、{app_name} はアプリストアから削除され、不可欠なサービスは停止します。\n\nどうかSessionの未来を守るためにご支援ください。</string>
     <string name="followSystemSettings">システム設定に合わせる</string>
     <string name="forever">常に</string>
     <string name="from">差出人:</string>
@@ -1140,6 +1142,7 @@
     <string name="rateSessionApp">アプリを評価</string>
     <string name="rateSessionModalDescription">{app_name} をご利用いただきありがとうございます。お時間があれば、{storevariant} で評価していただけると、他の方がプライベートで安全なメッセージを見つける手助けになります！</string>
     <string name="read">既読</string>
+    <string name="readMoreCapital">続きを読む</string>
     <string name="readReceipts">既読通知</string>
     <string name="readReceiptsDescription">送信したすべてのメッセージに対する既読通知を表示します</string>
     <string name="received">受信:</string>

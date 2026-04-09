@@ -523,6 +523,8 @@
     <string name="feedbackDescription">Teile deine Erfahrungen mit {app_name}, indem du eine kurze Umfrage ausfüllst.</string>
     <string name="file">Datei</string>
     <string name="files">Dateien</string>
+    <string name="finalAppeal"><font color="0">Unser letzter Appell:</font>\n{app_name} wird in 90 Tagen eingestellt</string>
+    <string name="finalAppealDescription">Ihre Spenden haben geholfen, aber das {entity_stf_short} hat nur genug Mittel erhalten, um kritische Abläufe bis zum 8. Juli zu unterstützen.\n\nDie Entwicklung wurde pausiert, und ohne zusätzliche Finanzierung wird das STF eingestellt, was dazu führt, dass {app_name} aus den App Stores entfernt wird und essenzielle Dienste offline gehen.\n\nBitte helfen Sie uns, die Zukunft von Session zu sichern.</string>
     <string name="followSystemSettings">Systemeinstellungen übernehmen.</string>
     <string name="forever">Für immer</string>
     <string name="from">Von:</string>
@@ -1183,6 +1185,7 @@
     <string name="rateSessionModalDescriptionUpdated">{app_name} schaltet keine Werbung, verkauft keine Nutzerdaten und ist nur seinen Nutzern gegenüber verantwortlich. Ihre Bewertung bei {storevariant} hilft anderen dabei, Nachrichtendienste zu finden, denen ihre Privatsphäre wirklich wichtig ist.</string>
     <string name="rateUs">Bewerten Sie uns</string>
     <string name="read">Gelesen</string>
+    <string name="readMoreCapital">Weiterlesen</string>
     <string name="readReceipts">Lesebestätigungen</string>
     <string name="readReceiptsDescription">Zeige Lesebestätigungen für alle Nachrichten, die du sendest und erhältst.</string>
     <string name="received">Empfangen:</string>
@@ -1221,6 +1224,10 @@
     <string name="remindMeLater">Später erinnern</string>
     <string name="remove">Entfernen</string>
     <plurals name="removeMember">
+        <item quantity="one">Mitglied entfernen</item>
+        <item quantity="other">Mitglieder entfernen</item>
+    </plurals>
+    <plurals name="removeMemberLowercase">
         <item quantity="one">Mitglied entfernen</item>
         <item quantity="other">Mitglieder entfernen</item>
     </plurals>

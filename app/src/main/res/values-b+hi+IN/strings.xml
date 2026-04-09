@@ -523,6 +523,8 @@
     <string name="feedbackDescription">{app_name} के साथ अपने अनुभव को एक संक्षिप्त सर्वेक्षण भरकर साझा करें।</string>
     <string name="file">फ़ाइल</string>
     <string name="files">फ़ाइलें</string>
+    <string name="finalAppeal"><font color="0">हमारी अंतिम अपील:</font>\n{app_name} 90 दिनों में बंद हो रहा है</string>
+    <string name="finalAppealDescription">आपके दान से मदद मिली है, लेकिन {entity_stf_short} को केवल 8 जुलाई तक महत्वपूर्ण परिचालनों का समर्थन करने लायक ही धन प्राप्त हुआ है।\n\nविकास रोक दिया गया है, और अतिरिक्त धन के बिना STF बंद हो जाएगा, जिसके परिणामस्वरूप {app_name} को ऐप स्टोर्स से हटा दिया जाएगा और आवश्यक सेवाएं ऑफ़लाइन हो जाएंगी।\n\nकृपया Session के भविष्य को सुरक्षित करने में हमारी मदद करें।</string>
     <string name="followSystemSettings">सिस्टम सेटिंग्स का पालन करें</string>
     <string name="forever">हमेशा के लिए</string>
     <string name="from">तरफ से:</string>
@@ -1180,6 +1182,7 @@
     <string name="rateSessionApp">ऐप को रेट करें</string>
     <string name="rateSessionModalDescription">हमें खुशी है कि आपको {app_name} पसंद आ रहा है, यदि आपके पास एक क्षण है, तो {storevariant} पर हमारी रेटिंग देने से दूसरों को निजी, सुरक्षित मैसेजिंग खोजने में मदद मिलती है!</string>
     <string name="read">पढ़ें</string>
+    <string name="readMoreCapital">और पढ़ें</string>
     <string name="readReceipts">पठित स्थिति प्रमाणपत्र</string>
     <string name="readReceiptsDescription">आपके द्वारा भेजे और प्राप्त किए गए सभी संदेशों के लिए पढ़ने की रसीदें दिखाएं।</string>
     <string name="received">प्राप्त किया:</string>

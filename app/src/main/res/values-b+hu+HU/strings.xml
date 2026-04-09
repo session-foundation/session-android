@@ -21,6 +21,7 @@
     </plurals>
     <string name="addAdminSingular">Adminisztrátor hozzáadása</string>
     <string name="addAdminsDescription">Adja meg a felhasználó fiókazonosítóját, akit adminisztrátorrá kíván kinevezni.\n\nEgyszerre több felhasználó hozzáadásához adja meg az egyes fiókazonosítókat vesszővel elválasztva. Egyszerre legfeljebb 20 fiókazonosító adható meg.</string>
+    <string name="admin">Adminisztrátor</string>
     <string name="adminCannotBeDemoted">Az adminisztrátorokat nem lehet lefokozni vagy eltávolítani a csoportból.</string>
     <string name="adminCannotBeRemoved">Adminokat nem lehet eltávolítani.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> és <b>{count} másik személy</b> adminisztrátorrá lettek előléptetve.</string>
@@ -523,6 +524,8 @@
     <string name="feedbackDescription">Oszd meg a(z) {app_name} használatával kapcsolatos tapasztalataidat egy rövid kérdőív kitöltésével.</string>
     <string name="file">Fájl</string>
     <string name="files">Fájlok</string>
+    <string name="finalAppeal"><font color="0">Utolsó felhívásunk:</font>\n{app_name} 90 nap múlva leáll</string>
+    <string name="finalAppealDescription">Az adományaitok sokat segítettek, de a {entity_stf_short} csak annyi finanszírozást kapott, hogy a kritikus működést július 8-ig fenn tudja tartani.\n\nA fejlesztés szünetel, és további finanszírozás nélkül az STF leáll, aminek eredményeként <b>{app_name}</b> kikerül az alkalmazásboltokból, az alapvető szolgáltatások pedig leállnak.\n\nKérjük, segíts biztosítani a Session jövőjét.</string>
     <string name="followSystemSettings">Rendszerbeállítások használata.</string>
     <string name="forever">Örökre</string>
     <string name="from">Feladó:</string>
@@ -1181,6 +1184,7 @@
     <string name="rateSessionApp">Alkalmazás értékelése</string>
     <string name="rateSessionModalDescription">Örülünk, hogy élvezed a {app_name} használatát! Ha van egy perced, értékelj minket a(z) {storevariant}-on – ezzel másoknak is segítesz felfedezni a privát és biztonságos üzenetváltást!</string>
     <string name="read">Elolvasva</string>
+    <string name="readMoreCapital">Részletek</string>
     <string name="readReceipts">Olvasási visszaigazolás</string>
     <string name="readReceiptsDescription">Olvasottsági visszajelzések megjelenítése az összes elküldött és fogadott üzenethez.</string>
     <string name="received">Érkezett:</string>
