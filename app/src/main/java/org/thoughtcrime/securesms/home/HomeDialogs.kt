@@ -33,6 +33,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.delay
@@ -75,7 +76,9 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.util.DonationManager.Companion.URL_DONATE
 
@@ -273,11 +276,12 @@ fun DonationDialog(
         sendCommand(HideDonationCTADialog)
     }
 
-    val title = Phrase.from(context,R.string.donateSessionAppealTitle)
-        .put(StringSubstitutionConstants.DONATE_APPEAL_KEY, NonTranslatableStringConstants.DONATE_APPEAL_NAME)
+    val title = Phrase.from(context,R.string.finalAppeal)
+        .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
 
-    val text = Phrase.from(context,R.string.donateSessionAppealDescription)
+    val text = Phrase.from(context,R.string.finalAppealDescription)
+        .put(StringSubstitutionConstants.ENTITY_STF_SHORT_KEY, NonTranslatableStringConstants.ENTITY_STF_SHORT)
         .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
 
@@ -294,13 +298,17 @@ fun DonationDialog(
                             .verticalScroll(rememberScrollState())
                     ) {
                         // hero image
-                        BottomFadingEdgeBox(
+                        /*BottomFadingEdgeBox(
                             modifier = Modifier.heightIn(max = heroMaxHeight),
                             fadingEdgeHeight = 70.dp,
                             fadingColor = LocalColors.current.backgroundSecondary,
                             content = { _ ->
                                 CTAImage(heroImage = R.drawable.cta_hero_donation)
                             },
+                        )*/
+                        CTAImage(
+                            modifier = Modifier.background(LocalColors.current.backgroundSecondary),
+                            heroImage = R.drawable.cta_hero_donation
                         )
 
                         // content
@@ -348,7 +356,7 @@ fun DonationDialog(
                                     modifier = Modifier
                                         .qaTag(R.string.qa_cta_button_positive)
                                         .shimmerOverlay(),
-                                    text = stringResource(R.string.donateSessionAppealReadMore),
+                                    text = stringResource(R.string.readMoreCapital),
                                     onClick =  {
                                         context.openUrl(URL_DONATE)
                                         sendCommand(HomeViewModel.Commands.OnDonationLinkClicked)
@@ -383,8 +391,10 @@ fun DonationDialog(
 
 @Preview
 @Composable
-fun PreviewDonationDialog() {
-    PreviewTheme {
+fun PreviewDonationDialog(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {

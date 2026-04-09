@@ -364,11 +364,11 @@ interface TextSecurePreferences {
 
 
         // Donation
-        const val HAS_DONATED = "has_donated_v2"
-        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url_v2"
-        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount_v2"
-        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta_v2"
-        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review_v2"
+        const val HAS_DONATED = "has_donated_v3"
+        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url_v3"
+        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount_v3"
+        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta_v3"
+        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review_v3"
 
         const val DEBUG_HAS_DONATED = "debug_has_donated"
         const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"

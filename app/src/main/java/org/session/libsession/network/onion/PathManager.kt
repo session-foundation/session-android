@@ -1,6 +1,7 @@
 package org.session.libsession.network.onion
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.FlowPreview
@@ -93,7 +94,7 @@ open class PathManager @Inject constructor(
 
     // Warm up from persisted paths without blocking construction.
     // Stored as a Deferred so getPath() can await it for deterministic completion.
-    private val warmUpJob: Deferred<Unit> = scope.async {
+    private val warmUpJob: Deferred<Unit> = scope.async(start = CoroutineStart.LAZY) {
         val persisted = sanitizePaths(storage.getOnionRequestPaths())
         _paths.update { current -> if (current.isEmpty()) persisted else current }
     }
