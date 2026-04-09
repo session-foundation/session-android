@@ -523,6 +523,8 @@
     <string name="feedbackDescription">Compartilhe sua experiência com o {app_name} respondendo a uma breve pesquisa.</string>
     <string name="file">Arquivo</string>
     <string name="files">Arquivos</string>
+    <string name="finalAppeal"><font color="0">Nosso apelo final:</font>\n{app_name} será encerrado em 90 dias</string>
+    <string name="finalAppealDescription">Suas doações ajudaram, mas a {entity_stf_short} recebeu financiamento suficiente apenas para manter as operações críticas até 8 de julho.\n\nO desenvolvimento foi pausado e, sem financiamento adicional, a STF será encerrada, resultando na remoção do {app_name} das lojas de aplicativos e na desativação dos serviços essenciais.\n\nPor favor, ajude-nos a garantir o futuro do Session.</string>
     <string name="followSystemSettings">Acompanhar as configurações do sistema.</string>
     <string name="forever">Para sempre</string>
     <string name="from">De:</string>
@@ -1180,6 +1182,7 @@
     <string name="rateSessionApp">Avaliar o app</string>
     <string name="rateSessionModalDescription">Ficamos felizes que você esteja gostando do {app_name}. Se tiver um momento, avaliá-lo na {storevariant} ajuda outras pessoas a descobrir mensagens privadas e seguras!</string>
     <string name="read">Lido</string>
+    <string name="readMoreCapital">Leia mais</string>
     <string name="readReceipts">Confirmações de Leitura</string>
     <string name="readReceiptsDescription">Mostrar recibos de leitura para todas as mensagens que você enviar e receber.</string>
     <string name="received">Recebido:</string>
