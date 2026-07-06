@@ -635,6 +635,8 @@
     <string name="onboardingPrivacy">پرائیویسی پالیسی</string>
     <string name="onboardingTos">شرائط و ضوابط</string>
     <string name="onboardingTosPrivacy">اس سروس کا استعمال کرتے ہوئے، آپ ہمارے <b>سروس کی شرائط</b> اور <b>پرائیویسی پالیسی</b> سے متفق ہیں۔</string>
+    <string name="ongoingAppeal">{app_name} کے لیے نئی امید</string>
+    <string name="ongoingAppealDescription">جب ایسا لگ رہا تھا کہ {app_name} شاید ختم ہو جائے، تو آپ آگے آئے۔\n\nآپ کے عطیات نے {entity_stf_short} کو اتنی فنڈنگ فراہم کی ہے کہ معاونین کی ایک چھوٹی ٹیم ایپ کی دیکھ بھال کر سکے۔\n\nفی الحال، توجہ {app_name} کو محفوظ، مستحکم اور آن لائن رکھنے پر ہے۔\n\nآپ کے عطیات اس نازک وقت میں {app_name} کی مدد کر سکتے ہیں۔ اضافی عطیات سے ممکن ہے کہ مزید ڈویلپرز کی خدمات حاصل کی جا سکیں اور ان خصوصیات کی فراہمی میں مدد ملے جو {app_name} کو زیادہ تیزی سے آگے بڑھانے کے لیے درکار ہیں۔</string>
     <string name="onionRoutingPath">راہ</string>
     <string name="onionRoutingPathDescription">{app_name} آپ کی IP کو آپ کے پیغامات کو {app_name} کے غیر مرکزیت شدہ نیٹ ورک میں متعدد سروس نوڈ کے ذریعے بھیج کر چھپاتا ہے۔ یہ آپ کا موجودہ راستہ ہے:</string>
     <string name="onionRoutingPathDestination">منزل</string>

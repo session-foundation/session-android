@@ -900,6 +900,8 @@
     <string name="onboardingPrivacy">Política de privacidad</string>
     <string name="onboardingTos">Términos del servicio</string>
     <string name="onboardingTosPrivacy">Al usar este servicio, aceptas nuestros <b>Términos del servicio</b> y <b>Política de privacidad</b></string>
+    <string name="ongoingAppeal">Nueva esperanza para {app_name}</string>
+    <string name="ongoingAppealDescription">Cuando parecía que {app_name} podía desaparecer, diste un paso al frente.\n\nTus donaciones han proporcionado a {entity_stf_short} fondos suficientes para permitir que un pequeño equipo de colaboradores mantenga la aplicación.\n\nAhora mismo, el objetivo es mantener {app_name} segura, estable y en línea.\n\nTus donaciones pueden ayudar a apoyar a {app_name} en este momento crítico. Las donaciones adicionales pueden permitir contratar a más desarrolladores y ayudar a ofrecer las funciones necesarias para impulsar {app_name} más rápido.</string>
     <string name="onionRoutingPath">Ruta</string>
     <string name="onionRoutingPathDescription">{app_name} oculta tu IP haciendo rebotar tus mensajes a través de los Service Nodes en la red descentralizada de {app_name}. Esta es tu ruta actual:</string>
     <string name="onionRoutingPathDestination">Destino</string>

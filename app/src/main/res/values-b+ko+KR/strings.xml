@@ -732,6 +732,8 @@
     <string name="onboardingPrivacy">개인정보 보호 정책</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">서비스를 사용함으로써, 귀하는 우리의 <b>서비스 약관</b> 및 <b>개인정보 보호정책</b>에 동의하게 됩니다.</string>
+    <string name="ongoingAppeal">{app_name}를 위한 새로운 희망</string>
+    <string name="ongoingAppealDescription">{app_name}가 사라질지도 모른다고 보였을 때, 여러분이 나서주셨습니다.\n\n여러분의 기부는 {entity_stf_short}에 충분한 자금을 제공하여, 소수의 기여자 팀이 앱을 유지할 수 있게 했습니다.\n\n지금은 {app_name}를 안전하고, 안정적이며, 온라인 상태로 유지하는 데 집중하고 있습니다.\n\n이 중요한 시기에 여러분의 기부는 {app_name}를 지원하는 데 도움이 될 수 있습니다. 추가 기부가 이루어진다면 더 많은 개발자를 고용하고, {app_name}를 더 빠르게 발전시키는 데 필요한 기능을 제공하는 데 도움이 될 수 있습니다.</string>
     <string name="onionRoutingPath">경로</string>
     <string name="onionRoutingPathDescription">{app_name}은 {app_name}의 탈중앙화된 네트워크에서 여러 서비스 노드를 통해 메시지를 라우팅하여 IP를 숨깁니다. 이것이 현재 경로입니다:</string>
     <string name="onionRoutingPathDestination">목적지</string>

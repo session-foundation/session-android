@@ -949,6 +949,8 @@
     <string name="onboardingPrivacy">Політика конфіденційності</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">Користуючись цією послугою, ви погоджуєтесь з нашими <b>Умовами надання послуг</b> та <b>Політикою конфіденційності</b></string>
+    <string name="ongoingAppeal">Нова надія на {app_name}</string>
+    <string name="ongoingAppealDescription">Коли здавалося, що {app_name} може зникнути, ви прийшли на допомогу.\n\nВаші пожертви забезпечили {entity_stf_short} достатнім фінансуванням, щоб невелика команда учасників могла підтримувати застосунок.\n\nЗараз основна увага зосереджена на тому, щоб {app_name} залишався безпечним, стабільним і доступним онлайн.\n\nВаші пожертви можуть допомогти підтримати {app_name} у цей критичний час. Додаткові пожертви можуть дати змогу найняти більше розробників і допомогти швидше впровадити функції, необхідні для подальшого розвитку {app_name}.</string>
     <string name="onionRoutingPath">Шлях</string>
     <string name="onionRoutingPathDescription">{app_name} приховує вашу IP-адресу, перенаправляючи ваші повідомлення через декілька сервісних вузлів у децентралізованій мережі {app_name}. Це ваш поточний шлях:</string>
     <string name="onionRoutingPathDestination">Місце призначення</string>

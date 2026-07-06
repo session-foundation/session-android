@@ -635,6 +635,8 @@
     <string name="onboardingPrivacy">Политика приватности</string>
     <string name="onboardingTos">Услови коришћења услуга</string>
     <string name="onboardingTosPrivacy">Коришћењем ове услуге, прихватате наше <b>Услове коришћења</b> и <b>Правила приватности</b></string>
+    <string name="ongoingAppeal">Нова нада за {app_name}</string>
+    <string name="ongoingAppealDescription">Када је изгледало да би {app_name} могао да нестане, ви сте притекли у помоћ.\n\nВаше донације су обезбедиле {entity_stf_short} довољно средстава да омогући малом тиму сарадника да одржава апликацију.\n\nТренутно је фокус на томе да {app_name} остане безбедан, стабилан и доступан на мрежи.\n\nВаше донације могу помоћи да се {app_name} подржи у овом критичном тренутку. Додатне донације могу омогућити ангажовање више програмера и помоћи у испоруци функција потребних за брже унапређење {app_name}.</string>
     <string name="onionRoutingPath">Путања</string>
     <string name="onionRoutingPathDescription">{app_name} скрива ваш IP тако што преусмерава ваше поруке кроз више Service Node-а у децентрализованој мрежи {app_name}. Ово је ваша тренутна путања:</string>
     <string name="onionRoutingPathDestination">Одредиште</string>

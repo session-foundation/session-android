@@ -738,6 +738,8 @@
     <string name="onboardingPrivacy">隱私政策</string>
     <string name="onboardingTos">服務條款</string>
     <string name="onboardingTosPrivacy">使用本服務即表示您同意我們的 <b>服務條款</b> 和 <b>隱私政策</b></string>
+    <string name="ongoingAppeal">{app_name} 的新希望</string>
+    <string name="ongoingAppealDescription">當看起來 {app_name} 可能會消失時，是你挺身而出。\n\n你的捐款已為 {entity_stf_short} 提供足夠資金，讓一小組貢獻者能夠維護這個應用程式。\n\n目前，重點是讓 {app_name} 保持安全、穩定並持續上線。\n\n你的捐款能在這個關鍵時刻幫助支持 {app_name}。額外的捐款或許能讓我們聘請更多開發人員，並協助更快推出推動 {app_name} 前進所需的功能。</string>
     <string name="onionRoutingPath">路徑</string>
     <string name="onionRoutingPathDescription">{app_name} 將您傳送的訊息經由 {app_name} 的去中心化網絡做多重的路徑與節點傳輸以隱藏您的 IP，這是您現在傳送訊息的路徑：</string>
     <string name="onionRoutingPathDestination">目的地</string>

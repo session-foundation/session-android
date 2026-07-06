@@ -754,6 +754,8 @@
     <string name="onboardingPrivacy">Política de Privacitat</string>
     <string name="onboardingTos">Condicions del servei</string>
     <string name="onboardingTosPrivacy">En utilitzar aquest servei, accepteu els nostres <b>Termes de Servei</b> i la nostra <b>Política de Privadesa</b></string>
+    <string name="ongoingAppeal">Nova esperança per a {app_name}</string>
+    <string name="ongoingAppealDescription">Quan semblava que {app_name} podria desaparèixer, vau fer un pas endavant.\n\nLes vostres donacions han proporcionat a la {entity_stf_short} prou finançament per permetre que un petit equip de col·laboradors mantingui l\'aplicació.\n\nAra mateix, l\'objectiu és mantenir {app_name} segura, estable i en línia.\n\nLes vostres donacions poden ajudar a donar suport a {app_name} en aquest moment crític. Les donacions addicionals poden permetre contractar més desenvolupadors i ajudar a oferir les funcionalitats necessàries per fer avançar {app_name} més ràpidament.</string>
     <string name="onionRoutingPath">Ruta</string>
     <string name="onionRoutingPathDescription">{app_name} amaga la vostra IP redirigint els vostres missatges a través de múltiples nodes de servei a la xarxa descentralitzada de {app_name}. Aquest és el vostre camí actual:</string>
     <string name="onionRoutingPathDestination">Destinació</string>

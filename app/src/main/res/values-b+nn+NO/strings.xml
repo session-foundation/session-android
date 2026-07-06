@@ -895,6 +895,8 @@
     <string name="onboardingPrivacy">Personvernreglar</string>
     <string name="onboardingTos">Vilkår for bruk</string>
     <string name="onboardingTosPrivacy">Ved å bruke denne tenesta, godtar du våre <b>Vilkår for bruk</b> og <b>Personvernerklæring</b></string>
+    <string name="ongoingAppeal">Nytt håp for {app_name}</string>
+    <string name="ongoingAppealDescription">Då det såg ut til at {app_name} kanskje kunne forsvinne, stilte du opp.\n\nDonasjonane dine har gitt {entity_stf_short} nok finansiering til at eit lite team av bidragsytarar kan halde appen ved like.\n\nAkkurat no er fokuset å halde {app_name} trygg, stabil og på nett.\n\nDonasjonane dine kan hjelpe med å støtte {app_name} i denne kritiske tida. Ytterlegare donasjonar kan gjere det mogleg å tilsetje fleire utviklarar og bidra til å levere funksjonane som trengst for å utvikle {app_name} raskare.</string>
     <string name="onionRoutingPath">Bane</string>
     <string name="onionRoutingPathDescription">{app_name} skjuler din IP ved å sende meldingene dine gjennom flere Service Nodes i {app_name}\'s desentraliserte nettverk. Dette er din nåværende rute:</string>
     <string name="onionRoutingPathDestination">Mål</string>

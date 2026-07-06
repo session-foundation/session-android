@@ -900,6 +900,8 @@
     <string name="onboardingPrivacy">Integritetspolicy</string>
     <string name="onboardingTos">Användarvillkor</string>
     <string name="onboardingTosPrivacy">Genom att använda denna tjänst accepterar du våra <b>Användarvillkor</b> och <b>Sekretesspolicy</b></string>
+    <string name="ongoingAppeal">Nytt hopp för {app_name}</string>
+    <string name="ongoingAppealDescription">När det såg ut som om {app_name} kunde försvinna, klev du upp.\n\nDina donationer har gett {entity_stf_short} tillräckligt med pengar för att möjliggöra för ett litet team av bidragsgivare att underhålla appen.\n\nJust nu ligger fokus på att hålla {app_name} säker, stabil och online.\n\nDina donationer kan hjälpa till att stödja {app_name} i denna kritiska tid. Ytterligare donationer kan göra det möjligt för fler utvecklare att anställas och hjälpa till att leverera de funktioner som behövs för att avancera {app_name} snabbare.</string>
     <string name="onionRoutingPath">Sökväg</string>
     <string name="onionRoutingPathDescription">{app_name} döljer din IP-adress genom att dirigera dina meddelanden genom flera Service Nodes i {app_name}s decentraliserade nätverk. Detta är din nuvarande väg:</string>
     <string name="onionRoutingPathDestination">Mål</string>

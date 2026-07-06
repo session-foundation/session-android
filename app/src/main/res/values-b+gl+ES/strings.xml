@@ -547,6 +547,8 @@
     <string name="onboardingPrivacy">Política de privacidade</string>
     <string name="onboardingTos">Condicións de servizo</string>
     <string name="onboardingTosPrivacy">Ao usar este servizo, aceptas os nosos <b>Termos de servizo</b> e a <b>Política de privacidade</b></string>
+    <string name="ongoingAppeal">Nova esperanza para {app_name}</string>
+    <string name="ongoingAppealDescription">Cando parecía que {app_name} podía desaparecer, deches un paso adiante.\n\nAs túas doazóns déronlle á {entity_stf_short} financiamento suficiente para permitir que un pequeno equipo de colaboradores manteña a aplicación.\n\nAgora mesmo, o foco está en manter {app_name} segura, estable e en liña.\n\nAs túas doazóns poden axudar a apoiar {app_name} neste momento crítico. As doazóns adicionais poden permitir contratar máis desenvolvedores e axudar a ofrecer as funcións necesarias para facer avanzar {app_name} máis rápido.</string>
     <string name="onionRoutingPath">Ruta</string>
     <string name="onionRoutingPathDescription">{app_name} agocha o teu IP ao redirixir as túas mensaxes a través de múltiples Service Node na rede descentralizada de {app_name}. Este é o teu camiño actual:</string>
     <string name="onionRoutingPathDestination">Destino</string>

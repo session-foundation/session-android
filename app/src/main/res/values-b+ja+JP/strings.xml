@@ -869,6 +869,8 @@
     <string name="onboardingPrivacy">プライバシーポリシー</string>
     <string name="onboardingTos">利用規約</string>
     <string name="onboardingTosPrivacy">このサービスを利用することで、<b>利用規約</b>と<b>プライバシーポリシー</b>に同意したことになります。</string>
+    <string name="ongoingAppeal">新しい {app_name} への希望</string>
+    <string name="ongoingAppealDescription">{app_name} が消えてしまうかもしれないと思われたとき、あなたは支援の手を差し伸べてくださいました。\n\n皆さまからのご寄付により、{entity_stf_short} は、少人数のコントリビューターチームがアプリを維持できるだけの資金を確保できました。\n\n現在は、{app_name} を安全で安定した、オンラインで利用可能な状態に保つことに注力しています。\n\nこの重要な時期に、皆さまのご寄付は {app_name} の支えになります。追加のご寄付があれば、さらに多くの開発者を雇用し、{app_name} の前進に必要な機能をより早く提供できるようになるかもしれません。</string>
     <string name="onionRoutingPath">パス</string>
     <string name="onionRoutingPathDescription">{app_name}は、{app_name}の分散型ネットワークの複数のService Nodeを介してメッセージをバウンスすることにより、IPアドレスを隠します。これが現在の経路です:</string>
     <string name="onionRoutingPathDestination">目的先</string>

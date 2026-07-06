@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Rregulla Privatësie</string>
     <string name="onboardingTos">Kushtet e Shërbimit</string>
     <string name="onboardingTosPrivacy">Duke përdorur këtë shërbim, ju pranoni <b>Kushtet e Shërbimit</b> dhe <b>Politikën e Privatësisë</b></string>
+    <string name="ongoingAppeal">Shpresë e re për {app_name}</string>
+    <string name="ongoingAppealDescription">Kur dukej se {app_name} mund të zhdukej, ju dolët në ndihmë.\n\nDonacionet tuaja i kanë dhënë {entity_stf_short} fonde të mjaftueshme për t’i mundësuar një ekipi të vogël kontribuesish ta mirëmbajë aplikacionin.\n\nTani për tani, fokusi është ta mbajmë {app_name} të sigurt, të qëndrueshëm dhe online.\n\nDonacionet tuaja mund të ndihmojnë në mbështetjen e {app_name} në këtë periudhë kritike. Donacionet shtesë mund të bëjnë të mundur punësimin e më shumë zhvilluesve dhe të ndihmojnë në ofrimin e veçorive të nevojshme për ta çuar {app_name} përpara më shpejt.</string>
     <string name="onionRoutingPath">Path</string>
     <string name="onionRoutingPathDescription">{app_name} fsheh IP-në tuaj duke e përcaktuar mesazhet tuaja përmes disa nyjeve shërbimi në rrjetin e decentralizuar të {app_name}. Ky është shtegu juaj aktual:</string>
     <string name="onionRoutingPathDestination">Destinacioni</string>

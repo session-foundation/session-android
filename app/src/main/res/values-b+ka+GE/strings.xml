@@ -658,6 +658,8 @@
     <string name="onboardingPrivacy">პირადი პოლიტიკა</string>
     <string name="onboardingTos">მომსახურების პირობები</string>
     <string name="onboardingTosPrivacy">მომსახურების გამოყენებით, თქვენ ეთანხმებით ჩვენს <b>მომსახურების პირობებს</b> და <b>კონფიდენციალურობის პოლიტიკას</b></string>
+    <string name="ongoingAppeal">ახალი იმედი {app_name}-ისთვის</string>
+    <string name="ongoingAppealDescription">როცა ჩანდა, რომ {app_name} შესაძლოა გამქრალიყო, თქვენ მხარში დაუდექით.\n\nთქვენმა შემოწირულობებმა {entity_stf_short}-ს საკმარისი დაფინანსება მისცა, რათა კონტრიბუტორების მცირე გუნდმა აპის მხარდაჭერა შეძლოს.\n\nამჟამად მთავარი აქცენტი {app_name}-ის უსაფრთხოდ, სტაბილურად და ონლაინ რეჟიმში შენარჩუნებაზეა.\n\nთქვენი შემოწირულობები ამ კრიტიკულ დროს {app_name}-ის მხარდაჭერას დაეხმარება. დამატებითმა შემოწირულობებმა შესაძლოა მეტი დეველოპერის დაქირავების შესაძლებლობა შექმნას და ხელი შეუწყოს იმ ფუნქციების მიწოდებას, რომლებიც საჭიროა {app_name}-ის უფრო სწრაფად განვითარებისთვის.</string>
     <string name="onionRoutingPath">Path</string>
     <string name="onionRoutingPathDescription">{app_name} მალავს თქვენს IP-ს, მარავდება თქვენი შეტყობინებები რამდენიმე Service Node-ების გავლით {app_name}-ის დეცენტრალიზებულ ქსელში. ეს არის თქვენი მიმდინარე მარშრუტი:</string>
     <string name="onionRoutingPathDestination">დანიშნულება</string>

@@ -687,6 +687,8 @@
     <string name="onboardingPrivacy">Kebijakan Privasi</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">Dengan menggunakan layanan ini, Anda menyetujui <b>Syarat Layanan</b> dan <b>Kebijakan Privasi</b> kami</string>
+    <string name="ongoingAppeal">Harapan Baru untuk {app_name}</string>
+    <string name="ongoingAppealDescription">Saat terlihat bahwa {app_name} mungkin akan lenyap, Anda turun tangan.\n\nDonasi Anda telah memberikan {entity_stf_short} pendanaan yang cukup sehingga tim kecil kontributor dapat memelihara aplikasi ini.\n\nSaat ini, fokusnya adalah menjaga {app_name} tetap aman, stabil, dan online.\n\nDonasi Anda dapat membantu mendukung {app_name} pada masa kritis ini. Donasi tambahan dapat memungkinkan perekrutan lebih banyak pengembang dan membantu menghadirkan fitur yang diperlukan untuk memajukan {app_name} lebih cepat.</string>
     <string name="onionRoutingPath">Path</string>
     <string name="onionRoutingPathDescription">{app_name} menyembunyikan IP Anda dengan memantulkan pesan melalui beberapa simpul layanan di jaringan terdesentralisasi {app_name}. Ini adalah jalur Anda saat ini:</string>
     <string name="onionRoutingPathDestination">Tujuan</string>

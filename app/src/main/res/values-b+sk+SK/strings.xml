@@ -648,6 +648,8 @@
     <string name="onboardingPrivacy">Zásady ochrany osobných údajov</string>
     <string name="onboardingTos">Podmienky služby</string>
     <string name="onboardingTosPrivacy">Používaním tejto služby súhlasíte s našimi <b>Podmienkami služby</b> a <b>Zásadami ochrany osobných údajov</b></string>
+    <string name="ongoingAppeal">Nová nádej pre {app_name}</string>
+    <string name="ongoingAppealDescription">Keď to vyzeralo, že {app_name} môže zaniknúť, pomohli ste.\n\nVaše dary poskytli {entity_stf_short} dostatok finančných prostriedkov na to, aby mohol malý tím prispievateľov aplikáciu udržiavať.\n\nPráve teraz sa pozornosť sústreďuje na to, aby {app_name} zostala bezpečná, stabilná a dostupná online.\n\nVaše dary môžu pomôcť podporiť {app_name} v tomto kritickom období. Ďalšie dary môžu umožniť prijatie ďalších vývojárov a pomôcť dodať funkcie potrebné na rýchlejší rozvoj {app_name}.</string>
     <string name="onionRoutingPath">Cesta</string>
     <string name="onionRoutingPathDescription">{app_name} skrýva tvoju IP rekordovaniu tvojich správ cez viacero service nodes v decentralizovanej sieti {app_name}. Toto je tvoja aktuálna trasa:</string>
     <string name="onionRoutingPathDestination">Cieľ</string>

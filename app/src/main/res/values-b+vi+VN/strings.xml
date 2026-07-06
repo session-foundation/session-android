@@ -684,6 +684,8 @@
     <string name="onboardingPrivacy">Chính sách Bảo mật</string>
     <string name="onboardingTos">Điều Khoản Dịch Vụ</string>
     <string name="onboardingTosPrivacy">Bằng cách sử dụng dịch vụ này, bạn đồng ý với <b>Điều khoản Dịch vụ</b> và <b>Chính sách Bảo mật</b> của chúng tôi</string>
+    <string name="ongoingAppeal">Hy vọng mới cho {app_name}</string>
+    <string name="ongoingAppealDescription">Khi tưởng như {app_name} có thể biến mất, bạn đã chung tay.\n\nNhững khoản quyên góp của bạn đã mang lại cho {entity_stf_short} đủ nguồn quỹ để một nhóm nhỏ cộng tác viên có thể duy trì ứng dụng.\n\nNgay lúc này, trọng tâm là giữ cho {app_name} an toàn, ổn định và hoạt động trực tuyến.\n\nCác khoản quyên góp của bạn có thể giúp hỗ trợ {app_name} trong thời điểm quan trọng này. Những khoản quyên góp thêm có thể cho phép thuê thêm nhà phát triển và giúp mang đến các tính năng cần thiết để thúc đẩy {app_name} phát triển nhanh hơn.</string>
     <string name="onionRoutingPath">Đường đi</string>
     <string name="onionRoutingPathDescription">{app_name} ẩn IP của bạn bằng cách luân chuyển tin nhắn của bạn qua một số Service Node trong mạng lưới phân cấp của {app_name}. Đây là đường đi hiện tại của bạn:</string>
     <string name="onionRoutingPathDestination">Điểm đến</string>

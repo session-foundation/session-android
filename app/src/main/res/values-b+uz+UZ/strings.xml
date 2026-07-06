@@ -624,6 +624,8 @@
     <string name="onboardingPrivacy">Maxfiylik siyosati</string>
     <string name="onboardingTos">Foydalanish shartlari</string>
     <string name="onboardingTosPrivacy">Ushbu xizmatdan foydalanganingiz uchun, siz bizning <b>Foydalanish Shartlari</b> va <b>Maxfiylik Siyosati</b> ga rozilik bildirasiz</string>
+    <string name="ongoingAppeal">{app_name} uchun yangi umid</string>
+    <string name="ongoingAppealDescription">{app_name} yo‘qolib ketishi mumkin bo‘lib tuyulganida, siz yordamga keldingiz.\n\nSizning xayriyalaringiz {entity_stf_short} ga ilovani qo‘llab-quvvatlash uchun hissa qo‘shuvchilardan iborat kichik jamoani saqlab turishga yetarli mablag‘ berdi.\n\nHozir asosiy e’tibor {app_name} ni xavfsiz, barqaror va onlayn holatda saqlab turishga qaratilgan.\n\nSizning xayriyalaringiz ushbu muhim davrda {app_name} ni qo‘llab-quvvatlashga yordam berishi mumkin. Qo‘shimcha xayriyalar ko‘proq dasturchilarni ishga olish va {app_name} ni tezroq rivojlantirish uchun zarur funksiyalarni yetkazishga yordam berishi mumkin.</string>
     <string name="onionRoutingPath">Yo‘l</string>
     <string name="onionRoutingPathDescription">{app_name} sizning IP-ingizni {app_name}ning markazlashmagan tarmog\'i, xabarlaringizni bir necha xizmat tarmoqlaridan o\'tkazish orqali yashiradi. Bu sizning joriy yo\'lingiz:</string>
     <string name="onionRoutingPathDestination">Manzil</string>

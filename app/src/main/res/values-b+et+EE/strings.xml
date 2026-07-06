@@ -663,6 +663,8 @@
     <string name="onboardingPrivacy">Privaatsuseeskirjad</string>
     <string name="onboardingTos">Kasutustingimused</string>
     <string name="onboardingTosPrivacy">Teenust kasutades nõustute meie <b>Kasutustingimuste</b> ja <b>Privaatsuspoliitikaga</b></string>
+    <string name="ongoingAppeal">Uus lootus {app_name} jaoks</string>
+    <string name="ongoingAppealDescription">Kui tundus, et {app_name} võib kaduda, astusite teie appi.\n\nTeie annetused on andnud {entity_stf_short}-ile piisavalt rahastust, et väike kaastööliste meeskond saaks rakendust hooldada.\n\nPraegu on fookuses hoida {app_name} turvalise, stabiilse ja veebis.\n\nTeie annetused võivad aidata {app_name}\'i sellel kriitilisel ajal toetada. Täiendavad annetused võivad võimaldada palgata rohkem arendajaid ja aidata pakkuda vajalikke funktsioone, et {app_name}\'i kiiremini edasi arendada.</string>
     <string name="onionRoutingPath">Rada</string>
     <string name="onionRoutingPathDescription">{app_name} peidab teie IP-aadressi, suunates teie sõnumeid läbi mitme teenusesõlme {app_name}\'i detsentraliseeritud võrgus. See on teie praegune rada:</string>
     <string name="onionRoutingPathDestination">Sihtkoht</string>

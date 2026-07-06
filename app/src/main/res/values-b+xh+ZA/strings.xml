@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Umgaqo-nkqubo Wobumfihlo</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">Ngokusebenzisa le nkonzo, uyavuma kwimigaqo yethu ye <b>imigaqo yenkonzo</b> kunye <b>imigaqo yabucala</b></string>
+    <string name="ongoingAppeal">Ithemba elitsha le-{app_name}</string>
+    <string name="ongoingAppealDescription">Xa kwakubonakala ngathi i-{app_name} inokusithela, naza nanceda.\n\nIminikelo yenu inike i-{entity_stf_short} inkxaso-mali eyaneleyo ukuze iqela elincinci labanegalelo likwazi ukugcina i-app isebenza.\n\nNgoku, kugxilwe ekugcineni i-{app_name} ikhuselekile, izinzile, kwaye ikwi-intanethi.\n\nIminikelo yenu inganceda ukuxhasa i-{app_name} kweli xesha libalulekileyo. Iminikelo eyongezelelekileyo ingavumela ukuba kuqeshwe abaphuhlisi abangakumbi kwaye incede ukuhambisa iimpawu ezifunekayo ukuze i-{app_name} iqhubele phambili ngokukhawuleza.</string>
     <string name="onionRoutingPath">Indlela</string>
     <string name="onionRoutingPathDescription">{app_name} ifihla i-IP yakho ngokuthumela imiyalezo yakho ngeendawo ezininzi zeenkonzo kwinethiwekhi ye {app_name} esekwe kwiNode yeNkonzo. Le yindlela yakho yangoku:</string>
     <string name="onionRoutingPathDestination">Destinieshoni</string>

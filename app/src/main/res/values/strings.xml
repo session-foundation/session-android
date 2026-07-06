@@ -954,6 +954,8 @@
     <string name="onboardingPrivacy">Privacy Policy</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">By using this service, you agree to our <b>Terms of Service</b> and <b>Privacy Policy</b></string>
+    <string name="ongoingAppeal">New Hope for {app_name}</string>
+    <string name="ongoingAppealDescription">When it looked like {app_name} might disappear, you stepped up.\n\nYour donations have given the {entity_stf_short} enough funding to enable a small team of contributors to maintain the app.\n\nRight now, the focus is keeping {app_name} secure, stable, and online.\n\nYour donations can help support {app_name} in this critical time.  Additional donations may allow for more developers to be hired and help deliver the features needed to advance {app_name} faster.</string>
     <string name="onionRoutingPath">Path</string>
     <string name="onionRoutingPathDescription">{app_name} hides your IP by routing your messages through multiple service nodes in {app_name}\'s decentralized network. This is your current path:</string>
     <string name="onionRoutingPathDestination">Destination</string>

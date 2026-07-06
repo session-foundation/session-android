@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">ਪ੍ਰਾਇਵੇਸੀ ਪਾਲਿਸੀ</string>
     <string name="onboardingTos">ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ</string>
     <string name="onboardingTosPrivacy">ਇਸ ਸੇਵਾ ਦੀ ਵਰਤੋਂ ਕਰ ਕੇ, ਤੁਸੀਂ ਸਾਡੇ <b>ਸੇਵਾਵਾਂ ਦੀਆਂ ਸ਼ਰਤਾਂ</b> ਅਤੇ <b>ਪ੍ਰਾਈਵੇਸੀ ਪਾਲਿਸੀ</b> ਨਾਲ ਸਹਿਮਤ ਹੋ।</string>
+    <string name="ongoingAppeal">{app_name} ਲਈ ਨਵੀਂ ਉਮੀਦ</string>
+    <string name="ongoingAppealDescription">ਜਦੋਂ ਇਹ ਲੱਗ ਰਿਹਾ ਸੀ ਕਿ {app_name} ਸ਼ਾਇਦ ਗਾਇਬ ਹੋ ਜਾਵੇ, ਤੁਸੀਂ ਅੱਗੇ ਆਏ।\n\nਤੁਹਾਡੇ ਦਾਨਾਂ ਨੇ {entity_stf_short} ਨੂੰ ਇੰਨੀ ਫੰਡਿੰਗ ਦਿੱਤੀ ਹੈ ਕਿ ਯੋਗਦਾਨਕਾਰਾਂ ਦੀ ਇੱਕ ਛੋਟੀ ਟੀਮ ਐਪ ਦੀ ਦੇਖਭਾਲ ਕਰ ਸਕੇ।\n\nਇਸ ਵੇਲੇ ਧਿਆਨ {app_name} ਨੂੰ ਸੁਰੱਖਿਅਤ, ਸਥਿਰ ਅਤੇ ਆਨਲਾਈਨ ਰੱਖਣ \'ਤੇ ਹੈ।\n\nਤੁਹਾਡੇ ਦਾਨ ਇਸ ਸੰਕਟਮਈ ਸਮੇਂ ਵਿੱਚ {app_name} ਦਾ ਸਮਰਥਨ ਕਰਨ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦੇ ਹਨ। ਵਾਧੂ ਦਾਨਾਂ ਨਾਲ ਹੋਰ ਡਿਵੈਲਪਰਾਂ ਨੂੰ ਭਰਤੀ ਕਰਨਾ ਸੰਭਵ ਹੋ ਸਕਦਾ ਹੈ ਅਤੇ {app_name} ਨੂੰ ਤੇਜ਼ੀ ਨਾਲ ਅੱਗੇ ਵਧਾਉਣ ਲਈ ਲੋੜੀਂਦੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਮੁਹੱਈਆ ਕਰਨ ਵਿੱਚ ਮਦਦ ਮਿਲ ਸਕਦੀ ਹੈ।</string>
     <string name="onionRoutingPath">ਪਥ</string>
     <string name="onionRoutingPathDescription">{app_name} ਤੁਹਾਡੇ IP ਨੂੰ ਬੇਨਕਾਬ ਕਰਨ ਦੇ ਰਸਤੇ ਹੱਲਾ ਹੈ ਆਪਣੇ ਸੁਨੇਹਿਆਂ ਨੂੰ {app_name} ਦੇ ਡਿਸੇਂਟਰਾਿਲਾਇਜਡ ਨੈੱਟਵਰਕ ਵਿੱਚ ਕਈ ਸਿਵਰ ਸੇਵਾਨੌਡਾਂ ਰਾਹੀਂ ਰੂਟ ਕਰਦਾ ਹੈ। ਇਹ ਤੁਹਾਡਾ ਮੌਜੂਦਾ ਰਸਤਾ ਹੈ:</string>
     <string name="onionRoutingPathDestination">ਮੰਜ਼ਿਲ</string>

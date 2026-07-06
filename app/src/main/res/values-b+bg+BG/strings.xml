@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Политика за поверителност</string>
     <string name="onboardingTos">Условия за ползване</string>
     <string name="onboardingTosPrivacy">С използването на услугата, вие се съгласявате с нашите <b>Условия за ползване</b> и <b>Политика за поверителност</b></string>
+    <string name="ongoingAppeal">Нова надежда за {app_name}</string>
+    <string name="ongoingAppealDescription">Когато изглеждаше, че {app_name} може да изчезне, вие се притекохте на помощ.\n\nВашите дарения осигуриха на {entity_stf_short} достатъчно финансиране, за да може малък екип от сътрудници да поддържа приложението.\n\nВ момента фокусът е върху това {app_name} да остане защитено, стабилно и онлайн.\n\nВашите дарения могат да помогнат за подкрепата на {app_name} в този критичен момент. Допълнителни дарения може да позволят наемането на още разработчици и да помогнат за предоставянето на необходимите функции, за да се развива {app_name} по-бързо.</string>
     <string name="onionRoutingPath">Път</string>
     <string name="onionRoutingPathDescription">{app_name} скрива вашия IP, като пренасочва съобщенията ви през множество Service Node възли в децентрализирана мрежа на {app_name}. Това е текущият ви път:</string>
     <string name="onionRoutingPathDestination">Дестинация</string>

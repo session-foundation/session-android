@@ -695,6 +695,8 @@
     <string name="onboardingPrivacy">Polisi Preifatrwydd</string>
     <string name="onboardingTos">Telerau Gwasanaeth</string>
     <string name="onboardingTosPrivacy">Trwy ddefnyddio\'r gwasanaeth hwn, rydych chi\'n cytuno i\'n <b>Telerau Gwasanaeth</b> ac <b>Polisi Preifatrwydd</b></string>
+    <string name="ongoingAppeal">Gobaith Newydd i {app_name}</string>
+    <string name="ongoingAppealDescription">Pan oedd hi\'n ymddangos y gallai {app_name} ddiflannu, gwnaethoch chi gamu ymlaen.\n\nMae eich rhoddion wedi rhoi digon o gyllid i\'r {entity_stf_short} alluogi tîm bach o gyfranwyr i gynnal yr ap.\n\nAr hyn o bryd, y ffocws yw cadw {app_name} yn ddiogel, yn sefydlog, ac ar-lein.\n\nGall eich rhoddion helpu i gefnogi {app_name} yn ystod y cyfnod tyngedfennol hwn. Gall rhoddion ychwanegol ganiatáu cyflogi mwy o ddatblygwyr a helpu i ddarparu\'r nodweddion sydd eu hangen i symud {app_name} ymlaen yn gyflymach.</string>
     <string name="onionRoutingPath">Llwybr</string>
     <string name="onionRoutingPathDescription">Mae {app_name} yn cuddio\'ch cyfeiriad IP trwy lwybro\'ch negeseuon trwy nifer o nodau gwasanaeth yn rhwydwaith gwasgaredig {app_name}. Dyma\'ch llwybr presennol:</string>
     <string name="onionRoutingPathDestination">Cyrchfan</string>

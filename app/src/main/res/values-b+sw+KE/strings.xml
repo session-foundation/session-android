@@ -624,6 +624,8 @@
     <string name="onboardingPrivacy">Sera ya Faragha</string>
     <string name="onboardingTos">Sheria za Huduma</string>
     <string name="onboardingTosPrivacy">Kwa kutumia huduma hii, unakubali <b>Vigezo vya Huduma</b> na <b>Sera ya Faragha</b></string>
+    <string name="ongoingAppeal">Matumaini mapya kwa {app_name}</string>
+    <string name="ongoingAppealDescription">Ilipoonekana kuwa {app_name} huenda ikatoweka, ulijitokeza.\n\nMichango yako imeipa {entity_stf_short} ufadhili wa kutosha kuwezesha timu ndogo ya wachangiaji kuitunza programu.\n\nKwa sasa, lengo ni kuifanya {app_name} ibaki salama, thabiti, na mtandaoni.\n\nMichango yako inaweza kusaidia kuendeleza {app_name} katika wakati huu muhimu. Michango ya ziada inaweza kuruhusu waendelezaji zaidi kuajiriwa na kusaidia kuwasilisha vipengele vinavyohitajika ili kuendeleza {app_name} kwa kasi zaidi.</string>
     <string name="onionRoutingPath">Njia</string>
     <string name="onionRoutingPathDescription">{app_name} inaficha IP yako kwa kupitisha ujumbe wako kupitia nodi nyingi za huduma katika mtandao wa {app_name} ulioenea. Hii ndio njia yako ya sasa:</string>
     <string name="onionRoutingPathDestination">Marudio</string>
