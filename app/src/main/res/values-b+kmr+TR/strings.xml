@@ -663,6 +663,8 @@
     <string name="onboardingPrivacy">Naha:  Meta</string>
     <string name="onboardingTos">Têkiliyên Xizmetkarî</string>
     <string name="onboardingTosPrivacy">Bila ku hûn bi karanîna mâreyê em wergirtinên me yên <b>Şertên Xezûrî</b> û <b>Siyaseta Arzûya Kesayetiê</b> qebûl bikin</string>
+    <string name="ongoingAppeal">Hêviyek Nû ji bo {app_name}</string>
+    <string name="ongoingAppealDescription">Dema ku wisa xuya dikir ku {app_name} dibe ku winda bibe, we gave gavê pêş.\n\nBeşdariyên we ji bo {entity_stf_short} têra fînansek peyda kirine ku tîmeke biçûk ji beşdarvanan bikaribe sepanê biparêze.\n\nNiha, armanc ew e ku {app_name} ewle, aram û li serhêl were parastin.\n\nBeşdariyên we dikarin di vê demê de ya girîng de alîkariya piştgirîkirina {app_name} bikin. Beşdariyên zêdetir dibe ku rê bidin ku pêşdebirên zêdetir werin xebitandin û bibin alîkar ku taybetmendiyên pêwîst ji bo pêşxistina {app_name} bi lezter were peydakirin.</string>
     <string name="onionRoutingPath">Rê</string>
     <string name="onionRoutingPathDescription">{app_name} IP-ya te veşêre bi riya peyaman te bi nexşên parastina xizmeta pirçavan di toraya qedaxkirî {app_name}\'s de re radike. Ev rêya weya niha ye:</string>
     <string name="onionRoutingPathDestination">Hedef</string>

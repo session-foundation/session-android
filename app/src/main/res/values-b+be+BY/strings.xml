@@ -647,6 +647,8 @@
     <string name="onboardingPrivacy">Палітыка прыватнасці</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">Вы карыстаецеся гэтай паслугай, вы згаджаецеся з нашымі <b>Умовамі Карыстання</b> і <b>Палітыкай прыватнасці</b></string>
+    <string name="ongoingAppeal">Новая надзея для {app_name}</string>
+    <string name="ongoingAppealDescription">Калі здавалася, што {app_name} можа знікнуць, вы прыйшлі на дапамогу.\n\nДзякуючы вашым ахвяраванням {entity_stf_short} атрымала дастаткова фінансавання, каб невялікая каманда ўдзельнікаў магла падтрымліваць праграму.\n\nЗараз асноўная ўвага надаецца таму, каб {app_name} заставалася бяспечнай, стабільнай і даступнай анлайн.\n\nВашы ахвяраванні могуць дапамагчы падтрымаць {app_name} у гэты крытычны час. Дадатковыя ахвяраванні могуць дазволіць наняць больш распрацоўшчыкаў і дапамагчы хутчэй рэалізаваць функцыі, неабходныя для далейшага развіцця {app_name}.</string>
     <string name="onionRoutingPath">Шлях</string>
     <string name="onionRoutingPathDescription">{app_name} хавае ваш IP, накіроўваючы вашы паведамленні праз некалькі сэрвісных вузлоў у дэцэнтралізаванай сетцы {app_name}. Вось ваш цяперашні шлях:</string>
     <string name="onionRoutingPathDestination">Месца прызначэння</string>

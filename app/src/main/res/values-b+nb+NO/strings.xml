@@ -895,6 +895,8 @@
     <string name="onboardingPrivacy">Personvernregler</string>
     <string name="onboardingTos">Vilkår for bruk</string>
     <string name="onboardingTosPrivacy">Ved å bruke denne tjenesten aksepterer du våre <b>Vilkår for bruk</b> og <b>Personvernerklæring</b></string>
+    <string name="ongoingAppeal">Ny håp for {app_name}</string>
+    <string name="ongoingAppealDescription">Når det så ut som {app_name} kan forsvinne, steget du opp.\n\ndonasjonene dine har gitt {entity_stf_short} nok midler til å aktivere en liten gruppe bidragsytere for å opprettholde appen.\n\nAkkurat nå holder fokuset {app_name} sikre, stasjonær og online.\n\nDine donasjoner kan hjelpe deg å støtte {app_name} i denne kritiske tiden. Ytterligere donasjoner kan tillate at flere utviklere kan leies inn og bidra til å levere funksjonene som trengs for å fremme {app_name} raskere.</string>
     <string name="onionRoutingPath">Sti</string>
     <string name="onionRoutingPathDescription">{app_name} skjuler din IP ved å sende meldingene dine gjennom flere Service Nodes i {app_name}s desentraliserte nettverk. Dette er din nåværende rute:</string>
     <string name="onionRoutingPathDestination">Destinasjon</string>

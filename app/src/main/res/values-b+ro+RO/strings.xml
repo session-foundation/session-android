@@ -930,6 +930,8 @@
     <string name="onboardingPrivacy">Politica de confidențialitate</string>
     <string name="onboardingTos">Termeni și condiții</string>
     <string name="onboardingTosPrivacy">Prin utilizarea acestui serviciu, sunteți de acord cu <b>Termenii și condițiile</b> și <b>Politica de confidențialitate</b></string>
+    <string name="ongoingAppeal">Speranță nouă pentru {app_name}</string>
+    <string name="ongoingAppealDescription">Când părea că {app_name} ar putea să dispară, ați intervenit.\n\nDonațiile dvs. au oferit {entity_stf_short} suficientă finanțare pentru a permite unei mici echipe de contribuitori să întrețină aplicația.\n\nÎn acest moment, accentul se pune pe menținerea {app_name} sigură, stabilă și online.\n\nDonațiile dvs. pot ajuta la sprijinirea {app_name} în această perioadă critică. Donațiile suplimentare pot permite angajarea mai multor dezvoltatori și pot ajuta la livrarea funcționalităților necesare pentru a avansa {app_name} mai rapid.</string>
     <string name="onionRoutingPath">Cale</string>
     <string name="onionRoutingPathDescription">{app_name} ascunde IP-ul tău redirecționând mesajele prin mai multe noduri de serviciu din rețeaua descentralizată a {app_name}. Aceasta este calea ta actuală:</string>
     <string name="onionRoutingPathDestination">Destinație</string>

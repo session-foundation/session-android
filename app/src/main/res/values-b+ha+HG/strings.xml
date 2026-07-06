@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Manufar Sirri</string>
     <string name="onboardingTos">Ka\'idojin Aiki</string>
     <string name="onboardingTosPrivacy">Ta yin amfani da wannan sabis, kun amince da <b>Sharuddan Sabis</b> namu da <b>Manufar Sirri</b></string>
+    <string name="ongoingAppeal">Sabuwar Bege ga {app_name}</string>
+    <string name="ongoingAppealDescription">Lokacin da ya zama kamar {app_name} na iya ɓacewa, kun tashi tsaye.\n\nGudummawar ku ta bai wa {entity_stf_short} isasshen kuɗi don bai wa ƙaramin ƙungiyar masu ba da gudummawa damar kula da manhajar.\n\nA yanzu, abin da ake mayar da hankali a kai shi ne tabbatar da cewa {app_name} tana da tsaro, tana da kwanciyar hankali, kuma tana kan layi.\n\nGudummawar ku na iya taimakawa wajen tallafa wa {app_name} a wannan muhimmin lokaci. Ƙarin gudummawa na iya ba da damar ɗaukar ƙarin masu haɓakawa aiki kuma su taimaka wajen samar da abubuwan da ake buƙata don haɓaka {app_name} cikin sauri.</string>
     <string name="onionRoutingPath">Hanya</string>
     <string name="onionRoutingPathDescription">{app_name} ya ɓoye IP ɗinka ta hanyar turawa saƙonninka ta hanyar ɗakunan sabis da yawa a cikin cibiyar sadarwar tsarin rarrabawa na {app_name}. Wannan shine hanyar ka ta yanzu:</string>
     <string name="onionRoutingPathDestination">Manufa</string>

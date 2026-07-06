@@ -900,6 +900,8 @@
     <string name="onboardingPrivacy">गोपनीयता नीति</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">इस सेवा का उपयोग करके, आप हमारी <b>सेवा की शर्तों</b> और <b>गोपनीयता नीति</b> से सहमत होते हैं</string>
+    <string name="ongoingAppeal">{app_name} के लिए नई उम्मीद</string>
+    <string name="ongoingAppealDescription">जब ऐसा लग रहा था कि {app_name} शायद गायब हो जाएगा, तब आप आगे आए।\n\nआपके दान ने {entity_stf_short} को इतना वित्तपोषण दिया है कि योगदानकर्ताओं की एक छोटी टीम ऐप का रखरखाव कर सके।\n\nअभी, ध्यान {app_name} को सुरक्षित, स्थिर और ऑनलाइन बनाए रखने पर है।\n\nआपके दान इस महत्वपूर्ण समय में {app_name} का समर्थन करने में मदद कर सकते हैं। अतिरिक्त दान से अधिक डेवलपर्स को नियुक्त करना संभव हो सकता है और {app_name} को तेजी से आगे बढ़ाने के लिए आवश्यक सुविधाएँ प्रदान करने में मदद मिल सकती है।</string>
     <string name="onionRoutingPath">पाथ</string>
     <string name="onionRoutingPathDescription">{app_name} आपके संदेशों को {app_name} के डेंटरलिज़्ड नेटवर्क के कई Service Nodes के माध्यम से रूट करके आपकी IP को छुपाता है। यह आपका वर्तमान पथ है:</string>
     <string name="onionRoutingPathDestination">गंतव्य</string>

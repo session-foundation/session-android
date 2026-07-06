@@ -574,6 +574,8 @@
     <string name="onboardingPrivacy">Privātuma politika</string>
     <string name="onboardingTos">Pakalpojuma noteikumi</string>
     <string name="onboardingTosPrivacy">Izmantojot šo pakalpojumu, jūs piekrītat mūsu <b>Pakalpojumu sniegšanas noteikumiem</b> un <b>Privātuma politikai</b></string>
+    <string name="ongoingAppeal">Jauna cerība priekš {app_name}</string>
+    <string name="ongoingAppealDescription">Kad izskatījās, ka {app_name} varētu pazust, jūs iesaistījāties.\n\nJūsu ziedojumi ir nodrošinājuši {entity_stf_short} pietiekamu finansējumu, lai neliela līdzstrādnieku komanda varētu uzturēt lietotni.\n\nPašlaik galvenā uzmanība ir pievērsta tam, lai {app_name} būtu droša, stabila un pieejama tiešsaistē.\n\nJūsu ziedojumi var palīdzēt atbalstīt {app_name} šajā kritiskajā laikā. Papildu ziedojumi varētu ļaut nolīgt vairāk izstrādātāju un palīdzēt nodrošināt funkcijas, kas nepieciešamas, lai {app_name} attīstītos ātrāk.</string>
     <string name="onionRoutingPath">Ceļš</string>
     <string name="onionRoutingPathDescription">{app_name} slēpj jūsu IP, maršrutējot jūsu ziņas caur vairākiem pakalpojuma mezgliem {app_name} decentralizētajā tīklā. Patreizējais ceļš ir:</string>
     <string name="onionRoutingPathDestination">Galamērķis</string>

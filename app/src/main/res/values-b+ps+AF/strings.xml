@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">د محرمیت پالیسي</string>
     <string name="onboardingTos">د خدماتو شرایط</string>
     <string name="onboardingTosPrivacy">د دې خدمت په کارولو سره، تاسو زموږ <b>د خدمت شرایط</b> او <b>د محرمیت پالیسي</b> سره موافق یاست</string>
+    <string name="ongoingAppeal">د {app_name} لپاره نوې هیله</string>
+    <string name="ongoingAppealDescription">کله چې داسې ښکارېدل چې {app_name} ښايي له منځه ولاړ شي، تاسو مخته راغلل.\n\nستاسو بسپنو {entity_stf_short} ته دومره بودیجه ورکړې چې د ونډه‌اخیستونکو یوه کوچنۍ ډله وکولای شي اپلیکیشن وساتي.\n\nهمدا اوس، تمرکز پر دې دی چې {app_name} خوندي، باثباته او آنلاین وساتل شي.\n\nستاسو بسپنې په دې مهم وخت کې د {app_name} ملاتړ کې مرسته کولی شي. اضافي بسپنې ښايي د دې لامل شي چې نور پراختیاکوونکي وګمارل شي او هغه ځانګړنې وړاندې شي چې {app_name} ته د لا چټک پرمختګ ورکولو لپاره اړتیا ده.</string>
     <string name="onionRoutingPath">لار</string>
     <string name="onionRoutingPathDescription">{app_name} ستاسو IP پټوي په {app_name} د غیر متمرکز شبکه کې ستاسو پیغامونه د څو Service Nodes له لارې راښکاره کوي. دا ستاسو اوسنی مسیر دی:</string>
     <string name="onionRoutingPathDestination">موخه</string>

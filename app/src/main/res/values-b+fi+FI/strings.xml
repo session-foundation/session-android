@@ -889,6 +889,8 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="onboardingPrivacy">Tietosuojakäytäntö</string>
     <string name="onboardingTos">Palveluehdot</string>
     <string name="onboardingTosPrivacy">Käyttämällä tätä palvelua, hyväksyt meidän <b>Käyttöehdot</b> ja <b>Tietosuojakäytäntö</b></string>
+    <string name="ongoingAppeal">Uusi toivo {app_name}</string>
+    <string name="ongoingAppealDescription">Kun näytti siltä, että {app_name} saattaisi kadota, sinä astuit esiin.\n\nLahjoitustesi ansiosta {entity_stf_short} on saanut riittävästi rahoitusta, jotta pieni avustajatiimi voi ylläpitää sovellusta.\n\nTällä hetkellä painopiste on siinä, että {app_name} pysyy turvallisena, vakaana ja verkossa.\n\nLahjoituksesi voivat auttaa tukemaan {app_name}a tänä kriittisenä aikana. Lisälahjoitukset voivat mahdollistaa useampien kehittäjien palkkaamisen ja auttaa toimittamaan tarvittavat ominaisuudet, jotta {app_name} kehittyy nopeammin.</string>
     <string name="onionRoutingPath">Polku</string>
     <string name="onionRoutingPathDescription">{app_name} piilottaa IP-osoitteesi ohjaamalla viestisi useiden Service Node määritteiden kautta {app_name} hajautetussa verkossa. Tämä on nykyinen reittisi:</string>
     <string name="onionRoutingPathDestination">Määränpää</string>

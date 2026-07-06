@@ -627,6 +627,8 @@
     <string name="onboardingPrivacy">தனியுரிமை கொள்கை</string>
     <string name="onboardingTos">சேவை விதிமுறைகள்</string>
     <string name="onboardingTosPrivacy">இந்த சேவையைப் பயன்படுத்துவதன் மூலம், நீங்கள் எங்களின் <b>சேவை விதிமுறைகளை</b> மற்றும் <b>தனியுரிமை கொள்கையை</b> ஒப்புக்கொள்கிறீர்கள்</string>
+    <string name="ongoingAppeal">{app_name} க்கான புதிய நம்பிக்கை</string>
+    <string name="ongoingAppealDescription">{app_name} மறைந்து போகலாம் என்று தோன்றியபோது, நீங்கள் முன்வந்தீர்கள்.\n\nஉங்கள் நன்கொடைகள், பங்களிப்பாளர்களின் ஒரு சிறிய குழு பயன்பாட்டைப் பராமரிக்க இயலும் அளவு நிதியை {entity_stf_short} க்கு வழங்கியுள்ளன.\n\nஇப்போது, {app_name} ஐ பாதுகாப்பாகவும், நிலையாகவும், ஆன்லைனிலும் வைத்திருப்பதில்தான் கவனம் செலுத்தப்படுகிறது.\n\nஇந்த முக்கியமான நேரத்தில் {app_name} ஐ ஆதரிக்க உங்கள் நன்கொடைகள் உதவலாம். கூடுதல் நன்கொடைகள் மேலும் பல டெவலப்பர்களை பணியமர்த்த அனுமதிக்கவும், {app_name} ஐ வேகமாக முன்னேற்ற தேவையான அம்சங்களை வழங்க உதவவும் செய்யலாம்.</string>
     <string name="onionRoutingPath">வழி</string>
     <string name="onionRoutingPathDescription">{app_name} உங்கள் IP ஐ மறைத்து, உங்கள் தகவல்களை {app_name}இன் decentralized network இல் பல service nodes மூலம் வழிவகுத்து அனுப்புகிறது. இது உங்கள் தற்போதைய பாதை:</string>
     <string name="onionRoutingPathDestination">இலக்கு</string>

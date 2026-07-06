@@ -870,6 +870,8 @@
     <string name="onboardingPrivacy">隐私政策</string>
     <string name="onboardingTos">服务条款</string>
     <string name="onboardingTosPrivacy">使用本服务即表示您同意我们的<b>服务条款</b>和<b>隐私政策</b></string>
+    <string name="ongoingAppeal">{app_name} 的新希望</string>
+    <string name="ongoingAppealDescription">当时看起来 {app_name} 可能会消失，是你挺身而出。\n\n你的捐款已为 {entity_stf_short} 提供了足够的资金，使一小团队贡献者能够维护这款应用。\n\n目前，重点是确保 {app_name} 的安全、稳定并持续在线。\n\n你的捐款可以在这一关键时期帮助支持 {app_name}。额外的捐款或许能让我们聘请更多开发者，并帮助更快交付推动 {app_name} 发展所需的功能。</string>
     <string name="onionRoutingPath">路径</string>
     <string name="onionRoutingPathDescription">{app_name}通过{app_name}区块链网络中的多个服务节点发送您的消息来隐藏您的IP。这是您当前的消息路径：</string>
     <string name="onionRoutingPathDestination">最终节点</string>

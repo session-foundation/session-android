@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Privacy Policy</string>
     <string name="onboardingTos">සේවා වියුතුන්</string>
     <string name="onboardingTosPrivacy">මෙම සේවාව භාවිතා කිරීමෙන්, ඔබ අපගේ <b>සේවා කෙරෙන නියම</b> සහ <b>රහස්‍යතා ප්‍රතිපත්තිය</b> පිළිගනි</string>
+    <string name="ongoingAppeal">{app_name} සඳහා නව බලාපොරොත්තුව</string>
+    <string name="ongoingAppealDescription">{app_name} අතුරුදහන් විය හැකි බව පෙනුණු විට, ඔබ ඉදිරියට ආවා.\n\nඔබගේ පරිත්‍යාගයන් {entity_stf_short} වෙත යෙදුම නඩත්තු කිරීම සඳහා දායකයින්ගෙන් සමන්විත කුඩා කණ්ඩායමකට සහාය දීමට ප්‍රමාණවත් අරමුදල් ලබා දී ඇත.\n\nදැන්, අවධානය යොමු වී ඇත්තේ {app_name} ආරක්ෂිත, ස්ථාවර සහ මාර්ගගතව පවත්වාගෙන යාමයි.\n\nමෙම තීරණාත්මක අවස්ථාවේදී {app_name} සඳහා සහාය වීමට ඔබගේ පරිත්‍යාගයන් උදවු කළ හැක. අමතර පරිත්‍යාගයන් මඟින් තවත් සංවර්ධකයන් බඳවා ගැනීමට හැකි විය හැකි අතර {app_name} වේගවත් ලෙස ඉදිරියට ගෙන යාමට අවශ්‍ය විශේෂාංග ලබා දීමටද උපකාරී විය හැක.</string>
     <string name="onionRoutingPath">මාර්ගය</string>
     <string name="onionRoutingPathDescription">{app_name} ඔබේ පණිවිඩ {app_name}ගේ විමධ්‍යගත ජාලයේ බහුවිධ Service Node හරහා යවීමෙන් ඔබේ IP සඟවයි. මෙය ඔබගේ වත්මන් මාර්ගයයි:</string>
     <string name="onionRoutingPathDestination">ගමනාන්තය</string>

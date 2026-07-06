@@ -869,6 +869,8 @@
     <string name="onboardingPrivacy">Gizlilik Siyasəti</string>
     <string name="onboardingTos">Xidmət Şərtləri</string>
     <string name="onboardingTosPrivacy">Bu xidməti istifadə edərək, <b>Xidmət Şərtləri</b> və <b>Gizlilik Siyasətimiz</b> ilə razılaşırsınız</string>
+    <string name="ongoingAppeal">{app_name} üçün yeni ümid</string>
+    <string name="ongoingAppealDescription">{app_name}-in yox ola biləcəyi göründükdə, siz dəstək oldunuz.\n\nSizin ianələriniz {entity_stf_short}-ə tətbiqi dəstəkləyən kiçik bir iştirakçılar komandasının onu qoruyub saxlaması üçün kifayət qədər maliyyə təmin etdi.\n\nHazırda əsas diqqət {app_name}-i təhlükəsiz, sabit və onlayn saxlamaqdadır.\n\nSizin ianələriniz bu kritik dövrdə {app_name}-ə dəstək olmağa kömək edə bilər. Əlavə ianələr daha çox tərtibatçının işə götürülməsinə imkan yarada və {app_name}-in daha sürətlə inkişafı üçün lazım olan funksiyaların təqdim edilməsinə kömək edə bilər.</string>
     <string name="onionRoutingPath">Yol</string>
     <string name="onionRoutingPathDescription">{app_name}, mesajlarınızı {app_name} tətbiqinin mərkəzləşdirilməmiş şəbəkəsindəki çoxsaylı xidmət düyünləri üzərindən yönləndirərək IP-nizi gizlədir. Bu, hazırkı yolunuzdur:</string>
     <string name="onionRoutingPathDestination">Hədəf</string>

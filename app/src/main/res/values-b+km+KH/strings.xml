@@ -611,6 +611,8 @@
     <string name="onboardingPrivacy">Privacy Policy</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">ដោយប្រើសេវាកម្មនេះ អ្នកយល់ព្រមទៅនឹង<b> លក្ខខណ្ឌ </b>និង<b> គោលការណ៍ភាពឯកជន </b>របស់យើង</string>
+    <string name="ongoingAppeal">ក្តីសង្ឃឹមថ្មីសម្រាប់ {app_name}</string>
+    <string name="ongoingAppealDescription">នៅពេលដែលវាមើលទៅដូចជា {app_name} អាចនឹងបាត់បង់ទៅ អ្នកបានឈានមុខមកជួយ។\n\nការបរិច្ចាគរបស់អ្នកបានផ្តល់ថវិកាគ្រប់គ្រាន់ឱ្យ {entity_stf_short} ដើម្បីឱ្យក្រុមអ្នករួមចំណែកតូចមួយអាចថែទាំកម្មវិធីនេះបាន។\n\nឥឡូវនេះ ការផ្តោតសំខាន់គឺរក្សា {app_name} ឱ្យមានសុវត្ថិភាព ស្ថិរភាព និងអនឡាញ។\n\nការបរិច្ចាគរបស់អ្នកអាចជួយគាំទ្រ {app_name} ក្នុងពេលវេលាសំខាន់នេះ។ ការបរិច្ចាគបន្ថែមអាចអនុញ្ញាតឱ្យជួលអ្នកអភិវឌ្ឍន៍បន្ថែម និងជួយផ្តល់មុខងារដែលត្រូវការ ដើម្បីអភិវឌ្ឍ {app_name} ឱ្យកាន់តែលឿន។</string>
     <string name="onionRoutingPath">ផ្លូវ</string>
     <string name="onionRoutingPathDescription">{app_name} លាក់ IP របស់អ្នកដោយបញ្ជូនសាររបស់អ្នកតាមគ nodes សេវាកម្មច្រើនក្នុងបណ្តាញ decentralised របស់ {app_name}។ នេះជាពពួកបច្ចុប្បន្នរបស់អ្នក៖</string>
     <string name="onionRoutingPathDestination">គោលដៅ</string>

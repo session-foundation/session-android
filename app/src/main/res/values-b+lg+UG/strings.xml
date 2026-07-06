@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Katibako Polosi ensigga</string>
     <string name="onboardingTos">Amateeka g\'obuweereza</string>
     <string name="onboardingTosPrivacy">By using this service, you agree to our <b>Terms of Service</b> and <b>Privacy Policy</b></string>
+    <string name="ongoingAppeal">Essuubi Eppya eri {app_name}</string>
+    <string name="ongoingAppealDescription">Bwe kyali kifaanana ngʼa {app_name} ayinza okubula, mwatuyamba.\n\nEbiweebwayo byammwe biwadde {entity_stf_short} ensimbi ezimala okusobozesa ttiimu entono ey’abayambi okulabirira app eno.\n\nMu kiseera kino, essira liteekeddwa ku kukuuma {app_name} ng’etaliimu buzibu, nnywevu era ng’ekyakola ku yintaneeti.\n\nEbiweebwayo byammwe bisobola okuyamba okuwagira {app_name} mu kiseera kino ekikulu. Ebiweebwayo ebirala biyinza okusobozesa okuwaayo emirimu eri abawandiisi ba pulogulaamu abalala era ne biyamba okuleeta ebikozesebwa ebyetaagisa okutumbula {app_name} mu bwangu.</string>
     <string name="onionRoutingPath">Ekubo</string>
     <string name="onionRoutingPathDescription">{app_name} ekweka IP yo nga etambuliza obubaka bwo ku binyigidwa by’omulimu bingi mu {app_name} decentralized network. Luno lwe luguudo lw\'olina:</string>
     <string name="onionRoutingPathDestination">Enda</string>

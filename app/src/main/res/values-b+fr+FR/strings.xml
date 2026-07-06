@@ -900,6 +900,8 @@
     <string name="onboardingPrivacy">Politique de confidentialité</string>
     <string name="onboardingTos">Conditions d\'utilisation</string>
     <string name="onboardingTosPrivacy">En utilisant ce service, vous acceptez nos <b>Conditions d\'utilisation</b> et notre <b>Politique de confidentialité</b></string>
+    <string name="ongoingAppeal">Nouvel espoir pour {app_name}</string>
+    <string name="ongoingAppealDescription">Lorsqu’il semblait que {app_name} pourrait disparaître, vous êtes intervenu.\n\nVos dons ont permis à la {entity_stf_short} d’obtenir suffisamment de financement pour permettre à une petite équipe de contributeurs d’assurer la maintenance de l’application.\n\nÀ l’heure actuelle, l’objectif est de maintenir {app_name} sécurisé, stable et en ligne.\n\nVos dons peuvent aider à soutenir {app_name} en cette période critique. Des dons supplémentaires pourraient permettre d’embaucher davantage de développeurs et d’apporter les fonctionnalités nécessaires pour faire progresser {app_name} plus rapidement.</string>
     <string name="onionRoutingPath">Chemin</string>
     <string name="onionRoutingPathDescription">{app_name} cache votre adresse IP en envoyant vos messages via plusieurs nœuds de service dans le réseau décentralisé de {app_name}. Voici votre chemin actuel :</string>
     <string name="onionRoutingPathDestination">Destination</string>

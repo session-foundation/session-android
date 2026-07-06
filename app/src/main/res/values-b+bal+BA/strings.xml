@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">نجی رہائش پالیسی</string>
     <string name="onboardingTos">سرویس شرطون</string>
     <string name="onboardingTosPrivacy">اس سروس کا استعمال کرتے ہوئے، آپ ہماری <b>خدمات کی شرائط</b> اور <b>رازداری کی پالیسی</b> سے اتفاق کرتے ہیں</string>
+    <string name="ongoingAppeal">{app_name} ءِ وارتَر اُمید</string>
+    <string name="ongoingAppealDescription">وختے اے گُمان اَت کہ {app_name} شایَد ناپَدید بِبیت، شما مدد کُرت.\n\nشما ءِ چندہاں {entity_stf_short} را اَندازہءَ کافی فنڈ داتگ اَنت تا اِک کَمّی ٹیم از شَریکداراں اَپلیکیشن ءَ برقرار بداریت.\n\nایں زمانگءَ توجہ اِیں اَت کہ {app_name} محفوظ، مُستحکم، و آن‌لاین نگہ داشتگ بِبیت.\n\nشما ءِ چندہاں ایں حَساس وُقتءَ {app_name} ءِ حمایت کَرت کَننت. زِیاتر چندہ شایَد اِیں مَیدان بدیت کہ بازتر ڈِوَلپر بھرتی بکنت و لازم خصوصیات زودتر {app_name} ءِ پیشرفتءَ برسنت.</string>
     <string name="onionRoutingPath">راہ</string>
     <string name="onionRoutingPathDescription">{app_name}دی آی پیءَ نے چھپچی کن گهنت روچیءَ دزے پیغامءَ هُن ڪمیں گهنت راهَد سرویس نوڊانی کررہ ، چہ {app_name}\'دی ڊیسینټریْلائزڈ نیٹ ورکءِ م، یہ اپءَ حالاتی راه دپتءَ.</string>
     <string name="onionRoutingPathDestination">منزل</string>
