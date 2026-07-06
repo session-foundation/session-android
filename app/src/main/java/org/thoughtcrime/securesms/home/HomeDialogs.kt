@@ -276,11 +276,11 @@ fun DonationDialog(
         sendCommand(HideDonationCTADialog)
     }
 
-    val title = Phrase.from(context,R.string.finalAppeal)
+    val title = Phrase.from(context,R.string.ongoingAppeal)
         .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
 
-    val text = Phrase.from(context,R.string.finalAppealDescription)
+    val text = Phrase.from(context,R.string.ongoingAppealDescription)
         .put(StringSubstitutionConstants.ENTITY_STF_SHORT_KEY, NonTranslatableStringConstants.ENTITY_STF_SHORT)
         .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
