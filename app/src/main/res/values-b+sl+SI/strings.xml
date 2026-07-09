@@ -647,6 +647,8 @@
     <string name="onboardingPrivacy">Pravilnik o zasebnosti</string>
     <string name="onboardingTos">Pogoji storitve</string>
     <string name="onboardingTosPrivacy">Z uporabo te storitve se strinjate z našimi <b>pogoji storitve</b> in <b>politiko zasebnosti</b></string>
+    <string name="ongoingAppeal">Novo upanje za {app_name}</string>
+    <string name="ongoingAppealDescription">Ko je kazalo, da bi {app_name} lahko izginil, ste stopili skupaj.\n\nVaše donacije so {entity_stf_short} zagotovile dovolj sredstev, da je lahko majhna ekipa sodelavcev vzdrževala aplikacijo.\n\nTrenutno je poudarek na tem, da {app_name} ostane varen, stabilen in na voljo na spletu.\n\nVaše donacije lahko pomagajo podpreti {app_name} v tem kritičnem času. Dodatne donacije bi lahko omogočile zaposlitev več razvijalcev in pomagale zagotoviti funkcije, potrebne za hitrejši napredek {app_name}.</string>
     <string name="onionRoutingPath">Pot</string>
     <string name="onionRoutingPathDescription">{app_name} skrije vašo IP tako, da usmerja vaša sporočila skozi več vozlišč storitve v {app_name}-ovem decentraliziranem omrežju. To je vaša trenutna pot:</string>
     <string name="onionRoutingPathDestination">Cilj</string>

@@ -639,6 +639,8 @@
     <string name="onboardingPrivacy">Нууцлалын бодлого</string>
     <string name="onboardingTos">Үйлчилгээний нөхцөл</string>
     <string name="onboardingTosPrivacy">Энэ үйлчилгээг ашигласнаар та манай <b>Үйлчилгээний нөхцөлүүд</b> болон <b>Нууцлалын бодлого</b>-ийг зөвшөөрч байна.</string>
+    <string name="ongoingAppeal">{app_name}-д шинэ найдвар</string>
+    <string name="ongoingAppealDescription">{app_name} алга болж магадгүй мэт санагдаж байсан үед та дэмжлэг үзүүлсэн.\n\nТаны хандивууд {entity_stf_short}-д аппыг арчилж, хэвийн ажиллуулахад хувь нэмэр оруулагчдын жижиг багийг ажиллуулахад хангалттай санхүүжилт өгсөн.\n\nЯг одоо гол анхаарал нь {app_name}-ийг аюулгүй, тогтвортой, онлайн байлгах явдал юм.\n\nЭнэ чухал үед таны хандив {app_name}-ийг дэмжихэд тусалж чадна. Нэмэлт хандивууд нь илүү олон хөгжүүлэгчийг ажилд авах боломжийг бүрдүүлж, {app_name}-ийг илүү хурдан хөгжүүлэхэд шаардлагатай боломжуудыг хүргэхэд тусалж магадгүй.</string>
     <string name="onionRoutingPath">Зам</string>
     <string name="onionRoutingPathDescription">{app_name} нь таны IP-г олон Service Node-оор дамжуулан таны мессежийг {app_name}-ийн Decentralized network-д холбож далдалдаг. Энэ бол таны одоогийн зам:</string>
     <string name="onionRoutingPathDestination">Хүрэх газар</string>

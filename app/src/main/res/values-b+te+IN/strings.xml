@@ -624,6 +624,8 @@
     <string name="onboardingPrivacy">గోప్యతా విధానం</string>
     <string name="onboardingTos">సేవా నిబంధనలు</string>
     <string name="onboardingTosPrivacy">ఈ సేవను ఉపయోగించడం ద్వారా, మీరు మా <b>సేవా నిబంధనలు</b> మరియు <b>గోప్యతా విధానం</b> ని అంగీకరిస్తారు</string>
+    <string name="ongoingAppeal">{app_name} కోసం కొత్త ఆశ</string>
+    <string name="ongoingAppealDescription">{app_name} కనుమరుగైపోవచ్చని అనిపించినప్పుడు, మీరు ముందుకు వచ్చారు.\n\nమీ విరాళాలు {entity_stf_short} కు యాప్‌ను నిర్వహించడానికి సహకారుల చిన్న బృందాన్ని కొనసాగించేంత నిధులను అందించాయి.\n\nప్రస్తుతం, ప్రధాన దృష్టి {app_name} ను సురక్షితంగా, స్థిరంగా మరియు ఆన్‌లైన్‌లో ఉంచడంపై ఉంది.\n\nఈ కీలక సమయంలో మీ విరాళాలు {app_name} కు మద్దతు ఇవ్వడంలో సహాయపడతాయి. అదనపు విరాళాలు మరిన్ని డెవలపర్‌లను నియమించడానికి అవకాశం కల్పించి, {app_name} ను మరింత వేగంగా ముందుకు తీసుకెళ్లేందుకు అవసరమైన ఫీచర్లను అందించడంలో సహాయపడవచ్చు.</string>
     <string name="onionRoutingPath">మార్గం</string>
     <string name="onionRoutingPathDescription">{app_name} మీ IPని {app_name} యొక్క decentralized network లోని ఎక్కువ service nodes ద్వారా మీ సందేశాలను రూటింగ్ చేయడం ద్వారా దాచిపెడుతుంది. ఇది మీ ప్రస్తుత మార్గం:</string>
     <string name="onionRoutingPathDestination">తలపురుగు</string>

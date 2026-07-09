@@ -650,6 +650,8 @@
     <string name="onboardingPrivacy">Privatumo politika</string>
     <string name="onboardingTos">Paslaugų nuostatos</string>
     <string name="onboardingTosPrivacy">Naudodamiesi šia paslauga, Jūs sutinkate su mūsų <b>Paslaugų teikimo sąlygomis</b> ir <b>Privatumo politika</b></string>
+    <string name="ongoingAppeal">Nauja viltis dėl {app_name}</string>
+    <string name="ongoingAppealDescription">Kai atrodė, kad {app_name} gali išnykti, jūs ištiesėte pagalbos ranką.\n\nJūsų aukos suteikė {entity_stf_short} pakankamai lėšų, kad nedidelė bendradarbių komanda galėtų prižiūrėti programėlę.\n\nŠiuo metu daugiausia dėmesio skiriama tam, kad {app_name} išliktų saugi, stabili ir pasiekiama internete.\n\nJūsų aukos gali padėti palaikyti {app_name} šiuo kritiniu metu. Papildomos aukos gali leisti pasamdyti daugiau programuotojų ir padėti greičiau įdiegti funkcijas, reikalingas tolesnei {app_name} plėtrai.</string>
     <string name="onionRoutingPath">Path</string>
     <string name="onionRoutingPathDescription">{app_name} slepia jūsų IP adresą, peradresuodamas jūsų žinutes per kelis aptarnavimo mazgus {app_name} decentralizuotame tinkle. Štai jūsų dabartinis kelias:</string>
     <string name="onionRoutingPathDestination">Paskirties vieta</string>

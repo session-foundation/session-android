@@ -635,6 +635,8 @@
     <string name="onboardingPrivacy">Pravila privatnosti</string>
     <string name="onboardingTos">Uvjeti korištenja</string>
     <string name="onboardingTosPrivacy">Korištenjem ove usluge pristajete na naše <b>Uvjeti korištenja</b> i <b>Pravila privatnosti</b></string>
+    <string name="ongoingAppeal">Nova nada za {app_name}</string>
+    <string name="ongoingAppealDescription">Kad se činilo da bi {app_name} mogao nestati, vi ste uskočili.\n\nVaše su donacije osigurale {entity_stf_short} dovoljno sredstava da omogući malom timu suradnika održavanje aplikacije.\n\nTrenutačno je fokus na tome da {app_name} ostane siguran, stabilan i dostupan na mreži.\n\nVaše donacije mogu pomoći podržati {app_name} u ovom kritičnom razdoblju. Dodatne donacije mogle bi omogućiti zapošljavanje više razvojnih programera i pomoći u isporuci značajki potrebnih za brži napredak {app_name}.</string>
     <string name="onionRoutingPath">Putanja</string>
     <string name="onionRoutingPathDescription">{app_name} skriva vaš IP usmjeravanjem vaših poruka kroz više uslužnih čvorova u {app_name} decentraliziranoj mreži. Ovo je vaša trenutna putanja:</string>
     <string name="onionRoutingPathDestination">Odredište</string>

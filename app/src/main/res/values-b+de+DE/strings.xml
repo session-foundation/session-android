@@ -900,6 +900,8 @@
     <string name="onboardingPrivacy">Datenschutzerklärung</string>
     <string name="onboardingTos">Nutzungsbedingungen</string>
     <string name="onboardingTosPrivacy">Durch die Nutzung dieses Dienstes stimmst du unseren <b> Nutzungsbedingungen </b> und <b> Datenschutzbestimmungen </b> zu</string>
+    <string name="ongoingAppeal">Neue Hoffnung für {app_name}</string>
+    <string name="ongoingAppealDescription">Als es aussah, als ob {app_name} verschwinden könnte, bist du aufgestockt.\n\nIhre Spenden haben die {entity_stf_short} genügend Mittel bereitgestellt, damit ein kleines Team von Spendern die App aufrecht erhalten kann.\n\nIm Moment hält der Fokus {app_name} sicher, stabil und online.\n\nIhre Spenden können {app_name} in dieser kritischen Zeit unterstützen. Zusätzliche Spenden können es ermöglichen, dass mehr Entwickler eingestellt werden und helfen die Funktionen zu liefern, die benötigt werden, um {app_name} schneller voranzubringen.</string>
     <string name="onionRoutingPath">Pfad</string>
     <string name="onionRoutingPathDescription">{app_name} verbirgt deine IP-Adresse, indem deine Nachrichten über mehrere Service Nodes im dezentralen {app_name}-Netzwerk geroutet werden. Dies ist dein aktueller Pfad:</string>
     <string name="onionRoutingPathDestination">Ziel</string>

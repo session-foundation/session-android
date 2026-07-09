@@ -712,6 +712,8 @@
     <string name="onboardingPrivacy">Privateca Politiko</string>
     <string name="onboardingTos">Uz-kondiĉoj</string>
     <string name="onboardingTosPrivacy">Per uzado de ĉi tiu servo, vi konsentas al niaj <b>Kondiĉoj de Servo</b> kaj <b>Privateca Politiko</b></string>
+    <string name="ongoingAppeal">Nova espero por {app_name}</string>
+    <string name="ongoingAppealDescription">Kiam ŝajnis, ke {app_name} povus malaperi, vi helpis.\n\nViaj donacoj donis al la {entity_stf_short} sufiĉan financadon por ebligi al malgranda teamo de kontribuantoj prizorgi la apon.\n\nĜuste nun, la fokuso estas teni {app_name} sekura, stabila kaj rete disponebla.\n\nViaj donacoj povas helpi subteni {app_name} en ĉi tiu kritika tempo. Kromaj donacoj eble ebligos dungi pli da programistoj kaj helpos liveri la bezonatajn funkciojn por antaŭenigi {app_name} pli rapide.</string>
     <string name="onionRoutingPath">Vojo</string>
     <string name="onionRoutingPathDescription">{app_name} kaŝas vian IP per direktigo de viaj mesaĝoj tra pluraj Service Nodes en {app_name}\'s decentralizita reto. Jen via aktuala vojo:</string>
     <string name="onionRoutingPathDestination">Celo</string>

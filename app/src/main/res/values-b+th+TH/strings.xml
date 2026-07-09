@@ -618,6 +618,8 @@
     <string name="onboardingPrivacy">นโยบายความเป็นส่วนตัว</string>
     <string name="onboardingTos">ข้อกำหนดในการให้บริการ</string>
     <string name="onboardingTosPrivacy">การใช้บริการนี้แสดงว่าคุณยอมรับ<b>ข้อกำหนดในการให้บริการ</b>และ<b>นโยบายความเป็นส่วนตัว</b>ของเรา</string>
+    <string name="ongoingAppeal">ความหวังใหม่สำหรับ {app_name}</string>
+    <string name="ongoingAppealDescription">เมื่อดูเหมือนว่า {app_name} อาจหายไป คุณก็ได้ยื่นมือเข้ามาช่วย\n\nเงินบริจาคของคุณช่วยให้ {entity_stf_short} มีเงินทุนเพียงพอสำหรับให้ผู้ร่วมพัฒนาทีมเล็ก ๆ ดูแลแอปต่อไปได้\n\nขณะนี้ จุดสำคัญคือการทำให้ {app_name} ปลอดภัย เสถียร และออนไลน์อยู่เสมอ\n\nเงินบริจาคของคุณสามารถช่วยสนับสนุน {app_name} ในช่วงเวลาสำคัญนี้ได้ เงินบริจาคเพิ่มเติมอาจทำให้สามารถจ้างนักพัฒนาเพิ่มได้ และช่วยส่งมอบฟีเจอร์ที่จำเป็นเพื่อผลักดัน {app_name} ให้ก้าวหน้าได้รวดเร็วยิ่งขึ้น</string>
     <string name="onionRoutingPath">ทาง</string>
     <string name="onionRoutingPathDescription">{app_name} ซ่อนอินเตอร์เน็ต IP ของคุณโดยกำหนดเส้นทางข้อความของคุณผ่านโหนดบริการหลายโหนดในเครือข่ายการกระจายอำนาจของ {app_name} นี่คือเส้นทางปัจจุบันของคุณ:</string>
     <string name="onionRoutingPathDestination">ปลายทาง</string>

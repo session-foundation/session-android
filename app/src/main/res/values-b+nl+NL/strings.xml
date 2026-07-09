@@ -900,6 +900,8 @@
     <string name="onboardingPrivacy">Privacybeleid</string>
     <string name="onboardingTos">Gebruiksvoorwaarden</string>
     <string name="onboardingTosPrivacy">Door deze service te gebruiken, ga je akkoord met onze <b>Gebruiksvoorwaarden</b> en <b>Privacybeleid</b></string>
+    <string name="ongoingAppeal">Nieuwe hoop voor {app_name}</string>
+    <string name="ongoingAppealDescription">Toen het leek alsof {app_name} zou kunnen verdwijnen, ben je opgestapeld.\n\nJe donaties hebben de {entity_stf_short} voldoende subsidie gegeven om een klein team van bijdragers in staat te stellen de app te onderhouden.\n\nRechts, de focus is gericht op {app_name} beveiligen, stabiel en online.\n\nJe donaties kunnen helpen met {app_name} ondersteuning in deze kritieke tijd. Extra donaties kunnen ervoor zorgen dat meer ontwikkelaars worden aangenomen en helpen om {app_name} sneller vooruit te helpen.</string>
     <string name="onionRoutingPath">Pad</string>
     <string name="onionRoutingPathDescription">{app_name} verbergt uw IP door het routeren van berichten via meerdere servicenodes in het gedecentraliseerde netwerk van {app_name}. Dit is uw huidige pad:</string>
     <string name="onionRoutingPathDestination">Bestemming</string>

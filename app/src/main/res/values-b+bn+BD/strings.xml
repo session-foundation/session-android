@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">গোপনীয়তা নীতি</string>
     <string name="onboardingTos">শর্তাবলী</string>
     <string name="onboardingTosPrivacy">এই পরিষেবা ব্যবহার করে, আপনি আমাদের <b>পরিষেবার শর্তাবলী</b> এবং <b>গোপনীয়তা নীতি</b> সম্মত হন</string>
+    <string name="ongoingAppeal">{app_name}-এর জন্য নতুন আশা</string>
+    <string name="ongoingAppealDescription">যখন মনে হচ্ছিল {app_name} হয়তো হারিয়ে যেতে পারে, তখন আপনি এগিয়ে এসেছিলেন।\n\nআপনার অনুদান {entity_stf_short}-কে যথেষ্ট অর্থায়ন দিয়েছে, যাতে অবদানকারীদের একটি ছোট দল অ্যাপটি রক্ষণাবেক্ষণ করতে পারে।\n\nএই মুহূর্তে মূল লক্ষ্য হলো {app_name}-কে নিরাপদ, স্থিতিশীল এবং অনলাইনে রাখা।\n\nএই সংকটপূর্ণ সময়ে আপনার অনুদান {app_name}-কে সহায়তা করতে পারে। অতিরিক্ত অনুদান আরও ডেভেলপার নিয়োগের সুযোগ করে দিতে পারে এবং {app_name}-কে আরও দ্রুত এগিয়ে নিতে প্রয়োজনীয় ফিচার সরবরাহে সাহায্য করতে পারে।</string>
     <string name="onionRoutingPath">পাথ</string>
     <string name="onionRoutingPathDescription">{app_name} আপনার আইপি ঠিকানা গোপন করে সার্ভিস নোডগুলোর মাধ্যমে আপনার বার্তাগুলিকে ছড়িয়ে দেয় {app_name} এর বিকেন্দ্রীভূত নেটওয়ার্কে। এটি আপনার বর্তমান পথ:</string>
     <string name="onionRoutingPathDestination">গন্তব্য</string>

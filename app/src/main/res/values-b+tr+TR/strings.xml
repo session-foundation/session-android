@@ -895,6 +895,8 @@
     <string name="onboardingPrivacy">Gizlilik Politikası</string>
     <string name="onboardingTos">Hizmet Koşulları</string>
     <string name="onboardingTosPrivacy">Bu hizmeti kullanarak <b>Hizmet Şartlarımızı</b> ve <b>Gizlilik Politikamızı</b> kabul etmiş olursunuz</string>
+    <string name="ongoingAppeal">{app_name} için Yeni Umut</string>
+    <string name="ongoingAppealDescription">{app_name}\'in ortadan kaybolabileceği göründüğünde, siz devreye girdiniz.\n\nBağışlarınız, {entity_stf_short}\'ye uygulamayı sürdüren küçük bir katkıda bulunanlar ekibini desteklemeye yetecek finansmanı sağladı.\n\nŞu anda odak noktası, {app_name}\'i güvenli, istikrarlı ve çevrimiçi tutmaktır.\n\nBağışlarınız, bu kritik zamanda {app_name}\'i desteklemeye yardımcı olabilir. Ek bağışlar, daha fazla geliştiricinin işe alınmasına olanak sağlayabilir ve {app_name}\'in daha hızlı ilerlemesi için gereken özelliklerin sunulmasına yardımcı olabilir.</string>
     <string name="onionRoutingPath">Yol</string>
     <string name="onionRoutingPathDescription">{app_name} iletilerinizi {app_name}\'in merkezi olmayan ağındaki birden çok Hizmet Düğümü üzerinden yönlendirerek IP\'nizi gizler. Bu sizin mevcut yolunuz:</string>
     <string name="onionRoutingPathDestination">Hedef</string>

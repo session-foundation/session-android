@@ -673,6 +673,8 @@
     <string name="onboardingPrivacy">Πολιτική Απορρήτου</string>
     <string name="onboardingTos">Όροι Χρήσης</string>
     <string name="onboardingTosPrivacy">Χρησιμοποιώντας αυτή την υπηρεσία, συμφωνείτε με τους <b>Όρους Παροχής Υπηρεσιών</b> και την <b>Πολιτική Απορρήτου</b> μας</string>
+    <string name="ongoingAppeal">Νέα ελπίδα για το {app_name}</string>
+    <string name="ongoingAppealDescription">Όταν φαινόταν ότι το {app_name} ίσως εξαφανιστεί, σταθήκατε στο ύψος των περιστάσεων.\n\nΟι δωρεές σας έχουν δώσει στο {entity_stf_short} επαρκή χρηματοδότηση, ώστε μια μικρή ομάδα συνεισφερόντων να μπορεί να συντηρεί την εφαρμογή.\n\nΑυτή τη στιγμή, η προτεραιότητα είναι να διατηρηθεί το {app_name} ασφαλές, σταθερό και διαθέσιμο στο διαδίκτυο.\n\nΟι δωρεές σας μπορούν να βοηθήσουν στην υποστήριξη του {app_name} σε αυτή την κρίσιμη περίοδο. Επιπλέον δωρεές ενδέχεται να επιτρέψουν την πρόσληψη περισσότερων προγραμματιστών και να βοηθήσουν στην παροχή των λειτουργιών που χρειάζονται για να εξελιχθεί το {app_name} ταχύτερα.</string>
     <string name="onionRoutingPath">Διαδρομή</string>
     <string name="onionRoutingPathDescription">Το {app_name} αποκρύπτει την IP σας δρομολογώντας τα μηνύματά σας μέσω πολλών Service Nodes στο αποκεντρωμένο δίκτυο του {app_name}. Αυτή είναι η τρέχουσα διαδρομή σας:</string>
     <string name="onionRoutingPathDestination">Προορισμός</string>

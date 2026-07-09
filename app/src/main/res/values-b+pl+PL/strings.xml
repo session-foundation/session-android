@@ -960,6 +960,8 @@
     <string name="onboardingPrivacy">Polityka prywatności</string>
     <string name="onboardingTos">Warunki korzystania z usługi</string>
     <string name="onboardingTosPrivacy">Korzystając z tej usługi, zgadzasz się na nasze <b>Warunki świadczenia usług</b> i <b>Politykę prywatności</b></string>
+    <string name="ongoingAppeal">Nowa nadzieja na {app_name}</string>
+    <string name="ongoingAppealDescription">Kiedy wyglądało jak {app_name} może zniknąć, zwiększyłeś się.\n\nTwoje darowizny darowizn dały {entity_stf_short} wystarczająco dużo, aby umożliwić małym zespołom współtwórców utrzymanie aplikacji.\n\nW tej chwili koncentruje się na tym, aby {app_name} był bezpieczny, stabilny i online.\n\nTwoje darowizny mogą pomóc w wsparciu {app_name} w tym krytycznym czasie. Dodatkowe darowizny mogą umożliwić zatrudnianie większej liczby deweloperów i pomoc w dostarczeniu funkcji niezbędnych do szybszego rozwoju {app_name}.</string>
     <string name="onionRoutingPath">Ścieżka</string>
     <string name="onionRoutingPathDescription">Aplikacja {app_name} ukrywa Twój adres IP, kierując wiadomości przez wiele węzłów usług w zdecentralizowanej sieci aplikacji {app_name}. Obecna ścieżka</string>
     <string name="onionRoutingPathDestination">Miejsce docelowe</string>

@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Privaatheidsbeleid</string>
     <string name="onboardingTos">Diensvoorwaardes</string>
     <string name="onboardingTosPrivacy">Deur hierdie diens te gebruik, stem jy in tot ons <b>Diensvoorwaardes</b> en <b>Privaatheidsbeleid</b></string>
+    <string name="ongoingAppeal">Nuwe hoop vir {app_name}</string>
+    <string name="ongoingAppealDescription">Toe dit gelyk het of {app_name} dalk sou verdwyn, het jy ingespring.\n\nJou skenkings het die {entity_stf_short} genoeg befondsing gegee om \'n klein span bydraers in staat te stel om die toepassing te onderhou.\n\nOp die oomblik is die fokus daarop om {app_name} veilig, stabiel en aanlyn te hou.\n\nJou skenkings kan help om {app_name} in hierdie kritieke tyd te ondersteun. Bykomende skenkings kan dit moontlik maak om nog ontwikkelaars aan te stel en help om die funksies te lewer wat nodig is om {app_name} vinniger te bevorder.</string>
     <string name="onionRoutingPath">Pad</string>
     <string name="onionRoutingPathDescription">{app_name} versteek jou IP deur jou boodskappe deur verskeie Service Nodes in {app_name} se gedesentraliseerde netwerk te stuur. Dit is jou huidige pad:</string>
     <string name="onionRoutingPathDestination">Bestemming</string>

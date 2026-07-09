@@ -625,6 +625,8 @@
     <string name="onboardingPrivacy">Dasar Privasi</string>
     <string name="onboardingTos">Syarat Perkhidmatan</string>
     <string name="onboardingTosPrivacy">Dengan menggunakan perkhidmatan ini, anda bersetuju dengan <b>Terma Perkhidmatan</b> dan <b>Polisi Privasi</b> kami</string>
+    <string name="ongoingAppeal">Harapan Baharu untuk {app_name}</string>
+    <string name="ongoingAppealDescription">Apabila nampaknya {app_name} mungkin lenyap, anda tampil membantu.\n\nSumbangan anda telah memberikan {entity_stf_short} pembiayaan yang mencukupi untuk membolehkan sebuah pasukan kecil penyumbang menyelenggara aplikasi ini.\n\nBuat masa ini, fokusnya ialah memastikan {app_name} kekal selamat, stabil dan dalam talian.\n\nSumbangan anda boleh membantu menyokong {app_name} pada waktu kritikal ini. Sumbangan tambahan mungkin membolehkan lebih ramai pembangun diupah dan membantu menyampaikan ciri yang diperlukan untuk memajukan {app_name} dengan lebih cepat.</string>
     <string name="onionRoutingPath">Laluan</string>
     <string name="onionRoutingPathDescription">{app_name} menyembunyikan IP anda dengan mengalihkan mesej anda melalui pelbagai Service Node dalam rangkaian berdesentralisasi {app_name}. Ini adalah laluan semasa anda:</string>
     <string name="onionRoutingPathDestination">Destinasi</string>

@@ -647,6 +647,8 @@
     <string name="onboardingPrivacy">מדיניות פרטיות</string>
     <string name="onboardingTos">תנאי שירות</string>
     <string name="onboardingTosPrivacy">בשימוש בשירות זה, אתה מסכים ל<b>תנאי השימוש</b> ול<b>מדיניות הפרטיות</b></string>
+    <string name="ongoingAppeal">תקווה חדשה עבור {app_name}</string>
+    <string name="ongoingAppealDescription">כשנראה היה ש-{app_name} עלולה להיעלם, התגייסתם.\n\nהתרומות שלכם העניקו ל-{entity_stf_short} מימון מספיק כדי לאפשר לצוות קטן של תורמים לתחזק את האפליקציה.\n\nכרגע, המיקוד הוא בשמירה על {app_name} מאובטחת, יציבה ומקוונת.\n\nהתרומות שלכם יכולות לסייע בתמיכה ב-{app_name} בזמן קריטי זה. תרומות נוספות עשויות לאפשר גיוס של מפתחים נוספים ולסייע באספקת התכונות הנדרשות כדי לקדם את {app_name} מהר יותר.</string>
     <string name="onionRoutingPath">דרך</string>
     <string name="onionRoutingPathDescription">{app_name} מסתיר את כתובת ה-IP שלך על ידי ניתוב ההודעות שלך דרך מספר צומתי שירות ברשת המבוזרת של {app_name}. זהו המסלול הנוכחי שלך:</string>
     <string name="onionRoutingPathDestination">יעד</string>

@@ -901,6 +901,8 @@
     <string name="onboardingPrivacy">Adatvédelmi szabályzat</string>
     <string name="onboardingTos">Szolgáltatási feltételek</string>
     <string name="onboardingTosPrivacy">A szolgáltatás használatával elfogadod az <b>Általános Szerződési Feltételeinket</b> és <b>Adatvédelmi Szabályzatunkat</b></string>
+    <string name="ongoingAppeal">Új remény a {app_name} számára</string>
+    <string name="ongoingAppealDescription">Amikor úgy tűnt, hogy a {app_name} eltűnhet, Önök összefogtak.\n\nAdományaik elegendő forrást biztosítottak a {entity_stf_short} számára ahhoz, hogy egy kis csapat közreműködő karbantarthassa az alkalmazást.\n\nJelenleg a hangsúly azon van, hogy a {app_name} biztonságos, stabil és elérhető maradjon.\n\nAdományaik segíthetnek támogatni a {app_name}-t ebben a kritikus időszakban. A további adományok lehetővé tehetik több fejlesztő felvételét, és segíthetnek a {app_name} fejlődéséhez szükséges funkciók gyorsabb megvalósításában.</string>
     <string name="onionRoutingPath">Útvonal</string>
     <string name="onionRoutingPathDescription">{app_name} elrejti az IP-címedet azáltal, hogy üzeneteidet a {app_name} decentralizált hálózatának szolgáltatási csomópontjain keresztül irányítja. Ez a jelenlegi útvonalad:</string>
     <string name="onionRoutingPathDestination">Célállomás</string>

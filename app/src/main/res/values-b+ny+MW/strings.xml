@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Ndondomeko ya Chinsinsi</string>
     <string name="onboardingTos">Malamulo Othandizira</string>
     <string name="onboardingTosPrivacy">By using this service, you agree to our <b>Terms of Service</b> and <b>Privacy Policy</b></string>
+    <string name="ongoingAppeal">Chiyembekezo Chatsopano cha {app_name}</string>
+    <string name="ongoingAppealDescription">Pamene zinkaoneka ngati {app_name} ikhoza kusowa, inu munathandiza.\n\nZopereka zanu zapatsa {entity_stf_short} ndalama zokwanira kuti gulu laling\'ono la othandizira lisamalire pulogalamuyi.\n\nPakadali pano, cholinga ndi kusunga {app_name} yotetezeka, yokhazikika, ndi yopezeka pa intaneti.\n\nZopereka zanu zingathandize kuthandiza {app_name} pa nthawi yovutayi. Zopereka zina zowonjezera zingalole kuti olemba mapulogalamu ambiri alembedwe ntchito komanso kuthandiza kupereka zinthu zofunika kuti {app_name} ipite patsogolo mwachangu.</string>
     <string name="onionRoutingPath">Njira</string>
     <string name="onionRoutingPathDescription">{app_name} amaphimba IP yanu powera mauthenga anu kudzera m\'masitima angapo a {app_name}\'s decentralized network. Iyi ndi njira yanu yapano:</string>
     <string name="onionRoutingPathDestination">Kumaliza</string>

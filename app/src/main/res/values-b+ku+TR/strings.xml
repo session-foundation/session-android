@@ -658,6 +658,8 @@
     <string name="onboardingPrivacy">سیاسەتی پاراستن</string>
     <string name="onboardingTos">مەرجەکانی خزمەتگوزاری</string>
     <string name="onboardingTosPrivacy">با بەکاربردنی ئەم خزمەتگوزارییە، وەتەی <b>Terms of Service</b> و <b>Privacy Policy</b> بملەم وەکو بەستەری نەناسە .</string>
+    <string name="ongoingAppeal">هیوایەکی نوێ بۆ {app_name}</string>
+    <string name="ongoingAppealDescription">کاتێک وا دەردەکەوت کە {app_name} لەوانەیە ون بێت، تۆ هەنگاوت نا.\n\nبەخشینەکانت بودجەیەکی پێویستیان داوە بە {entity_stf_short} تاکو بتوانێت تیمێکی بچووک لە بەشداربووان هەبێت بۆ پاراستن و بەردەوامیی ئەپەکە.\n\nلە ئێستادا، سەرنج خراوەتە سەر ئەوەی {app_name} پارێزراو، جێگیر، و لەسەر هێڵ بمێنێت.\n\nبەخشینەکانت دەتوانن یارمەتیی پشتگیریی {app_name} بدەن لەم کاتە گرنگەدا. بەخشینە زیاترەکان لەوانەیە ڕێگا بدەن بەوەی گەشەپێدەری زیاتر دامەزرێنرێن و یارمەتیی دابینکردنی تایبەتمەندییە پێویستەکان بدەن بۆ ئەوەی {app_name} خێراتر پێشبکەوێت.</string>
     <string name="onionRoutingPath">پەیامەکان تەنها دەبێ پەیامەکان ئاستێژبێت.</string>
     <string name="onionRoutingPathDescription">{app_name} نیشانی ئایپیٔت پێشبینی دەکات بە ڕێکخستنەوەی پەیامەکانت بە شێوەیەکی هەڵبژێردراوە لە ڕێکخراوە {app_name}ی جیاواز، ئەمە ڕێراهەنی ئێستاتە:</string>
     <string name="onionRoutingPathDestination">ئامانج</string>

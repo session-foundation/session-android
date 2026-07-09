@@ -724,6 +724,8 @@
     <string name="onboardingPrivacy">Privatlivspolitik</string>
     <string name="onboardingTos">Servicevilkår</string>
     <string name="onboardingTosPrivacy">Ved at bruge denne service accepterer du vores <b>Betingelser for brug</b> og <b>Privatlivspolitik</b></string>
+    <string name="ongoingAppeal">Nyt Håb for {app_name}</string>
+    <string name="ongoingAppealDescription">Da det så ud som {app_name} måske forsvinder, trådte du op.\n\nDine donationer har givet {entity_stf_short} tilstrækkelig finansiering til, at et lille team af bidragsydere kan vedligeholde appen.\n\nLige nu, fokus er at holde {app_name} sikker, stabil og online.\n\nDine donationer kan hjælpe med at støtte {app_name} i denne kritiske tid. Yderligere donationer kan give flere udviklere mulighed for at blive hyret og hjælpe med at levere de funktioner, der er nødvendige for at fremme {app_name} hurtigere.</string>
     <string name="onionRoutingPath">Sti</string>
     <string name="onionRoutingPathDescription">{app_name} skjuler din IP ved at sende dine beskeder igennem adskillige Service Noder i {app_name}\'s decentraliserede netværk. Dette er din nuværende rute:</string>
     <string name="onionRoutingPathDestination">Destination</string>

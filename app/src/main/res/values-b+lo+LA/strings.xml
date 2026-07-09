@@ -217,6 +217,8 @@
     <string name="onboardingAccountCreated">ໄດ້ສ້າງແອກາດແລ້ວ</string>
     <string name="onboardingBubbleSessionIsEngineered">{app_name} ໄດ້ຖືກຂຽນຂຶ້ນເພື່ອປົກປ້ອງຄວາມສ່ວນຕົວຂອງທ່ານ.</string>
     <string name="onboardingTosPrivacy">ໂດຍການໃຊ້ບໍລິການນີ້, ທ່ານຕົຏຖ້ງກັບ <b>ຂໍ້ກຳນົດໃນການບໍລິການ</b> ແລະ <b>ນະໂປລິຊີຄວາມຊອບໃຊ້ຂໍ້ມູນສ່ວນບຸກຄົນ</b>.</string>
+    <string name="ongoingAppeal">ຄວາມຫວັງໃໝ່ສຳລັບ {app_name}</string>
+    <string name="ongoingAppealDescription">ເມື່ອມັນເບິ່ງຄືວ່າ {app_name} ອາດຈະຫາຍໄປ, ທ່ານໄດ້ກ້າວເຂົ້າມາຊ່ວຍ.\n\nການບໍລິຈາກຂອງທ່ານໄດ້ມອບທຶນໃຫ້ {entity_stf_short} ພຽງພໍ ເພື່ອໃຫ້ທີມຜູ້ຮ່ວມພັດທະນາຂະໜາດນ້ອຍສາມາດດູແລແອັບໄດ້.\n\nໃນຕອນນີ້, ຈຸດສຸມແມ່ນການຮັກສາໃຫ້ {app_name} ປອດໄພ, ມີສະຖຽນລະພາບ, ແລະອອນລາຍຢູ່ສະເໝີ.\n\nການບໍລິຈາກຂອງທ່ານສາມາດຊ່ວຍສະໜັບສະໜູນ {app_name} ໃນຊ່ວງເວລາສຳຄັນນີ້. ການບໍລິຈາກເພີ່ມເຕີມອາດຊ່ວຍໃຫ້ສາມາດຈ້າງນັກພັດທະນາເພີ່ມອີກ ແລະຊ່ວຍສົ່ງມອບຄຸນສົມບັດທີ່ຈຳເປັນເພື່ອພັດທະນາ {app_name} ໃຫ້ໄວຂຶ້ນ.</string>
     <string name="onionRoutingPathDescription">{app_name} ປິດບັງທີ່ຢູ່ IP ຂອງທ່ານໂດຍຜ່ານຂໍ້ຄວາມຂອງທ່ານຜ່ານ Service Node ຫລາຍໜ່ວຍຂ່າຍໃນ {app_name} ເປັນຮູບແບບຂອງຂ່າຍອິດສະຫລະ. ນີ້ແມ່ນເສັ້ນທາງປັດຈຸບັນຂອງທ່ານ:</string>
     <string name="onionRoutingPathDestination">ຈຸດໝາຍ</string>
     <string name="onionRoutingPathEntryNode">ເນົດເຂົ້າ</string>

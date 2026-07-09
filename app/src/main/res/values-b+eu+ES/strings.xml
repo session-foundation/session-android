@@ -623,6 +623,8 @@
     <string name="onboardingPrivacy">Pribatutasun Politika</string>
     <string name="onboardingTos">Zerbitzu Baldintzak</string>
     <string name="onboardingTosPrivacy">By using this service, you agree to our <b>Terms of Service</b> and <b>Privacy Policy</b></string>
+    <string name="ongoingAppeal">Itxaropen berria {app_name}-rentzat</string>
+    <string name="ongoingAppealDescription">{app_name} desagertu zitekeela ematen zuenean, zuk aurrera egin zenuen.\n\nZure dohaintzei esker, {entity_stf_short}-ek nahikoa finantzaketa izan du laguntzaile talde txiki bati aplikazioa mantentzeko aukera emateko.\n\nOraintxe bertan, arreta {app_name} segurua, egonkorra eta linean mantentzean dago.\n\nZure dohaintzek une kritiko honetan {app_name} babesten lagun dezakete. Dohaintza gehigarriei esker garatzaile gehiago kontratatu ahal izango dira, eta {app_name} azkarrago aurrera egiteko behar diren eginbideak eskaintzen lagundu.</string>
     <string name="onionRoutingPath">Bidea</string>
     <string name="onionRoutingPathDescription">{app_name}(e)k zure IPa ezkutatzen du zure mezuak hainbat Service Node zerbitzari bidez bideratuz {app_name}\'ren decentralized network sarean. Hau da zure oraingo bide-lerroa:</string>
     <string name="onionRoutingPathDestination">Helmuga</string>

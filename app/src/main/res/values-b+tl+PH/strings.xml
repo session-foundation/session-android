@@ -624,6 +624,8 @@
     <string name="onboardingPrivacy">Patakaran sa Privacy</string>
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">Sa paggamit ng serbisyong ito, sumasang-ayon ka sa aming <b>Mga Tuntunin ng Serbisyo</b> at <b>Patakaran sa Privacy</b></string>
+    <string name="ongoingAppeal">Bagong Pag-asa para sa {app_name}</string>
+    <string name="ongoingAppealDescription">Nang magmukhang maaaring mawala ang {app_name}, umaksyon ka.\n\nDahil sa inyong mga donasyon, nagkaroon ang {entity_stf_short} ng sapat na pondo upang masuportahan ang isang maliit na pangkat ng mga kontribyutor na magpapanatili sa app.\n\nSa ngayon, ang pokus ay panatilihing ligtas, matatag, at online ang {app_name}.\n\nMakakatulong ang inyong mga donasyon na masuportahan ang {app_name} sa kritikal na panahong ito. Ang mga karagdagang donasyon ay maaaring magbigay-daan upang makakuha ng mas marami pang developer at makatulong sa paghahatid ng mga kinakailangang feature upang mas mapabilis ang pag-unlad ng {app_name}.</string>
     <string name="onionRoutingPath">Daan</string>
     <string name="onionRoutingPathDescription">Itinatago ng {app_name} ang iyong IP sa pamamagitan ng pag-ruta ng iyong mga mensahe sa maraming service node sa desentralisadong network ng {app_name}. Ito ang kasalukuyang daan mo:</string>
     <string name="onionRoutingPathDestination">Destinasyon</string>

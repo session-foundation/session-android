@@ -615,6 +615,8 @@
     <string name="onboardingPrivacy">गोपनीयता नीति</string>
     <string name="onboardingTos">सेवाका शर्तहरू</string>
     <string name="onboardingTosPrivacy">यस सेवा प्रयोग गर्दा, तपाईं हाम्रो<b>सेवा सर्तहरू</b> र <b>गोपनीयता नीति</b> मा सहमत हुनुहुन्छ</string>
+    <string name="ongoingAppeal">{app_name} का लागि नयाँ आशा</string>
+    <string name="ongoingAppealDescription">जब {app_name} हराउन सक्छ जस्तो देखिन्थ्यो, तपाईं अघि सर्नुभयो।\n\nतपाईंका दानहरूले {entity_stf_short} लाई एपको मर्मतसम्भार गर्न योगदानकर्ताहरूको सानो टोलीलाई सक्षम बनाउन पर्याप्त कोष उपलब्ध गराएका छन्।\n\nअहिले, ध्यान {app_name} लाई सुरक्षित, स्थिर र अनलाइन राख्नमा केन्द्रित छ।\n\nतपाईंका दानहरूले यो महत्वपूर्ण समयमा {app_name} लाई समर्थन गर्न मद्दत गर्न सक्छन्। थप दानहरूले अझ धेरै विकासकर्ताहरू नियुक्त गर्न सम्भव बनाउन सक्छन् र {app_name} लाई अझ छिटो अगाडि बढाउन आवश्यक सुविधाहरू उपलब्ध गराउन मद्दत गर्न सक्छन्।</string>
     <string name="onionRoutingPath">मार्ग</string>
     <string name="onionRoutingPathDescription">{app_name} तपाईंको IP लुकाउँछ सेवा नोडहरूको माध्यमबाट तपाईंको सन्देशहरूलाई {app_name}को विकेन्द्रित सञ्जालमा रुट गरेर। यो तपाईंको वर्तमान मार्ग हो:</string>
     <string name="onionRoutingPathDestination">गन्तव्य</string>
