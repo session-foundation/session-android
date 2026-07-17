@@ -146,8 +146,8 @@ android {
 
         buildConfigField("org.thoughtcrime.securesms.pro.ProBackendConfig", "PRO_BACKEND_DEV", """
             new org.thoughtcrime.securesms.pro.ProBackendConfig(
-                "https://pro-backend-dev.getsession.org",
-                "fc947730f49eb01427a66e050733294d9e520e545c7a27125a780634e0860a27"
+                "https://pro.session.codes",
+                "479ffca8bcec7b4a0f0f7afe48b8a6d15635a8c7ff15ad16add05752c19414d4"
             )
         """.trimIndent())
 
