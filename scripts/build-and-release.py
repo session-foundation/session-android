@@ -1,10 +1,4 @@
-#!/usr/bin/env -S uv run --script
-
-# /// script
-# dependencies = [
-#   "fdroidserver",
-# ]
-# ///
+#!/usr/bin/env python3
 
 import subprocess
 import json
@@ -19,6 +13,8 @@ import base64
 import string
 import glob
 import argparse
+
+from _keyring import get_secret
 
 
 # Number of versions to keep in the fdroid repo. Will remove all the older versions.
@@ -100,7 +96,7 @@ def build_releases(project_root: str,
 
 project_root = os.path.dirname(sys.path[0])
 build_dir = os.path.join(project_root, 'build')
-credentials_file_path = os.path.join(project_root, 'release-creds.toml')
+RELEASE_CREDS_KEYRING_NAME = 'release-creds'
 fdroid_repo_path = os.path.join(build_dir, 'fdroidrepo')
 
 def detect_android_sdk() -> str:
@@ -222,10 +218,16 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
     print('Committing the changes...')
     subprocess.run(f'git add . && git commit -am "Prepare for release {build.version_name}"', shell=True, check=True, cwd=fdroid_workspace)
 
-    # Create Pull Request for releases
+    # Push the branch explicitly to origin (session-foundation/session-fdroid) first, so
+    # `gh pr create` has nothing to push and won't prompt. `gh repo clone` adds an `upstream`
+    # remote (oxen-io), so with two remotes gh otherwise can't decide where to push the head.
+    print('Pushing the release branch...')
+    subprocess.run(f'git push -u origin {branch_name} --force-with-lease', shell=True, check=True, cwd=fdroid_workspace)
+
+    # Create Pull Request for releases (--head names the already-pushed branch => no prompt)
     print('Creating a pull request...')
     subprocess.run(f'''\
-                   gh pr create --base master \
+                   gh pr create --base master --head {branch_name} \
                     --title "Release {build.version_name}" \
                     -R session-foundation/session-fdroid \
                     --body "This is an automated release preparation for Release {build.version_name}. Human beings are still required to approve and merge this PR."\
@@ -248,16 +250,21 @@ if shutil.which('gh') is None:
 
 # Make sure fdroid command is available
 if shutil.which('fdroid') is None:
-    print('`fdroid` command not found. It is required to automate fdroid releases. Please install it from https://f-droid.org/', file=sys.stderr)
+    print('`fdroid` command not found. Install fdroidserver via your system package manager:\n'
+          '  Debian/Ubuntu:  apt install fdroidserver\n'
+          '  Homebrew:       brew install fdroidserver\n'
+          '  MacPorts:       port install fdroidserver\n'
+          'Other methods: https://f-droid.org/docs/Installing_the_Server_and_Repo_Tools/',
+          file=sys.stderr)
     sys.exit(1)
 
-# Make sure credentials file exists
-if not os.path.isfile(credentials_file_path):
-    print(f'Credentials file not found at {credentials_file_path}. You should ask the project maintainer for the file.', file=sys.stderr)
-    sys.exit(1)
-
-with open(credentials_file_path, 'rb') as f:
-    credentials = tomllib.load(f)
+# Load signing credentials (a TOML blob) from the OS keyring, so they never sit
+# on disk in plaintext. Store them once with:
+#   python3 scripts/_keyring.py set release-creds < release-creds.toml
+# then delete the plaintext file.
+credentials = tomllib.loads(get_secret(
+    RELEASE_CREDS_KEYRING_NAME,
+    what='Release signing credentials (release-creds.toml contents)'))
 
 # Make sure build folder exists
 if not os.path.isdir(build_dir):
@@ -304,13 +311,13 @@ huawei_build_result = build_releases(
 # If the a github release draft exists, upload the apks to the release
 if not args.build_only:
     try:
-        release_info = json.loads(subprocess.check_output(f'gh release view --json isDraft {play_build_result.version_name}', shell=True, cwd=project_root))
+        release_info = json.loads(subprocess.check_output(f'gh release view -R session-foundation/session-android --json isDraft {play_build_result.version_name}', shell=True, cwd=project_root))
         if release_info['isDraft'] == True:
             print(f'Uploading build artifact to the release {play_build_result.version_name} draft...')
             files_to_upload = [*play_build_result.apk_paths,
                                play_build_result.bundle_path,
                                *huawei_build_result.apk_paths]
-            upload_commands = ['gh', 'release', 'upload', play_build_result.version_name, '--clobber', *files_to_upload]
+            upload_commands = ['gh', 'release', 'upload', '-R', 'session-foundation/session-android', play_build_result.version_name, '--clobber', *files_to_upload]
             subprocess.run(upload_commands, shell=False, cwd=project_root, check=True)
 
             print('Successfully uploaded these files to the draft release: ')
