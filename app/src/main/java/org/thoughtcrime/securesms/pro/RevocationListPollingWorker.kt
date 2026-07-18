@@ -53,7 +53,9 @@ class RevocationListPollingWorker @AssistedInject constructor(
             ).successOrThrow()
             proDatabase.updateRevocations(
                 data = response.items,
-                newTicket = response.ticket
+                newTicket = response.ticket,
+                retainForSeconds = response.retainForSeconds,
+                now = snodeClock.currentTime()
             )
 
             proDatabase.pruneRevocations(snodeClock.currentTime())

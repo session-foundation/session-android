@@ -284,7 +284,7 @@ class ProStatusManager @Inject constructor(
                             .asSequence()
                             .filterIsInstance<Conversation.WithProProofInfo>()
                             .filter { convo ->
-                                convo.proProofInfo?.genIndexHash?.let { proDatabase.isRevoked(it.data.toHexString(), snodeClock.currentTime()) } == true
+                                convo.proProofInfo?.revocationTag?.let { proDatabase.isRevoked(it.data.toHexString(), snodeClock.currentTime()) } == true
                             }
                             .onEach { convo ->
                                 convo.proProofInfo = null
@@ -320,7 +320,7 @@ class ProStatusManager @Inject constructor(
                             .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
                             .map {
                                 configFactory.get().withUserConfigs { configs ->
-                                    configs.userProfile.getProAccessExpiryMs()
+                                    configs.userProfile.getProAccessExpiry()
                                 }
                             }
                             .distinctUntilChanged()
@@ -341,7 +341,7 @@ class ProStatusManager @Inject constructor(
                             .filterNotNull()
                             .distinctUntilChanged()
                             .mapLatest { proConfig ->
-                                val expiry = Instant.ofEpochMilli(proConfig.proProof.expiryMs)
+                                val expiry = Instant.ofEpochSecond(proConfig.proProof.expirySeconds)
                                 // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
 
                                 val refreshTime =
@@ -373,7 +373,7 @@ class ProStatusManager @Inject constructor(
                 combine(
                     configFactory.get()
                         .watchUserProConfig()
-                        .mapNotNull { it?.proProof?.genIndexHashHex },
+                        .mapNotNull { it?.proProof?.revocationTagHex },
 
                     proDatabase.revocationChangeNotification
                         .onStart { emit(Unit) },
@@ -385,7 +385,7 @@ class ProStatusManager @Inject constructor(
                     .filterNotNull()
                     .collectLatest { revokedHash ->
                         configFactory.get().withMutableUserConfigs { configs ->
-                            if (configs.userProfile.getProConfig()?.proProof?.genIndexHashHex == revokedHash) {
+                            if (configs.userProfile.getProConfig()?.proProof?.revocationTagHex == revokedHash) {
                                 Log.w(
                                     DebugLogGroup.PRO_SUBSCRIPTION.label,
                                     "Current Pro proof has been revoked, clearing Pro config"

@@ -249,10 +249,10 @@ class ProfileUpdateHandler @Inject constructor(
 
                 if (pro?.status == ProProof.STATUS_VALID &&
                     pro.proof != null &&
-                    pro.proof!!.expiryMs > nowMills) {
+                    pro.proof!!.expirySeconds > nowMills / 1000) {
                     proProofInfo = Conversation.ProProofInfo(
-                        genIndexHash = pro.proof!!.genIndexHashHex.hexToByteArray(),
-                        expiryMs = pro.proof!!.expiryMs,
+                        revocationTag = pro.proof!!.revocationTagHex.hexToByteArray(),
+                        expirySeconds = pro.proof!!.expirySeconds,
                     )
                     proFeatures = pro.proProfileFeatures
                 } else {

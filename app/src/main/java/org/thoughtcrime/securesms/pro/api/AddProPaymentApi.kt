@@ -23,9 +23,9 @@ class AddProPaymentApi @AssistedInject constructor(
             version = 0,
             masterPrivateKey = masterPrivateKey,
             rotatingPrivateKey = rotatingPrivateKey,
-            paymentProvider = BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY,
-            paymentId = googlePaymentToken,
-            orderId = googleOrderId,
+            providerCode = BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY,
+            // Google composite payment_id = "<payment_token>|<order_id>" (backend splits on first '|').
+            paymentId = "$googlePaymentToken|$googleOrderId",
         )
     }
 

@@ -84,7 +84,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
             }
 
 
-            Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochMilli(proof.expiryMs)}")
+            Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
             Result.success()
         } catch (e: Exception) {
             if (e is CancellationException) throw e

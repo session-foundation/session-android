@@ -48,25 +48,29 @@ class ProDatabase @Inject constructor(
 
     fun updateRevocations(
         newTicket: Long,
+        retainForSeconds: Long,
+        now: Instant,
         data: List<ProRevocations.Item>
     ) {
         var changes = 0
+        // Memory-/storage-only local aging: keep each item until `seen + retain_for` (§4).
+        val retainUntil = now.epochSecond + retainForSeconds
 
         writableDatabase.transaction {
             if (data.isNotEmpty()) {
                 //language=roomsql
                 compileStatement(
                     """
-                INSERT INTO pro_revocations (gen_index_hash, expiry_ms, effective_from_ms)
+                INSERT INTO pro_revocations (revocation_tag, effective_ts, retain_until_ts)
                 VALUES (?, ?, ?)
-                ON CONFLICT DO UPDATE SET expiry_ms=excluded.expiry_ms, effective_from_ms=excluded.effective_from_ms
-                WHERE expiry_ms != excluded.expiry_ms OR effective_from_ms != excluded.effective_from_ms
+                ON CONFLICT DO UPDATE SET effective_ts=excluded.effective_ts, retain_until_ts=excluded.retain_until_ts
+                WHERE effective_ts != excluded.effective_ts OR retain_until_ts != excluded.retain_until_ts
             """
                 ).use { stmt ->
                     for (item in data) {
-                        stmt.bindString(1, item.genIndexHash)
-                        stmt.bindLong(2, item.expiry.toEpochMilli())
-                        stmt.bindLong(3, item.effectiveFrom.toEpochMilli())
+                        stmt.bindString(1, item.revocationTag)
+                        stmt.bindLong(2, item.effectiveFrom.epochSecond)
+                        stmt.bindLong(3, retainUntil)
                         changes += stmt.executeUpdateDelete()
                         stmt.clearBindings()
                     }
@@ -84,7 +88,7 @@ class ProDatabase @Inject constructor(
         }
 
         for (item in data) {
-            cache.put(item.genIndexHash, Unit)
+            cache.put(item.revocationTag, Unit)
         }
 
         if (changes > 0) {
@@ -96,34 +100,36 @@ class ProDatabase @Inject constructor(
         //language=roomsql
         val pruned = writableDatabase.rawQuery("""
             DELETE FROM pro_revocations
-            WHERE expiry_ms < ?
-            RETURNING gen_index_hash
-        """, now.toEpochMilli()).use { cursor ->
+            WHERE retain_until_ts < ?
+            RETURNING revocation_tag
+        """, now.epochSecond).use { cursor ->
             cursor.asSequence()
                 .map { it.getString(0) }
                 .toList()
         }
 
-        for (genIndexHash in pruned) {
-            cache.remove(genIndexHash)
+        for (revocationTag in pruned) {
+            cache.remove(revocationTag)
         }
 
         Log.d(TAG, "Pruned ${pruned.size} expired pro revocations")
     }
 
-    fun isRevoked(genIndexHash: String, now: Instant): Boolean {
-        if (cache[genIndexHash] != null) {
+    fun isRevoked(revocationTag: String, now: Instant): Boolean {
+        if (cache[revocationTag] != null) {
             return true
         }
 
+        // A tag is revoked once the client clock has reached its effective_ts (§4); tag-match alone
+        // is not enough. Local aging (retain_until_ts) is handled separately by pruneRevocations.
         //language=roomsql
         readableDatabase.query("""
             SELECT 1 FROM pro_revocations
-            WHERE gen_index_hash = ?1 AND ?2 >= effective_from_ms AND ?2 < expiry_ms 
+            WHERE revocation_tag = ?1 AND ?2 >= effective_ts
             LIMIT 1
-        """, arrayOf<Any>(genIndexHash, now.toEpochMilli())).use { cursor ->
+        """, arrayOf<Any>(revocationTag, now.epochSecond)).use { cursor ->
             if (cursor.moveToFirst()) {
-                cache.put(genIndexHash, Unit)
+                cache.put(revocationTag, Unit)
                 return true
             }
             return false
@@ -217,6 +223,22 @@ class ProDatabase @Inject constructor(
             db.execSQL("""
                 ALTER TABLE pro_revocations
                 ADD COLUMN effective_from_ms INTEGER NOT NULL DEFAULT 0
+            """)
+        }
+
+        fun reshapeRevocationsForSeconds(db: SupportSQLiteDatabase) {
+            // Pro is unreleased and the revocation list is re-polled, so drop and recreate the table
+            // with the new seconds-based schema: revocation_tag / effective_ts / retain_until_ts
+            // (replaces the old gen_index_hash / expiry_ms / effective_from_ms shape).
+            //language=roomsql
+            db.execSQL("DROP TABLE IF EXISTS pro_revocations")
+            //language=roomsql
+            db.execSQL("""
+                CREATE TABLE pro_revocations(
+                    revocation_tag TEXT NOT NULL PRIMARY KEY,
+                    effective_ts INTEGER NOT NULL,
+                    retain_until_ts INTEGER NOT NULL
+                ) WITHOUT ROWID
             """)
         }
     }

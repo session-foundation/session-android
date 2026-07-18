@@ -7,9 +7,8 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import network.loki.messenger.libsession_util.pro.BackendRequests
-import network.loki.messenger.libsession_util.pro.PaymentProvider
 import org.session.libsession.network.SnodeClock
-import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
+import org.session.libsession.utilities.serializable.InstantAsSecondsSerializer
 import java.time.Instant
 
 class GetProDetailsApi @AssistedInject constructor(
@@ -24,7 +23,7 @@ class GetProDetailsApi @AssistedInject constructor(
         return BackendRequests.buildGetProDetailsRequestJson(
             version = 0,
             proMasterPrivateKey = masterPrivateKey,
-            nowMs = snodeClock.currentTimeMillis(),
+            nowSeconds = snodeClock.currentTimeMillis() / 1000,
             count = 10,
         )
     }
@@ -41,7 +40,6 @@ class GetProDetailsApi @AssistedInject constructor(
 }
 
 typealias ServerProDetailsStatus = Int
-typealias ServerPlanDuration = Int
 
 @Serializable
 class ProDetails(
@@ -50,12 +48,12 @@ class ProDetails(
     @SerialName("auto_renewing")
     val autoRenewing: Boolean? = null,
 
-    @SerialName("expiry_unix_ts_ms")
-    @Serializable(with = InstantAsMillisSerializer::class)
+    @SerialName("expiry_ts")
+    @Serializable(with = InstantAsSecondsSerializer::class)
     val expiry: Instant? = null,
 
-    @SerialName("grace_period_duration_ms")
-    val graceDurationMs: Long? = null,
+    @SerialName("grace_period_duration")
+    val graceDuration: Long? = null,
 
     @SerialName("error_report")
     val errorReport: Int? = null,
@@ -66,8 +64,8 @@ class ProDetails(
     @SerialName("items")
     val paymentItems: List<Item> = emptyList(),
 
-    @SerialName("refund_requested_unix_ts_ms")
-    val refundRequestedAtMs: Long = 0,
+    @SerialName("refund_requested_ts")
+    val refundRequestedAtSeconds: Long = 0,
 
 
 
@@ -81,59 +79,45 @@ class ProDetails(
     @Serializable
     data class Item(
         @SerialName("plan")
-        val planDuration: ServerPlanDuration,
+        val plan: String, // period code, e.g. "1m" / "3m" / "1y"
 
-        val status: Int, // Payment status [Redeemed, Revoked, Expired] - we do not use this status in the clients
+        // Payment status code [unredeemed, redeemed, expired, revoked] - we do not use it in the clients
+        val status: String? = null,
 
         @SerialName("payment_provider")
-        val paymentProvider: PaymentProvider,
+        val paymentProvider: String, // opaque provider slug, e.g. "google_play" / "app_store"
 
-        @SerialName("expiry_unix_ts_ms")
-        @Serializable(with = InstantAsMillisSerializer::class)
+        @SerialName("expiry_ts")
+        @Serializable(with = InstantAsSecondsSerializer::class)
         val expiry: Instant? = null,
 
-        @SerialName("grace_period_duration_ms")
-        val graceDurationMs: Long? = null,
+        @SerialName("grace_period_duration")
+        val graceDuration: Long? = null,
 
-        @SerialName("platform_refund_expiry_unix_ts_ms")
-        @Serializable(with = InstantAsMillisSerializer::class)
+        @SerialName("platform_refund_expiry_ts")
+        @Serializable(with = InstantAsSecondsSerializer::class)
         val platformExpiry: Instant? = null,
 
-        @SerialName("redeemed_unix_ts_ms")
-        @Serializable(with = InstantAsMillisSerializer::class)
+        @SerialName("redeemed_ts")
+        @Serializable(with = InstantAsSecondsSerializer::class)
         val timeRedeemed: Instant? = null,
 
-        @SerialName("unredeemed_unix_ts_ms")
-        @Serializable(with = InstantAsMillisSerializer::class)
+        @SerialName("unredeemed_ts")
+        @Serializable(with = InstantAsSecondsSerializer::class)
         val timeUnredeemed: Instant? = null,
 
-        @SerialName("revoked_unix_ts_ms")
-        @Serializable(with = InstantAsMillisSerializer::class)
+        @SerialName("revoked_ts")
+        @Serializable(with = InstantAsSecondsSerializer::class)
         val timeRevoked: Instant? = null,
 
-        @SerialName("google_order_id")
-        val googleOrderId: String? = null,
-
-        @SerialName("google_payment_token")
-        val googlePaymentToken: String? = null,
-
-        @SerialName("apple_original_tx_id")
-        val appleOriginalTxId: String? = null,
-
-        @SerialName("apple_tx_id")
-        val appleTxId: String? = null,
-
-        @SerialName("apple_web_line_order_id")
-        val appleWebLineOrderId: String? = null,
+        // Opaque per-provider payment id (Google: "<token>|<order_id>"; others: their id verbatim)
+        @SerialName("payment_id")
+        val paymentId: String? = null,
     )
 
     companion object {
         const val DETAILS_STATUS_NEVER_BEEN_PRO: ServerProDetailsStatus = 0
         const val DETAILS_STATUS_ACTIVE: ServerProDetailsStatus = 1
         const val DETAILS_STATUS_EXPIRED: ServerProDetailsStatus = 2
-
-        const val SERVER_PLAN_DURATION_1_MONTH: ServerPlanDuration = 1
-        const val SERVER_PLAN_DURATION_3_MONTH: ServerPlanDuration = 2
-        const val SERVER_PLAN_DURATION_12_MONTH: ServerPlanDuration = 3
     }
 }

@@ -85,7 +85,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
             configFactory.withMutableUserConfigs { configs ->
                 if (details.expiry != null) {
-                    configs.userProfile.setProAccessExpiryMs(details.expiry.toEpochMilli())
+                    configs.userProfile.setProAccessExpiry(details.expiry.epochSecond)
                 } else {
                     configs.userProfile.removeProAccessExpiry()
                 }
@@ -123,13 +123,13 @@ class FetchProDetailsWorker @AssistedInject constructor(
         } else {
             val currentProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
 
-            if (currentProof == null || currentProof.expiryMs <= now) {
+            if (currentProof == null || currentProof.expirySeconds * 1000L <= now) {
                 Log.d(
                     TAG,
                     "Pro is active but no valid proof found, scheduling proof generation now"
                 )
                 ProProofGenerationWorker.schedule(context)
-            } else if (currentProof.expiryMs - now <= Duration.ofMinutes(60).toMillis() &&
+            } else if (currentProof.expirySeconds * 1000L - now <= Duration.ofMinutes(60).toMillis() &&
                 details.expiry!!.toEpochMilli() - now > Duration.ofMinutes(60).toMillis() &&
                 details.autoRenewing == true
             ) {
