@@ -7,6 +7,8 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import network.loki.messenger.libsession_util.pro.BackendRequests
+import network.loki.messenger.libsession_util.pro.GetProDetailsResponse
+import network.loki.messenger.libsession_util.pro.ProRequest
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.serializable.InstantAsSecondsSerializer
 import java.time.Instant
@@ -15,21 +17,16 @@ class GetProDetailsApi @AssistedInject constructor(
     private val snodeClock: SnodeClock,
     @Assisted private val masterPrivateKey: ByteArray,
     deps: ProApiDependencies,
-) : ProApi<Int, ProDetails>(deps) {
-    override val endpoint: String
-        get() = "get_pro_details"
-
-    override fun buildJsonBody(): String {
-        return BackendRequests.buildGetProDetailsRequestJson(
-            version = 0,
-            proMasterPrivateKey = masterPrivateKey,
+) : ProApi<Int, GetProDetailsResponse>(deps) {
+    override fun buildProRequest(): ProRequest =
+        BackendRequests.buildGetProDetailsRequest(
+            masterPrivateKey = masterPrivateKey,
             nowSeconds = snodeClock.currentTimeMillis() / 1000,
             count = 10,
         )
-    }
 
-    override val responseDeserializer: DeserializationStrategy<ProDetails>
-        get() = ProDetails.serializer()
+    override fun parseResponse(json: String): GetProDetailsResponse =
+        BackendRequests.parsePaymentDetailsResponse(json)
 
     override fun convertErrorStatus(status: Int): Int = status
 

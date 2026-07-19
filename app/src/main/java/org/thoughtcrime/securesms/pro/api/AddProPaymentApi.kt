@@ -3,9 +3,9 @@ package org.thoughtcrime.securesms.pro.api
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.serialization.DeserializationStrategy
 import network.loki.messenger.libsession_util.pro.BackendRequests
-import network.loki.messenger.libsession_util.pro.ProProof
+import network.loki.messenger.libsession_util.pro.ProProofResponse
+import network.loki.messenger.libsession_util.pro.ProRequest
 import org.session.libsignal.utilities.Log
 
 class AddProPaymentApi @AssistedInject constructor(
@@ -14,29 +14,24 @@ class AddProPaymentApi @AssistedInject constructor(
     @Assisted("master") private val masterPrivateKey: ByteArray,
     @Assisted private val rotatingPrivateKey: ByteArray,
     deps: ProApiDependencies
-) : ProApi<AddPaymentErrorStatus, ProProof>(deps) {
-    override val endpoint: String
-        get() = "add_pro_payment"
-
-    override fun buildJsonBody(): String {
-        return BackendRequests.buildAddProPaymentRequestJson(
-            version = 0,
+) : ProApi<AddPaymentErrorStatus, ProProofResponse>(deps) {
+    override fun buildProRequest(): ProRequest =
+        BackendRequests.buildAddProPaymentRequest(
             masterPrivateKey = masterPrivateKey,
             rotatingPrivateKey = rotatingPrivateKey,
             providerCode = BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY,
             // Google composite payment_id = "<payment_token>|<order_id>" (backend splits on first '|').
             paymentId = "$googlePaymentToken|$googleOrderId",
         )
-    }
+
+    override fun parseResponse(json: String): ProProofResponse =
+        BackendRequests.parseAddPaymentResponse(json)
 
     override fun convertErrorStatus(status: Int): AddPaymentErrorStatus {
         Log.w("", "AddProPayment: convertErrorStatus: $status")
         return AddPaymentErrorStatus.entries.firstOrNull { it.apiValue == status }
             ?: AddPaymentErrorStatus.GenericError
     }
-
-    override val responseDeserializer: DeserializationStrategy<ProProof>
-        get() = ProProof.serializer()
 
     @AssistedFactory
     interface Factory {

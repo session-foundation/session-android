@@ -1,10 +1,8 @@
 package org.thoughtcrime.securesms.pro.api
 
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.decodeFromStream
+import network.loki.messenger.libsession_util.pro.ProRequest
+import network.loki.messenger.libsession_util.pro.ProResponse
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.thoughtcrime.securesms.api.ApiExecutorContext
@@ -22,54 +20,47 @@ import javax.inject.Inject
  * @param ErrorStatus The type of error status returned by the API.
  * @param Res The type of the expected response.
  */
-abstract class ProApi<ErrorStatus, Res>(private val deps: ProApiDependencies)
+abstract class ProApi<ErrorStatus, Res : ProResponse>(private val deps: ProApiDependencies)
     : ServerApi<ProApiResponse<Res, ErrorStatus>>(deps.errorManager) {
-    /**
-     * The endpoint (path) for this API request, e.g. "v1/pro/payments"
-     */
-    abstract val endpoint: String
 
-    abstract val responseDeserializer: DeserializationStrategy<Res>
+    /** Builds the request (endpoint + signed JSON body) via libsession. */
+    abstract fun buildProRequest(): ProRequest
+
+    /** Parses the raw response body JSON into a typed struct via libsession. */
+    abstract fun parseResponse(json: String): Res
 
     abstract fun convertErrorStatus(status: Int): ErrorStatus
-
-    abstract fun buildJsonBody(): String
 
     override fun buildRequest(
         baseUrl: String,
         x25519PubKeyHex: String
     ): HttpRequest {
+        val request = buildProRequest()
         return HttpRequest(
             method = "POST",
-            url = "$baseUrl/$endpoint".toHttpUrl(),
+            url = "$baseUrl/${request.endpoint}".toHttpUrl(),
             headers = mapOf(
                 "Content-Type" to "application/json"
             ),
-            body = HttpBody.Text(buildJsonBody())
+            body = HttpBody.Text(request.body)
         )
     }
 
-    @Suppress("OPT_IN_USAGE")
     override suspend fun handleSuccessResponse(
         executorContext: ApiExecutorContext,
         baseUrl: String,
         response: HttpResponse
     ): ProApiResponse<Res, ErrorStatus> {
-        val rawResp: RawProApiResponse = response.body
-            .asInputStream()
-            .use { deps.json.decodeFromStream(it) }
+        // libsession owns response parsing: hand it the raw body and get a typed struct back.
+        val bodyJson = response.body.asInputStream().use { it.readBytes().decodeToString() }
+        val parsed = parseResponse(bodyJson)
 
-        return if (rawResp.status == 0) {
-            val data = deps.json.decodeFromJsonElement(
-                responseDeserializer,
-                requireNotNull(rawResp.result) {
-                    "Expected 'result' field to be present on successful response"
-                })
-            ProApiResponse.Success(data)
+        return if (parsed.header.isSuccess) {
+            ProApiResponse.Success(parsed)
         } else {
             ProApiResponse.Failure(
-                status = convertErrorStatus(rawResp.status),
-                errors = rawResp.errors.orEmpty()
+                status = convertErrorStatus(parsed.header.status),
+                errors = parsed.header.errors
             )
         }
     }
@@ -77,13 +68,6 @@ abstract class ProApi<ErrorStatus, Res>(private val deps: ProApiDependencies)
     class ProApiDependencies @Inject constructor(
         val errorManager: ServerApiErrorManager,
         val json: Json,
-    )
-
-    @Serializable
-    private data class RawProApiResponse(
-        val status: Int,
-        val result: JsonElement? = null,
-        val errors: List<String>? = null,
     )
 }
 
