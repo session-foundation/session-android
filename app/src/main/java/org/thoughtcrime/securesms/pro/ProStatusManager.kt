@@ -36,6 +36,7 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
+import network.loki.messenger.libsession_util.pro.ProResponseStatus
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
@@ -63,7 +64,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
+import org.thoughtcrime.securesms.pro.api.ProApiError
 import org.thoughtcrime.securesms.pro.api.AddProPaymentApi
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
@@ -503,7 +504,10 @@ class ProStatusManager @Inject constructor(
                         "Timeout adding pro payment"
                     }
                 }.getOrElse {
-                    ProApiResponse.Failure(AddPaymentErrorStatus.GenericError, emptyList())
+                    // Timed out / threw before we got a response — treat as a retryable backend error.
+                    ProApiResponse.Failure(
+                        ProApiError(ProResponseStatus.Error, errorCode = null, error = "add-payment request failed: $it")
+                    )
                 }
 
                 when (paymentResponse) {
@@ -513,7 +517,11 @@ class ProStatusManager @Inject constructor(
                         configFactory.get().withMutableUserConfigs { configs ->
                             configs.userProfile.setProConfig(
                                 ProConfig(
-                                    proProof = paymentResponse.data,
+                                    // Delta #12 invariant: an `ok` add-payment always carries a proof
+                                    // (a re-claim of an already-redeemed payment now succeeds with one too).
+                                    proProof = requireNotNull(paymentResponse.data.proof) {
+                                        "add-payment returned ok without a proof"
+                                    },
                                     rotatingPrivateKey = rotatingKeyPair.secretKey.data
                                 )
                             )
@@ -525,23 +533,14 @@ class ProStatusManager @Inject constructor(
                     }
 
                     is ProApiResponse.Failure -> {
-                        // Handle payment failure
                         Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' failure: $paymentResponse")
-                        when (paymentResponse.status) {
-                            // unknown payment is retryable - throw a generic exception here to go through our retries
-                            AddPaymentErrorStatus.UnknownPayment -> {
-                                throw Exception()
-                            }
-
-                            // nothing to do if already redeemed
-                            AddPaymentErrorStatus.AlreadyRedeemed -> {
-                                return
-                            }
-
-                            // non retryable error - throw our custom exception
-                            AddPaymentErrorStatus.GenericError -> {
-                                throw SubscriptionManager.PaymentServerException()
-                            }
+                        // Delta #12: `already_redeemed` is gone — a re-claim now returns ok + a proof
+                        // (handled above). Retry transient failures (backend fault, or a payment the
+                        // backend hasn't ingested yet); everything else is a hard, non-retryable failure.
+                        if (paymentResponse.error.isRetryable) {
+                            throw Exception()
+                        } else {
+                            throw SubscriptionManager.PaymentServerException()
                         }
                     }
                 }

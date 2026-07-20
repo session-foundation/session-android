@@ -17,7 +17,7 @@ class GetProDetailsApi @AssistedInject constructor(
     private val snodeClock: SnodeClock,
     @Assisted private val masterPrivateKey: ByteArray,
     deps: ProApiDependencies,
-) : ProApi<Int, GetProDetailsResponse>(deps) {
+) : ProApi<GetProDetailsResponse>(deps) {
     override fun buildProRequest(): ProRequest =
         BackendRequests.buildGetProDetailsRequest(
             masterPrivateKey = masterPrivateKey,
@@ -27,8 +27,6 @@ class GetProDetailsApi @AssistedInject constructor(
 
     override fun parseResponse(json: String): GetProDetailsResponse =
         BackendRequests.parsePaymentDetailsResponse(json)
-
-    override fun convertErrorStatus(status: Int): Int = status
 
     @AssistedFactory
     interface Factory {

@@ -13,7 +13,7 @@ class GenerateProProofApi @AssistedInject constructor(
     @Assisted private val rotatingPrivateKey: ByteArray,
     private val snodeClock: SnodeClock,
     deps: ProApiDependencies,
-) : ProApi<GetProProofStatus, ProProofResponse>(deps) {
+) : ProApi<ProProofResponse>(deps) {
 
     override fun buildProRequest(): ProRequest =
         BackendRequests.buildGenerateProProofRequest(
@@ -25,8 +25,6 @@ class GenerateProProofApi @AssistedInject constructor(
     override fun parseResponse(json: String): ProProofResponse =
         BackendRequests.parseProProofResponse(json)
 
-    override fun convertErrorStatus(status: Int): GetProProofStatus = status
-
     @AssistedFactory
     interface Factory {
         fun create(
@@ -35,5 +33,3 @@ class GenerateProProofApi @AssistedInject constructor(
         ): GenerateProProofApi
     }
 }
-
-typealias GetProProofStatus = Int
