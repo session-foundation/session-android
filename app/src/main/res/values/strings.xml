@@ -1155,6 +1155,17 @@
     <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
     <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
     <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
+    <!-- TODO(crowdin): provider display names — added locally to unblock the pro provider-metadata
+         migration (libsession no longer supplies these). MUST be added upstream on Crowdin before the
+         next translations sync, or the sync will delete them. Values mirror the old libsession metadata. -->
+    <string name="proProviderGooglePlatform">Google</string>
+    <string name="proProviderGoogleStore">Google Play Store</string>
+    <string name="proProviderGoogleDevice">Android</string>
+    <string name="proProviderGoogleAccount">Google account</string>
+    <string name="proProviderApplePlatform">Apple</string>
+    <string name="proProviderAppleStore">Apple App Store</string>
+    <string name="proProviderAppleDevice">iOS</string>
+    <string name="proProviderAppleAccount">Apple account</string>
     <string name="proReactivatingActivation">re-activating</string>
     <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">We’re sorry to see you go. Here\'s what you need to know before requesting a refund.</string>
