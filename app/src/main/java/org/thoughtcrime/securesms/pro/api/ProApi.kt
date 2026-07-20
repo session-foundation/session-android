@@ -39,8 +39,9 @@ abstract class ProApi<ErrorStatus, Res : ProResponse>(private val deps: ProApiDe
         return HttpRequest(
             method = "POST",
             url = "$baseUrl/${request.endpoint}".toHttpUrl(),
+            // Content-Type comes from libsession (the wire format is its contract with the backend); we relay it
             headers = mapOf(
-                "Content-Type" to "application/json"
+                "Content-Type" to request.contentType
             ),
             body = HttpBody.Text(request.body)
         )
