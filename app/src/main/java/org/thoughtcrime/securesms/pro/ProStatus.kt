@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.pro
 
 import network.loki.messenger.BuildConfig
-import network.loki.messenger.libsession_util.protocol.PaymentProviderMetadata
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
