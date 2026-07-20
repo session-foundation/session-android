@@ -12,7 +12,7 @@ import kotlinx.serialization.json.Json
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
-import org.thoughtcrime.securesms.pro.api.ProDetails
+import network.loki.messenger.libsession_util.pro.GetProDetailsResponse
 import org.thoughtcrime.securesms.pro.api.ProRevocations
 import org.thoughtcrime.securesms.util.asSequence
 import java.time.Instant
@@ -143,17 +143,20 @@ class ProDatabase @Inject constructor(
 
     val proDetailsChangeNotification: SharedFlow<Unit> get() = mutableProDetailsChangeNotification
 
-    fun getProDetailsAndLastUpdated(): Pair<ProDetails, Instant>? {
+    fun getProDetailsAndLastUpdated(): Pair<GetProDetailsResponse, Instant>? {
         return readableDatabase.query("""
             SELECT name, value FROM pro_state
             WHERE name IN (?, ?)
         """, arrayOf(STATE_PRO_DETAILS, STATE_PRO_DETAILS_UPDATED_AT)).use { cursor ->
-            var details: ProDetails? = null
+            var details: GetProDetailsResponse? = null
             var updatedAt: Instant? = null
 
             while (cursor.moveToNext()) {
                 when (val name = cursor.getString(0)) {
-                    STATE_PRO_DETAILS -> details = json.decodeFromString(cursor.getString(1))
+                    // Tolerate a stale/incompatible cached blob (e.g. an older shape): drop it and let
+                    // the next fetch repopulate, rather than throwing.
+                    STATE_PRO_DETAILS -> details =
+                        runCatching { json.decodeFromString<GetProDetailsResponse>(cursor.getString(1)) }.getOrNull()
                     STATE_PRO_DETAILS_UPDATED_AT -> updatedAt = Instant.ofEpochMilli(cursor.getString(1).toLong())
                     else -> error("Unexpected state name $name")
                 }
@@ -167,7 +170,7 @@ class ProDatabase @Inject constructor(
         }
     }
 
-    fun updateProDetails(proDetails: ProDetails, updatedAt: Instant) {
+    fun updateProDetails(proDetails: GetProDetailsResponse, updatedAt: Instant) {
         val changes = writableDatabase.compileStatement("""
             INSERT INTO pro_state (name, value)
             VALUES (?, ?), (?, ?)

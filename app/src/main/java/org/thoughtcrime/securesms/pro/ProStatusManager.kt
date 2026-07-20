@@ -141,7 +141,7 @@ class ProStatusManager @Inject constructor(
                 val nowMs = snodeClock.currentTimeMillis()
 
                 ProDataState(
-                    type = proDetailsState.lastUpdated?.first?.toProStatus(nowMs) ?: ProStatus.NeverSubscribed,
+                    type = proDetailsState.lastUpdated?.first?.toProStatus(nowMs, application) ?: ProStatus.NeverSubscribed,
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
@@ -155,7 +155,7 @@ class ProStatusManager @Inject constructor(
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.THREE_MONTHS,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false,
                             inGracePeriod = false
@@ -164,7 +164,7 @@ class ProStatusManager @Inject constructor(
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE_REFUNDING -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.THREE_MONTHS,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = true,
                             inGracePeriod = false
@@ -173,7 +173,7 @@ class ProStatusManager @Inject constructor(
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false
                         )
@@ -181,7 +181,7 @@ class ProStatusManager @Inject constructor(
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(40),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false
                         )
@@ -189,7 +189,7 @@ class ProStatusManager @Inject constructor(
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.ONE_MONTH,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false,
                             inGracePeriod = false
@@ -198,22 +198,22 @@ class ProStatusManager @Inject constructor(
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.ONE_MONTH,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
                             expiredAt = Instant.now() - Duration.ofDays(14),
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
                             expiredAt = Instant.now() - Duration.ofDays(60),
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
                             expiredAt = Instant.now() - Duration.ofDays(14),
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!
+                            providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application)
                         )
                     },
 

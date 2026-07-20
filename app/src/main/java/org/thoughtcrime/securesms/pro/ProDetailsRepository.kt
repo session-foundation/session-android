@@ -17,7 +17,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.pro.api.ProDetails
+import network.loki.messenger.libsession_util.pro.GetProDetailsResponse
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import java.time.Instant
@@ -35,20 +35,20 @@ class ProDetailsRepository @Inject constructor(
     private val networkConnectivity: NetworkConnectivity,
 ) {
     sealed interface LoadState {
-        val lastUpdated: Pair<ProDetails, Instant>?
+        val lastUpdated: Pair<GetProDetailsResponse, Instant>?
 
         data object Init : LoadState {
-            override val lastUpdated: Pair<ProDetails, Instant>?
+            override val lastUpdated: Pair<GetProDetailsResponse, Instant>?
                 get() = null
         }
 
         data class Loading(
-            override val lastUpdated: Pair<ProDetails, Instant>?,
+            override val lastUpdated: Pair<GetProDetailsResponse, Instant>?,
             val waitingForNetwork: Boolean
         ) : LoadState
 
-        data class Loaded(override val lastUpdated: Pair<ProDetails, Instant>) : LoadState
-        data class Error(override val lastUpdated: Pair<ProDetails, Instant>?) : LoadState
+        data class Loaded(override val lastUpdated: Pair<GetProDetailsResponse, Instant>) : LoadState
+        data class Error(override val lastUpdated: Pair<GetProDetailsResponse, Instant>?) : LoadState
     }
 
 

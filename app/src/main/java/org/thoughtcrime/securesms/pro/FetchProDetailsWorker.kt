@@ -28,8 +28,8 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
+import network.loki.messenger.libsession_util.pro.GetProDetailsResponse
 import org.thoughtcrime.securesms.pro.api.GetProDetailsApi
-import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.pro.db.ProDatabase
@@ -79,7 +79,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
             Log.d(
                 TAG,
-                "Fetched pro details, status = ${details.status}, " +
+                "Fetched pro details, status = ${details.userStatus}, " +
                         "autoRenew = ${details.autoRenewing}, expiry = ${details.expiry}"
             )
 
@@ -92,7 +92,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
 
                 // Remove the pro config immediately if we know we are not pro anymore.
                 // We will schedule proof generation below if we are still pro.
-                if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
+                if (details.userStatus != ProUserStatus.ACTIVE) {
                     configs.userProfile.removeProConfig()
                 }
             }
@@ -114,10 +114,10 @@ class FetchProDetailsWorker @AssistedInject constructor(
     }
 
 
-    private suspend fun scheduleProofGenerationIfNeeded(details: ProDetails) {
+    private suspend fun scheduleProofGenerationIfNeeded(details: GetProDetailsResponse) {
         val now = snodeClock.currentTimeMillis()
 
-        if (details.status != ProDetails.DETAILS_STATUS_ACTIVE) {
+        if (details.userStatus != ProUserStatus.ACTIVE) {
             Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")
             ProProofGenerationWorker.cancel(context)
         } else {

@@ -25,7 +25,6 @@ import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.pro.api.GenerateProProofApi
-import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.util.findCause
@@ -60,14 +59,14 @@ class ProProofGenerationWorker @AssistedInject constructor(
             "Pro details must be available to generate proof"
         }
 
-        check(details.first.status == ProDetails.DETAILS_STATUS_ACTIVE) {
+        check(details.first.userStatus == ProUserStatus.ACTIVE) {
             "Pro status must be active to generate proof"
         }
 
         return try {
             val rotatingPrivateKey = ED25519.generate(null).secretKey.data
 
-            val proof = apiExecutor.execute(
+            val response = apiExecutor.execute(
                 ServerApiRequest(
                     proBackendConfig = proBackendConfig.get(),
                     api = generateProProofApi.create(
@@ -76,6 +75,8 @@ class ProProofGenerationWorker @AssistedInject constructor(
                     ),
                 )
             ).successOrThrow()
+            // Delta #12 invariant: an `ok` proof response always carries the proof.
+            val proof = requireNotNull(response.proof) { "generate-proof returned ok without a proof" }
 
             configFactory.withMutableUserConfigs {
                 it.userProfile.setProConfig(ProConfig(
