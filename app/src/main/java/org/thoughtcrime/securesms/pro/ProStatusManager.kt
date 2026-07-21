@@ -540,7 +540,11 @@ class ProStatusManager @Inject constructor(
                         if (paymentResponse.error.isRetryable) {
                             throw Exception()
                         } else {
-                            throw SubscriptionManager.PaymentServerException()
+                            // Permanent fault: surface the specific reason (error_code slug ->
+                            // localized string, falling back to the backend diagnostic).
+                            throw SubscriptionManager.NonRetryableProPaymentException(
+                                paymentResponse.error.userFacingMessage(application)
+                            )
                         }
                     }
                 }
@@ -549,6 +553,10 @@ class ProStatusManager @Inject constructor(
             } catch (e: SubscriptionManager.PaymentServerException){
                 // rethrow this error directly without retrying
                 Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' PaymentServerException caught and rethrown")
+                throw e
+            } catch (e: SubscriptionManager.NonRetryableProPaymentException){
+                // permanent, non-retryable fault — rethrow directly so we don't retry or swallow it
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' NonRetryableProPaymentException caught and rethrown")
                 throw e
             }catch (e: Exception) {
                 Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' exception", e)
@@ -572,7 +580,5 @@ class ProStatusManager @Inject constructor(
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
-        const val DEFAULT_GOOGLE_STORE = "Google Play Store"
-        const val DEFAULT_APPLE_STORE = "Apple App Store"
     }
 }

@@ -79,6 +79,12 @@ abstract class SubscriptionManager(
                             )
                         )
                     }
+                    // A non-retryable backend failure carries a user-facing reason (mapped from the
+                    // error_code slug); show it directly rather than the retry dialog, which would be
+                    // misleading for a permanent fault.
+                    is NonRetryableProPaymentException -> {
+                        _purchaseEvents.emit(PurchaseEvent.Failed.GenericError(e.userMessage))
+                    }
                     else -> _purchaseEvents.emit(PurchaseEvent.Failed.GenericError())
                 }
             }
@@ -86,6 +92,9 @@ abstract class SubscriptionManager(
     }
 
     class PaymentServerException: Exception()
+
+    /** A non-retryable Pro backend failure whose [userMessage] is already localized for display. */
+    class NonRetryableProPaymentException(val userMessage: String): Exception()
 
     data class SubscriptionPricing(
         val subscriptionDuration: ProSubscriptionDuration,

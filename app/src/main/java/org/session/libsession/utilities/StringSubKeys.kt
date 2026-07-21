@@ -55,7 +55,7 @@ object StringSubstitutionConstants {
     const val SELECTED_PLAN_LENGTH_SINGULAR_KEY: StringSubKey = "selected_plan_length_singular"
     const val PLATFORM_KEY: StringSubKey                   = "platform"
     const val PLATFORM_STORE_KEY: StringSubKey             = "platform_store"
-    const val PLATFORM_STORE2_KEY: StringSubKey            = "platform_store_other"
+    const val PRO_STORES_KEY: StringSubKey                 = "pro_stores"
     const val PLATFORM_ACCOUNT_KEY: StringSubKey           = "platform_account"
     const val MONTHLY_PRICE_KEY: StringSubKey              = "monthly_price"
     const val PRICE_KEY: StringSubKey                      = "price"
