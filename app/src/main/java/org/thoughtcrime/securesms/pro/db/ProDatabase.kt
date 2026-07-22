@@ -202,13 +202,15 @@ class ProDatabase @Inject constructor(
         private const val ROTATING_KEY_VALIDITY_DAYS = 15
 
         fun createTable(db: SupportSQLiteDatabase) {
-            // A table to hold the list of pro revocations
+            // A table to hold the list of pro revocations. This is the ORIGINAL (lokiV57) shipped
+            // shape; `reshapeRevocationsForSeconds` (lokiV61) drops and recreates it with the
+            // current seconds-based schema, so do NOT edit this to match the new columns — installs
+            // that already ran lokiV57 must see the same schema here that they got when they shipped.
             //language=roomsql
             db.execSQL("""
                 CREATE TABLE pro_revocations(
-                    revocation_tag TEXT NOT NULL PRIMARY KEY,
-                    effective_ts INTEGER NOT NULL,
-                    retain_until_ts INTEGER NOT NULL
+                    gen_index_hash TEXT NOT NULL PRIMARY KEY,
+                    expiry_ms INTEGER NOT NULL
                 ) WITHOUT ROWID
             """)
 
