@@ -90,9 +90,15 @@ class FetchProDetailsWorker @AssistedInject constructor(
                     configs.userProfile.removeProAccessExpiry()
                 }
 
-                // Remove the pro config immediately if we know we are not pro anymore.
-                // We will schedule proof generation below if we are still pro.
-                if (details.userStatus != ProUserStatus.ACTIVE) {
+                // Remove the pro config only when the backend authoritatively says we are no longer
+                // pro (expired) or never were (never). An unknown/future status is NOT a basis to
+                // delete it: removeProConfig() writes the SYNCED user profile, so clearing on an
+                // unrecognised status would erase a valid proof across all the user's devices. Leave
+                // it — the proof's own expiry governs, and the backend won't refresh (or will revoke)
+                // a genuinely-lapsed account. We schedule proof generation below if we are still pro.
+                if (details.userStatus == ProUserStatus.EXPIRED ||
+                    details.userStatus == ProUserStatus.NEVER
+                ) {
                     configs.userProfile.removeProConfig()
                 }
             }
