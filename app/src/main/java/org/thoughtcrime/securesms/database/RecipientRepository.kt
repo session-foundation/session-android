@@ -784,7 +784,7 @@ class RecipientRepository @Inject constructor(
                         RecipientSettings.ProData(
                             showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                             expiry = convo.proProofInfo!!.expiry,
-                            genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                            revocationTag = convo.proProofInfo!!.revocationTag.data.toHexString(),
                         )
                     )
                 }

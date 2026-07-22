@@ -206,8 +206,9 @@ class ProDatabase @Inject constructor(
             //language=roomsql
             db.execSQL("""
                 CREATE TABLE pro_revocations(
-                    gen_index_hash TEXT NOT NULL PRIMARY KEY,
-                    expiry_ms INTEGER NOT NULL
+                    revocation_tag TEXT NOT NULL PRIMARY KEY,
+                    effective_ts INTEGER NOT NULL,
+                    retain_until_ts INTEGER NOT NULL
                 ) WITHOUT ROWID
             """)
 

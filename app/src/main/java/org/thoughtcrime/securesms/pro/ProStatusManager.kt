@@ -379,8 +379,8 @@ class ProStatusManager @Inject constructor(
                     proDatabase.revocationChangeNotification
                         .onStart { emit(Unit) },
 
-                    { proofGenIndexHash, _ ->
-                        proofGenIndexHash.takeIf { proDatabase.isRevoked(it, snodeClock.currentTime()) }
+                    { proofRevocationTag, _ ->
+                        proofRevocationTag.takeIf { proDatabase.isRevoked(it, snodeClock.currentTime()) }
                     }
                 )
                     .filterNotNull()
