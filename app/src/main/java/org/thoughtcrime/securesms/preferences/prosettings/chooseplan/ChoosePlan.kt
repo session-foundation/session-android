@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.preferences.prosettings.chooseplan
 
-import android.icu.util.MeasureUnit
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -56,8 +55,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ENTITY_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.BaseProSettingsScreen
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
@@ -116,11 +113,8 @@ fun ChoosePlan(
             is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
                 .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(
-                    CURRENT_PLAN_LENGTH_KEY, DateUtils.getLocalisedTimeDuration(
-                        context = context,
-                        amount = planData.proStatus.duration.duration.months,
-                        unit = MeasureUnit.MONTH
-                    )
+                    CURRENT_PLAN_LENGTH_KEY,
+                    DateUtils.getLocalisedProPlanLength(context, planData.proStatus.duration)
                 )
                 .put(DATE_KEY, planData.proStatus.renewingAtFormatted())
                 .format()
@@ -490,12 +484,8 @@ private fun PreviewUpdatePlan(
                 enableButton = true,
                 plans = listOf(
                     ProPlan(
-                        title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
-                            .put(MONTHLY_PRICE_KEY, "$3.99")
-                            .format().toString(),
-                        subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
-                            .put(PRICE_KEY, "$47.99")
-                            .format().toString(),
+                        title = "1 year - $3.99 / month",
+                        subtitle = "$47.99 billed every 1 year",
                         selected = false,
                         currentPlan = false,
                         durationType = ProSubscriptionDuration.TWELVE_MONTHS,
@@ -504,30 +494,22 @@ private fun PreviewUpdatePlan(
                         ),
                     ),
                     ProPlan(
-                        title = Phrase.from(context.getText(R.string.proPriceThreeMonths))
-                            .put(MONTHLY_PRICE_KEY, "$4.99")
-                            .format().toString(),
-                        subtitle = Phrase.from(context.getText(R.string.proBilledQuarterly))
-                            .put(PRICE_KEY, "$14.99")
-                            .format().toString(),
+                        title = "3 months - $4.99 / month",
+                        subtitle = "$14.99 billed every 3 months",
                         selected = true,
                         currentPlan = true,
-                        durationType = ProSubscriptionDuration.TWELVE_MONTHS,
+                        durationType = ProSubscriptionDuration.THREE_MONTHS,
                         badges = listOf(
                             ProPlanBadge("Current Plan"),
                             ProPlanBadge("20% Off", "This is a tooltip"),
                         ),
                     ),
                     ProPlan(
-                        title = Phrase.from(context.getText(R.string.proPriceOneMonth))
-                            .put(MONTHLY_PRICE_KEY, "$5.99")
-                            .format().toString(),
-                        subtitle = Phrase.from(context.getText(R.string.proBilledMonthly))
-                            .put(PRICE_KEY, "$5")
-                            .format().toString(),
+                        title = "1 month - $5.99 / month",
+                        subtitle = "$5.99 billed every 1 month",
                         selected = false,
                         currentPlan = false,
-                        durationType = ProSubscriptionDuration.TWELVE_MONTHS,
+                        durationType = ProSubscriptionDuration.ONE_MONTH,
                         badges = emptyList(),
                     ),
                 )

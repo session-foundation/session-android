@@ -154,7 +154,7 @@ class ProStatusManager @Inject constructor(
                     type = when(subscriptionState){
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
-                            duration = ProSubscriptionDuration.THREE_MONTHS,
+                            duration = ProSubscriptionDuration.THREE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false,
@@ -163,7 +163,7 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE_REFUNDING -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
-                            duration = ProSubscriptionDuration.THREE_MONTHS,
+                            duration = ProSubscriptionDuration.THREE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = true,
@@ -172,7 +172,7 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(2),
-                            duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                            duration = ProSubscriptionDuration.TWELVE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false
@@ -180,7 +180,7 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(40),
-                            duration = ProSubscriptionDuration.TWELVE_MONTHS,
+                            duration = ProSubscriptionDuration.TWELVE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false
@@ -188,7 +188,7 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
-                            duration = ProSubscriptionDuration.ONE_MONTH,
+                            duration = ProSubscriptionDuration.ONE_MONTH.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false,
@@ -197,7 +197,7 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(2),
-                            duration = ProSubscriptionDuration.ONE_MONTH,
+                            duration = ProSubscriptionDuration.ONE_MONTH.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false

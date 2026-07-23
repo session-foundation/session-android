@@ -3,6 +3,9 @@ package org.thoughtcrime.securesms.pro
 import android.content.Context
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.GetProStatusResponse
+import network.loki.messenger.libsession_util.pro.ProPaymentItem
+import org.thoughtcrime.securesms.pro.subscription.ProPlanPeriod
+import org.thoughtcrime.securesms.pro.subscription.ProPlanUnit
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import java.time.Duration
 import java.time.Instant
@@ -31,8 +34,17 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context): ProStatus {
             val renewingAtMs = expiryMs - gracePeriod.toMillis()
             val renewingAt = Instant.ofEpochMilli(renewingAtMs)
             val providerData = providerMetadata(paymentItem.paymentProvider, context)
-            val duration = paymentItem.plan.toSubscriptionDuration()
+            val duration = paymentItem.toProPlanPeriod()
             val refundInProgress = refundRequested != null
+
+            // Correctness guard (Delta #14): a lifetime plan is NOT a renewing/expiring subscription and
+            // has no renewal/expiry date to render. A genuine lifetime carries no account `expiry`, so it
+            // already falls through the `expiry ?: return NeverSubscribed` short-circuit above; this
+            // explicit check additionally guarantees a lifetime plan can never be presented via the
+            // AutoRenewing/Expiring ("renews/expires on {date}") paths. NOTE: there is no dedicated
+            // always-on Active state yet, so lifetime is currently surfaced as not-subscribed — a
+            // follow-up should add an `Active.Lifetime` state with no date.
+            if (duration.isLifetime) return ProStatus.NeverSubscribed
 
             if (autoRenewing) {
                 ProStatus.Active.AutoRenewing(
@@ -68,13 +80,16 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context): ProStatus {
 }
 
 /**
- * Map an opaque billing-period slug (spec: `N` + unit `d`/`w`/`m`/`y`; canonical `"1m"`/`"3m"`/`"1y"`)
- * to the app's subscription duration. Unknown/future codes fall back to the one-month presentation.
+ * The billing period as a (count, unit) [ProPlanPeriod]. libsession parses the wire `plan` grammar
+ * (pro-wire-protocol.md §1 / Delta #14) into `{count, unit}` and the android glue hands it to us as the
+ * structured pair `planCount` + `planUnit` (see libsession-util-android `pro_backend.cpp`
+ * `plan_unit_to_string`). We keep it as (count, unit) verbatim — the unit is PRESERVED as transmitted
+ * (never canonicalized), so a NEW period ("6m", "1w", "2y") needs ZERO code change to render. An
+ * unrecognized unit name shouldn't occur (closed grammar); we fall back to a one-month period.
  */
-fun String.toSubscriptionDuration(): ProSubscriptionDuration = when (this) {
-    "1y" -> ProSubscriptionDuration.TWELVE_MONTHS
-    "3m" -> ProSubscriptionDuration.THREE_MONTHS
-    else -> ProSubscriptionDuration.ONE_MONTH // "1m" + fallback
+fun ProPaymentItem.toProPlanPeriod(): ProPlanPeriod {
+    val unit = ProPlanUnit.fromWireName(planUnit) ?: ProPlanUnit.MONTH
+    return ProPlanPeriod(planCount, unit)
 }
 
 fun PaymentProviderMetadata.isFromAnotherPlatform(): Boolean {
@@ -109,7 +124,7 @@ val previewAppleMetaData = PaymentProviderMetadata(
 
 val previewAutoRenewingApple = ProStatus.Active.AutoRenewing(
     renewingAt = Instant.now() + Duration.ofDays(14),
-    duration = ProSubscriptionDuration.THREE_MONTHS,
+    duration = ProSubscriptionDuration.THREE_MONTHS.period,
     providerData = previewAppleMetaData,
     quickRefundExpiry = Instant.now() + Duration.ofDays(14),
     refundInProgress = false,
