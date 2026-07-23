@@ -75,7 +75,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
                     ),
                 )
             ).successOrThrow()
-            // Delta #12 invariant: an `ok` proof response always carries the proof.
+            // §5.2 invariant: an `ok` proof response always carries the proof.
             val proof = requireNotNull(response.proof) { "generate-proof returned ok without a proof" }
 
             configFactory.withMutableUserConfigs {

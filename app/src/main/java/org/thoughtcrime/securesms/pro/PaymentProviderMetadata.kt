@@ -6,7 +6,7 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 
 /**
  * App-facing per-provider metadata: the human-readable display names — client-owned i18n now that
- * libsession no longer supplies them (Delta #10) — plus the support/management URLs, which are still
+ * libsession no longer supplies them — plus the support/management URLs, which are still
  * libsession's (fetched via [BackendRequests.providerUrls] by the provider slug). Replaces the removed
  * libsession `PaymentProviderMetadata` struct.
  */

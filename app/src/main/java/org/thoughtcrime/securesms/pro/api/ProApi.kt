@@ -74,7 +74,7 @@ abstract class ProApi<Res : ProResponse>(private val deps: ProApiDependencies)
 }
 
 /**
- * A failed Pro backend response (Delta #12). [status] is [ProResponseStatus.Fail] (client input /
+ * A failed Pro backend response (§5). [status] is [ProResponseStatus.Fail] (client input /
  * precondition) or [ProResponseStatus.Error] (backend fault, retryable). [errorCode] is the machine slug
  * (see [ProErrorCode]; null if libsession supplied none) that the UI maps to a localized string; [error]
  * is an English diagnostic — NOT user-facing (only shown when a slug has no translation), always safe to log.

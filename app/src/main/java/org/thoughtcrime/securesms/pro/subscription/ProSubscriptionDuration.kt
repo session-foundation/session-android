@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.pro.subscription
 
 /**
- * Billing-period unit, mirroring libsession's `ProPlanUnit` (pro-wire-protocol.md §1 / Delta #14).
+ * Billing-period unit, mirroring libsession's `ProPlanUnit` (pro-wire-protocol.md §1).
  * The unit is PRESERVED exactly as transmitted and is never canonicalized (e.g. "12m" and "1y" are
  * the same real duration but distinct values). A new unit renders generically via the locale formatter.
  */

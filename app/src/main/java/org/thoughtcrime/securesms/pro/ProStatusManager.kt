@@ -517,7 +517,7 @@ class ProStatusManager @Inject constructor(
                         configFactory.get().withMutableUserConfigs { configs ->
                             configs.userProfile.setProConfig(
                                 ProConfig(
-                                    // Delta #12 invariant: an `ok` add-payment always carries a proof
+                                    // §5.2 invariant: an `ok` add-payment always carries a proof
                                     // (a re-claim of an already-redeemed payment now succeeds with one too).
                                     proProof = requireNotNull(paymentResponse.data.proof) {
                                         "add-payment returned ok without a proof"
@@ -534,7 +534,7 @@ class ProStatusManager @Inject constructor(
 
                     is ProApiResponse.Failure -> {
                         Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' failure: $paymentResponse")
-                        // Delta #12: `already_redeemed` is gone — a re-claim now returns ok + a proof
+                        // §5.1: `already_redeemed` is gone — a re-claim now returns ok + a proof
                         // (handled above). Retry transient failures (backend fault, or a payment the
                         // backend hasn't ingested yet); everything else is a hard, non-retryable failure.
                         if (paymentResponse.error.isRetryable) {

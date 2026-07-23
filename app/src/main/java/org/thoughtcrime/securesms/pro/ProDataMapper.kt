@@ -37,7 +37,7 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context): ProStatus {
             val duration = paymentItem.toProPlanPeriod()
             val refundInProgress = refundRequested != null
 
-            // Correctness guard (Delta #14): a lifetime plan is NOT a renewing/expiring subscription and
+            // Correctness guard (plan grammar, §1): a lifetime plan is NOT a renewing/expiring subscription and
             // has no renewal/expiry date to render. A genuine lifetime carries no account `expiry`, so it
             // already falls through the `expiry ?: return NeverSubscribed` short-circuit above; this
             // explicit check additionally guarantees a lifetime plan can never be presented via the
@@ -81,7 +81,7 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context): ProStatus {
 
 /**
  * The billing period as a (count, unit) [ProPlanPeriod]. libsession parses the wire `plan` grammar
- * (pro-wire-protocol.md §1 / Delta #14) into `{count, unit}` and the android glue hands it to us as the
+ * (pro-wire-protocol.md §1) into `{count, unit}` and the android glue hands it to us as the
  * structured pair `planCount` + `planUnit` (see libsession-util-android `pro_backend.cpp`
  * `plan_unit_to_string`). We keep it as (count, unit) verbatim — the unit is PRESERVED as transmitted
  * (never canonicalized), so a NEW period ("6m", "1w", "2y") needs ZERO code change to render. An
