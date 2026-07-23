@@ -821,8 +821,11 @@ class ProSettingsViewModel @AssistedInject constructor(
         val data3Month  = calculatePricesFor(prices.firstOrNull{ it.subscriptionDuration == ProSubscriptionDuration.THREE_MONTHS })
         val data12Month = calculatePricesFor(prices.firstOrNull{ it.subscriptionDuration == ProSubscriptionDuration.TWELVE_MONTHS })
 
-        // The 1-month plan's per-month price is the discount baseline for the longer plans.
-        val baseline = data1Month?.perMonthUnits ?: BigDecimal.ZERO
+        // Discount baseline = the highest per-month price among the available plans — i.e. the shortest
+        // plan, since shorter plans cost more per month. Don't assume the 1-month SKU exists; whichever
+        // plan equals the baseline gets 0% and no badge via discountBadge().
+        val baseline = listOfNotNull(data1Month, data3Month, data12Month)
+            .maxOfOrNull { it.perMonthUnits } ?: BigDecimal.ZERO
 
         // One generic card per SKU (longest first). The period label ("3 months"/"1 year") comes from the
         // locale formatter, so a new SKU needs no new strings; the 1-month card naturally carries no
