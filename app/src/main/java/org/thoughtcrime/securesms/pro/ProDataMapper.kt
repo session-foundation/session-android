@@ -2,13 +2,13 @@ package org.thoughtcrime.securesms.pro
 
 import android.content.Context
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
-import network.loki.messenger.libsession_util.pro.GetProDetailsResponse
+import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import java.time.Duration
 import java.time.Instant
 
 /**
- * Account-level Pro status slugs (get-details `user_status`, spec §5.2). Closed set on the backend:
+ * Account-level Pro status slugs (get-pro-status `user_status`, spec §5.2). Closed set on the backend:
  * `never`/`active`/`expired` — note there is NO account-level `revoked` (that's a per-item payment
  * status / an error_code). Opaque on the wire, so an unrecognized value is treated as "not subscribed".
  */
@@ -19,13 +19,13 @@ object ProUserStatus {
 }
 
 /**
- * Map a libsession-parsed get-details response to the app's [ProStatus] domain model. Needs a [Context]
+ * Map a libsession-parsed get-pro-status response to the app's [ProStatus] domain model. Needs a [Context]
  * to resolve the (client-owned) provider display strings.
  */
-fun GetProDetailsResponse.toProStatus(nowMs: Long, context: Context): ProStatus {
+fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context): ProStatus {
     return when (userStatus) {
         ProUserStatus.ACTIVE -> {
-            val paymentItem = items.firstOrNull() ?: return ProStatus.NeverSubscribed
+            val paymentItem = latestPayment ?: return ProStatus.NeverSubscribed
             // Access expiry (incl. grace); "renew due" is expiry minus the grace period.
             val expiryMs = (expiry ?: return ProStatus.NeverSubscribed).toEpochMilli()
             val renewingAtMs = expiryMs - gracePeriod.toMillis()
@@ -57,7 +57,7 @@ fun GetProDetailsResponse.toProStatus(nowMs: Long, context: Context): ProStatus 
         ProUserStatus.EXPIRED -> ProStatus.Expired(
             expiredAt = expiry ?: Instant.EPOCH,
             providerData = providerMetadata(
-                items.firstOrNull()?.paymentProvider ?: PAYMENT_PROVIDER_GOOGLE_PLAY,
+                latestPayment?.paymentProvider ?: PAYMENT_PROVIDER_GOOGLE_PLAY,
                 context,
             ),
         )

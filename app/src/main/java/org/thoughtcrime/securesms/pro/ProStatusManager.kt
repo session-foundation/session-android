@@ -93,7 +93,7 @@ class ProStatusManager @Inject constructor(
     private val loginState: LoginStateRepository,
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
-    private val proDetailsRepository: Lazy<ProDetailsRepository>,
+    private val proStatusRepository: Lazy<ProStatusRepository>,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
 ) : AuthAwareComponent {
 
@@ -108,7 +108,7 @@ class ProStatusManager @Inject constructor(
                     }
                 }
                 .distinctUntilChanged(),
-            proDetailsRepository.get().loadState,
+            proStatusRepository.get().loadState,
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.getDebugSubscriptionType() },
@@ -118,19 +118,19 @@ class ProStatusManager @Inject constructor(
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
-        ){ showProBadgePreference, proDetailsState,
+        ){ showProBadgePreference, proStatusState,
            debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
                 else -> {
                     // calculate the real refresh state here
-                    when(proDetailsState){
-                        is ProDetailsRepository.LoadState.Loading -> {
-                            if(proDetailsState.waitingForNetwork) State.Error(Exception())
+                    when(proStatusState){
+                        is ProStatusRepository.LoadState.Loading -> {
+                            if(proStatusState.waitingForNetwork) State.Error(Exception())
                             else State.Loading
                         }
-                        is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
+                        is ProStatusRepository.LoadState.Error -> State.Error(Exception())
                         else -> State.Success(Unit)
                     }
                 }
@@ -141,7 +141,7 @@ class ProStatusManager @Inject constructor(
                 val nowMs = snodeClock.currentTimeMillis()
 
                 ProDataState(
-                    type = proDetailsState.lastUpdated?.first?.toProStatus(nowMs, application) ?: ProStatus.NeverSubscribed,
+                    type = proStatusState.lastUpdated?.first?.toProStatus(nowMs, application) ?: ProStatus.NeverSubscribed,
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
@@ -251,7 +251,7 @@ class ProStatusManager @Inject constructor(
         }
 
         launch { manageOtherPeoplePro() }
-        launch { manageProDetailsRefreshScheduling() }
+        launch { manageProStatusRefreshScheduling() }
         launch { manageCurrentProProofRevocation() }
         launch {
             postProLaunchStatus
@@ -312,7 +312,7 @@ class ProStatusManager @Inject constructor(
     }
 
     @OptIn(FlowPreview::class)
-    private suspend fun manageProDetailsRefreshScheduling() {
+    private suspend fun manageProStatusRefreshScheduling() {
         postProLaunchStatus
             .collectLatest { postLaunch ->
                 if (postLaunch) {
@@ -327,7 +327,7 @@ class ProStatusManager @Inject constructor(
                             .distinctUntilChanged()
                             .map { "ProAccessExpiry in config changes" },
 
-                        proDetailsRepository.get().loadState
+                        proStatusRepository.get().loadState
                             .mapNotNull { it.lastUpdated?.first?.expiry }
                             .distinctUntilChanged()
                             .transformLatest { expiry ->
@@ -357,13 +357,13 @@ class ProStatusManager @Inject constructor(
                         .collect { refreshReason ->
                             Log.d(
                                 DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                "Scheduling ProDetails fetch due to: $refreshReason"
+                                "Scheduling ProStatus fetch due to: $refreshReason"
                             )
 
-                            proDetailsRepository.get().requestRefresh(force = true)
+                            proStatusRepository.get().requestRefresh(force = true)
                         }
                 } else {
-                    FetchProDetailsWorker.cancel(application)
+                    FetchProStatusWorker.cancel(application)
                 }
             }
     }
@@ -528,8 +528,8 @@ class ProStatusManager @Inject constructor(
 
                             configs.userProfile.setProBadge(true)
                         }
-                        // refresh the pro details
-                        proDetailsRepository.get().requestRefresh(force = true)
+                        // refresh the pro status
+                        proStatusRepository.get().requestRefresh(force = true)
                     }
 
                     is ProApiResponse.Failure -> {

@@ -12,7 +12,7 @@ import kotlinx.serialization.json.Json
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
-import network.loki.messenger.libsession_util.pro.GetProDetailsResponse
+import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import org.thoughtcrime.securesms.pro.api.ProRevocations
 import org.thoughtcrime.securesms.util.asSequence
 import java.time.Instant
@@ -136,28 +136,28 @@ class ProDatabase @Inject constructor(
         }
     }
 
-    private val mutableProDetailsChangeNotification = MutableSharedFlow<Unit>(
+    private val mutableProStatusChangeNotification = MutableSharedFlow<Unit>(
         extraBufferCapacity = 10,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    val proDetailsChangeNotification: SharedFlow<Unit> get() = mutableProDetailsChangeNotification
+    val proStatusChangeNotification: SharedFlow<Unit> get() = mutableProStatusChangeNotification
 
-    fun getProDetailsAndLastUpdated(): Pair<GetProDetailsResponse, Instant>? {
+    fun getProStatusAndLastUpdated(): Pair<GetProStatusResponse, Instant>? {
         return readableDatabase.query("""
             SELECT name, value FROM pro_state
             WHERE name IN (?, ?)
-        """, arrayOf(STATE_PRO_DETAILS, STATE_PRO_DETAILS_UPDATED_AT)).use { cursor ->
-            var details: GetProDetailsResponse? = null
+        """, arrayOf(STATE_PRO_STATUS, STATE_PRO_STATUS_UPDATED_AT)).use { cursor ->
+            var details: GetProStatusResponse? = null
             var updatedAt: Instant? = null
 
             while (cursor.moveToNext()) {
                 when (val name = cursor.getString(0)) {
                     // Tolerate a stale/incompatible cached blob (e.g. an older shape): drop it and let
                     // the next fetch repopulate, rather than throwing.
-                    STATE_PRO_DETAILS -> details =
-                        runCatching { json.decodeFromString<GetProDetailsResponse>(cursor.getString(1)) }.getOrNull()
-                    STATE_PRO_DETAILS_UPDATED_AT -> updatedAt = Instant.ofEpochMilli(cursor.getString(1).toLong())
+                    STATE_PRO_STATUS -> details =
+                        runCatching { json.decodeFromString<GetProStatusResponse>(cursor.getString(1)) }.getOrNull()
+                    STATE_PRO_STATUS_UPDATED_AT -> updatedAt = Instant.ofEpochMilli(cursor.getString(1).toLong())
                     else -> error("Unexpected state name $name")
                 }
             }
@@ -170,22 +170,22 @@ class ProDatabase @Inject constructor(
         }
     }
 
-    fun updateProDetails(proDetails: GetProDetailsResponse, updatedAt: Instant) {
+    fun updateProStatus(proStatus: GetProStatusResponse, updatedAt: Instant) {
         val changes = writableDatabase.compileStatement("""
             INSERT INTO pro_state (name, value)
             VALUES (?, ?), (?, ?)
             ON CONFLICT DO UPDATE SET value=excluded.value
             WHERE value != excluded.value
         """).use { stmt ->
-            stmt.bindString(1, STATE_PRO_DETAILS)
-            stmt.bindString(2, json.encodeToString(proDetails))
-            stmt.bindString(3, STATE_PRO_DETAILS_UPDATED_AT)
+            stmt.bindString(1, STATE_PRO_STATUS)
+            stmt.bindString(2, json.encodeToString(proStatus))
+            stmt.bindString(3, STATE_PRO_STATUS_UPDATED_AT)
             stmt.bindString(4, updatedAt.toEpochMilli().toString())
             stmt.executeUpdateDelete()
         }
 
         if (changes > 0) {
-            mutableProDetailsChangeNotification.tryEmit(Unit)
+            mutableProStatusChangeNotification.tryEmit(Unit)
         }
     }
 
@@ -196,8 +196,8 @@ class ProDatabase @Inject constructor(
         private const val STATE_NAME_LAST_TICKET = "last_ticket"
 
 
-        private const val STATE_PRO_DETAILS = "pro_details"
-        private const val STATE_PRO_DETAILS_UPDATED_AT = "pro_details_updated_at"
+        private const val STATE_PRO_STATUS = "pro_status"
+        private const val STATE_PRO_STATUS_UPDATED_AT = "pro_status_updated_at"
 
         private const val ROTATING_KEY_VALIDITY_DAYS = 15
 

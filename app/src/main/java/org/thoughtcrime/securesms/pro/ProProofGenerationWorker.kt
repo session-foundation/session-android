@@ -37,7 +37,7 @@ import javax.inject.Provider
  * locally.
  *
  * Normally you don't need to interact with this worker directly, as it is scheduled
- * automatically when needed based on the Pro details state, by the [FetchProDetailsWorker].
+ * automatically when needed based on the Pro status state, by the [FetchProStatusWorker].
  */
 @HiltWorker
 class ProProofGenerationWorker @AssistedInject constructor(
@@ -46,7 +46,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
     private val apiExecutor: ServerApiExecutor,
     private val proBackendConfig: Provider<ProBackendConfig>,
     private val generateProProofApi: GenerateProProofApi.Factory,
-    private val proDetailsRepository: ProDetailsRepository,
+    private val proStatusRepository: ProStatusRepository,
     private val loginStateRepository: LoginStateRepository,
     private val configFactory: ConfigFactoryProtocol,
 ) : CoroutineWorker(context, params) {
@@ -55,8 +55,8 @@ class ProProofGenerationWorker @AssistedInject constructor(
             "User must be logged to generate proof"
         }
 
-        val details = checkNotNull(proDetailsRepository.loadState.value.lastUpdated) {
-            "Pro details must be available to generate proof"
+        val details = checkNotNull(proStatusRepository.loadState.value.lastUpdated) {
+            "Pro status must be available to generate proof"
         }
 
         check(details.first.userStatus == ProUserStatus.ACTIVE) {

@@ -28,8 +28,8 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import network.loki.messenger.libsession_util.pro.GetProDetailsResponse
-import org.thoughtcrime.securesms.pro.api.GetProDetailsApi
+import network.loki.messenger.libsession_util.pro.GetProStatusResponse
+import org.thoughtcrime.securesms.pro.api.GetProStatusApi
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.pro.db.ProDatabase
@@ -37,20 +37,20 @@ import java.time.Duration
 import javax.inject.Provider
 
 /**
- * A worker that fetches the user's Pro details from the server and updates the local database.
+ * A worker that fetches the user's Pro status from the server and updates the local database.
  *
  * This worker doesn't do any business logic in terms of when to schedule itself, it simply performs
  * the fetch and update operation regardlessly. It, however, does schedule the [ProProofGenerationWorker]
- * if needed based on the fetched Pro details, this is because the proof generation logic
- * is tightly coupled to the fetched Pro details state.
+ * if needed based on the fetched Pro status, this is because the proof generation logic
+ * is tightly coupled to the fetched Pro status state.
  */
 @HiltWorker
-class FetchProDetailsWorker @AssistedInject constructor(
+class FetchProStatusWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val proBackendConfig: Provider<ProBackendConfig>,
     private val serverApiExecutor: ServerApiExecutor,
-    private val getProDetailsApiFactory: GetProDetailsApi.Factory,
+    private val getProStatusApiFactory: GetProStatusApi.Factory,
     private val proDatabase: ProDatabase,
     private val loginStateRepository: LoginStateRepository,
     private val snodeClock: SnodeClock,
@@ -59,27 +59,27 @@ class FetchProDetailsWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         if (!prefs.forcePostPro()) {
-            Log.d(TAG, "Pro details fetch skipped because pro is not enabled")
+            Log.d(TAG, "Pro status fetch skipped because pro is not enabled")
             return Result.success()
         }
 
         val proMasterKey =
             requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
-                "User must be logged in to fetch pro details"
+                "User must be logged in to fetch pro status"
             }
 
         return try {
-            Log.d(TAG, "Fetching Pro details from server")
+            Log.d(TAG, "Fetching Pro status from server")
             val details = serverApiExecutor.execute(
                 ServerApiRequest(
                     proBackendConfig = proBackendConfig.get(),
-                    api = getProDetailsApiFactory.create(proMasterKey)
+                    api = getProStatusApiFactory.create(proMasterKey)
                 )
             ).successOrThrow()
 
             Log.d(
                 TAG,
-                "Fetched pro details, status = ${details.userStatus}, " +
+                "Fetched pro status, status = ${details.userStatus}, " +
                         "autoRenew = ${details.autoRenewing}, expiry = ${details.expiry}"
             )
 
@@ -102,7 +102,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
                     configs.userProfile.removeProConfig()
                 }
             }
-            proDatabase.updateProDetails(proDetails = details, updatedAt = snodeClock.currentTime())
+            proDatabase.updateProStatus(proStatus = details, updatedAt = snodeClock.currentTime())
 
             scheduleProofGenerationIfNeeded(details)
 
@@ -111,16 +111,16 @@ class FetchProDetailsWorker @AssistedInject constructor(
             Log.d(TAG, "Work cancelled")
             throw e
         } catch (e: NonRetryableException) {
-            Log.e(TAG, "Non-retryable error fetching pro details", e)
+            Log.e(TAG, "Non-retryable error fetching pro status", e)
             Result.failure()
         } catch (e: Exception) {
-            Log.e(TAG, "Error fetching pro details", e)
+            Log.e(TAG, "Error fetching pro status", e)
             Result.retry()
         }
     }
 
 
-    private suspend fun scheduleProofGenerationIfNeeded(details: GetProDetailsResponse) {
+    private suspend fun scheduleProofGenerationIfNeeded(details: GetProStatusResponse) {
         val now = snodeClock.currentTimeMillis()
 
         if (details.userStatus != ProUserStatus.ACTIVE) {
@@ -152,7 +152,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
     }
 
     companion object {
-        private const val TAG = "FetchProDetailsWorker"
+        private const val TAG = "FetchProStatusWorker"
 
         fun watch(context: Context): Flow<WorkInfo> {
             val workQuery = WorkQuery.Builder
@@ -173,7 +173,7 @@ class FetchProDetailsWorker @AssistedInject constructor(
                 .enqueueUniqueWork(
                     uniqueWorkName = TAG,
                     existingWorkPolicy = existingWorkPolicy,
-                    request = OneTimeWorkRequestBuilder<FetchProDetailsWorker>()
+                    request = OneTimeWorkRequestBuilder<FetchProStatusWorker>()
                         .apply {
                             if (delay != null) {
                                 setInitialDelay(delay)

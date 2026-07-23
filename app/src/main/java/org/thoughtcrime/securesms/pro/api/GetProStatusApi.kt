@@ -4,27 +4,26 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import network.loki.messenger.libsession_util.pro.BackendRequests
-import network.loki.messenger.libsession_util.pro.GetProDetailsResponse
+import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import network.loki.messenger.libsession_util.pro.ProRequest
 import org.session.libsession.network.SnodeClock
 
-class GetProDetailsApi @AssistedInject constructor(
+class GetProStatusApi @AssistedInject constructor(
     private val snodeClock: SnodeClock,
     @Assisted private val masterPrivateKey: ByteArray,
     deps: ProApiDependencies,
-) : ProApi<GetProDetailsResponse>(deps) {
+) : ProApi<GetProStatusResponse>(deps) {
     override fun buildProRequest(): ProRequest =
-        BackendRequests.buildGetProDetailsRequest(
+        BackendRequests.buildGetProStatusRequest(
             masterPrivateKey = masterPrivateKey,
             nowSeconds = snodeClock.currentTimeMillis() / 1000,
-            count = 10,
         )
 
-    override fun parseResponse(json: String): GetProDetailsResponse =
-        BackendRequests.parsePaymentDetailsResponse(json)
+    override fun parseResponse(json: String): GetProStatusResponse =
+        BackendRequests.parseProStatusResponse(json)
 
     @AssistedFactory
     interface Factory {
-        fun create(masterPrivateKey: ByteArray): GetProDetailsApi
+        fun create(masterPrivateKey: ByteArray): GetProStatusApi
     }
 }

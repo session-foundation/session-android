@@ -52,7 +52,7 @@ import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProDataState
-import org.thoughtcrime.securesms.pro.ProDetailsRepository
+import org.thoughtcrime.securesms.pro.ProStatusRepository
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
@@ -80,7 +80,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val subscriptionCoordinator: SubscriptionCoordinator,
     private val dateUtils: DateUtils,
     private val prefs: TextSecurePreferences,
-    private val proDetailsRepository: ProDetailsRepository,
+    private val proStatusRepository: ProStatusRepository,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
     private val storage: StorageProtocol,
     private val clock: SnodeClock,
@@ -488,7 +488,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshProDetails(true) },
+                                    onPositive = { refreshProStatus(true) },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                                     }
@@ -577,12 +577,12 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             is Commands.RecoverAccount -> {
                 recovering = true
-                refreshProDetails(true)
+                refreshProStatus(true)
             }
 
             is Commands.OnUserBackFromCancellation -> {
                 // refresh details
-                refreshProDetails(true)
+                refreshProStatus(true)
 
                 // send action to handle post cancellation to the navigator
                 viewModelScope.launch {
@@ -753,7 +753,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshProDetails(true) },
+                                    onPositive = { refreshProStatus(true) },
                                     onNegative = {
                                         onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
                                     }
@@ -792,12 +792,12 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun refreshProDetails(force: Boolean){
+    private fun refreshProStatus(force: Boolean){
         // stop early if we are already refreshing
         if(_proSettingsUIState.value.proDataState.refreshState is State.Loading) return
 
-        // refreshes the pro details data
-        proDetailsRepository.requestRefresh(force = force)
+        // refreshes the pro status data
+        proStatusRepository.requestRefresh(force = force)
     }
 
     private fun getSelectedPlan(): ProPlan? {
