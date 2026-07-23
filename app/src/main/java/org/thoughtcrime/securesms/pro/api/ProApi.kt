@@ -36,7 +36,9 @@ abstract class ProApi<Res : ProResponse>(private val deps: ProApiDependencies)
         val request = buildProRequest()
         return HttpRequest(
             method = "POST",
-            url = "$baseUrl/${request.endpoint}".toHttpUrl(),
+            // baseUrl is an HttpUrl.toString(), which normalizes a bare host to a trailing "/"; trim it
+            // so we don't emit a doubled slash (e.g. //get_pro_status) in the inner request path.
+            url = "${baseUrl.trimEnd('/')}/${request.endpoint}".toHttpUrl(),
             // Content-Type comes from libsession (the wire format is its contract with the backend); we relay it
             headers = mapOf(
                 "Content-Type" to request.contentType
