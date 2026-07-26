@@ -13,7 +13,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import network.loki.messenger.libsession_util.pro.GetProStatusResponse
-import org.thoughtcrime.securesms.pro.api.ProRevocations
+import network.loki.messenger.libsession_util.pro.ProRevocationItem
 import org.thoughtcrime.securesms.util.asSequence
 import java.time.Instant
 import javax.inject.Inject
@@ -50,7 +50,7 @@ class ProDatabase @Inject constructor(
         newTicket: Long,
         retainForSeconds: Long,
         now: Instant,
-        data: List<ProRevocations.Item>
+        data: List<ProRevocationItem>
     ) {
         var changes = 0
         // Memory-/storage-only local aging: keep each item until `seen + retain_for` (§4).
@@ -68,8 +68,8 @@ class ProDatabase @Inject constructor(
             """
                 ).use { stmt ->
                     for (item in data) {
-                        stmt.bindString(1, item.revocationTag)
-                        stmt.bindLong(2, item.effectiveFrom.epochSecond)
+                        stmt.bindString(1, item.revocationTagHex)
+                        stmt.bindLong(2, item.effectiveUnixTs)
                         stmt.bindLong(3, retainUntil)
                         changes += stmt.executeUpdateDelete()
                         stmt.clearBindings()
@@ -88,7 +88,7 @@ class ProDatabase @Inject constructor(
         }
 
         for (item in data) {
-            cache.put(item.revocationTag, Unit)
+            cache.put(item.revocationTagHex, Unit)
         }
 
         if (changes > 0) {

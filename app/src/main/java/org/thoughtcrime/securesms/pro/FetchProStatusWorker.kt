@@ -84,8 +84,11 @@ class FetchProStatusWorker @AssistedInject constructor(
             )
 
             configFactory.withMutableUserConfigs { configs ->
-                if (details.expiry != null) {
-                    configs.userProfile.setProAccessExpiry(details.expiry.epochSecond)
+                // Capture into a local: `expiry` is a public API property from another module, so
+                // Kotlin can't smart-cast the nullable directly on the property access.
+                val expiry = details.expiry
+                if (expiry != null) {
+                    configs.userProfile.setProAccessExpiry(expiry.epochSecond)
                 } else {
                     configs.userProfile.removeProAccessExpiry()
                 }
