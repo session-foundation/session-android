@@ -216,6 +216,7 @@
     <string name="cameraGrantAccessQr">{app_name} a besoin d\'accéder à l\'appareil photo pour scanner les codes QR</string>
     <string name="cancel">Annuler</string>
     <string name="cancelAccess">Résilier l\'accès {pro}</string>
+    <string name="cancelProPlatformStore">Annulez sur le <b><font color="0">site Web de {platform_store}</font></b>, en utilisant le compte {platform_account} avec lequel vous vous êtes inscrit à {pro}.</string>
     <string name="change">Modifier</string>
     <string name="changePasswordFail">Échec de changement de mot de passe</string>
     <string name="changePasswordModalDescription">Changez votre mot de passe pour {app_name}. Les données stockées localement seront re-chiffrées avec votre nouveau mot de passe.</string>
@@ -263,6 +264,7 @@
     <string name="commitHashDesktop">Hash de validation : {hash}</string>
     <string name="communityBanDeleteDescription">Ceci va bannir l\'utilisateur sélectionné de cette communauté et supprimer tous ses messages. Êtes-vous sûr de vouloir continuer ?</string>
     <string name="communityBanDescription">Ceci va bannir l\'utilisateur sélectionné de cette communauté. Êtes-vous sûr de vouloir continuer ?</string>
+    <string name="communityBanUserDescription">Êtes-vous sûr de vouloir bannir <b>{name}</b> de cette communauté ?</string>
     <string name="communityDescriptionEnter">Entrez une description de la communauté</string>
     <string name="communityEnterUrl">Entrez l\'URL de la Communauté</string>
     <string name="communityEnterUrlErrorInvalid">URL non valide</string>
@@ -278,8 +280,11 @@
     <string name="communityJoinedAlready">Vous êtes déjà membre de cette communauté.</string>
     <string name="communityLeave">Quitter la communauté</string>
     <string name="communityLeaveError">Échec de quitter {community_name}</string>
+    <string name="communityModOtherBlindedId">D\'autres membres de la communauté verront votre ID masqué.</string>
+    <string name="communityModSelfManagement">Gérer votre propre rôle arrive dans une mise à jour future.</string>
     <string name="communityNameEnter">Entrez un nom de communauté</string>
     <string name="communityNameEnterPlease">Veuillez entrer un nom de communauté</string>
+    <string name="communityUnbanUserDescription">Êtes-vous sûr de vouloir lever le bannissement de <b>{name}</b> de cette communauté ?</string>
     <string name="communityUnknown">Communauté inconnue</string>
     <string name="communityUrl">URL de la communauté</string>
     <string name="communityUrlCopy">Copier l\'URL de la communauté</string>
@@ -303,6 +308,7 @@
     <string name="contentDescriptionQuoteThumbnail">Imagette du message cité</string>
     <string name="contentDescriptionStartConversation">Créer une conversation avec un nouveau contact</string>
     <string name="contentNotificationDescription">Choisissez le contenu affiché dans les notifications locales lorsqu\'un message entrant est reçu.</string>
+    <string name="conversationNavigate">Accéder à la conversation</string>
     <string name="conversationsAddToHome">Ajouter à l’écran d’accueil</string>
     <string name="conversationsAddedToHome">Ajouté à l’écran d’accueil</string>
     <string name="conversationsAudioMessages">Messages audio</string>
@@ -368,7 +374,7 @@
         <item quantity="other">Supprimer les pièces jointes sélectionnées</item>
     </plurals>
     <plurals name="deleteAttachmentsDescription">
-        <item quantity="one">Êtes-vous certain de vouloir effacer la pièce jointe sélectionnée? Le message associé à la pièce jointe sera également supprimé.</item>
+        <item quantity="one">Êtes-vous certain de vouloir effacer la pièce jointe sélectionnée ? Le message associé à la pièce jointe sera également supprimé.</item>
         <item quantity="other">Êtes-vous certain de vouloir effacer toutes les pièces jointes sélectionnées ? Les messages associés aux pièces jointes seront également supprimés.</item>
     </plurals>
     <string name="deleteContactDescription">Êtes-vous sûr de vouloir supprimer <b>{name}</b> de vos contacts ?\n\nCela supprimera votre conversation, y compris tous les messages et pièces jointes. Les futurs messages de <b>{name}</b> apparaîtront comme une demande de message.</string>
@@ -554,7 +560,7 @@
     <string name="groupInviteFailedTwo">Échec d\'inviter {name} et {other_name} à {group_name}</string>
     <string name="groupInviteFailedUser">Échec d\'inviter {name} à {group_name}</string>
     <string name="groupInviteNotSent">Invitation non envoyée</string>
-    <string name="groupInviteReinvite"><b>{name}</b> vous a invité à rejoindre à nouveau <b>{group_name}</b>, où vous êtes un administrateur.</string>
+    <string name="groupInviteReinvite"><b>{name}</b> vous a invité à joindre <b>{group_name}</b>, où vous êtes un administrateur.</string>
     <string name="groupInviteReinviteYou">Vous avez été invité à rejoindre <b>{group_name}</b>, où vous êtes Administrateur.</string>
     <plurals name="groupInviteSending">
         <item quantity="one">Envoi de l\'invitation</item>
@@ -604,6 +610,7 @@
     <string name="groupOnlyAdmin">Vous êtes le seul administrateur de <b>{group_name}</b>.\n\nLes membres du groupe et les paramètres ne peuvent pas être modifiés sans un administrateur.</string>
     <string name="groupOnlyAdminLeave">Vous êtes le seul administrateur de <b>{group_name}</b>.\n\n Les membres du groupe et les paramètres ne peuvent pas être modifiés sans un administrateur. Pour quitter le groupe sans le supprimer, veuillez d\'abord ajouter un nouvel administrateur</string>
     <string name="groupPendingRemoval">En attente de suppression</string>
+    <string name="groupPermissionReadOnly">Ce groupe est en lecture seule</string>
     <string name="groupPromotedYou"><b>Vous</b> avez été promu·e en tant qu\'administrateur.</string>
     <string name="groupPromotedYouMultiple"><b>Vous</b> et <b>{count} autres</b> ont été promus admin.</string>
     <string name="groupPromotedYouTwo"><b>Vous</b> et <b>{other_name}</b> avez été promus administrateurs.</string>
@@ -671,6 +678,9 @@
     <string name="inviteNewMemberGroupLink">Invitez un nouveau membre au groupe en entrant l\'ID de compte, l\'ONS ou en scannant le code QR {icon} de ce membre</string>
     <string name="inviteNewMemberGroupNoLink">Invitez un nouveau membre au groupe en entrant l\'ID de compte, l\'ONS ou en scannant le code QR de ce membre</string>
     <string name="join">Rejoindre</string>
+    <string name="joinThisCommunity">Voulez-vous rejoindre cette communauté ?</string>
+    <string name="joinedCommunityOpen">Vous avez déjà rejoint la communauté <b>{community_name}</b>.\n\nSouhaitez-vous ouvrir cette Communauté ?</string>
+    <string name="keyboardShortcuts">Raccourcis Clavier</string>
     <string name="later">Plus tard</string>
     <string name="launchOnStartDescriptionDesktop">Lancer automatiquement {app_name} au démarrage de votre ordinateur.</string>
     <string name="launchOnStartDesktop">Lancer au démarrage</string>
@@ -718,16 +728,13 @@
     <string name="manageAdmins">Gérer les administrateurs</string>
     <string name="manageMembers">Gérer Membres</string>
     <string name="managePro">Gérer {pro}</string>
+    <string name="manageSelf">Se gérer</string>
     <string name="max">Maximale</string>
     <string name="maybeLater">Peut-être plus tard</string>
     <string name="media">Médias</string>
     <plurals name="memberSelected">
         <item quantity="one">%1$d Membre sélectionné</item>
         <item quantity="other">%1$d Membres sélectionnés</item>
-    </plurals>
-    <plurals name="members">
-        <item quantity="one">%1$d membre</item>
-        <item quantity="other">%1$d membres</item>
     </plurals>
     <plurals name="membersActive">
         <item quantity="one">%1$d membre actif</item>
@@ -816,6 +823,7 @@
     <string name="modalMessageCharacterTooLongTitle">Le message est trop long</string>
     <string name="modalMessageTooLongDescription">Veuillez raccourcir votre message a {limit} caractères ou moins.</string>
     <string name="modalMessageTooLongTitle">Le message est trop long</string>
+    <string name="nameAdminCommunities">{name} est un <b>admin</b> dans toutes les communautés hébergées par ce serveur.</string>
     <string name="newPassword">Nouveau mot de passe</string>
     <string name="next">Suivant</string>
     <string name="nextSteps">Étapes suivantes</string>
@@ -835,6 +843,7 @@
     <string name="noteToSelfEmpty">Vous n\'avez aucun message dans Note à mon intention.</string>
     <string name="noteToSelfHide">Cacher la Note à soi-même</string>
     <string name="noteToSelfHideDescription">Êtes-vous sûr de vouloir masquer Note à moi-même ?</string>
+    <string name="noteToSelfOpen">Ouvrir la note à soi-même</string>
     <string name="noteTosPrivacyPolicy"><b>VEUILLEZ NOTER</b>: En {action_type}, vous acceptez les <b>Conditions d\'utilisation</b> {icon} et la <b>Politique de confidentialité</b> {icon} de {app_pro}</string>
     <string name="notificationDisplay">Affichage des notifications</string>
     <string name="notificationSenderNameAndPreview">Afficher le nom de l\'expéditeur et un aperçu du contenu du message.</string>
@@ -911,6 +920,7 @@
     <string name="onsErrorNotRecognized">Nous n\'avons pas pu reconnaître cet ONS. Veuillez vérifier et réessayer.</string>
     <string name="onsErrorUnableToSearch">Nous n\'avons pas pu rechercher cet ONS. Veuillez réessayer plus tard.</string>
     <string name="open">Ouvrir</string>
+    <string name="openMessageContextMenu">Ouvrir le menu contextuel du message</string>
     <string name="openPlatformStoreWebsite">Ouvrir le site Web de {platform_store}</string>
     <string name="openPlatformWebsite">Ouvrir le site Web de {platform}</string>
     <string name="openSettings">Ouvrir les paramètres</string>
@@ -1005,14 +1015,12 @@
     <string name="proAccessNotFoundDescription">{app_name} a détecté que votre compte ne dispose pas d’un accès {pro}. Si vous pensez qu’il s’agit d’une erreur, veuillez contacter l’assistance de {app_name} pour obtenir de l’aide.</string>
     <string name="proAccessRecover">Récupérer l’accès à {pro}</string>
     <string name="proAccessRenew">Renouveler l’accès {pro}</string>
-    <string name="proAccessRenewDesktop">Actuellement, les accès {pro} ne peuvent être achetés et renouvelés que via les boutiques {platform_store} et {platform_store_other}. Étant donné que vous utilisez {app_name} Bureau, vous ne pouvez pas renouveler votre abonnement ici.\n\nLes développeurs de {app_name} travaillent activement sur des options de paiement alternatives pour permettre aux utilisateurs d\'acheter des abonnements {pro} en dehors des boutiques {platform_store} et {platform_store_other}. <b>Feuille de route {pro}</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renouvelez votre accès {pro} sur le <b><font color="0">site Web de {platform_store}</font></b> en utilisant le compte {platform_account} avec lequel vous vous êtes inscrit à {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Renouvelez sur le <b><font color="0">site Web de {platform}</font></b>, en utilisant le compte {platform_account} avec lequel vous vous êtes inscrit à {pro}.</string>
     <string name="proAccessRenewStart">Renouvelez votre abonnement {pro} pour recommencer à utiliser les puissantes fonctionnalités bêta de {app_pro}.</string>
     <string name="proAccessRestored">Accès {pro} restauré</string>
     <string name="proAccessRestoredDescription">{app_name} a détecté et récupéré l\'accès {pro} de votre compte. Votre statut {pro} a été restauré !</string>
     <string name="proAccessSignUp">Comme vous vous êtes initialement inscrit à {app_pro} via <b>{platform_store}</b>, vous devez utiliser votre compte {platform_account} pour mettre à jour votre accès {pro}.</string>
-    <string name="proAccessUpgradeDesktop">Actuellement, les accès {pro} ne peuvent être achetés que via les boutiques {platform_store} et {platform_store_other}. Étant donné que vous utilisez {app_name} Bureau, vous ne pouvez pas effectuer de mise à niveau vers {pro} ici.\n\nLes développeurs de {app_name} travaillent activement sur des options de paiement alternatives pour permettre aux utilisateurs dʼacheter des abonnements {pro} en dehors des boutiques {platform_store} et {platform_store_other}. <b>Feuille de route {pro}</b> {icon}</string>
     <string name="proActivated">Activé</string>
     <string name="proActivatingActivation">activation</string>
     <string name="proAllSet">Tout est prêt !</string>
@@ -1035,9 +1043,6 @@
         <item quantity="other">Badge %1$s %2$s envoyé</item>
     </plurals>
     <string name="proBetaFeatures">Fonctionnalités {pro}</string>
-    <string name="proBilledAnnually">{price} facturé annuellement</string>
-    <string name="proBilledMonthly">{price} facturé mensuellement</string>
-    <string name="proBilledQuarterly">{price} facturé trimestriellement</string>
     <string name="proCallToActionLongerMessages">Vous souhaitez envoyer des messages plus longs?\nEnvoyez plus de texte et débloquez des fonctionnalités premium avec {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Vous voulez plus de messages épinglés?\nOrganisez vos discussions et débloquez les fonctionnalités premium avec {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vous voulez plus que {limit} messages épinglés?\nOrganisez vos discussions et débloquez les fonctionnalités premium avec {app_pro} Beta</string>
@@ -1096,27 +1101,23 @@
     <string name="proPlanPlatformRefund">Parce que vous avez initialement souscrit {app_pro} depuis <b><font color="0">{platform_store}</font></b>, vous devrez utiliser le même {platform_account} pour demander un remboursement.</string>
     <string name="proPlanPlatformRefundLong">Comme vous vous êtes initialement inscrit à {app_pro} via le <b><font color="0">Store {platform_store}</font></b>, votre demande de remboursement sera traitée par le support de {app_name}.\n\nDemandez un remboursement en cliquant sur le bouton ci-dessous et en remplissant le formulaire de demande de remboursement.\n\nBien que le support de {app_name} s\'efforce de traiter les demandes de remboursement sous 24-72 heures, le traitement peut prendre plus de temps en cas de forte demande.</string>
     <string name="proPlanRenewSupport">Votre forfait {app_pro} a été renouvelé ! Merci de soutenir {network_name}.</string>
-    <string name="proPriceOneMonth">1 mois – {monthly_price} / mois</string>
-    <string name="proPriceThreeMonths">3 mois - {monthly_price} / mois</string>
-    <string name="proPriceTwelveMonths">12 mois - {monthly_price} / mois</string>
     <string name="proReactivatingActivation">réactivation</string>
     <string name="proRefundAccountDevice">Ouvrez ce compte {app_name} sur un appareil {device_type} connecté au compte {platform_account} avec lequel vous vous êtes inscrit à l\'origine. Ensuite, demandez un remboursement via les paramètres {app_pro}.</string>
     <string name="proRefundDescription">Nous sommes désolés de vous voir partir. Voici ce que vous devez savoir avant de demander un remboursement.</string>
     <string name="proRefundNextSteps">{platform} traite actuellement votre demande de remboursement. Cela prend généralement 24-48 heures. Selon leur décision, votre statut {pro} peut changer dans {app_name}.</string>
     <string name="proRefundRequestSessionSupport">Votre demande de remboursement sera traitée par le service de {app_name}.\n\nDemandez un remboursement en appuyant sur le bouton ci-dessous et en remplissant le formulaire de demande de remboursement.\n\nBien que le service de {app_name} fait au mieux afin de traiter les demandes de remboursement dans un délai de 24-72 heures, le traitement peut être plus long en période de forte demande.</string>
     <string name="proRefundRequestStorePolicies">Votre demande de remboursement sera traitée exclusivement par {platform} via le site Web de <b>{platform}</b>.\n\nEn raison des politiques de remboursement de {platform}, les développeurs de {app_name} n\'ont aucun moyen d\'influencer l\'issue des demandes de remboursement. Cela inclut la décision d\'approuver ou de refuser la demande, ainsi que l\'éventualité d\'un remboursement total ou partiel.</string>
+    <string name="proRefundSupport">Veuillez contacter {platform}, pour plus d\'informations sur votre demande de remboursement. En raison de la politique de remboursement de {platform} , les développeurs {app_name} n\'ont pas la possibilité d\'influencer le résultat des demandes de remboursement.\n\n<font color="0"><b>Service Remboursement de {platform} {icon}</b></font></string>
     <string name="proRefunding">Remboursement de {pro}</string>
     <string name="proRefundingDescription">Les remboursements pour {app_pro} sont exclusivement gérés par {platform} via {platform_store}.\n\nConformément aux politiques de remboursement de {platform}, les développeurs de {app_name} n\'ont aucun pouvoir d\'influencer l\'issue des demandes de remboursement. Cela inclut la décision d\'approbation ou de refus, ainsi que le montant total ou partiel du remboursement.</string>
     <string name="proRenewAnimatedDisplayPicture">Envie d’utiliser à nouveau des photos de profil animées ?\n Renouvelez votre accès {pro} pour débloquer les fonctionnalités qui vous manquent.</string>
     <string name="proRenewBeta">Renouveler la version bêta {pro}</string>
-    <string name="proRenewDesktopLinked">Renouvelez votre accès {pro} dans les paramètres de {app_pro} sur un appareil lié avec {app_name} installé via {platform_store} ou {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Envie d’envoyer à nouveau des messages plus longs ?\n Renouvelez votre accès {pro} pour débloquer les fonctionnalités qui vous manquent.</string>
     <string name="proRenewMaxPotential">Envie d’utiliser {app_name} à son plein potentiel à nouveau ?\n Renouvelez votre accès {pro} pour débloquer les fonctionnalités qui vous manquent.</string>
     <string name="proRenewPinFiveConversations">Vous souhaitez à nouveau épingler plus de {limit} conversations?\nRenouvelez votre accès {pro} pour débloquer les fonctionnalités qui vous manquent.</string>
     <string name="proRenewPinMoreConversations">Envie d’épingler à nouveau plus de conversations ?\n Renouvelez votre accès {pro} pour débloquer les fonctionnalités qui vous manquent.</string>
     <string name="proRenewTosPrivacy">En renouvelant, vous acceptez les <b>Conditions d\'utilisation</b> {icon} et la <b>Politique de confidentialité</b> {icon} de {app_pro}</string>
     <string name="proRenewingAction">renouvellement</string>
-    <string name="proRenewingNoAccessBilling">Actuellement, les accès {pro} ne peuvent être achetés et renouvelés que via les boutiques {platform_store} et {platform_store_other}. Étant donné que vous avez installé {app_name} à l\'aide de la version {build_variant}, vous ne pouvez pas renouveler votre abonnement ici.\n\nLes développeurs de {app_name} travaillent activement sur des options de paiement alternatives pour permettre aux utilisateurs d\'acheter des abonnements {pro} en dehors des boutiques {platform_store} et {platform_store_other}. <b>Feuille de route {pro}</b>{icon}</string>
     <string name="proRequestedRefund">Remboursement demandé</string>
     <string name="proSendMore">Envoyez plus avec</string>
     <string name="proSettings">Paramètres {pro}</string>
@@ -1139,12 +1140,11 @@
     <string name="proTosPrivacy">En mettant à jour, vous acceptez les <b>Conditions d\'utilisation</b> {icon} et la <b>Politique de confidentialité</b> {icon} de {app_pro}</string>
     <string name="proUnlimitedPins">Épingles illimitées</string>
     <string name="proUnlimitedPinsDescription">Organisez toutes vos discussions avec un nombre illimité de conversations épinglées.</string>
+    <string name="proUnsuccessfulRenewalDescription">Votre accès {pro} n\'a pas pu être renouvelé à cause d\'un problème de paiement lié à votre {platform_account}. Merci de vérifier le status de votre paiement sur le {platform_store}. \n\nVotre accès {pro} restera actif et vous pourrez continuer de faire des changements de facturations pendant que le {platform_store} réessaye le paiement.</string>
     <string name="proUpdateAccessDescription">Votre option de facturation actuelle vous donne droit à <b>{current_plan_length}</b> d\'accès {pro}. Voulez-vous vraiment passer à l\'option de facturation <b>{selected_plan_length_singular}</b>?\n\nEn mettant à jour, votre accès {pro} sera automatiquement renouvelé le <b>{date}</b> pour <b>{selected_plan_length}</b> supplémentaire d\'accès {pro}.</string>
     <string name="proUpdateAccessExpireDescription">Votre accès {pro} expirera le <b>{date}</b>.\n\nEn le mettant à jour, votre accès {pro} sera automatiquement renouvelé le <b>{date}</b> pour <b>{selected_plan_length}</b> supplémentaires d’accès {pro}.</string>
     <string name="proUpdatingAction">mise à jour</string>
     <string name="proUpgradeAccess">Passez à {app_pro} Bêta pour accéder à de nombreux avantages et fonctionnalités exclusifs.</string>
-    <string name="proUpgradeDesktopLinked">Passez à {pro} depuis les paramètres de {app_pro} sur un appareil lié avec {app_name} installé via {platform_store} ou {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">Actuellement, les accès {pro} ne peuvent être achetés que via les boutiques {platform_store} et {platform_store_other}. Étant donné que vous avez installé {app_name} à l\'aide de la version {build_variant}, vous ne pouvez pas effectuer de mise à niveau vers {pro} ici.\n\nLes développeurs de {app_name} travaillent activement sur des options de paiement alternatives pour permettre aux utilisateurs d\'acheter des abonnements {pro} en dehors des boutiques {platform_store} et {platform_store_other}. <b>Feuille de route {pro}</b>{icon}</string>
     <string name="proUpgradeOption">Pour l\'instant, il y a un seul moyen de mettre à niveau :</string>
     <string name="proUpgradeOptionsTwo">Pour l\'instant, il y a deux moyens de mettre à niveau :</string>
     <string name="proUpgraded">Vous êtes passé à {app_pro} !\nMerci de soutenir {network_name}.</string>
@@ -1184,6 +1184,8 @@
     <string name="rateSession">Noter {app_name} ?</string>
     <string name="rateSessionApp">Noter l’application</string>
     <string name="rateSessionModalDescription">Nous sommes ravis que vous appréciiez {app_name}. Si vous avez un instant, une évaluation sur {storevariant} aiderait d\'autres personnes à découvrir la messagerie privée et sécurisée !</string>
+    <string name="rateSessionModalDescriptionUpdated">{app_name} n\'affiche aucune publicité, ne vend aucune donnée, et ne répond qu\'à ses utilisateurs. Votre avis {storevariant} aide davantage de personnes à trouver une messagerie qui respecte réellement leur confidentialité.</string>
+    <string name="rateUs">Laissez-nous un avis</string>
     <string name="read">Lu</string>
     <string name="readMoreCapital">En savoir plus</string>
     <string name="readReceipts">Accusés de lecture</string>
@@ -1227,6 +1229,10 @@
         <item quantity="one">Retirer un membre</item>
         <item quantity="other">Supprimer les membres</item>
     </plurals>
+    <plurals name="removeMemberLowercase">
+        <item quantity="one">Retirer le membre</item>
+        <item quantity="other">Retirer les membres</item>
+    </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="one">Supprimer le membre et ses messages</item>
         <item quantity="other">Supprimer les membres et leurs messages</item>
@@ -1235,7 +1241,7 @@
     <string name="removePasswordModalDescription">Supprimez votre mot de passe actuel pour {app_name}. Les données stockées localement seront à nouveau chiffrées à l\'aide d\'une clé générée aléatoirement, stockée sur votre appareil.</string>
     <plurals name="removingMember">
         <item quantity="one">Suppression du membre</item>
-        <item quantity="other">Suppression des membres</item>
+        <item quantity="other">Suppression de membres</item>
     </plurals>
     <string name="renew">Renouveler</string>
     <string name="renewingPro">Renouvellement de {pro}</string>
@@ -1269,6 +1275,7 @@
     <string name="runSessionBackground">Exécuter {app_name} en arrière-plan?</string>
     <string name="runSessionBackgroundDescription">Puisque vous utilisez le mode lent, nous vous recommandons d\'autoriser {app_name} à s\'exécuter en arrière-plan pour améliorer la fiabilité des notifications. Cela peut améliorer la cohérence des notifications, bien que votre système puisse toujours limiter automatiquement l\'activité en arrière-plan.\n\nVous pouvez modifier ce paramètre ultérieurement dans les paramètres.</string>
     <string name="save">Enregistrer</string>
+    <string name="saveMessageAttachment">Enregistrer la pièce jointe</string>
     <string name="saved">Enregistré</string>
     <string name="savedMessages">Messages enregistrés</string>
     <string name="saving">Enregistrement...</string>
@@ -1284,7 +1291,7 @@
     <string name="searchConversation">Chercher dans la conversation</string>
     <string name="searchEnter">Veuillez saisir votre recherche.</string>
     <plurals name="searchMatches">
-        <item quantity="one">%1$d resultat sur %2$d</item>
+        <item quantity="one">%1$d Sur %2$d correspondance</item>
         <item quantity="other">%1$d resultats sur %2$d</item>
     </plurals>
     <string name="searchMatchesNone">Aucun résultat trouvé.</string>
@@ -1299,8 +1306,8 @@
     <string name="sendingCallOffer">Appel en cours d’envoi</string>
     <string name="sendingConnectionCandidates">Envoi des candidats à la connexion</string>
     <plurals name="sendingPromotion">
-        <item quantity="one">Envoi de la promotion</item>
-        <item quantity="other">Envoi des promotions</item>
+        <item quantity="one">Envoi d\'une nomination</item>
+        <item quantity="other">Envoi des nominations</item>
     </plurals>
     <string name="sent">Envoyé :</string>
     <string name="sessionAppearance">Apparence</string>
@@ -1358,6 +1365,9 @@
     <string name="theError">Erreur</string>
     <string name="theReturn">Retour</string>
     <string name="themePreview">Aperçu du thème</string>
+    <string name="toggleEmojiPicker">Afficher/Masquer le sélecteur d\'émoji</string>
+    <string name="toggleReactionBarMessage">Afficher/Masquer la barre de réactions du message</string>
+    <string name="toggleReplyMessage">Répondre au message</string>
     <string name="tooltipAccountIdVisible">L’ID de compte de <b>{name}</b> est visible en fonction de vos interactions précédentes</string>
     <string name="tooltipBlindedIdCommunities">Les ID aveuglés sont utilisés dans les communautés pour réduire le spam et renforcer la confidentialité</string>
     <string name="translate">Traduction</string>
@@ -1404,6 +1414,7 @@
     <string name="urlOpenDescription">Êtes-vous sûr de vouloir ouvrir cette adresse URL dans votre navigateur web ?\n\n<b>{url}</b></string>
     <string name="urlOpenDescriptionAlternative">Les liens s\'ouvriront dans votre navigateur.</string>
     <string name="useFastMode">Utiliser le mode rapide</string>
+    <string name="userSettings">Paramètres Utilisateur</string>
     <string name="viaPlatformWebsiteDescription">Modifiez votre abonnement en utilisant le compte {platform_account} avec lequel vous vous êtes inscrit, via le site web de <b><font color="0">{platform}</font></b>.</string>
     <string name="viaStoreWebsite">Via le site Web {platform}</string>
     <string name="video">Vidéo</string>

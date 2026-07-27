@@ -560,6 +560,11 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Stemboodskap</string>
     <string name="messages">Boodskappe</string>
     <string name="minimize">Minimeer</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Boodskappe het \'n karakter limiet van %1$s karakters. Jy het %2$d karakter oor.</item>
+        <item quantity="other">Boodskappe het \'n karakterl imiet van %1$s karakters. Jy het %2$d karakters oor.</item>
+    </plurals>
+    <string name="modalMessageCharacterTooLongTitle">Boodskap te lank</string>
     <string name="next">Volgende</string>
     <string name="nicknameDescription">Kies \'n bynaam vir <b>{name}</b>. Dit sal vir jou verskyn in jou een-tot-een en groepe gesprekke.</string>
     <string name="nicknameEnter">Voer bynaam in</string>
@@ -673,6 +678,10 @@
     <string name="pinUnpin">Losmaak</string>
     <string name="pinUnpinConversation">Maak Gesprek Los</string>
     <string name="preview">Voorskou</string>
+    <plurals name="proLongerMessagesSent">
+        <item quantity="one">%1$s Vasgemaakte gesprek</item>
+        <item quantity="other">%1$s Vasgemaakte gesprekke</item>
+    </plurals>
     <string name="profile">Profiel</string>
     <string name="profileDisplayPicture">Vertoon Prent</string>
     <string name="profileDisplayPictureRemoveError">Kon nie vertoonbeeld verwyder nie.</string>
@@ -708,6 +717,10 @@
     <string name="recoveryPasswordRestoreDescription">Voer jou herstel wagwoord in om jou rekening te laai. As jy dit nie gestoor het nie, kan jy dit in jou app-instellings kry.</string>
     <string name="recoveryPasswordWarningSendDescription">Hierdie is jou Herwinningswagwoord. As jy dit aan iemand stuur, sal hulle volle toegang tot jou rekening hê.</string>
     <string name="redo">Herdoen</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d karakter oor</item>
+        <item quantity="other">%1$d karakters oor</item>
+    </plurals>
     <string name="remove">Verwyder</string>
     <string name="removePasswordFail">Kon nie wagwoord verwyder nie</string>
     <string name="reply">Antwoord</string>

@@ -383,7 +383,7 @@
     <string name="emojiReactsClearAll">Bạn có chắc chắn rằng bạn muốn xóa tất cả {emoji}?</string>
     <string name="emojiReactsCoolDown">Chậm lại! Bạn đã gửi quá nhiều emoji react. Thử lại sau</string>
     <plurals name="emojiReactsCountOthers">
-        <item quantity="other">Và %1$d người khác đã phản ứng %2$s với tin nhắn này.</item>
+        <item quantity="other">Và %1$d người khác đã bày tỏ cảm xúc %2$s với tin nhắn này.</item>
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} đã phản ứng với {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} và {other_name} đã phản ứng với {emoji_name}</string>
@@ -658,7 +658,7 @@
     <string name="notificationsMuted">Đã ngắt tiếng</string>
     <string name="notificationsMutedFor">Tắt thông báo trong {time_large}</string>
     <string name="notificationsSlowMode">Slow Mode</string>
-    <string name="notificationsSlowModeDescription">{app_name} sẽ thỉnh thoảng kiểm tra tin nhắn mới trong nền.</string>
+    <string name="notificationsSlowModeDescription">{app_name} sẽ thỉnh thoảng kiểm tra tin nhắn mới khi chạy ở chế độ ngầm.</string>
     <string name="notificationsSound">Âm thanh</string>
     <string name="notificationsSoundDescription">Âm thanh khi ứng dụng mở</string>
     <string name="notificationsSoundDesktop">Thông báo âm thanh</string>
@@ -737,6 +737,8 @@
     <string name="pinUnpin">Bỏ ghim</string>
     <string name="pinUnpinConversation">Bỏ ghim cuộc trò chuyện</string>
     <string name="preview">Xem trước</string>
+    <string name="proAnimatedDisplayPicturesNonProModalDescription">Tải lên GIF với PRO</string>
+    <string name="proRefundRequestSessionSupport">Yêu cầu hoàn tiền của bạn sẽ được bộ phận Hỗ trợ {app_name} xử lý.\n\nHãy yêu cầu hoàn tiền bằng cách nhấn nút bên dưới và hoàn thành biểu mẫu yêu cầu hoàn tiền.\n\nMặc dù bộ phận Hỗ trợ {app_name} luôn cố gắng xử lý yêu cầu hoàn tiền trong vòng 24 đến 72 giờ, nhưng thời gian xử lý có thể lâu hơn vào những thời điểm có nhiều yêu cầu.</string>
     <string name="profile">Hồ sơ cá nhân</string>
     <string name="profileDisplayPicture">Display Picture</string>
     <string name="profileDisplayPictureRemoveError">Không thể xóa hình đại diện.</string>
@@ -782,6 +784,7 @@
     <string name="recoveryPasswordWarningSendDescription">Đây là Mật khẩu Khôi phục của bạn. Nếu bạn gửi nó cho ai đó, họ sẽ có toàn quyền truy cập vào tài khoản của bạn.</string>
     <string name="recreateGroup">Tạo lại nhóm</string>
     <string name="redo">Hoàn tác</string>
+    <string name="refundNonOriginatorApple">Vì bạn đã đăng ký {app_pro} bằng một {platform_account} khác, bạn cần sử dụng tài khoản <b><font color="0">{platform_account}</font></b> đó để cập nhật quyền truy cập {pro}.</string>
     <string name="remove">Bỏ</string>
     <string name="removePasswordFail">Xóa mật khẩu thất bại</string>
     <string name="reply">Trả lời</string>

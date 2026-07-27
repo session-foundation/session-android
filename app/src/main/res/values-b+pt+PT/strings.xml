@@ -127,9 +127,9 @@
     <string name="attachmentsFilesEmpty">Não tem nenhum ficheiro nesta conversa.</string>
     <string name="attachmentsImageErrorMetadata">Não é possível remover os metadados do ficheiro.</string>
     <string name="attachmentsLoadingNewer">Carregando Multimédia Recente...</string>
-    <string name="attachmentsLoadingNewerFiles">Carregando Arquivos Recentes...</string>
+    <string name="attachmentsLoadingNewerFiles">A carregar Arquivos Recentes...</string>
     <string name="attachmentsLoadingOlder">Carregando Multimédia Antiga...</string>
-    <string name="attachmentsLoadingOlderFiles">Carregando Arquivos Antigos...</string>
+    <string name="attachmentsLoadingOlderFiles">A carregar Arquivos Antigos...</string>
     <string name="attachmentsMedia">{name} em {date_time}</string>
     <string name="attachmentsMediaEmpty">Não existe multimédia nesta conversa.</string>
     <string name="attachmentsMediaSaved">Multimédia guardada por {name}</string>
@@ -208,7 +208,7 @@
     <string name="cameraAccessInstructions">Para permitir o acesso à câmera, abra as configurações e ative a permissão da Câmera.</string>
     <string name="cameraAccessReminderMessage">Durante sua última chamada, você tentou usar o vídeo, mas não conseguiu porque o acesso à câmera foi negado anteriormente. Para permitir o acesso à câmera, abra as configurações e ative a permissão da Câmera.</string>
     <string name="cameraAccessRequired">Acesso à Câmera Necessário</string>
-    <string name="cameraErrorNotFound">Não foi encontrada a câmara</string>
+    <string name="cameraErrorNotFound">Não foi encontrada a câmera</string>
     <string name="cameraErrorUnavailable">Câmera indisponível.</string>
     <string name="cameraGrantAccess">Conceder Acesso à Câmera</string>
     <string name="cameraGrantAccessDenied">{app_name} precisa de acesso à câmera para tirar fotos e vídeos, mas isso foi negado permanentemente. Por favor, acesse as configurações do app, selecione \"Permissões\" e ative \"Câmera\".</string>
@@ -296,7 +296,7 @@
         <item quantity="other">%1$d contactos selecionados</item>
     </plurals>
     <string name="contactUserDetails">Detalhes do Utilizador</string>
-    <string name="contentDescriptionCamera">Câmara</string>
+    <string name="contentDescriptionCamera">Câmera</string>
     <string name="contentDescriptionChooseConversationType">Escolha uma ação para começar uma conversa</string>
     <string name="contentDescriptionMediaMessage">Mensagem multimédia</string>
     <string name="contentDescriptionMessageComposition">Composição da mensagem</string>
@@ -312,7 +312,7 @@
     <string name="conversationsCommunities">Comunidades</string>
     <string name="conversationsDelete">Eliminar Conversa</string>
     <string name="conversationsDeleteDescription">Tem certeza de que deseja apagar sua conversa com <b>{name}?</b> Novas mensagens de <b>{name}</b> iniciarão uma nova conversa.</string>
-    <string name="conversationsDeleted">Conversa excluída</string>
+    <string name="conversationsDeleted">Conversa apagada</string>
     <string name="conversationsEmpty">Não existem mensagens em {conversation_name}.</string>
     <string name="conversationsEnter">Inserir ENTER</string>
     <string name="conversationsEnterDescription">Defina como as teclas Enter e Shift+Enter funcionam nas conversas.</string>
@@ -344,7 +344,7 @@
     <string name="databaseErrorRestoreDataWarning">Tem a certeza de que pretende apagar todas as mensagens, anexos e dados da conta deste dispositivo e restaurar a sua conta a partir da rede?</string>
     <string name="databaseErrorTimeout">Percebemos que {app_name} está a demorar muito a iniciar.\n\nPode continuar a esperar, exportar os registos do seu dispositivo e partilhar para analisarmos o problema, ou tentar reiniciar o {app_name}.</string>
     <string name="databaseErrorUpdate">A base de dados do seu aplicativo é incompatível com esta versão do {app_name}. Reinstale o aplicativo e restaure a sua conta para gerar uma nova base de dados e continuar a usar o {app_name}.\n\nAviso: Isso resultará na perda de todas as mensagens e anexos com mais de duas semanas.</string>
-    <string name="databaseOptimizing">Otimizando a base de dados</string>
+    <string name="databaseOptimizing">A optimizar a base de dados</string>
     <string name="debugLog">Log de debug</string>
     <string name="decline">Recusar</string>
     <string name="delete">Apagar</string>
@@ -503,7 +503,7 @@
     <string name="enterPasswordDescription">Insira a palavra-passe que você definiu para {app_name}</string>
     <string name="enterPasswordTooltip">Insira a palavra-passe que você usa para desbloquear o {app_name} na inicialização, não a sua palavra-passe de recuperação</string>
     <string name="errorCheckingProStatus">Erro ao verificar o status {pro}</string>
-    <string name="errorConnection">Por favor, verifique a sua conexão à Internet e tente novamente.</string>
+    <string name="errorConnection">Por favor, verifique a sua conexão à internet e tente novamente.</string>
     <string name="errorCopyAndQuit">Copiar erro e sair</string>
     <string name="errorDatabase">Erro na base de dados</string>
     <string name="errorGeneric">Ocorreu um erro. Por favor, tente novamente mais tarde.</string>
@@ -531,7 +531,7 @@
     <string name="fullScreenToggle">Ativar ecrã completo</string>
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
-    <string name="giphyWarningDescription">{app_name} irá conectar-se ao Giphy para fornecer resultados de busca. Você não terá proteção total de metadados ao enviar GIFs.</string>
+    <string name="giphyWarningDescription">{app_name} irá conectar-se ao Giphy para fornecer resultados da procura. Você não terá proteção total de metadados ao enviar GIFs.</string>
     <string name="giveFeedback">Dar opinião?</string>
     <string name="giveFeedbackDescription">Lamentamos saber que a sua experiência com o {app_name} não foi ideal. Agradecíamos se pudesse partilhar a sua opinião através de um breve questionário</string>
     <string name="groupAddMemberMaximum">Os grupos têm no máximo 100 membros</string>
@@ -831,7 +831,7 @@
     <string name="nonProUnlimitedPinnedDescription">Organize os chats com conversas fixadas ilimitadas.</string>
     <string name="none">Nenhum</string>
     <string name="notNow">Agora não</string>
-    <string name="noteToSelf">Nota para mim</string>
+    <string name="noteToSelf">Nota pessoal</string>
     <string name="noteToSelfEmpty">Não possui mensagens em Nota Pessoais.</string>
     <string name="noteToSelfHide">Ocultar Nota Pessoal</string>
     <string name="noteToSelfHideDescription">Tem certeza que pretende ocultar a Nota pessoal?</string>
@@ -861,10 +861,10 @@
     <string name="notificationsMentionsOnly">Apenas menções</string>
     <string name="notificationsMessage">Notificações de mensagem</string>
     <string name="notificationsMostRecent">Mais recente de {name}</string>
-    <string name="notificationsMute">Silenciar</string>
-    <string name="notificationsMuteFor">Silenciar por {time_large}</string>
+    <string name="notificationsMute">Pôr em modo de silêncio</string>
+    <string name="notificationsMuteFor">Pôr em modo de silêncio por {time_large}</string>
     <string name="notificationsMuteUnmute">Não silenciar</string>
-    <string name="notificationsMuted">Silenciado</string>
+    <string name="notificationsMuted">Em modo de silêncio</string>
     <string name="notificationsMutedFor">Silenciado por {time_large}</string>
     <string name="notificationsMutedForTime">Silenciado até {date_time}</string>
     <string name="notificationsSlowMode">Modo lento</string>
@@ -979,7 +979,7 @@
     <string name="permissionsRequired">Permissão necessária</string>
     <string name="permissionsStorageDenied">{app_name} precisa de acesso à biblioteca das fotos para poder enviar fotos e vídeos, mas foi permanentemente negado. Carregue em Definições → Permissões, e ative \"Fotos e vídeos\".</string>
     <string name="permissionsStorageDeniedLegacy">{app_name} precisa de acesso ao armazenamento para que possa enviar e guardar anexos. Carregue em Definições → Permissões, e ative \"Armazenamento\".</string>
-    <string name="permissionsStorageSave">{app_name} precisa de acesso ao armazenamento para salvar anexos e mídia.</string>
+    <string name="permissionsStorageSave">{app_name} precisa de acesso ao armazenamento para salvar anexos e multimédia.</string>
     <string name="permissionsStorageSaveDenied">{app_name} precisa de acesso ao armazenamento para salvar fotos e vídeos, mas isso foi negado permanentemente. Por favor, acesse as definições do app, selecione \"Permissões\" e ative \"Armazenamento\".</string>
     <string name="permissionsStorageSend">{app_name} precisa de acesso ao armazenamento para enviar fotos e vídeos.</string>
     <string name="permissionsWriteCommunity">Você não tem permissões de escrita nesta Comunidade</string>
@@ -1004,14 +1004,12 @@
     <string name="proAccessNotFoundDescription">O {app_name} detectou que sua conta não possui acesso {pro}. Se você acredita que isso seja um erro, entre em contato com o suporte do {app_name} para obter ajuda.</string>
     <string name="proAccessRecover">Recuperar acesso {pro}</string>
     <string name="proAccessRenew">Renovar acesso {pro}</string>
-    <string name="proAccessRenewDesktop">Atualmente, o acesso ao {pro} só pode ser adquirido e renovado por meio da {platform_store} ou da {platform_store_other}. Como você está usando o {app_name} Desktop, não é possível renovar aqui.\n\nOs desenvolvedores do {app_name} estão trabalhando intensamente em opções alternativas de pagamento para permitir que os usuários adquiram o acesso ao {pro} fora da {platform_store} e da {platform_store_other}. <b>Roteiro do {pro}</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renove seu acesso ao {pro} no <b><font color="0">site da {platform_store}</font></b> usando a {platform_account} com a qual você criou sua conta {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Renove no <b><font color="0">site da {platform}</font></b> usando a {platform_account} com a qual subscreveu o {pro}.</string>
     <string name="proAccessRenewStart">Renove seu acesso {pro} para voltar a usar os poderosos recursos Beta do {app_pro}.</string>
     <string name="proAccessRestored">Acesso {pro} Recuperado</string>
     <string name="proAccessRestoredDescription">O {app_name} detectou e recuperou o acesso {pro} da sua conta. Seu status {pro} foi restaurado!</string>
     <string name="proAccessSignUp">Como você se registrou originalmente no {app_pro} pela <b>{platform_store}</b>, será necessário usar sua conta {platform_account} para atualizar seu acesso ao {pro}.</string>
-    <string name="proAccessUpgradeDesktop">Atualmente, o acesso {pro} só pode ser adquirido através da {platform_store} ou da {platform_store_other}. Como você está usando o {app_name} Desktop, não é possível fazer o upgrade para {pro} aqui.\n\nOs desenvolvedores do {app_name} estão trabalhando arduamente em opções de pagamento alternativas para permitir que os usuários adquiram acesso {pro} fora da {platform_store} e {platform_store_other}. <b>Roteiro do {pro}</b> {icon}</string>
     <string name="proActivated">Ativado</string>
     <string name="proActivatingActivation">a ativar</string>
     <string name="proAllSet">Tudo pronto!</string>
@@ -1034,9 +1032,6 @@
         <item quantity="other">%1$s emblemas %2$s enviados</item>
     </plurals>
     <string name="proBetaFeatures">Funcionalidades Beta de {pro}</string>
-    <string name="proBilledAnnually">{price} Cobrado Anualmente</string>
-    <string name="proBilledMonthly">{price} Cobrado Mensalmente</string>
-    <string name="proBilledQuarterly">{price} Cobrado Trimestralmente</string>
     <string name="proCallToActionLongerMessages">Quer enviar mensagens mais longas?\nEnvie mais texto e desbloqueie funcionalidades premium com o {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Quer fixar mais conversas?\nOrganize os seus chats e desbloqueie funcionalidades premium com o {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Quer fixar mais de {limit} conversas?\nOrganize os seus chats e desbloqueie funcionalidades premium com o {app_pro} Beta</string>
@@ -1095,9 +1090,6 @@
     <string name="proPlanPlatformRefund">Como você se registrou originalmente no {app_pro} pela <b><font color="0">{platform_store}</font></b>, será necessário usar sua conta {platform_account} para solicitar um reembolso.</string>
     <string name="proPlanPlatformRefundLong">Como você se registrou originalmente no {app_pro} pela <b><font color="0">{platform_store}</font></b>, sua solicitação de reembolso será processada pelo Suporte do {app_name}.\n\nSolicite um reembolso clicando no botão abaixo e preenchendo o formulário de reembolso.\n\nEmbora o Suporte do {app_name} se esforce para processar as solicitações de reembolso em 24 a 72 horas, o processamento pode levar mais tempo durante períodos de alta demanda.</string>
     <string name="proPlanRenewSupport">Seu acesso {app_pro} foi renovado! Obrigado por apoiar a {network_name}.</string>
-    <string name="proPriceOneMonth">1 Mês - {monthly_price} / Mês</string>
-    <string name="proPriceThreeMonths">3 Meses - {monthly_price} / Mês</string>
-    <string name="proPriceTwelveMonths">12 Meses - {monthly_price} / Mês</string>
     <string name="proReactivatingActivation">a reativar</string>
     <string name="proRefundAccountDevice">Abra esta conta do {app_name} em um dispositivo {device_type} com sessão iniciada na {platform_account} com a qual você se inscreveu originalmente. Em seguida, solicite um reembolso pelas definições do {app_pro}.</string>
     <string name="proRefundDescription">Lamentamos ver você partir. Aqui está o que você precisa saber antes de solicitar o reembolso.</string>
@@ -1108,14 +1100,12 @@
     <string name="proRefundingDescription">Reembolsos do {app_pro} são processados exclusivamente pelo {platform} por meio da {platform_store}.\n\nDevido às políticas de reembolso do {platform}, os desenvolvedores do {app_name} não têm qualquer possibilidade de influenciar o resultado de pedidos de reembolso. Isso inclui se o pedido será aprovado ou recusado, assim como se será emitido um reembolso integral ou parcial.</string>
     <string name="proRenewAnimatedDisplayPicture">Quer voltar a usar imagens de exibição animadas?\nRenove seu acesso ao {pro} para desbloquear os recursos dos quais você sentiu falta.</string>
     <string name="proRenewBeta">Renovar {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Renove seu acesso ao {pro} nas configurações do {app_pro} em um dispositivo vinculado com o {app_name} instalado via {platform_store} ou {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Quer voltar a enviar mensagens mais longas?\nRenove seu acesso ao {pro} para desbloquear os recursos dos quais você sentiu falta.</string>
     <string name="proRenewMaxPotential">Quer voltar a usar o {app_name} ao máximo?\nRenove seu acesso ao {pro} para desbloquear os recursos dos quais você sentiu falta.</string>
     <string name="proRenewPinFiveConversations">Quer voltar a fixar mais de {limit} conversas?\nRenove seu acesso ao {pro} para desbloquear os recursos dos quais você sentiu falta.</string>
     <string name="proRenewPinMoreConversations">Quer voltar a fixar mais conversas?\nRenove seu acesso ao {pro} para desbloquear os recursos dos quais você sentiu falta.</string>
     <string name="proRenewTosPrivacy">Ao renovar, você concorda com os <b>Termos de Serviço</b> {icon} e a <b>Política de Privacidade</b> {icon} do {app_pro}</string>
     <string name="proRenewingAction">a renovar</string>
-    <string name="proRenewingNoAccessBilling">No momento, o acesso ao {pro} só pode ser adquirido e renovado através da {platform_store} ou da {platform_store_other}. Como você instalou o {app_name} usando o {build_variant}, não é possível renovar por aqui.\n\nOs desenvolvedores do {app_name} estão trabalhando intensamente em opções alternativas de pagamento para que os usuários possam adquirir acesso ao {pro} fora da {platform_store} e da {platform_store_other}.<b> Roteiro do {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Reembolso solicitado</string>
     <string name="proSendMore">Envie mais com</string>
     <string name="proSettings">Definições do {pro}</string>
@@ -1142,8 +1132,6 @@
     <string name="proUpdateAccessExpireDescription">Seu acesso ao {pro} expirará em <b>{date}</b>.\n\nAo atualizar, seu acesso ao {pro} será renovado automaticamente em <b>{date}</b> por mais <b>{selected_plan_length}</b> de acesso ao {pro}.</string>
     <string name="proUpdatingAction">a atualizar</string>
     <string name="proUpgradeAccess">Faça o upgrade para o {app_pro} Beta para obter acesso a vários benefícios e recursos exclusivos.</string>
-    <string name="proUpgradeDesktopLinked">Faça o upgrade para {pro} nas configurações do {app_pro} em um dispositivo vinculado onde o {app_name} foi instalado pela {platform_store} ou {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">Atualmente, o acesso {pro} só pode ser adquirido através da {platform_store} ou {platform_store_other}. Como você instalou o {app_name} usando o {build_variant}, não é possível fazer o upgrade para {pro} aqui.\n\nOs desenvolvedores do {app_name} estão trabalhando arduamente em opções de pagamento alternativas para permitir que os usuários adquiram acesso {pro} fora da {platform_store} e {platform_store_other}.<b> Roteiro do {pro}</b> {icon}</string>
     <string name="proUpgradeOption">Por enquanto, há apenas uma forma de atualizar:</string>
     <string name="proUpgradeOptionsTwo">Por enquanto, há duas formas de fazer o upgrade:</string>
     <string name="proUpgraded">Você fez upgrade para {app_pro}!\nObrigado por apoiar o {network_name}.</string>
@@ -1156,7 +1144,7 @@
     <string name="profileDisplayPicture">Exibir Imagem</string>
     <string name="profileDisplayPictureRemoveError">Erro ao remover a foto do perfil.</string>
     <string name="profileDisplayPictureSet">Definir imagem a exibir</string>
-    <string name="profileDisplayPictureSizeError">Por favor, escolha um ficheiro menor.</string>
+    <string name="profileDisplayPictureSizeError">Por favor, escolha um ficheiro de menor dimensão.</string>
     <string name="profileErrorUpdate">Não foi possível atualizar o perfil.</string>
     <string name="promote">Promover</string>
     <string name="promoteAdminsWarning">Os admins poderão ver o histórico de mensagens dos últimos 14 dias e não poderão ser despromovidos ou removidos do grupo.</string>
@@ -1273,7 +1261,7 @@
     <string name="saving">A gravar...</string>
     <string name="scan">Escanear</string>
     <string name="screenSecurity">Segurança de ecrã</string>
-    <string name="screenshotNotifications">Notificações de Screenshot</string>
+    <string name="screenshotNotifications">Notificações de captura de ecrã</string>
     <string name="screenshotNotificationsDescription">Receber uma notificação quando um contato captura um screenshot de uma conversa.</string>
     <string name="screenshotProtectionDescriptionDesktop">Ocultar a janela do {app_name} nas capturas de ecrã feitas neste dispositivo.</string>
     <string name="screenshotProtectionDesktop">Proteção contra capturas de ecrã</string>
@@ -1289,7 +1277,7 @@
     <string name="searchMatchesNone">Nenhuns resultados de pesquisa encontrados.</string>
     <string name="searchMatchesNoneSpecific">Não foram encontrados resultados para \'{query}\'</string>
     <string name="searchMembers">Procurar Membros</string>
-    <string name="searchSearching">Pesquisando...</string>
+    <string name="searchSearching">A pesquisar...</string>
     <string name="select">Selecionar</string>
     <string name="selectAll">Selecionar tudo</string>
     <string name="selectAppIcon">Selecionar ícone da aplicação</string>
@@ -1396,7 +1384,7 @@
     <string name="upgrade">Atualizar</string>
     <string name="upgradeSession">Atualizar {app_name}</string>
     <string name="upgradeTo">Atualizar para</string>
-    <string name="uploading">Carregando</string>
+    <string name="uploading">A carregar</string>
     <string name="urlCopy">Copiar URL</string>
     <string name="urlOpen">Abrir URL</string>
     <string name="urlOpenBrowser">Isso abrirá no seu navegador.</string>

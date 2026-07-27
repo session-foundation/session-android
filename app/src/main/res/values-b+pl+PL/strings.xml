@@ -2,7 +2,7 @@
 <resources>
     <string name="about">O aplikacji</string>
     <string name="accept">Zaakceptuj</string>
-    <string name="accountIDCopy">Kopiuj identyfikator konta</string>
+    <string name="accountIDCopy">Kopiowanie identyfikatora konta</string>
     <string name="accountId">Identyfikator konta</string>
     <string name="accountIdCopied">Skopiowano identyfikator konta</string>
     <string name="accountIdCopyDescription">Skopiuj swój identyfikator konta, a następnie udostępnij go znajomym, aby mogli wysłać do Ciebie wiadomość.</string>
@@ -91,7 +91,7 @@
     <string name="appearanceLanguageDescription">Wybierz ustawienie języka dla aplikacji {app_name}. Po zmianie ustawienia języka aplikacja {app_name} uruchomi się ponownie.</string>
     <string name="appearancePreview1">Jak się masz?</string>
     <string name="appearancePreview2">Dobrze, dzięki. A Ty?</string>
-    <string name="appearancePreview3">Świetnie, dziękuję.</string>
+    <string name="appearancePreview3">Świetnie, dzięki.</string>
     <string name="appearancePrimaryColor">Kolor podstawowy</string>
     <string name="appearanceThemes">Motywy</string>
     <string name="appearanceThemesClassicDark">Klasyczny ciemny</string>
@@ -141,20 +141,20 @@
     <string name="attachmentsMediaSaved">Media zapisane przez użytkownika {name}</string>
     <string name="attachmentsMoveAndScale">Przesuń i zmień wielkość</string>
     <string name="attachmentsNa">Nie dotyczy</string>
-    <string name="attachmentsNotification">{emoji} Załącznik</string>
+    <string name="attachmentsNotification">{emoji} załącznik</string>
     <string name="attachmentsNotificationGroup">{author}: {emoji} Załącznik</string>
     <string name="attachmentsResolution">Rozdzielczość:</string>
     <string name="attachmentsSaveError">Nie można zapisać pliku.</string>
     <string name="attachmentsSendTo">Wyślij do {name}</string>
     <string name="attachmentsTapToDownload">Kliknij, aby pobrać {file_type}</string>
     <string name="attachmentsThisMonth">Ten miesiąc</string>
-    <string name="attachmentsThisWeek">W tym tygodniu</string>
+    <string name="attachmentsThisWeek">Bieżący tydzień</string>
     <string name="attachmentsWarning">Zapisane załączniki mogą być dostępne dla innych aplikacji na urządzeniu.</string>
     <string name="audio">Audio</string>
     <string name="audioNoInput">Nie znaleziono urządzenia wejściowego audio</string>
     <string name="audioNoOutput">Nie znaleziono urządzenia wyjściowego audio</string>
     <string name="audioUnableToPlay">Nie można odtworzyć pliku audio.</string>
-    <string name="audioUnableToRecord">Nie udało się nagrać dźwięku.</string>
+    <string name="audioUnableToRecord">Nie udało się nagrać audio.</string>
     <string name="authenticateFailed">Uwierzytelnianie się nie powiodło</string>
     <string name="authenticateFailedTooManyAttempts">Zbyt wiele nieudanych prób uwierzytelnienia. Spróbuj ponownie później.</string>
     <string name="authenticateNotAccessed">Nie można uzyskać dostępu do uwierzytelniania.</string>
@@ -182,7 +182,7 @@
     <string name="blockUnblockedUser">Odblokowano {name}</string>
     <string name="blockedContactsManageDescription">Przeglądaj i zarządzaj zablokowanymi kontaktami.</string>
     <string name="browserNotFound">Nie znaleziono przeglądarki do otwarcia tego adresu URL, spróbuj zamiast tego go skopiować</string>
-    <string name="call">Zadzwoń</string>
+    <string name="call">Połączenie</string>
     <string name="callsCalledYou">{name} dzwonił(a) do Ciebie</string>
     <string name="callsCannotStart">Nie można rozpocząć nowego połączenia. Najpierw należy zakończyć bieżące połączenie.</string>
     <string name="callsConnecting">Łączenie...</string>
@@ -190,7 +190,7 @@
     <string name="callsEnded">Połączenie zakończone</string>
     <string name="callsErrorAnswer">Nie udało się odebrać połączenia</string>
     <string name="callsErrorStart">Nie udało się rozpocząć rozmowy</string>
-    <string name="callsInProgress">Trwa połączenie</string>
+    <string name="callsInProgress">Połączenie w toku</string>
     <string name="callsIncoming">Połączenie przychodzące od {name}</string>
     <string name="callsIncomingUnknown">Połączenie przychodzące</string>
     <string name="callsMicrophonePermissionsRequired">Nie odebrałeś połączenia od <b>{name}</b> ponieważ nie przyznano <b>dostępu do mikrofonu</b>.</string>
@@ -271,6 +271,7 @@
     <string name="commitHashDesktop">Hash zatwierdzenia: {hash}</string>
     <string name="communityBanDeleteDescription">Działanie zablokuje wybranego użytkownika w społeczności i skasuje wszystkie jego wiadomości. Na pewno kontynuować?</string>
     <string name="communityBanDescription">Działanie zablokuje wybranego użytkownika w społeczności. Na pewno kontynuować?</string>
+    <string name="communityBanUserDescription">Czy na pewno chcesz zablokować <b>{name}</b> z tej społeczności?</string>
     <string name="communityDescriptionEnter">Wprowadź opis społeczności</string>
     <string name="communityEnterUrl">Wprowadź adres URL społeczności</string>
     <string name="communityEnterUrlErrorInvalid">Nieprawidłowy adres URL</string>
@@ -290,7 +291,7 @@
     <string name="communityNameEnterPlease">Proszę wprowadzić nazwę społeczności</string>
     <string name="communityUnknown">Nieznana społeczność</string>
     <string name="communityUrl">Adres URL społeczności</string>
-    <string name="communityUrlCopy">Kopiuj adres URL społeczności</string>
+    <string name="communityUrlCopy">Kopiowanie adresu URL społeczności</string>
     <string name="confirm">Potwierdź</string>
     <string name="confirmPromotion">Potwierdź awans</string>
     <string name="confirmPromotionDescription">Czy na pewno? Administratorów nie można zdegradować ani usunąć z grupy.</string>
@@ -305,7 +306,7 @@
         <item quantity="many">Wybrano %1$d kontaktów</item>
         <item quantity="other">Wybrano %1$d kontaktów</item>
     </plurals>
-    <string name="contactUserDetails">Szczegóły użytkownika</string>
+    <string name="contactUserDetails">Dane użytkownika</string>
     <string name="contentDescriptionCamera">Aparat</string>
     <string name="contentDescriptionChooseConversationType">Aby rozpocząć rozmowę, wybierz akcję</string>
     <string name="contentDescriptionMediaMessage">Wiadomość multimedialna</string>
@@ -342,7 +343,7 @@
     <string name="conversationsSpellCheckDescription">Włącz sprawdzanie pisowni podczas pisania wiadomości.</string>
     <string name="conversationsStart">Rozpocznij rozmowę</string>
     <string name="copied">Skopiowano</string>
-    <string name="copy">Kopiuj</string>
+    <string name="copy">Kopia</string>
     <string name="create">Utwórz</string>
     <string name="creatingCall">Tworzenie połączenia</string>
     <string name="currentBilling">Bieżące rozliczenie</string>
@@ -362,7 +363,7 @@
     <string name="deleteAfterGroupPR1BlockThisUser">Zablokuj tego użytkownika</string>
     <string name="deleteAfterGroupPR1BlockUser">Zablokuj użytkownika</string>
     <string name="deleteAfterGroupPR1GroupSettings">Ustawienia grupy</string>
-    <string name="deleteAfterGroupPR1MentionsOnly">Powiadom tylko o wzmiankach</string>
+    <string name="deleteAfterGroupPR1MentionsOnly">Powiadamiaj tylko o wzmiankach</string>
     <string name="deleteAfterGroupPR1MentionsOnlyDescription">Po włączeniu tej opcji będziesz otrzymywać powiadomienia tylko o wiadomościach, w których o Tobie wspomniano.</string>
     <string name="deleteAfterGroupPR1MessageSound">Dźwięk wiadomości</string>
     <string name="deleteAfterGroupPR3DeleteMessagesConfirmation">Trwale usunąć wiadomości w tej konwersacji?</string>
@@ -418,7 +419,7 @@
     <string name="deleteMessageDevicesAll">Usuń na wszystkich moich urządzeniach</string>
     <string name="deleteMessageEveryone">Usuń u wszystkich</string>
     <plurals name="deleteMessageFailed">
-        <item quantity="one">Nie udało się usunąć wiadomości</item>
+        <item quantity="one">Usunięcie wiadomości nie powiodło się</item>
         <item quantity="few">Nie udało się usunąć wiadomości</item>
         <item quantity="many">Nie udało się usunąć wiadomości</item>
         <item quantity="other">Nie udało się usunąć wiadomości</item>
@@ -442,7 +443,7 @@
     <string name="dictationStart">Rozpocznij dyktowanie...</string>
     <string name="disappearingMessages">Znikające wiadomości</string>
     <string name="disappearingMessagesCountdownBig">Wiadomość zostanie usunięta za {time_large}</string>
-    <string name="disappearingMessagesCountdownBigMobile">Automatyczne usuwanie za {time_large}</string>
+    <string name="disappearingMessagesCountdownBigMobile">Automatyczne usuwanie w {time_large}</string>
     <string name="disappearingMessagesCountdownBigSmall">Wiadomość zostanie usunięta za {time_large} {time_small}</string>
     <string name="disappearingMessagesCountdownBigSmallMobile">Automatyczne usuwanie za {time_large} {time_small}</string>
     <string name="disappearingMessagesDeleteType">Usuń typ</string>
@@ -468,7 +469,7 @@
     <string name="disappearingMessagesTurnedOff"><b>{name}</b> wyłączył(a) znikające wiadomości. Wysłane wiadomości nie będą już znikały.</string>
     <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> <b>wyłącza</b> znikające wiadomości.</string>
     <string name="disappearingMessagesTurnedOffYou"><b>Ty</b> <b>wyłączyłeś(-aś)</b> znikające wiadomości. Wysłane wiadomości nie będą już znikały.</string>
-    <string name="disappearingMessagesTurnedOffYouGroup"><b>Wyłączono</b> znikające wiadomości.</string>
+    <string name="disappearingMessagesTurnedOffYouGroup"><b>Ty</b> <b>wyłączyłeś/aś</b> znikające wiadomości.</string>
     <string name="disappearingMessagesTypeRead">przeczytano</string>
     <string name="disappearingMessagesTypeSent">wysłano</string>
     <string name="disappearingMessagesUpdated"><b>{admin_name}</b> zaktualizował(a) ustawienia znikających wiadomości.</string>
@@ -558,9 +559,9 @@
     <string name="followSystemSettings">Dopasuj do ustawień systemu.</string>
     <string name="forever">Zawsze</string>
     <string name="from">Od:</string>
-    <string name="fullScreenToggle">Pełny ekran</string>
+    <string name="fullScreenToggle">Przełączanie pełnego ekranu</string>
     <string name="gif">GIF</string>
-    <string name="giphyWarning">Giphy</string>
+    <string name="giphyWarning">Gify</string>
     <string name="giphyWarningDescription">Aby dostarczać wyniki wyszukiwania, aplikacja {app_name} połączy się z platformą Giphy. Podczas wysyłania GIF-ów nie będziesz mieć pełnej ochrony metadanych.</string>
     <string name="giveFeedback">Przekazać opinię?</string>
     <string name="giveFeedbackDescription">Przykro nam, że Twoje doświadczenie z {app_name} nie było idealne. Bylibyśmy wdzięczni, gdybyś poświęcił chwilę na podzielenie się swoją opinią w krótkiej ankiecie</string>
@@ -715,6 +716,7 @@
     <string name="inviteNewMemberGroupLink">Zaproś nowego członka do grupy, wpisując Identyfikator konta swojego znajomego, ONS lub skanując jego kod QR {icon}</string>
     <string name="inviteNewMemberGroupNoLink">Zaproś nowego członka do grupy, wpisując identyfikator konta znajomego, ONS lub skanując jego kod QR</string>
     <string name="join">Dołącz</string>
+    <string name="joinedCommunityOpen">Dołączyłeś już do <b>{community_name}</b> Społeczności.\n\nCzy chcesz otworzyć tę społeczność?</string>
     <string name="later">Później</string>
     <string name="launchOnStartDescriptionDesktop">Uruchamiaj {app_name} automatycznie przy uruchomieniu komputera.</string>
     <string name="launchOnStartDesktop">Uruchom przy starcie</string>
@@ -743,13 +745,13 @@
     <string name="linkPreviewsFirstDescription">Wyświetla podgląd wysyłanych i odbieranych adresów URL. Może to być przydatne, jednak aby wygenerować podgląd, aplikacja {app_name} musi skontaktować się z powiązanymi stronami internetowymi. Zawsze możesz wyłączyć podgląd linków w ustawieniach aplikacji {app_name}.</string>
     <string name="linkPreviewsSend">Wyślij podglądy linków</string>
     <string name="linkPreviewsSendModalDescription">Podczas wysyłania podglądu linków nie wystęuje pełna ochrona metadanych.</string>
-    <string name="linkPreviewsTurnedOff">Podglądy linków wyłączone</string>
+    <string name="linkPreviewsTurnedOff">Podglądy linków są wyłączone</string>
     <string name="linkPreviewsTurnedOffDescription">Aby generować podgląd wysłanych i odbieranych linków, aplikacja {app_name} musi połączyć się z powiązanymi stronami.\n\nMożesz włączyć tę funkcję w ustawieniach aplikacji {app_name}.</string>
     <string name="links">Linki</string>
     <string name="loadAccount">Wczytywanie konta</string>
     <string name="loadAccountProgressMessage">Wczytywanie konta</string>
     <string name="loading">Wczytywanie...</string>
-    <string name="lockApp">Zablokuj aplikację</string>
+    <string name="lockApp">Blokada aplikacji</string>
     <string name="lockAppDescription">Wymagaj odcisku palca, kodu PIN, wzoru lub hasła, aby odblokować aplikację {app_name}.</string>
     <string name="lockAppDescriptionIos">Wymagaj Touch ID, Face ID lub kodu dostępu, aby odblokować aplikację {app_name}.</string>
     <string name="lockAppEnablePasscode">Aby korzystać z blokady ekranu, należy włączyć kod dostępu w ustawieniach systemu iOS.</string>
@@ -757,14 +759,14 @@
     <string name="lockAppQuickResponse">Szybka odpowiedź jest niedostępna, gdy aplikacja {app_name} jest zablokowana!</string>
     <string name="lockAppStatus">Status blokady</string>
     <string name="lockAppUnlock">Naciśnij, aby odblokować</string>
-    <string name="lockAppUnlocked">{app_name} jest odblokowany</string>
+    <string name="lockAppUnlocked">{app_name} jest odblokowane</string>
     <string name="logs">Dzienniki</string>
     <string name="manageAdmins">Zarządzaj administratorami</string>
     <string name="manageMembers">Zarządzaj członkami</string>
     <string name="managePro">Zarządzaj {pro}</string>
     <string name="max">Maks</string>
     <string name="maybeLater">Może później</string>
-    <string name="media">Multimedia</string>
+    <string name="media">Media</string>
     <plurals name="memberSelected">
         <item quantity="one">Wybrano %1$d członka</item>
         <item quantity="few">Wybrano %1$d członków</item>
@@ -798,7 +800,7 @@
     <string name="membersInviteShareDescriptionTwo">Czy chcesz udostępnić historię wiadomości grupy użytkownikom <b>{name}</b> i <b>{other_name}</b>?</string>
     <string name="membersInviteShareMessageHistory">Udostępnij historię wiadomości</string>
     <string name="membersInviteShareMessageHistoryDays">Udostępnij historię wiadomości z ostatnich 14 dni</string>
-    <string name="membersInviteShareNewMessagesOnly">Udostępniaj tylko nowe wiadomości</string>
+    <string name="membersInviteShareNewMessagesOnly">Udostępnij tylko nowe wiadomości</string>
     <string name="membersInviteTitle">Zaproś</string>
     <string name="membersNonAdmins">Członkowie (nie administratorzy)</string>
     <string name="menuBar">Pasek Menu</string>
@@ -823,7 +825,7 @@
     <string name="messageNewDescriptionMobile">Rozpocznij nową rozmowę, wprowadzając identyfikator konta lub ONS znajomego lub skanując jego kod QR.</string>
     <string name="messageNewDescriptionMobileLink">Rozpocznij nową rozmowę, wpisując identyfikator konta znajomego (Account ID), ONS lub skanując jego kod QR {icon}</string>
     <plurals name="messageNewYouveGot">
-        <item quantity="one">Masz nową wiadomość.</item>
+        <item quantity="one">Masz nową wiadomość</item>
         <item quantity="few">Masz %1$d nowe wiadomości.</item>
         <item quantity="many">Masz %1$d nowych wiadomości.</item>
         <item quantity="other">Masz %1$d nowych wiadomości.</item>
@@ -838,7 +840,7 @@
     <string name="messageRequestDisabledToastAttachments">Nie można wysyłać załączników, dopóki prośba o wiadomość nie zostanie zaakceptowana</string>
     <string name="messageRequestDisabledToastVoiceMessages">Nie można wysyłać wiadomości głosowych, dopóki prośba o wiadomość nie zostanie zaakceptowana</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> zaprasza Cię do grupy<b>{group_name}</b>.</string>
-    <string name="messageRequestGroupInviteDescription">Wysłanie wiadomości do tej grupy automatycznie zaakceptuje zaproszenie do grupy.</string>
+    <string name="messageRequestGroupInviteDescription">Wysłanie wiadomości do tej grupy spowoduje automatyczne zaakceptowanie zaproszenia do grupy.</string>
     <string name="messageRequestPending">Twoja prośba o wiadomość czeka na akceptację.</string>
     <string name="messageRequestPendingDescription">Wiadomości głosowe i załączniki będzie można wysyłać po zatwierdzeniu prośby o wiadomość przez odbiorcę.</string>
     <string name="messageRequestYouHaveAccepted">Zaakceptowano prośbę o wiadomość od: <b>{name}</b>.</string>
@@ -899,8 +901,9 @@
     <string name="notificationDisplay">Wyświetlanie powiadomień</string>
     <string name="notificationSenderNameAndPreview">Wyświetlaj nazwę nadawcy i podgląd wiadomości.</string>
     <string name="notificationSenderNameOnly">Wyświetlaj tylko nazwę nadawcy, bez podglądu wiadomości.</string>
+    <string name="notificationWarningDescription">Powiadomienia w trybie szybkim muszą być włączone, aby otrzymywać niezawodne powiadomienia o połączeniach po zamknięciu aplikacji {app_name}. To urządzenie korzysta obecnie z powiadomień w trybie zwolnionym.\n\nCzy chcesz zmienić ustawienia powiadomień?</string>
     <string name="notificationsAllMessages">Wszystkie wiadomości</string>
-    <string name="notificationsContent">Treść powiadomień</string>
+    <string name="notificationsContent">Treść powiadomienia</string>
     <string name="notificationsContentDescription">Informacje wyświetlane w powiadomieniach.</string>
     <string name="notificationsContentShowNameAndContent">Nazwa i zawartość</string>
     <string name="notificationsContentShowNameOnly">Tylko nazwa</string>
@@ -959,7 +962,7 @@
     <string name="onboardingMessageNotificationExplanation">Aplikacja {app_name} może powiadomić Cię o nowych wiadomościach na dwa sposoby.</string>
     <string name="onboardingPrivacy">Polityka prywatności</string>
     <string name="onboardingTos">Warunki korzystania z usługi</string>
-    <string name="onboardingTosPrivacy">Korzystając z tej usługi, zgadzasz się na nasze <b>Warunki świadczenia usług</b> i <b>Politykę prywatności</b></string>
+    <string name="onboardingTosPrivacy">Korzystając z tej usługi, użytkownik wyraża zgodę na <b>Warunki świadczenia usług</b> i <b>Politykę prywatności</b></string>
     <string name="ongoingAppeal">Nowa nadzieja na {app_name}</string>
     <string name="ongoingAppealDescription">Kiedy wyglądało jak {app_name} może zniknąć, zwiększyłeś się.\n\nTwoje darowizny darowizn dały {entity_stf_short} wystarczająco dużo, aby umożliwić małym zespołom współtwórców utrzymanie aplikacji.\n\nW tej chwili koncentruje się na tym, aby {app_name} był bezpieczny, stabilny i online.\n\nTwoje darowizny mogą pomóc w wsparciu {app_name} w tym krytycznym czasie. Dodatkowe darowizny mogą umożliwić zatrudnianie większej liczby deweloperów i pomoc w dostarczeniu funkcji niezbędnych do szybszego rozwoju {app_name}.</string>
     <string name="onionRoutingPath">Ścieżka</string>
@@ -983,12 +986,12 @@
     <string name="passwordConfirm">Potwierdź hasło</string>
     <string name="passwordCreate">Utwórz hasło</string>
     <string name="passwordCurrentIncorrect">Twoje obecne hasło jest nieprawidłowe.</string>
-    <string name="passwordEnter">Wprowadź hasło</string>
+    <string name="passwordEnter">Wpisz hasło</string>
     <string name="passwordEnterCurrent">Wprowadź aktualne hasło</string>
     <string name="passwordEnterNew">Wprowadź nowe hasło</string>
     <string name="passwordError">Hasło może zawierać jedynie litery, cyfry i symbole</string>
     <string name="passwordErrorLength">Hasło musi zawierać od {min} do {max} znaków</string>
-    <string name="passwordErrorMatch">Podane hasła różnią się</string>
+    <string name="passwordErrorMatch">Hasła nie są zgodne</string>
     <string name="passwordFailed">Nie udało się ustawić hasła</string>
     <string name="passwordIncorrect">Nieprawidłowe hasło</string>
     <string name="passwordNewConfirm">Potwierdź nowe hasło</string>
@@ -1053,6 +1056,7 @@
     <string name="preview">Podgląd</string>
     <string name="previewNotification">Podgląd powiadomień</string>
     <string name="proAccessActivatedAutoShort">Twój dostęp do {pro} jest aktywny!\n\nTwój dostęp do {pro} zostanie automatycznie odnowiony na kolejne <b>{current_plan_length}</b> dnia <b>{date}</b>.</string>
+    <string name="proAccessActivatedNotAuto">Twój dostęp do {pro} wygaśnie <b>{date}</b>.\n\nZaktualizuj dostęp do {pro} teraz, aby zapewnić automatyczne odnowienie przed wygaśnięciem dostępu do {pro}.</string>
     <string name="proAccessActivatesAuto">Twój dostęp do {pro} jest aktywny!\n\nTwój dostęp do {pro} zostanie automatycznie odnowiony na kolejne\n<b>{current_plan_length}</b> dnia <b>{date}</b>. Wszelkie zmiany wprowadzone tutaj zostaną zastosowane przy następnym odnowieniu.</string>
     <string name="proAccessError">Błąd dostępu {pro}</string>
     <string name="proAccessExpireDate">Twój dostęp do {pro} wygaśnie <b>{date}</b>.</string>
@@ -1064,14 +1068,12 @@
     <string name="proAccessNotFoundDescription">Aplikacja {app_name} wykryła, że Twoje konto nie posiada dostępu {pro}. Jeśli uważasz, że to pomyłka, skontaktuj się z pomocą techniczną {app_name}.</string>
     <string name="proAccessRecover">Odzyskaj dostęp do {pro}</string>
     <string name="proAccessRenew">Odnów dostęp do {pro}</string>
-    <string name="proAccessRenewDesktop">Obecnie dostęp {pro} można zakupić i odnawiać wyłącznie za pośrednictwem {platform_store} lub {platform_store_other}. Ponieważ korzystasz z aplikacji {app_name} na komputerze stacjonarnym, nie możesz odnowić tutaj.\n\nTwórcy aplikacji {app_name} intensywnie pracują nad alternatywnymi metodami płatności, które pozwolą użytkownikom kupować dostęp {pro} poza {platform_store} i {platform_store_other}. <b>Mapa drogowa {pro}</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Odnów dostęp {pro} na stronie <b><font color="0">{platform_store}</font></b> przy użyciu konta {platform_account}, za pomocą którego zasubskrybowałeś(-aś) {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Odnów na stronie internetowej <b><font color="0">{platform}</font></b>, korzystając z konta {platform_account}, którego użyto do rejestracji w {pro}.</string>
     <string name="proAccessRenewStart">Odnów dostęp {pro}, aby ponownie korzystać z potężnych funkcji {app_pro} Beta.</string>
     <string name="proAccessRestored">Dostęp {pro} został przywrócony</string>
     <string name="proAccessRestoredDescription">Aplikacja {app_name} wykryła i przywróciła dostęp {pro} dla Twojego konta. Twój status {pro} został przywrócony!</string>
     <string name="proAccessSignUp">Ponieważ początkowo zarejestrowano się w {app_pro} przez <b>{platform_store}</b>, musisz użyć swojego konta {platform_account}, aby zaktualizować dostęp do {pro}.</string>
-    <string name="proAccessUpgradeDesktop">Obecnie dostęp do {pro} można uzyskać tylko za pośrednictwem {platform_store} lub {platform_store_other}. Ponieważ korzystasz z {app_name} Desktop, aktualizacja do {pro} w tym miejscu nie jest możliwa.\n\nZespół {app_name} pracuje nad alternatywnymi metodami płatności, które umożliwią zakup dostępu {pro} poza {platform_store} i {platform_store_other}. <b>Mapa drogowa {pro}</b> {icon}</string>
     <string name="proActivated">Aktywowano</string>
     <string name="proActivatingActivation">aktywowanie</string>
     <string name="proAllSet">Wszystko gotowe!</string>
@@ -1096,9 +1098,6 @@
         <item quantity="other">Wysłano %1$s odznak %2$s</item>
     </plurals>
     <string name="proBetaFeatures">Funkcje {pro}</string>
-    <string name="proBilledAnnually">Opłata roczna: {price}</string>
-    <string name="proBilledMonthly">Opłata miesięczna: {price}</string>
-    <string name="proBilledQuarterly">Opłata kwartalna: {price}</string>
     <string name="proCallToActionLongerMessages">Chcesz wysyłać dłuższe wiadomości?\nWyślij więcej tekstu i odblokuj funkcje premium dzięki {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Chcesz przypinać więcej czatów?\nZorganizuj swoje rozmowy i odblokuj funkcje premium dzięki {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Chcesz przypiąć więcej niż {limit} czatów?\nZorganizuj swoje rozmowy i odblokuj funkcje premium dzięki {app_pro} Beta</string>
@@ -1163,27 +1162,23 @@
     <string name="proPlanPlatformRefund">Ponieważ początkowo zarejestrowano się w {app_pro} przez <b><font color="0">{platform_store}</font></b>, musisz użyć tego samego konta {platform_account}, aby złożyć wniosek o zwrot.</string>
     <string name="proPlanPlatformRefundLong">Ponieważ początkowo zarejestrowano się w {app_pro} przez <b><font color="0">{platform_store}</font></b>, Twoim wnioskiem o zwrot zajmie się Zespół Wsparcia {app_name}.\n\nAby poprosić o zwrot, kliknij poniższy przycisk i wypełnij formularz zgłoszenia.\n\nChociaż Zespół Wsparcia {app_name} dokłada starań, aby przetwarzać wnioski o zwrot w ciągu 24–72 godzin, przetwarzanie może trwać dłużej w okresach dużej liczby zgłoszeń.</string>
     <string name="proPlanRenewSupport">Twój dostęp {app_pro} został odnowiony! Dziękujemy za wspieranie {network_name}.</string>
-    <string name="proPriceOneMonth">1 miesiąc - {monthly_price} / miesiąc</string>
-    <string name="proPriceThreeMonths">3 miesiące - {monthly_price} / miesiąc</string>
-    <string name="proPriceTwelveMonths">12 miesięcy - {monthly_price} / miesiąc</string>
     <string name="proReactivatingActivation">ponowne aktywowanie</string>
     <string name="proRefundAccountDevice">Otwórz to konto {app_name} na urządzeniu {device_type} zalogowanym na konto {platform_account}, którego użyto do rejestracji. Następnie poproś o zwrot pieniędzy przez ustawienia {app_pro}.</string>
     <string name="proRefundDescription">Przykro nam, że odchodzisz. Tutaj znajdziesz wszystko, co powinieneś wiedzieć przed złożeniem wniosku o zwrot.</string>
     <string name="proRefundNextSteps">{platform} przetwarza obecnie Twój wniosek o zwrot. Zwykle trwa to 24–48 godzin. W zależności od decyzji, Twój status {pro} w {app_name} może się zmienić.</string>
     <string name="proRefundRequestSessionSupport">Twoją prośbą o zwrot zajmie się Zespół Wsparcia {app_name}.\n\nAby poprosić o zwrot, kliknij poniższy przycisk i wypełnij formularz zgłoszenia.\n\nChociaż Zespół Wsparcia {app_name} dokłada starań, aby przetwarzać wnioski o zwrot w ciągu 24–72 godzin, przetwarzanie może trwać dłużej w okresach dużej liczby zgłoszeń.</string>
     <string name="proRefundRequestStorePolicies">Twoja prośba o zwrot zostanie rozpatrzona wyłącznie przez {platform} za pośrednictwem <b>strony internetowej {platform}</b>.\n\nZe względu na zasady zwrotów {platform}, deweloperzy {app_name} nie mają wpływu na decyzję o przyznaniu zwrotu—ani czy wniosek zostanie zaakceptowany lub odrzucony, ani czy zostanie wydany pełny lub częściowy zwrot.</string>
+    <string name="proRefundSupport">Skontaktuj się z {platform} w celu uzyskania dalszych informacji na temat twojego żądania zwrotu. Ze względu na zasady zwrotu {platform}, deweloperzy {app_name} nie mają możliwości wpływania na wynik żądań zwrotu.\n\n<font color="0"><b>{platform} Wsparcie dotyczące zwrotu {icon}</b></font></string>
     <string name="proRefunding">Zwrot {pro}</string>
     <string name="proRefundingDescription">Zwroty za {app_pro} są obsługiwane wyłącznie przez {platform} za pośrednictwem {platform_store}.\n\nZe względu na polityki zwrotów {platform}, twórcy aplikacji {app_name} nie mają możliwości wpływu na wynik wniosków o zwrot – ani decyzji o jego akceptacji lub odrzuceniu, ani o wysokości kwoty (pełnej lub częściowej).</string>
     <string name="proRenewAnimatedDisplayPicture">Chcesz ponownie korzystać z animowanych zdjęć profilowych?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewBeta">Odnów {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Odnów dostęp {pro} w ustawieniach {app_pro} na powiązanym urządzeniu z zainstalowaną aplikacją {app_name} przez {platform_store} lub {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Chcesz znów wysyłać dłuższe wiadomości?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewMaxPotential">Chcesz ponownie wykorzystać pełen potencjał {app_name}?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewPinFiveConversations">Chcesz znowu przypiąć więcej niż {limit} konwersacji?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewPinMoreConversations">Chcesz ponownie przypinać więcej konwersacji?\nOdnów dostęp {pro}, aby odblokować brakujące funkcje.</string>
     <string name="proRenewTosPrivacy">Odnawiając, wyrażasz zgodę na <b>Warunki świadczenia usług</b> {icon} oraz <b>Politykę prywatności</b> {icon} {app_pro}</string>
     <string name="proRenewingAction">odnawianie</string>
-    <string name="proRenewingNoAccessBilling">Obecnie dostęp do {pro} można kupić i odnowić wyłącznie przez {platform_store} lub {platform_store_other}. Ponieważ zainstalowałeś {app_name} za pomocą {build_variant}, nie możesz odnowić tutaj.\n\nDeweloperzy {app_name} intensywnie pracują nad alternatywnymi metodami płatności, które umożliwią zakup dostępu do {pro} poza {platform_store} i {platform_store_other}.<b> Plan rozwoju {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Wniosek o zwrot wysłany</string>
     <string name="proSendMore">Wyślij więcej z</string>
     <string name="proSettings">Ustawienia {pro}</string>
@@ -1206,10 +1201,9 @@
     <string name="proTosPrivacy">Dokonując zmian wyrażasz zgodę na <b>Warunki Świadczenia Usług</b> {app_pro} {icon} oraz <b>Politykę Prywatności</b> {icon}</string>
     <string name="proUnlimitedPins">Nielimitowane przypięcia</string>
     <string name="proUnlimitedPinsDescription">Organizuj swoje czaty z nielimitowaną możliwością przypinania konwersacji.</string>
+    <string name="proUpdateAccessDescription">Twoja aktualna opcja rozliczeniowa zapewni <b>{current_plan_length}</b> dodatkowego dostępu {pro} gdy nastąpi następne odnowienie. Czy na pewno chcesz przełączyć się na opcję rozliczeniową <b>{selected_plan_length_singular}</b>?\n\npoprzez aktualizację, twój dostęp do {pro} automatycznie odnowi się na <b>{date}</b> po dodatkowe <b>{selected_plan_length}</b> dostępu {pro}.</string>
     <string name="proUpdatingAction">aktualizowanie</string>
     <string name="proUpgradeAccess">Zaktualizuj do wersji {app_pro} Beta, aby uzyskać dostęp do wielu ekskluzywnych funkcji i korzyści.</string>
-    <string name="proUpgradeDesktopLinked">Zaktualizuj do {pro} z ustawień {app_pro} na powiązanym urządzeniu, na którym {app_name} został zainstalowany za pośrednictwem {platform_store} lub {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">Obecnie dostęp {pro} można zakupić wyłącznie za pośrednictwem {platform_store} lub {platform_store_other}. Ponieważ zainstalowano {app_name} za pomocą {build_variant}, aktualizacja do {pro} nie jest tutaj możliwa.\n\nZespół {app_name} pracuje nad alternatywnymi metodami płatności, które umożliwią zakup dostępu {pro} poza {platform_store} i {platform_store_other}.<b> Mapa drogowa {pro}</b> {icon}</string>
     <string name="proUpgradeOption">Na razie dostępna jest tylko jedna opcja aktualizacji:</string>
     <string name="proUpgradeOptionsTwo">Na razie istnieją dwa sposoby aktualizacji:</string>
     <string name="proUpgraded">Zaktualizowano do {app_pro}!\nDziękujemy za wspieranie sieci {network_name}.</string>
@@ -1302,6 +1296,12 @@
         <item quantity="many">Usuń członków</item>
         <item quantity="other">Usuń członków</item>
     </plurals>
+    <plurals name="removeMemberLowercase">
+        <item quantity="one">Usuń użytkownika</item>
+        <item quantity="few">Usuń kilku użytkowników</item>
+        <item quantity="many">Usuń wielu użytkowników</item>
+        <item quantity="other">Usuń użytkowników</item>
+    </plurals>
     <plurals name="removeMemberMessages">
         <item quantity="one">Usuń członka i jego wiadomości</item>
         <item quantity="few">Usuń członków i ich wiadomości</item>
@@ -1362,7 +1362,7 @@
     <string name="scan">Skanuj</string>
     <string name="screenSecurity">Ochrona ekranu</string>
     <string name="screenshotNotifications">Powiadomienia o zrzucie ekranu</string>
-    <string name="screenshotNotificationsDescription">Wymagaj powiadomienia, gdy kontakt wykona zrzut ekranu rozmowy prywatnej.</string>
+    <string name="screenshotNotificationsDescription">Wymagaj powiadomienia, gdy kontakt wykona zrzut ekranu z czatu jeden na jeden.</string>
     <string name="screenshotProtectionDescriptionDesktop">Ukryj okno {app_name} na zrzutach ekranu wykonanych na tym urządzeniu.</string>
     <string name="screenshotProtectionDesktop">Ochrona przed zrzutami ekranu</string>
     <string name="screenshotTaken"><b>{name}</b> zrobił(a) zrzut ekranu.</string>
@@ -1381,7 +1381,7 @@
     <string name="searchMembers">Szukaj członków</string>
     <string name="searchSearching">Wyszukiwanie...</string>
     <string name="select">Wybierz</string>
-    <string name="selectAll">Zaznacz wszystko</string>
+    <string name="selectAll">Wybierz wszystko</string>
     <string name="selectAppIcon">Wybierz ikonę aplikacji</string>
     <string name="send">Wyślij</string>
     <string name="sending">Wysyłanie</string>
@@ -1411,7 +1411,7 @@
     <string name="sessionNetworkTokenDescription">Stawiając {token_name_long} w celu zabezpieczenia sieci, otrzymujesz nagrody w {token_name_short} z puli {staking_reward_pool}.</string>
     <string name="sessionNew"><font color="0"><b>•</b> Nowy</font></string>
     <string name="sessionNotifications">Powiadomienia</string>
-    <string name="sessionPermissions">Uprawnienia</string>
+    <string name="sessionPermissions">Zezwolenia</string>
     <string name="sessionPrivacy">Prywatność</string>
     <string name="sessionProBeta">Beta {app_pro}</string>
     <string name="sessionRecoveryPassword">Hasło odzyskiwania</string>
@@ -1426,7 +1426,7 @@
     <string name="share">Udostępnij</string>
     <string name="shareAccountIdDescription">Zaproś znajomego do rozmowy w aplikacji {app_name}, udostępniając mu swój identyfikator konta.</string>
     <string name="shareAccountIdDescriptionCopied">Udostępnij znajomym tam, gdzie zwykle z nimi rozmawiasz, a następnie przenieś rozmowę tutaj.</string>
-    <string name="shareExtensionDatabaseError">Wystąpił problem podczas otwierania bazy danych. Uruchom ponownie aplikację i spróbuj ponownie.</string>
+    <string name="shareExtensionDatabaseError">Wystąpił problem z otwarciem bazy danych. Uruchom ponownie aplikację i spróbuj ponownie.</string>
     <string name="shareExtensionNoAccountError">Ups! Wygląda na to, że nie masz konta {app_name}.\n\nBędziesz musiał stworzyć konto w aplikacji {app_name}, zanim będziesz mógł to udostępnić.</string>
     <string name="shareGroupMessageHistory">Czy chcesz udostępnić temu użytkownikowi historię wiadomości grupy?</string>
     <string name="shareToSession">Udostępnij w aplikacji {app_name}</string>
@@ -1497,6 +1497,7 @@
     <string name="useFastMode">Użyj trybu szybkiego</string>
     <string name="viaPlatformWebsiteDescription">Zmień swój plan, korzystając z konta {platform_account}, którego użyto do rejestracji, przez stronę <b><font color="0">{platform}</font></b>.</string>
     <string name="viaStoreWebsite">Przez stronę internetową {platform}</string>
+    <string name="viaStoreWebsiteDescription">Zaktualizuj dostęp {pro} za pomocą {platform_account}, którego użyłeś/aś do rejestracji, poprzez <b><font color="0">stronę {platform_store}</font></b>.</string>
     <string name="video">Wideo</string>
     <string name="videoErrorPlay">Nie można odtworzyć wideo.</string>
     <string name="view">Zobacz</string>
@@ -1504,7 +1505,7 @@
     <string name="viewMore">Zobacz więcej</string>
     <string name="waitFewMinutes">Może to potrwać kilka minut.</string>
     <string name="waitOneMoment">Chwileczkę...</string>
-    <string name="warning">Uwaga</string>
+    <string name="warning">Ostrzeżenie</string>
     <string name="warningIosVersionEndingSupport">Zakończono obsługę iOS 15. Zaktualizuj do iOS 16 lub nowszej wersji, aby nadal otrzymywać aktualizacje aplikacji.</string>
     <string name="window">Okno</string>
     <string name="yes">Tak</string>

@@ -472,7 +472,7 @@
     <string name="groupInviteReinvite"><b>{name}</b> et van convidar a unir-te a <b>{group_name}</b>, on ets un administrador.</string>
     <string name="groupInviteReinviteYou">Vas ser convidat a unir-te a <b>{group_name}</b>, on ets un administrador.</string>
     <plurals name="groupInviteSending">
-        <item quantity="one">Enviant invitació</item>
+        <item quantity="one">S\'estan enviant invitacions</item>
         <item quantity="other">Enviant invitacions</item>
     </plurals>
     <string name="groupInviteSent">Invitació enviada</string>
@@ -634,7 +634,7 @@
     <string name="messageMarkRead">Marcar com a llegit</string>
     <string name="messageMarkUnread">Marcar com a no llegit</string>
     <plurals name="messageNew">
-        <item quantity="one">Missatge nou</item>
+        <item quantity="one">Nou missatge</item>
         <item quantity="other">Missatges nous</item>
     </plurals>
     <string name="messageNewDescriptionDesktop">Comença una conversa nova introduint la ID del compte o el ONS del teu amic.</string>
@@ -757,7 +757,7 @@
     <string name="ongoingAppeal">Nova esperança per a {app_name}</string>
     <string name="ongoingAppealDescription">Quan semblava que {app_name} podria desaparèixer, vau fer un pas endavant.\n\nLes vostres donacions han proporcionat a la {entity_stf_short} prou finançament per permetre que un petit equip de col·laboradors mantingui l\'aplicació.\n\nAra mateix, l\'objectiu és mantenir {app_name} segura, estable i en línia.\n\nLes vostres donacions poden ajudar a donar suport a {app_name} en aquest moment crític. Les donacions addicionals poden permetre contractar més desenvolupadors i ajudar a oferir les funcionalitats necessàries per fer avançar {app_name} més ràpidament.</string>
     <string name="onionRoutingPath">Ruta</string>
-    <string name="onionRoutingPathDescription">{app_name} amaga la vostra IP redirigint els vostres missatges a través de múltiples nodes de servei a la xarxa descentralitzada de {app_name}. Aquest és el vostre camí actual:</string>
+    <string name="onionRoutingPathDescription">{app_name} amaga la vostra IP redirigint els vostres missatges a través de múltiples Service Nodes a la xarxa descentralitzada de {app_name}. Aquest és el vostre camí actual:</string>
     <string name="onionRoutingPathDestination">Destinació</string>
     <string name="onionRoutingPathEntryNode">Node d\'entrada</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>

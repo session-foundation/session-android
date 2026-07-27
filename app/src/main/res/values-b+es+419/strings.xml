@@ -6,9 +6,9 @@
     <string name="accountId">ID de cuenta</string>
     <string name="accountIdCopied">ID de cuenta copiada</string>
     <string name="accountIdCopyDescription">Copia tu ID de cuenta y compártelo con tus amigos para que te puedan enviar mensajes.</string>
-    <string name="accountIdEnter">Introduce la ID de cuenta</string>
+    <string name="accountIdEnter">Introduzca la ID de cuenta</string>
     <string name="accountIdErrorInvalid">Este Account ID es inválido. Por favor verifica e inténtalo de nuevo.</string>
-    <string name="accountIdOrOnsEnter">Introduce la ID de cuenta o el ONS</string>
+    <string name="accountIdOrOnsEnter">Introduzca la ID de cuenta o el ONS</string>
     <string name="accountIdOrOnsInvite">Invitar ID de Cuenta o ONS</string>
     <string name="accountIdShare">¡Hola! He estado usando {app_name} para chatear con total privacidad y seguridad. ¡Chatea conmigo! Mi ID de cuenta es\n\n{account_id}\n\nDescárgala en {session_download_url}</string>
     <string name="accountIdYours">Su ID de cuenta</string>
@@ -19,29 +19,29 @@
         <item quantity="one">Añadir administrador</item>
         <item quantity="other">Añadir administradores</item>
     </plurals>
-    <string name="addAdminSingular">Añadir administrador</string>
+    <string name="addAdminSingular">Añadir admin</string>
     <string name="addAdminsDescription">Ingrese el ID de la cuenta del usuario que desea promover a administrador.\n\nPara agregar varios usuarios, ingrese cada Account ID separado por una coma. Puede especificar hasta 20 ID de Cuenta a la vez.</string>
     <string name="admin">Admin</string>
     <string name="adminCannotBeDemoted">Los adminis no pueden ser degradados ni eliminados del grupo.</string>
-    <string name="adminCannotBeRemoved">Los administradores no pueden ser eliminados.</string>
+    <string name="adminCannotBeRemoved">Los admins no pueden ser eliminados.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> y <b>{count} más</b> fueron promovidos a Admin.</string>
     <string name="adminPromote">Promover Admins</string>
     <string name="adminPromoteDescription">¿Estás seguro de que deseas promocionar a <b>{name}</b> a admins? Los adminis no pueden ser eliminados.</string>
-    <string name="adminPromoteMoreDescription">¿Estás seguro de que deseas promocionar a <b>{name}</b> y <b>{count} otros</b> a administrador? Los administradores no pueden ser eliminados.</string>
+    <string name="adminPromoteMoreDescription">¿Estás seguro de que deseas promocionar a <b>{name}</b> y <b>{count} otros</b> a admin? Los adminis no pueden ser eliminados.</string>
     <string name="adminPromoteToAdmin">Promover a Admin</string>
-    <string name="adminPromoteTwoDescription">¿Estás seguro de que deseas promocionar a <b>{name}</b> y <b>{other_name}</b> a administrador? Los administradores no pueden ser eliminados.</string>
+    <string name="adminPromoteTwoDescription">¿Estás seguro de que deseas promocionar a <b>{name}</b> y <b>{other_name}</b> a admin? Los admins no pueden ser eliminados.</string>
     <string name="adminPromotedToAdmin"><b>{name}</b> fue promovido a Admin.</string>
-    <string name="adminPromotionFailed">Fallo en la promoción del administrador</string>
+    <string name="adminPromotionFailed">Fallo en la promoción del admin</string>
     <string name="adminPromotionFailedDescription">No se pudo promover a {name} en {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">No se pudo promover a {name} y {count} otros en {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">No se pudo promover a {name} y {other_name} en {group_name}</string>
     <string name="adminPromotionNotSent">Promoción no enviada</string>
-    <string name="adminPromotionSent">Promoción del administrador enviada</string>
+    <string name="adminPromotionSent">Promoción del admin enviada</string>
     <string name="adminPromotionStatusUnknown">Estado de promoción desconocido</string>
-    <string name="adminRemove">Eliminar Administradores</string>
-    <string name="adminRemoveAsAdmin">Eliminar como Administrador</string>
+    <string name="adminRemove">Eliminar Admins</string>
+    <string name="adminRemoveAsAdmin">Eliminar como Admins</string>
     <string name="adminRemoveCommunityNone">No hay Admins en esta Comunidad.</string>
-    <string name="adminRemoveFailed">Falló al remover a {name} como Admin.</string>
+    <string name="adminRemoveFailed">Falló al eliminar a {name} como Admin.</string>
     <string name="adminRemoveFailedMultiple">Error al eliminar a <b>{name}</b> y a <b>otros {count}</b> Admins más.</string>
     <string name="adminRemoveFailedOther">No se pudo eliminar a <b>{name}</b> y <b>{other_name}</b> como adminis.</string>
     <string name="adminRemovedUser"><b>{name}</b> fue removido como Admin.</string>
@@ -52,26 +52,26 @@
         <item quantity="other">%1$d administradores seleccionados</item>
     </plurals>
     <plurals name="adminSendingPromotion">
-        <item quantity="one">Enviando promoción a administrador</item>
-        <item quantity="other">Enviando promociones de administrador</item>
+        <item quantity="one">Enviando promoción a admin</item>
+        <item quantity="other">Enviando promociones de admin</item>
     </plurals>
-    <string name="adminSettings">Configuración del administrador</string>
-    <string name="adminStatusYou">No puedes cambiar tu estado de administrador. Para salir del grupo, abre los ajustes de la conversación y selecciona Salir del grupo.</string>
+    <string name="adminSettings">Configuración del admin</string>
+    <string name="adminStatusYou">No puedes cambiar tu estado de admin. Para salir del grupo, abre los ajustes de la conversación y selecciona Salir del grupo.</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> y <b>{other_name}</b> fueron promovidos a Admin.</string>
-    <string name="admins">Administradores</string>
+    <string name="admins">Admins</string>
     <string name="allow">Permitir</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anónimo</string>
     <string name="appIcon">Ícono de la App</string>
-    <string name="appIconAndNameChange">Cambiar icono y nombre de la aplicación</string>
+    <string name="appIconAndNameChange">Cambiar icono y nombre de la app</string>
     <string name="appIconAndNameChangeConfirmation">Cambiar el icono y el nombre de la aplicación requiere cerrar {app_name}. Las notificaciones seguirán utilizando el icono y nombre predeterminados de {app_name}.</string>
-    <string name="appIconAndNameDescription">Ícono y nombre alternativos para la aplicación se muestran en la pantalla de inicio y en el menú de aplicaciones.</string>
+    <string name="appIconAndNameDescription">Ícono y nombre alternativos para la app se muestran en la pantalla de inicio y en el menú de aplicaciones.</string>
     <string name="appIconAndNameSelectionDescription">The selected app icon and name is displayed on the home screen and app drawer.</string>
     <string name="appIconAndNameSelectionTitle">Ícono y nombre</string>
     <string name="appIconDescription">El ícono alternativo para la aplicación se muestra en la pantalla de inicio y en la biblioteca de apps. El nombre de la app seguirá apareciendo como \'{app_name}\'.</string>
-    <string name="appIconEnableIcon">Usar un ícono alternativo para la aplicación</string>
-    <string name="appIconEnableIconAndName">Usar un ícono y nombre alternativos para la aplicación</string>
-    <string name="appIconSelect">Seleccione un ícono alternativo para la aplicación</string>
+    <string name="appIconEnableIcon">Usar un ícono alternativo para la app</string>
+    <string name="appIconEnableIconAndName">Usar un ícono y nombre alternativos para la app</string>
+    <string name="appIconSelect">Seleccione un ícono alternativo para la app</string>
     <string name="appIconSelectionTitle">Ícono</string>
     <string name="appNameCalculator">Calculadora</string>
     <string name="appNameMeetingSE">Eventos</string>
@@ -91,8 +91,8 @@
     <string name="appearanceThemes">Temas</string>
     <string name="appearanceThemesClassicDark">Classic Dark</string>
     <string name="appearanceThemesClassicLight">Classic Light</string>
-    <string name="appearanceThemesOceanDark">Ocean Dark</string>
-    <string name="appearanceThemesOceanLight">Ocean Light</string>
+    <string name="appearanceThemesOceanDark">Océano oscuro</string>
+    <string name="appearanceThemesOceanLight">Océano claro</string>
     <string name="appearanceZoom">Zoom</string>
     <string name="appearanceZoomIn">Ampliar</string>
     <string name="appearanceZoomOut">Reducir</string>
@@ -113,7 +113,7 @@
     <string name="attachmentsDuration">Duración:</string>
     <string name="attachmentsErrorLoad">Error al adjuntar archivo</string>
     <string name="attachmentsErrorMediaSelection">Error al seleccionar el archivo adjunto</string>
-    <string name="attachmentsErrorNoApp">No se pudo encontrar una aplicación para seleccionar archivos.</string>
+    <string name="attachmentsErrorNoApp">No se pudo encontrar una app para seleccionar archivos.</string>
     <string name="attachmentsErrorNotSupported">Este tipo de archivo no es compatible.</string>
     <string name="attachmentsErrorNumber">No se pueden enviar más de 32 archivos de imagen y video a la vez.</string>
     <string name="attachmentsErrorOpen">No se puede abrir el archivo.</string>
@@ -134,7 +134,7 @@
     <string name="attachmentsMedia">{name} en {date_time}</string>
     <string name="attachmentsMediaEmpty">No hay ningún adjunto en este chat.</string>
     <string name="attachmentsMediaSaved">Archivo guardado por {name}</string>
-    <string name="attachmentsMoveAndScale">Editar foto</string>
+    <string name="attachmentsMoveAndScale">Mover y escalar</string>
     <string name="attachmentsNa">N/A</string>
     <string name="attachmentsNotification">Adjunto {emoji}</string>
     <string name="attachmentsNotificationGroup">{author}: {emoji} Adjunto</string>
@@ -144,7 +144,7 @@
     <string name="attachmentsTapToDownload">Toca para descargar {file_type}</string>
     <string name="attachmentsThisMonth">Este mes</string>
     <string name="attachmentsThisWeek">Esta semana</string>
-    <string name="attachmentsWarning">Los archivos adjuntos que guardes pueden ser accesibles por otras aplicaciones en tu dispositivo.</string>
+    <string name="attachmentsWarning">Los archivos adjuntos que guardes pueden ser accesibles por otras apps en tu dispositivo.</string>
     <string name="audio">Audio</string>
     <string name="audioNoInput">No se encontró entrada de audio</string>
     <string name="audioNoOutput">No se encontró salida de audio</string>
@@ -213,7 +213,7 @@
     <string name="cameraErrorNotFound">Cámara no encontrada</string>
     <string name="cameraErrorUnavailable">Cámara no disponible.</string>
     <string name="cameraGrantAccess">Permitir acceso a cámara</string>
-    <string name="cameraGrantAccessDenied">{app_name} requiere de acceso a la cámara para tomar fotos o videos, pero ha sido permanentemente negado. Por favor, vaya al menú de configuración de la aplicación, seleccione \"Permisos\" y habilite \"Cámara\".</string>
+    <string name="cameraGrantAccessDenied">{app_name} requiere de acceso a la cámara para tomar fotos o videos, pero ha sido permanentemente negado. Por favor vaya al menú de configuración de la app, seleccione \"Permisos\", y habilite \"Cámara\".</string>
     <string name="cameraGrantAccessDescription">{app_name} necesita acceso a la cámara para tomar fotos y videos, o escanear códigos QR.</string>
     <string name="cameraGrantAccessQr">{app_name} necesita acceso a la cámara para escanear códigos QR</string>
     <string name="cancel">Cancelar</string>
@@ -263,7 +263,7 @@
     <string name="clearMessagesNoteToSelfDescriptionUpdated">¿Estás seguro de que deseas eliminar todos los mensajes de <b>Nota Personal</b> en este dispositivo?</string>
     <string name="clearOnThisDevice">Borrar en este dispositivo</string>
     <string name="close">Cerrar</string>
-    <string name="closeApp">Cerrar aplicación</string>
+    <string name="closeApp">Cerrar app</string>
     <string name="closeFocusedConversation">Cerrar la conversación enfocada</string>
     <string name="closeWindow">Cerrar ventana</string>
     <string name="commitHashDesktop">Hash del Commit: {hash}</string>
@@ -333,7 +333,7 @@
     <string name="conversationsDeleteDescription">¿Estás seguro de que deseas eliminar tu conversación con <b>{name}?</b> Los mensajes nuevos de <b>{name}?</b> iniciarán una nueva conversación.</string>
     <string name="conversationsDeleted">Conversación eliminada</string>
     <string name="conversationsEmpty">No hay mensajes en {conversation_name}.</string>
-    <string name="conversationsEnter">Introduce tecla</string>
+    <string name="conversationsEnter">Introduzca tecla</string>
     <string name="conversationsEnterDescription">Define cómo funcionan las teclas Enter y Shift+Enter en las conversaciones.</string>
     <string name="conversationsEnterNewLine">SHIFT + ENTER envía un mensaje, ENTER inicia una nueva línea.</string>
     <string name="conversationsEnterSends">ENTER envía un mensaje, SHIFT + ENTER inicia una nueva línea.</string>
@@ -395,7 +395,7 @@
     <string name="deleteConversationDescription">¿Estás seguro de que quieres eliminar tu conversación con <b>{name}</b>?\nEsto eliminará permanentemente todos los mensajes y archivos adjuntos.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Eliminar el mensaje</item>
-        <item quantity="other">Eliminar el mensaje</item>
+        <item quantity="other">Eliminar mensajes</item>
     </plurals>
     <plurals name="deleteMessageConfirm">
         <item quantity="one">¿Estás seguro de que deseas eliminar este mensaje?</item>
@@ -416,8 +416,8 @@
     <string name="deleteMessageDevicesAll">Eliminar en todos mis dispositivos</string>
     <string name="deleteMessageEveryone">Eliminar para todos</string>
     <plurals name="deleteMessageFailed">
-        <item quantity="one">Error al eliminar el mensaje</item>
-        <item quantity="other">Error al eliminar los mensajes</item>
+        <item quantity="one">Error al eliminar mensaje</item>
+        <item quantity="other">Error al eliminar mensajes</item>
     </plurals>
     <plurals name="deleteMessageNoteToSelfWarning">
         <item quantity="one">Este mensaje no se puede eliminar de todos tus dispositivos</item>
@@ -474,14 +474,14 @@
     <string name="dismiss">Descartar</string>
     <string name="display">Pantalla</string>
     <string name="displayNameDescription">Puede ser su nombre real, un alias o cualquier otra cosa - y puede cambiarlo cuando quiera.</string>
-    <string name="displayNameEnter">Ingresa un nombre para mostrar</string>
+    <string name="displayNameEnter">Ingrese un nombre para mostrar</string>
     <string name="displayNameErrorDescription">Por favor, ingresa un nombre para mostrar</string>
     <string name="displayNameErrorDescriptionShorter">Por favor, elige un nombre para mostrar más corto</string>
-    <string name="displayNameErrorNew">No pudimos cargar tu nombre para mostrar. Por favor, introduce un nuevo nombre para continuar.</string>
+    <string name="displayNameErrorNew">No pudimos cargar tu nombre para mostrar. Por favor introduce un nuevo nombre para continuar.</string>
     <string name="displayNameNew">Elige un nuevo nombre para mostrar</string>
     <string name="displayNamePick">Elige tu nombre para mostrar</string>
     <string name="displayNameSet">Establecer Nombre Visible</string>
-    <string name="displayNameVisible">Tu nombre visible es visible para los usuarios, grupos y comunidades con los que interactúas.</string>
+    <string name="displayNameVisible">Su nombre de pantalla es visible para los usuarios, grupos y comunidades con las que interactúa.</string>
     <string name="document">Documento</string>
     <string name="donate">Donar</string>
     <string name="donateSessionAppealDescription">Hace ocho años, se fundó {app_name} con la misión de restaurar su privacidad. Hoy, {app_name} enfrenta una escasez de fondos que pone en riesgo su propia supervivencia.\n\nSi alguna vez encontró valor en {app_name} o en su misión, por favor dedíqueme un momento de su tiempo y lea este llamado.</string>
@@ -495,9 +495,9 @@
     <string name="draft">Borrador</string>
     <string name="edit">Editar</string>
     <string name="editCommunityDetails">Editar los detalles de la comunidad</string>
-    <string name="emojiAndSymbols">Emoji &amp;amp; Símbolos</string>
+    <string name="emojiAndSymbols">Emoji y Símbolos</string>
     <string name="emojiCategoryActivities">Actividades</string>
-    <string name="emojiCategoryAnimals">Animales &amp;amp; naturaleza</string>
+    <string name="emojiCategoryAnimals">Animales &amp; naturaleza</string>
     <string name="emojiCategoryFlags">Banderas</string>
     <string name="emojiCategoryFood">Comida y Bebida</string>
     <string name="emojiCategoryObjects">Objetos</string>
@@ -508,8 +508,8 @@
     <string name="emojiReactsClearAll">¿Estás seguro de que quieres eliminar todos los {emoji}?</string>
     <string name="emojiReactsCoolDown">¡Despacio! Has enviado demasiadas reacciones de emoji. Prueba de nuevo pronto</string>
     <plurals name="emojiReactsCountOthers">
-        <item quantity="one">Y %1$d más han reaccionado %2$s a este mensaje.</item>
-        <item quantity="other">Y %1$d otros han reaccionado %2$s a este mensaje.</item>
+        <item quantity="one">Y %1$d más ha reaccionado %2$s a este mensaje.</item>
+        <item quantity="other">Y %1$d más han reaccionado %2$s a este mensaje.</item>
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reaccionó con {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} y {other_name} reaccionaron con {emoji_name}</string>
@@ -585,7 +585,7 @@
     <string name="groupInviteFailedUser">No se pudo invitar a {name} a {group_name}</string>
     <string name="groupInviteNotSent">Invitación no enviada</string>
     <string name="groupInviteReinvite"><b>{name}</b> te invitó a reunirte con <b>{group_name}</b>, donde eres un admin.</string>
-    <string name="groupInviteReinviteYou">Fuiste invitado a reincorporarte a <b>{group_name}</b>, donde eres un administrador.</string>
+    <string name="groupInviteReinviteYou">Fuiste invitado a reincorporarte a <b>{group_name}</b>, donde eres un admin.</string>
     <plurals name="groupInviteSending">
         <item quantity="one">Enviando invitación</item>
         <item quantity="other">Enviando invitaciones</item>
@@ -715,7 +715,7 @@
     <string name="leave">Abandonar</string>
     <string name="leaving">Saliendo...</string>
     <string name="legacyGroupAfterDeprecationAdmin">Este grupo ahora es de solo lectura. Vuelve a crear este grupo para seguir chateando.</string>
-    <string name="legacyGroupAfterDeprecationMember">Este grupo ahora es de solo lectura. Pide al administrador del grupo que vuelva a crear este grupo para seguir chateando.</string>
+    <string name="legacyGroupAfterDeprecationMember">Este grupo ahora es de solo lectura. Pide al admin del grupo que vuelva a crear este grupo para seguir chateando.</string>
     <string name="legacyGroupBeforeDeprecationAdmin">¡Los grupos se han actualizado! Vuelve a crear este grupo para mejorar la fiabilidad. Este grupo pasará a ser de solo lectura el {date}.</string>
     <string name="legacyGroupBeforeDeprecationMember">¡Los grupos se han actualizado! Pide al administrador del grupo que vuelva a crear este grupo para mejorar la fiabilidad. Este grupo pasará a ser de solo lectura el {date}.</string>
     <string name="legacyGroupChatHistory">El historial de chat no se transferirá al nuevo grupo. Aún puedes ver todo el historial de chat en tu antiguo grupo.</string>
@@ -732,7 +732,7 @@
     <string name="linkPreviewsEnable">Habilitar vista previa de enlaces</string>
     <string name="linkPreviewsErrorLoad">No se puede cargar la previsualización del enlace</string>
     <string name="linkPreviewsErrorUnsecure">Vista previa no cargada por un enlace inseguro</string>
-    <string name="linkPreviewsFirstDescription">Mostrar vistas previas de los URLs que envías y recibes. Esto puede ser útil, sin embargo {app_name} debe contactar sitios web vinculados para generar vistas previas. Siempre puedes desactivar las vistas previas de enlaces en los ajustes de {app_name}.</string>
+    <string name="linkPreviewsFirstDescription">Mostrar vistas previas de las URLs que envías y recibes. Esto puede ser útil, sin embargo {app_name} debe contactar sitios web vinculados para generar vistas previas. Siempre puedes desactivar las vistas previas de enlaces en los ajustes de {app_name}.</string>
     <string name="linkPreviewsSend">Enviar Previsualizaciones de Enlaces</string>
     <string name="linkPreviewsSendModalDescription">No tendrás una privacidad completa de metadatos al enviar previsualizaciones de enlaces.</string>
     <string name="linkPreviewsTurnedOff">Previsualizaciones de enlaces desactivadas</string>
@@ -741,7 +741,7 @@
     <string name="loadAccount">Cargar cuenta</string>
     <string name="loadAccountProgressMessage">Cargando su cuenta</string>
     <string name="loading">Cargando...</string>
-    <string name="lockApp">Bloquear aplicación</string>
+    <string name="lockApp">Bloquear app</string>
     <string name="lockAppDescription">Solicitar huella, PIN, patrón o contraseña para desbloquear {app_name}.</string>
     <string name="lockAppDescriptionIos">Exigir Touch ID, Face ID o tu clave para desbloquear {app_name}.</string>
     <string name="lockAppEnablePasscode">Debes habilitar un PIN en tus configuraciones de iOS para poder usar el bloqueo de pantalla.</string>
@@ -759,7 +759,7 @@
     <string name="manageSelf">Administrar el perfil</string>
     <string name="manageUser">Administrar usuario</string>
     <string name="manageYourRole">Administrar tu rol</string>
-    <string name="max">Máximo</string>
+    <string name="max">Máx</string>
     <string name="maybeLater">Tal vez después</string>
     <string name="media">Multimedia</string>
     <string name="member">Miembro</string>
@@ -895,7 +895,7 @@
     <string name="notificationsAllMessages">Todos los mensajes</string>
     <string name="notificationsContent">Contenido de las notificaciones</string>
     <string name="notificationsContentDescription">La información mostrada en las notificaciones.</string>
-    <string name="notificationsContentShowNameAndContent">Remitente y contenido</string>
+    <string name="notificationsContentShowNameAndContent">Nombre y contenido</string>
     <string name="notificationsContentShowNameOnly">Solo nombre de contacto</string>
     <string name="notificationsContentShowNoNameOrContent">Sin nombre ni contenido</string>
     <string name="notificationsFastMode">Modo Rápido</string>
@@ -916,18 +916,18 @@
     <string name="notificationsMostRecent">Más reciente de {name}</string>
     <string name="notificationsMute">Silenciar</string>
     <string name="notificationsMuteFor">Silenciar por {time_large}</string>
-    <string name="notificationsMuteUnmute">No silenciar</string>
+    <string name="notificationsMuteUnmute">Activar sonido</string>
     <string name="notificationsMuted">Silenciado</string>
     <string name="notificationsMutedFor">Silenciado por {time_large}</string>
     <string name="notificationsMutedForTime">Silenciado hasta {date_time}</string>
     <string name="notificationsSlowMode">Modo Lento</string>
     <string name="notificationsSlowModeDescription">{app_name} comprobará ocasionalmente si hay nuevos mensajes en segundo plano.</string>
     <string name="notificationsSound">Sonido</string>
-    <string name="notificationsSoundDescription">Sonido cuando la aplicación está abierta</string>
+    <string name="notificationsSoundDescription">Sonido cuando la app está abierta</string>
     <string name="notificationsSoundDesktop">Notificaciones de Audio</string>
     <string name="notificationsStrategy">Estrategia de notificación</string>
     <string name="notificationsStyle">Estilo de notificación</string>
-    <string name="notificationsSystem">{message_count} mensajes nuevos en {conversation_count} chats</string>
+    <string name="notificationsSystem">{message_count} mensajes nuevos en {conversation_count} conversaciones</string>
     <string name="notificationsVibrate">Vibración</string>
     <string name="off">Apagado</string>
     <string name="okay">Okay</string>
@@ -940,7 +940,7 @@
     <string name="onPlatformWebsite">En el sitio web de {platform}</string>
     <string name="onboardingAccountCreate">Crear cuenta</string>
     <string name="onboardingAccountCreated">Cuenta Creada</string>
-    <string name="onboardingAccountExists">Iniciar sesión</string>
+    <string name="onboardingAccountExists">Tengo una cuenta</string>
     <string name="onboardingBackAccountCreation">No puedes retroceder más. Para cancelar la creación de tu cuenta, {app_name} necesita cerrarse.</string>
     <string name="onboardingBackLoadAccount">No puedes retroceder más. Para dejar de cargar tu cuenta, {app_name} necesita cerrarse.</string>
     <string name="onboardingBubbleCreatingAnAccountIsEasy">Crear una cuenta es rápido, gratuito y anónimo {emoji}</string>
@@ -961,7 +961,7 @@
     <string name="onionRoutingPathEntryNode">Nodo de Entrada</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
     <string name="onionRoutingPathUnknownCountry">País desconocido</string>
-    <string name="onsErrorNotRecognized">No pudimos reconocer este ONS. Por favor, verifícalo e inténtalo de nuevo.</string>
+    <string name="onsErrorNotRecognized">No pudimos reconocer este ONS. Por favor verifícalo e inténtalo de nuevo.</string>
     <string name="onsErrorUnableToSearch">No pudimos buscar este ONS. Por favor, inténtalo de nuevo más tarde.</string>
     <string name="open">Abrir</string>
     <string name="openCommunity">Abrir la comunidad</string>
@@ -1060,14 +1060,12 @@
     <string name="proAccessNotFoundDescription">{app_name} detectó que tu cuenta no tiene acceso {pro}. Si crees que se trata de un error, contacta al soporte de {app_name} para obtener ayuda.</string>
     <string name="proAccessRecover">Recuperar acceso {pro}</string>
     <string name="proAccessRenew">Renovar acceso {pro}</string>
-    <string name="proAccessRenewDesktop">Actualmente, el acceso a {pro} solo puede comprarse y renovarse a través de {platform_store} o {platform_store_other}. Como estás utilizando {app_name} Escritorio, no puedes renovar desde aquí.\n\nLos desarrolladores de {app_name} están trabajando arduamente en opciones de pago alternativas para permitir a los usuarios adquirir acceso a {pro} fuera de {platform_store} y {platform_store_other}. <b>Hoja de ruta de {pro}</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renueva tu acceso {pro} en el <b><font color="0">sitio web de {platform_store}</font></b> utilizando la cuenta {platform_account} con la que te registraste para {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Renueva en el <b><font color="0">sitio web de {platform}</font></b> utilizando la cuenta {platform_account} con la que te registraste en {pro}.</string>
     <string name="proAccessRenewStart">Renueva tu acceso {pro} para volver a utilizar las potentes funciones beta de {app_pro}.</string>
     <string name="proAccessRestored">Acceso {pro} recuperado</string>
     <string name="proAccessRestoredDescription">{app_name} detectó y recuperó el acceso {pro} para tu cuenta. ¡Tu estado {pro} ha sido restaurado!</string>
     <string name="proAccessSignUp">Como te registraste originalmente en {app_pro} a través de <b>{platform_store}</b>, deberás usar tu cuenta {platform_account} para actualizar tu acceso {pro}.</string>
-    <string name="proAccessUpgradeDesktop">Actualmente, el acceso a {pro} solo se puede adquirir mediante {platform_store} o {platform_store_other}. Como estás usando {app_name} en Escritorio, no puedes actualizar a {pro} aquí.\n\nLos desarrolladores de {app_name} están trabajando arduamente en opciones de pago alternativas para permitir a los usuarios adquirir acceso a {pro} fuera de {platform_store} y {platform_store_other}. <b>Hoja de ruta de {pro}</b> {icon}</string>
     <string name="proActivated">Activado</string>
     <string name="proActivatingActivation">activando</string>
     <string name="proAllSet">¡Todo listo!</string>
@@ -1090,9 +1088,6 @@
         <item quantity="other">%1$s insignias %2$s enviadas</item>
     </plurals>
     <string name="proBetaFeatures">Funciones beta de {pro}</string>
-    <string name="proBilledAnnually">{price} Facturado anualmente</string>
-    <string name="proBilledMonthly">{price} Facturado mensualmente</string>
-    <string name="proBilledQuarterly">{price} Facturado trimestralmente</string>
     <string name="proCallToActionLongerMessages">¿Quieres enviar mensajes más largos?\nEnvía más texto y desbloquea funciones premium con {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">¿Quieres más conversaciones fijadas?\nOrganiza tus chats y desbloquea funciones premium con {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">¿Quieres más de {limit} conversaciones fijadas?\nOrganiza tus chats y desbloquea funciones premium con {app_pro} Beta</string>
@@ -1116,11 +1111,11 @@
     <string name="proFeatureListAnimatedDisplayPicture">Sube imágenes de perfil en formato GIF y WebP</string>
     <string name="proFeatureListLargerGroups">Chats grupales más grandes de hasta 300 miembros</string>
     <string name="proFeatureListLoadsMore">Y muchas funciones exclusivas más</string>
-    <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
+    <string name="proFeatureListLongerMessages">Messages up to 10 000 characters</string>
     <string name="proFeatureListPinnedConversations">Fija conversaciones sin límite</string>
     <string name="proFullestPotential">¿Quieres usar {app_name} al máximo?\nActualiza a {app_pro} Beta para acceder a muchas ventajas y funciones exclusivas.</string>
     <string name="proGroupActivated">Grupo activado</string>
-    <string name="proGroupActivatedDescription">¡Este grupo tiene capacidad ampliada! Puede admitir hasta 300 miembros porque un administrador del grupo tiene</string>
+    <string name="proGroupActivatedDescription">¡Este grupo tiene capacidad ampliada! Puede admitir hasta 300 miembros porque un admin del grupo tiene</string>
     <plurals name="proGroupsUpgraded">
         <item quantity="one">%1$s grupo actualizado</item>
         <item quantity="other">%1$s grupos actualizados</item>
@@ -1129,10 +1124,10 @@
     <string name="proIncreasedAttachmentSizeFeature">Tamaño del archivo adjunto aumentado</string>
     <string name="proIncreasedMessageLengthFeature">Mayor longitud de mensaje</string>
     <string name="proLargerGroups">Grupos más grandes</string>
-    <string name="proLargerGroupsDescription">Los grupos en los que eres administrador se actualizan automáticamente para admitir hasta 300 miembros.</string>
+    <string name="proLargerGroupsDescription">Los grupos en los que eres admin se actualizan automáticamente para admitir hasta 300 miembros.</string>
     <string name="proLargerGroupsTooltip">¡Los chats grupales grandes (hasta 300 miembros) estarán disponibles pronto para todos los usuarios beta de Pro!</string>
     <string name="proLongerMessages">Mensajes más largos</string>
-    <string name="proLongerMessagesDescription">You can send messages up to 10,000 characters in all conversations.</string>
+    <string name="proLongerMessagesDescription">Puedes enviar mensajes de hasta 10 000 caracteres en todas las conversaciones.</string>
     <plurals name="proLongerMessagesSent">
         <item quantity="one">%1$s mensaje más largo enviado</item>
         <item quantity="other">%1$s mensajes más largos enviados</item>
@@ -1151,9 +1146,6 @@
     <string name="proPlanPlatformRefund">Como te registraste originalmente en {app_pro} a través de la <b><font color="0">{platform_store}</font></b>, deberás usar tu cuenta {platform_account} para solicitar un reembolso.</string>
     <string name="proPlanPlatformRefundLong">Dado que te registraste originalmente en {app_pro} a través de la <b><font color="0">{platform_store}</font></b>, tu solicitud de reembolso será procesada por el Soporte de {app_name}.\n\nSolicita un reembolso pulsando el botón de abajo y completando el formulario de solicitud de reembolso.\n\nAunque el Soporte de {app_name} se esfuerza por procesar las solicitudes de reembolso en un plazo de 24-72 horas, el procesamiento puede tardar más durante periodos de alto volumen de solicitudes.</string>
     <string name="proPlanRenewSupport">¡Tu acceso a {app_pro} ha sido renovado! Gracias por apoyar a {network_name}.</string>
-    <string name="proPriceOneMonth">1 mes - {monthly_price} / mes</string>
-    <string name="proPriceThreeMonths">3 meses - {monthly_price} / mes</string>
-    <string name="proPriceTwelveMonths">12 meses - {monthly_price} / mes</string>
     <string name="proReactivatingActivation">reactivando</string>
     <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">Lamentamos que te vayas. Esto es lo que necesitas saber antes de solicitar un reembolso.</string>
@@ -1165,7 +1157,6 @@
     <string name="proRefundingDescription">Los reembolsos de {app_pro} son gestionados exclusivamente por {platform} a través del {platform_store}.\n\nDebido a las políticas de reembolso de {platform}, los desarrolladores de {app_name} no tienen la posibilidad de influir en el resultado de las solicitudes de reembolso. Esto incluye si la solicitud es aprobada o rechazada, así como si se otorga un reembolso total o parcial.</string>
     <string name="proRenewAnimatedDisplayPicture">¿Quieres volver a usar fotos de perfil animadas?\nRenueva tu acceso a {pro} para desbloquear las funciones que te estás perdiendo.</string>
     <string name="proRenewBeta">Renovar {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Renueva tu acceso {pro} desde los ajustes de {app_pro} en un dispositivo vinculado con {app_name} instalado mediante {platform_store} o {platform_store_other}.</string>
     <string name="proRenewLongerMessages">¿Quieres volver a enviar mensajes más largos?\nRenueva tu acceso a {pro} para desbloquear las funciones que te estás perdiendo.</string>
     <string name="proRenewMaxPotential">¿Quieres volver a usar {app_name} al máximo de su potencial?\nRenueva tu acceso a {pro} para desbloquear las funciones que te has estado perdiendo.</string>
     <string name="proRenewPinFiveConversations">¿Quieres volver a fijar más de {limit} conversaciones?\nRenueva tu acceso a {pro} para desbloquear las funciones que te estás perdiendo.</string>
@@ -1174,7 +1165,6 @@
     <string name="proRenewalUnsuccessful">{pro} recompensa no exitosa, reintentando en breve</string>
     <string name="proRenewalUnsuccessfulTitle">{pro} Renovación no exitosa</string>
     <string name="proRenewingAction">renovando</string>
-    <string name="proRenewingNoAccessBilling">Actualmente, el acceso a {pro} solo se puede comprar y renovar a través de {platform_store} o {platform_store_other}. Como instalaste {app_name} utilizando {build_variant}, no puedes renovar aquí.\n\nLos desarrolladores de {app_name} están trabajando arduamente en opciones de pago alternativas que permitan a los usuarios adquirir el acceso a {pro} fuera de {platform_store} y {platform_store_other}.<b> Hoja de ruta de {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Reembolso solicitado</string>
     <string name="proSendMore">Envía más con</string>
     <string name="proSettings">Configuración de {pro}</string>
@@ -1202,8 +1192,6 @@
     <string name="proUpdateAccessExpireDescription">Tu acceso {pro} vencerá el <b>{date}</b>.\n\nAl actualizar, tu acceso {pro} se renovará automáticamente el <b>{date}</b> por <b>{selected_plan_length}</b> adicionales de acceso {pro}.</string>
     <string name="proUpdatingAction">actualizando</string>
     <string name="proUpgradeAccess">Actualiza a {app_pro} Beta para acceder a muchas ventajas y funciones exclusivas.</string>
-    <string name="proUpgradeDesktopLinked">Actualiza a {pro} desde la configuración de {app_pro} en un dispositivo vinculado con {app_name} instalado mediante {platform_store} o {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">Actualmente, el acceso a {pro} solo se puede adquirir mediante {platform_store} o {platform_store_other}. Como instalaste {app_name} usando {build_variant}, no puedes actualizar a {pro} aquí.\n\nLos desarrolladores de {app_name} están trabajando arduamente en opciones de pago alternativas para permitir a los usuarios adquirir acceso a {pro} fuera de {platform_store} y {platform_store_other}.<b> Hoja de ruta de {pro}</b> {icon}</string>
     <string name="proUpgradeOption">Por ahora, solo hay una forma de actualizar:</string>
     <string name="proUpgradeOptionsTwo">Por ahora, hay dos formas de actualizar:</string>
     <string name="proUpgraded">¡Has actualizado a {app_pro}!\nGracias por apoyar a {network_name}.</string>
@@ -1214,12 +1202,12 @@
     <string name="processingRefundRequest">{platform} está procesando tu solicitud de reembolso</string>
     <string name="profile">Perfil</string>
     <string name="profileDisplayPicture">Imagen de perfil</string>
-    <string name="profileDisplayPictureRemoveError">Falló al remover foto de perfil.</string>
+    <string name="profileDisplayPictureRemoveError">Falló al eliminar foto de perfil.</string>
     <string name="profileDisplayPictureSet">Establecer Imagen de Perfil</string>
     <string name="profileDisplayPictureSizeError">Por favor, elija un archivo más pequeño.</string>
     <string name="profileErrorUpdate">Fallo al actualizar el perfil.</string>
     <string name="promote">Promover</string>
-    <string name="promoteAdminsWarning">Los administradores podrán ver el historial de mensajes de los últimos 14 días y no podrán ser degradados ni eliminados del grupo.</string>
+    <string name="promoteAdminsWarning">Los admins podrán ver el historial de mensajes de los últimos 14 días y no podrán ser degradados ni eliminados del grupo.</string>
     <plurals name="promoteMember">
         <item quantity="one">Promover miembro</item>
         <item quantity="other">Promover miembros</item>
@@ -1241,7 +1229,7 @@
     <string name="quit">Salir de {app_name}</string>
     <string name="quitButton">Salir</string>
     <string name="rateSession">¿Calificar {app_name}?</string>
-    <string name="rateSessionApp">Calificar aplicación</string>
+    <string name="rateSessionApp">Calificar app</string>
     <string name="rateSessionModalDescription">We\'re glad you\'re enjoying {app_name}, if you have a moment, rating us in the {storevariant} helps others discover private, secure messaging!</string>
     <string name="rateSessionModalDescriptionUpdated">{app_name} corre sin anuncios, no vende ningún dato, responde solo a sus usuarios. Tu calificación {storevariant} ayuda a que más personas encuentren un servicio de mensajería que realmente respeta su privacidad.</string>
     <string name="rateUs">Califícanos</string>
@@ -1269,7 +1257,7 @@
     <string name="recoveryPasswordHidePermanentlyDescription2">¿Estás seguro de que deseas ocultar permanentemente tu contraseña de recuperación en este dispositivo?\n\nEsto no se puede deshacer.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Ocultar Clave de Recuperación</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Ocultar permanentemente tu clave de recuperación en este dispositivo.</string>
-    <string name="recoveryPasswordRestoreDescription">Ingrese su clave de recuperación para cargar su cuenta. Si no la ha guardado, puede encontrarla en la configuración de su aplicación.</string>
+    <string name="recoveryPasswordRestoreDescription">Ingrese su clave de recuperación para cargar su cuenta. Si no la ha guardado, puede encontrarla en la configuración de su app.</string>
     <string name="recoveryPasswordView">Ver contraseña de recuperación</string>
     <string name="recoveryPasswordVisibility">Visibilidad de la contraseña de recuperación</string>
     <string name="recoveryPasswordWarningSendDescription">Esta es tu recovery password. Si la envías a alguien, tendrá acceso completo a tu cuenta.</string>
@@ -1445,7 +1433,7 @@
     <string name="update">Actualizar</string>
     <string name="updateAccess">Actualizar acceso {pro}</string>
     <string name="updateAccessTwo">Dos formas de actualizar tu acceso {pro}:</string>
-    <string name="updateApp">Actualizaciones de la aplicación</string>
+    <string name="updateApp">Actualizaciones de la app</string>
     <string name="updateCommunityInformation">Actualizar la información de la comunidad</string>
     <string name="updateCommunityInformationDescription">El nombre y la descripción de la comunidad son visibles para todos los miembros de la comunidad</string>
     <string name="updateCommunityInformationEnterShorterDescription">Por favor, introduce una descripción más corta de la comunidad</string>

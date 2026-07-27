@@ -232,8 +232,8 @@
     <string name="clearDataAllDescription">Bu işlem iletilerinizi ve kişilerinizi kalıcı olarak silecektir. Verilerinizi sadece bu cihazdan mı yoksa tüm ağdan mı temizlemek istersiniz?</string>
     <string name="clearDataError">Veri Silinmedi</string>
     <plurals name="clearDataErrorDescription">
-        <item quantity="one">Veriler %1$d Hizmet Noktaları tarafından silinemedi. Hizmet Noktası Kimlikleri: %2$s.</item>
-        <item quantity="other">Veriler %1$d Hizmet Noktaları tarafından silinemedi. Hizmet Noktası Kimlikleri: %2$s.</item>
+        <item quantity="one">Veriler %1$d Hizmet Noktası tarafından silinemedi. Hizmet Noktası Kimlikleri: %2$s.</item>
+        <item quantity="other">Veriler %1$d Hizmet Noktası tarafından silinemedi. Hizmet Noktası Kimlikleri: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">Bilinmeyen bir hata oluştu ve verileriniz silinmedi. Bunun yerine verilerinizi sadece bu cihazdan silmek ister misiniz?</string>
     <string name="clearDevice">Cihazdan Temizle</string>
@@ -396,8 +396,8 @@
     <string name="deleteMessageDevicesAll">Tüm cihazlarımda sil</string>
     <string name="deleteMessageEveryone">Herkes için sil</string>
     <plurals name="deleteMessageFailed">
-        <item quantity="one">İleti teslim edilemedi</item>
-        <item quantity="other">İleti teslim edilemedi</item>
+        <item quantity="one">İleti silinemedi</item>
+        <item quantity="other">İletiler silinemedi</item>
     </plurals>
     <plurals name="deleteMessageNoteToSelfWarning">
         <item quantity="one">Bu ileti tüm cihazlarınızdan silinemez</item>
@@ -478,8 +478,8 @@
     <string name="emojiReactsClearAll">Tüm {emoji}\'leri silmek istediğinizden emin misiniz?</string>
     <string name="emojiReactsCoolDown">Yavaşla biraz! Çok fazla emoji tepkisi gönderdin. Birazdan tekrar deneyin</string>
     <plurals name="emojiReactsCountOthers">
-        <item quantity="one">Ve %1$d diğeri bu iletiye %2$s tepki verdi.</item>
-        <item quantity="other">Ve %1$d diğerleri bu iletiye %2$s tepki gösterdi.</item>
+        <item quantity="one">Ve %1$d kişi bu iletiye %2$s ile tepki verdi.</item>
+        <item quantity="other">Ve %1$d kişi bu iletiye %2$s ile tepki gösterdi.</item>
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} {emoji_name} ile tepki verdi</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ve {other_name} {emoji_name} ile tepki verdi</string>
@@ -722,7 +722,7 @@
     </plurals>
     <plurals name="members">
         <item quantity="one">%1$d üye</item>
-        <item quantity="other">%1$d üye</item>
+        <item quantity="other">%1$d üyeler</item>
     </plurals>
     <plurals name="membersActive">
         <item quantity="one">%1$d aktif üye</item>
@@ -765,7 +765,7 @@
     <string name="messageNewDescriptionMobileLink">Yeni bir sohbet başlatmak için arkadaşınızın Hesap Kimliğini, ONS’yi girin veya QR kodunu tarayın {icon}</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Yeni bir iletiniz var.</item>
-        <item quantity="other">%1$d Adet Yeni İletiniz Var.</item>
+        <item quantity="other">%1$d Adet yeni iletiniz var.</item>
     </plurals>
     <plurals name="messageNewYouveGotGroup">
         <item quantity="one">%1$s tarafından yeni mesaj var.</item>
@@ -1000,14 +1000,12 @@
     <string name="proAccessNotFoundDescription">{app_name}, hesabınızın {pro} erişimine sahip olmadığını tespit etti. Bunun bir hata olduğunu düşünüyorsanız, lütfen yardım için {app_name} destek ekibiyle iletişime geçin.</string>
     <string name="proAccessRecover">{pro} Erişimini Geri Yükle</string>
     <string name="proAccessRenew">{pro} Erişimini Yenile</string>
-    <string name="proAccessRenewDesktop">Şu anda {pro} erişimi yalnızca {platform_store} veya {platform_store_other} üzerinden satın alınabilir ve yenilenebilir. {app_name} Masaüstü uygulamasını kullandığınız için yenileme işlemi buradan yapılamıyor.\n\n{app_name} geliştiricileri, {pro} erişiminin {platform_store} ve {platform_store_other} dışından da satın alınabilmesi için alternatif ödeme seçenekleri geliştirmek üzere yoğun şekilde çalışıyor. <b>{pro} Yol Haritası</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">{pro} erişiminizi, {pro} için kaydolurken kullandığınız {platform_account} ile <b><font color="0">{platform_store} web sitesi</font></b> üzerinden yenileyin.</string>
     <string name="proAccessRenewPlatformWebsite">{pro} için kaydolduğunuz {platform_account} hesabını kullanarak <b><font color="0">{platform} web sitesinde</font></b> yenileyin.</string>
     <string name="proAccessRenewStart">Güçlü {app_pro} Beta özelliklerini tekrar kullanmaya başlamak için {pro} erişiminizi yenileyin.</string>
     <string name="proAccessRestored">{pro} Erişimi Geri Yüklendi</string>
     <string name="proAccessRestoredDescription">{app_name}, hesabınız için {pro} erişimini algıladı ve geri yükledi. {pro} durumunuz geri yüklendi!</string>
     <string name="proAccessSignUp">{app_pro}\'ya ilk olarak <b>{platform_store}</b> üzerinden kaydolduğunuz için, {pro} erişiminizi güncellemek üzere {platform_account} hesabınızı kullanmanız gerekir.</string>
-    <string name="proAccessUpgradeDesktop">Şu anda {pro} erişimi yalnızca {platform_store} veya {platform_store_other} üzerinden satın alınabilir. {app_name} Masaüstü\'nü kullandığınız için buradan {pro} sürümüne yükseltme yapamazsınız.\n\n{app_name} geliştiricileri, {platform_store} ve {platform_store_other} dışında {pro} erişimi satın alınabilmesini sağlamak üzere alternatif ödeme seçenekleri üzerinde yoğun şekilde çalışıyor. <b>{pro} Yol Haritası</b> {icon}</string>
     <string name="proActivated">Etkinleştirildi</string>
     <string name="proActivatingActivation">etkinleştiriliyor</string>
     <string name="proAllSet">Her şey hazır!</string>
@@ -1030,9 +1028,6 @@
         <item quantity="other">%1$s %2$s Gönderilen Rozetler</item>
     </plurals>
     <string name="proBetaFeatures">{pro} Beta Özellikler</string>
-    <string name="proBilledAnnually">Yıllık {price} faturalandırılır</string>
-    <string name="proBilledMonthly">Aylık {price} faturalandırılır</string>
-    <string name="proBilledQuarterly">Üç Aylık {price} faturalandırılır</string>
     <string name="proCallToActionLongerMessages">Daha uzun mesajlar mı göndermek istiyorsunuz?\n{app_pro} Beta ile daha fazla metin gönderin ve premium özelliklerin kilidini açın</string>
     <string name="proCallToActionPinnedConversations">Daha fazla sabitleme mi istiyorsunuz?\nSohbetlerinizi düzenleyin ve {app_pro} Beta ile premium özelliklerin kilidini açın</string>
     <string name="proCallToActionPinnedConversationsMoreThan">{limit} sabitlemeden fazlasını mı istiyorsunuz?\nSohbetlerinizi düzenleyin ve {app_pro} Beta ile premium özelliklerin kilidini açın</string>
@@ -1090,9 +1085,6 @@
     <string name="proPlanPlatformRefund">{app_pro}\'ya ilk olarak <b><font color="0">{platform_store}</font></b> üzerinden kaydolduğunuz için, geri ödeme talebinde bulunmak üzere {platform_account} hesabınızı kullanmanız gerekir.</string>
     <string name="proPlanPlatformRefundLong">{app_pro}\'ya ilk olarak <b><font color="0">{platform_store}</font></b> üzerinden kaydolduğunuz için, geri ödeme talebiniz {app_name} Destek tarafından işlenecektir.\n\nAşağıdaki düğmeye tıklayarak ve geri ödeme talep formunu doldurarak geri ödeme isteğinde bulunun.\n\n{app_name} Destek, geri ödeme taleplerini genellikle 24–72 saat içinde işlemeye çalışır; ancak taleplerin yoğun olduğu dönemlerde bu süre uzayabilir.</string>
     <string name="proPlanRenewSupport">{app_pro} erişiminiz yenilendi! {network_name} desteğiniz için teşekkür ederiz.</string>
-    <string name="proPriceOneMonth">1 Ay - Aylık {monthly_price}</string>
-    <string name="proPriceThreeMonths">3 Ay - Aylık {monthly_price}</string>
-    <string name="proPriceTwelveMonths">12 Ay - Aylık {monthly_price}</string>
     <string name="proReactivatingActivation">yeniden etkinleştiriliyor</string>
     <string name="proRefundDescription">Seni kaybettiğimize üzüldük. İşte para iadesi talep etmeden önce bilmen gerekenler.</string>
     <string name="proRefundNextSteps">{platform} şu anda iade talebinizi işliyor. Bu işlem genellikle 24-48 saat sürer. Kararlarına bağlı olarak, {app_name} içindeki {pro} durumunuzda bir değişiklik görebilirsiniz.</string>
@@ -1102,14 +1094,13 @@
     <string name="proRefundingDescription">{app_pro} için geri ödemeler yalnızca {platform} tarafından {platform_store} aracılığıyla gerçekleştirilir.\n\n{platform} iade politikaları nedeniyle, {app_name} geliştiricileri iade taleplerinin sonucunu etkileme yetkisine sahip değildir. Bu, talebin onaylanıp onaylanmaması ve tam mı yoksa kısmi mi iade yapılacağı gibi durumları da içerir.</string>
     <string name="proRenewAnimatedDisplayPicture">Animasyonlu profil resimlerini yeniden kullanmak mı istiyorsunuz?\nKaçırdığınız özellikleri açmak için {pro} erişiminizi yenileyin.</string>
     <string name="proRenewBeta">{pro} Beta\'yı yenile</string>
-    <string name="proRenewDesktopLinked">{pro} erişiminizi, {platform_store} veya {platform_store_other} üzerinden {app_name} yüklü bağlı bir cihazda {app_pro} ayarlarını kullanarak yenileyin.</string>
     <string name="proRenewLongerMessages">Tekrar uzun mesajlar göndermek mi istiyorsunuz?\n{pro} erişiminizi yenileyerek kaçırdığınız özelliklerin kilidini açın.</string>
     <string name="proRenewMaxPotential">{app_name} uygulamasını tekrar tam potansiyeliyle kullanmak mı istiyorsunuz?\n{pro} erişiminizi yenileyerek kaçırdığınız özelliklerin kilidini açın.</string>
     <string name="proRenewPinFiveConversations">Yine {limit}’den fazla sohbeti sabitlemek mi istiyorsunuz?\nKaçırdığınız özellikleri açmak için {pro} erişiminizi yenileyin.</string>
     <string name="proRenewPinMoreConversations">Yine daha fazla sohbet sabitlemek mi istiyorsunuz?\nKaçırdığınız özellikleri açmak için {pro} erişiminizi yenileyin.</string>
     <string name="proRenewTosPrivacy">Yenileyerek, {app_pro} <b>Hizmet Şartları</b> {icon} ve <b>Gizlilik Politikası</b> {icon}’nı kabul etmiş olursunuz.</string>
+    <string name="proRenewalUnsuccessfulTitle">{pro} Yenileme Başarısız</string>
     <string name="proRenewingAction">yenileniyor</string>
-    <string name="proRenewingNoAccessBilling">Şu anda, {pro} erişimi yalnızca {platform_store} veya {platform_store_other} üzerinden satın alınabilir ve yenilenebilir. {app_name} uygulamasını {build_variant} kullanarak yüklediğiniz için burada yenileme işlemi yapamazsınız.\n\n{app_name} geliştiricileri, kullanıcıların {platform_store} ve {platform_store_other} dışında {pro} erişimi satın alabilmesi için alternatif ödeme seçenekleri üzerinde yoğun şekilde çalışıyor.<b> {pro} Yol Haritası</b> {icon}</string>
     <string name="proRequestedRefund">Geri Ödeme Talep Edildi</string>
     <string name="proSendMore">ile daha fazlasını gönderin</string>
     <string name="proSettings">{pro} Ayarları</string>
@@ -1135,8 +1126,6 @@
     <string name="proUpdateAccessExpireDescription">{pro} erişiminiz <b>{date}</b> tarihinde sona erecek.\n\nGüncelleme ile birlikte, {pro} erişiminiz <b>{date}</b> tarihinde otomatik olarak yenilenerek ek <b>{selected_plan_length}</b> {pro} erişimi sağlayacaktır.</string>
     <string name="proUpdatingAction">güncelleniyor</string>
     <string name="proUpgradeAccess">{app_pro} Beta sürümüne geçerek birçok ayrıcalıklı avantaja ve özelliğe erişin.</string>
-    <string name="proUpgradeDesktopLinked">{pro} sürümüne yükseltmek için {app_name} uygulamasının {platform_store} veya {platform_store_other} üzerinden yüklü olduğu bağlı bir cihazdaki {app_pro} ayarlarını kullanın.</string>
-    <string name="proUpgradeNoAccessBilling">Şu anda {pro} erişimi yalnızca {platform_store} veya {platform_store_other} üzerinden satın alınabilir. {build_variant} kullanılarak {app_name} uygulamasını yüklediğiniz için buradan {pro} yükseltmesi yapamazsınız.\n\n{app_name} geliştiricileri, {platform_store} ve {platform_store_other} dışında {pro} erişimi satın alınabilmesini sağlamak üzere alternatif ödeme seçenekleri üzerinde yoğun bir şekilde çalışıyor. <b>{pro} Yol Haritası</b> {icon}</string>
     <string name="proUpgradeOption">Şu anda yükseltmenin yalnızca bir yolu var:</string>
     <string name="proUpgradeOptionsTwo">Şu anda yükseltmenin iki yolu var:</string>
     <string name="proUpgraded">{app_pro} sürümüne yükseltildiniz!\n{network_name} desteğiniz için teşekkürler.</string>
@@ -1235,7 +1224,7 @@
     <string name="requestRefundPlatformWebsite">{pro} için kaydolduğunuz {platform_account} hesabını kullanarak <b><font color="0">{platform} web sitesinden</font></b> geri ödeme isteyin.</string>
     <string name="resend">Tekrar gönder</string>
     <plurals name="resendInvite">
-        <item quantity="one">Davetiyeyi Tekrar Gönder</item>
+        <item quantity="one">Daveti Yeniden Gönder</item>
         <item quantity="other">Davetleri Yeniden Gönder</item>
     </plurals>
     <plurals name="resendPromotion">

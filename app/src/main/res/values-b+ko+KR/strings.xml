@@ -35,7 +35,7 @@
     <string name="adminRemoveAsAdmin">관리자에서 제거</string>
     <string name="adminRemoveCommunityNone">이 커뮤니티에 관리자가 없습니다.</string>
     <string name="adminRemoveFailed">{name}님을 관리자로 제거하지 못했습니다.</string>
-    <string name="adminRemoveFailedMultiple">{name} 님과 {count} 명의 사람들의 관리자 직책을 제거하지 못했습니다.</string>
+    <string name="adminRemoveFailedMultiple"><b>{name} 님</b>과 <b>{count} 명의 사람들</b>의 관리자 직책을 제거하지 못했습니다.</string>
     <string name="adminRemoveFailedOther"><b>{name}</b>님과 <b>{other_name}</b>님의 관리자 직책을 제거하지 못했습니다.</string>
     <string name="adminRemovedUser"><b>{name}님</b>이 관리자에서 제거되었습니다.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b>님과 <b>{count} 명의 사람들</b>의 관리자 직책이 제거되었습니다</string>
@@ -835,8 +835,8 @@
     <string name="receivingCallOffer">통화 제안 받는 중</string>
     <string name="receivingPreOffer">사전 제안 수신 중</string>
     <string name="recommended">권장</string>
-    <string name="recoveryPasswordBannerDescription">계정에 접근 권한을 잃지 않도록 회복 비밀번호를 저장하세요.</string>
-    <string name="recoveryPasswordBannerTitle">회복 비밀번호 저장</string>
+    <string name="recoveryPasswordBannerDescription">계정에 접근 권한을 잃지 않도록 복구 비밀번호를 저장하세요.</string>
+    <string name="recoveryPasswordBannerTitle">복구 비밀번호 저장</string>
     <string name="recoveryPasswordDescription">복구 비밀번호를 사용해 다른 기기에서 계정을 불러올 수 있습니다. \n\n복구 비밀번호가 없으면 계정을 불러올 수 없습니다. 안전한 곳에 보관하고 <b>다른 사람이 볼 수 없게 하세요</b>.</string>
     <string name="recoveryPasswordEnter">복구 비밀번호 입력</string>
     <string name="recoveryPasswordErrorLoad">복구 비밀번호를 불러오는 도중 오류가 발생했습니다.\n\n문제를 해결하기 위해 로그를 내보낸 후 {app_name} 고객 지원 센터에 첨부하여 문의 해주세요.</string>

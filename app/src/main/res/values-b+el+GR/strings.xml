@@ -14,6 +14,10 @@
     <string name="accountIdYoursDescription">Αυτό είναι το ID λογαριασμού σας. Άλλοι χρήστες μπορούν να το σαρώσουν για να ξεκινήσουν μια συνομιλία μαζί σας.</string>
     <string name="actualSize">Πραγματικό Μέγεθος</string>
     <string name="add">Προσθήκη</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Προσθήκη διαχειριστή</item>
+        <item quantity="other">Προσθήκη διαχειριστών</item>
+    </plurals>
     <string name="adminCannotBeRemoved">Οι διαχειριστές δεν μπορούν να αφαιρεθούν.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> και <b>{count} άλλα</b> προωθήθηκαν στον Διαχειριστή.</string>
     <string name="adminPromote">Προώθηση Διαχειριστών</string>
@@ -36,6 +40,10 @@
     <string name="adminRemovedUser"><b>{name}</b> αφαιρέθηκε ως Διαχειριστής.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> και <b>{count} άλλοι</b> αφαιρέθηκαν ως Διαχειριστές.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> και <b>{other_name}</b> αφαιρέθηκαν ως Διαχειριστές.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d διαχειριστής επιλέχθηκε</item>
+        <item quantity="other">%1$d διαχειριστές επιλέχθηκαν</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Στέλνεται προαγωγή διαχειριστή</item>
         <item quantity="other">Στέλνονται προαγωγές διαχειριστή</item>
@@ -219,6 +227,10 @@
     <string name="contactDeleteDescription">Είστε βέβαιοι ότι θέλετε να διαγράψετε το <b>{name}</b> από τις επαφές σας; Νέα μηνύματα από <b>{name}</b> θα φτάσουν ως αίτημα μηνύματος.</string>
     <string name="contactNone">Δεν έχετε επαφές ακόμα</string>
     <string name="contactSelect">Επιλογή Επαφών</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d επαφή επιλέχθηκε</item>
+        <item quantity="other">%1$d επαφές επιλέχθηκαν</item>
+    </plurals>
     <string name="contactUserDetails">Λεπτομέρειες Χρήστη</string>
     <string name="contentDescriptionCamera">Κάμερα</string>
     <string name="contentDescriptionChooseConversationType">Επιλέξτε μια ενέργεια για να ξεκινήσετε μια συνομιλία</string>
@@ -274,6 +286,10 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Παρακαλώ περιμένετε όσο δημιουργείται η ομάδα...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Αποτυχία Ενημέρωσης Ομάδας</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Δεν έχετε άδεια να διαγράψετε τα μηνύματα άλλων</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Διαγραφή επιλεγμένου συνημμένου</item>
+        <item quantity="other">Διαγραφή επιλεγμένων συνημμένων</item>
+    </plurals>
     <plurals name="deleteMessage">
         <item quantity="one">Διαγραφή Μηνύματος</item>
         <item quantity="other">Διαγραφή Μηνυμάτων</item>
@@ -356,6 +372,7 @@
     <string name="displayNameSet">Ορισμός Ονόματος Εμφάνισης</string>
     <string name="displayNameVisible">Το Όνομα Προβολής σας είναι ορατό στους χρήστες, στις ομάδες και στις κοινότητες με τις οποίες αλληλεπιδράτε.</string>
     <string name="document">Έγγραφο</string>
+    <string name="donateSessionDescription">Ισχυρές δυνάμεις προσπαθούν να αποδυναμώσουν την ιδιωτϻικότητα, αλλά δεν μπορούμε να συνεχίσουμε αυτόν τον αγώνα μόνοι μας.\n\nΗ δωρεά βοηθά να παραμείνει το {app_name} ασφαλές, ανεξάρτητο και διαθέσιμο στο διαδίκτυο.</string>
     <string name="done">Ολοκληρώθηκε</string>
     <string name="download">Λήψη</string>
     <string name="downloading">Λήψη...</string>
@@ -463,8 +480,8 @@
         <item quantity="other">Αφαίρεση χρηστών και των μηνυμάτων τους</item>
     </plurals>
     <plurals name="groupRemoveUserOnly">
-        <item quantity="one">Αφαίρεση Απλά Χρήστη</item>
-        <item quantity="other">Αφαίρεση Χρηστών</item>
+        <item quantity="one">Αφαίρεση χρήστη</item>
+        <item quantity="other">Αφαίρεση χρηστών</item>
     </plurals>
     <string name="groupRemoved"><b>{name}</b> αφαιρέθηκε από την ομάδα.</string>
     <string name="groupRemovedMultiple"><b>{name}</b> και <b>{count} άλλα</b> αφαιρέθηκαν από την ομάδα.</string>
@@ -491,6 +508,10 @@
     <string name="incognitoKeyboardDescription">Ζητήστε ανώνυμη λειτουργία αν είναι διαθέσιμη. Ανάλογα με το πληκτρολόγιο που χρησιμοποιείτε, το πληκτρολόγιο σας μπορεί να αγνοήσει αυτό το αίτημα.</string>
     <string name="info">Πληροφορίες</string>
     <string name="invalidShortcut">Μη έγκυρη συντόμευση</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Πρόσκληση επαφής</item>
+        <item quantity="other">Πρόσκληση επαφών</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Η πρόσκληση απέτυχε</item>
         <item quantity="other">Οι προσκλήσεις απέτυχαν</item>
@@ -539,14 +560,14 @@
         <item quantity="other">%1$d μέλη</item>
     </plurals>
     <plurals name="membersActive">
-        <item quantity="one">%1$d ενεργά μέλη</item>
+        <item quantity="one">%1$d ενεργό μέλος</item>
         <item quantity="other">%1$d ενεργά μέλη</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Προσθήκη Account ID ή ONS</string>
     <string name="membersInvite">Πρόσκληση Επαφών</string>
     <plurals name="membersInviteSend">
-        <item quantity="one">Αποστολή Πρόσκλησης</item>
-        <item quantity="other">Αποστολή Προσκλήσεων</item>
+        <item quantity="one">Αποστολή πρόσκλησης</item>
+        <item quantity="other">Αποστολή προσκλήσεων</item>
     </plurals>
     <string name="membersInviteShareDescription">Θα θέλατε να μοιραστείτε το ιστορικό μηνυμάτων ομάδας με τον/την <b>{name}</b>;</string>
     <string name="membersInviteShareDescriptionMultiple">Θα θέλατε να μοιραστείτε το ιστορικό μηνυμάτων ομάδας με τον/την <b>{name}</b> και άλλους <b>{count}</b>;</string>
@@ -564,13 +585,13 @@
     <string name="messageMarkRead">Σήμανση ως αναγνωσμένο</string>
     <string name="messageMarkUnread">Σήμανση ως μη αναγνωσμένο</string>
     <plurals name="messageNew">
-        <item quantity="one">Νέο Μήνυμα</item>
-        <item quantity="other">Νέα Μηνύματα</item>
+        <item quantity="one">Νέο μήνυμα</item>
+        <item quantity="other">Νέα μηνύματα</item>
     </plurals>
     <string name="messageNewDescriptionDesktop">Ξεκινήστε μια νέα συνομιλία εισάγοντας το ID λογαριασμού του φίλου σας ή το ONS.</string>
     <string name="messageNewDescriptionMobile">Ξεκινήστε μια νέα συνομιλία εισάγοντας το ID λογαριασμού του φίλου σας, το ONS ή σκανάροντας τον κώδικα QR τους.</string>
     <plurals name="messageNewYouveGot">
-        <item quantity="one">Έχετε νέο μήνυμα.</item>
+        <item quantity="one">Έχετε ένα νέο μήνυμα.</item>
         <item quantity="other">Έχετε %1$d νέα μηνύματα.</item>
     </plurals>
     <plurals name="messageNewYouveGotGroup">
@@ -702,6 +723,7 @@
     <string name="permissionsAppleMusic">Το {app_name} χρειάζεται πρόσβαση στο Apple Music για αναπαραγωγή συνημμένων πολυμέσων.</string>
     <string name="permissionsAutoUpdate">Αυτόματη Ενημέρωση</string>
     <string name="permissionsAutoUpdateDescription">Αυτόματος έλεγχος για ενημερώσεις κατά την εκκίνηση</string>
+    <string name="permissionsCameraChangeDescriptionIos">Η πρόσβαση στην κάμερα είναι ενεργοποιημένη. Για να την απενεργοποιήσετε, εναλλάξτε την άδεια \"Κάμερα\" στις Ρυθμίσεις.</string>
     <string name="permissionsCameraDenied">Το {app_name} χρειάζεται πρόσβαση στην κάμερα για τη λήψη φωτογραφιών και βίντεο, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε την \"Κάμερα\".</string>
     <string name="permissionsFaceId">Η λειτουργία κλειδώματος οθόνης στο {app_name} χρησιμοποιεί το Face ID.</string>
     <string name="permissionsKeepInSystemTray">Διατήρηση στην Περιοχή Ειδοποιήσεων</string>
@@ -724,13 +746,14 @@
     <string name="pinUnpin">Ξεκαρφίτσωμα</string>
     <string name="pinUnpinConversation">Ξεκαρφίτσωμα Συνομιλίας</string>
     <string name="preview">Προεπισκόπηση</string>
+    <string name="proAnimatedDisplayPicture">Προχωρήστε και ανεβάστε GIF και κινούμενες εικόνες WebP για την εικόνα της οθόνης σας!</string>
     <plurals name="proBadgesSent">
         <item quantity="one">%1$s %2$s Σήμα στάλθηκε</item>
         <item quantity="other">%1$s %2$s Εμβλήματα στάλθηκαν</item>
     </plurals>
     <plurals name="proGroupsUpgraded">
-        <item quantity="one">Αναβαθμίστηκε η %1$s ομάδα</item>
-        <item quantity="other">Αναβαθμίστηκαν %1$s ομάδες</item>
+        <item quantity="one">%1$s ομάδα αναβαθμίστηκε</item>
+        <item quantity="other">%1$s ομάδες αναβαθμίστηκαν</item>
     </plurals>
     <plurals name="proLongerMessagesSent">
         <item quantity="one">%1$s Μεγαλύτερο Μήνυμα εστάλη</item>
@@ -763,6 +786,7 @@
     <string name="qrYoursDescription">Οι φίλοι μπορούν να σας στείλουν μήνυμα σκανάροντας τον QR κωδικό σας.</string>
     <string name="quit">Κλείσιμο {app_name}</string>
     <string name="quitButton">Κλείσιμο</string>
+    <string name="rateSessionModalDescriptionUpdated">Το {app_name} δεν προβάλλει διαφημίσεις, δεν πουλά δεδομένα και απαντά μόνο στους χρήστες του. Η βαθμολογία σας στο {storevariant} βοηθά περισσότερους να ανακαλύψουν επικοινωνία που σέβεται πραγματικά την ιδιωτικότητά τους.</string>
     <string name="read">Ανάγνωση</string>
     <string name="readReceipts">Αναφορές Ανάγνωσης</string>
     <string name="readReceiptsDescription">Δείξε αναφορές ανάγνωσης για όλα τα μηνύματα που στέλνετε και λαμβάνετε.</string>
@@ -770,6 +794,7 @@
     <string name="recommended">Προτείνεται</string>
     <string name="recoveryPasswordBannerDescription">Αποθηκεύστε τον κωδικό σας ανάκτησης για να βεβαιωθείτε ότι δεν θα χάσετε την πρόσβαση στον λογαριασμό σας.</string>
     <string name="recoveryPasswordBannerTitle">Αποθηκεύστε τον κωδικό σας ανάκτησης</string>
+    <string name="recoveryPasswordDescription">Χρησιμοποιήστε τον κωδικό ανάκτησης για να φορτώσετε τον λογαριασμό σας σε νέες συσκευές.\n\nΟ λογαριασμός σας δεν μπορεί να ανακτηθεί χωρίς τον κωδικό ανάκτησης. Βεβαιωθείτε ότι τον αποθηκεύσατε σε ασφαλές μέρος — και <b>μην τον μοιραστείτε με κανέναν</b>.</string>
     <string name="recoveryPasswordEnter">Εισαγάγετε τον κωδικό σας ανάκτησης</string>
     <string name="recoveryPasswordErrorMessageGeneric">Παρακαλώ ελέγξτε τον κωδικό πρόσβασης για ανάκτηση και προσπαθήστε ξανά.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Κάποιες από τις λέξεις στον Κωδικό Ανάκτησης σας είναι λανθασμένες. Παρακαλώ ελέγξτε και προσπαθήστε ξανά.</string>
@@ -778,6 +803,7 @@
     <string name="recoveryPasswordExplanation">Για να φορτώσετε τον λογαριασμό σας, εισαγάγετε τον κωδικό ανάκτησης.</string>
     <string name="recoveryPasswordHidePermanently">Απόκρυψη του Κωδικού Ανάκτησης Μόνιμα</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Χωρίς τον κωδικό ανάκτησης, δεν μπορείτε να φορτώσετε τον λογαριασμό σας σε νέες συσκευές.\n\nΣυνιστούμε ανεπιφύλακτα να αποθηκεύσετε τον κωδικό ανάκτησης σε ένα ασφαλές και σίγουρο μέρος πριν συνεχίσετε.</string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">Είστε βέβαιοι ότι θέλετε να αποκρύψετε μόνιμα τον κωδικό σας ανάκτησης σε αυτήν τη συσκευή;\n\n Αυτό δεν μπορεί να αναιρεθεί.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Απόκρυψη Κωδικού Ανάκτησης</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Μόνιμη απόκρυψη του κωδικού ανάκτησης σε αυτή τη συσκευή.</string>
     <string name="recoveryPasswordRestoreDescription">Εισαγάγετε τον κωδικό σας ανάκτησης για να φορτώσετε τον λογαριασμό σας. Αν δεν τον έχετε αποθηκεύσει, μπορείτε να τον βρείτε στις ρυθμίσεις της εφαρμογής.</string>
@@ -788,9 +814,17 @@
         <item quantity="other">%1$d χαρακτήρες απομένουν</item>
     </plurals>
     <string name="remove">Αφαίρεση</string>
+    <plurals name="removeMemberLowercase">
+        <item quantity="one">Αφαίρεση μέλους</item>
+        <item quantity="other">Αφαίρεση μελών</item>
+    </plurals>
     <string name="removePasswordFail">Αποτυχία κατάργησης κωδικού πρόσβασης</string>
     <string name="reply">Απάντηση</string>
     <string name="resend">Επαναποστολή</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Εκ νέου Αποστολή Πρόσκλησης</item>
+        <item quantity="other">Εκ νέου Αποστολή Προσκλήσεων</item>
+    </plurals>
     <string name="resolving">Γίνεται φόρτωση χωρών...</string>
     <string name="restart">Επανεκκίνηση</string>
     <string name="resync">Επανασυγχρονισμός</string>
@@ -840,6 +874,7 @@
     <string name="shareAccountIdDescriptionCopied">Μοιραστείτε με τους φίλους σας όπου και αν μιλάτε συνήθως μαζί τους — στη συνέχεια μετακινήστε τη συζήτηση εδώ.</string>
     <string name="shareExtensionDatabaseError">Υπάρχει ένα πρόβλημα κατά το άνοιγμα της βάσης δεδομένων. Παρακαλώ επανεκκινήστε την εφαρμογή και δοκιμάστε ξανά.</string>
     <string name="shareToSession">Κοινοποιήστε στο {app_name}</string>
+    <string name="sharingSupportMultipleMedia">Συγνώμη, το {app_name} υποστηρίζει μόνο την κοινοποίηση πολλαπλών εικόνων και βίντεο ταυτόχρονα</string>
     <string name="show">Εμφάνιση</string>
     <string name="showAll">Εμφάνιση Όλων</string>
     <string name="showLess">Εμφάνιση Λιγότερων</string>

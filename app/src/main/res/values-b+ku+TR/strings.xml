@@ -58,7 +58,7 @@
     <string name="appearanceThemesClassicLight">ئاڕاسته کەی کلاسیکی</string>
     <string name="appearanceThemesOceanDark">بەحرە تۆخ</string>
     <string name="appearanceThemesOceanLight">بەحرە ڕوون</string>
-    <string name="appearanceZoom">Zoom</string>
+    <string name="appearanceZoom">زووم</string>
     <string name="appearanceZoomIn">Zoom In</string>
     <string name="appearanceZoomOut">Zoom Out</string>
     <string name="attachment">هاوپێچ</string>
@@ -164,9 +164,9 @@
     <string name="cameraErrorNotFound">هیچ کامێرایەک نەدۆزرایەوە</string>
     <string name="cameraErrorUnavailable">.کامێرا بەردەست نییە</string>
     <string name="cameraGrantAccess">پێشاندانی پێوەندی کەمێرا</string>
-    <string name="cameraGrantAccessDenied">{app_name} ڕوونکردنەوەی کامێرا پێویستی بۆ گرتنی وێنەکان و ڤیدیۆکان، بەڵام هەڵەیەکی هەمیشەیی روویدا. تکایە بڕۆ بۆ ڕێکخستنەکانی بەرنامە، \"ڕێگەدانەکان\" هەلبژێرە و \"کامێرا\" چارەسه‌ر بکە.</string>
+    <string name="cameraGrantAccessDenied">{app_name} ڕوونکردنەوەی کامێرا پێویستی بۆ گرتنی وێنەکان و ڤیدیۆکان، بەڵام هەڵەیەکی هەمیشەیی روویدا. تکایە بڕۆ بۆ ڕێکخستنەکانی بەرنامە، \"ڕێگەدانەکان\" هەلبژێرە و \"کامێرا\" چالاک بکە.</string>
     <string name="cameraGrantAccessDescription">{app_name} پێویستە بەکارهێنانی کامێرای پێویستە بۆ وەرگرتنی وێنه‌ و ڤیدیۆکان، یان ڕووپیاکانی QR codeکان.</string>
-    <string name="cameraGrantAccessQr">{app_name} بەکارهێنانی کامێرای پێویستە بۆ ڕووپیاکانی QR codeکان.</string>
+    <string name="cameraGrantAccessQr">{app_name} پێویستی بە دەستگەیشتن بە کامێرا هەیە بۆ سکانکردنی کۆدەکانی QR</string>
     <string name="cancel">ڕەتکردنەوە</string>
     <string name="changePasswordFail">توشەی فرشتن پەیامەم نەتوانرا</string>
     <string name="clear">پاکردنەوە</string>
@@ -284,7 +284,7 @@
     </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">نامە سڕا</item>
-        <item quantity="other">نامەکان بسڕانەوە</item>
+        <item quantity="other">نامەکان سڕدرانەوە</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">ئەم پەیامە سڕاوە</string>
     <string name="deleteMessageDeletedLocally">ئەم پەیامە سڕاوە لەسەر ئەم ئامێرەیە</string>
@@ -297,8 +297,8 @@
     <string name="deleteMessageDevicesAll">سڕینەوە لە هەموو ئاڵاتەکانم</string>
     <string name="deleteMessageEveryone">سڕینەوە بۆ هەمووان</string>
     <plurals name="deleteMessageFailed">
-        <item quantity="one">شکستی هەندەڵکردنی پەیام</item>
-        <item quantity="other">شکستی هەندەڵکردنی پەیامەکان</item>
+        <item quantity="one">شکستی سڕینەوەی پەیام</item>
+        <item quantity="other">شکستی سڕینەوەی پەیامەکان</item>
     </plurals>
     <plurals name="deleteMessageNoteToSelfWarning">
         <item quantity="one">ئەم پەیامە ناتوانرێت لە هەموو ئامێرەکانت بسڕدرێتەوە</item>
@@ -320,7 +320,7 @@
     <string name="disappearingMessagesDeleteType">جۆری سڕینەوە</string>
     <string name="disappearingMessagesDescription">ئەم ڕێکخستنە ب پارێزگایەکان پەیوەندیدانی تۆڤتی هەینی کردن بۆ گفتوگۆی ئەم بەھڕێدانە بەكەیت.</string>
     <string name="disappearingMessagesDescription1">ئەم ڕێکخستنە ب يو نەخشە بۆ زانیارەکان لە گفتوگۆیەندا دەكەیت.</string>
-    <string name="disappearingMessagesDescriptionGroup">ئەم ڕێکخستندە بۆ هەموو کەسانی ئەم وەرزشە کاردەکات.\nتەنها بەڕێوەبەری گروپەکان دەتوانن ئەم ڕێکخستندە بگۆڕن.</string>
+    <string name="disappearingMessagesDescriptionGroup">ئەم ڕێکخستنە بۆ هەموو کەسێک لەم گفتوگۆیەدا دەگونجێت.\nتەنها بەڕێوەبەرانی گروپ دەتوانن ئەم ڕێکخستنە بگۆڕن.</string>
     <string name="disappearingMessagesDisappear">نەمان پەیامەکان دوای {disappearing_messages_type} - {time}</string>
     <string name="disappearingMessagesDisappearAfterRead">نەمان دوای خوێندنەوە</string>
     <string name="disappearingMessagesDisappearAfterReadDescription">نامەکان بسڕدرێنەوە دوای خوێندنەوەیان</string>
@@ -340,7 +340,7 @@
     <string name="disappearingMessagesTurnedOff"><b>{name}</b> پەیامەکانی دەبەرەنەوەی. پەیامەکانیان دواتر ناباشرێت.</string>
     <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> پەیام دەسڕێنەوەی <b>ناچالاک کرد</b>.</string>
     <string name="disappearingMessagesTurnedOffYou"><b>Te</b> peyamên wendabûyî <b>xebitî</b>. Mesajên ku hûn dişînin dê êdî winda nebin.</string>
-    <string name="disappearingMessagesTurnedOffYouGroup"><b>تۆ</b> پەیام دەسڕێنەوەی <b>ناچالاک کرد</b>.</string>
+    <string name="disappearingMessagesTurnedOffYouGroup"><b>تۆ</b> پەیامە ونبووەکانت <b>کوژاندەوە</b>.</string>
     <string name="disappearingMessagesTypeRead">خوێندن</string>
     <string name="disappearingMessagesTypeSent">نارد</string>
     <string name="disappearingMessagesUpdated"><b>{admin_name}</b> پەیوەندەکانی نامەی ناپەیدا نوێکردەوە.</string>
@@ -453,12 +453,12 @@
     <string name="groupRemoveDescriptionMultiple">ئایا دەتەوێت بڕبەیتەوە <b>{name}</b> و <b>{count} یەک و چەندێکی تر</b> لە <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionTwo">ئایا دەتەوێت بڕبەیتەوە <b>{name}</b> و <b>{other_name}</b> لە <b>{group_name}</b>؟</string>
     <plurals name="groupRemoveMessages">
-        <item quantity="one">لابردنی بەکارهێنەر و پەیامەکانیان</item>
-        <item quantity="other">کارەکان و پیامەکانیشان لاببردن</item>
+        <item quantity="one">لابردنی بەکارهێنەر و پەیامەکانی</item>
+        <item quantity="other">لابردنی بەکارهێنەران و پەیامەکانیان</item>
     </plurals>
     <plurals name="groupRemoveUserOnly">
         <item quantity="one">لابردنی بەکارهێنەر</item>
-        <item quantity="other">کارەکان لاببردن</item>
+        <item quantity="other">لابردنی بەکارهێنەرەکان</item>
     </plurals>
     <string name="groupRemoved"><b>{name}</b> لە گروپەکە لابرا.</string>
     <string name="groupRemovedMultiple"><b>{name}</b> و <b>{count} کەس دیکە</b> لە گروپەکە لابران.</string>
@@ -521,11 +521,11 @@
     <string name="lockAppDescription">پێویستە چەشنە یان PIN یان ڕووتە یان تێپەڕەوشەیەک بکرێتە کار {app_name} کە بەردەبەكەرەوە.</string>
     <string name="lockAppDescriptionIos">پێویستە Touch ID ، Face ID یان تێپەڕەوشە بکرێتە کار {app_name}.</string>
     <string name="lockAppEnablePasscode">تۆ دەبێت تێپەڕەوە تایپ بەکاربەیت لە ڕێکخستنی iOS بۆ بەکاربردنی ناوی خەڕەپاکە.</string>
-    <string name="lockAppLocked">{app_name} داخستەوە</string>
+    <string name="lockAppLocked">{app_name} داخرا</string>
     <string name="lockAppQuickResponse">وەلامی خێرا نییە کاتێک {app_name} داخراوە!</string>
     <string name="lockAppStatus">Status قفل</string>
     <string name="lockAppUnlock">بخە بۆ کردن</string>
-    <string name="lockAppUnlocked">{app_name} کردەوە</string>
+    <string name="lockAppUnlocked">{app_name} کراوە</string>
     <string name="max">Max</string>
     <string name="media">میدیا</string>
     <plurals name="members">
@@ -540,7 +540,7 @@
     <string name="membersInvite">بانێ تیپی پەیوەندیکان</string>
     <plurals name="membersInviteSend">
         <item quantity="one">ناردنی بانگ</item>
-        <item quantity="other">ناردنی بانگهکان</item>
+        <item quantity="other">ناردنی بانگه کان</item>
     </plurals>
     <string name="membersInviteShareDescription">ئایا دەتەوێت مێژووی گروپ شکێنەوە <b>{name}</b>؟</string>
     <string name="membersInviteShareDescriptionMultiple">ئایا دەتەوێت مێژووی نامەکانی گروپیشە هەلبەرەوە <b>{name}</b> و <b>{count} یەکی تر</b>؟</string>
@@ -620,7 +620,7 @@
     <string name="notificationsGoToDevice">بڕۆ بۆ ڕێکەوتکردنی ئاگادکردنەکانی ئامراز</string>
     <string name="notificationsHeaderAllMessages">ئاگادارکردنەوەکان - هەموو</string>
     <string name="notificationsHeaderMentionsOnly">ئاگادارکردنەوەکان - نیشاندانەکان تەنها</string>
-    <string name="notificationsHeaderMute">ئاگادارکردنەوەکان - داخستراو</string>
+    <string name="notificationsHeaderMute">ئاگادارکردنەوەکان - بێدەنگ</string>
     <string name="notificationsIosGroup">{name} بۆ {conversation_name}</string>
     <string name="notificationsIosRestart">لەو کاتە دەبێت پەیامەکانت وەریابیتەوە کە {device} کارەکەیان ڕاست دەچێت.</string>
     <string name="notificationsLedColor">ڕەنگی LED</string>
@@ -683,7 +683,7 @@
     <string name="passwordRemove">لابردنی پەیامێکی پاراستوو</string>
     <string name="passwordSet">دانشتنی تێپەڕ ئەو ناو</string>
     <string name="paste">پەیامەکان تەنها دەبێ قەبارە بنووسە</string>
-    <string name="permissionMusicAudioDenied">بەرنامەی {app_name} پێویستی بە ڕێزەنامەی موسیقا و ئاواز بەدەستەکان بۆ ناردن پەیوەندەکان، موسیقا و ئاواز، بەڵام ئەمەدا دیاری کراوە. تکایە ئیش بکە لە ڕێکەوتەکان → ڕێگەدانەکان، و \"موسیقا و ئاواز\" بەرە چاودێر بکە.</string>
+    <string name="permissionMusicAudioDenied">بەرنامەی {app_name} پێویستی بە دەستگەیشتن بە مۆسیقا و دەنگی هەیە بۆ ئەوەی فایل و مۆسیقا و دەنگ بنێرێت، بەڵام بۆ هەمیشە ڕەتکراوەتەوە. لەسەر ڕێکخستنەکان → مۆڵەتەکان پەنجە بنێ و \"مۆسیقا و دەنگ\" دابگیرسێنە.</string>
     <string name="permissionsAppleMusic">{app_name} پێویستە بە پارێزمەنیی ژمارەی تەلەفۆنەکان بۆ بەکردنەوەی هەموو پەیوەستەکان.</string>
     <string name="permissionsAutoUpdate">ئاپدیـتەكە خۆكار ئەكاتەوە</string>
     <string name="permissionsAutoUpdateDescription">بە شێوەی خۆکار بگەڕێتەوە بۆ نوێكردنەوە لە کاتی پەیوەندیدانەوە</string>
@@ -696,7 +696,7 @@
     <string name="permissionsMicrophoneAccessRequiredDesktop">تۆ دەتوانی دەسەڵاتی میکرۆفۆن بکەیەوە لە ڕێکخستنی تایبەتی {app_name}</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} دەتوانێت بەکارهێنانی داده‌یەکیی وەکو پەیوەستەکان بکات بۆ پەیوەندیش</string>
     <string name="permissionsMicrophoneDescription">ڕێگە بە بەرزی دەرەکی بخەرەوە.</string>
-    <string name="permissionsMusicAudio">بەرنامەی {app_name} پێویستی بە ڕێزەنامەی موسیقا و ئاواز بکات بۆ ناردنە پەیوەندەکان، موسیقا و ئاواز.</string>
+    <string name="permissionsMusicAudio">بەرنامەی {app_name} پێویستی بە دەستگەیشتن بە مۆسیقا و دەنگی هەیە بۆ ئەوەی فایل و مۆسیقا و دەنگ بنێرێت.</string>
     <string name="permissionsRequired">پەیامی دەبێ بەرێوەبەران پەیامەکان</string>
     <string name="permissionsStorageDenied">بەرنامەی {app_name} پێویستی بە دەسگای وێنەی ئافرەت پارێزییەکان بۆ ئەوەی بتوانیت وێنەکان و ڤیدیۆکان بناردەیت، بەڵام ئەمەدا بە هەرێزین ڕەپەڕینە. پەڕەکانی ڕێکدەست → ڕێگەدانەکان، و \"وێنە و ڤیدیۆکان\" بڕۆپا.</string>
     <string name="permissionsStorageDeniedLegacy">بەرنامەی {app_name} پێویستی بە خەزنەیەک دایەنەکراوە بۆ ناردن و پاشەکەوتکردنی پەیوەند پەیامەکان. پەڕەکانی ڕێکدەست → ڕێگەدانەکان، و \"خەزنەیەک\" بڕۆپا.</string>

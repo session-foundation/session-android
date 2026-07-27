@@ -626,7 +626,7 @@
     <string name="ongoingAppeal">{app_name} ಗೆ ಹೊಸ ಆಶೆ</string>
     <string name="ongoingAppealDescription">{app_name} ಅಳಿದುಹೋಗಬಹುದು ಎಂದು ಕಂಡಾಗ, ನೀವು ಮುಂದೆ ಬಂದಿರಿ.\n\nನಿಮ್ಮ ದೇಣಿಗೆಗಳು {entity_stf_short} ಗೆ ಆಪ್ ಅನ್ನು ನಿರ್ವಹಿಸಲು ಕೊಡುಗೆದಾರರ ಸಣ್ಣ ತಂಡವೊಂದನ್ನು ಸಾಧ್ಯವಾಗಿಸುವಷ್ಟು ನಿಧಿಯನ್ನು ಒದಗಿಸಿವೆ.\n\nಈಗ, ಮುಖ್ಯ ಗಮನ {app_name} ಅನ್ನು ಸುರಕ್ಷಿತವಾಗಿ, ಸ್ಥಿರವಾಗಿ ಮತ್ತು ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ಇರಿಸುವುದರ ಮೇಲೆ ಇದೆ.\n\nಈ ಸಂಕಷ್ಟದ ಸಮಯದಲ್ಲಿ ನಿಮ್ಮ ದೇಣಿಗೆಗಳು {app_name} ಗೆ ಬೆಂಬಲ ನೀಡಲು ಸಹಾಯ ಮಾಡಬಹುದು. ಹೆಚ್ಚುವರಿ ದೇಣಿಗೆಗಳು ಇನ್ನಷ್ಟು ಡೆವಲಪರ್‌ಗಳನ್ನು ನೇಮಿಸಲು ಅವಕಾಶ ಮಾಡಿಕೊಡಬಹುದು ಮತ್ತು {app_name} ಅನ್ನು ವೇಗವಾಗಿ ಮುಂದಕ್ಕೆ ಸಾಗಿಸಲು ಅಗತ್ಯವಿರುವ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಒದಗಿಸಲು ಸಹಾಯ ಮಾಡಬಹುದು.</string>
     <string name="onionRoutingPath">ದಾರಿ</string>
-    <string name="onionRoutingPathDescription">{app_name} ನಿಮ್ಮ IP ಅನ್ನು {app_name} ಡಿಸೆಂಟ್ರಲೈಸ್ಡ್ ನೆಟ್‌ವರ್ಕ್ನಲ್ಲಿನ ಅನೇಕರಿಗೆ ಸಂದೇಶಗಳನ್ನು ಮಾರ್ಗಗೊಳಿಸಿ ಮುಚ್ಚುತ್ತವೆ. ಇದು ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಮಾರ್ಗವಾಗಿದೆ:</string>
+    <string name="onionRoutingPathDescription">{app_name} ನಿಮ್ಮ IP ಅನ್ನು {app_name} ಡಿಸೆಂಟ್ರಲೈಸ್ಡ್ ನೆಟ್‌ವರ್ಕ್ನಲ್ಲಿನ ಅನೇಕರಿಗೆ ಸಂದೇಶಗಳನ್ನು ಮಾರ್ಗಗೊಳಿಸಿ ಅಡಗಿಸುತ್ತದೆ. ಇದು ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಮಾರ್ಗವಾಗಿದೆ:</string>
     <string name="onionRoutingPathDestination">ಗಮ್ಯಸ್ಥಾನ</string>
     <string name="onionRoutingPathEntryNode">ಪ್ರವೇಶ ನೋಡ್</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>

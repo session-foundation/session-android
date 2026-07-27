@@ -93,7 +93,7 @@
     <string name="attachmentsLoadingNewerFiles">Laadin uuemaid faile...</string>
     <string name="attachmentsLoadingOlder">Laadin vanemat meediat...</string>
     <string name="attachmentsLoadingOlderFiles">Laadin vanemaid faile...</string>
-    <string name="attachmentsMedia">{name} juures {date_time}</string>
+    <string name="attachmentsMedia">{name} saatis: {date_time}</string>
     <string name="attachmentsMediaEmpty">Teil ei ole selles vestluses meediat.</string>
     <string name="attachmentsMediaSaved">{name} salvestas meediumi</string>
     <string name="attachmentsMoveAndScale">Liiguta ja skaleeri</string>

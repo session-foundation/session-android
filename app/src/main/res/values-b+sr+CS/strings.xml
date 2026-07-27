@@ -320,7 +320,7 @@
     <string name="disappearingMessagesSetYou"><b>Vi</b> ste postavili da poruke nestanu {time} nakon što su bile {disappearing_messages_type}.</string>
     <string name="disappearingMessagesTimer">Tajmer</string>
     <string name="disappearingMessagesTurnedOff"><b>{name}</b> je isključio/la nestajuće poruke. Poruke koje šalje više neće nestajati.</string>
-    <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> je isključio/la nestajuće poruke.</string>
+    <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> je <b>isključio/la</b> nestajuće poruke.</string>
     <string name="disappearingMessagesTurnedOffYou"><b>Vi</b> ste <b>isključili</b> nestajuće poruke. Poruke koje šaljete više neće nestajati.</string>
     <string name="disappearingMessagesTurnedOffYouGroup"><b>Vi</b> ste isključili <b>nestajuće poruke</b>.</string>
     <string name="disappearingMessagesTypeRead">pročitano</string>

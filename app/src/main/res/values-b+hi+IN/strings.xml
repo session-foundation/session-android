@@ -727,7 +727,7 @@
     </plurals>
     <plurals name="members">
         <item quantity="one">%1$d सदस्य</item>
-        <item quantity="other">%1$dसदस्य</item>
+        <item quantity="other">%1$d सदस्य</item>
     </plurals>
     <plurals name="membersActive">
         <item quantity="one">%1$d सक्रिय सदस्य</item>
@@ -1004,14 +1004,12 @@
     <string name="proAccessNotFoundDescription">{app_name} ने पाया कि आपके खाते में {pro} एक्सेस नहीं है। यदि आपको लगता है कि यह एक त्रुटि है, तो कृपया सहायता के लिए {app_name} समर्थन से संपर्क करें।</string>
     <string name="proAccessRecover">{pro} पहुँच पुनर्प्राप्त करें</string>
     <string name="proAccessRenew">{pro} पहुँच को नवीनीकृत करें</string>
-    <string name="proAccessRenewDesktop">वर्तमान में, {pro} एक्सेस केवल {platform_store} या {platform_store_other} के माध्यम से ही खरीदी और नवीनीकृत की जा सकती है। चूंकि आप {app_name} डेस्कटॉप का उपयोग कर रहे हैं, इसलिए आप इसे यहां नवीनीकृत नहीं कर सकते।\n\n{app_name} के डेवलपर्स {platform_store} और {platform_store_other} के बाहर उपयोगकर्ताओं को {pro} एक्सेस खरीदने की अनुमति देने के लिए वैकल्पिक भुगतान विकल्पों पर काम कर रहे हैं। <b>{pro} रोडमैप</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite"><b><font color="0">{platform_store} वेबसाइट</font></b> पर जाकर उस {platform_account} से अपनी {pro} एक्सेस नवीनीकृत करें जिससे आपने {pro} के लिए साइन अप किया था।</string>
     <string name="proAccessRenewPlatformWebsite"><b><font color="0">{platform} वेबसाइट</font></b> पर जाकर उस {platform_account} के साथ नवीनीकरण करें जिससे आपने {pro} के लिए साइन अप किया था।</string>
     <string name="proAccessRenewStart">{app_pro} के शक्तिशाली Beta फ़ीचर्स का फिर से उपयोग शुरू करने के लिए अपनी {pro} एक्सेस नवीनीकृत करें।</string>
     <string name="proAccessRestored">{pro} पहुँच पुनर्प्राप्त की गई</string>
     <string name="proAccessRestoredDescription">{app_name} ने आपके खाते के लिए {pro} एक्सेस का पता लगाया और उसे पुनर्प्राप्त किया। आपकी {pro} स्थिति पुनः स्थापित कर दी गई है!</string>
     <string name="proAccessSignUp">चूंकि आपने मूल रूप से <b>{platform_store}</b> के माध्यम से {app_pro} के लिए साइन अप किया था, इसलिए आपको अपने {platform_account} का उपयोग करके अपनी {pro} पहुँच को अपडेट करना होगा।</string>
-    <string name="proAccessUpgradeDesktop">फिलहाल, {pro} एक्सेस केवल {platform_store} या {platform_store_other} के माध्यम से ही खरीदा जा सकता है। चूंकि आप {app_name} डेस्कटॉप का उपयोग कर रहे हैं, आप यहाँ {pro} में अपग्रेड नहीं कर सकते।\n\n{app_name} के डेवलपर वैकल्पिक भुगतान विकल्पों पर काम कर रहे हैं ताकि उपयोगकर्ता {platform_store} और {platform_store_other} के बाहर से {pro} एक्सेस खरीद सकें। <b>{pro} रोडमैप</b> {icon}</string>
     <string name="proActivated">सक्रिय किया गया</string>
     <string name="proActivatingActivation">सक्रिय कर रहे हैं</string>
     <string name="proAllSet">आप पूरी तरह से तैयार हैं!</string>
@@ -1034,9 +1032,6 @@
         <item quantity="other">%1$s %2$s बैज भेजे गए</item>
     </plurals>
     <string name="proBetaFeatures">{pro} बीटा फीचर्स</string>
-    <string name="proBilledAnnually">{price} प्रति वर्ष बिल किया जाएगा</string>
-    <string name="proBilledMonthly">{price} प्रति माह बिल किया जाएगा</string>
-    <string name="proBilledQuarterly">{price} प्रति तिमाही बिल किया जाएगा</string>
     <string name="proCallToActionLongerMessages">लंबे संदेश भेजना चाहते हैं?\n{app_pro} Beta के साथ अधिक टेक्स्ट भेजें और प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proCallToActionPinnedConversations">अधिक पिन करना चाहते हैं?\n{app_pro} Beta के साथ अपनी चैट व्यवस्थित करें और प्रीमियम सुविधाओं का अनलॉक करें</string>
     <string name="proCallToActionPinnedConversationsMoreThan">{limit} से अधिक पिन करना चाहते हैं?\n{app_pro} Beta के साथ अपनी चैट व्यवस्थित करें और प्रीमियम सुविधाओं का अनलॉक करें</string>
@@ -1095,9 +1090,6 @@
     <string name="proPlanPlatformRefund">चूंकि आपने मूल रूप से <b><font color="0">{platform_store}</font></b> के माध्यम से {app_pro} के लिए साइन अप किया था, इसलिए आपको धनवापसी का अनुरोध करने के लिए अपने {platform_account} का उपयोग करना होगा।</string>
     <string name="proPlanPlatformRefundLong">चूंकि आपने प्रारंभ में <b><font color="0">{platform_store}</font></b> के माध्यम से {app_pro} के लिए साइन अप किया था, इसलिए आपका धनवापसी अनुरोध {app_name} सहायता द्वारा संसाधित किया जाएगा।\n\nनीचे दिए गए बटन पर क्लिक करें और धनवापसी अनुरोध फ़ॉर्म भरें ताकि आप धनवापसी का अनुरोध कर सकें।\n\n{app_name} सहायता 24-72 घंटों के भीतर अनुरोधों को संसाधित करने का प्रयास करती है, लेकिन अनुरोधों की उच्च मात्रा के समय इसमें अधिक समय लग सकता है।</string>
     <string name="proPlanRenewSupport">आपकी {app_pro} एक्सेस नवीनीकृत कर दी गई है! {network_name} का समर्थन करने के लिए धन्यवाद।</string>
-    <string name="proPriceOneMonth">1 महीना - {monthly_price} / माह</string>
-    <string name="proPriceThreeMonths">3 महीने - {monthly_price} / माह</string>
-    <string name="proPriceTwelveMonths">12 महीने - {monthly_price} / माह</string>
     <string name="proReactivatingActivation">पुनः सक्रिय कर रहे हैं</string>
     <string name="proRefundAccountDevice">यह {app_name} खाता उस {device_type} डिवाइस पर खोलें जिसमें वही {platform_account} लॉग इन है जिससे आपने साइन अप किया था। फिर, {app_pro} सेटिंग्स में जाकर रिफ़ंड का अनुरोध करें।</string>
     <string name="proRefundDescription">हमें आपके जाने का दुख है। रिफंड का अनुरोध करने से पहले आपको ये बात जाननी चाहिए।</string>
@@ -1108,14 +1100,12 @@
     <string name="proRefundingDescription">{app_pro} के लिए रिफंड केवल {platform} द्वारा {platform_store} के माध्यम से नियंत्रित किए जाते हैं।\n\n{platform} की रिफंड नीतियों के कारण, {app_name} डेवलपर्स रिफंड अनुरोधों के परिणाम को प्रभावित नहीं कर सकते। इसमें यह शामिल है कि अनुरोध को स्वीकृत या अस्वीकृत किया जाए, और पूर्ण या आंशिक रिफंड जारी किया जाए या नहीं।</string>
     <string name="proRenewAnimatedDisplayPicture">क्या आप फिर से एनिमेटेड डिस्प्ले पिक्चर्स का उपयोग करना चाहते हैं?\nजिन फ़ीचर्स को आप मिस कर रहे थे उन्हें अनलॉक करने के लिए अपना {pro} एक्सेस नवीनीकरण करें।</string>
     <string name="proRenewBeta">{pro} बीटा को नवीनीकृत करें</string>
-    <string name="proRenewDesktopLinked">{app_name} वाले लिंक किए गए डिवाइस के {app_pro} सेटिंग्स से, जो {platform_store} या {platform_store_other} के माध्यम से इंस्टॉल किया गया है, अपनी {pro} एक्सेस को नवीनीकृत करें।</string>
     <string name="proRenewLongerMessages">क्या आप फिर से लंबे संदेश भेजना चाहते हैं?\nवह सुविधाएँ अनलॉक करने के लिए अपना {pro} एक्सेस नवीनीकरण करें जिन्हें आप मिस कर रहे थे।</string>
     <string name="proRenewMaxPotential">क्या आप {app_name} का अधिकतम उपयोग फिर से करना चाहते हैं?\nअपनी {pro} एक्सेस को नवीनीकृत करें ताकि आप जिन सुविधाओं से चूक रहे थे उन्हें अनलॉक कर सकें।</string>
     <string name="proRenewPinFiveConversations">क्या आप फिर से {limit} से अधिक बातचीत को पिन करना चाहते हैं?\nअपनी {pro} एक्सेस को नवीनीकृत करें ताकि आप जिन सुविधाओं से चूक रहे थे उन्हें अनलॉक कर सकें।</string>
     <string name="proRenewPinMoreConversations">क्या आप फिर से अधिक बातचीत को पिन करना चाहते हैं?\nअपनी {pro} एक्सेस को नवीनीकृत करें ताकि आप जिन सुविधाओं से चूक रहे थे उन्हें अनलॉक कर सकें।</string>
     <string name="proRenewTosPrivacy">नवीनीकरण करके, आप {app_pro} की <b>सेवा की शर्तों</b> {icon} और <b>गोपनीयता नीति</b> {icon} से सहमत होते हैं</string>
     <string name="proRenewingAction">नवीनीकरण कर रहे हैं</string>
-    <string name="proRenewingNoAccessBilling">वर्तमान में, {pro} एक्सेस केवल {platform_store} या {platform_store_other} के माध्यम से ही खरीदी और नवीनीकृत की जा सकती है। चूंकि आपने {build_variant} का उपयोग करके {app_name} इंस्टॉल किया है, आप यहां नवीनीकरण नहीं कर सकते।\n\n{app_name} के डेवलपर्स वैकल्पिक भुगतान विकल्पों पर काम कर रहे हैं ताकि उपयोगकर्ता {platform_store} और {platform_store_other} से बाहर {pro} एक्सेस खरीद सकें।<b> {pro} रोडमैप</b> {icon}</string>
     <string name="proRequestedRefund">रिफंड का अनुरोध किया गया</string>
     <string name="proSendMore">इसके साथ और भेजें</string>
     <string name="proSettings">{pro} सेटिंग्स</string>
@@ -1142,8 +1132,6 @@
     <string name="proUpdateAccessExpireDescription">आपकी {pro} पहुँच <b>{date}</b> को समाप्त हो जाएगी।\n\nअपडेट करने पर, आपकी {pro} पहुँच <b>{date}</b> को स्वचालित रूप से नवीनीकृत हो जाएगी जो अतिरिक्त <b>{selected_plan_length}</b> की {pro} पहुँच प्रदान करेगी।</string>
     <string name="proUpdatingAction">अद्यतन कर रहे हैं</string>
     <string name="proUpgradeAccess">कई विशिष्ट फ़ायदों और सुविधाओं तक पहुँच के लिए {app_pro} बीटा में अपग्रेड करें।</string>
-    <string name="proUpgradeDesktopLinked">{platform_store} या {platform_store_other} के माध्यम से {app_name} इंस्टॉल किए गए लिंक किए गए डिवाइस पर {app_pro} सेटिंग्स से {pro} में अपग्रेड करें।</string>
-    <string name="proUpgradeNoAccessBilling">फिलहाल, {pro} एक्सेस केवल {platform_store} या {platform_store_other} के माध्यम से ही खरीदी जा सकती है। चूंकि आपने {app_name} को {build_variant} का उपयोग करके इंस्टॉल किया है, आप यहाँ {pro} में अपग्रेड नहीं कर सकते।\n\n{app_name} के डेवलपर वैकल्पिक भुगतान विकल्पों पर काम कर रहे हैं ताकि उपयोगकर्ता {platform_store} और {platform_store_other} के बाहर से {pro} एक्सेस खरीद सकें।<b> {pro} रोडमैप</b> {icon}</string>
     <string name="proUpgradeOption">अभी के लिए, अपग्रेड करने का केवल एक ही तरीका है:</string>
     <string name="proUpgradeOptionsTwo">अभी के लिए, अपग्रेड करने के दो तरीके हैं:</string>
     <string name="proUpgraded">आपने {app_pro} में अपग्रेड कर लिया है!\n{network_name} का समर्थन करने के लिए धन्यवाद।</string>
