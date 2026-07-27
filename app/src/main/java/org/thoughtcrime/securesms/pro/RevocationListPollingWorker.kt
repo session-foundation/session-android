@@ -60,18 +60,45 @@ class RevocationListPollingWorker @AssistedInject constructor(
 
             proDatabase.pruneRevocations(snodeClock.currentTime())
 
-            // Arrange next polling
+            // Arrange next polling, sanitising the backend's `retry_in` — it goes straight into a
+            // OneTimeWorkRequest delay on APPEND unique work, so a bad value either hot-loops
+            // against the backend or disables polling outright.
+            //
+            // The agreed cross-client rule (signed off 2026-07-27):
+            //   retry_in <= 0 -> DEFAULT_RETRY_IN_SECONDS (the checklist's 1-day worst case)
+            //   otherwise     -> clamp to [MIN, MAX]
+            //
+            // Absent/zero deliberately does NOT fall through to the 60s floor: "we were told
+            // nothing" should mean "try again tomorrow", not "try again in a minute".
+            //
+            // Purely defensive — the backend hardcodes RETRY_IN = SECONDS_IN_DAY
+            // (Session-Pro-Backend server.py:248) and asserts it in tests, so this should never fire
+            // against a real backend. Revocation is also not latency-critical by design: the backend
+            // sets effective_at = revoked_at + RETRY_IN (server.py:271), giving every client a full
+            // poll interval of slack before a revocation takes effect.
+            //
+            // TODO: consolidate this rule into libsession once libsession owns networking, so the
+            //  three clients share one implementation. Client-side is the correct home until then.
+            val retryInSeconds = if (response.retryInSeconds <= 0) {
+                DEFAULT_RETRY_IN_SECONDS
+            } else {
+                response.retryInSeconds.coerceIn(MIN_RETRY_IN_SECONDS, MAX_RETRY_IN_SECONDS)
+            }
+            if (retryInSeconds != response.retryInSeconds) {
+                Log.w(TAG, "Adjusted backend retry_in ${response.retryInSeconds}s to ${retryInSeconds}s")
+            }
+
             WorkManager.getInstance(context)
                 .beginUniqueWork(WORK_NAME, ExistingWorkPolicy.APPEND,
                     OneTimeWorkRequestBuilder<RevocationListPollingWorker>()
-                        .setInitialDelay(response.retryInSeconds, TimeUnit.SECONDS)
+                        .setInitialDelay(retryInSeconds, TimeUnit.SECONDS)
                         .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(10))
                         .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                         .build()
                 )
                 .enqueue()
 
-            Log.d(TAG, "Arranged next polling in ${response.retryInSeconds} seconds")
+            Log.d(TAG, "Arranged next polling in $retryInSeconds seconds")
 
             return Result.success()
         } catch (e: Exception) {
@@ -92,6 +119,21 @@ class RevocationListPollingWorker @AssistedInject constructor(
         private const val TAG = "RevocationListPollingWorker"
 
         private const val WORK_NAME = "RevocationListPollingWorker"
+
+        /** Floor for a positive `retry_in`, so a small value can't turn polling into a hot loop. */
+        private const val MIN_RETRY_IN_SECONDS = 60L
+
+        /**
+         * Ceiling for `retry_in`. The important half: without it, a `retry_in` of (say) ten years is
+         * honoured and revocation polling is silently disabled for good.
+         */
+        private const val MAX_RETRY_IN_SECONDS = 24L * 60 * 60
+
+        /**
+         * Used when `retry_in` is absent or non-positive — the checklist's "worst case hardcode to
+         * 1 day". Matches the backend's own `RETRY_IN` (`server.py:248`).
+         */
+        private const val DEFAULT_RETRY_IN_SECONDS = MAX_RETRY_IN_SECONDS
 
         suspend fun schedule(context: Context) {
             WorkManager.getInstance(context)

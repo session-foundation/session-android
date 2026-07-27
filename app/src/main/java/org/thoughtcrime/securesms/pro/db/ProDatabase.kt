@@ -84,11 +84,26 @@ class ProDatabase @Inject constructor(
             """).use { stmt ->
                 stmt.bindString(1, STATE_NAME_LAST_TICKET)
                 stmt.bindLong(2, newTicket)
+                // Must be executed — binding alone writes nothing. Without this
+                // getLastRevocationTicket() always returns null and every poll re-requests the
+                // entire revocation list from ticket 0.
+                stmt.executeInsert()
             }
         }
 
+        // `cache` is a positive-only "known revoked" set, and isRevoked() trusts a hit without
+        // re-checking the clock — so only cache items that are ALREADY effective (§4). Caching a
+        // future-dated revocation here would apply it immediately and bypass the effective_ts check
+        // in isRevoked()'s query; such an item is left to be picked up from the DB (and cached
+        // there) once its effective_ts has passed.
         for (item in data) {
-            cache.put(item.revocationTagHex, Unit)
+            if (item.effectiveUnixTs <= now.epochSecond) {
+                cache.put(item.revocationTagHex, Unit)
+            } else {
+                // An update can also push effective_ts forward for a tag we cached on an earlier
+                // poll; drop it so the DB's effective_ts check governs again.
+                cache.remove(item.revocationTagHex)
+            }
         }
 
         if (changes > 0) {

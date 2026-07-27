@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
 import android.content.Context
+import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import network.loki.messenger.libsession_util.pro.ProPaymentItem
@@ -92,18 +93,24 @@ fun ProPaymentItem.toProPlanPeriod(): ProPlanPeriod {
     return ProPlanPeriod(planCount, unit)
 }
 
+/**
+ * Whether the subscription was bought somewhere this device can't manage it — i.e. anywhere other
+ * than Google Play. Drives the three non-originating screens (Update #7, Cancel #27, Refund
+ * #22/#23) and price suppression.
+ *
+ * Keyed off the provider **slug**, never off a display field: those are localized, so comparing
+ * them would classify every non-English Google Play subscriber as non-originating.
+ */
 fun PaymentProviderMetadata.isFromAnotherPlatform(): Boolean {
-    return platform.trim().lowercase() != "google"
+    return slug != PAYMENT_PROVIDER_GOOGLE_PLAY
 }
 
 /**
- * Some UI cases require a special display name for the platform.
+ * Some UI cases require a special display name for the platform: for our own store the copy reads
+ * better with the store name ("Google Play") than the platform name ("Google").
  */
 fun PaymentProviderMetadata.getPlatformDisplayName(): String {
-    return when (platform.trim().lowercase()) {
-        "google" -> store
-        else -> platform
-    }
+    return if (slug == PAYMENT_PROVIDER_GOOGLE_PLAY) store else platform
 }
 
 /**
@@ -111,6 +118,7 @@ fun PaymentProviderMetadata.getPlatformDisplayName(): String {
  */
 
 val previewAppleMetaData = PaymentProviderMetadata(
+    slug = PAYMENT_PROVIDER_APP_STORE,
     device = "iOS",
     store = "Apple App Store",
     platform = "Apple",

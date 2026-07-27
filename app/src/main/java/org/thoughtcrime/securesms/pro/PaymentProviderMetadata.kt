@@ -11,6 +11,12 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
  * libsession `PaymentProviderMetadata` struct.
  */
 data class PaymentProviderMetadata(
+    /**
+     * The opaque provider wire slug (`google_play`, `app_store`, `rangeproof`, …) this metadata was
+     * built from. Carried so platform decisions key off the slug rather than off one of the
+     * localized display fields below — see [isFromAnotherPlatform].
+     */
+    val slug: String,
     val device: String,
     val store: String,
     val platform: String,
@@ -30,6 +36,7 @@ data class PaymentProviderMetadata(
 fun providerMetadata(providerSlug: String, context: Context): PaymentProviderMetadata {
     val urls = BackendRequests.providerUrls(providerSlug)
     return PaymentProviderMetadata(
+        slug = providerSlug,
         device = providerDisplay(context, providerSlug, "device"),
         store = providerDisplay(context, providerSlug, "store"),
         platform = providerDisplay(context, providerSlug, "platform"),

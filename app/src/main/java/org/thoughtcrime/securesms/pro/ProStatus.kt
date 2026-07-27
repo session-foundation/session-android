@@ -33,8 +33,16 @@ sealed interface ProStatus{
             override val refundInProgress: Boolean,
         ): Active
 
-        fun isWithinQuickRefundWindow(): Boolean {
-            return quickRefundExpiry != null && quickRefundExpiry!!.isAfter(Instant.now())
+        /**
+         * Whether the store's own quick-refund window is still open, which decides between the
+         * <48h (#19/#22) and >48h (#20/#23) refund screens.
+         *
+         * [now] must come from [org.session.libsession.network.SnodeClock], as everywhere else in
+         * the Pro stack — `quickRefundExpiry` is a backend/store timestamp, so comparing it against
+         * the device clock lets clock skew flip the branch.
+         */
+        fun isWithinQuickRefundWindow(now: Instant): Boolean {
+            return quickRefundExpiry?.isAfter(now) == true
         }
 
         fun renewingAtFormatted(): String {

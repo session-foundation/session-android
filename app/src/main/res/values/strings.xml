@@ -1157,15 +1157,31 @@
     <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
     <!-- TODO(crowdin): provider display names — added locally to unblock the pro provider-metadata
          migration (libsession no longer supplies these). MUST be added upstream on Crowdin before the
-         next translations sync, or the sync will delete them. Values mirror the old libsession metadata. -->
-    <string name="proProviderGooglePlatform">Google</string>
-    <string name="proProviderGoogleStore">Google Play Store</string>
-    <string name="proProviderGoogleDevice">Android</string>
-    <string name="proProviderGoogleAccount">Google account</string>
-    <string name="proProviderApplePlatform">Apple</string>
-    <string name="proProviderAppleStore">Apple App Store</string>
-    <string name="proProviderAppleDevice">iOS</string>
-    <string name="proProviderAppleAccount">Apple account</string>
+         next translations sync, or the sync will delete them. Values mirror the old libsession metadata.
+
+         NAMING IS LOAD-BEARING: these are resolved at runtime by name, as
+         `pro_provider_<provider_slug>_<suffix>` (PaymentProviderMetadata.kt), where <provider_slug> is
+         the backend's opaque wire slug (`google_play`, `app_store`, …) and <suffix> is one of
+         device/store/platform/account. A missing resource does NOT fail the build — getIdentifier()
+         returns 0 and the code falls back to `pro_provider_unknown_<suffix>` and then to the raw slug,
+         so a rename that misses these silently ships wire slugs as user-facing copy. Renaming to the
+         camelCase house style would break the lookup; keep the snake_case slug form.
+
+         `pro_provider_unknown_*` are the forward-compatible fallback for a provider the client has no
+         translations for yet; `{provider}` (where present) is substituted with the raw slug. Adding a
+         new provider should need only these four strings, no code change. -->
+    <string name="pro_provider_google_play_platform">Google</string>
+    <string name="pro_provider_google_play_store">Google Play Store</string>
+    <string name="pro_provider_google_play_device">Android</string>
+    <string name="pro_provider_google_play_account">Google account</string>
+    <string name="pro_provider_app_store_platform">Apple</string>
+    <string name="pro_provider_app_store_store">Apple App Store</string>
+    <string name="pro_provider_app_store_device">iOS</string>
+    <string name="pro_provider_app_store_account">Apple account</string>
+    <string name="pro_provider_unknown_platform">{provider}</string>
+    <string name="pro_provider_unknown_store">{provider}</string>
+    <string name="pro_provider_unknown_device">{provider}</string>
+    <string name="pro_provider_unknown_account">{provider} account</string>
     <string name="proReactivatingActivation">re-activating</string>
     <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">We’re sorry to see you go. Here\'s what you need to know before requesting a refund.</string>

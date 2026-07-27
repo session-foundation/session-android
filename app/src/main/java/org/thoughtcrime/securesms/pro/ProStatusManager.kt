@@ -253,16 +253,6 @@ class ProStatusManager @Inject constructor(
         launch { manageOtherPeoplePro() }
         launch { manageProStatusRefreshScheduling() }
         launch { manageCurrentProProofRevocation() }
-        launch {
-            postProLaunchStatus
-                .collectLatest { postLaunch ->
-                    if (postLaunch) {
-                        RevocationListPollingWorker.schedule(application)
-                    } else {
-                        RevocationListPollingWorker.cancel(application)
-                    }
-                }
-        }
     }
 
     override fun onLoggedOut() {
@@ -528,8 +518,28 @@ class ProStatusManager @Inject constructor(
 
                             configs.userProfile.setProBadge(true)
                         }
-                        // refresh the pro status
-                        proStatusRepository.get().requestRefresh(force = true)
+
+                        // The claim is persisted from here on, so nothing below may send us back
+                        // around the retry loop: refreshing the status is only a UI-freshness
+                        // concern, and a scheduled refresh will pick it up regardless.
+                        try {
+                            proStatusRepository.get().requestRefresh(force = true)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Log.w(
+                                DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                "Pro status refresh after 'add pro payment' failed; the claim is already persisted",
+                                e
+                            )
+                        }
+
+                        // The one and only success exit. Without this the loop runs all 3 attempts
+                        // and then throws PaymentServerException, so a purchase that actually
+                        // worked surfaces to the user as "Payment Error". `already_redeemed` used to
+                        // break the loop by accident; §5.1 removed it (a re-claim now returns ok),
+                        // which left success with no exit at all. Do not remove.
+                        return
                     }
 
                     is ProApiResponse.Failure -> {
