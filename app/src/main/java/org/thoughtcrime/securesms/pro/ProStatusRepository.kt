@@ -17,7 +17,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.pro.api.ProDetails
+import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import java.time.Instant
@@ -25,7 +25,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ProDetailsRepository @Inject constructor(
+class ProStatusRepository @Inject constructor(
     private val application: Application,
     private val db: ProDatabase,
     private val snodeClock: SnodeClock,
@@ -35,41 +35,41 @@ class ProDetailsRepository @Inject constructor(
     private val networkConnectivity: NetworkConnectivity,
 ) {
     sealed interface LoadState {
-        val lastUpdated: Pair<ProDetails, Instant>?
+        val lastUpdated: Pair<GetProStatusResponse, Instant>?
 
         data object Init : LoadState {
-            override val lastUpdated: Pair<ProDetails, Instant>?
+            override val lastUpdated: Pair<GetProStatusResponse, Instant>?
                 get() = null
         }
 
         data class Loading(
-            override val lastUpdated: Pair<ProDetails, Instant>?,
+            override val lastUpdated: Pair<GetProStatusResponse, Instant>?,
             val waitingForNetwork: Boolean
         ) : LoadState
 
-        data class Loaded(override val lastUpdated: Pair<ProDetails, Instant>) : LoadState
-        data class Error(override val lastUpdated: Pair<ProDetails, Instant>?) : LoadState
+        data class Loaded(override val lastUpdated: Pair<GetProStatusResponse, Instant>) : LoadState
+        data class Error(override val lastUpdated: Pair<GetProStatusResponse, Instant>?) : LoadState
     }
 
 
     val loadState: StateFlow<LoadState> = loginStateRepository.flowWithLoggedInState {
         combine(
-            FetchProDetailsWorker.watch(application)
+            FetchProStatusWorker.watch(application)
                 .map { it.state }
                 .distinctUntilChanged(),
 
             networkConnectivity.networkAvailable,
 
-            db.proDetailsChangeNotification
+            db.proStatusChangeNotification
                 .onStart { emit(Unit) }
-                .map { db.getProDetailsAndLastUpdated() }
+                .map { db.getProStatusAndLastUpdated() }
         ) { state, isOnline, last ->
             when (state) {
                 WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> LoadState.Loading(last, waitingForNetwork = !isOnline)
                 WorkInfo.State.RUNNING -> LoadState.Loading(last, waitingForNetwork = false)
                 WorkInfo.State.SUCCEEDED -> {
                     if (last != null) {
-                        Log.d(DebugLogGroup.PRO_DATA.label, "Successfully fetched Pro details from backend")
+                        Log.d(DebugLogGroup.PRO_DATA.label, "Successfully fetched Pro status from backend")
                         LoadState.Loaded(last)
                     } else {
                         // This should never happen, but just in case...
@@ -84,7 +84,7 @@ class ProDetailsRepository @Inject constructor(
 
 
     /**
-     * Requests a fresh of current user's pro details. By default, if last update is recent enough,
+     * Requests a fresh of current user's pro status. By default, if last update is recent enough,
      * no network request will be made. If [force] is true, a network request will be
      * made regardless of the freshness of the last update.
      */
@@ -98,12 +98,12 @@ class ProDetailsRepository @Inject constructor(
         if (!force && (currentState is LoadState.Loading || currentState is LoadState.Loaded) &&
             currentState.lastUpdated?.second?.plusSeconds(MIN_UPDATE_INTERVAL_SECONDS)
                 ?.isAfter(snodeClock.currentTime()) == true) {
-            Log.d(DebugLogGroup.PRO_DATA.label, "Pro details are fresh enough, skipping refresh")
+            Log.d(DebugLogGroup.PRO_DATA.label, "Pro status are fresh enough, skipping refresh")
             return
         }
 
-        Log.d(DebugLogGroup.PRO_DATA.label, "Scheduling fetch of Pro details from server")
-        FetchProDetailsWorker.schedule(application, ExistingWorkPolicy.REPLACE)
+        Log.d(DebugLogGroup.PRO_DATA.label, "Scheduling fetch of Pro status from server")
+        FetchProStatusWorker.schedule(application, ExistingWorkPolicy.REPLACE)
     }
 
 

@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.preferences.prosettings.chooseplan
 
-import android.icu.util.MeasureUnit
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -50,11 +49,8 @@ fun ChoosePlanNonOriginating(
 
         is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatedAutoShort))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(CURRENT_PLAN_LENGTH_KEY, DateUtils.getLocalisedTimeDuration(
-                context = context,
-                amount = subscription.duration.duration.months,
-                unit = MeasureUnit.MONTH
-            ))
+            .put(CURRENT_PLAN_LENGTH_KEY,
+                DateUtils.getLocalisedProPlanLength(context, subscription.duration))
             .put(DATE_KEY, subscription.renewingAtFormatted())
             .format()
 

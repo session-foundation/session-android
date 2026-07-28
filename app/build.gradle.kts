@@ -144,12 +144,12 @@ android {
         buildConfigField("String", "USER_AGENT", "\"OWA\"")
         buildConfigField("int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode")
 
-        buildConfigField("org.thoughtcrime.securesms.pro.ProBackendConfig", "PRO_BACKEND_DEV", """
-            new org.thoughtcrime.securesms.pro.ProBackendConfig(
-                "https://pro.session.codes",
-                "479ffca8bcec7b4a0f0f7afe48b8a6d15635a8c7ff15ad16add05752c19414d4"
-            )
-        """.trimIndent())
+        // NOTE: there is deliberately no PRO_BACKEND_DEV buildConfigField here. The Pro backend URL
+        // and signing pubkey are single-sourced from libsession (`BackendRequests.proBackendUrl()` /
+        // `proBackendPubKeyHex()`, wired up in ProModule); a second copy in the build script is a
+        // launch trap, since it would keep shipping the dev URL and debug pubkey after libsession
+        // moved to production. If a client-side override is ever wanted, add it deliberately as an
+        // override *of* the libsession default, not as a parallel source of truth.
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
