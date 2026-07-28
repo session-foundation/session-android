@@ -17,16 +17,18 @@ import org.session.libsession.utilities.StringSubstitutionConstants.BUILD_VARIAN
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE2_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PRO_STORES_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProSettingsScreen
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import org.thoughtcrime.securesms.pro.ProStatus
-import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.buildProStoresList
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
+import org.thoughtcrime.securesms.pro.providerStoreName
 import org.thoughtcrime.securesms.pro.previewExpiredApple
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -42,8 +44,7 @@ fun ChoosePlanNoBilling(
 ){
     val context = LocalContext.current
 
-    val defaultGoogleStore = ProStatusManager.DEFAULT_GOOGLE_STORE
-    val defaultAppleStore = ProStatusManager.DEFAULT_APPLE_STORE
+    val proStores = buildProStoresList(context)
 
     val headerTitle = when(subscription) {
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.proAccessRenewStart))
@@ -73,25 +74,19 @@ fun ChoosePlanNoBilling(
     val contentDescription: CharSequence = when(subscription) {
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.proRenewingNoAccessBilling))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
+            .put(PRO_STORES_KEY, proStores)
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(BUILD_VARIANT_KEY, when (BuildConfig.FLAVOR) {
                 "fdroid" -> "F-Droid Store"
                 "huawei" -> "Huawei App Gallery"
                 else -> "APK"
             })
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(ICON_KEY, iconExternalLink)
             .format()
 
         is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeNoAccessBilling))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
+            .put(PRO_STORES_KEY, proStores)
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(BUILD_VARIANT_KEY, when (BuildConfig.FLAVOR) {
                 "fdroid" -> "F-Droid Store"
@@ -114,16 +109,14 @@ fun ChoosePlanNoBilling(
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.proRenewDesktopLinked))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
+            .put(PRO_STORES_KEY, proStores)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
         is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeDesktopLinked))
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
-            .put(PLATFORM_STORE2_KEY, defaultAppleStore)
+            .put(PRO_STORES_KEY, proStores)
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
@@ -133,14 +126,14 @@ fun ChoosePlanNoBilling(
     val cell2Text: CharSequence = when(subscription) {
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.proNewInstallationDescription))
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+            .put(PLATFORM_STORE_KEY, providerStoreName(PAYMENT_PROVIDER_GOOGLE_PLAY, context))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
 
         is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proNewInstallationUpgrade))
             .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
-            .put(PLATFORM_STORE_KEY, defaultGoogleStore)
+            .put(PLATFORM_STORE_KEY, providerStoreName(PAYMENT_PROVIDER_GOOGLE_PLAY, context))
             .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
