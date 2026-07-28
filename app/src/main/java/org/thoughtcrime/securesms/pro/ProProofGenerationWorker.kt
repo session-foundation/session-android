@@ -25,7 +25,6 @@ import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.pro.api.GenerateProProofApi
-import org.thoughtcrime.securesms.pro.api.ProDetails
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.util.findCause
@@ -38,7 +37,7 @@ import javax.inject.Provider
  * locally.
  *
  * Normally you don't need to interact with this worker directly, as it is scheduled
- * automatically when needed based on the Pro details state, by the [FetchProDetailsWorker].
+ * automatically when needed based on the Pro status state, by the [FetchProStatusWorker].
  */
 @HiltWorker
 class ProProofGenerationWorker @AssistedInject constructor(
@@ -47,7 +46,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
     private val apiExecutor: ServerApiExecutor,
     private val proBackendConfig: Provider<ProBackendConfig>,
     private val generateProProofApi: GenerateProProofApi.Factory,
-    private val proDetailsRepository: ProDetailsRepository,
+    private val proStatusRepository: ProStatusRepository,
     private val loginStateRepository: LoginStateRepository,
     private val configFactory: ConfigFactoryProtocol,
 ) : CoroutineWorker(context, params) {
@@ -56,18 +55,18 @@ class ProProofGenerationWorker @AssistedInject constructor(
             "User must be logged to generate proof"
         }
 
-        val details = checkNotNull(proDetailsRepository.loadState.value.lastUpdated) {
-            "Pro details must be available to generate proof"
+        val details = checkNotNull(proStatusRepository.loadState.value.lastUpdated) {
+            "Pro status must be available to generate proof"
         }
 
-        check(details.first.status == ProDetails.DETAILS_STATUS_ACTIVE) {
+        check(details.first.userStatus == ProUserStatus.ACTIVE) {
             "Pro status must be active to generate proof"
         }
 
         return try {
             val rotatingPrivateKey = ED25519.generate(null).secretKey.data
 
-            val proof = apiExecutor.execute(
+            val response = apiExecutor.execute(
                 ServerApiRequest(
                     proBackendConfig = proBackendConfig.get(),
                     api = generateProProofApi.create(
@@ -76,6 +75,8 @@ class ProProofGenerationWorker @AssistedInject constructor(
                     ),
                 )
             ).successOrThrow()
+            // §5.2 invariant: an `ok` proof response always carries the proof.
+            val proof = requireNotNull(response.proof) { "generate-proof returned ok without a proof" }
 
             configFactory.withMutableUserConfigs {
                 it.userProfile.setProConfig(ProConfig(
@@ -84,7 +85,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
             }
 
 
-            Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochMilli(proof.expiryMs)}")
+            Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
             Result.success()
         } catch (e: Exception) {
             if (e is CancellationException) throw e

@@ -36,6 +36,7 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
+import network.loki.messenger.libsession_util.pro.ProResponseStatus
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
@@ -63,7 +64,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
-import org.thoughtcrime.securesms.pro.api.AddPaymentErrorStatus
+import org.thoughtcrime.securesms.pro.api.ProApiError
 import org.thoughtcrime.securesms.pro.api.AddProPaymentApi
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
@@ -92,7 +93,7 @@ class ProStatusManager @Inject constructor(
     private val loginState: LoginStateRepository,
     private val proDatabase: ProDatabase,
     private val snodeClock: SnodeClock,
-    private val proDetailsRepository: Lazy<ProDetailsRepository>,
+    private val proStatusRepository: Lazy<ProStatusRepository>,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
 ) : AuthAwareComponent {
 
@@ -107,7 +108,7 @@ class ProStatusManager @Inject constructor(
                     }
                 }
                 .distinctUntilChanged(),
-            proDetailsRepository.get().loadState,
+            proStatusRepository.get().loadState,
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.getDebugSubscriptionType() },
@@ -117,19 +118,19 @@ class ProStatusManager @Inject constructor(
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
-        ){ showProBadgePreference, proDetailsState,
+        ){ showProBadgePreference, proStatusState,
            debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
                 else -> {
                     // calculate the real refresh state here
-                    when(proDetailsState){
-                        is ProDetailsRepository.LoadState.Loading -> {
-                            if(proDetailsState.waitingForNetwork) State.Error(Exception())
+                    when(proStatusState){
+                        is ProStatusRepository.LoadState.Loading -> {
+                            if(proStatusState.waitingForNetwork) State.Error(Exception())
                             else State.Loading
                         }
-                        is ProDetailsRepository.LoadState.Error -> State.Error(Exception())
+                        is ProStatusRepository.LoadState.Error -> State.Error(Exception())
                         else -> State.Success(Unit)
                     }
                 }
@@ -140,7 +141,7 @@ class ProStatusManager @Inject constructor(
                 val nowMs = snodeClock.currentTimeMillis()
 
                 ProDataState(
-                    type = proDetailsState.lastUpdated?.first?.toProStatus(nowMs) ?: ProStatus.NeverSubscribed,
+                    type = proStatusState.lastUpdated?.first?.toProStatus(nowMs, application) ?: ProStatus.NeverSubscribed,
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
@@ -153,8 +154,8 @@ class ProStatusManager @Inject constructor(
                     type = when(subscriptionState){
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
-                            duration = ProSubscriptionDuration.THREE_MONTHS,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            duration = ProSubscriptionDuration.THREE_MONTHS.period,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false,
                             inGracePeriod = false
@@ -162,8 +163,8 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE_REFUNDING -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
-                            duration = ProSubscriptionDuration.THREE_MONTHS,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            duration = ProSubscriptionDuration.THREE_MONTHS.period,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = true,
                             inGracePeriod = false
@@ -171,24 +172,24 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(2),
-                            duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            duration = ProSubscriptionDuration.TWELVE_MONTHS.period,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(40),
-                            duration = ProSubscriptionDuration.TWELVE_MONTHS,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!,
+                            duration = ProSubscriptionDuration.TWELVE_MONTHS.period,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
                             renewingAt = Instant.now() + Duration.ofDays(14),
-                            duration = ProSubscriptionDuration.ONE_MONTH,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            duration = ProSubscriptionDuration.ONE_MONTH.period,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false,
                             inGracePeriod = false
@@ -196,23 +197,23 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(2),
-                            duration = ProSubscriptionDuration.ONE_MONTH,
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!,
+                            duration = ProSubscriptionDuration.ONE_MONTH.period,
+                            providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
                             refundInProgress = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
                             expiredAt = Instant.now() - Duration.ofDays(14),
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
                             expiredAt = Instant.now() - Duration.ofDays(60),
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY)!!
+                            providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
                             expiredAt = Instant.now() - Duration.ofDays(14),
-                            providerData = BackendRequests.getPaymentProviderMetadata(PAYMENT_PROVIDER_APP_STORE)!!
+                            providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application)
                         )
                     },
 
@@ -250,18 +251,8 @@ class ProStatusManager @Inject constructor(
         }
 
         launch { manageOtherPeoplePro() }
-        launch { manageProDetailsRefreshScheduling() }
+        launch { manageProStatusRefreshScheduling() }
         launch { manageCurrentProProofRevocation() }
-        launch {
-            postProLaunchStatus
-                .collectLatest { postLaunch ->
-                    if (postLaunch) {
-                        RevocationListPollingWorker.schedule(application)
-                    } else {
-                        RevocationListPollingWorker.cancel(application)
-                    }
-                }
-        }
     }
 
     override fun onLoggedOut() {
@@ -284,7 +275,7 @@ class ProStatusManager @Inject constructor(
                             .asSequence()
                             .filterIsInstance<Conversation.WithProProofInfo>()
                             .filter { convo ->
-                                convo.proProofInfo?.genIndexHash?.let { proDatabase.isRevoked(it.data.toHexString(), snodeClock.currentTime()) } == true
+                                convo.proProofInfo?.revocationTag?.let { proDatabase.isRevoked(it.data.toHexString(), snodeClock.currentTime()) } == true
                             }
                             .onEach { convo ->
                                 convo.proProofInfo = null
@@ -311,7 +302,7 @@ class ProStatusManager @Inject constructor(
     }
 
     @OptIn(FlowPreview::class)
-    private suspend fun manageProDetailsRefreshScheduling() {
+    private suspend fun manageProStatusRefreshScheduling() {
         postProLaunchStatus
             .collectLatest { postLaunch ->
                 if (postLaunch) {
@@ -320,13 +311,13 @@ class ProStatusManager @Inject constructor(
                             .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
                             .map {
                                 configFactory.get().withUserConfigs { configs ->
-                                    configs.userProfile.getProAccessExpiryMs()
+                                    configs.userProfile.getProAccessExpiry()
                                 }
                             }
                             .distinctUntilChanged()
                             .map { "ProAccessExpiry in config changes" },
 
-                        proDetailsRepository.get().loadState
+                        proStatusRepository.get().loadState
                             .mapNotNull { it.lastUpdated?.first?.expiry }
                             .distinctUntilChanged()
                             .transformLatest { expiry ->
@@ -341,7 +332,7 @@ class ProStatusManager @Inject constructor(
                             .filterNotNull()
                             .distinctUntilChanged()
                             .mapLatest { proConfig ->
-                                val expiry = Instant.ofEpochMilli(proConfig.proProof.expiryMs)
+                                val expiry = Instant.ofEpochSecond(proConfig.proProof.expirySeconds)
                                 // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
 
                                 val refreshTime =
@@ -356,13 +347,13 @@ class ProStatusManager @Inject constructor(
                         .collect { refreshReason ->
                             Log.d(
                                 DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                "Scheduling ProDetails fetch due to: $refreshReason"
+                                "Scheduling ProStatus fetch due to: $refreshReason"
                             )
 
-                            proDetailsRepository.get().requestRefresh(force = true)
+                            proStatusRepository.get().requestRefresh(force = true)
                         }
                 } else {
-                    FetchProDetailsWorker.cancel(application)
+                    FetchProStatusWorker.cancel(application)
                 }
             }
     }
@@ -373,19 +364,19 @@ class ProStatusManager @Inject constructor(
                 combine(
                     configFactory.get()
                         .watchUserProConfig()
-                        .mapNotNull { it?.proProof?.genIndexHashHex },
+                        .mapNotNull { it?.proProof?.revocationTagHex },
 
                     proDatabase.revocationChangeNotification
                         .onStart { emit(Unit) },
 
-                    { proofGenIndexHash, _ ->
-                        proofGenIndexHash.takeIf { proDatabase.isRevoked(it, snodeClock.currentTime()) }
+                    { proofRevocationTag, _ ->
+                        proofRevocationTag.takeIf { proDatabase.isRevoked(it, snodeClock.currentTime()) }
                     }
                 )
                     .filterNotNull()
                     .collectLatest { revokedHash ->
                         configFactory.get().withMutableUserConfigs { configs ->
-                            if (configs.userProfile.getProConfig()?.proProof?.genIndexHashHex == revokedHash) {
+                            if (configs.userProfile.getProConfig()?.proProof?.revocationTagHex == revokedHash) {
                                 Log.w(
                                     DebugLogGroup.PRO_SUBSCRIPTION.label,
                                     "Current Pro proof has been revoked, clearing Pro config"
@@ -503,7 +494,10 @@ class ProStatusManager @Inject constructor(
                         "Timeout adding pro payment"
                     }
                 }.getOrElse {
-                    ProApiResponse.Failure(AddPaymentErrorStatus.GenericError, emptyList())
+                    // Timed out / threw before we got a response — treat as a retryable backend error.
+                    ProApiResponse.Failure(
+                        ProApiError(ProResponseStatus.Error, errorCode = null, error = "add-payment request failed: $it")
+                    )
                 }
 
                 when (paymentResponse) {
@@ -513,35 +507,54 @@ class ProStatusManager @Inject constructor(
                         configFactory.get().withMutableUserConfigs { configs ->
                             configs.userProfile.setProConfig(
                                 ProConfig(
-                                    proProof = paymentResponse.data,
+                                    // §5.2 invariant: an `ok` add-payment always carries a proof
+                                    // (a re-claim of an already-redeemed payment now succeeds with one too).
+                                    proProof = requireNotNull(paymentResponse.data.proof) {
+                                        "add-payment returned ok without a proof"
+                                    },
                                     rotatingPrivateKey = rotatingKeyPair.secretKey.data
                                 )
                             )
 
                             configs.userProfile.setProBadge(true)
                         }
-                        // refresh the pro details
-                        proDetailsRepository.get().requestRefresh(force = true)
+
+                        // The claim is persisted from here on, so nothing below may send us back
+                        // around the retry loop: refreshing the status is only a UI-freshness
+                        // concern, and a scheduled refresh will pick it up regardless.
+                        try {
+                            proStatusRepository.get().requestRefresh(force = true)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Log.w(
+                                DebugLogGroup.PRO_SUBSCRIPTION.label,
+                                "Pro status refresh after 'add pro payment' failed; the claim is already persisted",
+                                e
+                            )
+                        }
+
+                        // The one and only success exit. Without this the loop runs all 3 attempts
+                        // and then throws PaymentServerException, so a purchase that actually
+                        // worked surfaces to the user as "Payment Error". `already_redeemed` used to
+                        // break the loop by accident; §5.1 removed it (a re-claim now returns ok),
+                        // which left success with no exit at all. Do not remove.
+                        return
                     }
 
                     is ProApiResponse.Failure -> {
-                        // Handle payment failure
                         Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' failure: $paymentResponse")
-                        when (paymentResponse.status) {
-                            // unknown payment is retryable - throw a generic exception here to go through our retries
-                            AddPaymentErrorStatus.UnknownPayment -> {
-                                throw Exception()
-                            }
-
-                            // nothing to do if already redeemed
-                            AddPaymentErrorStatus.AlreadyRedeemed -> {
-                                return
-                            }
-
-                            // non retryable error - throw our custom exception
-                            AddPaymentErrorStatus.GenericError -> {
-                                throw SubscriptionManager.PaymentServerException()
-                            }
+                        // §5.1: `already_redeemed` is gone — a re-claim now returns ok + a proof
+                        // (handled above). Retry transient failures (backend fault, or a payment the
+                        // backend hasn't ingested yet); everything else is a hard, non-retryable failure.
+                        if (paymentResponse.error.isRetryable) {
+                            throw Exception()
+                        } else {
+                            // Permanent fault: surface the specific reason (error_code slug ->
+                            // localized string, falling back to the backend diagnostic).
+                            throw SubscriptionManager.NonRetryableProPaymentException(
+                                paymentResponse.error.userFacingMessage(application)
+                            )
                         }
                     }
                 }
@@ -550,6 +563,10 @@ class ProStatusManager @Inject constructor(
             } catch (e: SubscriptionManager.PaymentServerException){
                 // rethrow this error directly without retrying
                 Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' PaymentServerException caught and rethrown")
+                throw e
+            } catch (e: SubscriptionManager.NonRetryableProPaymentException){
+                // permanent, non-retryable fault — rethrow directly so we don't retry or swallow it
+                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' NonRetryableProPaymentException caught and rethrown")
                 throw e
             }catch (e: Exception) {
                 Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' exception", e)
@@ -573,7 +590,5 @@ class ProStatusManager @Inject constructor(
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
-        const val DEFAULT_GOOGLE_STORE = "Google Play Store"
-        const val DEFAULT_APPLE_STORE = "Apple App Store"
     }
 }

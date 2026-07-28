@@ -196,8 +196,10 @@ class ProfileUpdateHandler @Inject constructor(
         val profileUpdateTime: Instant?,
     ) {
         companion object {
+            // No clock parameter: deciding whether to KEEP a verified proof is time-independent
+            // (see the status check below). Expiry is applied at render, in
+            // RecipientRepository.resolveProStatus(), on SnodeClock time.
             fun create(content: SessionProtos.Content,
-                       nowMills: Long,
                        pro: DecodedPro?): Updates? {
                 val profile: SessionProtos.LokiProfile
                 val profilePicKey: ByteString?
@@ -247,13 +249,35 @@ class ProfileUpdateHandler @Inject constructor(
                 val proProofInfo: Conversation.ProProofInfo?
                 val proFeatures: BitSet<ProProfileFeature>
 
-                if (pro?.status == ProProof.STATUS_VALID &&
-                    pro.proof != null &&
-                    pro.proof!!.expiryMs > nowMills) {
+                // Keep the record for any proof libsession has cryptographically verified — VALID or
+                // EXPIRED — and let expiry be enforced at render instead of here.
+                //
+                // EXPIRED is "genuine but lapsed", never "unverified": ProProof::status checks the
+                // Pro backend signature, then the user signature, and only then expiry
+                // (LibSession-Util `src/session_protocol.cpp:154-174`), so a forged proof lands on
+                // STATUS_INVALID_PRO_BACKEND_SIGNATURE / STATUS_INVALID_USER_SIGNATURE and is
+                // discarded by the `else` below. Those two must keep clearing the record.
+                //
+                // Why we no longer drop an expired proof here: `proProofInfo` goes into
+                // convoInfoVolatile, which is SHARED config. A linked device (or iOS/Desktop, which
+                // both preserve expired proofs) may have received this contact's proof while it was
+                // still valid; clearing it here would sync the clear back and cause config
+                // ping-pong between platforms. Android was the only client discarding them.
+                //
+                // This cannot surface a Pro badge for an expired proof: RecipientRepository
+                // .resolveProStatus() drops expired and revoked proofs on SnodeClock time before any
+                // badge is computed, and it's the only writer of `Recipient.data.proData`. Do not
+                // "restore" an expiry check here on the assumption that render-time filtering is
+                // missing — it isn't; the comparison lives inside RecipientSettings.isExpired().
+                if ((pro?.status == ProProof.STATUS_VALID || pro?.status == ProProof.STATUS_EXPIRED) &&
+                    pro.proof != null) {
                     proProofInfo = Conversation.ProProofInfo(
-                        genIndexHash = pro.proof!!.genIndexHashHex.hexToByteArray(),
-                        expiryMs = pro.proof!!.expiryMs,
+                        revocationTag = pro.proof!!.revocationTagHex.hexToByteArray(),
+                        expirySeconds = pro.proof!!.expirySeconds,
                     )
+                    // Moves with proProofInfo deliberately: proFeatures lives in the (also synced)
+                    // contacts config, so keeping one without the other just relocates the
+                    // ping-pong. It's inert while the proof is expired, for the reason above.
                     proFeatures = pro.proProfileFeatures
                 } else {
                     proProofInfo = null

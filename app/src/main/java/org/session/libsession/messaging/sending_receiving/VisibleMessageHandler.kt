@@ -18,7 +18,6 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.MessageExpirationManagerProtocol
@@ -51,7 +50,6 @@ class VisibleMessageHandler @Inject constructor(
     private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val typingIndicators: TypingIndicatorsProtocol,
-    private val clock: SnodeClock,
     private val jobQueue: Provider<JobQueue>,
 ){
     fun handleVisibleMessage(
@@ -215,7 +213,6 @@ class VisibleMessageHandler @Inject constructor(
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
                 val updates = ProfileUpdateHandler.Updates.create(
                     content = proto,
-                    nowMills = clock.currentTimeMillis(),
                     pro = pro
                 )
 

@@ -60,7 +60,11 @@ In practice:
 - `PLAY_STORE_DISABLED`: gates store-specific behavior
 - `DEVICE`: identifies Android vs Huawei device environment
 - `PUSH_KEY_SUFFIX`: provider-specific push-key suffix
-- `PRO_BACKEND_DEV`: currently the injected Pro backend configuration object
+
+The Pro backend configuration is **not** among them: its URL and signing pubkey come from
+libsession (`BackendRequests.proBackendUrl()` / `proBackendPubKeyHex()`, assembled into
+`ProBackendConfig` by `ProModule`), so changing the backend means releasing libsession, not editing
+the build script. There is no client-side override.
 
 Manifest placeholders are also used to vary:
 

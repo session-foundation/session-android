@@ -9,7 +9,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.protocol.PaymentProviderMetadata
+import org.thoughtcrime.securesms.pro.PaymentProviderMetadata
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
