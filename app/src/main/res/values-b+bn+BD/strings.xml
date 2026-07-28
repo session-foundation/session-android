@@ -36,6 +36,10 @@
     <string name="adminRemovedUser"><b>{name}</b> অ্যাডমিন হিসেবে থেকে সরিয়ে দেওয়া হয়েছে।</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> এবং <b>{count} জন অন্য সদস্য</b> অ্যাডমিন হিসেবে সরিয়ে দেওয়া হয়েছে।</string>
     <string name="adminRemovedUserOther"><b>{name}</b> এবং <b>{other_name}</b> অ্যাডমিন হিসেবে সরিয়ে দেওয়া হয়েছে।</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">অ্যাডমিন হিসেবে প্রমোট করা হচ্ছে</item>
+        <item quantity="other">অ্যাডমিন প্রমোশন পাঠানো হচ্ছে</item>
+    </plurals>
     <string name="adminSettings">অ্যাডমিন সেটিংস</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> এবং <b>{other_name}</b> অ্যাডমিন হিসেবে উন্নীত হয়েছে।</string>
     <string name="andMore">+{count}</string>
@@ -278,6 +282,10 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">এই মেসেজটি মুছে ফেলা হয়েছে</string>
     <string name="deleteMessageDeletedLocally">এই মেসেজটি এই ডিভাইসে মুছে ফেলা হয়েছে</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">আপনি কি এই মেসেজটি শুধুমাত্র এই ডিভাইস থেকে ডিলিট করতে চান?</item>
+        <item quantity="other">আপনি কি এই মেসেজগুলো শুধুমাত্র এই ডিভাইস থেকে ডিলিট করতে চান?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">আপনি কি এই বার্তা সবাই জন্য মুছে ফেলতে চান?</string>
     <string name="deleteMessageDeviceOnly">শুধু এই ডিভাইস থেকে মুছে ফেলুন</string>
     <string name="deleteMessageDevicesAll">সমস্ত ডিভাইসে মুছে ফেলুন</string>
@@ -445,6 +453,7 @@
     <string name="groupUpdated">গ্রুপ আপডেট করা হয়েছে</string>
     <string name="helpFAQ">FAQ</string>
     <string name="helpHelpUsTranslateSession">{app_name} অনুবাদ করতে আমাদের সাহায্য করুন</string>
+    <string name="helpReportABug">বাগ রিপোর্ট করুন</string>
     <string name="helpReportABugDescription">আপনার সমস্যার সমাধান করতে সাহায্য করতে কয়েকটি তথ্য শেয়ার করুন। আপনার লগ্‌স রপ্তানি করুন, তারপর ফাইল আপলোড করুন {app_name} এর সাহায্য ডেস্ক।</string>
     <string name="helpReportABugExportLogs">লগ রপ্তানি করুন</string>
     <string name="helpReportABugExportLogsDescription">আপনার লগ গুলি রপ্তানি করুন, তারপর ফাইলটি {app_name}\'s এর সাহায্যের ডেস্ক এর মাধ্যমে আপলোড করুন।</string>

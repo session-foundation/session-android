@@ -250,7 +250,7 @@
     <string name="clearMessagesCommunityUpdated">Weet je zeker dat je alle berichten van <b>{community_name}</b> op dit apparaat wilt wissen?</string>
     <string name="clearMessagesForEveryone">Wis voor iedereen</string>
     <string name="clearMessagesForMe">Wis voor mij</string>
-    <string name="clearMessagesGroupAdminDescription">Weet je zeker dat je alle <b>{group_name} </b> berichten wilt wissen?</string>
+    <string name="clearMessagesGroupAdminDescription">Weet u zeker dat u alle <b>{group_name}</b> berichten wilt wissen?</string>
     <string name="clearMessagesGroupAdminDescriptionUpdated">Weet je zeker dat je alle berichten van <b>{group_name}</b> wilt wissen?</string>
     <string name="clearMessagesGroupDescription">Weet u zeker dat u alle <b>{group_name}</b> berichten van uw apparaat wilt wissen?</string>
     <string name="clearMessagesGroupDescriptionUpdated">Weet je zeker dat je alle berichten van <b>{group_name}</b> op dit apparaat wilt wissen?</string>
@@ -472,18 +472,14 @@
     <string name="emojiCategoryActivities">Activiteiten</string>
     <string name="emojiCategoryAnimals">Dieren &amp;amp; Natuur</string>
     <string name="emojiCategoryFlags">Vlaggen</string>
-    <string name="emojiCategoryFood">Eten &amp; Drinken</string>
+    <string name="emojiCategoryFood">Eten &amp;amp; Drinken</string>
     <string name="emojiCategoryObjects">Objecten</string>
     <string name="emojiCategoryRecentlyUsed">Recent gebruikt</string>
     <string name="emojiCategorySmileys">Smileys &amp;amp; Mensen</string>
     <string name="emojiCategorySymbols">Symbolen</string>
-    <string name="emojiCategoryTravel">Reizen en locaties</string>
+    <string name="emojiCategoryTravel">Reizen &amp;amp; Locaties</string>
     <string name="emojiReactsClearAll">Weet jeu zeker dat u alle {emoji} wilt wissen?</string>
     <string name="emojiReactsCoolDown">Je hebt te veel emoji gestuurd. Probeer het binnenkort opnieuw</string>
-    <plurals name="emojiReactsCountOthers">
-        <item quantity="one">En %1$d ander heeft gereageerd %2$s op dit bericht.</item>
-        <item quantity="other">En %1$d anderen hebben gereageerd %2$s op dit bericht.</item>
-    </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reageerde met {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} en {other_name} reageerden met {emoji_name}</string>
     <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} en <font color="0">{count} anderen</font> reageerden met {emoji_name}</string>
@@ -903,7 +899,7 @@
     <string name="ongoingAppeal">Nieuwe hoop voor {app_name}</string>
     <string name="ongoingAppealDescription">Toen het leek alsof {app_name} zou kunnen verdwijnen, ben je opgestapeld.\n\nJe donaties hebben de {entity_stf_short} voldoende subsidie gegeven om een klein team van bijdragers in staat te stellen de app te onderhouden.\n\nRechts, de focus is gericht op {app_name} beveiligen, stabiel en online.\n\nJe donaties kunnen helpen met {app_name} ondersteuning in deze kritieke tijd. Extra donaties kunnen ervoor zorgen dat meer ontwikkelaars worden aangenomen en helpen om {app_name} sneller vooruit te helpen.</string>
     <string name="onionRoutingPath">Pad</string>
-    <string name="onionRoutingPathDescription">{app_name} verbergt uw IP door het routeren van berichten via meerdere servicenodes in het gedecentraliseerde netwerk van {app_name}. Dit is uw huidige pad:</string>
+    <string name="onionRoutingPathDescription">{app_name} verbergt uw IP door het routeren van berichten via meerdere Service Nodes in het gedecentraliseerde netwerk van {app_name}. Dit is uw huidige pad:</string>
     <string name="onionRoutingPathDestination">Bestemming</string>
     <string name="onionRoutingPathEntryNode">Invoer node</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
@@ -1004,14 +1000,12 @@
     <string name="proAccessNotFoundDescription">{app_name} heeft vastgesteld dat je account geen {pro}-toegang heeft. Als je denkt dat dit een vergissing is, neem dan contact op met de ondersteuning van {app_name} voor hulp.</string>
     <string name="proAccessRecover">{pro}-toegang herstellen</string>
     <string name="proAccessRenew">{pro}-toegang verlengen</string>
-    <string name="proAccessRenewDesktop">Momenteel kan {pro}-toegang alleen worden gekocht en verlengd via de {platform_store} of {platform_store_other}. Omdat je {app_name} Desktop gebruikt, kun je hier niet verlengen.\n\nDe ontwikkelaars van {app_name} werken hard aan alternatieve betaalmogelijkheden om gebruikers toe te staan {pro}-toegang aan te schaffen buiten de {platform_store} en {platform_store_other} om. <b>{pro}-routekaart</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Verleng je {pro}-toegang op de <b><font color="0">{platform_store}-website</font></b> met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="proAccessRenewPlatformWebsite">Verleng via de <b><font color="0">{platform}-website</font></b> met het {platform_account} waarmee je je voor {pro} hebt aangemeld.</string>
     <string name="proAccessRenewStart">Verleng je {pro}-toegang om opnieuw gebruik te maken van krachtige {app_pro} bètaversie-functies.</string>
     <string name="proAccessRestored">{pro}-toegang hersteld</string>
     <string name="proAccessRestoredDescription">{app_name} heeft {pro}-toegang voor je account gedetecteerd en hersteld. Je {pro}-status is hersteld!</string>
     <string name="proAccessSignUp">Omdat je je oorspronkelijk voor {app_pro} hebt aangemeld via de <b>{platform_store}</b>, moet je je {platform_account} gebruiken om je {pro}-toegang bij te werken.</string>
-    <string name="proAccessUpgradeDesktop">{pro}-toegang kan momenteel alleen worden gekocht via de {platform_store} of {platform_store_other}. Omdat u {app_name} Desktop gebruikt, kunt u hier niet upgraden naar {pro}.\n\nDe ontwikkelaars van {app_name} werken hard aan alternatieve betaalmogelijkheden zodat gebruikers {pro}-toegang buiten de {platform_store} en {platform_store_other} kunnen aanschaffen. <b>{pro} Routekaart</b> {icon}</string>
     <string name="proActivated">Geactiveerd</string>
     <string name="proActivatingActivation">activeren</string>
     <string name="proAllSet">Alles is geregeld!</string>
@@ -1034,9 +1028,6 @@
         <item quantity="other">%1$s %2$s-badges verzonden</item>
     </plurals>
     <string name="proBetaFeatures">{pro} functies</string>
-    <string name="proBilledAnnually">{price} Jaarlijks gefactureerd</string>
-    <string name="proBilledMonthly">{price} Maandelijks gefactureerd</string>
-    <string name="proBilledQuarterly">{price} per kwartaal gefactureerd</string>
     <string name="proCallToActionLongerMessages">Wil je langere berichten versturen?\nVerstuur meer tekst en ontgrendel premiumfuncties met {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Wil je meer vastzetten?\nOrganiseer je chats en ontgrendel premiumfuncties met {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Wil je meer dan {limit} vastgezette gesprekken?\nOrganiseer je chats en ontgrendel premiumfuncties met {app_pro} Beta</string>
@@ -1095,9 +1086,6 @@
     <string name="proPlanPlatformRefund">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, moet je hetzelfde {platform_account} gebruiken om een terugbetaling aan te vragen.</string>
     <string name="proPlanPlatformRefundLong">Omdat je je oorspronkelijk hebt aangemeld voor {app_pro} via de <b><font color="0">{platform_store} winkel</font></b>, wordt je restitutieverzoek afgehandeld door {app_name} Support.\n\nVraag een restitutie aan door op de knop hieronder te drukken en het restitutieformulier in te vullen.\n\nHoewel {app_name} Support ernaar streeft om restitutieverzoeken binnen 24-72 uur te verwerken, kan het tijdens drukte langer duren.</string>
     <string name="proPlanRenewSupport">Je {app_pro}-toegang is verlengd! Bedankt voor je steun aan het {network_name}.</string>
-    <string name="proPriceOneMonth">1 maand - {monthly_price} / maand</string>
-    <string name="proPriceThreeMonths">3 maanden - {monthly_price} / maand</string>
-    <string name="proPriceTwelveMonths">12 maanden - {monthly_price} / maand</string>
     <string name="proReactivatingActivation">opnieuw activeren</string>
     <string name="proRefundAccountDevice">Open dit {app_name}-account op een {device_type}-apparaat dat is aangemeld met het {platform_account} waarmee je je oorspronkelijk hebt geregistreerd. Vraag daarna een terugbetaling aan via de {app_pro}-instellingen.</string>
     <string name="proRefundDescription">Het spijt ons dat je vertrekt. Dit moet je weten voordat je een terugbetaling aanvraagt.</string>
@@ -1108,14 +1096,12 @@
     <string name="proRefundingDescription">Terugbetalingen voor {app_pro} worden uitsluitend afgehandeld door {platform} via de {platform_store}.\n\nVanwege het restitutiebeleid van {platform} hebben ontwikkelaars van {app_name} geen invloed op de uitkomst van terugbetalingsverzoeken. Dit omvat zowel de goedkeuring als afwijzing van het verzoek, evenals of een volledige of gedeeltelijke terugbetaling wordt uitgegeven.</string>
     <string name="proRenewAnimatedDisplayPicture">Wil je opnieuw geanimeerde profielfoto\'s gebruiken?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
     <string name="proRenewBeta">{pro} Beta verlengen</string>
-    <string name="proRenewDesktopLinked">Verleng je {pro}-toegang via de instellingen van {app_pro} op een gekoppeld apparaat met {app_name} geïnstalleerd via de {platform_store} of {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Wilt u weer langere berichten versturen?\nVerleng uw {pro}-toegang om de functies te ontgrendelen die u hebt gemist.</string>
     <string name="proRenewMaxPotential">Wil je {app_name} opnieuw maximaal benutten?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
     <string name="proRenewPinFiveConversations">Wil je opnieuw meer dan {limit} gesprekken vastmaken?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
     <string name="proRenewPinMoreConversations">Wil je opnieuw meer gesprekken vastmaken?\nVerleng je {pro}-toegang om de functies te ontgrendelen die je hebt gemist.</string>
     <string name="proRenewTosPrivacy">Door te verlengen gaat u akkoord met de {app_pro} <b>Gebruiksvoorwaarden</b> {icon} en het <b>Privacybeleid</b> {icon}</string>
     <string name="proRenewingAction">verlengen</string>
-    <string name="proRenewingNoAccessBilling">Momenteel kan {pro}-toegang alleen worden gekocht en verlengd via de {platform_store} of {platform_store_other}. Omdat je {app_name} hebt geïnstalleerd met de {build_variant}, kun je hier niet verlengen.\n\nDe ontwikkelaars van {app_name} werken hard aan alternatieve betaalopties zodat gebruikers {pro}-toegang kunnen aanschaffen buiten de {platform_store} en {platform_store_other}.<b> {pro} Routekaart</b> {icon}</string>
     <string name="proRequestedRefund">Terugbetaling aangevraagd</string>
     <string name="proSendMore">Verstuur meer met</string>
     <string name="proSettings">{pro} instellingen</string>
@@ -1142,8 +1128,6 @@
     <string name="proUpdateAccessExpireDescription">Je {pro}-toegang verloopt op <b>{date}</b>.\n\nBij het bijwerken wordt je {pro}-toegang automatisch verlengd op <b>{date}</b> voor een extra <b>{selected_plan_length}</b> {pro}-toegang.</string>
     <string name="proUpdatingAction">bijwerken</string>
     <string name="proUpgradeAccess">Upgrade naar {app_pro} Beta om toegang te krijgen tot tal van exclusieve voordelen en functies.</string>
-    <string name="proUpgradeDesktopLinked">Upgrade naar {pro} via de {app_pro}-instellingen op een gekoppeld apparaat waarop {app_name} is geïnstalleerd via de {platform_store} of {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">{pro}-toegang kan momenteel alleen worden aangeschaft via de {platform_store} of {platform_store_other}. Omdat u {app_name} hebt geïnstalleerd met de {build_variant}, kunt u hier niet naar {pro} upgraden.\n\nOntwikkelaars van {app_name} werken hard aan alternatieve betaalmogelijkheden waarmee gebruikers {pro}-toegang buiten de {platform_store} en {platform_store_other} kunnen aanschaffen.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proUpgradeOption">Er is momenteel slechts één manier om te upgraden:</string>
     <string name="proUpgradeOptionsTwo">Er zijn momenteel twee manieren om te upgraden:</string>
     <string name="proUpgraded">U bent geüpgraded naar {app_pro}!\nBedankt voor uw steun aan het {network_name}.</string>

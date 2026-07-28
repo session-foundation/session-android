@@ -1181,14 +1181,12 @@
     <string name="proAccessNotFoundDescription">اكتشف {app_name} أن حسابك لا يحتوي على صلاحية وصول {pro}. إذا كنتم تعتقدون أن هذا خطأ، يُرجى التواصل مع دعم {app_name} للحصول على المساعدة.</string>
     <string name="proAccessRecover">استعادة الوصول إلى {pro}</string>
     <string name="proAccessRenew">تجديد الوصول إلى {pro}</string>
-    <string name="proAccessRenewDesktop">في الوقت الحالي، يمكن شراء وتجديد وصول {pro} فقط عن طريق {platform_store} أو {platform_store_other}. وبما أنكم تستخدمون {app_name} على سطح المكتب، فلا يمكنكم التجديد من هنا.\n\nيعمل مطورو {app_name} جاهدين على توفير خيارات دفع بديلة تُمكِّن المستخدمين من شراء وصول {pro} خارج {platform_store} و{platform_store_other}. <b>خارطة طريق {pro}</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">جددوا وصولكم إلى {pro} على <b><font color="0">موقع {platform_store}</font></b> باستخدام حساب {platform_account} الذي استخدمتم للتسجيل في {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">جددوا على <b><font color="0">موقع {platform}</font></b> باستخدام {platform_account} الذي سجلتم به اشتراك {pro}.</string>
     <string name="proAccessRenewStart">تجديد صلاحية وصول {pro} لبدء استخدام ميزات النسخة التجريبية القوية من {app_pro} مرة أخرى.</string>
     <string name="proAccessRestored">تمت استعادة الوصول إلى {pro}</string>
     <string name="proAccessRestoredDescription">اكتشف {app_name} واستعاد الوصول إلى {pro} لحسابكم. تمت استعادة حالة {pro} الخاصة بكم!</string>
     <string name="proAccessSignUp">نظرًا لأنكم تسجلتم في الأصل في {app_pro} عبر <b>{platform_store}</b>، ستحتاجون إلى استخدام حساب {platform_account} لتحديث وصولكم إلى {pro}.</string>
-    <string name="proAccessUpgradeDesktop">حالياً، يمكن شراء وصول {pro} فقط من خلال {platform_store} أو {platform_store_other}. بما أنكم تستخدمون {app_name} لسطح المكتب، لا يمكن الترقية إلى {pro} من هنا.\n\nيعمل مطورو {app_name} بجد على توفير خيارات دفع بديلة تتيح للمستخدمين شراء وصول {pro} من خارج {platform_store} و{platform_store_other}. <b>خارطة طريق {pro}</b> {icon}</string>
     <string name="proActivated">تم التفعيل</string>
     <string name="proActivatingActivation">تفعيل</string>
     <string name="proAllSet">كل شيء جاهز!</string>
@@ -1215,9 +1213,6 @@
         <item quantity="other">تم إرسال %1$s شارة %2$s</item>
     </plurals>
     <string name="proBetaFeatures">ميزات {pro} التجريبية</string>
-    <string name="proBilledAnnually">{price} يتم إصدار الفاتورة سنويًا</string>
-    <string name="proBilledMonthly">{price} يتم إصدار الفاتورة شهريًا</string>
-    <string name="proBilledQuarterly">{price} يتم إصدار الفاتورة كل ثلاثة أشهر</string>
     <string name="proCallToActionLongerMessages">هل تودون إرسال رسائل أطول؟\nأرسلوا المزيد من النصوص وافتحوا الميزات الحصرية باستخدام {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">هل تودون تثبيت المزيد؟\nنظّموا محادثاتكم وافتحوا الميزات الحصرية باستخدام {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">هل تودون تثبيت أكثر من {limit} محادثة؟\nنظّموا محادثاتكم وافتحوا الميزات الحصرية باستخدام {app_pro} Beta</string>
@@ -1288,9 +1283,6 @@
     <string name="proPlanPlatformRefund">نظرًا لأنكم تسجلتم في الأصل في {app_pro} عبر <b><font color="0">{platform_store}</font></b>، ستحتاجون إلى استخدام حساب {platform_account} لطلب استرداد المبلغ.</string>
     <string name="proPlanPlatformRefundLong">نظرًا لأنك تسجلتم في {app_pro} في الأصل عبر <b><font color="0">{platform_store}</font></b>، فسيتم معالجة طلب الاسترداد الخاص بكم من قبل دعم {app_name}.\n\nلطلب استرداد، اضغطوا على الزر أدناه واملأوا نموذج طلب الاسترداد.\n\nيسعى دعم {app_name} لمعالجة طلبات الاسترداد خلال ٢٤ إلى ٧٢ ساعة، ولكن قد تستغرق المعالجة وقتًا أطول في فترات كثافة الطلبات.</string>
     <string name="proPlanRenewSupport">تم تجديد صلاحية وصولكم إلى {app_pro}! شكرًا لدعمكم لـ {network_name}.</string>
-    <string name="proPriceOneMonth">1 شهر - {monthly_price} / شهريًا</string>
-    <string name="proPriceThreeMonths">3 أشهر - {monthly_price} / شهريًا</string>
-    <string name="proPriceTwelveMonths">12 شهرًا - {monthly_price} / شهريًا</string>
     <string name="proReactivatingActivation">إعادة التفعيل</string>
     <string name="proRefundAccountDevice">افتحوا هذا الحساب في {app_name} على جهاز {device_type} مُسجّل عليه الدخول بالحساب {platform_account} الذي سجلتم به في البداية. بعد ذلك، اطلبوا استرداد المبلغ من خلال إعدادات {app_pro}.</string>
     <string name="proRefundDescription">نأسف لمغادرتكم. إليكم ما تحتاجون إلى معرفته قبل طلب استرداد المبلغ.</string>
@@ -1302,7 +1294,6 @@
     <string name="proRefundingDescription">يتم التعامل مع طلبات استرداد الأموال لـ {app_pro} حصريًا من خلال {platform} عبر {platform_store}.\n\nوبسبب سياسات الاسترداد الخاصة بـ {platform}، لا يمتلك مطورو {app_name} أي قدرة على التأثير في نتيجة طلبات الاسترداد. ويتضمن ذلك ما إذا كان سيتم الموافقة على الطلب أو رفضه، وكذلك ما إذا كان سيتم إصدار استرداد كامل أو جزئي.</string>
     <string name="proRenewAnimatedDisplayPicture">هل تودون استخدام صور العرض المتحركة مجددًا؟\nجددوا وصول {pro} الخاص بكم لفتح الميزات التي فاتتكم.</string>
     <string name="proRenewBeta">تجديد {pro} Beta</string>
-    <string name="proRenewDesktopLinked">جددوا وصولكم إلى {pro} من إعدادات {app_pro} على جهاز مرتبط يحتوي على تطبيق {app_name} تم ثبتوه من خلال {platform_store} أو {platform_store_other}.</string>
     <string name="proRenewLongerMessages">هل تودون إرسال رسائل أطول مجددًا؟\nجددوا وصول {pro} الخاص بكم لفتح الميزات التي فاتتكم.</string>
     <string name="proRenewMaxPotential">هل ترغبون في استخدام {app_name} بكامل إمكانياته مرة أخرى؟\nجددوا وصول {pro} لفتح الميزات التي فاتتكم.</string>
     <string name="proRenewPinFiveConversations">هل تودون تثبيت أكثر من {limit} محادثة مجددًا؟\nجددوا وصول {pro} الخاص بكم لفتح الميزات التي فاتتكم.</string>
@@ -1311,7 +1302,6 @@
     <string name="proRenewalUnsuccessful">فشل تجديد {pro}، ستتم إعادة المحاولة قريبًا</string>
     <string name="proRenewalUnsuccessfulTitle">تعذّر تجديد {pro}</string>
     <string name="proRenewingAction">تجديد</string>
-    <string name="proRenewingNoAccessBilling">في الوقت الحالي، يمكن شراء وتجديد الوصول إلى {pro} فقط عبر {platform_store} أو {platform_store_other}. نظرًا لأنكم قمتم بتثبيت {app_name} باستخدام {build_variant}، لا يمكنكم التجديد من هنا.\n\nيعمل مطورو {app_name} بجهد على توفير خيارات دفع بديلة للسماح للمستخدمين بشراء الوصول إلى {pro} خارج {platform_store} و {platform_store_other}.<b> خارطة طريق {pro}</b> {icon}</string>
     <string name="proRequestedRefund">تم طلب الاسترداد</string>
     <string name="proSendMore">أرسلوا المزيد من خلال</string>
     <string name="proSettings">إعدادات {pro}</string>
@@ -1339,8 +1329,6 @@
     <string name="proUpdateAccessExpireDescription">ستنتهي صلاحية وصول {pro} الخاص بكم في <b>{date}</b>.\n\nعند التحديث، سيتم تجديد وصول {pro} تلقائيًا في <b>{date}</b> لمدة إضافية قدرها <b>{selected_plan_length}</b> من وصول {pro}.</string>
     <string name="proUpdatingAction">تحديث</string>
     <string name="proUpgradeAccess">الترقية إلى {app_pro} Beta للوصول إلى العديد من المزايا والميزات الحصرية.</string>
-    <string name="proUpgradeDesktopLinked">الترقية إلى {pro} من إعدادات {app_pro} على جهاز مرتبط تم تثبيت {app_name} عليه عبر {platform_store} أو {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">حاليًا، يمكن شراء الوصول إلى {pro} فقط عبر {platform_store} أو {platform_store_other}. نظرًا لأنكم قمتم بتثبيت {app_name} باستخدام {build_variant}، فإنه لا يمكنكم الترقية إلى {pro} هنا.\n\nيعمل مطورو {app_name} بجد على توفير خيارات دفع بديلة لتمكين المستخدمين من شراء الوصول إلى {pro} خارج {platform_store} و{platform_store_other}.<b> خارطة طريق {pro}</b> {icon}</string>
     <string name="proUpgradeOption">حالياً، يوجد خيار واحد فقط للترقية:</string>
     <string name="proUpgradeOptionsTwo">حاليًا، هناك طريقتان للترقية:</string>
     <string name="proUpgraded">لقد تمّت الترقية إلى {app_pro}!\nشكرًا لدعمكم لـ {network_name}.</string>

@@ -242,7 +242,7 @@
     <string name="conversationsNew">Nová konverzácia</string>
     <string name="conversationsNone">Zatiaľ nemáte žiadne konverzácie</string>
     <string name="conversationsSendWithEnterKeyDescription">Namiesto vytvorenia nového riadku v správe, aplikácia odošle správu.</string>
-    <string name="conversationsSettingsAllMedia">Všetky média</string>
+    <string name="conversationsSettingsAllMedia">Všetky médiá</string>
     <string name="conversationsSpellCheck">Kontrola pravopisu</string>
     <string name="conversationsSpellCheckDescription">Povoliť kontrolu pravopisu pri písaní správ.</string>
     <string name="conversationsStart">Začať príhovor</string>

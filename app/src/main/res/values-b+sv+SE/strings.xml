@@ -819,7 +819,7 @@
     <string name="newPassword">Nytt Lösenord</string>
     <string name="next">Nästa</string>
     <string name="nextSteps">Nästa steg</string>
-    <string name="nicknameDescription">Välj ett smeknamn för <b>{name}</b>. Detta kommer att visas för dig i dina en-till-en- och gruppkonversationer.</string>
+    <string name="nicknameDescription">Välj ett smeknambubblan1976n för <b>{name}</b>. Detta kommer att visas för dig i dina en-till-en- och gruppkonversationer.</string>
     <string name="nicknameEnter">Ange smeknamn</string>
     <string name="nicknameErrorShorter">Vänligen ange ett kortare smeknamn</string>
     <string name="nicknameRemove">Ta bort smeknamn</string>
@@ -1004,14 +1004,12 @@
     <string name="proAccessNotFoundDescription">{app_name} har upptäckt att ditt konto inte har tillgång till {pro}. Om du tror att detta är ett misstag, vänligen kontakta {app_name}s support för hjälp.</string>
     <string name="proAccessRecover">Återställ åtkomst till {pro}</string>
     <string name="proAccessRenew">Förnya åtkomst till {pro}</string>
-    <string name="proAccessRenewDesktop">För närvarande kan {pro}-åtkomst endast köpas och förnyas via {platform_store} eller {platform_store_other}. Eftersom du använder {app_name} Desktop kan du inte förnya här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att göra det möjligt för användare att köpa {pro}-åtkomst utanför {platform_store} och {platform_store_other}. <b>{pro}-utvecklingsplan</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Förnya din {pro}-åtkomst på <b><font color="0">{platform_store}-webbplatsen</font></b> med det {platform_account} du använde för att registrera dig för {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Förnya via <b><font color="0">{platform}s webbplats</font></b> med det {platform_account} du registrerade dig för {pro} med.</string>
     <string name="proAccessRenewStart">Förnya din åtkomst till {pro} för att börja använda kraftfulla {app_pro} Beta-funktioner igen.</string>
     <string name="proAccessRestored">{pro} Åtkomst återställd</string>
     <string name="proAccessRestoredDescription">{app_name} upptäckte och återskapade åtkomst till {pro} för ditt konto. Din {pro}-status har återställts!</string>
     <string name="proAccessSignUp">Eftersom du ursprungligen registrerade dig för {app_pro} via <b>{platform_store}</b>, måste du använda ditt {platform_account} för att uppdatera din åtkomst till {pro}.</string>
-    <string name="proAccessUpgradeDesktop">För närvarande kan åtkomst till {pro} endast köpas via {platform_store} eller {platform_store_other}. Eftersom du använder {app_name} Desktop, kan du inte uppgradera till {pro} här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att möjliggöra köp av åtkomst till {pro} utanför {platform_store} och {platform_store_other}. <b>{pro} utvecklingsplan</b> {icon}</string>
     <string name="proActivated">Aktiverat</string>
     <string name="proActivatingActivation">aktiverar</string>
     <string name="proAllSet">Allt är klart!</string>
@@ -1034,9 +1032,6 @@
         <item quantity="other">%1$s %2$s-märken skickade</item>
     </plurals>
     <string name="proBetaFeatures">{pro} beta-funktioner</string>
-    <string name="proBilledAnnually">{price} Faktureras årligen</string>
-    <string name="proBilledMonthly">{price} Faktureras månadsvis</string>
-    <string name="proBilledQuarterly">{price} Faktureras kvartalsvis</string>
     <string name="proCallToActionLongerMessages">Vill du skicka längre meddelanden?\nSkicka mer text och lås upp premiumfunktioner med {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Vill du ha fler fästen?\nOrganisera dina chattar och lås upp premiumfunktioner med {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vill du ha mer än {limit} fästisar?\nOrganisera dina chattar och lås upp premiumfunktioner med {app_pro} Beta</string>
@@ -1094,9 +1089,6 @@
     <string name="proPlanPlatformRefund">Eftersom du ursprungligen registrerade dig för {app_pro} via <b><font color="0">{platform_store}</font></b>så måste du använda din {platform_account} för att begära återbetalning.</string>
     <string name="proPlanPlatformRefundLong">Eftersom du ursprungligen registrerade dig för {app_pro} via <b><font color="0">{platform_store}</font></b>, så kommer din begäran om återbetalning att behandlas av {app_name} Support.\n\nBegär återbetalning genom att trycka på knappen nedan och fyll i formuläret för återbetalning.\n\nÄven om {app_name} Support strävar efter att behandla en begäran om återbetalning inom 24–72 timmar, så kan det ta längre tid vid tillfällen med många förfrågningar om återbetalning.</string>
     <string name="proPlanRenewSupport">Din tillgång till {app_pro} har förnyats! Tack för att du stöttar {network_name}.</string>
-    <string name="proPriceOneMonth">1 månad – {monthly_price} / månad</string>
-    <string name="proPriceThreeMonths">3 månader – {monthly_price} / månad</string>
-    <string name="proPriceTwelveMonths">12 månader – {monthly_price} / månad</string>
     <string name="proReactivatingActivation">återaktiverar</string>
     <string name="proRefundAccountDevice">Öppna detta {app_name}-konto på en {device_type}-enhet som är inloggad på det {platform_account} du ursprungligen registrerade dig med. Begär sedan återbetalning via inställningarna i {app_pro}.</string>
     <string name="proRefundDescription">Vi är ledsna att du vill avsluta. Här är vad du behöver veta innan du begär en återbetalning.</string>
@@ -1107,14 +1099,12 @@
     <string name="proRefundingDescription">Återbetalningar för {app_pro} hanteras uteslutande av {platform} via {platform_store}.\n\nPå grund av {platform}s återbetalningspolicyer har utvecklarna av {app_name} ingen möjlighet att påverka resultatet av återbetalningsförfrågningar. Detta inkluderar om begäran godkänns eller nekas, samt om en fullständig eller delvis återbetalning ges.</string>
     <string name="proRenewAnimatedDisplayPicture">Vill du använda animerade visningsbilder igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
     <string name="proRenewBeta">Förnya {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Förnya din {pro}-åtkomst från {app_pro}-inställningarna på en länkad enhet med {app_name} installerad via {platform_store} eller {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Vill du skicka längre meddelanden igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
     <string name="proRenewMaxPotential">Vill du använda {app_name} till dess fulla potential igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
     <string name="proRenewPinFiveConversations">Vill du fästa fler än {limit} konversationer igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
     <string name="proRenewPinMoreConversations">Vill du fästa fler konversationer igen?\nFörnya din {pro}-åtkomst för att låsa upp funktioner du har gått miste om.</string>
     <string name="proRenewTosPrivacy">Genom att förnya godkänner du {app_pro} <b>Användarvillkoren</b> {icon} och <b>Sekretesspolicyn</b> {icon}</string>
     <string name="proRenewingAction">förnyar</string>
-    <string name="proRenewingNoAccessBilling">För närvarande kan åtkomst till {pro} endast köpas och förnyas via {platform_store} eller {platform_store_other}. Eftersom du installerade {app_name} med hjälp av {build_variant}, så kan du inte förnya här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att göra det möjligt för användare att köpa åtkomst till {pro} utanför {platform_store} och {platform_store_other}.<b> Utvecklingsplan för {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Återbetalning begärd</string>
     <string name="proSendMore">Skicka mer med</string>
     <string name="proSettings">{pro}-inställningar</string>
@@ -1141,8 +1131,6 @@
     <string name="proUpdateAccessExpireDescription">Din åtkomst till {pro} upphör den <b>{date}</b>.\n\nGenom att uppdatera kommer din åtkomst till {pro} att automatiskt förnyas den <b>{date}</b> för ytterligare <b>{selected_plan_length}</b> åtkomst till {pro}.</string>
     <string name="proUpdatingAction">uppdaterar</string>
     <string name="proUpgradeAccess">Uppgradera till {app_pro} Beta för att få tillgång till massor av exklusiva förmåner och funktioner.</string>
-    <string name="proUpgradeDesktopLinked">Uppgradera till {pro} från {app_pro}-inställningarna på en länkad enhet med {app_name} installerad via {platform_store} eller {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">För närvarande kan åtkomst till {pro} endast köpas via {platform_store} eller {platform_store_other}. Eftersom du installerade {app_name} med hjälp av {build_variant}, kan du inte uppgradera till {pro} här.\n\nUtvecklarna av {app_name} arbetar hårt med alternativa betalningslösningar för att möjliggöra köp av åtkomst till {pro} utanför {platform_store} och {platform_store_other}.<b> {pro} utvecklingsplan</b> {icon}</string>
     <string name="proUpgradeOption">För tillfället finns det endast ett sätt att uppgradera:</string>
     <string name="proUpgradeOptionsTwo">För tillfället finns det två sätt att uppgradera:</string>
     <string name="proUpgraded">Du har uppgraderat till {app_pro}!\nTack för att du stöttar {network_name}.</string>
@@ -1189,7 +1177,7 @@
     <string name="received">Mottaget:</string>
     <string name="receivedAnswer">Mottog svar</string>
     <string name="receivingCallOffer">Inkommande erbjudande för samtal</string>
-    <string name="receivingPreOffer">Receiving Pre Offer</string>
+    <string name="receivingPreOffer">邀请失败</string>
     <string name="recommended">Rekommenderat</string>
     <string name="recoveryPasswordBannerDescription">Spara ditt återställningslösenord så att du inte förlorar tillgången till ditt konto.</string>
     <string name="recoveryPasswordBannerTitle">Spara ditt återställningslösenord</string>

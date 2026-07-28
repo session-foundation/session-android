@@ -324,7 +324,7 @@
     <string name="conversationsDeleteDescription">Ви дійсно хочете видалити розмову з <b>{name}</b>? Нові повідомлення від <b>{name}</b> почнуть нову розмову.</string>
     <string name="conversationsDeleted">Розмову видалено</string>
     <string name="conversationsEmpty">Немає повідомлень в {conversation_name}.</string>
-    <string name="conversationsEnter">Введіть Key</string>
+    <string name="conversationsEnter">Клавіша Enter</string>
     <string name="conversationsEnterDescription">Налаштування дій клавіш Enter та Shift+Enter у розмовах.</string>
     <string name="conversationsEnterNewLine">SHIFT + ENTER надсилає повідомлення, ENTER починає новий рядок.</string>
     <string name="conversationsEnterSends">ENTER надсилає повідомлення, SHIFT + ENTER починає новий рядок.</string>
@@ -372,7 +372,7 @@
     <string name="deleteAfterLegacyDisappearingMessagesTheyChangedTimer"><b>{name}</b> встановив/ла таймер зникаючих повідомлень на <b>{time}</b></string>
     <string name="deleteAfterLegacyGroupsGroupCreation">Будь ласка, зачекайте поки створюється група...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Не вдалося оновити групу</string>
-    <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">У вас немає прав на видалення інших повідомлень</string>
+    <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">У вас немає прав на видалення чужих повідомлень</string>
     <plurals name="deleteAttachments">
         <item quantity="one">Видалити вибране вкладення</item>
         <item quantity="few">Видалити вибрані вкладення</item>
@@ -1051,14 +1051,12 @@
     <string name="proAccessNotFoundDescription">{app_name} виявив, що ваш обліковий запис не має доступу {pro}. Якщо ви вважаєте, що це помилка, зверніться до служби підтримки {app_name} для отримання допомоги.</string>
     <string name="proAccessRecover">Відновити доступ до {pro}</string>
     <string name="proAccessRenew">Поновити доступ до {pro}</string>
-    <string name="proAccessRenewDesktop">На даний момент доступ до {pro} можна придбати або поновити лише через {platform_store} або {platform_store_other}. Оскільки ви використовуєте {app_name} для компʼютера, поновити доступ тут неможливо.\n\nРозробники {app_name} активно працюють над альтернативними методами оплати, щоб дозволити користувачам купувати доступ до {pro} поза межами {platform_store} та {platform_store_other}. <b>Дорожня карта {pro}</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Поновіть доступ до {pro} на <b><font color="0">вебсайті {platform_store}</font></b>, використовуючи обліковий запис {platform_account}, з яким ви зареєструвалися у {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Поновіть підписку на <b><font color="0">вебсайті {platform}</font></b>, використовуючи обліковий запис {platform_account}, з яким ви оформили {pro}.</string>
     <string name="proAccessRenewStart">Поновіть свій доступ до {pro}, щоб знову почати використовувати потужні функції {app_pro} Beta.</string>
     <string name="proAccessRestored">Доступ до {pro} відновлено</string>
     <string name="proAccessRestoredDescription">{app_name} виявив і відновив доступ до {pro} для вашого облікового запису. Ваш статус {pro} було відновлено!</string>
     <string name="proAccessSignUp">Оскільки ви спочатку зареєструвалися в {app_pro} через <b>{platform_store}</b>, для оновлення доступу до {pro} потрібно використати ваш обліковий запис {platform_account}.</string>
-    <string name="proAccessUpgradeDesktop">Наразі доступ до {pro} можна придбати лише через {platform_store} або {platform_store_other}. Оскільки ви використовуєте {app_name} Desktop, оновлення до {pro} тут недоступне.\n\nРозробники {app_name} наполегливо працюють над альтернативними способами оплати, щоб дозволити придбання доступу до {pro} поза межами {platform_store} та {platform_store_other}. <b>Дорожня карта {pro}</b> {icon}</string>
     <string name="proActivated">активовано</string>
     <string name="proActivatingActivation">активація</string>
     <string name="proAllSet">Готово!</string>
@@ -1083,9 +1081,6 @@
         <item quantity="other">%1$s значків %2$s надіслано</item>
     </plurals>
     <string name="proBetaFeatures">Можливості {pro}</string>
-    <string name="proBilledAnnually">{price} сплата щорічно</string>
-    <string name="proBilledMonthly">{price} сплата щомісячно</string>
-    <string name="proBilledQuarterly">{price} сплата щоквартально</string>
     <string name="proCallToActionLongerMessages">Хочете надсилати довші повідомлення?\nНадсилайте більше тексту та розблокуйте преміальні функції з {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Потрібно більше закріплень?\nВпорядкуйте свої чати та розблокуйте преміальні функції з {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Хочете більше ніж {limit} закріплень?\nВпорядкуйте свої чати та розблокуйте преміальні функції з {app_pro} Beta</string>
@@ -1149,9 +1144,6 @@
     <string name="proPlanPlatformRefund">Оскільки ви спочатку зареєструвалися в {app_pro} через <b><font color="0">{platform_store}</font></b>, вам потрібно використати ваш обліковий запис {platform_account}, щоб подати запит на повернення коштів.</string>
     <string name="proPlanPlatformRefundLong">Оскільки ви спочатку зареєструвалися в {app_pro} через <b><font color="0">{platform_store}</font></b>, ваш запит на повернення коштів буде оброблений Підтримкою {app_name}.\n\nПодайте запит на повернення, натиснувши кнопку нижче та заповнивши форму запиту на повернення коштів.\n\nПідтримка {app_name} прагне обробляти запити на повернення протягом 24–72 годин, проте в періоди високого навантаження це може зайняти більше часу.</string>
     <string name="proPlanRenewSupport">Ваш доступ до {app_pro} було поновлено! Дякуємо за підтримку {network_name}.</string>
-    <string name="proPriceOneMonth">1 місяць — {monthly_price} / місяць</string>
-    <string name="proPriceThreeMonths">3 місяці — {monthly_price} / місяць</string>
-    <string name="proPriceTwelveMonths">12 місяців – {monthly_price} / місяць</string>
     <string name="proReactivatingActivation">повторна активація</string>
     <string name="proRefundAccountDevice">Відкрийте цей обліковий запис {app_name} на пристрої типу {device_type}, увійденому до облікового запису {platform_account}, з яким ви зареєструвалися. Потім подайте запит на повернення коштів через налаштування {app_pro}.</string>
     <string name="proRefundDescription">Шкода, же ти передумав(ла). Перед вимогою повернення грошей ти мусиш знати ось що.</string>
@@ -1162,14 +1154,12 @@
     <string name="proRefundingDescription">Повернення коштів за {app_pro} здійснюється виключно через {platform} через {platform_store}.\n\nЧерез політику повернення коштів {platform}, розробники {app_name} не мають можливості впливати на результат запитів на повернення. Це стосується як схвалення або відхилення запиту, так і надання повного або часткового повернення коштів.</string>
     <string name="proRenewAnimatedDisplayPicture">Хочете знову використовувати анімовані зображення профілю?\nПоновіть свій доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
     <string name="proRenewBeta">Оновити {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Поновіть доступ до {pro} у налаштуваннях {app_pro} на повʼязаному пристрої з встановленим {app_name} через {platform_store} або {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Хочете знову надсилати довші повідомлення?\nПоновіть свій доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
     <string name="proRenewMaxPotential">Хочете знову використати {app_name} на повну?\nПоновіть доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
     <string name="proRenewPinFiveConversations">Бажаєте знову закріпити більше ніж {limit} розмов?\nПоновіть свій доступ до {pro}, щоб отримати функції, яких вам бракувало.</string>
     <string name="proRenewPinMoreConversations">Хочете знову закріпити більше розмов?\nПоновіть свій доступ до {pro}, щоб розблокувати функції, яких вам бракувало.</string>
     <string name="proRenewTosPrivacy">Поновлюючи, ви погоджуєтеся з <b>Умовами надання послуг</b> {icon} та <b>Політикою конфіденційності</b> {icon} сервісу {app_pro}.</string>
     <string name="proRenewingAction">поновлення</string>
-    <string name="proRenewingNoAccessBilling">На даний момент доступ {pro} можна придбати та оновити лише через {platform_store} або {platform_store_other}. Оскільки ви встановили {app_name}, використовуючи {build_variant}, ви не можете поновити доступ тут.\n\nРозробники {app_name} активно працюють над альтернативними способами оплати, щоб надати змогу користувачам купувати доступ {pro} поза межами {platform_store} та {platform_store_other}.<b> Дорожня карта {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Вимогу повернення грошей надіслано</string>
     <string name="proSendMore">Надсилайте довші повідомлення з</string>
     <string name="proSettings">Налаштування {pro}</string>
@@ -1194,8 +1184,6 @@
     <string name="proUnlimitedPinsDescription">Закріплення необмеженої кількості співрозмовників в головному переліку.</string>
     <string name="proUpdatingAction">оновлення</string>
     <string name="proUpgradeAccess">Оновіться до {app_pro} Beta, щоб отримати доступ до великої кількості ексклюзивних переваг і функцій.</string>
-    <string name="proUpgradeDesktopLinked">Оновіть до {pro} через налаштування {app_pro} на прив’язаному пристрої, на якому встановлено {app_name} через {platform_store} або {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">На даний момент доступ до {pro} можна придбати лише через {platform_store} або {platform_store_other}. Оскільки ви встановили {app_name} за допомогою {build_variant}, оновлення до {pro} тут недоступне.\n\nРозробники {app_name} активно працюють над альтернативними способами оплати, щоб дати змогу користувачам придбати доступ до {pro} поза межами {platform_store} та {platform_store_other}.<b> Дорожня карта {pro}</b> {icon}</string>
     <string name="proUpgradeOption">Наразі єдиний шлях підвищити рівень:</string>
     <string name="proUpgradeOptionsTwo">Наразі є два способи оновлення доступу.</string>
     <string name="proUpgraded">Ви оновилися до {app_pro}!\nДякуємо за підтримку мережі {network_name}.</string>
@@ -1356,7 +1344,7 @@
     <string name="searchConversation">Пошук бесіди</string>
     <string name="searchEnter">Будь ласка, введіть текст для пошуку.</string>
     <plurals name="searchMatches">
-        <item quantity="one">%1$d з %2$d збіг</item>
+        <item quantity="one">%1$d з %2$d збігається</item>
         <item quantity="few">%1$d з %2$d збігаються</item>
         <item quantity="many">%1$d з %2$d збігів</item>
         <item quantity="other">%1$d з %2$d збігаються</item>

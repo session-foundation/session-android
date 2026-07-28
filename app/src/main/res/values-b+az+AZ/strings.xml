@@ -207,8 +207,8 @@
     <string name="cameraErrorUnavailable">Kamera əlçatmazdır.</string>
     <string name="cameraGrantAccess">Kamera erişiminə icazə ver</string>
     <string name="cameraGrantAccessDenied">{app_name} foto və video çəkmək üçün kameraya erişməlidir, ancaq bu erişimə həmişəlik rədd cavabı verilib. Lütfən tətbiq ayarlarına gedib \"İcazələr\"i seçin və \"Kamera\"nı fəallaşdırın.</string>
-    <string name="cameraGrantAccessDescription">{app_name} foto və video çəkmək və ya QR kodlarını skan etmək üçün kameraya müraciət etməlidir.</string>
-    <string name="cameraGrantAccessQr">{app_name} QR kodlarını skan etmək üçün kameraya müraciət etməlidir</string>
+    <string name="cameraGrantAccessDescription">{app_name} foto və video çəkmək və ya QR kodlarını skan etmək üçün kameraya erişməlidir.</string>
+    <string name="cameraGrantAccessQr">{app_name} QR kodlarını skan etmək üçün kameraya erişməlidir</string>
     <string name="cancel">İmtina</string>
     <string name="cancelAccess">{pro} - ləğv et</string>
     <string name="change">Dəyişdir</string>
@@ -330,9 +330,9 @@
     <string name="currentPassword">Hazırkı parol</string>
     <string name="cut">Kəs</string>
     <string name="darkMode">Qaranlıq rejim</string>
-    <string name="databaseErrorClearDataWarning">Bu cihazdan bütün mesajları, qoşmaları və hesab məlumatlarını silmək və yeni hesab yaratmaq istədiyinizə əminsinizmi?</string>
-    <string name="databaseErrorGeneric">Verilənlər bazası xətası baş verdi.\n\nProblemləri həll etmək üçün paylaşmaq üçün proqram qeydlərinizi ixrac edin. Bu uğursuz olarsa, {app_name} proqramını yenidən quraşdırın və hesabınızı bərpa edin.</string>
-    <string name="databaseErrorRestoreDataWarning">Bu cihazdan bütün mesajları, qoşmaları və hesab məlumatlarını silmək və hesabınızı şəbəkədən bərpa etmək istədiyinizə əminsinizmi?</string>
+    <string name="databaseErrorClearDataWarning">Bu cihazdan bütün mesajları, qoşmaları və hesab verilərini silmək və yeni hesab yaratmaq istədiyinizə əminsiniz?</string>
+    <string name="databaseErrorGeneric">Veri bazasında bir xəta baş verdi.\n\nProblemləri həll etmək məqsədilə paylaşmaq üçün tətbiq jurnalını xaricə köçürün. Bu uğursuz olarsa, {app_name} tətbiqini yenidən quraşdırın və hesabınızı bərpa edin.</string>
+    <string name="databaseErrorRestoreDataWarning">Bu cihazdan bütün mesajları, qoşmaları və hesab verilərini silmək və hesabınızı şəbəkədən bərpa etmək istədiyinizə əminsiniz?</string>
     <string name="databaseErrorTimeout">{app_name} tətbiqinin başladılmasının çox vaxt apardığına fikir verdik.\n\nGözləməyə davam edə, problemin aradan qaldırılması üçün cihazınızın jurnallarını xaricə köçürə və ya {app_name}-u yenidən başlatmağa çalışa bilərsiniz.</string>
     <string name="databaseErrorUpdate">Tətbiqinizin veri bazası, {app_name} tətbiqinin versiyası ilə uyumlu deyil. Yeni bir veri bazası yaratmaq və {app_name} istifadə etməyə davam etmək üçün tətbiqi yenidən quraşdırın və hesabınızı bərpa edin.\n\nXəbərdarlıq: Bu, iki həftədən köhnə olan bütün mesajların və qoşmaların itkisi ilə nəticələnəcək.</string>
     <string name="databaseOptimizing">Veri bazası optimallaşdırılır</string>
@@ -511,7 +511,7 @@
     <string name="fullScreenToggle">Tam ekranı aç/bağla</string>
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
-    <string name="giphyWarningDescription">{app_name} axtarış nəticələrini təqdim etmək üçün Giphy-ə bağlanacaq. GIF göndərərkən tam metadata qorumasına sahib olmayacaqsınız.</string>
+    <string name="giphyWarningDescription">{app_name} axtarış nəticələrini təqdim etmək üçün Giphy-ə bağlanacaq. GIF göndərərkən tam meta veri qorumasına sahib olmayacaqsınız.</string>
     <string name="giveFeedback">Əks-əlaqə vermək istəyirsiniz?</string>
     <string name="giveFeedbackDescription">{app_name} təcrübənizin yaxşı olmadığını eşitmək bizi məyus etdi. Fikirlərinizi qısa anket üzərindən bizimlə paylaşsanız minnətdar olarıq</string>
     <string name="groupAddMemberMaximum">Qruplarda ən çox 100 üzv ola bilər</string>
@@ -937,17 +937,17 @@
     <string name="permissionsMicrophoneAccessRequired">{app_name}, zəng etmək və səsli mesaj göndərmək üçün mikrofona erişməlidir, ancaq bu erişimə həmişəlik rədd cavabı verilib. Ayarlara → İcazələr bölməsinə gedin və \"Mikrofon\"u işə salın.</string>
     <string name="permissionsMicrophoneAccessRequiredCallsIos">Zəng etmək və səsli mesajları yazmaq üçün mikrofona erişim tələb olunur. Davam etmək üçün Ayarlarda \"Mikrofon\" icazəsini işə salın.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">{app_name} gizlilik ayarlarında mikrofona erişimi fəallaşdıra bilərsiniz</string>
-    <string name="permissionsMicrophoneAccessRequiredIos">{app_name} zəng etmək və səsli mesajlar yazmaq üçün mikrofona müraciət etməlidir.</string>
+    <string name="permissionsMicrophoneAccessRequiredIos">{app_name} zəng etmək və səsli mesajlar yazmaq üçün mikrofona erişməlidir.</string>
     <string name="permissionsMicrophoneChangeDescriptionIos">Mikrofon erişimi hazırda fəaldır. Onu sıradan çıxartmaq üçün Ayarlarda \"Mikrofon\" icazəsini söndürün.</string>
     <string name="permissionsMicrophoneDescription">Mikrofona erişim icazəsi verin.</string>
     <string name="permissionsMicrophoneDescriptionIos">Səsli zənglər və səsli mesajlar üçün mikrofona erişimə icazə verin.</string>
     <string name="permissionsMusicAudio">Fayl, musiqi və səs göndərə bilməyiniz üçün {app_name} musiqi və səslərə erişməlidir.</string>
     <string name="permissionsRequired">İcazə tələb edilir</string>
     <string name="permissionsStorageDenied">Foto və video göndərə bilməyiniz üçün {app_name} foto kitabxanasına erişməlidir, ancaq bu erişimə birdəfəlik rədd cavabı verilib. Ayarlar → \"İcazələr\"ə toxunun və \"Foto və videolar\"ı işə salın.</string>
-    <string name="permissionsStorageDeniedLegacy">{app_name}, qoşmaları göndərə və saxlaya bilməyiniz üçün anbara müraciət etməlidir. Ayarlar → İcazələr bölməsinə gedin və \"Anbar\"ı işə salın.</string>
+    <string name="permissionsStorageDeniedLegacy">{app_name}, qoşmaları göndərə və saxlaya bilməyiniz üçün anbara erişməlidir. Ayarlar → İcazələr bölməsinə gedin və \"Anbar\"ı işə salın.</string>
     <string name="permissionsStorageSave">{app_name} qoşmaları və medianı saxlamaq üçün anbara erişməlidir.</string>
     <string name="permissionsStorageSaveDenied">{app_name} foto və videoları saxlamaq üçün anbara erişməlidir, ancaq bu erişimə həmişəlik rədd cavabı verilib. Lütfən tətbiq ayarlarına gedin, \"İcazələr\"i seçin və \"Anbar\" icazəsini fəallaşdırın.</string>
-    <string name="permissionsStorageSend">{app_name} foto və videoları göndərmək üçün anbara müraciət etməlidir.</string>
+    <string name="permissionsStorageSend">{app_name} foto və videoları göndərmək üçün anbara erişməlidir.</string>
     <string name="permissionsWriteCommunity">Bu icmada yazma icazəniz yoxdur</string>
     <string name="pin">Sancaqla</string>
     <string name="pinConversation">Danışığı sancaqla</string>
@@ -969,7 +969,6 @@
     <string name="proAccessNotFoundDescription">{app_name}, hesabınızda {pro} erişimi olmadığını müəyyən etdi. Bunun bir səhv olduğunu düşünürsünüzsə, lütfən kömək üçün {app_name} dəstəyi ilə əlaqə saxlayın.</string>
     <string name="proAccessRecover">{pro} erişimini geri qaytar</string>
     <string name="proAccessRenew">{pro} erişimini yenilə</string>
-    <string name="proAccessRenewDesktop">Hazırda, {pro} erişimi , yalnız {platform_store} və {platform_store_other} vasitəsilə satın alına və yenilənə bilər. {app_name} Masaüstü istifadə etdiyinizə görə burada yeniləyə bilməzsiniz.\n\n{app_name} gəlişdiriciləri, istifadəçilərin {pro} erişimini {platform_store} və {platform_store_other} xaricində almağına imkan verəcək alternativ ödəniş variantları üzərində ciddi şəkildə çalışırlar. <b>{pro} Yol Xəritəsi</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">{pro} erişiminizi {pro} üçün qeydiyyatdan keçdiyiniz {platform_account} istifadə edərək <b><font color="0">{platform_store} veb saytında</font></b> yeniləyin.</string>
     <string name="proAccessRenewStart">Güclü {pro} Beta özəlliklərini yenidən istifadə etməyə başlamaq üçün {app_pro} erişiminizi yeniləyin.</string>
     <string name="proAccessRestored">{pro} erişimi geri qaytarıldı</string>
@@ -996,9 +995,6 @@
         <item quantity="other">%1$s %2$s nişan göndərildi</item>
     </plurals>
     <string name="proBetaFeatures">{pro} Beta Xüsusiyyətləri</string>
-    <string name="proBilledAnnually">{price} - illik haqq</string>
-    <string name="proBilledMonthly">{price} - aylıq haqq</string>
-    <string name="proBilledQuarterly">{price} - rüblük haqq</string>
     <string name="proCallToActionLongerMessages">Daha uzun mesajlar göndərmək istəyirsiniz?\n{app_pro} Beta ilə daha çox mesaj göndərin və premim özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversations">Daha çoxunu sancmaq istəyirsiniz?\n{app_pro} Beta ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
     <string name="proCallToActionPinnedConversationsMoreThan">{limit} danışıqdan çoxunu sancmaq istəyirsiniz?\n{app_pro} Beta ilə söhbətlərinizi təşkil edin və premium özəlliklərin kilidini açın</string>
@@ -1045,9 +1041,6 @@
     <string name="proPlanPlatformRefund">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri ödəmə tələbini göndərmək üçün eyni {platform_account} hesabını istifadə etməlisiniz.</string>
     <string name="proPlanPlatformRefundLong">Başda <b><font color="0">{platform_store} Mağazası</font></b> üzərindən {app_pro} üçün qeydiyyatdan keçdiyinizə görə, geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəmə tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəmə tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
     <string name="proPlanRenewSupport">{app_pro} erişiminiz yeniləndi! {network_name} dəstək verdiyiniz üçün təşəkkürlər.</string>
-    <string name="proPriceOneMonth">1 ay - {monthly_price}/ay</string>
-    <string name="proPriceThreeMonths">3 ay - {monthly_price}/ay</string>
-    <string name="proPriceTwelveMonths">12 ay - {monthly_price}/ay</string>
     <string name="proRefundDescription">Getməyinizə məyus olduq. Geri ödəmə tələb etməzdən əvvəl bilməli olduğunuz şeylər.</string>
     <string name="proRefundNextSteps">{platform} hazırda geri ödəniş tələbinizi emal edir. Bu, adətən 24-48 saat çəkir. Onların qərarından asılı olaraq, {app_name} tətbiqində {pro} statusunuzun dəyişdiyini görə bilərsiniz.</string>
     <string name="proRefundRequestSessionSupport">Geri qaytarma tələbiniz {app_name} Dəstək komandası tərəfindən icra olunacaq.\n\nAşağıdakı düyməyə basaraq və geri ödəniş formunu dolduraraq geri ödəniş tələbinizi göndərin.\n\n{app_name} Dəstək komandası, geri ödəniş tələblərini adətən 24-72 saat ərzində emal edir, yüksək tələb həcminə görə bu proses daha uzun çəkə bilər.</string>
@@ -1055,7 +1048,6 @@
     <string name="proRefunding">{pro} geri ödəməsi</string>
     <string name="proRefundingDescription">{app_pro} üçün geri ödəmələr yalnız {platform_store} vasitəsilə {platform} tərəfindən həyata keçirilir.\n\n{platform} geri ödəniş siyasətlərinə əsasən, {app_name} gəlişdiriciləri, geri ödəniş tələblərinin nəticəsinə təsir edə bilməz. Bu, tələbin qəbul olunub-olunmaması ilə yanaşı, tam və ya qismən geri ödənişin verilib-verilməməsini də əhatə edir.</string>
     <string name="proRenewBeta">{pro} Beta-nı yenilə</string>
-    <string name="proRenewDesktopLinked">{pro} erişiminizi, {platform_store} və ya {platform_store_other} üzərindən {app_name} quraşdırılmış və əlaqələndirilmiş cihazın {app_pro} ayarlarında yeniləyin.</string>
     <string name="proRenewMaxPotential">{app_name} tətbiqini yenidən maksimum potensialda istifadə etmək istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
     <string name="proRenewPinMoreConversations">Daha çox danışığı təkrar sancmaq istəyirsiniz?\nQaçırdığınız özəlliklərin kilidini açmaq üçün {pro} erişiminizi yeniləyin.</string>
     <string name="proRequestedRefund">Geri ödəmə tələb edildi</string>
@@ -1203,7 +1195,7 @@
     <string name="search">Axtar</string>
     <string name="searchContacts">Kontaktları axtar</string>
     <string name="searchConversation">Danışıq axtar</string>
-    <string name="searchEnter">Zəhmət olmasa, axtarışınızı daxil edin.</string>
+    <string name="searchEnter">Lütfən axtardığınızı daxil edin.</string>
     <plurals name="searchMatches">
         <item quantity="one">%1$d/%2$d uyuşma</item>
         <item quantity="other">%1$d/%2$d uyuşma</item>

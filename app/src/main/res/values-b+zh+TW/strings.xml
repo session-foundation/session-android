@@ -190,7 +190,7 @@
     <string name="cameraGrantAccess">授予相機存取權限</string>
     <string name="cameraGrantAccessDenied">{app_name} 需要相機的權限來拍攝照片或是影片，但它已被永久拒絕。請到應用程式設定中，選取「權限」，並啟用「相機」。</string>
     <string name="cameraGrantAccessDescription">{app_name} 需要使用相機來拍攝照片和影片，或掃描 QR 圖碼。</string>
-    <string name="cameraGrantAccessQr">{app_name} 需要相機存取權來掃描 QR 圖碼</string>
+    <string name="cameraGrantAccessQr">{app_name} 需要相機存取權來掃描 QR code</string>
     <string name="cancel">取消</string>
     <string name="changePasswordFail">更改密碼失敗</string>
     <string name="clear">清除</string>
@@ -377,7 +377,7 @@
     <string name="disappearingMessagesTurnedOffYouGroup"><b>你</b> <b>已關閉</b>訊息自動銷毀。</string>
     <string name="disappearingMessagesTypeRead">已讀</string>
     <string name="disappearingMessagesTypeSent">已傳送</string>
-    <string name="disappearingMessagesUpdated"><b>{admin_name}</b> 更新了消失訊息的設定。</string>
+    <string name="disappearingMessagesUpdated"><b>{admin_name}</b> 更新了訊息自動銷毀的設定。</string>
     <string name="disappearingMessagesUpdatedYou"><b>你</b> 更新了訊息總動銷毀功能設定。</string>
     <string name="dismiss">關閉</string>
     <string name="displayNameDescription">它可以是您的真名、別名或任何您喜歡的名字—並且可以隨時更改。</string>
@@ -578,7 +578,7 @@
     <string name="linkPreviewsSend">傳送連結預覽</string>
     <string name="linkPreviewsSendModalDescription">您在傳送連結預覽時無法得到完整的元數據保護。</string>
     <string name="linkPreviewsTurnedOff">已停用連結預覽</string>
-    <string name="linkPreviewsTurnedOffDescription">{app_name} 必須連接已連結的網站以生成您傳送和接收的鏈接預覽。\n\n您可以在 {app_name} 的設定中啟用此功能。</string>
+    <string name="linkPreviewsTurnedOffDescription">{app_name} 需連線至您傳送和接收的網址，以產生網址預覽。\n\n您可以在 {app_name} 的設定中啟用此功能。</string>
     <string name="loadAccount">載入帳號</string>
     <string name="loadAccountProgressMessage">正在載入您的帳戶...</string>
     <string name="loading">載入中…</string>
@@ -609,7 +609,7 @@
     <string name="membersInviteShareDescriptionMultiple">您是否想要與 <b>{name}</b> 和 <b>{count} 名其他成員</b> 分享群組訊息歷史？</string>
     <string name="membersInviteShareDescriptionTwo">您是否想要與 <b>{name}</b> 和 <b>{other_name}</b> 分享群組訊息歷史？</string>
     <string name="membersInviteShareMessageHistory">分享舊訊息記錄</string>
-    <string name="membersInviteShareNewMessagesOnly">僅共享新訊息</string>
+    <string name="membersInviteShareNewMessagesOnly">僅分享新訊息</string>
     <string name="membersInviteTitle">邀請</string>
     <string name="message">訊息</string>
     <string name="messageBubbleReadMore">閱讀更多</string>

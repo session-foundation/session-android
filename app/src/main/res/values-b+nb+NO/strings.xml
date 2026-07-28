@@ -630,7 +630,7 @@
     <string name="helpReportABug">Rapporter en bug</string>
     <string name="helpReportABugDescription">Del noen detaljer for å hjelpe oss med å løse problemet ditt. Eksporter loggene dine, og last deretter opp filen gjennom Hjelpesenteret til {app_name}.</string>
     <string name="helpReportABugExportLogs">Eksportlogger</string>
-    <string name="helpReportABugExportLogsDescription">Eksporter logger, deretter last opp filen gjennom {app_name}\'s Help Desk.</string>
+    <string name="helpReportABugExportLogsDescription">Eksporter logger, deretter last opp filen gjennom hjelpesenteret til {app_name}.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Lagre til skrivebordet</string>
     <string name="helpReportABugExportLogsSaveToDesktopDescription">Lagre denne filen, så del den med {app_name}-utviklerne.</string>
     <string name="helpSupport">Brukerstøtte</string>
@@ -997,14 +997,12 @@
     <string name="proAccessNotFoundDescription">{app_name} oppdaget at kontoen din ikke har {pro}-tilgang. Hvis du mener dette er en feil, vennligst kontakt brukerstøtte hos {app_name} for hjelp.</string>
     <string name="proAccessRecover">Gjenopprett {pro}-tilgang</string>
     <string name="proAccessRenew">Forny {pro}-tilgang</string>
-    <string name="proAccessRenewDesktop">For øyeblikket kan {pro}-tilgang kun kjøpes og fornyes via {platform_store} eller {platform_store_other}. Siden du bruker {app_name} Desktop, kan du ikke fornye her.\n\nUtviklerne av {app_name} jobber hardt med alternative betalingsalternativer som lar brukere kjøpe {pro}-tilgang utenfor {platform_store} og {platform_store_other}. <b>{pro}-Veikart</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Forny {pro}-tilgangen din på <b><font color="0">{platform_store}-nettstedet</font></b> ved å bruke {platform_account}-kontoen du brukte da du registrerte deg for {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Forny på <b><font color="0">{platform}-nettstedet</font></b> ved å bruke {platform_account}-kontoen du registrerte {pro} med.</string>
     <string name="proAccessRenewStart">Forny {pro}-tilgangen din for å begynne å bruke de kraftige funksjonene i {app_pro} Beta igjen.</string>
     <string name="proAccessRestored">{pro}-tilgang gjenopprettet</string>
     <string name="proAccessRestoredDescription">{app_name} oppdaget og gjenopprettet {pro}-tilgang for kontoen din. Din {pro}-status er gjenopprettet!</string>
     <string name="proAccessSignUp">Fordi du opprinnelig registrerte deg for {app_pro} via <b>{platform_store}</b>, må du bruke din {platform_account} for å oppdatere tilgangen din til {pro}.</string>
-    <string name="proAccessUpgradeDesktop">For øyeblikket kan {pro}-tilgang kun kjøpes via {platform_store} eller {platform_store_other}. Fordi du bruker {app_name} Desktop, kan du ikke oppgradere til {pro} her.\n\nUtviklerne av {app_name} jobber hardt med alternative betalingsløsninger slik at brukere kan kjøpe {pro}-tilgang utenom {platform_store} og {platform_store_other}. <b>Veikart for {pro}</b> {icon}</string>
     <string name="proActivated">Aktivert</string>
     <string name="proActivatingActivation">aktiverer</string>
     <string name="proAllSet">Alt er klart!</string>
@@ -1027,9 +1025,6 @@
         <item quantity="other">%1$s %2$s Merker Sendt</item>
     </plurals>
     <string name="proBetaFeatures">{pro} betafunksjoner</string>
-    <string name="proBilledAnnually">{price} Faktureres årlig</string>
-    <string name="proBilledMonthly">{price} Faktureres månedlig</string>
-    <string name="proBilledQuarterly">{price} Faktureres kvartalsvis</string>
     <string name="proCallToActionLongerMessages">Vil du sende lengre meldinger?\nSend mer tekst og lås opp premiumfunksjoner med {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Vil du feste flere samtaler?\nOrganiser samtalene dine og lås opp premiumfunksjoner med {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vil du ha mer enn {limit} festede samtaler?\nOrganiser samtalene dine og lås opp premiumfunksjoner med {app_pro} Beta</string>
@@ -1088,9 +1083,6 @@
     <string name="proPlanPlatformRefund">Fordi du opprinnelig registrerte deg for {app_pro} via <b><font color="0">{platform_store}</font></b>, må du bruke din {platform_account} for å be om refusjon.</string>
     <string name="proPlanPlatformRefundLong">Fordi du opprinnelig registrerte deg for {app_pro} via <b><font color="0">{platform_store}</font></b>, vil refusjonsforespørselen din behandles av {app_name}-støtte.\n\nBe om refusjon ved å trykke på knappen nedenfor og fylle ut refusjonsskjemaet.\n\n{app_name}-støtte tilstreber å behandle refusjonsforespørsler innen 24–72 timer, men behandlingstiden kan være lengre ved stor pågang.</string>
     <string name="proPlanRenewSupport">Tilgangen til {app_pro} er fornyet! Takk for at du støtter {network_name}.</string>
-    <string name="proPriceOneMonth">1 måned – {monthly_price} / måned</string>
-    <string name="proPriceThreeMonths">3 måneder – {monthly_price} / måned</string>
-    <string name="proPriceTwelveMonths">12 måneder – {monthly_price} / måned</string>
     <string name="proReactivatingActivation">aktiverer på nytt</string>
     <string name="proRefundAccountDevice">Åpne denne {app_name}-kontoen på en {device_type}-enhet som er logget inn med {platform_account}-kontoen du opprinnelig registrerte deg med. Be deretter om refusjon via {app_pro}-innstillingene.</string>
     <string name="proRefundDescription">Vi er lei for at du forlater oss. Her er hva du bør vite før du ber om refusjon.</string>
@@ -1101,14 +1093,12 @@
     <string name="proRefundingDescription">Refusjoner for {app_pro} håndteres utelukkende av {platform} via {platform_store}.\n\nPå grunn av refusjonspolicyene til {platform}, har ikke utviklerne av {app_name} mulighet til å påvirke utfallet av refusjonsforespørsler. Dette inkluderer hvorvidt forespørselen blir godkjent eller avslått, samt om det gis full eller delvis refusjon.</string>
     <string name="proRenewAnimatedDisplayPicture">Vil du bruke animerte visningsbilder igjen?\nForny {pro}-tilgangen din for å låse opp funksjonene du har gått glipp av.</string>
     <string name="proRenewBeta">Forny {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Forny {pro}-tilgangen din fra {app_pro}-innstillingene på en tilkoblet enhet med {app_name} installert via {platform_store} eller {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Vil du sende lengre meldinger igjen?\nForny {pro}-tilgangen din for å låse opp funksjonene du har gått glipp av.</string>
     <string name="proRenewMaxPotential">Vil du bruke {app_name} til sitt fulle potensial igjen?\nForny {pro}-tilgangen din for å låse opp funksjonene du har gått glipp av.</string>
     <string name="proRenewPinFiveConversations">Vil du feste mer enn {limit} samtaler igjen?\nForny {pro}-tilgangen din for å låse opp funksjonene du har gått glipp av.</string>
     <string name="proRenewPinMoreConversations">Vil du feste flere samtaler igjen?\nForny {pro}-tilgangen din for å låse opp funksjonene du har gått glipp av.</string>
     <string name="proRenewTosPrivacy">Ved å fornye godtar du {app_pro} sine <b>Vilkår for tjenesten</b> {icon} og <b>Personvernerklæring</b> {icon}</string>
     <string name="proRenewingAction">fornyer</string>
-    <string name="proRenewingNoAccessBilling">For øyeblikket kan {pro}-tilgang bare kjøpes og fornyes via {platform_store} eller {platform_store_other}. Fordi du installerte {app_name} ved bruk av {build_variant}, kan du ikke fornye her.\n\nUtviklerne av {app_name} jobber hardt med alternative betalingsalternativer for å gjøre det mulig å kjøpe {pro}-tilgang utenfor {platform_store} og {platform_store_other}.<b> Veikart for {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Refusjon forespurt</string>
     <string name="proSendMore">Send mer med</string>
     <string name="proSettings">{pro}-innstillinger</string>
@@ -1134,8 +1124,6 @@
     <string name="proUpdateAccessExpireDescription">Tilgangen din til {pro} utløper <b>{date}</b>.\n\nVed oppdatering fornyes din tilgang til {pro} automatisk den <b>{date}</b> for ytterligere <b>{selected_plan_length}</b> med {pro}-tilgang.</string>
     <string name="proUpdatingAction">oppdaterer</string>
     <string name="proUpgradeAccess">Oppgrader til {app_pro} Beta for å få tilgang til mange eksklusive fordeler og funksjoner.</string>
-    <string name="proUpgradeDesktopLinked">Oppgrader til {pro} fra {app_pro}-innstillingene på en tilkoblet enhet med {app_name} installert via {platform_store} eller {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">For øyeblikket kan {pro}-tilgang kun kjøpes via {platform_store} eller {platform_store_other}. Fordi du installerte {app_name} ved bruk av {build_variant}, kan du ikke oppgradere til {pro} her.\n\nUtviklerne av {app_name} jobber hardt med alternative betalingsløsninger slik at brukere kan kjøpe {pro}-tilgang utenom {platform_store} og {platform_store_other}.<b> Veikart for {pro}</b> {icon}</string>
     <string name="proUpgradeOption">Foreløpig finnes det bare én måte å oppgradere på.</string>
     <string name="proUpgradeOptionsTwo">Foreløpig finnes det to måter å oppgradere på:</string>
     <string name="proUpgraded">Du har oppgradert til {app_pro}!\nTakk for at du støtter {network_name}.</string>
@@ -1166,7 +1154,7 @@
     </plurals>
     <string name="qrCode">QR-kode</string>
     <string name="qrNotAccountId">Denne QR-koden inneholder ikke en Account ID</string>
-    <string name="qrNotRecoveryPassword">Denne QR-koden inneholder ikke en Gjenopprettingsfrase</string>
+    <string name="qrNotRecoveryPassword">Denne QR-koden inneholder ikke en gjenopprettingspassord</string>
     <string name="qrScan">Skann QR-kode</string>
     <string name="qrView">Vis QR</string>
     <string name="qrYoursDescription">Venner kan sende deg meldinger ved å skanne din QR-kode.</string>
@@ -1191,17 +1179,17 @@
     <string name="recoveryPasswordErrorMessageGeneric">Sjekk gjenopprettingspassordet ditt og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Noen av ordene i gjenopprettingspassordet ditt er feil. Vennligst sjekk og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageShort">Gjenopprettingspassordet du oppga er ikke langt nok. Vennligst sjekk og prøv igjen.</string>
-    <string name="recoveryPasswordErrorTitle">Galt Recovery Password</string>
-    <string name="recoveryPasswordExplanation">For å laste din konto, skriv inn din gjenopprettingsfrase.</string>
-    <string name="recoveryPasswordHidePermanently">Skjul Recovery Password permanent</string>
+    <string name="recoveryPasswordErrorTitle">Galt gjenopprettingspassord</string>
+    <string name="recoveryPasswordExplanation">For å laste din konto, skriv inn din gjenopprettingspassord.</string>
+    <string name="recoveryPasswordHidePermanently">Skjul gjenopprettingspassord permanent</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Uten gjenopprettingspassordet kan du ikke laste kontoen din på nye enheter. \n\nVi anbefaler sterkt at du lagrer gjenopprettingspassordet ditt på et trygt og sikkert sted før du fortsetter.</string>
     <string name="recoveryPasswordHidePermanentlyDescription2">Er du sikker på at du har lyst til å permanent skjule gjenopprettingspassordet ditt?\n\nDette kan ikke angres.</string>
-    <string name="recoveryPasswordHideRecoveryPassword">Skjul Recovery Password</string>
+    <string name="recoveryPasswordHideRecoveryPassword">Skjul gjenopprettingspassord</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Skjul gjenopprettingspassord permanent på denne enheten.</string>
     <string name="recoveryPasswordRestoreDescription">Skriv inn ditt gjenopprettingspassord for å laste kontoen din. Hvis du ikke har lagret det, kan du finne det i app-innstillingene dine.</string>
     <string name="recoveryPasswordView">Vis Gjenopprettingspassord</string>
     <string name="recoveryPasswordVisibility">Gjenopprettingspassord Synlighet</string>
-    <string name="recoveryPasswordWarningSendDescription">Dette er din gjenopprettingsfrase. Hvis du sender den til noen vil de ha full tilgang til din konto.</string>
+    <string name="recoveryPasswordWarningSendDescription">Dette er din gjenopprettingspassord. Hvis du sender den til noen vil de ha full tilgang til din konto.</string>
     <string name="recreateGroup">Opprett gruppe på nytt</string>
     <string name="redo">Gjenta</string>
     <string name="refundNonOriginatorApple">Fordi du opprinnelig registrerte deg for {app_pro} via en annen {platform_account}, må du bruke den <b><font color="0">{platform_account}</font></b> for å oppdatere {pro}-tilgangen din.</string>

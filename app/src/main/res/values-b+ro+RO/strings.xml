@@ -103,7 +103,7 @@
     <string name="attachmentsAdd">Adaugă atașament</string>
     <string name="attachmentsAlbumUnnamed">Album fără nume</string>
     <string name="attachmentsAutoDownload">Descărcare automată atașamente</string>
-    <string name="attachmentsAutoDownloadDescription">Descarcă automat media și fișiere din acest chat.</string>
+    <string name="attachmentsAutoDownloadDescription">Descarcă automat media și fișiere din această conversație.</string>
     <string name="attachmentsAutoDownloadModalDescription">Doriți să descărcați automat toate fișierele din <b>{conversation_name}</b>?</string>
     <string name="attachmentsAutoDownloadModalTitle">Descărcare automată</string>
     <string name="attachmentsClearAll">Șterge toate atașamentele</string>
@@ -157,7 +157,7 @@
     <string name="authenticateNotAccessed">Autentificarea nu a putut fi accesată.</string>
     <string name="authenticateToOpen">Autentifică-te pentru a deschide {app_name}.</string>
     <string name="back">Înapoi</string>
-    <string name="banDeleteAll">Banează și Șterge Tot</string>
+    <string name="banDeleteAll">Interzice și șterge toate</string>
     <string name="banErrorFailed">Interdicţie eșuată</string>
     <string name="banUnbanErrorFailed">Eroare la ridicarea interdicției</string>
     <string name="banUnbanUser">Scoate interdicția utilizatorului</string>
@@ -236,8 +236,8 @@
     <string name="clearDataError">Datele nu au fost șterse</string>
     <plurals name="clearDataErrorDescription">
         <item quantity="one">Datele nu au fost șterse de %1$d noduri de serviciu. ID-ul nodului de serviciu: %2$s.</item>
-        <item quantity="few">Datele nu au fost șterse de %1$d Noduri de serviciu. ID-uri de serviciu: %2$s.</item>
-        <item quantity="other">Datele nu au fost șterse de %1$d Noduri de serviciu. ID-uri de serviciu: %2$s.</item>
+        <item quantity="few">Datele nu au fost șterse de %1$d noduri de serviciu. ID-urile nodurilor de serviciu: %2$s.</item>
+        <item quantity="other">Datele nu au fost șterse de %1$d noduri de serviciu. ID-urile nodurilor de serviciu: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">A apărut o eroare necunoscută și datele dvs. nu au fost șterse. Doriți să ștergeți datele de pe acest dispozitiv în schimb?</string>
     <string name="clearDevice">Șterge dispozitivul</string>
@@ -312,7 +312,7 @@
     <string name="conversationsAddedToHome">Adăugat pe ecranul principal</string>
     <string name="conversationsAudioMessages">Mesaje audio</string>
     <string name="conversationsAutoplayAudioMessage">Redare automată mesaje audio</string>
-    <string name="conversationsAutoplayAudioMessageDescription">Redare automată a mesajelor audio consecutive</string>
+    <string name="conversationsAutoplayAudioMessageDescription">Redare automată a mesajelor audio consecutive.</string>
     <string name="conversationsBlockedContacts">Contacte blocate</string>
     <string name="conversationsCommunities">Comunități</string>
     <string name="conversationsDelete">Șterge conversația</string>
@@ -1035,7 +1035,6 @@
     <string name="proAccessNotFoundDescription">{app_name} a detectat că contul tău nu are acces {pro}. Dacă crezi că este o greșeală, te rugăm să contactezi asistența {app_name} pentru ajutor.</string>
     <string name="proAccessRecover">Recuperează accesul {pro}</string>
     <string name="proAccessRenew">Reînnoiește accesul {pro}</string>
-    <string name="proAccessRenewDesktop">În prezent, accesul {pro} poate fi achiziționat și reînnoit doar prin {platform_store} sau {platform_store_other}. Deoarece folosești {app_name} Desktop, nu îl poți reînnoi aici.\n\nDezvoltatorii {app_name} lucrează intens la opțiuni alternative de plată pentru a permite utilizatorilor să achiziționeze accesul {pro} în afara {platform_store} și {platform_store_other}. <b>Foaia de parcurs {pro}</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Reînnoiește-ți accesul la {pro} pe <b><font color="0">site-ul {platform_store}</font></b> folosind contul {platform_account} cu care te-ai înregistrat pentru {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Reînnoiește pe <b><font color="0">site-ul {platform}</font></b> folosind contul {platform_account} cu care te-ai înregistrat la {pro}.</string>
     <string name="proAccessRenewStart">Reînnoiește-ți accesul {pro} pentru a începe din nou să folosești funcționalitățile beta avansate {app_pro}.</string>
@@ -1046,11 +1045,11 @@
     <string name="proActivatingActivation">activare</string>
     <string name="proAllSet">Totul este gata!</string>
     <string name="proAllSetDescription">Accesul tău la {app_pro} a fost actualizat! Vei fi facturat când {pro} se va reînnoi automat pe <b>{date}</b>.</string>
-    <string name="proAlreadyPurchased">Deja ai</string>
-    <string name="proAnimatedDisplayPicture">Mergi mai departe și încarcă GIF-uri și imagini WebP animate pentru imaginea ta de profil!</string>
+    <string name="proAlreadyPurchased">Ai deja</string>
+    <string name="proAnimatedDisplayPicture">Încarcă GIF-uri și imagini WebP animate pentru poza ta de profil!</string>
     <string name="proAnimatedDisplayPictureCallToActionDescription">Obține imagini de profil animate și deblochează funcționalități premium cu {app_pro} Beta</string>
     <string name="proAnimatedDisplayPictureFeature">Poză de profil animată</string>
-    <string name="proAnimatedDisplayPictureModalDescription">utilizatorii pot încărca GIF-uri</string>
+    <string name="proAnimatedDisplayPictureModalDescription">Utilizatorii pot încărca GIF-uri</string>
     <string name="proAnimatedDisplayPictures">Poze de profil animate</string>
     <string name="proAnimatedDisplayPicturesDescription">Setează GIF-uri animate și imagini WebP animate ca imagine de profil.</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Încarcă GIF-uri cu</string>
@@ -1065,9 +1064,6 @@
         <item quantity="other">%1$s insigne %2$s trimise</item>
     </plurals>
     <string name="proBetaFeatures">Caracteristici {pro} Beta</string>
-    <string name="proBilledAnnually">{price} Facturat anual</string>
-    <string name="proBilledMonthly">{price} Facturat lunar</string>
-    <string name="proBilledQuarterly">{price} Facturat trimestrial</string>
     <string name="proCallToActionLongerMessages">Vrei să trimiți mesaje mai lungi?\nTrimite mai mult text și deblochează funcții premium cu {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Vrei mai multe fixări?\nOrganizează-ți conversațiile și deblochează funcționalități premium cu {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Vrei mai mult de {limit} fixări?\nOrganizează-ți conversațiile și deblochează funcții premium cu {app_pro} Beta</string>
@@ -1082,17 +1078,17 @@
     <string name="proDiscountTooltip">Accesul tău {pro} are deja o reducere de {percent}% din prețul complet al {app_pro}.</string>
     <string name="proErrorRefreshingStatus">Eroare la reîmprospătarea statutului {pro}</string>
     <string name="proExpired">Expirat</string>
-    <string name="proExpiredDescription">Din păcate, accesul tău {pro} a expirat. Reînnoiește-l pentru a reactiva beneficiile și funcționalitățile exclusive ale {app_pro}.</string>
+    <string name="proExpiredDescription">Din păcate, accesul tău {pro} a expirat.\nReînnoiește-l pentru a reactiva beneficiile și funcționalitățile exclusive ale {app_pro}.</string>
     <string name="proExpiringSoon">Expiră în curând</string>
     <string name="proExpiringSoonDescription">Accesul tău {pro} expiră în <b>{time}</b>.\nActualizează acum pentru a continua să beneficiezi de avantajele și funcționalitățile exclusive ale {app_pro} Beta</string>
     <string name="proExpiringTime">{pro} va expira în <b>{time}</b></string>
     <string name="proFaq">Întrebări frecvente {pro}</string>
     <string name="proFaqDescription">Găsește răspunsuri la întrebările frecvente în secțiunea {app_pro} FAQ.</string>
-    <string name="proFeatureListAnimatedDisplayPicture">Încarcă imagini de profil GIF și WebP</string>
+    <string name="proFeatureListAnimatedDisplayPicture">Încarcă poze de profil GIF și WebP</string>
     <string name="proFeatureListLargerGroups">Conversații de grup mai mari, cu până la 300 de membri</string>
-    <string name="proFeatureListLoadsMore">Și multe alte funcționalități exclusive</string>
+    <string name="proFeatureListLoadsMore">Și multe alte funcții exclusive</string>
     <string name="proFeatureListLongerMessages">Mesaje de până la 10.000 de caractere</string>
-    <string name="proFeatureListPinnedConversations">Fixează un număr nelimitat de conversații</string>
+    <string name="proFeatureListPinnedConversations">Fixează conversații nelimitate</string>
     <string name="proFullestPotential">Vrei să folosești {app_name} la întregul său potențial?\nFă upgrade la {app_pro} Beta pentru a avea acces la o mulțime de beneficii și funcții exclusive.</string>
     <string name="proGroupActivated">Grup activat</string>
     <string name="proGroupActivatedDescription">Acest grup are capacitate extinsă! Poate susține până la 300 de membri deoarece un administrator de grup are</string>
@@ -1129,9 +1125,6 @@
     <string name="proPlanPlatformRefund">Deoarece te-ai înregistrat inițial la {app_pro} prin <b><font color="0">{platform_store}</font></b>, va trebui să folosești contul tău {platform_account} pentru a solicita o rambursare.</string>
     <string name="proPlanPlatformRefundLong">Pentru că v-ați înregistrat inițial pentru {app_pro} prin intermediul <b><font color="0">{platform_store}</font></b>, solicitarea dvs. de rambursare va fi procesată de Asistența {app_name}.\n\nSolicitați o rambursare apăsând butonul de mai jos și completând formularul de cerere de rambursare.\n\nDeși Asistența {app_name} depune eforturi pentru a procesa solicitările de rambursare în 24–72 de ore, procesarea poate dura mai mult în perioadele cu volum mare de cereri.</string>
     <string name="proPlanRenewSupport">Accesul tău {app_pro} a fost reînnoit! Îți mulțumim că susții {network_name}.</string>
-    <string name="proPriceOneMonth">1 lună - {monthly_price} / lună</string>
-    <string name="proPriceThreeMonths">3 luni - {monthly_price} / lună</string>
-    <string name="proPriceTwelveMonths">12 luni - {monthly_price} / lună</string>
     <string name="proReactivatingActivation">reactivare</string>
     <string name="proRefundAccountDevice">Deschide acest cont {app_name} pe un dispozitiv {device_type} conectat la contul {platform_account} cu care te-ai înregistrat inițial. Apoi, solicită o rambursare din setările {app_pro}.</string>
     <string name="proRefundDescription">Ne pare rău că pleci. Iată ce trebuie să știi înainte de a solicita o rambursare.</string>
@@ -1142,14 +1135,12 @@
     <string name="proRefundingDescription">Rambursările pentru {app_pro} sunt gestionate exclusiv de {platform} prin intermediul {platform_store}.\n\nDin cauza politicilor de rambursare ale {platform}, dezvoltatorii {app_name} nu pot influența rezultatul solicitărilor de rambursare. Aceasta include dacă solicitarea este aprobată sau refuzată, precum și dacă se acordă o rambursare integrală sau parțială.</string>
     <string name="proRenewAnimatedDisplayPicture">Vrei să folosești din nou poze de profil animate?\nReînnoiește-ți accesul {pro} pentru a debloca funcțiile de care ai fost privat.</string>
     <string name="proRenewBeta">Reînnoiește {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Reînnoiește-ți accesul la {pro} din setările {app_pro} de pe un dispozitiv asociat care are instalată aplicația {app_name} prin {platform_store} sau {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Vrei să trimiți din nou mesaje mai lungi?\nReînnoiește-ți accesul {pro} pentru a debloca funcțiile de care ai fost privat.</string>
     <string name="proRenewMaxPotential">Vrei să folosești din nou {app_name} la potențialul său maxim?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
     <string name="proRenewPinFiveConversations">Vrei să fixezi din nou mai mult de {limit} conversații?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
     <string name="proRenewPinMoreConversations">Vrei să fixezi din nou mai multe conversații?\nReînnoiește accesul {pro} pentru a debloca funcționalitățile care ți-au lipsit.</string>
     <string name="proRenewTosPrivacy">Prin reînnoire, ești de acord cu <b>Termenii de utilizare</b> {icon} și <b>Politica de confidențialitate</b> {icon} ale {app_pro}</string>
     <string name="proRenewingAction">reînnoire</string>
-    <string name="proRenewingNoAccessBilling">În prezent, accesul {pro} poate fi achiziționat și reînnoit doar prin intermediul {platform_store} sau {platform_store_other}. Deoarece ai instalat {app_name} folosind {build_variant}, nu poți reînnoi de aici.\n\nDezvoltatorii {app_name} lucrează intens la opțiuni alternative de plată, pentru a permite utilizatorilor să cumpere accesul {pro} în afara {platform_store} și {platform_store_other}.<b> Planul {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Rambursare solicitată</string>
     <string name="proSendMore">Trimite mai mult cu</string>
     <string name="proSettings">Setări {pro}</string>
@@ -1176,8 +1167,6 @@
     <string name="proUpdateAccessExpireDescription">Accesul dvs. {pro} va expira pe <b>{date}</b>.\n\nPrin actualizare, accesul dvs. la {pro} se va reînnoi automat pe <b>{date}</b> pentru încă <b>{selected_plan_length}</b> de acces {pro}.</string>
     <string name="proUpdatingAction">actualizare</string>
     <string name="proUpgradeAccess">Upgradează la {app_pro} Beta pentru a avea acces la numeroase beneficii și funcționalități exclusive.</string>
-    <string name="proUpgradeDesktopLinked">Upgradează la {pro} din setările {app_pro} de pe un dispozitiv asociat, unde {app_name} este instalat prin {platform_store} sau {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">În prezent, accesul {pro} poate fi achiziționat doar prin {platform_store} sau {platform_store_other}. Deoarece ai instalat {app_name} utilizând {build_variant}, nu poți face upgrade la {pro} de aici.\n\nDezvoltatorii {app_name} lucrează intens la opțiuni alternative de plată pentru a permite utilizatorilor să achiziționeze accesul la {pro} în afara {platform_store} și {platform_store_other}.<b> Foaie de parcurs {pro}</b> {icon}</string>
     <string name="proUpgradeOption">Deocamdată, există o singură modalitate de a face upgrade:</string>
     <string name="proUpgradeOptionsTwo">Deocamdată, există două modalități de a face upgrade:</string>
     <string name="proUpgraded">Ai făcut upgrade la {app_pro}!\nÎți mulțumim că susții {network_name}.</string>
@@ -1323,8 +1312,8 @@
     <string name="screenshotProtectionDescriptionDesktop">Ascunde fereastra {app_name} în capturile de ecran realizate pe acest dispozitiv.</string>
     <string name="screenshotProtectionDesktop">Protecție captură ecran</string>
     <string name="screenshotTaken"><b>{name}</b> a făcut o captură de ecran.</string>
-    <string name="search">Căutați</string>
-    <string name="searchContacts">Cauta contacte</string>
+    <string name="search">Căutare</string>
+    <string name="searchContacts">Căutare contacte</string>
     <string name="searchConversation">Căutare în conversație</string>
     <string name="searchEnter">Vă rugăm să introduceţi căutarea.</string>
     <plurals name="searchMatches">

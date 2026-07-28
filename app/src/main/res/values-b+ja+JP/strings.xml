@@ -708,7 +708,7 @@
     <plurals name="membersActive">
         <item quantity="other">%1$d 人のアクティブなメンバー</item>
     </plurals>
-    <string name="membersAddAccountIdOrOns">Account ID または ONS を追加</string>
+    <string name="membersAddAccountIdOrOns">アカウント ID または ONS を追加</string>
     <string name="membersGroupPromotionAcceptInvite">メンバーは、グループへの招待を承諾した後にのみ昇格できます。</string>
     <string name="membersInvite">連絡先を招待</string>
     <string name="membersInviteNoContacts">このグループに招待できる連絡先がありません。\n戻って、アカウントIDまたはONSを使ってメンバーを招待してください。</string>
@@ -974,14 +974,12 @@
     <string name="proAccessNotFoundDescription">{app_name} は、お客様のアカウントに {pro} アクセスがないことを検出しました。これが誤りだと思われる場合は、サポートが必要ですので、{app_name} サポートへご連絡ください。</string>
     <string name="proAccessRecover">{pro} アクセスを復元</string>
     <string name="proAccessRenew">{pro} アクセスを更新</string>
-    <string name="proAccessRenewDesktop">現在、{pro} アクセスは {platform_store} または {platform_store_other} を通じてのみ購入および更新が可能です。{app_name} デスクトップを使用しているため、ここでは更新できません。\n\n{app_name} の開発者は、{platform_store} および {platform_store_other} 以外でも {pro} アクセスを購入できるよう、代替の支払いオプションを鋭意開発中です。<b>{pro} 開発ロードマップ</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">{pro} に登録した {platform_account} を使用して、<b><font color="0">{platform_store} ウェブサイト</font></b> 上で {pro} アクセスを更新してください。</string>
     <string name="proAccessRenewPlatformWebsite"><b><font color="0">{platform} のウェブサイト</font></b> で、{pro} に登録した {platform_account} を使って更新してください。</string>
     <string name="proAccessRenewStart">{pro} アクセスを更新して、強力な {app_pro} ベータ機能を再びご利用ください。</string>
     <string name="proAccessRestored">{pro} アクセスが復元されました</string>
     <string name="proAccessRestoredDescription">{app_name} がアカウントの {pro} アクセスを検出し、復元しました。{pro} ステータスが復元されました！</string>
     <string name="proAccessSignUp">{app_pro} に最初に <b>{platform_store}</b> を通じて登録したため、{pro} へのアクセスを更新するには {platform_account} を使用する必要があります。</string>
-    <string name="proAccessUpgradeDesktop">現在、{pro} アクセスは {platform_store} または {platform_store_other} 経由でのみ購入可能です。{app_name} デスクトップ版をご利用のため、ここでは {pro} にアップグレードできません。\n\n{app_name} の開発者は、{platform_store} および {platform_store_other} 以外でも {pro} アクセスを購入できるように、代替の支払いオプションに取り組んでいます。 <b>{pro} ロードマップ</b> {icon}</string>
     <string name="proActivated">アクティベート済み</string>
     <string name="proActivatingActivation">アクティベート中</string>
     <string name="proAllSet">準備完了です！</string>
@@ -1003,9 +1001,6 @@
         <item quantity="other">%1$s 件の %2$s バッジを送信済み</item>
     </plurals>
     <string name="proBetaFeatures">{pro} ベータ機能</string>
-    <string name="proBilledAnnually">{price}（年額請求）</string>
-    <string name="proBilledMonthly">{price}（月額請求）</string>
-    <string name="proBilledQuarterly">{price}（四半期ごとの請求）</string>
     <string name="proCallToActionLongerMessages">長文を送りたいですか？\n{app_pro} Betaでさらに多くのテキストを送り、プレミアム機能を解除しましょう。</string>
     <string name="proCallToActionPinnedConversations">さらにピン留めしますか？\n{app_pro} Betaでチャットを整理して、プレミアム機能を解除しましょう。</string>
     <string name="proCallToActionPinnedConversationsMoreThan">{limit}件以上ピン留めしたいですか？\n{app_pro} Betaでチャットを整理して、プレミアム機能を解除しましょう。</string>
@@ -1060,9 +1055,6 @@
     <string name="proPlanPlatformRefund">{app_pro} に最初に <b><font color="0">{platform_store}</font></b> を通じて登録したため、払い戻しを申請するには同じ {platform_account} を使用する必要があります。</string>
     <string name="proPlanPlatformRefundLong">{app_pro} に最初に <b><font color="0">{platform_store}</font></b> を通じて登録したため、払い戻しリクエストは {app_name} サポートによって処理されます。\n\n下のボタンを押して払い戻しリクエストフォームに記入することで、払い戻しを申請できます。\n\n{app_name} サポートは通常24～72時間以内の処理を目指していますが、リクエストが集中している場合は処理に時間がかかることがあります。</string>
     <string name="proPlanRenewSupport">{app_pro} アクセスが更新されました！{network_name} をご支援いただきありがとうございます。</string>
-    <string name="proPriceOneMonth">1か月 - {monthly_price} / 月</string>
-    <string name="proPriceThreeMonths">3か月 - {monthly_price} / 月</string>
-    <string name="proPriceTwelveMonths">12か月 - {monthly_price} / 月</string>
     <string name="proReactivatingActivation">再アクティベート中</string>
     <string name="proRefundDescription">ご利用いただけなくなるのは残念です。返金をリクエストする前に知っておくべきことがあります。</string>
     <string name="proRefundNextSteps">{platform} で返金申請の処理中です。通常は 24～48 時間かかります。決定に応じて、{app_name} 内の {pro} ステータスが変更される場合があります。</string>
@@ -1072,14 +1064,12 @@
     <string name="proRefundingDescription">{app_pro} の返金処理はすべて {platform_store} を通じて {platform} によって行われます。\n\n{platform} の返金ポリシーにより、{app_name} の開発者は返金申請の結果に影響を与えることができません。これには申請の承認・却下の判断、および全額または一部返金かどうかも含まれます。</string>
     <string name="proRenewAnimatedDisplayPicture">アニメーション付き表示画像を再び使いたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewBeta">{pro} ベータ版を更新</string>
-    <string name="proRenewDesktopLinked">{platform_store} または {platform_store_other} 経由で {app_name} がインストールされたリンク済みデバイスの {app_pro} 設定から {pro} アクセスを更新してください。</string>
     <string name="proRenewLongerMessages">長いメッセージを再び送りたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewMaxPotential">{app_name} を最大限に活用したいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewPinFiveConversations">{limit} 件以上の会話を再びピン留めしたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewPinMoreConversations">さらに多くの会話を再びピン留めしたいですか？\n{pro} アクセスを更新して、見逃していた機能を解放しましょう。</string>
     <string name="proRenewTosPrivacy">更新することで、{app_pro} の<b>利用規約</b> {icon} および <b>プライバシーポリシー</b> {icon} に同意したことになります</string>
     <string name="proRenewingAction">更新中</string>
-    <string name="proRenewingNoAccessBilling">現在、{pro} へのアクセスの購入および更新は、{platform_store} または {platform_store_other} を通じてのみ可能です。{build_variant} を使用して {app_name} をインストールしたため、ここでは更新できません。\n\n{app_name} の開発者は、{platform_store} および {platform_store_other} 以外からも {pro} アクセスを購入できるよう、代替支払い方法の提供に向けて取り組んでいます。<b>{pro} のロードマップ</b> {icon}</string>
     <string name="proRequestedRefund">返金をリクエストしました</string>
     <string name="proSendMore">さらに送信：</string>
     <string name="proSettings">{pro} 設定</string>
@@ -1105,8 +1095,6 @@
     <string name="proUpdateAccessDescription">現在の請求オプションでは、<b>{current_plan_length}</b>の {pro} アクセスが付与されています。<b>{selected_plan_length_singular}</b> の請求オプションに切り替えてもよろしいですか？\n\n更新することで、{pro} へのアクセスは <b>{date}</b> に自動的に更新され、さらに <b>{selected_plan_length}</b> の {pro} アクセスが追加されます。</string>
     <string name="proUpdatingAction">更新中</string>
     <string name="proUpgradeAccess">{app_pro} Beta にアップグレードして、数多くの限定特典や機能にアクセスしましょう。</string>
-    <string name="proUpgradeDesktopLinked">{platform_store} または {platform_store_other} 経由で {app_name} をインストールしたリンク済みデバイスの {app_pro} 設定から {pro} にアップグレードしてください。</string>
-    <string name="proUpgradeNoAccessBilling">現在、{pro} アクセスは {platform_store} または {platform_store_other} 経由でのみ購入できます。{build_variant} を使用して {app_name} をインストールしているため、ここでは {pro} にアップグレードできません。\n\n{app_name} の開発者は、{platform_store} および {platform_store_other} 以外でも {pro} アクセスを購入できるよう、代替の支払い方法に取り組んでいます。<b>{pro} ロードマップ</b> {icon}</string>
     <string name="proUpgradeOption">現時点で、アップグレードする方法は 1 つだけです：</string>
     <string name="proUpgradeOptionsTwo">現時点で、アップグレードする方法は 2 つあります：</string>
     <string name="proUpgraded">{app_pro} にアップグレードしました！\n{network_name} をサポートしていただきありがとうございます。</string>

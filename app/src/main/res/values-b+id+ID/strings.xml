@@ -141,7 +141,7 @@
     <string name="block">Blokir</string>
     <string name="blockBlockedDescription">Lepaskan blokir kontak ini untuk mengirim pesan.</string>
     <string name="blockBlockedNone">Tidak ada kontak yang diblokir</string>
-    <string name="blockBlockedUser">Blokir {name}</string>
+    <string name="blockBlockedUser">Diblokir {name}</string>
     <string name="blockDescription">Apakah Anda yakin ingin memblokir <b>{name}?</b> Pengguna yang diblokir tidak bisa mengirimkan Anda permintaan pesan, undangan grup, atau menelepon Anda.</string>
     <string name="blockUnblock">Buka blokir</string>
     <string name="blockUnblockName">Apakah Anda yakin ingin membuka blokir <b>{name}</b>?</string>
@@ -321,7 +321,7 @@
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Anda yakin ingin menghapus pesan-pesan ini untuk semua orang?</string>
     <string name="deleting">Menghapus</string>
-    <string name="developerToolsToggle">Toggle perangkat pengembangan</string>
+    <string name="developerToolsToggle">Aktifkan Alat Pengembang</string>
     <string name="dictationStart">Mulai Dikte...</string>
     <string name="disappearingMessages">Pesan Menghilang</string>
     <string name="disappearingMessagesCountdownBig">Pesan akan dihapus dalam {time_large}</string>
@@ -367,6 +367,7 @@
     <string name="displayNameSet">Atur Nama Tampilan</string>
     <string name="displayNameVisible">Nama Tampilan Anda dapat dilihat oleh pengguna, grup, dan komunitas yang berinteraksi dengan Anda.</string>
     <string name="document">Dokumen</string>
+    <string name="donate">Donasi</string>
     <string name="done">Selesai</string>
     <string name="download">Unduh</string>
     <string name="downloading">Mengunduh...</string>
@@ -405,7 +406,7 @@
     <string name="files">Berkas</string>
     <string name="forever">Selamanya</string>
     <string name="from">Dari:</string>
-    <string name="fullScreenToggle">Toggle layar penuh</string>
+    <string name="fullScreenToggle">Alihkan Layar Penuh</string>
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
     <string name="giphyWarningDescription">{app_name} akan terhubung ke Giphy untuk memberikan hasil pencarian. Anda tidak akan mendapatkan perlindungan metadata penuh saat mengirim GIF.</string>
@@ -604,6 +605,7 @@
     <string name="messageRequestsClearAllExplanation">Apakah Anda yakin ingin menghapus semua permintaan pesan dan undangan grup?</string>
     <string name="messageRequestsCommunities">Permintaan Pesan Komunitas</string>
     <string name="messageRequestsCommunitiesDescription">Izinkan permintaan pesan dari percakapan Community.</string>
+    <string name="messageRequestsContactDelete">Anda yakin ingin menghapus permintaan pesan ini beserta kontak terkait?</string>
     <string name="messageRequestsDelete">Apakah Anda yakin ingin menolak permintaan pesan ini?</string>
     <string name="messageRequestsNew">Anda mendapatkan permintaan pesan baru</string>
     <string name="messageRequestsNonePending">Tidak ada permintaan pesan tertunda</string>
@@ -653,7 +655,7 @@
     <string name="notificationsLedColor">Warna LED</string>
     <string name="notificationsMentionsOnly">Sebutan saja</string>
     <string name="notificationsMessage">Notifikasi Pesan</string>
-    <string name="notificationsMostRecent">Paling baru dari {name}</string>
+    <string name="notificationsMostRecent">Most recent from {name}</string>
     <string name="notificationsMute">Senyap</string>
     <string name="notificationsMuteFor">Senyapkan selama {time_large}</string>
     <string name="notificationsMuteUnmute">Batalkan senyap</string>
@@ -737,11 +739,13 @@
     <string name="permissionsStorageSave">{app_name} membutuhkan akses penyimpanan untuk menyimpan lampiran dan media.</string>
     <string name="permissionsStorageSaveDenied">{app_name} membutuhkan akses penyimpanan untuk menyimpan foto dan video, tetapi telah ditolak secara permanen. Silakan lanjutkan ke pengaturan aplikasi, pilih \"Izin\", dan aktifkan \"Penyimpanan\".</string>
     <string name="permissionsStorageSend">{app_name} membutuhkan akses penyimpanan untuk mengirim foto dan video.</string>
+    <string name="permissionsWriteCommunity">Anda tidak memiliki izin menulis di komunitas ini</string>
     <string name="pin">Sematkan</string>
     <string name="pinConversation">Sematkan Percakapan</string>
     <string name="pinUnpin">Lepas sematan</string>
     <string name="pinUnpinConversation">Lepas Semat Percakapan</string>
     <string name="preview">Pratinjau</string>
+    <string name="proIncreasedMessageLengthFeature">Panjang Pesan yang Ditingkatkan</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Tampilan Gambar</string>
     <string name="profileDisplayPictureRemoveError">Gagal menghapus gambar profil.</string>
@@ -858,7 +862,7 @@
     <string name="theDefault">Bawaan</string>
     <string name="theError">Kesalahan</string>
     <string name="tryAgain">Coba Lagi</string>
-    <string name="typingIndicators">Indikator penulisan</string>
+    <string name="typingIndicators">Indikator Pengetikan</string>
     <string name="typingIndicatorsDescription">Lihat dan bagikan indikator mengetik.</string>
     <string name="unavailable">Tidak tersedia</string>
     <string name="undo">Ulang</string>
@@ -881,7 +885,7 @@
     <string name="urlOpen">Buka URL</string>
     <string name="urlOpenBrowser">Ini akan membuka di peramban Anda.</string>
     <string name="urlOpenDescription">Apakah Anda yakin ingin membuka URL ini di browser?\n\n<b>{url}</b></string>
-    <string name="useFastMode">Gunakan Fast Mode</string>
+    <string name="useFastMode">Gunakan Mode Cepat</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Tidak dapat memutar video.</string>
     <string name="view">Lihat</string>

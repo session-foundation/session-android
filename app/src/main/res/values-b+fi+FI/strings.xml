@@ -310,7 +310,7 @@
     <string name="conversationsDeleteDescription">Haluatko varmasti poistaa keskustelusi käyttäjän <b>{name} kanssa</b>? Uudet viestit käyttäjältä <b>{name}</b> aloittavat uuden keskustelun.</string>
     <string name="conversationsDeleted">Keskustelu poistettu</string>
     <string name="conversationsEmpty">Keskustelussa {conversation_name} ei ole viestejä.</string>
-    <string name="conversationsEnter">Syötä avain</string>
+    <string name="conversationsEnter">Rivinvaihto-näppäin</string>
     <string name="conversationsEnterDescription">Määritä, miten Enter- ja Shift+Enter-näppäimet toimivat keskusteluissa.</string>
     <string name="conversationsEnterNewLine">SHIFT + ENTER lähettää viestin, ENTER aloittaa uuden rivin.</string>
     <string name="conversationsEnterSends">ENTER lähettää viestin, SHIFT + ENTER aloittaa uuden rivin.</string>
@@ -321,7 +321,7 @@
     <string name="conversationsNew">Uusi keskustelu</string>
     <string name="conversationsNone">Sinulla ei ole vielä yhtään keskustelua</string>
     <string name="conversationsSendWithEnterKey">Lähetä Enter-näppäimellä</string>
-    <string name="conversationsSendWithEnterKeyDescription">Rivinvaihdon sijaan Enter-näppäimen painallus lähettää viestin.</string>
+    <string name="conversationsSendWithEnterKeyDescription">Rivinvaihto-näppäimen painallus lähettää viestin uuden rivin sijaan.</string>
     <string name="conversationsSendWithShiftEnter">Lähetä painamalla Shift+Enter</string>
     <string name="conversationsSettingsAllMedia">Kaikki media</string>
     <string name="conversationsSpellCheck">Oikeinkirjoituksen tarkistus</string>
@@ -592,7 +592,7 @@
     <string name="groupNoMessages">Sinulla ei ole viestejä käyttäjältä <b>{group_name}</b>. Lähetä viesti aloittaaksesi keskustelun!</string>
     <string name="groupNotUpdatedWarning">Tätä ryhmää ei ole päivitetty yli 30 päivään. Viestien lähettämisessä tai ryhmän tietojen katsomisessa saattaa esiintyä ongelmia.</string>
     <string name="groupOnlyAdmin">Olet ainoa ylläpitäjä ryhmässä <b>{group_name}</b>.\n\nRyhmän jäseniä ja asetuksia ei voi muuttaa ilman ylläpitäjää.</string>
-    <string name="groupOnlyAdminLeave">Olet ainoa järjestelmänvalvoja ryhmässä <b>{group_name}</b>.\n
+    <string name="groupOnlyAdminLeave">Olet ainoa järjestelmänvalvoja ryhmässä <b>{group_name}</b>.\n\n
 Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jos haluat poistua ryhmästä sitä poistamatta, lisää ensin uusi järjestelmänvalvoja.</string>
     <string name="groupPendingRemoval">Odottaa poistamista</string>
     <string name="groupPromotedYou"><b>Sinut</b> ylennettiin ylläpitäjäksi.</string>
@@ -725,7 +725,7 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="membersAddAccountIdOrOns">Lisää Account ID tai ONS</string>
     <string name="membersGroupPromotionAcceptInvite">Jäseniä voidaan ylentää vain sen jälkeen, kun he ovat hyväksyneet kutsun liittyä ryhmään.</string>
     <string name="membersInvite">Kutsu yhteystietoja</string>
-    <string name="membersInviteNoContacts">Sinulla ei ole kontakteja, joita kutsua tähän ryhmään. Palaa takaisin ja kutsu jäseniä heidän tilitunnuksellaan (Account ID) tai ONS-tunnuksellaan.</string>
+    <string name="membersInviteNoContacts">Sinulla ei ole kontakteja, joita kutsua tähän ryhmään.\nPalaa takaisin ja kutsu jäseniä heidän tilitunnuksellaan (Account ID) tai ONS-tunnuksellaan.</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Lähetä kutsu</item>
         <item quantity="other">Lähetä kutsut</item>
@@ -994,13 +994,11 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proAccessNotFoundDescription">{app_name} havaitsi, että tililläsi ei ole {pro}-oikeuksia. Jos uskot tämän olevan virhe, ota yhteyttä {app_name}-tukeen saadaksesi apua.</string>
     <string name="proAccessRecover">Palauta {pro}-käyttöoikeus</string>
     <string name="proAccessRenew">Uudista {pro} Pääsy</string>
-    <string name="proAccessRenewDesktop">Tällä hetkellä {pro}-käyttöoikeuden voi ostaa ja uusia vain {platform_store}:n tai {platform_store_other}:n kautta. Koska käytät {app_name} Desktop -sovellusta, et voi uusia tilausta täällä.\n\n{app_name}:n kehittäjät työskentelevät kovasti vaihtoehtoisten maksutapojen parissa, jotta {pro}-käyttöoikeuden voisi jatkossa ostaa myös ilman {platform_store}:a ja {platform_store_other}:a. <b>{pro}-suunnitelma</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Uudista {pro}-käyttöoikeutesi <b><font color="0">{platform_store}-verkkosivustolla</font></b> käyttämällä {platform_account}-tiliä, jolla rekisteröidyit {pro}-palveluun.</string>
     <string name="proAccessRenewStart">Uusimalla {pro}-käyttöoikeutesi voit jälleen käyttää tehokkaita {app_pro}-betaominaisuuksia.</string>
     <string name="proAccessRestored">{pro} Käyttöoikeus palautettu</string>
     <string name="proAccessRestoredDescription">{app_name} havaitsi ja palautti {pro}-käyttöoikeuden tilillesi. {pro}-tilasi on palautettu!</string>
     <string name="proAccessSignUp">Koska rekisteröidyit alun perin {app_pro}-palveluun <b>{platform_store}</b>-palvelun kautta, sinun on käytettävä {platform_account}-tiliäsi päivittääksesi {pro}-käyttöoikeutesi.</string>
-    <string name="proAccessUpgradeDesktop">Tällä hetkellä {pro}-käyttöoikeuden voi ostaa ja uusia vain {platform_store}:n tai {platform_store_other}:n kautta. Koska käytät {app_name} Desktop -sovellusta, et voi uusia {pro} tilausta täällä.\n\n{app_name}:n kehittäjät työskentelevät kovasti vaihtoehtoisten maksutapojen parissa, jotta {pro}-käyttöoikeuden voisi jatkossa ostaa myös ilman {platform_store}:a ja {platform_store_other}:a. <b>{pro}-suunnitelma</b> {icon}</string>
     <string name="proActivated">Aktivoitu</string>
     <string name="proActivatingActivation">aktivointi</string>
     <string name="proAllSet">Kaikki on valmista!</string>
@@ -1023,9 +1021,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
         <item quantity="other">%1$s %2$s-merkkiä lähetetty</item>
     </plurals>
     <string name="proBetaFeatures">{pro} Betatoiminnot</string>
-    <string name="proBilledAnnually">{price} laskutetaan vuosittain</string>
-    <string name="proBilledMonthly">{price} laskutetaan kuukausittain</string>
-    <string name="proBilledQuarterly">{price} laskutetaan neljännesvuosittain</string>
     <string name="proCallToActionLongerMessages">Haluatko lähettää pidempiä viestejä?\nLähetä enemmän tekstiä ja avaa premium-ominaisuudet käyttämällä {app_pro} Betaa</string>
     <string name="proCallToActionPinnedConversations">Haluatko lisää kiinnitettyjä keskusteluja?\nJärjestä keskustelusi ja avaa käyttöösi premium-ominaisuuksia {app_pro} Betan avulla</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Haluatko enemmän kuin {limit} kiinnitettyä keskustelua?\nJärjestä keskustelusi ja avaa käyttöösi premium-ominaisuudet {app_pro} Betassa</string>
@@ -1084,9 +1079,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proPlanPlatformRefund">Koska rekisteröidyit alun perin palveluun {app_pro} <b><font color="0">{platform_store}</font></b>-palvelun kautta, sinun tulee käyttää {platform_account}-tiliäsi pyytääksesi hyvitystä.</string>
     <string name="proPlanPlatformRefundLong">Koska rekisteröidyit alun perin palveluun {app_pro} <b><font color="0">{platform_store}</font></b>-kautta, hyvityspyyntösi käsittelee {app_name}-tuki.\n\nPyydä hyvitystä napsauttamalla alla olevaa painiketta ja täyttämällä hyvityspyynnön lomake.\n\n{app_name}-tuki pyrkii käsittelemään hyvityspyynnöt 24–72 tunnin kuluessa, mutta käsittely voi kestää kauemmin suuren pyynnön määrän aikana.</string>
     <string name="proPlanRenewSupport">Käyttöoikeutesi {app_pro} on uusittu! Kiitos, että tuet {network_name}.</string>
-    <string name="proPriceOneMonth">1 kuukausi – {monthly_price} / kuukausi</string>
-    <string name="proPriceThreeMonths">3 kuukautta – {monthly_price} / kuukausi</string>
-    <string name="proPriceTwelveMonths">12 kuukautta – {monthly_price} / kuukausi</string>
     <string name="proReactivatingActivation">aktivoidaan uudelleen</string>
     <string name="proRefundAccountDevice">Avaa tämä {app_name}-tili {device_type}-laitteella, joka on kirjautunut siihen {platform_account}-tiliin, jolla alun perin rekisteröidyit. Pyydä sitten hyvitystä {app_pro}-asetusten kautta.</string>
     <string name="proRefundDescription">Ikävää, että olet lähdössä. Tässä on, mitä sinun tulee tietää ennen hyvityspyynnön tekemistä.</string>
@@ -1097,14 +1089,12 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proRefundingDescription">Hyvitysten käsittelystä sovellukselle {app_pro} vastaa yksinomaan {platform} {platform_store}-palvelun kautta.\n\n{platform}:n hyvityskäytäntöjen vuoksi {app_name}-sovelluksen kehittäjillä ei ole mahdollisuutta vaikuttaa hyvityspyyntöjen lopputulokseen. Tämä koskee sekä pyynnön hyväksymistä tai hylkäämistä että sitä, myönnetäänkö hyvitys kokonaan vai osittain.</string>
     <string name="proRenewAnimatedDisplayPicture">Haluatko käyttää animoituja näyttökuvia uudelleen?\nUusi {pro}-käyttöoikeutesi avataksesi ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewBeta">Uudista {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Uudista {pro}-käyttöoikeutesi {app_pro}-asetuksista yhdistetyllä laitteella, johon on asennettu {app_name} {platform_store}- tai {platform_store_other}-kaupan kautta.</string>
     <string name="proRenewLongerMessages">Haluatko lähettää jälleen pidempiä viestejä?\nUusi {pro}-käyttöoikeutesi avataksesi ne ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewMaxPotential">Haluatko käyttää {app_name}-sovelluksen maksimaalista potentiaalia uudelleen?\nUusi {pro}-käyttöoikeutesi avataksesi ne ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewPinFiveConversations">Haluatko kiinnittää enemmän kuin {limit} keskustelua uudelleen?\nUusi {pro}-käyttöoikeus avataksesi ne ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewPinMoreConversations">Haluatko kiinnittää enemmän keskusteluja uudelleen?\nUusi {pro}-käyttöoikeutesi avataksesi ne ominaisuudet, joista olet jäänyt paitsi.</string>
     <string name="proRenewTosPrivacy">Uusimalla hyväksyt {app_pro} <b>Käyttöehdot</b> {icon} ja <b>Tietosuojakäytännön</b> {icon}</string>
     <string name="proRenewingAction">uusiminen</string>
-    <string name="proRenewingNoAccessBilling">Tällä hetkellä {pro}-käyttöoikeuden voi ostaa ja uusia vain {platform_store}:n tai {platform_store_other}:n kautta. Koska asensit {app_name}-sovelluksen käyttäen versiota {build_variant}, et voi uusia käyttöoikeutta tässä.\n\n{app_name}:n kehittäjät työskentelevät kovasti vaihtoehtoisten maksutapojen parissa, jotta käyttäjät voivat ostaa {pro}-käyttöoikeuden myös ilman {platform_store}:a ja {platform_store_other}:a. <b>{pro}-suunnitelma</b> {icon}</string>
     <string name="proRequestedRefund">Hyvitystä pyydetty</string>
     <string name="proSendMore">Lähetä enemmän Prolla</string>
     <string name="proSettings">{pro}-asetukset</string>
@@ -1131,8 +1121,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proUpdateAccessExpireDescription">{pro}-käyttöoikeutesi vanhenee <b>{date}</b>.\n\nPäivittämällä {pro}-käyttöoikeutesi uusiutuu automaattisesti <b>{date}</b> ja jatkuu {pro} <b>{selected_plan_length}</b> ajan.</string>
     <string name="proUpdatingAction">päivitetään</string>
     <string name="proUpgradeAccess">Päivitä {app_pro} Betaan päästäksesi käsiksi latauksiin eksklusiivisista eduista ja ominaisuuksista.</string>
-    <string name="proUpgradeDesktopLinked">Päivitä {pro}-versioon {app_pro}-asetuksista yhdistetyllä laitteella, johon on asennettu {app_name} joko {platform_store}- tai {platform_store_other}-kaupan kautta.</string>
-    <string name="proUpgradeNoAccessBilling">Tällä hetkellä {pro}-käyttöoikeuden voi ostaa vain {platform_store}:n tai {platform_store_other}:n kautta. Koska asensit sovelluksen nimeltä {app_name} käyttäen versiota {build_variant}, et voi päivittää {pro}-käyttöoikeuteen tässä.\n\n{app_name}:n kehittäjät työskentelevät kovasti vaihtoehtoisten maksutapojen parissa, jotta käyttäjät voivat ostaa {pro}-käyttöoikeuden myös ilman {platform_store}:a ja {platform_store_other}:a. <b>{pro}-suunnitelma</b> {icon}</string>
     <string name="proUpgradeOption">Tällä hetkellä on vain yksi tapa päivittää.</string>
     <string name="proUpgradeOptionsTwo">Tällä hetkellä on kaksi tapaa päivittää:</string>
     <string name="proUpgraded">Olet päivittänyt kohteeseen {app_pro}!\nKiitos, että tuit sovellusta {network_name}.</string>
@@ -1180,22 +1168,22 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="receivingCallOffer">Saapuva puhelutarjous</string>
     <string name="receivingPreOffer">Vastaanotetaan esitarjousta</string>
     <string name="recommended">Suositeltu</string>
-    <string name="recoveryPasswordBannerDescription">Tallenna palautussalasanasi varmistaaksesi, ettet menetä pääsyä tilillesi.</string>
-    <string name="recoveryPasswordBannerTitle">Tallenna palautussalasanasi</string>
+    <string name="recoveryPasswordBannerDescription">Tallenna palautuslauseesi varmistaaksesi, ettet menetä pääsyä tilillesi.</string>
+    <string name="recoveryPasswordBannerTitle">Tallenna palautuslauseesi</string>
     <string name="recoveryPasswordDescription">Käytä palautussalasanaasi ladataksesi tilisi uusiin laitteisiin.\n\nTiliäsi ei voida palauttaa ilman palautussalasanaa. Varmista, että se on tallessa turvallisessa paikassa — äläkä <b>jaa sitä kenellekään</b>.</string>
-    <string name="recoveryPasswordEnter">Syötä palautussalasana</string>
+    <string name="recoveryPasswordEnter">Syötä palautuslause</string>
     <string name="recoveryPasswordErrorLoad">Virhe ilmeni yritettäessä ladata palautussalasanaasi.\n\nOle hyvä ja vie lokitiedostosi ja lähetä tiedosto {app_name}-sovelluksen tukipalveluun tämän ongelman ratkaisemiseksi.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Tarkista palautuslauseesi ja yritä uudelleen.</string>
-    <string name="recoveryPasswordErrorMessageIncorrect">Jotkin palautuslausekkeesi sanat ovat virheelliset. Tarkista ja yritä uudelleen.</string>
-    <string name="recoveryPasswordErrorMessageShort">Syöttämäsi palautusavain on liian lyhyt. Tarkista ja yritä uudelleen.</string>
-    <string name="recoveryPasswordErrorTitle">Virheellinen Recovery Password</string>
+    <string name="recoveryPasswordErrorMessageIncorrect">Jotkin palautuslauseesi sanat ovat virheelliset. Tarkista ja yritä uudelleen.</string>
+    <string name="recoveryPasswordErrorMessageShort">Syöttämäsi palautuslause on liian lyhyt. Tarkista ja yritä uudelleen.</string>
+    <string name="recoveryPasswordErrorTitle">Virheellinen palautuslause</string>
     <string name="recoveryPasswordExplanation">Lataa tilisi syöttämällä palautussalasanasi.</string>
-    <string name="recoveryPasswordHidePermanently">Piilota Recovery Password pysyvästi</string>
+    <string name="recoveryPasswordHidePermanently">Piilota palautuslause pysyvästi</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Ilman palautussalasanaasi et voi ladata tiliäsi uusille laitteille. \n\nSuosittelemme vahvasti, että tallennat palautussalasanasi turvalliseen paikkaan ennen jatkamista.</string>
     <string name="recoveryPasswordHidePermanentlyDescription2">Haluatko varmasti piilottaa palautussalasanasi pysyvästi tässä laitteessa?\n\nTätä toimintoa ei voi perua.</string>
-    <string name="recoveryPasswordHideRecoveryPassword">Piilota Recovery Password</string>
+    <string name="recoveryPasswordHideRecoveryPassword">Piilota palautuslause</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Piilota palautuslause pysyvästi tällä laitteella.</string>
-    <string name="recoveryPasswordRestoreDescription">Syötä palautussalasanasi ladataksesi tilisi. Jos et ole tallentanut sitä, löydät sen sovelluksen asetuksista.</string>
+    <string name="recoveryPasswordRestoreDescription">Syötä palautuslause ladataksesi tilisi. Jos et ole tallentanut sitä, löydät sen sovelluksen asetuksista.</string>
     <string name="recoveryPasswordView">Näytä palautussalasana</string>
     <string name="recoveryPasswordVisibility">Palautussalasanan näkyvyys</string>
     <string name="recoveryPasswordWarningSendDescription">Tämä on palautussalasanasi. Jos lähetät sen jollekulle, he saavat täyden pääsyn tilillesi.</string>
@@ -1307,7 +1295,7 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="sessionPermissions">Käyttöoikeudet</string>
     <string name="sessionPrivacy">Yksityisyys</string>
     <string name="sessionProBeta">{app_pro} Beta</string>
-    <string name="sessionRecoveryPassword">Recovery Password</string>
+    <string name="sessionRecoveryPassword">Palautuslause</string>
     <string name="sessionSettings">Asetukset</string>
     <string name="set">Aseta</string>
     <string name="setCommunityDisplayPicture">Aseta yhteisön profiilikuva</string>

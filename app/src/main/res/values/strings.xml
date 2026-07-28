@@ -1061,14 +1061,14 @@
     <string name="proAccessNotFoundDescription">{app_name} detected that your account does not have {pro} access. If you believe this is a mistake, please reach out to {app_name} support for assistance.</string>
     <string name="proAccessRecover">Recover {pro} Access</string>
     <string name="proAccessRenew">Renew {pro} Access</string>
-    <string name="proAccessRenewDesktop">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
+    <string name="proAccessRenewDesktop">Currently, {pro} access can only be purchased and renewed via support platforms:{pro_stores}\nBecause you are using {app_name} Desktop, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the above platforms. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renew your {pro} access on the <b><font color="0">{platform_store} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
     <string name="proAccessRenewPlatformWebsite">Renew on the <b><font color="0">{platform} website</font></b> using the {platform_account} you signed up for {pro} with.</string>
     <string name="proAccessRenewStart">Renew your {pro} access to start using powerful {app_pro} Beta features again.</string>
     <string name="proAccessRestored">{pro} Access Recovered</string>
     <string name="proAccessRestoredDescription">{app_name} detected and recovered {pro} access for your account. Your {pro} status has been restored!</string>
     <string name="proAccessSignUp">Because you originally signed up for {app_pro} via the <b>{platform_store}</b>, you\'ll need to use your {platform_account} to update your {pro} access.</string>
-    <string name="proAccessUpgradeDesktop">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you are using {app_name} Desktop, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}. <b>{pro} Roadmap</b> {icon}</string>
+    <string name="proAccessUpgradeDesktop">Currently, {pro} access can only be purchased via one of our supported platforms:{pro_stores}\nBecause you are using {app_name} Desktop, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the platforms listed above. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proActivated">Activated</string>
     <string name="proActivatingActivation">activating</string>
     <string name="proAllSet">You\'re all set!</string>
@@ -1091,9 +1091,6 @@
         <item quantity="other">%1$s %2$s Badges Sent</item>
     </plurals>
     <string name="proBetaFeatures">{pro} Beta Features</string>
-    <string name="proBilledAnnually">{price} Billed Annually</string>
-    <string name="proBilledMonthly">{price} Billed Monthly</string>
-    <string name="proBilledQuarterly">{price} Billed Quarterly</string>
     <string name="proCallToActionLongerMessages">Want to send longer messages?\nSend more text and unlock premium features with {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Want more pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Want more than {limit} pins?\nOrganize your chats and unlock premium features with {app_pro} Beta</string>
@@ -1149,39 +1146,12 @@
         <item quantity="one">%1$s Pinned Conversation</item>
         <item quantity="other">%1$s Pinned Conversations</item>
     </plurals>
+    <string name="proPlanBilledEvery">{price} billed every {plan_length}</string>
+    <string name="proPlanLifetime">Lifetime</string>
     <string name="proPlanPlatformRefund">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, you\'ll need to use your {platform_account} to request a refund.</string>
     <string name="proPlanPlatformRefundLong">Because you originally signed up for {app_pro} via the <b><font color="0">{platform_store}</font></b>, your refund request will be processed by {app_name} Support.\n\nRequest a refund by hitting the button below and completing the refund request form.\n\nWhile {app_name} Support strives to process refund requests within 24-72 hours, processing may take longer during times of high request volume.</string>
+    <string name="proPlanPricePerMonth">{plan_length} - {monthly_price} / month</string>
     <string name="proPlanRenewSupport">Your {app_pro} access has been renewed! Thank you for supporting the {network_name}.</string>
-    <string name="proPriceOneMonth">1 Month - {monthly_price} / Month</string>
-    <string name="proPriceThreeMonths">3 Months - {monthly_price} / Month</string>
-    <string name="proPriceTwelveMonths">12 Months - {monthly_price} / Month</string>
-    <!-- TODO(crowdin): provider display names — added locally to unblock the pro provider-metadata
-         migration (libsession no longer supplies these). MUST be added upstream on Crowdin before the
-         next translations sync, or the sync will delete them. Values mirror the old libsession metadata.
-
-         NAMING IS LOAD-BEARING: these are resolved at runtime by name, as
-         `pro_provider_<provider_slug>_<suffix>` (PaymentProviderMetadata.kt), where <provider_slug> is
-         the backend's opaque wire slug (`google_play`, `app_store`, …) and <suffix> is one of
-         device/store/platform/account. A missing resource does NOT fail the build — getIdentifier()
-         returns 0 and the code falls back to `pro_provider_unknown_<suffix>` and then to the raw slug,
-         so a rename that misses these silently ships wire slugs as user-facing copy. Renaming to the
-         camelCase house style would break the lookup; keep the snake_case slug form.
-
-         `pro_provider_unknown_*` are the forward-compatible fallback for a provider the client has no
-         translations for yet; `{provider}` (where present) is substituted with the raw slug. Adding a
-         new provider should need only these four strings, no code change. -->
-    <string name="pro_provider_google_play_platform">Google</string>
-    <string name="pro_provider_google_play_store">Google Play Store</string>
-    <string name="pro_provider_google_play_device">Android</string>
-    <string name="pro_provider_google_play_account">Google account</string>
-    <string name="pro_provider_app_store_platform">Apple</string>
-    <string name="pro_provider_app_store_store">Apple App Store</string>
-    <string name="pro_provider_app_store_device">iOS</string>
-    <string name="pro_provider_app_store_account">Apple account</string>
-    <string name="pro_provider_unknown_platform">{provider}</string>
-    <string name="pro_provider_unknown_store">{provider}</string>
-    <string name="pro_provider_unknown_device">{provider}</string>
-    <string name="pro_provider_unknown_account">{provider} account</string>
     <string name="proReactivatingActivation">re-activating</string>
     <string name="proRefundAccountDevice">Open this {app_name} account on an {device_type} device logged into the {platform_account} you originally signed up with. Then, request a refund via the {app_pro} settings.</string>
     <string name="proRefundDescription">We’re sorry to see you go. Here\'s what you need to know before requesting a refund.</string>
@@ -1193,7 +1163,7 @@
     <string name="proRefundingDescription">Refunds for {app_pro} are handled exclusively by {platform} through the {platform_store}.\n\nDue to {platform} refund policies, {app_name} developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
     <string name="proRenewAnimatedDisplayPicture">Want to use animated display pictures again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewBeta">Renew {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Renew your {pro} access from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
+    <string name="proRenewDesktopLinked">Renew your {pro} access from the {app_pro} settings on a linked device with {app_name} installed via one of the support platforms:{pro_stores}</string>
     <string name="proRenewLongerMessages">Want to send longer messages again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewMaxPotential">Want to use {app_name} to its max potential again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewPinFiveConversations">Want to pin more than {limit} conversations again?\nRenew your {pro} access to unlock the features you’ve been missing out on.</string>
@@ -1202,7 +1172,7 @@
     <string name="proRenewalUnsuccessful">{pro} renewal unsuccessful, retrying soon</string>
     <string name="proRenewalUnsuccessfulTitle">{pro} Renewal Unsuccessful</string>
     <string name="proRenewingAction">renewing</string>
-    <string name="proRenewingNoAccessBilling">Currently, {pro} access can only be purchased and renewed via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proRenewingNoAccessBilling">Currently, {pro} access can only be purchased and renewed via one the supported platforms:{pro_stores}\nBecause you installed {app_name} using the {build_variant}, you\'re not able to renew here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the platforms listed above.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">{pro} Settings</string>
@@ -1230,8 +1200,8 @@
     <string name="proUpdateAccessExpireDescription">Your {pro} access will expire on <b>{date}</b>.\n\nBy updating, your {pro} access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of {pro} access.</string>
     <string name="proUpdatingAction">updating</string>
     <string name="proUpgradeAccess">Upgrade to {app_pro} Beta to get access to loads of exclusive perks and features.</string>
-    <string name="proUpgradeDesktopLinked">Upgrade to {pro} from the {app_pro} settings on a linked device with {app_name} installed via the {platform_store} or {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased via the {platform_store} or {platform_store_other}. Because you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the {platform_store} and {platform_store_other}.<b> {pro} Roadmap</b> {icon}</string>
+    <string name="proUpgradeDesktopLinked">Upgrade to {pro} from the {app_pro} settings on a linked device with {app_name} installed via the our of our supported platforms:{pro_stores}</string>
+    <string name="proUpgradeNoAccessBilling">Currently, {pro} access can only be purchased via one of our supported platforms:{pro_stores}\nBecause you installed {app_name} using the {build_variant}, you\'re not able to upgrade to {pro} here.\n\n{app_name} developers are working hard on alternative payment options to allow users to purchase {pro} access outside of the platforms listed above.<b> {pro} Roadmap</b> {icon}</string>
     <string name="proUpgradeOption">For now, there is only one way to upgrade:</string>
     <string name="proUpgradeOptionsTwo">For now, there are two ways to upgrade:</string>
     <string name="proUpgraded">You have upgraded to {app_pro}!\nThank you for supporting the {network_name}.</string>
@@ -1239,6 +1209,19 @@
     <string name="proUpgradingTo">Upgrading to {pro}</string>
     <string name="proUpgradingTosPrivacy">By upgrading, you agree to the {app_pro} <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}?\nUpgrade to {app_pro} Beta for a more powerful messaging experience.</string>
+    <string name="pro_error_expired">Your {pro} subscription has expired.</string>
+    <string name="pro_error_not_subscribed">You do not have an active {pro} subscription.</string>
+    <string name="pro_error_revoked">Your {pro} subscription is no longer active</string>
+    <string name="pro_error_stale_request">Your device\'s clock appears to be incorrect. Check your date and time settings and try again.</string>
+    <string name="pro_error_unknown_payment">Your {pro} payment could not be verified. Please wait a few minutes and try again.</string>
+    <string name="pro_provider_app_store_account">Apple account</string>
+    <string name="pro_provider_app_store_device">iOS</string>
+    <string name="pro_provider_app_store_platform">Apple</string>
+    <string name="pro_provider_app_store_store">Apple App Store</string>
+    <string name="pro_provider_google_play_account">Google account</string>
+    <string name="pro_provider_google_play_device">Android</string>
+    <string name="pro_provider_google_play_platform">Google</string>
+    <string name="pro_provider_google_play_store">Google Play Store</string>
     <string name="processingRefundRequest">{platform} is processing your refund request</string>
     <string name="profile">Profile</string>
     <string name="profileDisplayPicture">Display Picture</string>

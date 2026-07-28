@@ -131,7 +131,7 @@
     <string name="blockUnblockNameTwo">Haqiqatan ham <b>{name}</b> va 1 boshqa foydalanuvchini blokdan chiqarishni xohlaysizmi?</string>
     <string name="blockUnblockedUser">Af qilingan {name}</string>
     <string name="call">Qo\'ng\'iroq</string>
-    <string name="callsCalledYou">{name} sizni chaqirdi</string>
+    <string name="callsCalledYou">{name} sizni esladi</string>
     <string name="callsCannotStart">Yangi qo\'ng\'iroq boshlay olmaysiz. Avval joriy qo\'ng\'iroqni tugating.</string>
     <string name="callsConnecting">Ulanmoqda...</string>
     <string name="callsEnd">Qo\'ng\'iroqni tugatish</string>

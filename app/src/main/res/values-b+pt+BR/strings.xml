@@ -232,7 +232,7 @@
     <string name="clearDataAllDescription">Isto excluirá permanentemente suas mensagens e contatos. Você gostaria de limpar este dispositivo somente ou excluir seus dados da rede também?</string>
     <string name="clearDataError">Dados não excluídos</string>
     <plurals name="clearDataErrorDescription">
-        <item quantity="one">Dados não excluídos por %1$d Service Node. IDs do Service Node: %2$s.</item>
+        <item quantity="one">Dados não excluídos por %1$d Service Node. ID do Service Node: %2$s.</item>
         <item quantity="other">Dados não excluídos por %1$d Service Nodes. IDs dos Service Node: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">Ocorreu um erro desconhecido e seus dados não foram apagados. Você quer apagar seus dados apenas deste dispositivo?</string>
@@ -1004,14 +1004,12 @@
     <string name="proAccessNotFoundDescription">O {app_name} detectou que sua conta não possui acesso ao {pro}. Se você acredita que isso seja um erro, entre em contato com o suporte do {app_name} para obter ajuda.</string>
     <string name="proAccessRecover">Recuperar Acesso ao {pro}</string>
     <string name="proAccessRenew">Renovar Acesso ao {pro}</string>
-    <string name="proAccessRenewDesktop">Atualmente, o acesso ao {pro} só pode ser adquirido e renovado por meio da {platform_store} ou da {platform_store_other}. Como você está usando o {app_name} para Desktop, não é possível renovar por aqui.\n\nOs desenvolvedores do {app_name} estão trabalhando intensamente em opções de pagamento alternativas para permitir que os usuários adquiram o acesso ao {pro} fora da {platform_store} e da {platform_store_other}. <b>Roteiro do {pro}</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renove seu acesso ao {pro} no <b><font color="0">site da {platform_store}</font></b> usando a {platform_account} com a qual você se cadastrou no {pro}.</string>
     <string name="proAccessRenewPlatformWebsite">Renove no <b><font color="0">site da {platform}</font></b> usando a {platform_account} com a qual você se inscreveu no {pro}.</string>
     <string name="proAccessRenewStart">Renove seu acesso ao {pro} para voltar a usar os poderosos recursos Beta do {app_pro}.</string>
     <string name="proAccessRestored">Acesso ao {pro} recuperado</string>
     <string name="proAccessRestoredDescription">O {app_name} detectou e recuperou o acesso ao {pro} da sua conta. Seu status {pro} foi restaurado!</string>
     <string name="proAccessSignUp">Como você se inscreveu originalmente no {app_pro} por meio da <b>{platform_store}</b>, será necessário usar sua conta {platform_account} para atualizar seu acesso ao {pro}.</string>
-    <string name="proAccessUpgradeDesktop">Atualmente, o acesso ao {pro} só pode ser adquirido por meio da {platform_store} ou da {platform_store_other}. Como você está usando o {app_name} Desktop, não é possível fazer upgrade para o {pro} aqui.\n\nOs desenvolvedores do {app_name} estão trabalhando arduamente em opções de pagamento alternativas para permitir que os usuários comprem acesso ao {pro} fora das lojas {platform_store} e {platform_store_other}. <b>Roteiro do {pro}</b> {icon}</string>
     <string name="proActivated">Ativado</string>
     <string name="proActivatingActivation">ativando</string>
     <string name="proAllSet">Tudo pronto!</string>
@@ -1034,9 +1032,6 @@
         <item quantity="other">%1$s distintivos %2$s enviados</item>
     </plurals>
     <string name="proBetaFeatures">Recursos Beta do {pro}</string>
-    <string name="proBilledAnnually">{price} faturado anualmente</string>
-    <string name="proBilledMonthly">{price} faturado mensalmente</string>
-    <string name="proBilledQuarterly">{price} faturado trimestralmente</string>
     <string name="proCallToActionLongerMessages">Quer enviar mensagens mais longas?\nEnvie mais texto e desbloqueie recursos premium com o {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversations">Quer mais fixações?\nOrganize seus chats e desbloqueie recursos avançados com o {app_pro} Beta</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Quer mais de {limit} fixações?\nOrganize seus chats e desbloqueie recursos avançados com o {app_pro} Beta</string>
@@ -1095,9 +1090,6 @@
     <string name="proPlanPlatformRefund">Como você se inscreveu originalmente no {app_pro} por meio da <b><font color="0">{platform_store}</font></b>, será necessário usar sua conta {platform_account} para solicitar um reembolso.</string>
     <string name="proPlanPlatformRefundLong">Como você se inscreveu originalmente no {app_pro} por meio da <b><font color="0">{platform_store}</font></b>, sua solicitação de reembolso será processada pelo Suporte do {app_name}.\n\nSolicite um reembolso clicando no botão abaixo e preenchendo o formulário de solicitação de reembolso.\n\nEmbora o Suporte do {app_name} se esforce para processar as solicitações de reembolso em até 24–72 horas, esse processo pode demorar mais em períodos de alto volume de solicitações.</string>
     <string name="proPlanRenewSupport">Seu acesso ao {app_pro} foi renovado! Obrigado por apoiar o {network_name}.</string>
-    <string name="proPriceOneMonth">1 mês - {monthly_price} / mês</string>
-    <string name="proPriceThreeMonths">3 meses - {monthly_price} / mês</string>
-    <string name="proPriceTwelveMonths">12 meses - {monthly_price} / mês</string>
     <string name="proReactivatingActivation">reativando</string>
     <string name="proRefundAccountDevice">Abra esta conta do {app_name} em um dispositivo {device_type} conectado à {platform_account} com a qual você se inscreveu originalmente. Em seguida, solicite um reembolso pelas configurações do {app_pro}.</string>
     <string name="proRefundDescription">Sentimos muito por ver você partir. Aqui está o que você precisa saber antes de solicitar um reembolso.</string>
@@ -1108,14 +1100,12 @@
     <string name="proRefundingDescription">Os reembolsos do {app_pro} são administrados exclusivamente pelo {platform}, por meio da {platform_store}.\n\nDevido às políticas de reembolso do {platform}, os desenvolvedores do {app_name} não têm nenhuma capacidade de influenciar o resultado dos pedidos de reembolso. Isso inclui tanto a aprovação ou recusa do pedido quanto a decisão sobre a emissão de um reembolso total ou parcial.</string>
     <string name="proRenewAnimatedDisplayPicture">Quer usar imagens de exibição animadas novamente?\nRenove seu acesso ao {pro} para desbloquear os recursos que você perdeu.</string>
     <string name="proRenewBeta">Renovar {pro} Beta</string>
-    <string name="proRenewDesktopLinked">Renove seu acesso ao {pro} nas configurações do {app_pro} em um dispositivo vinculado com o {app_name} instalado via {platform_store} ou {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Quer enviar mensagens mais longas novamente?\nRenove seu acesso ao {pro} para desbloquear os recursos que você perdeu.</string>
     <string name="proRenewMaxPotential">Quer usar o {app_name} ao máximo novamente?\nRenove seu acesso ao {pro} para desbloquear os recursos que você perdeu.</string>
     <string name="proRenewPinFiveConversations">Quer fixar mais de {limit} conversas novamente?\nRenove seu acesso ao {pro} para desbloquear os recursos que você perdeu.</string>
     <string name="proRenewPinMoreConversations">Quer fixar mais conversas novamente?\nRenove seu acesso ao {pro} para desbloquear os recursos que você perdeu.</string>
     <string name="proRenewTosPrivacy">Ao renovar, você concorda com os <b>Termos de Serviço</b> {icon} e a <b>Política de Privacidade</b> {icon} do {app_pro}</string>
     <string name="proRenewingAction">renovando</string>
-    <string name="proRenewingNoAccessBilling">Atualmente, o acesso ao {pro} só pode ser adquirido e renovado por meio da {platform_store} ou da {platform_store_other}. Como você instalou o {app_name} usando o {build_variant}, não é possível renovar aqui.\n\nOs desenvolvedores do {app_name} estão trabalhando intensamente em opções alternativas de pagamento para permitir que os usuários adquiram o acesso ao {pro} fora da {platform_store} e da {platform_store_other}.<b> Roteiro do {pro}</b> {icon}</string>
     <string name="proRequestedRefund">Reembolso Solicitado</string>
     <string name="proSendMore">Envie mais com</string>
     <string name="proSettings">Configurações do {pro}</string>
@@ -1142,8 +1132,6 @@
     <string name="proUpdateAccessExpireDescription">Seu acesso ao {pro} expirará em <b>{date}</b>.\n\nAo atualizar, seu acesso ao {pro} será renovado automaticamente em <b>{date}</b> por mais <b>{selected_plan_length}</b> de acesso ao {pro}.</string>
     <string name="proUpdatingAction">atualizando</string>
     <string name="proUpgradeAccess">Faça upgrade para o {app_pro} Beta para acessar diversos benefícios e recursos exclusivos.</string>
-    <string name="proUpgradeDesktopLinked">Faça o upgrade para o {pro} nas configurações do {app_pro} em um dispositivo vinculado com o {app_name} instalado pela {platform_store} ou {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">Atualmente, o acesso ao {pro} só pode ser adquirido por meio da {platform_store} ou da {platform_store_other}. Como você instalou o {app_name} usando o {build_variant}, não é possível fazer upgrade para o {pro} aqui.\n\nOs desenvolvedores de {app_name} estão trabalhando arduamente em opções de pagamento alternativas para permitir que os usuários comprem acesso ao {pro} fora da {platform_store} e da {platform_store_other}.<b> Roteiro do {pro}</b> {icon}</string>
     <string name="proUpgradeOption">Por enquanto, há apenas uma forma de atualizar:</string>
     <string name="proUpgradeOptionsTwo">Por enquanto, há duas maneiras de fazer o upgrade:</string>
     <string name="proUpgraded">Você fez upgrade para {app_pro}!\nObrigado por apoiar a {network_name}.</string>

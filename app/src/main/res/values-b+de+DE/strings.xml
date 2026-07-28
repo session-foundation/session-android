@@ -213,7 +213,7 @@
     <string name="cameraGrantAccess">Kamerazugriff gewähren</string>
     <string name="cameraGrantAccessDenied">{app_name} benötigt Zugriff auf die Kamera, um Fotos oder Videos aufzunehmen, aber dieser Zugriff wurde dauerhaft verweigert. Bitte öffne die Einstellungen, wähle »Berechtigungen« und aktiviere »Kamera«.</string>
     <string name="cameraGrantAccessDescription">{app_name} benötigt die Berechtigung »Kamera«, um Fotos oder Videos aufzunehmen oder QR-Codes zu scannen.</string>
-    <string name="cameraGrantAccessQr">{app_name} benötigt Kamera-Zugriff um QR-Codes zu scannen</string>
+    <string name="cameraGrantAccessQr">{app_name} benötigt Kamera-Zugriff um QR-Codes scannen zu können</string>
     <string name="cancel">Abbrechen</string>
     <string name="cancelAccess">{pro} kündigen</string>
     <string name="change">Ändern</string>
@@ -283,6 +283,7 @@
     <string name="communityUnknown">Unbekannte Community</string>
     <string name="communityUrl">Community-URL</string>
     <string name="communityUrlCopy">Community-URL kopieren</string>
+    <string name="communityUrlOpenScanned">Es sieht so aus, als hättest du eine Community-URL gescannt.\n\nDu bist bereits Mitglied der <b>{community_name}</b> Community. Möchtest du diese Community öffnen?</string>
     <string name="confirm">Bestätigen</string>
     <string name="confirmPromotion">Beförderung bestätigen</string>
     <string name="confirmPromotionDescription">Bist du sicher? Administratoren können nicht herabgestuft oder aus der Gruppe entfernt werden.</string>
@@ -1005,14 +1006,12 @@
     <string name="proAccessNotFoundDescription">{app_name} hat festgestellt, dass dein Konto keinen {pro}-Zugang besitzt. Wenn du glaubst, dass es sich um einen Fehler handelt, kontaktiere bitte den {app_name}-Support.</string>
     <string name="proAccessRecover">{pro}-Zugang wiederherstellen</string>
     <string name="proAccessRenew">{pro}-Zugang verlängern</string>
-    <string name="proAccessRenewDesktop">Derzeit kann der Zugriff auf {pro} nur über den {platform_store} oder {platform_store_other} erworben und verlängert werden. Da Sie {app_name} Desktop verwenden, können Sie hier keine Verlängerung durchführen.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmöglichkeiten, damit Nutzer {pro}-Zugriff auch außerhalb des {platform_store} und {platform_store_other} erwerben können. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Verlängern Sie Ihren {pro}-Zugang auf der <b><font color="0">{platform_store}-Website</font></b> mit dem {platform_account}, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="proAccessRenewPlatformWebsite">Verlängern Sie auf der <b><font color="0">{platform}-Website</font></b>, indem Sie das {platform_account} verwenden, mit dem Sie sich für {pro} registriert haben.</string>
     <string name="proAccessRenewStart">Verlängere deinen {pro}-Zugang, um die leistungsstarken {app_pro} Beta-Funktionen wieder nutzen zu können.</string>
     <string name="proAccessRestored">{pro}-Zugang wiederhergestellt</string>
     <string name="proAccessRestoredDescription">{app_name} hat deinen {pro}-Zugang erkannt und wiederhergestellt. Dein {pro}-Status wurde zurückgesetzt!</string>
     <string name="proAccessSignUp">Da Sie sich ursprünglich über den <b>{platform_store}</b> für {app_pro} angemeldet haben, müssen Sie Ihr {platform_account} verwenden, um Ihren {pro}-Zugang zu aktualisieren.</string>
-    <string name="proAccessUpgradeDesktop">Derzeit kann der Zugriff auf {pro} nur über den {platform_store} oder {platform_store_other} erworben werden. Da du {app_name} Desktop verwendest, kannst du hier kein Upgrade auf {pro} durchführen.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmethoden, um den Erwerb des {pro}-Zugangs auch außerhalb des {platform_store} und {platform_store_other} zu ermöglichen. <b>{pro} Roadmap</b> {icon}</string>
     <string name="proActivated">Aktiviert</string>
     <string name="proActivatingActivation">aktivieren</string>
     <string name="proAllSet">Alles erledigt!</string>
@@ -1035,9 +1034,6 @@
         <item quantity="other">%1$s %2$s-Abzeichen gesendet</item>
     </plurals>
     <string name="proBetaFeatures">{pro} Beta-Funktionen</string>
-    <string name="proBilledAnnually">{price} jährlich abgerechnet</string>
-    <string name="proBilledMonthly">{price} monatlich abgerechnet</string>
-    <string name="proBilledQuarterly">{price} vierteljährlich abgerechnet</string>
     <string name="proCallToActionLongerMessages">Möchtest du längere Nachrichten senden?\nSende mehr Text und schalte Premium-Funktionen mit {app_pro} Beta frei</string>
     <string name="proCallToActionPinnedConversations">Mehr Anheftungen gewünscht?\nOrganisiere deine Chats und schalte Premium-Funktionen mit {app_pro} Beta frei</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Mehr als {limit} Anheftungen gewünscht?\nOrganisiere deine Chats und schalte Premium-Funktionen mit {app_pro} Beta frei</string>
@@ -1096,9 +1092,6 @@
     <string name="proPlanPlatformRefund">Da Sie sich ursprünglich über den <b><font color="0">{platform_store}</font></b> für {app_pro} registriert haben, müssen Sie Ihr {platform_account} verwenden, um eine Rückerstattung zu beantragen.</string>
     <string name="proPlanPlatformRefundLong">Da Sie sich ursprünglich über den <b><font color="0">{platform_store}</font></b> für {app_pro} registriert haben, wird Ihre Rückerstattungsanfrage vom {app_name} Support bearbeitet.\n\nFordern Sie eine Rückerstattung an, indem Sie auf die Schaltfläche unten klicken und das Rückerstattungsformular ausfüllen.\n\nDer {app_name} Support bemüht sich, Rückerstattungen innerhalb von 24–72 Stunden zu bearbeiten. Bei hohem Anfrageaufkommen kann die Bearbeitung jedoch länger dauern.</string>
     <string name="proPlanRenewSupport">Dein Zugang zu {app_pro} wurde verlängert! Vielen Dank für deine Unterstützung von {network_name}.</string>
-    <string name="proPriceOneMonth">1 Monat – {monthly_price} / Monat</string>
-    <string name="proPriceThreeMonths">3 Monate – {monthly_price} / Monat</string>
-    <string name="proPriceTwelveMonths">12 Monate – {monthly_price} / Monat</string>
     <string name="proReactivatingActivation">erneut aktivieren</string>
     <string name="proRefundAccountDevice">Öffnen Sie dieses {app_name}-Konto auf einem {device_type}-Gerät, bei dem Sie mit dem {platform_account} angemeldet sind, mit dem Sie sich ursprünglich registriert haben. Fordern Sie dann eine Rückerstattung über die {app_pro}-Einstellungen an.</string>
     <string name="proRefundDescription">Es ist schade, dass du gehst. Das solltest du wissen, bevor du eine Rückerstattung beantragst.</string>
@@ -1109,14 +1102,12 @@
     <string name="proRefundingDescription">Rückerstattungen für {app_pro} werden ausschließlich von {platform} über den {platform_store} abgewickelt.\n\nAufgrund der Rückerstattungsrichtlinien von {platform} haben die Entwickler von {app_name} keinerlei Einfluss auf das Ergebnis von Rückerstattungsanfragen. Dies betrifft sowohl die Genehmigung oder Ablehnung der Anfrage als auch die Entscheidung über eine vollständige oder teilweise Rückerstattung.</string>
     <string name="proRenewAnimatedDisplayPicture">Möchtest du wieder animierte Profilbilder verwenden?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
     <string name="proRenewBeta">{pro} Beta verlängern</string>
-    <string name="proRenewDesktopLinked">Verlängern Sie Ihren {pro}-Zugang in den Einstellungen von {app_pro} auf einem verknüpften Gerät mit installiertem {app_name} über den {platform_store} oder {platform_store_other}.</string>
     <string name="proRenewLongerMessages">Möchtest du wieder längere Nachrichten senden?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
     <string name="proRenewMaxPotential">Möchtest du {app_name} wieder mit vollem Potenzial nutzen?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
     <string name="proRenewPinFiveConversations">Möchtest du wieder mehr als {limit} Unterhaltungen anpinnen?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
     <string name="proRenewPinMoreConversations">Möchtest du wieder mehr Unterhaltungen anpinnen?\nVerlängere deinen {pro}-Zugang, um die Funktionen freizuschalten, die dir gefehlt haben.</string>
     <string name="proRenewTosPrivacy">Durch die Verlängerung stimmst du den <b>Nutzungsbedingungen</b> {icon} und der <b>Datenschutzerklärung</b> {icon} von {app_pro} zu</string>
     <string name="proRenewingAction">verlängern</string>
-    <string name="proRenewingNoAccessBilling">Derzeit kann der {pro}-Zugriff nur über den {platform_store} oder {platform_store_other} gekauft und verlängert werden. Da Sie {app_name} mit dem Build {build_variant} installiert haben, können Sie hier nicht verlängern.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmethoden, um es Nutzern zu ermöglichen, den {pro}-Zugriff außerhalb des {platform_store} und {platform_store_other} zu erwerben.<b> {pro}-Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Rückerstattung beantragt</string>
     <string name="proSendMore">Mehr senden mit</string>
     <string name="proSettings">{pro}-Einstellungen</string>
@@ -1143,8 +1134,6 @@
     <string name="proUpdateAccessExpireDescription">Ihr {pro}-Zugang läuft am <b>{date}</b> ab.\n\nDurch ein Update wird Ihr {pro}-Zugang am <b>{date}</b> automatisch um weitere <b>{selected_plan_length}</b> Jahre {pro}-Zugang verlängert.</string>
     <string name="proUpdatingAction">aktualisieren</string>
     <string name="proUpgradeAccess">Upgrade auf {app_pro} Beta, um Zugriff auf zahlreiche exklusive Vorteile und Funktionen zu erhalten.</string>
-    <string name="proUpgradeDesktopLinked">Upgrade auf {pro} über die {app_pro}-Einstellungen auf einem verknüpften Gerät mit {app_name}, installiert über den {platform_store} oder {platform_store_other}.</string>
-    <string name="proUpgradeNoAccessBilling">Derzeit kann der {pro}-Zugang nur über den {platform_store} oder den {platform_store_other} erworben werden. Da Sie {app_name} mit der {build_variant} installiert haben, ist ein Upgrade auf {pro} hier nicht möglich.\n\nDie Entwickler von {app_name} arbeiten intensiv an alternativen Zahlungsmöglichkeiten, um den Erwerb von {pro}-Zugang außerhalb des {platform_store} und {platform_store_other} zu ermöglichen.<b> {pro}-Roadmap</b> {icon}</string>
     <string name="proUpgradeOption">Aktuell gibt es nur eine Möglichkeit zum Upgrade:</string>
     <string name="proUpgradeOptionsTwo">Momentan gibt es zwei Upgrade-Möglichkeiten:</string>
     <string name="proUpgraded">Sie haben auf {app_pro} upgegradet!\nVielen Dank für Ihre Unterstützung des {network_name}.</string>
@@ -1364,6 +1353,8 @@
     <string name="theError">Fehler</string>
     <string name="theReturn">Zurück</string>
     <string name="themePreview">Design-Vorschau</string>
+    <string name="toggleEmojiPicker">Emoji-Auswahl ein-/aus</string>
+    <string name="toggleReactionBarMessage">Reaktionsleiste für Nachrichten ein-/aus</string>
     <string name="tooltipAccountIdVisible">Die Account-ID von <b>{name}</b> ist basierend auf deinen vorherigen Interaktionen sichtbar</string>
     <string name="tooltipBlindedIdCommunities">Verschleierte IDs werden in Communities verwendet, um Spam zu reduzieren und die Privatsphäre zu erhöhen</string>
     <string name="translate">Übersetzen</string>
@@ -1412,6 +1403,7 @@
     <string name="useFastMode">Schnellen Modus verwenden</string>
     <string name="viaPlatformWebsiteDescription">Ändern Sie Ihren Plan mit dem {platform_account}, mit dem Sie sich registriert haben, über die <b><font color="0">{platform}-Website</font></b>.</string>
     <string name="viaStoreWebsite">Über die {platform}-Website</string>
+    <string name="viaStoreWebsiteDescription">Aktualisiere deinen {pro} Zugriff, mit dem du dich auf {platform_account} über die <b><font color="0">{platform_store} Website</font></b> angemeldet hast.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Videowiedergabe fehlgeschlagen.</string>
     <string name="view">Anzeigen</string>

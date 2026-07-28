@@ -15,7 +15,7 @@
     <string name="actualSize">Mezinahiya eslî</string>
     <string name="add">Îlawe bike</string>
     <string name="adminCannotBeRemoved">Admîn nikarin werin rakirin.</string>
-    <string name="adminMorePromotedToAdmin"><b>{name}</b> û <b>{count} yên din</b> wekî admîn hatin xwepêşandin.</string>
+    <string name="adminMorePromotedToAdmin"><b>{name}</b> û <b>{count} yên din</b> wekî admîn hatin terfîkirin.</string>
     <string name="adminPromote">Admînan Belind</string>
     <string name="adminPromoteDescription">Tu piştrast î ku dixwazî <b>{name}</b> wek admîn bidî terfîkirin? Admîn nikarin werin rakirin.</string>
     <string name="adminPromoteMoreDescription">Tu piştrast î ku dixwazî <b>{name}</b> û <b>{count} yên din</b> wek admîn bidî terfîkirin? Admîn nikarin werin rakirin.</string>
@@ -41,7 +41,7 @@
         <item quantity="other">Terfîyên admînan dişîne</item>
     </plurals>
     <string name="adminSettings">Mîhengên Admînê</string>
-    <string name="adminTwoPromotedToAdmin"><b>{name}</b> û <b>{other_name}</b> wekî admîn hatin xwepêşandin.</string>
+    <string name="adminTwoPromotedToAdmin"><b>{name}</b> û <b>{other_name}</b> wekî admîn hatin terfîkirin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonîm</string>
     <string name="appIcon">ئایکۆنی ئەپ</string>
@@ -264,7 +264,7 @@
     <string name="deleteAfterGroupPR1BlockThisUser">Blok Bike Vê Bikarhênerê</string>
     <string name="deleteAfterGroupPR1BlockUser">Bikarhênerê Blok Bike</string>
     <string name="deleteAfterGroupPR1GroupSettings">Mîhengên Komê</string>
-    <string name="deleteAfterGroupPR1MentionsOnly">Tenê tiya din ji bo peyamên şaneke edə par kendiakirinani wallah</string>
+    <string name="deleteAfterGroupPR1MentionsOnly">Tenê ji bo Behskirinan Agahdar Bike</string>
     <string name="deleteAfterGroupPR1MentionsOnlyDescription">Gava pêveka aktîv bike, hûn ten foraan bêjin mesajên yedi nexşanda te kirîna hûncarî.</string>
     <string name="deleteAfterGroupPR1MessageSound">Peyama Dengî</string>
     <string name="deleteAfterGroupPR3DeleteMessagesConfirmation">Bila ev mesajên di vê sohbetê de daîmen were jêbirin?</string>
@@ -295,7 +295,7 @@
     </plurals>
     <string name="deleteMessageDescriptionEveryone">Tu piştrast î ku tu dixwazî vê peyamê ji bo tevan jê bibî?</string>
     <string name="deleteMessageDeviceOnly">Tenê ji ser vê cîhazê bibe</string>
-    <string name="deleteMessageDevicesAll">Peymaneyan di ser hemû amêrakên min de jê bibe</string>
+    <string name="deleteMessageDevicesAll">Li ser temamê cîhazên min jê bibe</string>
     <string name="deleteMessageEveryone">Ji bo tevan jê bibe</string>
     <plurals name="deleteMessageFailed">
         <item quantity="one">Bi ser neket ku peyama jê derbike.</item>
@@ -344,7 +344,7 @@
     <string name="disappearingMessagesTurnedOffYouGroup"><b>Tu</b> peyamekên winda bike<b>vegerandin</b>.</string>
     <string name="disappearingMessagesTypeRead">xwendin</string>
     <string name="disappearingMessagesTypeSent">hate şandin</string>
-    <string name="disappearingMessagesUpdated"><b>{admin_name} </b> mîhengên peyamên windabûna nûve kir.</string>
+    <string name="disappearingMessagesUpdated"><b>{admin_name} </b> mîhengên peyamên windaber rojane kir.</string>
     <string name="disappearingMessagesUpdatedYou"><b>Te</b> mîhengan peyamên wîndaber rojane kir.</string>
     <string name="dismiss">Betal bike</string>
     <string name="displayNameDescription">Divê navê te rastîn, yekê pirgir yan tiştê din be. Hevbihêle bê canê ku tu dikarî wî/aña guherîne bi her dem.</string>
@@ -377,9 +377,9 @@
         <item quantity="one">Û %1$d bi %2$s bi vê peyamê bertexî dike.</item>
         <item quantity="other">Û %1$d bi %2$s ji vê peyamê bertex dikin.</item>
     </plurals>
-    <string name="emojiReactsHoverNameDesktop">{name} bi {emoji_name} re agirandin</string>
+    <string name="emojiReactsHoverNameDesktop">{name} bi {emoji_name} bertek da</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} û {other_name} bi {emoji_name} re agirandin</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} û <font color="0">{count} yên din</font> bi {emoji_name} re agirandin</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} û <font color="0">{count} yên din</font> bi {emoji_name} bertek dan</string>
     <string name="emojiReactsHoverYouNameDesktop">Hûn bi {emoji_name} re agirandin</string>
     <string name="emojiReactsHoverYouNameMultipleDesktop">Hûn û <font color="0">{count} yên din</font> bi {emoji_name} re agirandin</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Hûn û {name} bi {emoji_name} re agirandin</string>
@@ -535,13 +535,13 @@
     </plurals>
     <plurals name="membersActive">
         <item quantity="one">%1$d endamê aktîv</item>
-        <item quantity="other">%1$d endamên aktîf</item>
+        <item quantity="other">%1$d endamên aktîv</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">IDya Hesabê an ONS tevlî bike</string>
     <string name="membersInvite">Kontaktan dawet bike</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Dawetnameyek bişîne</item>
-        <item quantity="other">Şandina Davetan</item>
+        <item quantity="other">Dawetname bişîne</item>
     </plurals>
     <string name="membersInviteShareDescription">Hûn dixwazin dîrokê peyamên şexsî ji <b>{name}</b> girî?</string>
     <string name="membersInviteShareDescriptionMultiple">Hûn dixwazin dîrokê peyamên şexsî ji <b>{name}</b> û <b>{count} yên din</b> girîftin?</string>
@@ -566,7 +566,7 @@
     <string name="messageNewDescriptionMobile">Bi navê hesabê hevalê xwe Account ID, ONS an scanê QR code-yê têlepeqîne.</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Peyameke te yê nû heye.</item>
-        <item quantity="other">%1$d peyama nû hîn tuneyê.</item>
+        <item quantity="other">%1$d peyamên te yên nû hene.</item>
     </plurals>
     <plurals name="messageNewYouveGotGroup">
         <item quantity="one">Peyameke te yê nû heye di %1$s de.</item>
@@ -626,7 +626,7 @@
     <string name="notificationsHeaderAllMessages">Agahdarî - Hemû</string>
     <string name="notificationsHeaderMentionsOnly">Agahdarî - Tenê Behskirin</string>
     <string name="notificationsHeaderMute">Agahdarî - Bêdeng</string>
-    <string name="notificationsIosGroup">{name} ji {conversation_name}</string>
+    <string name="notificationsIosGroup">{name} ji bo {conversation_name}</string>
     <string name="notificationsIosRestart">Gava ku {device}ê te vedigere, tu pêvajo hildîsti.</string>
     <string name="notificationsLedColor">Rengê LED</string>
     <string name="notificationsMentionsOnly">Tenê behskirin</string>
@@ -714,7 +714,7 @@
     <string name="pinUnpinConversation">Pulina Peyven</string>
     <string name="preview">Pêşdîtin</string>
     <string name="profile">Profîl</string>
-    <string name="profileDisplayPicture">Resmê Xuya bike</string>
+    <string name="profileDisplayPicture">Rismê Nîşan Bide</string>
     <string name="profileDisplayPictureRemoveError">Rûberê profîlê remove têbîne</string>
     <string name="profileDisplayPictureSet">Rismê Profîlê Çêke</string>
     <string name="profileDisplayPictureSizeError">Ji kerema xwe pêveke zêdetir bicikne.</string>
@@ -777,11 +777,11 @@
     <string name="screenshotTaken"><b>{name}</b> wêneyekî ekranê kişand.</string>
     <string name="search">Gerr</string>
     <string name="searchContacts">Li kontaktekî bigerrin</string>
-    <string name="searchConversation">Li söylek bigerrin</string>
+    <string name="searchConversation">Li sohbetekê bigere</string>
     <string name="searchEnter">Kerem bike tu li ser Giphy ne girêdane - ne têketina gêrê, usbikirina tambûra têkeve</string>
     <plurals name="searchMatches">
         <item quantity="one">%1$d ji %2$d li hev tê</item>
-        <item quantity="other">%1$d li li %2$d yên din</item>
+        <item quantity="other">%1$d ji %2$d li hev tên</item>
     </plurals>
     <string name="searchMatchesNone">Encam peyda nebû</string>
     <string name="searchMatchesNoneSpecific">Encam peyda nebû ji bo {query}</string>
@@ -831,7 +831,7 @@
     <string name="updateDownloaded">Nûveker tê zêdekirin, bişkînin ji bo destzê kirina xwerê</string>
     <string name="updateDownloading">Rojanekirin tê daxistin: {percent_loader}%</string>
     <string name="updateError">Nikare Rojane Bike</string>
-    <string name="updateErrorDescription">{app_name} nêteweyên nûvekirinê bi ser neket. Ji kerema xwe biçe {session_download_url} û wersionekî nû bi destê xwe saz bike, paşê bi Merkezê Yêrimeda me bigere ji bo agahî kirina me vê pirsgirêkê.</string>
+    <string name="updateErrorDescription">{app_name} rojanekirin bi ser neket. Ji kerema xwe biçe {session_download_url} û versîyonekî nû bi destê xwe saz bike, paşê ji bo me ji vê pirsgirêkê agahdar bikî bi Merkeza me ya Alîkarîyê re îrtîbat deyne.</string>
     <string name="updateNewVersion">Versîyoneke nû ya {app_name} berdest e, ji bo rojanekirinê lê bitikîne</string>
     <string name="updateNewVersionDescription">Versîyoneke nû ({version}) ya {app_name} berdest e.</string>
     <string name="updateReleaseNotes">Here Notên Versiyonê</string>
