@@ -92,6 +92,14 @@ class PlayStoreSubscriptionManager @Inject constructor(
                             return@setListener
                         }
 
+                        // Only a PURCHASED (not PENDING) purchase means Google accepted payment; a pending
+                        // purchase (e.g. cash / parental approval) isn't redeemable yet, so don't mark it
+                        // in-flight — we'll get another callback when it resolves to PURCHASED.
+                        if (it.purchaseState != Purchase.PurchaseState.PURCHASED) {
+                            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Ignoring purchase not in PURCHASED state: ${it.purchaseState}")
+                            return@setListener
+                        }
+
                         Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label,
                             "Billing callback. We have a purchase [${it.orderId}]. Acknowledged? ${it.isAcknowledged}")
 

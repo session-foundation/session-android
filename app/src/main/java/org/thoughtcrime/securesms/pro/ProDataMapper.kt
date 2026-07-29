@@ -26,7 +26,7 @@ object ProUserStatus {
  * Map a libsession-parsed get-pro-status response to the app's [ProStatus] domain model. Needs a [Context]
  * to resolve the (client-owned) provider display strings.
  */
-fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context): ProStatus {
+fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context, refundInProgress: Boolean): ProStatus {
     return when (userStatus) {
         ProUserStatus.ACTIVE -> {
             val paymentItem = latestPayment ?: return ProStatus.NeverSubscribed
@@ -36,7 +36,6 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context): ProStatus {
             val renewingAt = Instant.ofEpochMilli(renewingAtMs)
             val providerData = providerMetadata(paymentItem.paymentProvider, context)
             val duration = paymentItem.toProPlanPeriod()
-            val refundInProgress = refundRequested != null
 
             // Correctness guard (plan grammar, §1): a lifetime plan is NOT a renewing/expiring subscription and
             // has no renewal/expiry date to render. A genuine lifetime carries no account `expiry`, so it

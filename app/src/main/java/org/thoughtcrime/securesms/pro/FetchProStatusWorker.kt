@@ -124,33 +124,39 @@ class FetchProStatusWorker @AssistedInject constructor(
 
 
     private suspend fun scheduleProofGenerationIfNeeded(details: GetProStatusResponse) {
-        val now = snodeClock.currentTimeMillis()
-
         if (details.userStatus != ProUserStatus.ACTIVE) {
-            Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")
-            ProProofGenerationWorker.cancel(context)
-        } else {
-            val currentProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
-
-            if (currentProof == null || currentProof.expirySeconds * 1000L <= now) {
-                Log.d(
-                    TAG,
-                    "Pro is active but no valid proof found, scheduling proof generation now"
-                )
+            // Not (yet) Pro — but if a purchase is in flight (possibly synced from another device that
+            // bought and set pro_prepaid), keep driving the redemption poll so any device can pull the
+            // entitlement through. Otherwise there's nothing to generate.
+            val purchasePending = configFactory.withUserConfigs { it.userProfile.getProPrepaid() } != null
+            if (purchasePending) {
+                Log.d(TAG, "Not active but a purchase is in flight; scheduling proof redemption")
                 ProProofGenerationWorker.schedule(context)
-            } else if (currentProof.expirySeconds * 1000L - now <= Duration.ofMinutes(60).toMillis() &&
-                details.expiry!!.toEpochMilli() - now > Duration.ofMinutes(60).toMillis() &&
-                details.autoRenewing == true
-            ) {
-                val delay = Duration.ofMinutes((Math.random() * 50 + 10).toLong())
-                Log.d(TAG, "Pro proof is expiring soon, scheduling proof generation in $delay")
-                ProProofGenerationWorker.schedule(context, delay)
             } else {
-                Log.d(
-                    TAG,
-                    "Pro proof is still valid for a long period, no need to schedule proof generation"
-                )
+                Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")
+                ProProofGenerationWorker.cancel(context)
             }
+            return
+        }
+
+        // libsession owns the renewal schedule now — no more client-side autoRenewing/expiry logic (which
+        // was inconsistent and skipped non-auto-renewing but still-valid entitlements). getProRenewalTarget
+        // returns null (valid proof, no renewal needed), a target <= now (renew now), or a future target
+        // (~1h before proof expiry, nudged off the rotation-period boundary so all devices converge).
+        val nowSeconds = snodeClock.currentTime().epochSecond
+        val target = configFactory.withUserConfigs { it.userProfile.getProRenewalTarget(nowSeconds) }
+        if (target == null) {
+            Log.d(TAG, "Pro proof is still valid; no renewal needed")
+            return
+        }
+
+        val delay = Duration.ofSeconds((target - nowSeconds).coerceAtLeast(0L))
+        if (delay.isZero) {
+            Log.d(TAG, "Pro proof needs (re)generation now, scheduling immediately")
+            ProProofGenerationWorker.schedule(context)
+        } else {
+            Log.d(TAG, "Pro proof renewal due in $delay, scheduling")
+            ProProofGenerationWorker.schedule(context, delay)
         }
     }
 
