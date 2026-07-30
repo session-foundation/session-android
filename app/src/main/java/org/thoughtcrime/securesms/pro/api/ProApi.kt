@@ -100,7 +100,7 @@ object ProErrorCode {
     const val BAD_SIGNATURE = "bad_signature"
     const val STALE_REQUEST = "stale_request"
     const val UNKNOWN_PAYMENT = "unknown_payment"
-    const val EXPIRED = "expired"
+    const val SUBSCRIPTION_EXPIRED = "subscription_expired"
     const val NOT_SUBSCRIBED = "not_subscribed"
     const val REVOKED = "revoked"
     const val INTERNAL_ERROR = "internal_error"
