@@ -313,11 +313,16 @@ class ProStatusManager @Inject constructor(
                             .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
                             .map {
                                 configFactory.get().withUserConfigs { configs ->
-                                    configs.userProfile.getProAccessExpiry()
+                                    // Watch both the access expiry (E) and the prepaid marker (I): a
+                                    // synced prepaid from another device's purchase must kick the
+                                    // redemption poll here too, so any device can pull the entitlement
+                                    // through even if the purchasing device goes offline before redeeming.
+                                    configs.userProfile.getProAccessExpiry() to
+                                        configs.userProfile.getProPrepaid()
                                 }
                             }
                             .distinctUntilChanged()
-                            .map { "ProAccessExpiry in config changes" },
+                            .map { "ProAccessExpiry/prepaid in config changes" },
 
                         proStatusRepository.get().loadState
                             .mapNotNull { it.lastUpdated?.first?.expiry }
