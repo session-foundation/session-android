@@ -43,19 +43,16 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ACTIVATION_TYPE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ENTITY_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.BaseProSettingsScreen
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.GetProPlan
@@ -106,12 +103,10 @@ fun ChoosePlan(
         val context = LocalContext.current
         val title = when (planData.proStatus) {
             is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessActivatedNotAuto))
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(DATE_KEY, planData.proStatus.renewingAtFormatted())
                 .format()
 
             is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatesAuto))
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(
                     CURRENT_PLAN_LENGTH_KEY,
                     DateUtils.getLocalisedProPlanLength(context, planData.proStatus.duration)
@@ -121,7 +116,6 @@ fun ChoosePlan(
 
             else ->
                 Phrase.from(context.getText(R.string.proChooseAccess))
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format()
         }
 
@@ -166,11 +160,9 @@ fun ChoosePlan(
         val buttonLabel = when (planData.proStatus) {
             is ProStatus.Expired -> context.getString(R.string.renew)
             is ProStatus.Active.Expiring -> Phrase.from(LocalContext.current, R.string.updateAccess)
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format().toString()
             is ProStatus.NeverSubscribed -> stringResource(R.string.upgrade)
             else -> Phrase.from(LocalContext.current, R.string.updateAccess)
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format().toString()
         }
 
@@ -205,7 +197,6 @@ fun ChoosePlan(
 
         val footer = Phrase.from(LocalContext.current.getText(R.string.noteTosPrivacyPolicy))
             .put(ACTION_TYPE_KEY, footerAction)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(ICON_KEY, iconExternalLink)
             .format()
 
@@ -241,8 +232,6 @@ fun ChoosePlan(
                         .put(ACTION_TYPE_KEY, footerAction)
                         .put(ACTIVATION_TYPE_KEY, footerActivation)
                         .put(ENTITY_KEY, NonTranslatableStringConstants.ENTITY_STF)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                         .format()
                 ),
                 textAlign = TextAlign.Center,

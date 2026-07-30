@@ -16,7 +16,6 @@
  */
 package org.thoughtcrime.securesms.service;
 
-import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
@@ -38,7 +37,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ServiceCompat;
 
-import com.squareup.phrase.Phrase;
+import org.session.libsession.utilities.Phrase;
 
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -244,7 +243,6 @@ public class KeyCachingService extends Service {
     // Replace app name in title string
     Context c = getApplicationContext();
     String unlockedTxt = Phrase.from(c, R.string.lockAppUnlocked)
-            .put(APP_NAME_KEY, c.getString(R.string.app_name))
             .format().toString();
     builder.setContentTitle(unlockedTxt);
     builder.setSmallIcon(R.drawable.ic_lock_keyhole_open);

@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update

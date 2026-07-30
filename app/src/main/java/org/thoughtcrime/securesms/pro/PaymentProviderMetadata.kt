@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.pro
 
 import android.content.Context
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.libsession_util.pro.BackendRequests
 
 /**

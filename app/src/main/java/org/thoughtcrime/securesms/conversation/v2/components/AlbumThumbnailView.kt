@@ -12,7 +12,7 @@ import android.widget.TextView
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import com.bumptech.glide.RequestManager
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.databinding.AlbumThumbnailViewBinding
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment

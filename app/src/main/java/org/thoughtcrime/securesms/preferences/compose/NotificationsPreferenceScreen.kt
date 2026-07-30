@@ -14,10 +14,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.notifications.NotificationChannelManager
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.Commands.*
 import org.thoughtcrime.securesms.preferences.compose.NotificationsPreferenceViewModel.NotificationPreferenceEvent.*
@@ -230,10 +229,8 @@ fun NotificationsPreference(
                 sendCommand(HideWhitelistEnableDialog)
             },
             title = Phrase.from(LocalContext.current, R.string.runSessionBackground)
-                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                 .format().toString(),
             text = Phrase.from(LocalContext.current, R.string.runSessionBackgroundDescription)
-                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                 .format().toString(),
             buttons = listOf(
                 DialogButtonData(
@@ -265,7 +262,6 @@ fun NotificationsPreference(
                 LocalContext.current,
                 R.string.limitBackgroundActivityDescription
             )
-                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                 .format().toString(),
             buttons = listOf(
                 DialogButtonData(

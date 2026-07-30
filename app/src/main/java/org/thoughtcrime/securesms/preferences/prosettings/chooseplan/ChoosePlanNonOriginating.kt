@@ -6,18 +6,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProSettingsScreen
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel
@@ -43,12 +39,10 @@ fun ChoosePlanNonOriginating(
 
     val headerTitle = when(subscription) {
         is ProStatus.Active.Expiring -> Phrase.from(context.getText(R.string.proAccessExpireDate))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(DATE_KEY, subscription.renewingAtFormatted())
             .format()
 
         is ProStatus.Active.AutoRenewing -> Phrase.from(context.getText(R.string.proAccessActivatedAutoShort))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(CURRENT_PLAN_LENGTH_KEY,
                 DateUtils.getLocalisedProPlanLength(context, subscription.duration))
             .put(DATE_KEY, subscription.renewingAtFormatted())
@@ -69,16 +63,12 @@ fun ChoosePlanNonOriginating(
             sendCommand(ShowOpenUrlDialog(subscription.providerData.updateSubscriptionUrl))
         },
         contentTitle = Phrase.from(LocalContext.current, R.string.updateAccess)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         contentDescription = Phrase.from(context.getText(R.string.proAccessSignUp))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PLATFORM_STORE_KEY, subscription.providerData.store)
             .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format(),
         linkCellsInfo = Phrase.from(context.getText(R.string.updateAccessTwo))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         linkCells = listOf(
             NonOriginatingLinkCellData(
@@ -86,11 +76,8 @@ fun ChoosePlanNonOriginating(
                     .put(DEVICE_TYPE_KEY, subscription.providerData.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.onDeviceDescription))
-                    .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(DEVICE_TYPE_KEY, subscription.providerData.device)
                     .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             ),
@@ -101,7 +88,6 @@ fun ChoosePlanNonOriginating(
                 info = Phrase.from(context.getText(R.string.viaStoreWebsiteDescription))
                     .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .put(PLATFORM_STORE_KEY, platformOverride)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_globe
             )

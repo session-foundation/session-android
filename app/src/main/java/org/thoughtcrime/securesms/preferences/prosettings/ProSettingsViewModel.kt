@@ -7,7 +7,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavOptionsBuilder
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.Lazy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -29,10 +29,7 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
@@ -41,7 +38,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLAN_LENGTH_
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
@@ -160,7 +156,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     title = context.getString(R.string.paymentError),
                                     message = Phrase.from(context, R.string.paymentProError)
                                         .put(ACTION_TYPE_KEY, action)
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format(),
                                     positiveText = context.getString(R.string.retry),
                                     negativeText = context.getString(R.string.helpSupport),
@@ -215,11 +210,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                     it.copy(
                         showSimpleDialog = SimpleDialogData(
                             title = Phrase.from(context, R.string.proAccessRestored)
-                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                             .format().toString(),
                             message = Phrase.from(context, R.string.proAccessRestoredDescription)
-                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format(),
                             positiveText = context.getString(R.string.okay),
                             positiveStyleDanger = false,
@@ -231,11 +223,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                     it.copy(
                         showSimpleDialog = SimpleDialogData(
                             title = Phrase.from(context, R.string.proAccessNotFound)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             message = Phrase.from(context, R.string.proAccessNotFoundDescription)
-                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format(),
                             positiveText = context.getString(R.string.helpSupport),
                             negativeText = context.getString(R.string.close),
@@ -265,11 +254,9 @@ class ProSettingsViewModel @AssistedInject constructor(
                             // in grace period
                             if(subType.inGracePeriod) {
                                 Phrase.from(context, R.string.proRenewalUnsuccessful)
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format()
                             } else {
                                 Phrase.from(context, R.string.proAutoRenewTime)
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .put(
                                         TIME_KEY, dateUtils.getExpiryString(
                                             remaining = Duration.between(now, subType.renewingAt)
@@ -282,7 +269,6 @@ class ProSettingsViewModel @AssistedInject constructor(
 
                         is ProStatus.Active.Expiring ->
                             Phrase.from(context, R.string.proExpiringTime)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .put(TIME_KEY, dateUtils.getExpiryString(
                                     remaining = Duration.between(now, subType.renewingAt)
                                         .coerceAtLeast(Duration.ZERO)))
@@ -422,23 +408,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                         val state = _proSettingsUIState.value.proDataState.type
                         val (title, message) = when{
                             state is ProStatus.Active -> Phrase.from(context.getText(R.string.proAccessLoading))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proAccessLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             state is ProStatus.NeverSubscribed
                                     || command.inSheet -> Phrase.from(context.getText(R.string.checkingProStatus))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusContinue))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             else -> Phrase.from(context.getText(R.string.checkingProStatus))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusRenew))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                         }
 
@@ -458,25 +438,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                         val state = _proSettingsUIState.value.proDataState.type
                         val (title, message) = when{
                             state is ProStatus.Active -> Phrase.from(context.getText(R.string.proAccessError))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proAccessNetworkLoadError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
                             state is ProStatus.NeverSubscribed
                                     || command.inSheet-> Phrase.from(context.getText(R.string.proStatusError))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusNetworkErrorContinue))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             else -> Phrase.from(context.getText(R.string.proStatusError))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusRenewError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
                         }
 
@@ -514,10 +486,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                                 it.copy(
                                     showSimpleDialog = SimpleDialogData(
                                         title = Phrase.from(context, R.string.proRenewalUnsuccessfulTitle)
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format().toString(),
                                         message = Phrase.from(context, R.string.proUnsuccessfulRenewalDescription)
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .put(PLATFORM_ACCOUNT_KEY, provider?.platformAccount ?: "")
                                             .put(PLATFORM_STORE_KEY, provider?.store ?: "")
                                             .format(),
@@ -638,11 +608,9 @@ class ProSettingsViewModel @AssistedInject constructor(
                         it.copy(
                             showSimpleDialog = SimpleDialogData(
                                 title = Phrase.from(context, R.string.updateAccess)
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString(),
                                 message = if(currentSubscription is ProStatus.Active.AutoRenewing)
                                     Phrase.from(context.getText(R.string.proUpdateAccessDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(DATE_KEY, newSubscriptionExpiryString)
                                         .put(CURRENT_PLAN_LENGTH_KEY, currentSubscriptionDuration)
                                         .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration.lowercase())
@@ -650,7 +618,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                                         .put(SELECTED_PLAN_LENGTH_SINGULAR_KEY, selectedSubscriptionDuration.removeSuffix("s"))
                                         .format()
                                 else Phrase.from(context.getText(R.string.proUpdateAccessExpireDescription))
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .put(DATE_KEY, newSubscriptionExpiryString)
                                     .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration.lowercase())
                                     .format(),
@@ -686,23 +653,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                         val state = _proSettingsUIState.value.proDataState.type
                         val (title, message) = when{
                             state is ProStatus.Active -> Phrase.from(context.getText(R.string.proStatusLoading))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             state is ProStatus.NeverSubscribed
                                     || command.inSheet-> Phrase.from(context.getText(R.string.checkingProStatus))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusContinue))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             else -> Phrase.from(context.getText(R.string.checkingProStatus))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                         }
                         _dialogState.update {
@@ -722,23 +683,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                             val state = _proSettingsUIState.value.proDataState.type
                             val (title, message) = when{
                                 state is ProStatus.Active -> Phrase.from(context.getText(R.string.proStatusError))
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
                                 state is ProStatus.NeverSubscribed ||
                                      command.inSheet -> Phrase.from(context.getText(R.string.proStatusError))
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusNetworkErrorContinue))
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
                                 else -> Phrase.from(context.getText(R.string.proStatusError))
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
                             }
 
@@ -771,10 +726,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                             it.copy(
                                 showSimpleDialog = SimpleDialogData(
                                     title = Phrase.from(context.getText(R.string.proStatsLoading))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format().toString(),
                                     message = Phrase.from(context.getText(R.string.proStatsLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format(),
                                     positiveText = context.getString(R.string.okay),
                                     positiveStyleDanger = false,
@@ -904,9 +857,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         if (pct <= 0) return null
         val tooltip = if (showTooltip)
             Phrase.from(context.getText(R.string.proDiscountTooltip))
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(PERCENT_KEY, pct.toString())
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format().toString()
         else null
         return ProPlanBadge(

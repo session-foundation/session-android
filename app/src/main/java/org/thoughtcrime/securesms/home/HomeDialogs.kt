@@ -35,13 +35,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.GotoProSettings
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HandleUserProfileCommand
@@ -175,9 +171,7 @@ fun HomeDialogs(
                 title = stringResource(R.string.proExpiringSoon),
                 badgeAtStart = true,
                 text = Phrase.from(context,R.string.proExpiringSoonDescription)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .put(TIME_KEY, dialogsState.proExpiringCTA.expiry)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format()
                     .toString(),
                 features = listOf(
@@ -217,8 +211,6 @@ fun HomeDialogs(
                 badgeAtStart = true,
                 disabled = true,
                 text = Phrase.from(context,R.string.proExpiredDescription)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format()
                     .toString(),
                 features = listOf(
@@ -277,12 +269,9 @@ fun DonationDialog(
     }
 
     val title = Phrase.from(context,R.string.ongoingAppeal)
-        .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
 
     val text = Phrase.from(context,R.string.ongoingAppealDescription)
-        .put(StringSubstitutionConstants.ENTITY_STF_SHORT_KEY, NonTranslatableStringConstants.ENTITY_STF_SHORT)
-        .put(StringSubstitutionConstants.APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
         .format()
 
     val titleColor: Color = LocalColors.current.text
