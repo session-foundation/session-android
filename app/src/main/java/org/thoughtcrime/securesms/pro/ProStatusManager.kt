@@ -41,7 +41,7 @@ import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.Conversation
-import network.loki.messenger.libsession_util.util.Util
+import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -455,9 +455,12 @@ class ProStatusManager @Inject constructor(
             proFeatures += configs.userProfile.getProFeatures().asSequence()
         }
 
-        if (message is VisibleMessage &&
-                Util.countCodepoints(message.text.orEmpty()) > MAX_CHARACTER_REGULAR){
-            proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
+        if (message is VisibleMessage) {
+            // Let libsession own the count -> feature policy: we count codepoints natively and
+            // hand it the count; it returns the message feature bitset (e.g. higher char limit).
+            val text = message.text.orEmpty()
+            SessionProtocol.proFeaturesForMessage(text.codePointCount(0, text.length))
+                .toProMessageFeatures(proFeatures)
         }
 
         message.proFeatures = proFeatures
@@ -482,8 +485,9 @@ class ProStatusManager @Inject constructor(
     }
 
     companion object {
-        const val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
-        private const val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
+        // Single-sourced from libsession (see SessionProtocol) rather than hard-coded here.
+        val MAX_CHARACTER_PRO = SessionProtocol.PRO_HIGHER_CHARACTER_LIMIT // max message codepoints for pro users
+        private val MAX_CHARACTER_REGULAR = SessionProtocol.STANDARD_CHARACTER_LIMIT // max message codepoints for non-pro users
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
