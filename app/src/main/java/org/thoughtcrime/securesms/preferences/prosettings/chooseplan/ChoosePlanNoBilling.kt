@@ -7,18 +7,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.BUILD_VARIANT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRO_STORES_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.BaseNonOriginatingProSettingsScreen
 import org.thoughtcrime.securesms.preferences.prosettings.NonOriginatingLinkCellData
@@ -48,12 +44,9 @@ fun ChoosePlanNoBilling(
 
     val headerTitle = when(subscription) {
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.proAccessRenewStart))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
         is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeAccess))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
         else -> ""
@@ -61,11 +54,9 @@ fun ChoosePlanNoBilling(
 
     val contentTitle = when(subscription) {
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.renewingPro))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString()
 
         is ProStatus.NeverSubscribed-> Phrase.from(context.getText(R.string.proUpgradingTo))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString()
 
         else -> ""
@@ -73,9 +64,7 @@ fun ChoosePlanNoBilling(
 
     val contentDescription: CharSequence = when(subscription) {
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.proRenewingNoAccessBilling))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PRO_STORES_KEY, proStores)
-            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(BUILD_VARIANT_KEY, when (BuildConfig.FLAVOR) {
                 "fdroid" -> "F-Droid Store"
                 "huawei" -> "Huawei App Gallery"
@@ -85,9 +74,7 @@ fun ChoosePlanNoBilling(
             .format()
 
         is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeNoAccessBilling))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .put(PRO_STORES_KEY, proStores)
-            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(BUILD_VARIANT_KEY, when (BuildConfig.FLAVOR) {
                 "fdroid" -> "F-Droid Store"
                 "huawei" -> "Huawei App Gallery"
@@ -107,17 +94,11 @@ fun ChoosePlanNoBilling(
 
     val cell1Text: CharSequence = when(subscription) {
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.proRenewDesktopLinked))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(PRO_STORES_KEY, proStores)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
         is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proUpgradeDesktopLinked))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(PRO_STORES_KEY, proStores)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
 
         else -> ""
@@ -125,17 +106,11 @@ fun ChoosePlanNoBilling(
 
     val cell2Text: CharSequence = when(subscription) {
         is ProStatus.Expired -> Phrase.from(context.getText(R.string.proNewInstallationDescription))
-            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(PLATFORM_STORE_KEY, providerStoreName(PAYMENT_PROVIDER_GOOGLE_PLAY, context))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
 
         is ProStatus.NeverSubscribed -> Phrase.from(context.getText(R.string.proNewInstallationUpgrade))
-            .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
             .put(PLATFORM_STORE_KEY, providerStoreName(PAYMENT_PROVIDER_GOOGLE_PLAY, context))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
 
         else -> ""
@@ -170,7 +145,6 @@ fun ChoosePlanNoBilling(
                     info = Phrase.from(context.getText(R.string.proAccessRenewPlatformWebsite))
                         .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
                         .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format(),
                     iconRes = R.drawable.ic_globe
                 )

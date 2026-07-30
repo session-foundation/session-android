@@ -23,10 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.groups.compose.MemberItem
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -78,7 +77,6 @@ fun ShareList(
         topBar = {
             BackAppBar(
                 title = Phrase.from(LocalContext.current, R.string.shareToSession)
-                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
                     .format().toString(),
                 onBack = onBack,
             )

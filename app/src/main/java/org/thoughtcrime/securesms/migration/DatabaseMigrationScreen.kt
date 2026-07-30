@@ -32,11 +32,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentManager
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
@@ -136,7 +135,6 @@ private fun DatabaseMigration(
                     is DatabaseMigrationManager.MigrationState.Error -> {
                         val title =
                             Phrase.from(LocalContext.current, R.string.databaseErrorGeneric)
-                                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                 .format()
                                 .toString()
 
