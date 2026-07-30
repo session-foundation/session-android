@@ -102,7 +102,14 @@ class FetchProStatusWorker @AssistedInject constructor(
                 if (details.userStatus == ProUserStatus.EXPIRED ||
                     details.userStatus == ProUserStatus.NEVER
                 ) {
-                    configs.userProfile.removeProConfig()
+                    // Downgrade guard: never wipe a currently-valid proof (a stale status read vs a
+                    // fresh proof another device just landed). At a genuine lapse the proof has also
+                    // expired (proof.expiry <= account expiry by backend clamp), so this still passes.
+                    val nowSeconds = snodeClock.currentTime().epochSecond
+                    val proof = configs.userProfile.getProConfig()?.proProof
+                    if (proof == null || proof.expirySeconds <= nowSeconds) {
+                        configs.userProfile.removeProConfig()
+                    }
                 }
             }
             proDatabase.updateProStatus(proStatus = details, updatedAt = snodeClock.currentTime())

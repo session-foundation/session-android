@@ -335,10 +335,11 @@ class ProStatusManager @Inject constructor(
                             .distinctUntilChanged()
                             .mapLatest { proConfig ->
                                 val expiry = Instant.ofEpochSecond(proConfig.proProof.expirySeconds)
-                                // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
-
-                                val refreshTime =
-                                    expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
+                                // Wake ~1h before proof expiry so the renewal path runs. Deterministic
+                                // (no client-side jitter): per-device random offsets leak device count
+                                // via the landed-renewal order statistic; libsession owns the timing
+                                // (renewal_target), and config resolution settles concurrent renewals.
+                                val refreshTime = expiry.minus(Duration.ofMinutes(60))
 
                                 snodeClock.delayUntil(refreshTime)
                                 "Pro proof expiry reached"

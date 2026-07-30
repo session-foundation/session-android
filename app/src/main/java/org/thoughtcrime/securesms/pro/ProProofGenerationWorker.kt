@@ -87,10 +87,19 @@ class ProProofGenerationWorker @AssistedInject constructor(
             // §5.2 invariant: an `ok` proof response always carries the proof.
             val proof = requireNotNull(response.proof) { "generate-proof returned ok without a proof" }
 
-            configFactory.withMutableUserConfigs {
-                it.userProfile.setProConfig(ProConfig(
-                    proProof = proof,
-                    rotatingPrivateKey = rotatingPrivateKey))
+            configFactory.withMutableUserConfigs { configs ->
+                // Upgrade guard: only replace the proof if it extends coverage (monotonic merge;
+                // same-period races round to the same expiry -> byte-identical -> no-op). Avoids
+                // churning a proof another device just landed.
+                val current = configs.userProfile.getProConfig()?.proProof
+                if (current == null || proof.expirySeconds > current.expirySeconds) {
+                    configs.userProfile.setProConfig(ProConfig(
+                        proProof = proof,
+                        rotatingPrivateKey = rotatingPrivateKey))
+                }
+                // Refresh the cached access-expiry from the advisory account_expiry that rides the
+                // proof response, so the renewal path keeps E fresh without a separate get_pro_status.
+                response.accountExpiry?.let { configs.userProfile.setProAccessExpiry(it.epochSecond) }
             }
 
 
