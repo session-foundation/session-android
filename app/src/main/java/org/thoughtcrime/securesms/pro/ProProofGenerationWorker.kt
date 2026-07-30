@@ -69,8 +69,8 @@ class ProProofGenerationWorker @AssistedInject constructor(
         }
 
         return try {
-            // Rotating key is the deterministic weekly seed derived from the Pro master key (libsession
-            // owns the rotation schedule), so every device converges on the same key per rotation period
+            // Rotating key is the deterministic seed derived from the Pro master key for the current
+            // time (libsession owns the rotation schedule), so every device converges on the same key
             // instead of each generating a random one. Expand the 32-byte seed to a full keypair.
             val rotatingSeed = ED25519.proRotatingSeed(proMasterKey, snodeClock.currentTime().epochSecond)
             val rotatingPrivateKey = ED25519.generate(rotatingSeed).secretKey.data
