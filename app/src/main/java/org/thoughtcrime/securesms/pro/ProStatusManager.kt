@@ -41,7 +41,7 @@ import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import network.loki.messenger.libsession_util.util.Conversation
-import network.loki.messenger.libsession_util.util.Util
+import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -65,7 +65,6 @@ import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.pro.api.ProApiError
-import org.thoughtcrime.securesms.pro.api.AddProPaymentApi
 import org.thoughtcrime.securesms.pro.api.ProApiResponse
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.db.ProDatabase
@@ -88,7 +87,6 @@ class ProStatusManager @Inject constructor(
     private val prefs: TextSecurePreferences,
     @param:ManagerScope private val scope: CoroutineScope,
     private val serverApiExecutor: ServerApiExecutor,
-    private val addProPaymentApiFactory: AddProPaymentApi.Factory,
     private val backendConfig: Provider<ProBackendConfig>,
     private val loginState: LoginStateRepository,
     private val proDatabase: ProDatabase,
@@ -140,8 +138,12 @@ class ProStatusManager @Inject constructor(
                 Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
                 val nowMs = snodeClock.currentTimeMillis()
 
+                // Refund-requested is now a synced config flag (set by whichever device — e.g. iOS —
+                // initiated the refund), not a get_pro_status field; read it for cross-device display.
+                val refundInProgress = configFactory.get()
+                    .withUserConfigs { it.userProfile.getRefundRequested() != null }
                 ProDataState(
-                    type = proStatusState.lastUpdated?.first?.toProStatus(nowMs, application) ?: ProStatus.NeverSubscribed,
+                    type = proStatusState.lastUpdated?.first?.toProStatus(nowMs, application, refundInProgress) ?: ProStatus.NeverSubscribed,
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
@@ -311,11 +313,16 @@ class ProStatusManager @Inject constructor(
                             .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
                             .map {
                                 configFactory.get().withUserConfigs { configs ->
-                                    configs.userProfile.getProAccessExpiry()
+                                    // Watch both the access expiry (E) and the prepaid marker (I): a
+                                    // synced prepaid from another device's purchase must kick the
+                                    // redemption poll here too, so any device can pull the entitlement
+                                    // through even if the purchasing device goes offline before redeeming.
+                                    configs.userProfile.getProAccessExpiry() to
+                                        configs.userProfile.getProPrepaid()
                                 }
                             }
                             .distinctUntilChanged()
-                            .map { "ProAccessExpiry in config changes" },
+                            .map { "ProAccessExpiry/prepaid in config changes" },
 
                         proStatusRepository.get().loadState
                             .mapNotNull { it.lastUpdated?.first?.expiry }
@@ -333,10 +340,11 @@ class ProStatusManager @Inject constructor(
                             .distinctUntilChanged()
                             .mapLatest { proConfig ->
                                 val expiry = Instant.ofEpochSecond(proConfig.proProof.expirySeconds)
-                                // Schedule a refresh for a random number between 10 and 60 minutes before proof expiry
-
-                                val refreshTime =
-                                    expiry.minus(Duration.ofMinutes((10..60).random().toLong()))
+                                // Wake ~1h before proof expiry so the renewal path runs. Deterministic
+                                // (no client-side jitter): per-device random offsets leak device count
+                                // via the landed-renewal order statistic; libsession owns the timing
+                                // (renewal_target), and config resolution settles concurrent renewals.
+                                val refreshTime = expiry.minus(Duration.ofMinutes(60))
 
                                 snodeClock.delayUntil(refreshTime)
                                 "Pro proof expiry reached"
@@ -453,140 +461,39 @@ class ProStatusManager @Inject constructor(
             proFeatures += configs.userProfile.getProFeatures().asSequence()
         }
 
-        if (message is VisibleMessage &&
-                Util.countCodepoints(message.text.orEmpty()) > MAX_CHARACTER_REGULAR){
-            proFeatures += ProMessageFeature.HIGHER_CHARACTER_LIMIT
+        if (message is VisibleMessage) {
+            // Let libsession own the count -> feature policy: we count codepoints natively and
+            // hand it the count; it returns the message feature bitset (e.g. higher char limit).
+            val text = message.text.orEmpty()
+            SessionProtocol.proFeaturesForMessage(text.codePointCount(0, text.length))
+                .toProMessageFeatures(proFeatures)
         }
 
         message.proFeatures = proFeatures
     }
 
     /**
-     * To be called once a subscription has successfully gone through a provider.
-     * This will link that payment to our back end.
+     * Called once a purchase has gone through the store. Redemption is now implicit: the store notifies
+     * the backend out-of-band and any master-signed request binds the account's unbound payments, so
+     * there is no "add payment" call anymore. We record a synced "purchase in flight" marker — so this
+     * device and the user's other devices know to poll — and schedule the proof worker, which retries
+     * generate_pro_proof with backoff until the backend has the payment and issues a proof (or the
+     * 1-week pro_prepaid gate expires). Setting the marker is a no-op inside libsession if already Pro,
+     * and it auto-clears once the entitlement lands.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun addProPayment(orderId: String, paymentId: String) {
-        // max 3 attempts as per PRD
-        val maxAttempts = 3
-
-        // no point in going further if we have no key data
-        val keyData = loginState.loggedInState.value ?: throw Exception()
-        val rotatingKeyPair = ED25519.generate(null)
-
-        for (attempt in 1..maxAttempts) {
-            try {
-                // 5s timeout as per PRD
-                val paymentResponse = runCatching {
-                    requireNotNull(withTimeoutOrNull(5000) {
-                        serverApiExecutor.execute(
-                            ServerApiRequest(
-                                proBackendConfig = backendConfig.get(),
-                                api = addProPaymentApiFactory.create(
-                                    googlePaymentToken = paymentId,
-                                    googleOrderId = orderId,
-                                    masterPrivateKey = keyData.seeded.proMasterPrivateKey,
-                                    rotatingPrivateKey = rotatingKeyPair.secretKey.data
-                                )
-                            )
-                        )
-                    }) {
-                        "Timeout adding pro payment"
-                    }
-                }.getOrElse {
-                    // Timed out / threw before we got a response — treat as a retryable backend error.
-                    ProApiResponse.Failure(
-                        ProApiError(ProResponseStatus.Error, errorCode = null, error = "add-payment request failed: $it")
-                    )
-                }
-
-                when (paymentResponse) {
-                    is ProApiResponse.Success -> {
-                        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' successful")
-                        // Payment was successfully claimed - save it
-                        configFactory.get().withMutableUserConfigs { configs ->
-                            configs.userProfile.setProConfig(
-                                ProConfig(
-                                    // §5.2 invariant: an `ok` add-payment always carries a proof
-                                    // (a re-claim of an already-redeemed payment now succeeds with one too).
-                                    proProof = requireNotNull(paymentResponse.data.proof) {
-                                        "add-payment returned ok without a proof"
-                                    },
-                                    rotatingPrivateKey = rotatingKeyPair.secretKey.data
-                                )
-                            )
-
-                            configs.userProfile.setProBadge(true)
-                        }
-
-                        // The claim is persisted from here on, so nothing below may send us back
-                        // around the retry loop: refreshing the status is only a UI-freshness
-                        // concern, and a scheduled refresh will pick it up regardless.
-                        try {
-                            proStatusRepository.get().requestRefresh(force = true)
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                            Log.w(
-                                DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                "Pro status refresh after 'add pro payment' failed; the claim is already persisted",
-                                e
-                            )
-                        }
-
-                        // The one and only success exit. Without this the loop runs all 3 attempts
-                        // and then throws PaymentServerException, so a purchase that actually
-                        // worked surfaces to the user as "Payment Error". `already_redeemed` used to
-                        // break the loop by accident; §5.1 removed it (a re-claim now returns ok),
-                        // which left success with no exit at all. Do not remove.
-                        return
-                    }
-
-                    is ProApiResponse.Failure -> {
-                        Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' failure: $paymentResponse")
-                        // §5.1: `already_redeemed` is gone — a re-claim now returns ok + a proof
-                        // (handled above). Retry transient failures (backend fault, or a payment the
-                        // backend hasn't ingested yet); everything else is a hard, non-retryable failure.
-                        if (paymentResponse.error.isRetryable) {
-                            throw Exception()
-                        } else {
-                            // Permanent fault: surface the specific reason (error_code slug ->
-                            // localized string, falling back to the backend diagnostic).
-                            throw SubscriptionManager.NonRetryableProPaymentException(
-                                paymentResponse.error.userFacingMessage(application)
-                            )
-                        }
-                    }
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: SubscriptionManager.PaymentServerException){
-                // rethrow this error directly without retrying
-                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' PaymentServerException caught and rethrown")
-                throw e
-            } catch (e: SubscriptionManager.NonRetryableProPaymentException){
-                // permanent, non-retryable fault — rethrow directly so we don't retry or swallow it
-                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' NonRetryableProPaymentException caught and rethrown")
-                throw e
-            }catch (e: Exception) {
-                Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' exception", e)
-                // If not the last attempt, backoff a little and retry
-                if (attempt < maxAttempts) {
-                    // small incremental backoff before retry
-                    val backoffMs = 300L * attempt
-                    delay(backoffMs)
-                }
-            }
+    suspend fun onPurchaseInFlight() {
+        val nowSeconds = snodeClock.currentTime().epochSecond
+        configFactory.get().withMutableUserConfigs { configs ->
+            configs.userProfile.setProPrepaid(nowSeconds)
         }
-
-        // All attempts failed - throw our custom exception
-        Log.w(DebugLogGroup.PRO_SUBSCRIPTION.label, "Backend 'add pro payment' - Al retries attempted, throwing our custom `PaymentServerException`")
-        throw SubscriptionManager.PaymentServerException()
+        Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Purchase in flight; set pro_prepaid, scheduling proof redemption")
+        ProProofGenerationWorker.schedule(application)
     }
 
     companion object {
-        const val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
-        private const val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
+        // Single-sourced from libsession (see SessionProtocol) rather than hard-coded here.
+        val MAX_CHARACTER_PRO = SessionProtocol.PRO_HIGHER_CHARACTER_LIMIT // max message codepoints for pro users
+        private val MAX_CHARACTER_REGULAR = SessionProtocol.STANDARD_CHARACTER_LIMIT // max message codepoints for non-pro users
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
