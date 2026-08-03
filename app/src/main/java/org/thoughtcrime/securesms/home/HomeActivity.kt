@@ -91,6 +91,7 @@ import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.qa.QaLaunchConfig
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import org.thoughtcrime.securesms.reviews.ui.InAppReview
@@ -229,6 +230,24 @@ class HomeActivity : ScreenLockActionBarActivity(),
         get() = false
 
     // region Lifecycle
+    /**
+     * This activity is the launcher target (via the `RoutingActivity` alias), so any automated-test
+     * launch extras arrive on ITS intent — including when there is no account yet and the base class
+     * immediately routes on to onboarding.
+     *
+     * The QA config is therefore applied here rather than in `onCreate(savedInstanceState, ready)`:
+     * that overload is only invoked when the base class did NOT route away (`!isFinishing`), so on a
+     * fresh install — exactly the automation case — it never runs. Placed after `super.onCreate` so
+     * Hilt has injected `textSecurePreferences`; `finish()` having been called does not stop us from
+     * persisting the preferences.
+     */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // QA/debug builds only; compiled out of release builds entirely.
+        QaLaunchConfig.apply(intent, textSecurePreferences)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
