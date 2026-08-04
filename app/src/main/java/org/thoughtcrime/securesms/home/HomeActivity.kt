@@ -53,6 +53,7 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
+import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
@@ -157,6 +158,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var prefs: PreferenceStorage
     @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
     @Inject lateinit var jobQueue: Provider<JobQueue>
+    @Inject lateinit var snodeDirectory: SnodeDirectory
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -245,7 +247,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         super.onCreate(savedInstanceState)
 
         // QA/debug builds only; compiled out of release builds entirely.
-        QaLaunchConfig.apply(intent, textSecurePreferences)
+        QaLaunchConfig.apply(intent, textSecurePreferences, snodeDirectory)
     }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
