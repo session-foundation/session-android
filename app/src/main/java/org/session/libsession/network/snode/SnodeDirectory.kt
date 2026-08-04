@@ -15,6 +15,7 @@ import kotlinx.serialization.json.decodeFromStream
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.secureRandom
@@ -46,6 +47,7 @@ class SnodeDirectory @Inject constructor(
     private val httpExecutor: Provider<HttpApiExecutor>,
     private val snodeAPiExecutor: Provider<SnodeApiExecutor>,
     private val listSnodeApi: Provider<ListSnodeApi>,
+    private val pathManager: Provider<PathManager>,
     @param:ManagerScope private val scope: CoroutineScope,
     @param:ApplicationContext private val appContext: Context,
     private val json: Json,
@@ -112,15 +114,9 @@ class SnodeDirectory @Inject constructor(
     }
 
     /**
-     * Drops a persisted snode pool that was fetched from a DIFFERENT seed configuration.
-     *
-     * Without this, [ensurePoolPopulated] happily returns a cached pool belonging to the previous
-     * network — so changing the environment or the devnet seed URL appears to do nothing until the
-     * app's data is wiped. That is why the debug menu's environment switch wipes everything; this
-     * makes the far more common case (config changed, pool stale) self-correcting instead.
-     *
-     * Keyed on the environment plus the resolved seed URLs, so it covers the debug menu, the devnet
-     * seed override, and any future change to the seed lists.
+     * Identifies the seed configuration a pool was fetched under: the environment plus the resolved
+     * seed URLs, so it covers the debug menu, the devnet seed override, and any future change to the
+     * seed lists. Compared as an opaque string; nothing parses it back.
      */
     private fun currentSeedMarker(): String = buildString {
         append(prefs.getEnvironment().name)
@@ -128,7 +124,21 @@ class SnodeDirectory @Inject constructor(
         append(seedNodePool.map(HttpUrl::toString).sorted().joinToString(","))
     }
 
-    private fun discardPoolIfSeedChanged() {
+    /**
+     * Drops everything derived from a DIFFERENT seed configuration than the one now in effect.
+     *
+     * Without this, [ensurePoolPopulated] happily returns a cached pool belonging to the previous
+     * network — so changing the environment or the devnet seed URL appears to do nothing until the
+     * app's data is wiped. That is why the debug menu's environment switch wipes everything; this
+     * makes the far more common case (config changed, caches stale) self-correcting instead.
+     *
+     * Everything network-derived hangs off the snode pool, so clearing it covers the lot: the stored
+     * onion paths and swarm memberships are removed with it (they are FK-bound to the snodes table),
+     * and the in-memory copies are dropped alongside. What is deliberately NOT touched is the
+     * account: keys, config and messages are the user's, not the network's, and a QA run that wants
+     * them gone reinstalls.
+     */
+    private suspend fun discardPoolIfSeedChanged() {
         val marker = currentSeedMarker()
 
         val previous = prefs.getSnodePoolSeedMarker()
@@ -143,11 +153,42 @@ class SnodeDirectory @Inject constructor(
                 "SnodeDirectory",
                 "Seed configuration changed ($previous -> $marker); discarding cached snode pool"
             )
+
+            // Also drops the stored onion paths, and the swarms, since both are made of pool members
+            // and every FK points back at the snodes table.
             storage.setSnodePool(emptyList())
             prefs.setLastSnodePoolRefresh(0L)
+
+            // The rows are gone, but PathManager holds its own in-memory copy of the paths and would
+            // keep routing over the previous network's snodes until enough failures accumulated to
+            // force a rebuild. Injected as a Provider because PathManager depends on us.
+            pathManager.get().clearPaths()
         }
 
         prefs.setSnodePoolSeedMarker(marker)
+    }
+
+    /**
+     * Runs the [discardPoolIfSeedChanged] check off the caller's thread.
+     *
+     * Needed because that check is otherwise only reachable from [ensurePoolPopulated], which is not
+     * called at all on a launch that already has a usable pool and cached paths — there is nothing to
+     * populate. A configuration change made after startup (QaLaunchConfig can only read the launch
+     * extras once the first activity exists) would then sit there doing nothing: the app would keep
+     * routing over the previous network until the pool happened to need repopulating, which may not
+     * happen for hours. Verified on device: without this, switching to devnet left a 1031-snode
+     * mainnet pool and its paths in place for the whole session.
+     */
+    fun discardPoolIfSeedChangedAsync() {
+        scope.launch {
+            try {
+                discardPoolIfSeedChanged()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("SnodeDirectory", "Failed to apply seed configuration change", e)
+            }
+        }
     }
 
     override fun onPostAppStarted() {

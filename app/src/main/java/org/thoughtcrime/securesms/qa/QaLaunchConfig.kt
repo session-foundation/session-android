@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.qa
 import android.content.Intent
 import network.loki.messenger.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
@@ -32,11 +33,18 @@ import org.session.libsignal.utilities.Log
  *
  * ## Timing
  *
- * Values are persisted to preferences rather than held in memory, because the components that read
- * them (e.g. `SnodeDirectory.seedNodePool`) are app-scoped singletons that may resolve before or
- * after the first activity is created. Persisting means the value is guaranteed to be in effect on
- * the NEXT launch; callers that need it applied deterministically should force-restart the app after
- * the first launch (which is what the appium harness does).
+ * No restart is needed. Values go to preferences, and everything that resolves the network re-reads
+ * them on every access — `SnodeDirectory.seedNodePool` is a getter, not a field captured at
+ * construction — so the requested configuration is live from here on.
+ *
+ * What does not follow automatically is state already derived from the PREVIOUS configuration — a
+ * cached snode pool, and the onion paths and swarms built out of it. `SnodeDirectory` owns that
+ * problem: it records the seed configuration each pool was fetched under and drops the lot when that
+ * no longer matches, so no restart is needed to converge on the requested network.
+ *
+ * It does have to be told to look, though. That check normally rides along with pool population, and
+ * a launch that already has a usable pool and cached paths never populates anything — so it would
+ * never run on exactly the launches where it matters. Hence the explicit kick at the end of [apply].
  */
 object QaLaunchConfig {
     private const val TAG = "QaLaunchConfig"
@@ -54,7 +62,7 @@ object QaLaunchConfig {
      * Read any supported extras off [intent] and persist them. Safe to call on every launch: absent
      * extras leave the corresponding preference untouched.
      */
-    fun apply(intent: Intent?, prefs: TextSecurePreferences) {
+    fun apply(intent: Intent?, prefs: TextSecurePreferences, snodeDirectory: SnodeDirectory) {
         if (!BuildConfig.ALLOW_QA_LAUNCH_CONFIG) {
             return
         }
@@ -83,11 +91,15 @@ object QaLaunchConfig {
             return
         }
 
-        // Note there is deliberately no cache invalidation here. A pool cached from the previous
-        // network is discarded by SnodeDirectory itself, which compares the pool against the seed
-        // configuration it was fetched from. Doing it here would be both redundant and wrong: this
-        // runs before the new configuration takes effect, so the current launch would simply refill
-        // the pool from the OLD network again.
+        // Invalidation is delegated rather than done here: SnodeDirectory keys the cached pool on the
+        // seed configuration it was fetched under and knows everything derived from it, whereas this
+        // class would only ever clear the caches it happened to know about.
+        //
+        // It does have to be kicked, though. The check normally rides along with pool population, and
+        // a launch that already has a usable pool and cached paths never populates anything — so
+        // without this the switch would apply to preferences and nothing else. Unconditional: the
+        // marker comparison inside is what decides whether there is anything to drop.
+        snodeDirectory.discardPoolIfSeedChangedAsync()
     }
 
     /**
@@ -119,7 +131,7 @@ object QaLaunchConfig {
             return false
         }
 
-        Log.i(TAG, "Setting service network to ${requested.label} (takes effect on next launch)")
+        Log.i(TAG, "Setting service network to ${requested.label}")
         prefs.setEnvironment(requested)
         return true
     }
@@ -163,7 +175,7 @@ object QaLaunchConfig {
             return false
         }
 
-        Log.i(TAG, "Setting devnet seed URL override to $raw (takes effect on next launch)")
+        Log.i(TAG, "Setting devnet seed URL override to $raw")
         prefs.setDevnetSeedUrl(raw)
         return true
     }
