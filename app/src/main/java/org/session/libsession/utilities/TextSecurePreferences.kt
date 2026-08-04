@@ -58,7 +58,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SEND_WIT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO
-import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
@@ -147,14 +146,11 @@ interface TextSecurePreferences {
     fun setForceOtherUsersAsPro(isPro: Boolean)
     fun forceIncomingMessagesAsPro(): Boolean
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
-    fun forcePostPro(): Boolean
-    fun setForcePostPro(postPro: Boolean)
     fun hasSeenProExpiring(): Boolean
     fun setHasSeenProExpiring()
     fun hasSeenProExpired(): Boolean
     fun setHasSeenProExpired()
     fun clearProExpiryView()
-    fun watchPostProStatus(): StateFlow<Boolean>
     fun hasSeenSlowModeCallWarning(): Boolean
     fun setHasSeenSlowModeCallWarning(value: Boolean)
     fun setShownCallWarning(): Boolean
@@ -288,7 +284,6 @@ interface TextSecurePreferences {
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
-        const val SET_FORCE_POST_PRO = "pref_force_post_pro"
         const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
         const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val SHOWN_SLOW_MODE_CALL_WARNING = "has_seen_slow_mode_call_warning"
@@ -553,7 +548,6 @@ class AppTextSecurePreferences @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val json: Json,
 ): TextSecurePreferences {
-    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, if (BuildConfig.BUILD_TYPE != "release") true else false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
     override var migratedToGroupV2Config: Boolean
@@ -980,16 +974,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, isPro)
     }
 
-    override fun forcePostPro(): Boolean {
-        return postProLaunchState.value
-    }
-
-    override fun setForcePostPro(postPro: Boolean) {
-        setBooleanPreference(SET_FORCE_POST_PRO, postPro)
-        postProLaunchState.update { postPro }
-        _events.tryEmit(SET_FORCE_POST_PRO)
-    }
-
     override fun hasSeenProExpiring(): Boolean {
         return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
     }
@@ -1009,10 +993,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun clearProExpiryView() {
         setBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
         setBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
-    }
-
-    override fun watchPostProStatus(): StateFlow<Boolean> {
-        return postProLaunchState
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {
@@ -1118,7 +1098,6 @@ class AppTextSecurePreferences @Inject constructor(
      * Clear all prefs and reset our observables
      */
     override fun clearAll() {
-        postProLaunchState.update { false }
         hiddenPasswordState.update { false }
 
         getDefaultSharedPreferences(context).edit(commit = true) { clear() }

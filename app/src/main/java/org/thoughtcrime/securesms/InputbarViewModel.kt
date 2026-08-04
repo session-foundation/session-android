@@ -42,7 +42,7 @@ abstract class InputbarViewModel(
                 count = charsLeft,
                 countFormatted = NumberUtil.getFormattedNumber(charsLeft.toLong()),
                 danger = charsLeft < 0,
-                showProBadge = proStatusManager.isPostPro() && !currentUser.isPro // only show the badge for non pro users POST pro launch
+                showProBadge = !currentUser.isPro // only show the badge for non pro users
             )
         } else {
             null
@@ -56,9 +56,7 @@ abstract class InputbarViewModel(
         val charsLeft = _inputBarState.value.charLimitState?.count ?: 0
         return if(charsLeft < 0){
             // the user is trying to send a message that is too long - we should display a dialog
-            // we currently have different logic for PRE and POST Pro launch
-            // which we can remove once Pro is out - currently we can switch this fro the debug menu
-            if(!proStatusManager.isPostPro() || currentUser.isPro){
+            if(currentUser.isPro){
                 showMessageTooLongSendDialog()
             } else {
                 showSessionProCTA()
@@ -71,9 +69,7 @@ abstract class InputbarViewModel(
     }
 
     fun onCharLimitTapped(){
-        // we currently have different logic for PRE and POST Pro launch
-        // which we can remove once Pro is out - currently we can switch this fro the debug menu
-        if(!proStatusManager.isPostPro() || currentUser.isPro){
+        if(currentUser.isPro){
             handleCharLimitTappedForProUser()
         } else {
             handleCharLimitTappedForRegularUser()
