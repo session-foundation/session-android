@@ -140,52 +140,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                         ).show()
                     }
 
-                    is SubscriptionManager.PurchaseEvent.Failed.ServerError -> {
-                        // this is a special case of failure. We should display a custom dialog and allow the user to retry
-                        _dialogState.update {
-                            val action = context.getString(
-                                when(_proSettingsUIState.value.proDataState.type) {
-                                    is ProStatus.Active -> R.string.proUpdatingAction
-                                    is ProStatus.Expired -> R.string.proRenewingAction
-                                    else -> R.string.proUpgradingAction
-                                }
-                            )
-
-                            it.copy(
-                                showSimpleDialog = SimpleDialogData(
-                                    title = context.getString(R.string.paymentError),
-                                    message = Phrase.from(context, R.string.paymentProError)
-                                        .put(ACTION_TYPE_KEY, action)
-                                        .format(),
-                                    positiveText = context.getString(R.string.retry),
-                                    negativeText = context.getString(R.string.helpSupport),
-                                    positiveStyleDanger = false,
-                                    showXIcon = true,
-                                    onPositive = {
-                                        // show the loader again
-                                        val data = choosePlanState.value
-                                        if(data is State.Success) {
-                                            _choosePlanState.update {
-                                                State.Success(
-                                                    data.value.copy(purchaseInProgress = true)
-                                                )
-                                            }
-                                        }
-
-                                        // retry the post purchase code
-                                        subscriptionCoordinator.getCurrentManager().onPurchaseSuccessful(
-                                            orderId = purchaseEvent.orderId,
-                                            paymentId = purchaseEvent.paymentId
-                                        )
-                                    },
-                                    onNegative = {
-                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
-                                    }
-                                )
-                            )
-                        }
-                    }
-
                     is SubscriptionManager.PurchaseEvent.Cancelled -> {
                         // nothing to do in this case
                     }

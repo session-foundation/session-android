@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.pro.ProStatusManager
@@ -33,7 +34,6 @@ abstract class SubscriptionManager(
         data object Cancelled : PurchaseEvent
         sealed interface Failed : PurchaseEvent {
             data class GenericError(val errorMessage: String? = null): Failed
-            data class ServerError(val orderId: String, val paymentId: String) : Failed
         }
     }
 
@@ -64,37 +64,19 @@ abstract class SubscriptionManager(
      * Function called when a purchased has been made successfully from the subscription api
      */
     fun onPurchaseSuccessful(orderId: String, paymentId: String){
-        // we need to tie our purchase with the back end
+        // The store accepted the payment; the backend redeems it out-of-band (no synchronous add-payment
+        // call anymore). Record the purchase as in-flight (synced) and kick off the proof-redemption poll.
+        // orderId/paymentId are no longer needed by the backend — kept only for the callback signature.
         scope.launch {
             try {
-                proStatusManager.addProPayment(orderId, paymentId)
+                proStatusManager.onPurchaseInFlight()
                 _purchaseEvents.emit(PurchaseEvent.Success)
             } catch (e: Exception) {
-                when (e) {
-                    is PaymentServerException -> {
-                        _purchaseEvents.emit(
-                            PurchaseEvent.Failed.ServerError(
-                                orderId = orderId,
-                                paymentId = paymentId
-                            )
-                        )
-                    }
-                    // A non-retryable backend failure carries a user-facing reason (mapped from the
-                    // error_code slug); show it directly rather than the retry dialog, which would be
-                    // misleading for a permanent fault.
-                    is NonRetryableProPaymentException -> {
-                        _purchaseEvents.emit(PurchaseEvent.Failed.GenericError(e.userMessage))
-                    }
-                    else -> _purchaseEvents.emit(PurchaseEvent.Failed.GenericError())
-                }
+                Log.e("SubscriptionManager", "Failed to record purchase in flight", e)
+                _purchaseEvents.emit(PurchaseEvent.Failed.GenericError())
             }
         }
     }
-
-    class PaymentServerException: Exception()
-
-    /** A non-retryable Pro backend failure whose [userMessage] is already localized for display. */
-    class NonRetryableProPaymentException(val userMessage: String): Exception()
 
     data class SubscriptionPricing(
         val subscriptionDuration: ProSubscriptionDuration,
