@@ -7,6 +7,8 @@ OS keyring (see _keyring.py). Subcommands:
   status                             show each track's releases (version code, status, rollout %)
   upload [AAB]                       upload an AAB to a track
   rollout {FRACTION|complete|halt}   change the current staged rollout on a track (no re-upload)
+  share [APK|AAB]                    upload to Internal App Sharing, print an install link (no
+                                     versionCode consumed; the fast iterate-with-Billing loop)
 
 Prerequisites:
   - apt install python3-google-auth python3-googleapi   (or the pip equivalents)
@@ -189,6 +191,34 @@ def cmd_rollout(pkg, args):
     print(f"Done. Track '{args.track}' release now: {fmt_release(rel)}")
 
 
+def cmd_share(pkg, args):
+    """Upload an APK/AAB to Internal App Sharing and print the install link.
+
+    Unlike a track release, this does NOT consume a versionCode (the same code can be re-uploaded
+    any number of times) and needs no release/rollout/track management — so it's the fast loop for
+    iterating on a build that still needs Google's signature (e.g. to exercise Play Billing)."""
+    if not os.path.isfile(args.artifact):
+        sys.exit(f"Artifact not found: {args.artifact}\n"
+                 f"Build it first (e.g. scripts/build-and-release.py --play-only) or pass the path.")
+    is_aab = args.artifact.lower().endswith(".aab")
+    print(f"Artifact: {args.artifact}\nPackage:  {pkg}\nTarget:   Internal App Sharing ({'bundle' if is_aab else 'APK'})")
+    if args.dry_run:
+        print("\nDry run -- not uploading.")
+        return
+
+    service = play_service()
+    from googleapiclient.http import MediaFileUpload
+    media = MediaFileUpload(args.artifact, mimetype="application/octet-stream", resumable=True)
+    artifacts = service.internalappsharingartifacts()
+    print("Uploading (this can take a while for an AAB)...")
+    call = artifacts.uploadbundle if is_aab else artifacts.uploadapk
+    result = call(packageName=pkg, media_body=media).execute()
+
+    print(f"\nDone. Internal App Sharing install link:\n\n  {result.get('downloadUrl')}\n\n"
+          "Open it on the device signed into an authorized account (an uploader, or an\n"
+          "internal-app-sharing tester). The same versionCode can be re-uploaded any number of times.")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -216,6 +246,11 @@ def main():
     r.add_argument("--track", default="production", choices=TRACKS, help="release track (default: production)")
     r.add_argument("--dry-run", action="store_true", help="show current state and intended change only")
     r.set_defaults(func=cmd_rollout)
+
+    sh = sub.add_parser("share", help="upload an APK/AAB to Internal App Sharing and print the install link")
+    sh.add_argument("artifact", nargs="?", default=DEFAULT_AAB, help=f"path to the APK/AAB (default: {DEFAULT_AAB})")
+    sh.add_argument("--dry-run", action="store_true", help="don't upload; just show what would happen")
+    sh.set_defaults(func=cmd_share)
 
     args = p.parse_args()
     # Run from the repo root so the default AAB path resolves.
