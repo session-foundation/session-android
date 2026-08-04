@@ -49,27 +49,39 @@ def build_releases(project_root: str,
                    extra_gradle_opts: str = '',
                    build_type: string = 'release',
                    build_bundle: bool = False,
-                   split_apks: bool = False) -> BuildResult:
+                   split_apks: bool = False,
+                   libsession_util_path: str = None) -> BuildResult:
     (keystore_fd, keystore_file) = tempfile.mkstemp(prefix='keystore_', suffix='.jks', dir=build_dir)
     try:
         with os.fdopen(keystore_fd, 'wb') as f:
             f.write(base64.b64decode(credentials.keystore_b64))
 
-        gradle_commands = f"""./gradlew \
-                    -P{credentials_property_prefix}_STORE_FILE='{keystore_file}'\
-                    -P{credentials_property_prefix}_STORE_PASSWORD='{credentials.keystore_password}' \
-                    -P{credentials_property_prefix}_KEY_ALIAS='{credentials.key_alias}' \
-                    -P{credentials_property_prefix}_KEY_PASSWORD='{credentials.key_password}' {extra_gradle_opts}"""
+        # Build the glue (and its native libsession-util) from source at this path instead of the
+        # published AAR; settings.gradle.kts reads this system property (see its comment there).
+        lib_source_opt = (f" -Dsession.libsession_util.project.path='{libsession_util_path}'"
+                          if libsession_util_path else "")
+        # Pass signing secrets via ORG_GRADLE_PROJECT_* env vars, NOT -P command-line args: argv is
+        # world-readable (`ps`, /proc/<pid>/cmdline) and gets echoed into subprocess exceptions on
+        # failure, whereas /proc/<pid>/environ is owner-only. Gradle maps ORG_GRADLE_PROJECT_<name>
+        # to the `<name>` project property, so the app's signingConfig reads these unchanged.
+        gradle_env = {
+            **os.environ,
+            f'ORG_GRADLE_PROJECT_{credentials_property_prefix}_STORE_FILE': keystore_file,
+            f'ORG_GRADLE_PROJECT_{credentials_property_prefix}_STORE_PASSWORD': credentials.keystore_password,
+            f'ORG_GRADLE_PROJECT_{credentials_property_prefix}_KEY_ALIAS': credentials.key_alias,
+            f'ORG_GRADLE_PROJECT_{credentials_property_prefix}_KEY_PASSWORD': credentials.key_password,
+        }
+        gradle_commands = f"./gradlew{lib_source_opt} {extra_gradle_opts}"
         
         if build_bundle:
             bundle_path = os.path.join(project_root, f'app/build/outputs/bundle/{flavor}{build_type.capitalize()}/app-{flavor}-{build_type}.aab')
             subprocess.run(f"""{gradle_commands} -PsplitApks=false \
-                    bundle{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
+                    bundle{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root, env=gradle_env)
         else:
             bundle_path = None
 
         subprocess.run(f"""{gradle_commands} \
-                    assemble{flavor.capitalize()}{build_type.capitalize()} -PsplitApks={str(split_apks).lower()} --stacktrace""", shell=True, check=True, cwd=project_root)
+                    assemble{flavor.capitalize()}{build_type.capitalize()} -PsplitApks={str(split_apks).lower()} --stacktrace""", shell=True, check=True, cwd=project_root, env=gradle_env)
 
         apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/{build_type}')
 
@@ -239,17 +251,23 @@ parser = argparse.ArgumentParser(
  )
 
 parser.add_argument('--build-only', action='store_true', help='If set, will only build APKs and skip all upload/fdroid actions')
+parser.add_argument('--play-only', action='store_true', help='Build only the signed play AAB (for a dev/test upload to the internal track); skips the fdroid and huawei flavors and all upload/PR steps')
 parser.add_argument('--build-type', help='Build with specified build type. Default: release', default = 'release')
+parser.add_argument('--libsession', metavar='PATH', help="Build libsession-util-android (and its native libsession-util) from source at this path (the glue repo root), instead of the published AAR. Passed to Gradle as -Dsession.libsession_util.project.path; overrides any local.properties setting.")
 
 args = parser.parse_args()
 
-# Make sure gh command is available
-if shutil.which('gh') is None:
+# Resolve to an absolute path: settings.gradle.kts resolves a relative path against the app's
+# rootDir, so an absolute path is unambiguous regardless of where the glue is checked out.
+lib_util_path = os.path.abspath(args.libsession) if args.libsession else None
+
+# Make sure gh command is available (not needed for a play-only build)
+if not args.play_only and shutil.which('gh') is None:
     print('`gh` command not found. It is required to automate fdroid releases. Please install it from https://cli.github.com/', file=sys.stderr)
     sys.exit(1)
 
-# Make sure fdroid command is available
-if shutil.which('fdroid') is None:
+# Make sure fdroid command is available (not needed for a play-only build)
+if not args.play_only and shutil.which('fdroid') is None:
     print('`fdroid` command not found. Install fdroidserver via your system package manager:\n'
           '  Debian/Ubuntu:  apt install fdroidserver\n'
           '  Homebrew:       brew install fdroidserver\n'
@@ -279,7 +297,19 @@ play_build_result = build_releases(
     build_type=args.build_type,
     build_bundle=True,
     split_apks=True,
+    libsession_util_path=lib_util_path,
     )
+
+# A play-only build is just the signed AAB for a dev/test upload to the internal
+# track, so skip the other flavors and every upload/PR step below.
+if args.play_only:
+    print('\n=====================')
+    print('Build result (play only):')
+    for apk in play_build_result.apk_paths:
+        print(f'\t{apk}')
+    print(f'\t{play_build_result.bundle_path}')
+    print('=====================')
+    sys.exit(0)
 
 print("Building fdroid releases...")
 fdroid_build_result = build_releases(
@@ -290,6 +320,7 @@ fdroid_build_result = build_releases(
     build_type=args.build_type,
     build_bundle=False,
     split_apks=True,
+    libsession_util_path=lib_util_path,
     )
 
 if not args.build_only:
@@ -306,6 +337,7 @@ huawei_build_result = build_releases(
     build_type=args.build_type,
     build_bundle=False,
     split_apks=False,
+    libsession_util_path=lib_util_path,
     )
 
 # If the a github release draft exists, upload the apks to the release
