@@ -89,8 +89,20 @@ Play Developer API (service-account key from the keyring, name
   link. Unlike a track release this consumes **no** versionCode (re-upload the
   same code freely) and needs no release/rollout/track management, so it's the
   fast loop for iterating on a build that still needs Google's signature (e.g. to
-  exercise Play Billing): `build-and-release.py --play-only` → `play-store.py
-  share` → open the printed link on the device.
+  exercise Play Billing). Add **`--open-emu`** to make it fully hands-off: it
+  sends the link to a running Play Store emulator (launching a
+  `google_apis_playstore` AVD if none is running), falling back to printing the
+  `adb` command if there isn't a single suitable emulator. Play processes each
+  uploaded artifact before the link resolves to it — until then the link shows
+  the *installed* build ("Open") not the new one ("Update"). There's no
+  off-device readiness signal (the upload API exposes no status field, and the
+  `downloadUrl` just 302s to a Google login for any HTTP client), so `--open-emu`
+  **polls the on-device Play Store UI** (via `uiautomator`): it fires the link,
+  and if the Install/Update button isn't up yet it waits and re-fires — up to
+  `--open-emu-timeout` seconds (default 120), every `--open-emu-interval` (default
+  5). Re-firing also defeats any device-side cache. If it times out, the link is
+  left on screen to re-fire manually.
+  Whole loop: `build-and-release.py --play-only && play-store.py share --open-emu`.
 
 ## Secrets
 

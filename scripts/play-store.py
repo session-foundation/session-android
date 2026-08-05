@@ -32,7 +32,11 @@ Examples:
 import argparse
 import json
 import os
+import re
+import shutil
+import subprocess
 import sys
+import time
 
 from _keyring import get_secret
 
@@ -191,6 +195,194 @@ def cmd_rollout(pkg, args):
     print(f"Done. Track '{args.track}' release now: {fmt_release(rel)}")
 
 
+def _sdk_root():
+    return (os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+            or os.path.expanduser("~/Android/Sdk"))
+
+
+def _adb():
+    return shutil.which("adb") or os.path.join(_sdk_root(), "platform-tools", "adb")
+
+
+def _emulator_bin():
+    return shutil.which("emulator") or os.path.join(_sdk_root(), "emulator", "emulator")
+
+
+def _running_emulators(adb):
+    """Serials of emulators currently in the 'device' (booted + authorized) state."""
+    out = subprocess.run([adb, "devices"], capture_output=True, text=True, check=True).stdout
+    emus = []
+    for line in out.splitlines()[1:]:
+        parts = line.split()
+        if len(parts) >= 2 and parts[0].startswith("emulator-") and parts[1] == "device":
+            emus.append(parts[0])
+    return emus
+
+
+def _avd_is_play_store(name):
+    """True/False/None for whether local AVD `name` is a Play Store image. The AVD config is the
+    source of truth: a plain google_apis image ships a non-functional com.android.vending stub, so a
+    `pm list packages` check can't tell them apart."""
+    if not name:
+        return None
+    avd_home = os.path.expanduser(os.environ.get("ANDROID_AVD_HOME") or "~/.android/avd")
+    config = os.path.join(avd_home, f"{name}.avd", "config.ini")
+    ini = os.path.join(avd_home, f"{name}.ini")  # points at the real .avd dir when it has been relocated
+    if os.path.isfile(ini):
+        with open(ini) as f:
+            for line in f:
+                if line.startswith("path="):
+                    config = os.path.join(line.split("=", 1)[1].strip(), "config.ini")
+                    break
+    if not os.path.isfile(config):
+        return None
+    text = open(config).read().replace(" ", "")
+    if "PlayStore.enabled" in text:
+        return "PlayStore.enabled=true" in text
+    return "google_apis_playstore" in text
+
+
+def _running_emulator_avd(adb, serial):
+    try:
+        out = subprocess.run([adb, "-s", serial, "emu", "avd", "name"],
+                             capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return next((ln.strip() for ln in out.splitlines() if ln.strip() and ln.strip() != "OK"), None)
+
+
+def _launch_play_store_avd(adb):
+    """No emulator running: find a Play Store AVD, launch it detached, wait for boot; return its serial (or None)."""
+    emulator_bin = _emulator_bin()
+    try:
+        listed = subprocess.run([emulator_bin, "-list-avds"], capture_output=True, text=True, timeout=20).stdout
+    except (OSError, subprocess.SubprocessError):
+        listed = ""
+    candidates = [a.strip() for a in listed.splitlines() if a.strip() and _avd_is_play_store(a.strip())]
+    if not candidates:
+        return None
+    avd = candidates[0]
+    print(f"--open-emu: no emulator running; launching Play Store AVD '{avd}' (can take a minute) ...")
+    before = set(_running_emulators(adb))
+    try:
+        subprocess.Popen([emulator_bin, "-avd", avd, "-no-boot-anim"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError as e:
+        print(f"--open-emu: couldn't launch the emulator ({e}).")
+        return None
+    deadline = time.time() + 240
+    serial = None
+    while time.time() < deadline and not serial:
+        time.sleep(3)
+        new = set(_running_emulators(adb)) - before
+        if new:
+            serial = sorted(new)[0]
+    if not serial:
+        print("--open-emu: the emulator didn't come online in time.")
+        return None
+    print(f"--open-emu: {serial} online; waiting for boot to finish ...")
+    while time.time() < deadline:
+        try:
+            booted = subprocess.run([adb, "-s", serial, "shell", "getprop", "sys.boot_completed"],
+                                    capture_output=True, text=True, timeout=10).stdout.strip()
+        except subprocess.SubprocessError:
+            booted = ""
+        if booted == "1":
+            return serial
+        time.sleep(3)
+    print(f"--open-emu: {serial} came online but didn't finish booting in time; trying anyway.")
+    return serial
+
+
+# uiautomator node whose text/content-desc is exactly the Play Store's install control. "Open"
+# (already installed) and "Uninstall" deliberately don't match — those mean "not the new artifact yet".
+_READY_BUTTON = re.compile(r'(?:text|content-desc)="(?:Install|Update)"', re.IGNORECASE)
+
+
+def _play_shows_install_button(adb, serial):
+    """True if the Play Store screen currently shows an Install/Update button. A freshly uploaded
+    Internal App Sharing artifact is processed before the link resolves to it; until then the page
+    shows only "Open" (the installed build). We can't see that state off-device — the downloadUrl
+    just 302s to a Google login for any HTTP client — so we scrape the on-device UI instead."""
+    try:
+        subprocess.run([adb, "-s", serial, "shell", "uiautomator", "dump", "/sdcard/iasharing_ui.xml"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+        xml = subprocess.run([adb, "-s", serial, "shell", "cat", "/sdcard/iasharing_ui.xml"],
+                             capture_output=True, text=True, timeout=20).stdout
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return bool(_READY_BUTTON.search(xml))
+
+
+def _open_on_emulator(url, pkg, timeout, interval):
+    """--open-emu: fire the install link at a running Play Store emulator (launching one if none is
+    running); otherwise print the adb command. The caller always prints the link itself too.
+
+    A freshly uploaded Internal App Sharing artifact is processed before the link resolves to it;
+    until that finishes, opening the link shows the *installed* build ("Open") instead of the new
+    one ("Update"/"Install"). There's no off-device readiness signal (no API status field; the
+    downloadUrl 302s to a Google login for any HTTP client), so we poll the on-device Play Store UI:
+    fire the link, check for the Install/Update button, and if it's not there yet wait `interval`s
+    and re-fire (re-firing also defeats any device-side cache), up to `timeout`s."""
+    adb = _adb()
+
+    def sample(who):
+        return (f'adb -s {who} shell am force-stop {pkg} && '
+                f'adb -s {who} shell am start -a android.intent.action.VIEW -d "{url}"')
+
+    try:
+        emus = _running_emulators(adb)
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(f"--open-emu: couldn't run adb ({e}); open it manually:\n  {sample('<emulator>')}")
+        return
+
+    if len(emus) > 1:
+        print(f"--open-emu: {len(emus)} emulators running ({', '.join(emus)}); pick one:\n  {sample('<emulator>')}")
+        return
+
+    if len(emus) == 1:
+        serial = emus[0]
+        if _avd_is_play_store(_running_emulator_avd(adb, serial)) is False:
+            print(f"--open-emu: {serial} is not a Play Store image (no Google Play), so Internal App Sharing\n"
+                  f"installs / Play Billing won't work there. Open it on a google_apis_playstore AVD instead:\n"
+                  f"  {sample('<emulator>')}")
+            return
+    else:
+        serial = _launch_play_store_avd(adb)
+        if not serial:
+            print(f"--open-emu: no emulator running and no Play Store (google_apis_playstore) AVD to launch.\n"
+                  f"Create one, then open the link with:\n  {sample('<emulator>')}")
+            return
+
+    # Force-stop the target first: if it's foregrounded, the VIEW intent just re-foregrounds the app
+    # instead of routing to the Play Store's Internal App Sharing page.
+    subprocess.run([adb, "-s", serial, "shell", "am", "force-stop", pkg],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(f"--open-emu: sending the link to {serial}, polling up to {timeout}s for Play to process it ...")
+    deadline = time.time() + timeout
+    fired_ok = False
+    while True:
+        rc = subprocess.run([adb, "-s", serial, "shell", "am", "start",
+                             "-a", "android.intent.action.VIEW", "-d", url],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+        if rc != 0:
+            print(f"--open-emu: adb exited {rc}; open it manually:\n  {sample(serial)}")
+            return
+        fired_ok = True
+        time.sleep(3)  # let the Play Store page render before scraping it
+        if _play_shows_install_button(adb, serial):
+            print(f"Ready — {serial} is showing Install/Update. Tap it to install "
+                  "(enable Internal App Sharing in the Play Store if prompted).")
+            return
+        if time.time() >= deadline:
+            break
+        time.sleep(interval)
+    if fired_ok:
+        print(f"--open-emu: gave up after {timeout}s — the Store still isn't showing Install/Update, so\n"
+              "the artifact probably hasn't finished processing (or the button text isn't in English).\n"
+              f"The link is on screen; re-fire it in a moment (no rebuild):\n  {sample(serial)}")
+
+
 def cmd_share(pkg, args):
     """Upload an APK/AAB to Internal App Sharing and print the install link.
 
@@ -214,9 +406,13 @@ def cmd_share(pkg, args):
     call = artifacts.uploadbundle if is_aab else artifacts.uploadapk
     result = call(packageName=pkg, media_body=media).execute()
 
-    print(f"\nDone. Internal App Sharing install link:\n\n  {result.get('downloadUrl')}\n\n"
-          "Open it on the device signed into an authorized account (an uploader, or an\n"
-          "internal-app-sharing tester). The same versionCode can be re-uploaded any number of times.")
+    url = result.get('downloadUrl')
+    print(f"\nDone. Internal App Sharing install link:\n\n  {url}\n")
+    if args.open_emu:
+        _open_on_emulator(url, pkg, args.open_emu_timeout, args.open_emu_interval)
+    else:
+        print("Open it on the device signed into an authorized account (an uploader, or an\n"
+              "internal-app-sharing tester). The same versionCode can be re-uploaded any number of times.")
 
 
 def main():
@@ -250,6 +446,16 @@ def main():
     sh = sub.add_parser("share", help="upload an APK/AAB to Internal App Sharing and print the install link")
     sh.add_argument("artifact", nargs="?", default=DEFAULT_AAB, help=f"path to the APK/AAB (default: {DEFAULT_AAB})")
     sh.add_argument("--dry-run", action="store_true", help="don't upload; just show what would happen")
+    sh.add_argument("--open-emu", action="store_true",
+                    help="after upload, send the link to a running Play Store emulator (launching one if "
+                         "none is running), polling the on-device Play Store UI until it shows the "
+                         "Install/Update button (i.e. Play has processed the new artifact); falls back to "
+                         "printing the adb command if there's no single suitable emulator")
+    sh.add_argument("--open-emu-timeout", type=int, default=120, metavar="SECONDS",
+                    help="max seconds to poll for Play to process the artifact / show Install/Update "
+                         "(default: 120)")
+    sh.add_argument("--open-emu-interval", type=int, default=5, metavar="SECONDS",
+                    help="seconds between poll attempts / re-fires while waiting (default: 5)")
     sh.set_defaults(func=cmd_share)
 
     args = p.parse_args()
