@@ -59,6 +59,19 @@ object QaLaunchConfig {
     private const val EXTRA_SERVICE_NETWORK = "sessionServiceNetwork"
 
     /**
+     * Session Pro backend to use instead of the one compiled into libsession, so a QA backend can be
+     * targeted without rebuilding. iOS's equivalents are `customProBackendUrl`/`customProBackendPubkey`.
+     *
+     * Both are required together, and [EXTRA_PRO_BACKEND_PUBKEY] must be the backend's **Ed25519**
+     * signing key (`signing_pubkey` from its `GET /status`), not the x25519 form — the x25519 key is
+     * derived from it (see ProBackendConfig). A URL paired with the production key verifies every
+     * QA-signed proof as invalid and silently strips Pro content, which reads as an app bug rather
+     * than a config mistake, so a half-supplied pair is rejected rather than half-applied.
+     */
+    private const val EXTRA_PRO_BACKEND_URL = "sessionProBackendUrl"
+    private const val EXTRA_PRO_BACKEND_PUBKEY = "sessionProBackendPubkey"
+
+    /**
      * Read any supported extras off [intent] and persist them. Safe to call on every launch: absent
      * extras leave the corresponding preference untouched.
      */
@@ -86,6 +99,7 @@ object QaLaunchConfig {
             // Order matters: point the devnet at the right seed BEFORE switching the environment onto it.
             applyDevnetSeedUrl(intent, prefs)
             applyServiceNetwork(intent, prefs)
+            applyProBackend(intent, prefs)
         } catch (e: RuntimeException) {
             Log.e(TAG, "Ignoring unreadable launch extras", e)
             return
@@ -143,6 +157,61 @@ object QaLaunchConfig {
             it.name.lowercase().replace("_", "") == normalised || it.label.lowercase() == normalised
         }
     }
+
+    /**
+     * Points the app at a different Session Pro backend.
+     *
+     * Only applied when BOTH extras are present and valid — see [EXTRA_PRO_BACKEND_URL] for why a
+     * mismatched pair is worse than no override at all. Passing an empty URL clears the override and
+     * falls back to the backend compiled into libsession.
+     */
+    private fun applyProBackend(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_BACKEND_URL) && !intent.hasExtra(EXTRA_PRO_BACKEND_PUBKEY)) {
+            return false
+        }
+
+        val rawUrl = intent.getStringExtra(EXTRA_PRO_BACKEND_URL).orEmpty().trim()
+        val rawPubkey = intent.getStringExtra(EXTRA_PRO_BACKEND_PUBKEY).orEmpty().trim()
+
+        // Deliberately distinguishes "absent" from "present but empty": an empty URL is how a test
+        // asks to clear a previous override.
+        if (rawUrl.isEmpty() && rawPubkey.isEmpty()) {
+            if (prefs.getProBackendUrl() == null && prefs.getProBackendPubkey() == null) {
+                return false
+            }
+            Log.i(TAG, "Clearing Pro backend override")
+            prefs.setProBackendUrl(null)
+            prefs.setProBackendPubkey(null)
+            return true
+        }
+
+        if (rawUrl.toHttpUrlOrNull() == null) {
+            Log.e(TAG, "Ignoring Pro backend override: malformed '$EXTRA_PRO_BACKEND_URL' ('$rawUrl')")
+            return false
+        }
+
+        if (!isEd25519PubKeyHex(rawPubkey)) {
+            Log.e(
+                TAG,
+                "Ignoring Pro backend override: '$EXTRA_PRO_BACKEND_PUBKEY' must be 64 hex characters " +
+                    "(the backend's Ed25519 signing_pubkey), got '${rawPubkey.length}' characters"
+            )
+            return false
+        }
+
+        if (rawUrl == prefs.getProBackendUrl() && rawPubkey == prefs.getProBackendPubkey()) {
+            Log.i(TAG, "Pro backend override already set to $rawUrl")
+            return false
+        }
+
+        Log.i(TAG, "Setting Pro backend override to $rawUrl (takes effect on next launch)")
+        prefs.setProBackendUrl(rawUrl)
+        prefs.setProBackendPubkey(rawPubkey)
+        return true
+    }
+
+    private fun isEd25519PubKeyHex(value: String): Boolean =
+        value.length == 64 && value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
 
     private fun applyDevnetSeedUrl(intent: Intent, prefs: TextSecurePreferences): Boolean {
         // Deliberately distinguishes "absent" from "present but empty": passing an empty value is how

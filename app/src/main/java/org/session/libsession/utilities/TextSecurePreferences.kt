@@ -35,6 +35,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SEEN_DONATION_CTA_AMOUNT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEVNET_SEED_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.PRO_BACKEND_PUBKEY
+import org.session.libsession.utilities.TextSecurePreferences.Companion.PRO_BACKEND_URL
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SNODE_POOL_SEED_MARKER
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
@@ -191,6 +193,17 @@ interface TextSecurePreferences {
     fun setDevnetSeedUrl(value: String?)
 
     /**
+     * Overrides the Session Pro backend, so a QA backend can be targeted without rebuilding. Both
+     * must be set together: the pubkey is what proofs are verified against, so a QA-signed proof read
+     * with the production key is simply invalid. `null` (the default) means use the compiled-in
+     * backend from libsession.
+     */
+    fun getProBackendUrl(): String?
+    fun setProBackendUrl(value: String?)
+    fun getProBackendPubkey(): String?
+    fun setProBackendPubkey(value: String?)
+
+    /**
      * Identifies the seed configuration the cached snode pool was fetched from, so a pool belonging
      * to a previous network can be discarded (see SnodeDirectory). Opaque; do not parse.
      */
@@ -314,6 +327,8 @@ interface TextSecurePreferences {
         const val LAST_VERSION_CHECK = "pref_last_version_check"
         const val ENVIRONMENT = "debug_environment"
         const val DEVNET_SEED_URL = "debug_devnet_seed_url"
+        const val PRO_BACKEND_URL = "debug_pro_backend_url"
+        const val PRO_BACKEND_PUBKEY = "debug_pro_backend_pubkey"
         const val SNODE_POOL_SEED_MARKER = "snode_pool_seed_marker"
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
@@ -947,6 +962,18 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setDevnetSeedUrl(value: String?) {
         setStringPreference(DEVNET_SEED_URL, value)
+    }
+
+    override fun getProBackendUrl(): String? = getStringPreference(PRO_BACKEND_URL, null)
+
+    override fun setProBackendUrl(value: String?) {
+        setStringPreference(PRO_BACKEND_URL, value)
+    }
+
+    override fun getProBackendPubkey(): String? = getStringPreference(PRO_BACKEND_PUBKEY, null)
+
+    override fun setProBackendPubkey(value: String?) {
+        setStringPreference(PRO_BACKEND_PUBKEY, value)
     }
 
     override fun getSnodePoolSeedMarker(): String? = getStringPreference(SNODE_POOL_SEED_MARKER, null)
