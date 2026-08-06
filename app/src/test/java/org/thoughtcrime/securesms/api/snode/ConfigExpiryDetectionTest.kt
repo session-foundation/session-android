@@ -102,6 +102,12 @@ class ConfigExpiryDetectionTest {
      * flag is the only thing that can produce Inconclusive. The first version passed `unchanged = null`,
      * which is unreadable on its own (V8b) — so the test went green whether or not the extend flag was
      * consulted at all, and a mutation deleting that guard left it passing. It now fails on that mutation.
+     *
+     * ⚠️ **This fixture is deliberately counterfactual and must stay that way.** A real server omits
+     * `unchanged` when it decides the request wasn't an extend, so production triggers *both* causes at
+     * once — which is exactly why the realistic fixture cannot isolate either. Making this "accurate" by
+     * restoring `unchanged = null` re-breaks the test silently and it will still pass. The realistic shape
+     * is covered by V8b, whose subject *is* the unreadable response.
      */
     @Test
     fun `V8 - detection is unavailable without an extend request`() {

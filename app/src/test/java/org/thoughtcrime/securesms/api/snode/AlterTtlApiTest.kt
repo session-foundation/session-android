@@ -111,6 +111,10 @@ class AlterTtlApiTest {
         // whether or not the alter type was checked at all: it would have gone green against an
         // implementation that read shorten responses for absence. Read this way it discriminates —
         // drop the alter-type guard and both hashes come back as Checked missing.
+        //
+        // ⚠️ Deliberately counterfactual, and it must stay that way: a real shorten response omits
+        // `unchanged`, so production trips both causes together and no realistic fixture can isolate
+        // either one. "Correcting" this body to omit `unchanged` makes the test vacuous again, silently.
         val report = handle(
             AlterTtlApi.AlterType.Shorten,
             """{ "swarm": { "aa": { "updated": [], "unchanged": {}, "expiry": 1 } } }"""
