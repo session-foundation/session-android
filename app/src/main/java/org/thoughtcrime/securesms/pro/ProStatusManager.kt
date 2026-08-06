@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -442,9 +443,65 @@ class ProStatusManager @Inject constructor(
         }
         Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Purchase in flight; set pro_prepaid, scheduling proof redemption")
         ProProofGenerationWorker.schedule(application)
+        pollProStatusAfterPurchase()
+    }
+
+    /**
+     * After a purchase, chase the ACCOUNT expiry (get_pro_status) — not the proof. The store took the
+     * payment but the backend only learns of it out-of-band (an async store notification), so a single
+     * refresh right after the purchase usually fires before the backend knows and reads a stale
+     * "expired" — and nothing else re-fetches (the proof is still valid so the renewal loop is dormant,
+     * and pro_prepaid is suppressed while a proof is held). We deliberately do NOT rotate the proof
+     * early (that would leak the subscription change via the rotating seed); we only re-fetch the
+     * display-only status, on a bounded poll, until the account flips to active.
+     */
+    private fun pollProStatusAfterPurchase() {
+        scope.launch {
+            val repo = proStatusRepository.get()
+            // We're done when the ACCOUNT expiry advances past this pre-purchase value — that's the field
+            // that moves once the backend redeems the new payment.
+            val baselineExpiry = repo.loadState.value.lastUpdated?.first?.expiry
+            // Keep firing until it's been ~2 minutes since the FIRST request: an onion-routed fetch can
+            // take a while (or time out around 30s), so a short window would only manage one attempt.
+            val stopFiringAfter = snodeClock.currentTime().plusMillis(PURCHASE_POLL_WINDOW_MS)
+            // Backstop in case a fetch never settles (it should always resolve to Loaded/Error) so we
+            // never leave this polling indefinitely.
+            withTimeoutOrNull(PURCHASE_POLL_MAX_MS) {
+                while (true) {
+                    // Fire immediately (over onion routing the request often reaches the backend after
+                    // the store's async notification already did).
+                    val before = repo.loadState.value.lastUpdated?.second
+                    repo.requestRefresh(force = true)
+                    // Pace off COMPLETION, not request-start: requestRefresh enqueues with REPLACE, so
+                    // re-firing while a slow request is in flight would just cancel and restart it forever.
+                    // Wait for THIS fetch to settle — a newer Loaded, or an Error (failure/timeout).
+                    val settled = repo.loadState.first { st ->
+                        (st is ProStatusRepository.LoadState.Loaded && st.lastUpdated.second != before) ||
+                            st is ProStatusRepository.LoadState.Error
+                    }
+                    val newExpiry = (settled as? ProStatusRepository.LoadState.Loaded)
+                        ?.lastUpdated?.first?.expiry
+                    if (newExpiry != null && (baselineExpiry == null || newExpiry.isAfter(baselineExpiry))) {
+                        break
+                    }
+                    // Failure/timeout, or a response whose account expiry hasn't advanced yet: wait 5s and
+                    // retry, as long as we're still within the ~2-minute window.
+                    if (!snodeClock.currentTime().isBefore(stopFiringAfter)) break
+                    delay(PURCHASE_POLL_INTERVAL_MS)
+                }
+            }
+        }
     }
 
     companion object {
+        // Bounded post-purchase get_pro_status poll (the backend learns of the payment out-of-band via
+        // an async store notification): after each fetch settles, wait 5s and retry until it's been ~2
+        // minutes since the first request, so slow/timing-out onion requests still get a few attempts.
+        private const val PURCHASE_POLL_INTERVAL_MS = 5_000L
+        private const val PURCHASE_POLL_WINDOW_MS = 120_000L
+        // Hard backstop (> the window) so a fetch that never settles can't poll forever.
+        private const val PURCHASE_POLL_MAX_MS = 150_000L
+
         // Single-sourced from libsession (see SessionProtocol) rather than hard-coded here.
         val MAX_CHARACTER_PRO = SessionProtocol.PRO_HIGHER_CHARACTER_LIMIT // max message codepoints for pro users
         private val MAX_CHARACTER_REGULAR = SessionProtocol.STANDARD_CHARACTER_LIMIT // max message codepoints for non-pro users
