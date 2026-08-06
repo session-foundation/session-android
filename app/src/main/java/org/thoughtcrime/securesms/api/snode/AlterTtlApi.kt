@@ -37,7 +37,7 @@ class AlterTtlApi @AssistedInject constructor(
             )
         }.getOrElse { e ->
             Log.w("AlterTtlApi", "Unable to read the expire response for missing configs", e)
-            ConfigExpiryReport.Inconclusive
+            ConfigExpiryReport.Inconclusive.ResponseUnreadable
         }
 
         return Result(expiry = report)

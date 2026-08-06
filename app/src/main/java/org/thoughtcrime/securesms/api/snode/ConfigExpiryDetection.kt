@@ -15,10 +15,39 @@ import kotlinx.serialization.Serializable
  */
 sealed interface ConfigExpiryReport {
     /**
-     * The response can't tell us anything: either the request didn't ask for an extension, or no
-     * sub-response was usable. No hash may be treated as missing.
+     * The response can't tell us anything, and **no hash may be treated as missing**. Every consumer
+     * treats these identically — the distinction is not a behavioural one, it exists so that a test can
+     * name *which* condition it is exercising.
+     *
+     * That is not cosmetic. When several conditions share one value, a fixture set up for one of them
+     * usually satisfies another as well, and the test then passes without touching the guard it names:
+     * two tests here did exactly that, and both went green with their guard deleted. Distinct values make
+     * every fixture self-isolating, because asserting the cause *is* asserting the guard ran.
      */
-    data object Inconclusive : ConfigExpiryReport
+    sealed interface Inconclusive : ConfigExpiryReport {
+        /**
+         * No extension was requested, so the server omits `unchanged` by definition and the response says
+         * nothing about absence whatever else it contains.
+         */
+        data object ExtendNotRequested : Inconclusive
+
+        /** We asked about no hashes, so there is nothing the answer could be about. */
+        data object NothingAsked : Inconclusive
+
+        /**
+         * Every sub-response was unusable — each one either `failed` or omitted `unchanged`. Distinct from
+         * [ExtendNotRequested] because here we *did* ask and the swarm still told us nothing.
+         */
+        data object NoUsableSubResponse : Inconclusive
+
+        /**
+         * The response body couldn't be decoded at all, so detection never ran. Deliberately *not* folded
+         * into [NoUsableSubResponse]: that one means the swarm answered and told us nothing, this one means
+         * we failed to read what it said. Collapsing the two would reintroduce, in the type meant to
+         * prevent it, exactly the ambiguity this split exists to remove.
+         */
+        data object ResponseUnreadable : Inconclusive
+    }
 
     /** At least one snode gave a usable answer. [missingHashes] may be empty, meaning all healthy. */
     data class Checked(val missingHashes: Set<String>) : ConfigExpiryReport
@@ -81,7 +110,8 @@ fun groupExpiredFromExpiryCheck(
  *    omitting `unchanged`.
  * 2. A sub-response carrying `failed` contributes nothing at all — not evidence of presence, not of
  *    absence. Reading a timeout as "that snode doesn't have it" would turn every network blip into
- *    a re-push storm. If nothing is left to read, the answer is [ConfigExpiryReport.Inconclusive].
+ *    a re-push storm. If nothing is left to read, the answer is
+ *    [ConfigExpiryReport.Inconclusive.NoUsableSubResponse].
  * 3. One usable snode reporting a hash as absent is enough to call it missing; agreement is not
  *    required. Re-storing is idempotent so a false positive costs a request, whereas waiting for
  *    consensus would lean on the swarm replication that is itself the unreliable part.
@@ -96,7 +126,7 @@ fun detectMissingConfigHashes(
     swarm: Map<String, SnodeExpiryState>,
 ): ConfigExpiryReport {
     if (!extendRequested) {
-        return ConfigExpiryReport.Inconclusive
+        return ConfigExpiryReport.Inconclusive.ExtendNotRequested
     }
 
     // Asking about nothing tells us nothing. The tempting short-circuit here is
@@ -105,12 +135,12 @@ fun detectMissingConfigHashes(
     // detection the authority for precisely the case it is supposed to defer on, and the fallback
     // unreachable. All three Session clients wrote that short-circuit independently.
     if (requestedHashes.isEmpty()) {
-        return ConfigExpiryReport.Inconclusive
+        return ConfigExpiryReport.Inconclusive.NothingAsked
     }
 
     val usable = swarm.values.filter { !it.failed && it.unchanged != null }
     if (usable.isEmpty()) {
-        return ConfigExpiryReport.Inconclusive
+        return ConfigExpiryReport.Inconclusive.NoUsableSubResponse
     }
 
     return ConfigExpiryReport.Checked(

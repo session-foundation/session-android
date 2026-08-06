@@ -112,15 +112,17 @@ class AlterTtlApiTest {
         // implementation that read shorten responses for absence. Read this way it discriminates —
         // drop the alter-type guard and both hashes come back as Checked missing.
         //
-        // ⚠️ Deliberately counterfactual, and it must stay that way: a real shorten response omits
-        // `unchanged`, so production trips both causes together and no realistic fixture can isolate
-        // either one. "Correcting" this body to omit `unchanged` makes the test vacuous again, silently.
+        // ⚠️ Deliberately counterfactual: a real shorten response omits `unchanged`, so production trips
+        // both causes together and no realistic fixture can isolate either one. Since the assertion now
+        // names the cause, "correcting" this body to omit `unchanged` fails the test LOUDLY (it would come
+        // back NoUsableSubResponse) rather than passing vacuously — which is the whole point of the causes
+        // being distinguishable, and why the fixture and the assertion have to be read together.
         val report = handle(
             AlterTtlApi.AlterType.Shorten,
             """{ "swarm": { "aa": { "updated": [], "unchanged": {}, "expiry": 1 } } }"""
         )
 
-        assertEquals(ConfigExpiryReport.Inconclusive, report)
+        assertEquals(ConfigExpiryReport.Inconclusive.ExtendNotRequested, report)
     }
 
     /**
@@ -132,7 +134,10 @@ class AlterTtlApiTest {
     fun `an unreadable response degrades to inconclusive instead of failing the request`() = runTest {
         val report = handle(AlterTtlApi.AlterType.Extend, """{ "swarm": "not-a-dict" }""")
 
-        assertEquals(ConfigExpiryReport.Inconclusive, report)
+        // ResponseUnreadable, not NoUsableSubResponse: detection never ran at all here. Asserting the
+        // specific cause is what proves the degradation happened in the decode and not somewhere inside
+        // the rules.
+        assertEquals(ConfigExpiryReport.Inconclusive.ResponseUnreadable, report)
     }
 
     private fun api(alterType: AlterTtlApi.AlterType) = AlterTtlApi(

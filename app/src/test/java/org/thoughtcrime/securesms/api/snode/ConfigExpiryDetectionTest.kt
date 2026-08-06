@@ -77,7 +77,7 @@ class ConfigExpiryDetectionTest {
             "snodeB" to SnodeExpiryState(failed = true),
         )
 
-        assertEquals(ConfigExpiryReport.Inconclusive, report)
+        assertEquals(ConfigExpiryReport.Inconclusive.NoUsableSubResponse, report)
     }
 
     /**
@@ -117,7 +117,7 @@ class ConfigExpiryDetectionTest {
             swarm = mapOf("snodeA" to SnodeExpiryState(updated = listOf(h1), unchanged = emptyMap())),
         )
 
-        assertEquals(ConfigExpiryReport.Inconclusive, report)
+        assertEquals(ConfigExpiryReport.Inconclusive.ExtendNotRequested, report)
     }
 
     /**
@@ -131,7 +131,7 @@ class ConfigExpiryDetectionTest {
             "snodeA" to SnodeExpiryState(updated = listOf(h1), unchanged = null),
         )
 
-        assertEquals(ConfigExpiryReport.Inconclusive, report)
+        assertEquals(ConfigExpiryReport.Inconclusive.NoUsableSubResponse, report)
     }
 
     @Test
@@ -266,7 +266,7 @@ class ConfigExpiryDetectionTest {
             swarm = mapOf("snodeA" to SnodeExpiryState(updated = emptyList(), unchanged = emptyMap())),
         )
 
-        assertEquals(ConfigExpiryReport.Inconclusive, report)
+        assertEquals(ConfigExpiryReport.Inconclusive.NothingAsked, report)
     }
 
     @Test
@@ -282,12 +282,22 @@ class ConfigExpiryDetectionTest {
         )
     }
 
+    /**
+     * Every cause, not a sampled one: the causes are distinguishable precisely so a test can name them, and
+     * a new cause added later must not quietly acquire the power to flag a group expired.
+     */
     @Test
-    fun `an inconclusive check leaves the expired state alone`() {
-        assertEquals(
-            null,
-            groupExpiredFromExpiryCheck(ConfigExpiryReport.Inconclusive, keysHashes = setOf("keys-1"))
+    fun `an inconclusive check leaves the expired state alone, whatever made it inconclusive`() {
+        val causes = listOf(
+            ConfigExpiryReport.Inconclusive.ExtendNotRequested,
+            ConfigExpiryReport.Inconclusive.NothingAsked,
+            ConfigExpiryReport.Inconclusive.NoUsableSubResponse,
+            ConfigExpiryReport.Inconclusive.ResponseUnreadable,
         )
+
+        for (cause in causes) {
+            assertEquals(null, groupExpiredFromExpiryCheck(cause, keysHashes = setOf("keys-1")), "$cause")
+        }
     }
 
     @Test

@@ -605,11 +605,17 @@ class ExpiredConfigRecoveryTest {
         coVerify(exactly = 0) { deleteMessageApiFactory.create(any(), any()) }
     }
 
+    /** Every cause, so that a cause added later cannot quietly become one that authorises a store. */
     @Test
-    fun `an inconclusive report triggers nothing`() = runTest {
+    fun `an inconclusive report triggers nothing, whatever made it inconclusive`() = runTest {
         recovery.markLocalStateLevelWithSwarm(userId.hexString, mergedConfigMessagesForDiagnosticsOnly = true)
 
-        recovery.onUserConfigsChecked(userAuth(), ConfigExpiryReport.Inconclusive)
+        listOf(
+            ConfigExpiryReport.Inconclusive.ExtendNotRequested,
+            ConfigExpiryReport.Inconclusive.NothingAsked,
+            ConfigExpiryReport.Inconclusive.NoUsableSubResponse,
+            ConfigExpiryReport.Inconclusive.ResponseUnreadable,
+        ).forEach { recovery.onUserConfigsChecked(userAuth(), it) }
 
         assertStoreCount(0)
         assertRecoveryStillReachable()
