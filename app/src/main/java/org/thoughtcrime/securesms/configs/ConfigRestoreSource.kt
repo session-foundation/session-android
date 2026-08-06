@@ -2,10 +2,13 @@ package org.thoughtcrime.securesms.configs
 
 import network.loki.messenger.libsession_util.MutableConfig
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
+import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsession.utilities.withMutableGroupConfigs
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.AccountId
@@ -26,6 +29,13 @@ class PendingRestore(
      * part missing is already covered.
      */
     val claimedHashes: Set<String>,
+
+    /**
+     * Whether this restore is a group's *keys* config. Recovery needs to know, because a successful keys
+     * re-store is what clears the expired-group banner — and it has to be a typed fact rather than a match
+     * on [label], which is a human-readable string nobody has promised to keep stable.
+     */
+    val isGroupKeys: Boolean = false,
 
     namespace: () -> Int,
 ) {
@@ -133,20 +143,12 @@ class ConfigRestoreSource @Inject constructor(
             // config its obsolete hashes, and a member subaccount has no Delete access anyway. Those
             // two facts cancel rather than compound — a member re-stores and simply never prunes.
             //
-            // The keys config is absent here, and the reason is the **Android wrapper**, not libsession:
-            // libsession retains the raw bytes of every active keys message and exposes them
-            // (Keys::active_key_messages), but no JNI binding for that exists yet. The only keys bytes
-            // reachable from Kotlin are pendingConfig(), which is a message this device authored and has
-            // not pushed — the wrong thing entirely, because retention is a property of having *loaded* a
-            // message, not of having authored one. So a group whose keys have expired is detected and
-            // flagged, and not recovered, until that binding lands.
-            //
-            // When it does, note what it is *not*: an admin path. Any device that loaded the message holds
-            // the bytes and can push them back unchanged — a member included, since the bytes carry the
-            // admin's signature already. Immediately after its own rekey an admin holds no bytes for the
-            // message it just created and is the device *least* able to repair it. An admin rekey remains
-            // the only remedy when no device anywhere still holds the bytes, which is what the banner is
-            // for; it is not the remedy when some device does.
+            // Keys are recoverable too, and NOT via an admin path: libsession retains the raw bytes of
+            // every keys message this device has *loaded*, and pushing those bytes back lands on the same
+            // hash without being re-signed. A member holding them can repair the group; an admin
+            // immediately after its own rekey holds nothing for the message it just created and is the
+            // device *least* able to. An admin rekey is the remedy only when no device anywhere still
+            // holds the bytes — which is what the banner is for.
             listOfNotNull(
                 configs.groupInfo.toRestore(
                     label = "group info for $groupId",
@@ -158,8 +160,89 @@ class ConfigRestoreSource @Inject constructor(
                     missingHashes = missingHashes,
                     namespace = { Namespace.GROUP_MEMBERS() },
                 ),
+                configs.groupKeys.keysToRestore(
+                    label = "group keys for $groupId",
+                    missingHashes = missingHashes,
+                ),
             )
         }
+    }
+
+    /**
+     * Whether this device could put back a group's keys, and if so the bytes to send.
+     *
+     * The one predicate behind both the expired-group flag and the re-store itself, shared rather than
+     * duplicated on purpose: if the two ever disagreed in the direction "flag says repairable, recovery
+     * declines", the banner would never appear AND nothing would be fixed — silently, and for good.
+     *
+     * Returns null when no hash the swarm has lost is one we hold bytes for. Holding bytes for messages
+     * that are all still present is not a reason to write anything.
+     */
+    private fun ReadableGroupKeysConfig.retainedKeysCovering(
+        missingHashes: Set<String>,
+    ): Map<String, ByteArray>? {
+        val retained = activeKeyMessages()
+        return retained.takeIf { missingHashes.any { hash -> hash in it.keys } }
+    }
+
+    /**
+     * Whether the expired-group banner should be withheld for [groupId] because this device can repair it.
+     *
+     * Deliberately **not** gated on the things that gate the *action* — foreground, backoff, being level
+     * with the swarm. Those decide whether to write now; this decides whether the group is beyond reach at
+     * all, and a group whose repair is merely deferred until the app is foregrounded is not expired. Gating
+     * this on them would raise a banner that a later poll takes away, which is the flicker v119(a) exists
+     * to avoid.
+     */
+    fun canRepairGroupKeys(groupId: AccountId, missingHashes: Set<String>): Boolean {
+        val group = configFactory.getGroup(groupId)
+        if (group == null || group.kicked || group.destroyed) {
+            // No credentials and a revoked subaccount token: the bytes are irrelevant, we cannot store.
+            return false
+        }
+
+        return configFactory.withGroupConfigs(groupId) { configs ->
+            configs.groupKeys.retainedKeysCovering(missingHashes) != null
+        }
+    }
+
+    /**
+     * The keys equivalent of [toRestore], and deliberately not the same function.
+     *
+     * **Every retained message goes back, not just the missing ones.** A generation is a rekey plus every
+     * supplemental issued against it, and a member who receives only part of a generation cannot derive the
+     * key — so a partial re-store is worse than none. The retained set is not keyed by generation and
+     * carries no generation field, so grouping is not expressible here; re-storing all of it is a strict
+     * superset of "the affected generation" and therefore satisfies the requirement a fortiori. It is
+     * bounded (retention follows the key expiry) and idempotent, since each message is byte-identical to
+     * what the swarm already had and lands on the same hash.
+     *
+     * None of the [shouldRestore] guards apply. There is no `needsPush` for keys — a pending rekey is a
+     * *new* message, not a re-store of an old one, and it goes out through the uploader. There is no
+     * obsolete-hash list either, so nothing is pruned and no delete is issued.
+     *
+     * Returns null when this device holds no bytes for any missing hash, which is the case the
+     * expired-group banner exists for.
+     */
+    private fun ReadableGroupKeysConfig.keysToRestore(
+        label: String,
+        missingHashes: Set<String>,
+    ): PendingRestore? {
+        val retained = retainedKeysCovering(missingHashes) ?: return null
+
+        Log.d(TAG, "Restoring all ${retained.size} retained keys message(s) for $label")
+
+        return PendingRestore(
+            label = label,
+            push = ConfigPush(
+                messages = retained.values.map { Bytes(it) },
+                seqNo = 0L,
+                obsoleteHashes = emptyList(),
+            ),
+            claimedHashes = retained.keys,
+            isGroupKeys = true,
+            namespace = { Namespace.GROUP_KEYS() },
+        )
     }
 
     /**

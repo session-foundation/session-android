@@ -125,6 +125,78 @@ class ConfigRestoreSourceTest {
     }
 
     /**
+     * V23 — keys ARE restorable when this device holds their bytes, and a **member** can do it: the retained
+     * message carries the admin's signature already, so pushing it back lands on the same hash without being
+     * re-signed. This fixture is a non-admin deliberately.
+     */
+    @Test
+    fun `V23 - a missing keys hash whose bytes are held is restorable by a member`() {
+        givenGroup(adminKey = null)
+        givenGroupConfigs(retainedKeys = mapOf("keys-1" to "keys-one".toByteArray()))
+
+        val restores = source.groupConfigsToRestore(groupId, setOf("keys-1"))
+
+        val keys = restores.single { it.isGroupKeys }
+        assertEquals(setOf("keys-1"), keys.claimedHashes)
+        assertEquals(listOf("keys-one"), keys.push.messages.map { String(it.data) })
+        // No obsolete-hash list for keys, so nothing is ever pruned on this path.
+        assertEquals(emptyList(), keys.push.obsoleteHashes)
+    }
+
+    /**
+     * V23b — a supplemental is retained and re-stored **at all**.
+     *
+     * A generation is a rekey plus every supplemental issued against it, and a member who receives only part
+     * of one cannot derive the key. Retention is keyed by message hash, not by generation, so all of it goes
+     * back whenever any of it is missing — which is a strict superset of "the affected generation" and the
+     * only form expressible on this API, since the retained map carries no generation field.
+     *
+     * What this pins is that supplementals are not silently dropped: it is the test that fails if someone
+     * "tidies" the cache to be keyed by generation, or re-stores only the hash the swarm reported.
+     */
+    @Test
+    fun `V23b - every retained keys message is re-stored, supplementals included`() {
+        givenGroup(adminKey = null)
+        givenGroupConfigs(
+            retainedKeys = mapOf(
+                "rekey-1" to "the-rekey".toByteArray(),
+                "supplement-1" to "for-alice".toByteArray(),
+                "supplement-2" to "for-bob".toByteArray(),
+            )
+        )
+
+        // Only ONE hash is reported missing; all three must still go back.
+        val keys = source.groupConfigsToRestore(groupId, setOf("supplement-1")).single { it.isGroupKeys }
+
+        assertEquals(setOf("rekey-1", "supplement-1", "supplement-2"), keys.claimedHashes)
+        assertEquals(3, keys.push.messages.size)
+    }
+
+    @Test
+    fun `canRepairGroupKeys is true only when a MISSING hash is one we hold`() {
+        givenGroup(adminKey = null)
+        givenGroupConfigs(retainedKeys = mapOf("keys-1" to "keys-one".toByteArray()))
+
+        assertTrue(source.canRepairGroupKeys(groupId, setOf("keys-1")))
+
+        // Holding bytes for messages the swarm still has is not a reason to write, and must not withhold
+        // the banner for a group whose *other* keys are genuinely gone.
+        assertFalse(source.canRepairGroupKeys(groupId, setOf("keys-99")))
+    }
+
+    /**
+     * A kicked group cannot be repaired however many bytes we hold — the credentials are gone and the
+     * subaccount token is revoked, so the store would only generate auth failures. The flag must stand.
+     */
+    @Test
+    fun `canRepairGroupKeys is false for a kicked group even holding the bytes`() {
+        givenGroup(adminKey = null, kicked = true)
+        givenGroupConfigs(retainedKeys = mapOf("keys-1" to "keys-one".toByteArray()))
+
+        assertFalse(source.canRepairGroupKeys(groupId, setOf("keys-1")))
+    }
+
+    /**
      * The keys config is not in the restorable set at all, and a missing keys hash goes straight to the
      * expired-group flag instead.
      *
@@ -205,15 +277,21 @@ class ConfigRestoreSourceTest {
     private fun givenGroupConfigs(
         activeHashes: List<String> = listOf(h1, h2),
         obsoleteHashes: List<String> = emptyList(),
+        retainedKeys: Map<String, ByteArray> = emptyMap(),
     ) {
         val configs = mockk<MutableGroupConfigs>()
         every { configs.groupInfo } returns
                 mockk<MutableGroupInfoConfig>().withState(activeHashes, obsoleteHashes = obsoleteHashes)
         every { configs.groupMembers } returns
                 mockk<MutableGroupMembersConfig>().withState(activeHashes, obsoleteHashes = obsoleteHashes)
-        every { configs.groupKeys } returns mockk<MutableGroupKeysConfig>(relaxed = true)
+        every { configs.groupKeys } returns mockk<MutableGroupKeysConfig>(relaxed = true).also {
+            every { it.activeKeyMessages() } returns retainedKeys
+        }
 
         every { configFactory.dangerouslyAccessMutableGroupConfigs(groupId) } returns (configs to {})
+        // canRepairGroupKeys reads through the *read-only* accessor, so it needs its own stub — the
+        // mutable one is not a superset here.
+        every { configFactory.dangerouslyAccessGroupConfigs(groupId) } returns (configs to {})
     }
 
     private fun givenGroup(

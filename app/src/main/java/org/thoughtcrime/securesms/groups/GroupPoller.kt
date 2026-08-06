@@ -268,8 +268,16 @@ class GroupPoller @AssistedInject constructor(
                         }
 
                         // The keys hashes alone decide this, and only when the check actually had an
-                        // answer — otherwise the empty-keys check above stands.
-                        groupExpiredFromExpiryCheck(expiryReport, configHashes.keys)?.let {
+                        // answer — otherwise the empty-keys check above stands. "Expired" now means the
+                        // keys are gone AND this device cannot put them back, so the repairable question
+                        // is part of the rule rather than something applied to its answer.
+                        groupExpiredFromExpiryCheck(
+                            report = expiryReport,
+                            keysHashes = configHashes.keys,
+                            canRepairKeys = {
+                                expiredConfigRecovery.canRepairGroupKeys(groupId, configHashes.keys)
+                            },
+                        )?.let {
                             groupExpired = it
                         }
 

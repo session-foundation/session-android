@@ -45,6 +45,7 @@ class ExpiredConfigRecoveryTest {
 
     private val h2 = "hash-two"
     private val userId = AccountId(IdPrefix.STANDARD, ByteArray(32) { 1 })
+    private val groupId = AccountId(IdPrefix.GROUP, ByteArray(32) { 2 })
 
     private lateinit var restoreSource: ConfigRestoreSource
     private lateinit var appVisibilityManager: AppVisibilityManager
@@ -733,6 +734,146 @@ class ExpiredConfigRecoveryTest {
         assertStoreCount(0)
     }
 
+    /**
+     * V23d — a group already flagged expired must have the flag cleared **by the re-store itself**.
+     *
+     * The reactive path cannot do this. It clears the flag when a keys message is *handled*, and the device
+     * that re-stored the bytes already holds that hash, so it may never handle it again — leaving a banner up
+     * permanently over keys that are back on the swarm. So a successful keys re-store emits directly.
+     */
+    @Test
+    fun `V23d - a successful keys re-store announces itself so the flag can be cleared`() = runTest {
+        givenGroupKeysRestorable()
+        recovery.markLocalStateLevelWithSwarm(groupId.hexString, mergedConfigMessagesForDiagnosticsOnly = true)
+
+        recovery.onGroupConfigsChecked(groupId, authFor(groupId.hexString), keysMissing)
+
+        assertEquals(listOf(groupId), recovery.keysRestored.replayCache)
+    }
+
+    /**
+     * V23c — a keys re-store that FAILED must not announce anything, so the flag stays up.
+     *
+     * What this pins is only that a wholly failed round is silent. It does NOT pin per-restore emission over
+     * per-round — every store fails here, so a round-level signal stays silent too and both implementations
+     * pass. The mixed round below is the test that separates them; this comment used to claim that job and
+     * was wrong, which a mutation to round-level emission demonstrated by surviving.
+     */
+    @Test
+    fun `V23c - a failed keys re-store announces nothing, so the flag stands`() = runTest {
+        givenGroupKeysRestorable()
+        coEvery { swarmApiExecutor.send(any(), any()) } throws RuntimeException("store failed")
+        recovery.markLocalStateLevelWithSwarm(groupId.hexString, mergedConfigMessagesForDiagnosticsOnly = true)
+
+        recovery.onGroupConfigsChecked(groupId, authFor(groupId.hexString), keysMissing)
+
+        assertEquals(emptyList(), recovery.keysRestored.replayCache)
+    }
+
+    /**
+     * A restore that is not the keys config must not clear the banner however well it goes — the flag is the
+     * keys config's alone, and info or members landing says nothing about whether the keys are back.
+     */
+    @Test
+    fun `a successful non-keys restore announces nothing`() = runTest {
+        every { restoreSource.groupConfigsToRestore(groupId, any()) } returns listOf(
+            PendingRestore(
+                label = "group info for $groupId",
+                push = ConfigPush(listOf(Bytes("info".toByteArray())), 7L, emptyList()),
+                claimedHashes = setOf("info-1"),
+                namespace = { GROUP_INFO_NAMESPACE },
+            )
+        )
+        recovery.markLocalStateLevelWithSwarm(groupId.hexString, mergedConfigMessagesForDiagnosticsOnly = true)
+
+        recovery.onGroupConfigsChecked(
+            groupId,
+            authFor(groupId.hexString),
+            ConfigExpiryReport.Checked(setOf("info-1")),
+        )
+
+        assertStoreCount(1)
+        assertEquals(emptyList(), recovery.keysRestored.replayCache)
+    }
+
+    /**
+     * The case that actually distinguishes per-restore emission from per-round: info lands, keys does not.
+     *
+     * V23c alone does NOT pin this, and I claimed it did. It fails *every* store, so `outcomes.any { it }`
+     * is false and a round-level implementation stays silent too — both pass. Verified by mutating the
+     * emission to round-level: V23c, V23d and the non-keys control all survived it. This test is what dies.
+     *
+     * Getting it wrong would clear the banner on a group whose keys never made it back, on the strength of
+     * its *info* config having stored.
+     */
+    @Test
+    fun `a round where info lands and keys fails announces nothing`() = runTest {
+        // A factory that hands back a distinguishable api per namespace, so the keys store can be failed
+        // precisely rather than by call ordering — which is concurrent within a chunk and would make this
+        // test depend on which store happened to run first.
+        val keysApis = mutableSetOf<StoreMessageApi>()
+        val factory = mockk<StoreMessageApi.Factory>()
+        every { factory.create(any(), any(), any()) } answers {
+            mockk<StoreMessageApi>(relaxed = true).also {
+                if (thirdArg<Int>() == GROUP_KEYS_NAMESPACE) keysApis += it
+            }
+        }
+        recovery = ExpiredConfigRecovery(
+            restoreSource = restoreSource,
+            clock = clock,
+            appVisibilityManager = appVisibilityManager,
+            swarmApiExecutor = swarmApiExecutor,
+            storeMessageApiFactory = factory,
+            deleteMessageApiFactory = deleteMessageApiFactory,
+        )
+        coEvery { swarmApiExecutor.send(any(), any()) } answers {
+            val request = secondArg<SwarmApiRequest<*>>()
+            if (request.api in keysApis) throw RuntimeException("keys store 500")
+            storeCalls.incrementAndGet()
+            StoreMessageResponse(hash = h2, timestamp = Instant.EPOCH)
+        }
+
+        every { restoreSource.groupConfigsToRestore(groupId, any()) } returns listOf(
+            PendingRestore(
+                label = "group info for $groupId",
+                push = ConfigPush(listOf(Bytes("info".toByteArray())), 7L, emptyList()),
+                claimedHashes = setOf("info-1"),
+                namespace = { GROUP_INFO_NAMESPACE },
+            ),
+            PendingRestore(
+                label = "group keys for $groupId",
+                push = ConfigPush(listOf(Bytes("keys-bytes".toByteArray())), 0L, emptyList()),
+                claimedHashes = setOf("keys-1"),
+                isGroupKeys = true,
+                namespace = { GROUP_KEYS_NAMESPACE },
+            ),
+        )
+        recovery.markLocalStateLevelWithSwarm(groupId.hexString, mergedConfigMessagesForDiagnosticsOnly = true)
+
+        recovery.onGroupConfigsChecked(
+            groupId,
+            authFor(groupId.hexString),
+            ConfigExpiryReport.Checked(setOf("info-1", "keys-1")),
+        )
+
+        // Info stored, so the round is not a failure — and the banner must still stand.
+        assertEquals(emptyList(), recovery.keysRestored.replayCache)
+    }
+
+    private val keysMissing = ConfigExpiryReport.Checked(setOf("keys-1"))
+
+    private fun givenGroupKeysRestorable() {
+        every { restoreSource.groupConfigsToRestore(groupId, any()) } returns listOf(
+            PendingRestore(
+                label = "group keys for $groupId",
+                push = ConfigPush(listOf(Bytes("keys-bytes".toByteArray())), 0L, emptyList()),
+                claimedHashes = setOf("keys-1"),
+                isGroupKeys = true,
+                namespace = { GROUP_KEYS_NAMESPACE },
+            )
+        )
+    }
+
     private fun givenRestorable(
         claimedHashes: Set<String>,
         messageCount: Int,
@@ -808,6 +949,8 @@ class ExpiredConfigRecoveryTest {
     private companion object {
         /** Hardcoded rather than read from libsession's native `Namespace`, which unit tests can't load. */
         const val CONTACTS_NAMESPACE = 3
+        const val GROUP_KEYS_NAMESPACE = 12
+        const val GROUP_INFO_NAMESPACE = 13
 
         /**
          * Requests one *failing* store produces: `retryWithUniformInterval` wraps each store with three

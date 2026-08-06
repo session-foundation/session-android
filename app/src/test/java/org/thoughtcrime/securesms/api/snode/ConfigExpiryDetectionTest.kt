@@ -6,6 +6,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 /**
  * How an `expire` response is read: which of the hashes we asked about the swarm has lost.
@@ -241,12 +242,13 @@ class ConfigExpiryDetectionTest {
     // --- Which mechanism decides that a group has expired ---
 
     @Test
-    fun `V16 - every requested keys hash gone means the group is expired`() {
+    fun `V16 - every requested keys hash gone, and unrepairable, means the group is expired`() {
         assertEquals(
             true,
             groupExpiredFromExpiryCheck(
                 ConfigExpiryReport.Checked(setOf("keys-1")),
                 keysHashes = setOf("keys-1"),
+                canRepairKeys = { false },
             )
         )
     }
@@ -269,6 +271,7 @@ class ConfigExpiryDetectionTest {
             groupExpiredFromExpiryCheck(
                 ConfigExpiryReport.Checked(setOf("keys-1")),
                 keysHashes = setOf("keys-1", "keys-2"),
+                canRepairKeys = mustNotAsk,
             )
         )
     }
@@ -282,6 +285,7 @@ class ConfigExpiryDetectionTest {
             groupExpiredFromExpiryCheck(
                 ConfigExpiryReport.Checked(setOf("info-1")),
                 keysHashes = setOf("keys-1"),
+                canRepairKeys = mustNotAsk,
             )
         )
     }
@@ -316,6 +320,7 @@ class ConfigExpiryDetectionTest {
             groupExpiredFromExpiryCheck(
                 ConfigExpiryReport.Checked(emptySet()),
                 keysHashes = emptySet(),
+                canRepairKeys = mustNotAsk,
             )
         )
     }
@@ -334,14 +339,51 @@ class ConfigExpiryDetectionTest {
         )
 
         for (cause in causes) {
-            assertEquals(null, groupExpiredFromExpiryCheck(cause, keysHashes = setOf("keys-1")), "$cause")
+            assertEquals(
+                null,
+                groupExpiredFromExpiryCheck(cause, setOf("keys-1"), canRepairKeys = mustNotAsk),
+                "$cause",
+            )
         }
     }
 
     @Test
     fun `no check at all leaves the expired state alone`() {
-        assertEquals(null, groupExpiredFromExpiryCheck(null, keysHashes = setOf("keys-1")))
+        assertEquals(null, groupExpiredFromExpiryCheck(null, setOf("keys-1"), canRepairKeys = mustNotAsk))
     }
+
+    /**
+     * V23a — every keys hash is gone from the swarm, and this device holds the bytes, so the group is **not**
+     * expired: it is repairable from here.
+     *
+     * This is the case the rule change exists for, and it is the only one that distinguishes the new rule
+     * from the old. V16 is the same wire response with the answer inverted by this one fact, which is why
+     * both are needed — either alone would pass against an implementation that ignored the repairable
+     * question entirely.
+     *
+     * The banner must be **withheld** rather than raised and later cleared: it is a visible conversation
+     * banner, so correcting it after the fact is a flicker on a group that was never out of reach.
+     */
+    @Test
+    fun `V23a - keys all gone but held locally is repairable, not expired`() {
+        assertEquals(
+            false,
+            groupExpiredFromExpiryCheck(
+                ConfigExpiryReport.Checked(setOf("keys-1")),
+                keysHashes = setOf("keys-1"),
+                canRepairKeys = { true },
+            )
+        )
+    }
+
+    /**
+     * Answering "can this device repair the keys?" means taking the config lock, so the rule must not ask
+     * until its own guards have passed — otherwise every inconclusive poll pays for an answer that cannot
+     * change the outcome. Passing this where the question is unreachable is what pins that ordering; a
+     * plain Boolean parameter could not express it, because Kotlin would evaluate it before the call.
+     */
+    private val mustNotAsk: () -> Boolean =
+        { fail("canRepairKeys was consulted for a report that cannot depend on it") }
 
     private fun detect(vararg swarm: Pair<String, SnodeExpiryState>) =
         detectMissingConfigHashes(

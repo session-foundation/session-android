@@ -70,32 +70,55 @@ class SnodeExpiryState(
 /**
  * Whether an expiry check is authoritative about a group having expired, and if so what it says.
  *
- * The group keys config decides this on its own. It is the only one of the three whose absence is both
- * unambiguous, and not repairable by this device *yet*: libsession retains the bytes of active keys
- * messages, but the Android wrapper exposes no binding for them, so there is no way from Kotlin to re-emit keys that
- * have already been loaded, so unlike info and members there is no recovery to wait for before
- * flagging. Info or members going missing drives a re-store, never the banner.
+ * The group keys config decides this on its own — info or members going missing drives a re-store, never
+ * the banner.
+ *
+ * **The rule is not "every keys hash is missing".** It is *every keys hash is missing **and** this device
+ * cannot put them back*, and those are one rule rather than a rule plus an override. libsession retains the
+ * raw bytes of the keys messages it has loaded, and re-storing those bytes lands on the same hash without
+ * being re-signed — so a device holding them, admin or member, is looking at a group it can repair rather
+ * than an expired one. Flagging it would raise a banner that is false at the moment it appears.
+ *
+ * Which is why [canRepairKeys] is an input here and not a check the caller applies to the answer. Returning
+ * "expired" for a group this device can repair, and leaving a second site to know better, would make the
+ * value mean something other than its name — and no single test could pin the rule, because half of it would
+ * live somewhere else.
  *
  * The result is deliberately three-valued, because this check does not supersede the existing "we
  * merged config messages and ended up with no keys at all" one — they answer different questions:
  *
- * - `true` / `false` — every requested keys hash is gone, or at least one survives. Detection wins.
+ * - `true` / `false` — the group is beyond this device's reach, or it is not. Detection wins.
  * - `null` — detection has nothing to say, so the existing check decides. Either no eligible snode
  *   answered, or the device held no keys hashes to ask about in the first place, in which case no
  *   request was even sent. Silence here is *not* "nothing is missing".
  *
  * @param keysHashes the group keys hashes that were requested — kept separate from the info and
  *  members hashes on purpose, since a flat union of the three can't be attributed back.
+ * @param canRepairKeys whether this device holds the bytes of the keys messages it asked about, so it could
+ *  re-store them. A fact rather than a collaborator: the caller does the asking, this rule does the deciding,
+ *  and detection gains no dependency on recovery machinery.
+ *
+ *  A lambda so it is only consulted once the guards above have passed — answering it means taking the config
+ *  lock, and on the overwhelmingly common inconclusive or all-present poll the answer cannot change the
+ *  outcome. Keeping the ordering inside the rule is what stops the caller re-deriving "is this conclusive"
+ *  in order to avoid the cost, which would put half the rule back at the call site.
  */
 fun groupExpiredFromExpiryCheck(
     report: ConfigExpiryReport?,
     keysHashes: Set<String>,
+    canRepairKeys: () -> Boolean,
 ): Boolean? {
     if (report !is ConfigExpiryReport.Checked || keysHashes.isEmpty()) {
         return null
     }
 
-    return keysHashes.all { it in report.missingHashes }
+    if (!keysHashes.all { it in report.missingHashes }) {
+        return false
+    }
+
+    // Every keys hash is gone from the swarm. Whether that makes the group expired is a separate
+    // question, and it is this one: expired means nobody here can put them back.
+    return !canRepairKeys()
 }
 
 /**

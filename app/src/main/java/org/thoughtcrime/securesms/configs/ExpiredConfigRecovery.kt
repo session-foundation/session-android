@@ -4,6 +4,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
@@ -273,18 +276,56 @@ class ExpiredConfigRecovery @Inject constructor(
     }
 
     /** Acts on an expiry check for a group's configs. */
+    /**
+     * Groups whose keys this device has just successfully put back on the swarm.
+     *
+     * The expired-group banner is otherwise cleared reactively, when a keys message is *handled* — and the
+     * device that did the re-storing already holds that hash, so it may never handle it again. Relying on
+     * the reactive path alone would leave the banner up forever over keys that are back on the swarm, which
+     * is the one case it must not do.
+     *
+     * `replay = 1` deliberately. The collector is started eagerly at process start, so in practice nothing
+     * can be emitted before it subscribes — recovery only runs from a poll. But a dropped emission here
+     * fails silently and permanently, while a replayed one merely clears a flag that is already clear, so
+     * the asymmetry decides it rather than an argument about reachability.
+     */
+    val keysRestored: SharedFlow<AccountId> get() = mutableKeysRestored.asSharedFlow()
+
+    private val mutableKeysRestored = MutableSharedFlow<AccountId>(replay = 1)
+
+    /**
+     * Whether the group's keys are within this device's reach, for the expired-group flag. Delegated so the
+     * poller has one recovery-side collaborator, and so the flag and the re-store share a single predicate.
+     */
+    fun canRepairGroupKeys(groupId: AccountId, missingHashes: Set<String>): Boolean =
+        restoreSource.canRepairGroupKeys(groupId, missingHashes)
+
     suspend fun onGroupConfigsChecked(
         groupId: AccountId,
         auth: SwarmAuth,
         report: ConfigExpiryReport,
     ) {
-        recover(auth, report) { missing -> restoreSource.groupConfigsToRestore(groupId, missing) }
+        recover(
+            auth = auth,
+            report = report,
+            gather = { missing -> restoreSource.groupConfigsToRestore(groupId, missing) },
+            // Per SUCCEEDED restore, not per round: a round that stored info and members but failed on keys
+            // must leave the banner up. Emitting from the round would make that case pass for the wrong
+            // reason.
+            onRestored = { restore ->
+                if (restore.isGroupKeys) {
+                    Log.i(TAG, "Group keys restored for $groupId; clearing any expired flag")
+                    mutableKeysRestored.tryEmit(groupId)
+                }
+            },
+        )
     }
 
     private suspend fun recover(
         auth: SwarmAuth,
         report: ConfigExpiryReport,
         gather: (missingHashes: Set<String>) -> List<PendingRestore>,
+        onRestored: (PendingRestore) -> Unit = {},
     ) {
         val missing = (report as? ConfigExpiryReport.Checked)?.missingHashes.orEmpty()
         if (missing.isEmpty()) {
@@ -344,7 +385,8 @@ class ExpiredConfigRecovery @Inject constructor(
         // of releasing claims below. But a hash a *guard* ruled out is barred like a success, because
         // nothing about it changes on the timescale the bar covers: it isn't current, or its config is
         // dirty and about to be pushed under a new hash anyway, or the group is gone, or it's a keys hash
-        // that has no re-store path at all.
+        // this device holds no retained bytes for — which is a fact about what we loaded, so it will not
+        // become true by asking again soon.
         //
         // Barred through the same expiring map as a successful store, deliberately: over hours a kicked
         // group can be rejoined, a destroyed one replaced, a dirty config settle. "Nothing will change"
@@ -372,6 +414,10 @@ class ExpiredConfigRecovery @Inject constructor(
         Log.i(TAG, "Recovering expired configs: ${restores.joinToString { it.label }}")
 
         val outcomes = runRound(auth, restores)
+
+        // Per restore that actually landed, index-aligned with [restores]. Anything keyed off the round as
+        // a whole would fire for a round in which this particular config failed.
+        outcomes.forEachIndexed { index, landed -> if (landed) onRestored(restores[index]) }
 
         // Decided once for the whole round rather than per config, so a mixed round can't race itself into
         // an arbitrary state depending on which config finished last.
