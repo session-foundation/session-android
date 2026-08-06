@@ -503,8 +503,16 @@ class ProStatusManager @Inject constructor(
         private const val PURCHASE_POLL_MAX_MS = 150_000L
 
         // Single-sourced from libsession (see SessionProtocol) rather than hard-coded here.
-        val MAX_CHARACTER_PRO = SessionProtocol.PRO_HIGHER_CHARACTER_LIMIT // max message codepoints for pro users
-        private val MAX_CHARACTER_REGULAR = SessionProtocol.STANDARD_CHARACTER_LIMIT // max message codepoints for non-pro users
+        //
+        // Lazy, and it has to stay that way: SessionProtocol is a LibSessionUtilCApi object, so merely
+        // reading one of its constants runs System.loadLibrary("session_util"). Doing that from this
+        // companion's initialiser meant ProStatusManager could not be class-initialised anywhere the
+        // native library is absent — which is every JVM unit test — so Mockito could not instrument it
+        // and every test constructing a ConversationViewModel failed with NoClassDefFoundError.
+        // Deferring to first read keeps the constants single-sourced without dragging the native
+        // library into class initialisation.
+        val MAX_CHARACTER_PRO by lazy { SessionProtocol.PRO_HIGHER_CHARACTER_LIMIT } // max message codepoints for pro users
+        private val MAX_CHARACTER_REGULAR by lazy { SessionProtocol.STANDARD_CHARACTER_LIMIT } // max message codepoints for non-pro users
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
