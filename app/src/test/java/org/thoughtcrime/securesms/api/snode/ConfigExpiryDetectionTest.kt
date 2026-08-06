@@ -105,9 +105,11 @@ class ConfigExpiryDetectionTest {
      *
      * ⚠️ **This fixture is deliberately counterfactual and must stay that way.** A real server omits
      * `unchanged` when it decides the request wasn't an extend, so production triggers *both* causes at
-     * once — which is exactly why the realistic fixture cannot isolate either. Making this "accurate" by
-     * restoring `unchanged = null` re-breaks the test silently and it will still pass. The realistic shape
-     * is covered by V8b, whose subject *is* the unreadable response.
+     * once — which is exactly why the realistic fixture cannot isolate either. Restoring `unchanged = null`
+     * to make it "accurate" now fails this test *loudly* — it would come back `NoUsableSubResponse` where
+     * the assertion names `ExtendNotRequested` — which is the point of the causes being distinguishable,
+     * and the reason the fixture and the assertion have to be read together. The realistic shape is
+     * covered by V8b, whose subject *is* the unreadable response.
      */
     @Test
     fun `V8 - detection is unavailable without an extend request`() {
