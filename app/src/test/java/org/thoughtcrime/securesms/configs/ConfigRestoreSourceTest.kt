@@ -125,11 +125,16 @@ class ConfigRestoreSourceTest {
     }
 
     /**
-     * V16 — the keys config is not in the restorable set at all. It has no re-serialise API, and a
-     * missing keys hash goes straight to the expired-group flag instead.
+     * The keys config is not in the restorable set at all. It has no re-serialise API, and a missing keys
+     * hash goes straight to the expired-group flag instead.
+     *
+     * Deliberately unlabelled: V16 is the *detection* rule (all keys hashes gone ⇒ group expired) and lives
+     * in ConfigExpiryDetectionTest. This is the same input on the *restore* path, which is a separate
+     * question the vector table doesn't have a row for. It carried "V16" until a sweep found that label
+     * already on the detection test.
      */
     @Test
-    fun `V16 - a missing group keys hash produces no re-store`() {
+    fun `a missing group keys hash produces no re-store, since keys cannot be re-serialised`() {
         // The keys hash is not among any restorable config's active hashes, so nothing matches.
         assertEquals(emptyList(), source.groupConfigsToRestore(groupId, setOf("keys-hash")))
 

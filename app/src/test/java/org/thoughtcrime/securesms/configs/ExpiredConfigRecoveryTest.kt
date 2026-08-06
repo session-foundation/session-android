@@ -221,9 +221,14 @@ class ExpiredConfigRecoveryTest {
         assertRecoveryStillReachable()
     }
 
-    /** And a swarm withdrawn this way doesn't take unrelated swarms down with it. */
+    /**
+     * And a swarm withdrawn this way doesn't take unrelated swarms down with it.
+     *
+     * Deliberately unlabelled: the withdrawal being per-swarm is a consequence of V22c, not a vector of its
+     * own. It carried "V22c" until a sweep found that label already on the test above.
+     */
     @Test
-    fun `V22c - withdrawing one swarm leaves others recoverable`() = runTest {
+    fun `withdrawing one swarm leaves others recoverable`() = runTest {
         recovery.markMergeIncompleteForSwarm(
             AccountId(IdPrefix.GROUP, ByteArray(32) { 9 }).hexString
         )
@@ -475,8 +480,16 @@ class ExpiredConfigRecoveryTest {
         verify(exactly = 40) { restoreSource.userConfigsToRestore(any()) }
     }
 
+    /**
+     * V13 — a swarm reporting the same hash missing on every poll must cost one store, not one per poll.
+     *
+     * ⚠️ This test does **not** advance the clock, so it cannot tell a session-scoped bar from a
+     * time-bounded one — both pass it. Hence "while the bar holds" in the name rather than a bare "once":
+     * the unqualified claim would be a property no assertion here checks. V13g is the only test that
+     * separates them.
+     */
     @Test
-    fun `V13 - a hash reported missing on every poll is put back once`() = runTest {
+    fun `V13 - a hash reported missing on every poll is put back once while the bar holds`() = runTest {
         recovery.markLocalStateLevelWithSwarm(userId.hexString, mergedConfigMessagesForDiagnosticsOnly = true)
 
         repeat(3) {
@@ -502,9 +515,15 @@ class ExpiredConfigRecoveryTest {
         assertStoreCount(3)
     }
 
-    /** And every part is then claimed, so a later poll naming a *different* part changes nothing. */
+    /**
+     * And every part is then claimed, so a later poll naming a *different* part changes nothing.
+     *
+     * Deliberately unlabelled: this is a consequence of V18 on this client, not a vector of its own. It
+     * carried "V13b" until a sweep found that label already on a different test above — the same silent
+     * collision that is only supposed to happen *between* clients.
+     */
     @Test
-    fun `V13b - re-storing a multipart config claims all of its parts`() = runTest {
+    fun `every part of a re-stored multipart config is claimed, not just the missing one`() = runTest {
         givenRestorable(claimedHashes = setOf("P1", "P2", "P3"), messageCount = 3)
         recovery.markLocalStateLevelWithSwarm(userId.hexString, mergedConfigMessagesForDiagnosticsOnly = true)
 
