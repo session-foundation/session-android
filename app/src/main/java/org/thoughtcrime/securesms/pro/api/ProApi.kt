@@ -1,10 +1,9 @@
 package org.thoughtcrime.securesms.pro.api
 
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.decodeFromStream
+import network.loki.messenger.libsession_util.pro.ProRequest
+import network.loki.messenger.libsession_util.pro.ProResponse
+import network.loki.messenger.libsession_util.pro.ProResponseStatus
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.thoughtcrime.securesms.api.server.ServerApiErrorManager
 import org.thoughtcrime.securesms.api.ApiExecutorContext
@@ -19,57 +18,53 @@ import javax.inject.Inject
 /**
  * Represents a generic API request to the Pro backend.
  *
- * @param ErrorStatus The type of error status returned by the API.
  * @param Res The type of the expected response.
  */
-abstract class ProApi<ErrorStatus, Res>(private val deps: ProApiDependencies)
-    : ServerApi<ProApiResponse<Res, ErrorStatus>>(deps.errorManager) {
-    /**
-     * The endpoint (path) for this API request, e.g. "v1/pro/payments"
-     */
-    abstract val endpoint: String
+abstract class ProApi<Res : ProResponse>(private val deps: ProApiDependencies)
+    : ServerApi<ProApiResponse<Res>>(deps.errorManager) {
 
-    abstract val responseDeserializer: DeserializationStrategy<Res>
+    /** Builds the request (endpoint + signed body) via libsession. */
+    abstract fun buildProRequest(): ProRequest
 
-    abstract fun convertErrorStatus(status: Int): ErrorStatus
-
-    abstract fun buildJsonBody(): String
+    /** Parses the raw response body into a typed struct via libsession. */
+    abstract fun parseResponse(json: String): Res
 
     override fun buildRequest(
         baseUrl: String,
         x25519PubKeyHex: String
     ): HttpRequest {
+        val request = buildProRequest()
         return HttpRequest(
             method = "POST",
-            url = "$baseUrl/$endpoint".toHttpUrl(),
+            // baseUrl is an HttpUrl.toString(), which normalizes a bare host to a trailing "/"; trim it
+            // so we don't emit a doubled slash (e.g. //get_pro_status) in the inner request path.
+            url = "${baseUrl.trimEnd('/')}/${request.endpoint}".toHttpUrl(),
+            // Content-Type comes from libsession (the wire format is its contract with the backend); we relay it
             headers = mapOf(
-                "Content-Type" to "application/json"
+                "Content-Type" to request.contentType
             ),
-            body = HttpBody.Text(buildJsonBody())
+            body = HttpBody.Text(request.body)
         )
     }
 
-    @Suppress("OPT_IN_USAGE")
     override suspend fun handleSuccessResponse(
         executorContext: ApiExecutorContext,
         baseUrl: String,
         response: HttpResponse
-    ): ProApiResponse<Res, ErrorStatus> {
-        val rawResp: RawProApiResponse = response.body
-            .asInputStream()
-            .use { deps.json.decodeFromStream(it) }
+    ): ProApiResponse<Res> {
+        // libsession owns response parsing: hand it the raw body and get a typed struct back.
+        val bodyJson = response.body.asInputStream().use { it.readBytes().decodeToString() }
+        val parsed = parseResponse(bodyJson)
 
-        return if (rawResp.status == 0) {
-            val data = deps.json.decodeFromJsonElement(
-                responseDeserializer,
-                requireNotNull(rawResp.result) {
-                    "Expected 'result' field to be present on successful response"
-                })
-            ProApiResponse.Success(data)
+        return if (parsed.header.isSuccess) {
+            ProApiResponse.Success(parsed)
         } else {
             ProApiResponse.Failure(
-                status = convertErrorStatus(rawResp.status),
-                errors = rawResp.errors.orEmpty()
+                ProApiError(
+                    status = parsed.header.status,
+                    errorCode = parsed.header.errorCode,
+                    error = parsed.header.error,
+                )
             )
         }
     }
@@ -78,38 +73,63 @@ abstract class ProApi<ErrorStatus, Res>(private val deps: ProApiDependencies)
         val errorManager: ServerApiErrorManager,
         val json: Json,
     )
-
-    @Serializable
-    private data class RawProApiResponse(
-        val status: Int,
-        val result: JsonElement? = null,
-        val errors: List<String>? = null,
-    )
 }
 
+/**
+ * A failed Pro backend response (§5). [status] is [ProResponseStatus.Fail] (client input /
+ * precondition) or [ProResponseStatus.Error] (backend fault, retryable). [errorCode] is the machine slug
+ * (see [ProErrorCode]; null if libsession supplied none) that the UI maps to a localized string; [error]
+ * is an English diagnostic — NOT user-facing (only shown when a slug has no translation), always safe to log.
+ */
+data class ProApiError(
+    val status: ProResponseStatus,
+    val errorCode: String?,
+    val error: String?,
+) {
+    /** A backend fault is safe to retry as-is; so is a not-yet-visible payment (a transient race). */
+    val isRetryable: Boolean
+        get() = status == ProResponseStatus.Error || errorCode == ProErrorCode.UNKNOWN_PAYMENT
+}
+
+/**
+ * Canonical machine-readable error-code slugs (wire spec §5.1). The set is open/additive — an unrecognized
+ * slug is expected and handled by [status]-level logic + the diagnostic fallback, never a hard failure.
+ */
+object ProErrorCode {
+    const val INVALID_REQUEST = "invalid_request"
+    const val BAD_SIGNATURE = "bad_signature"
+    const val STALE_REQUEST = "stale_request"
+    const val UNKNOWN_PAYMENT = "unknown_payment"
+    const val SUBSCRIPTION_EXPIRED = "subscription_expired"
+    const val NOT_SUBSCRIBED = "not_subscribed"
+    const val REVOKED = "revoked"
+    const val INTERNAL_ERROR = "internal_error"
+}
 
 /**
  * Represents the response from a Pro API request.
  *
  * @param Res The type of the successful response data.
  */
-sealed interface ProApiResponse<out Res, out Status> {
-    data class Success<T>(val data: T) : ProApiResponse<T, Nothing>
-    data class Failure<S>(val status: S, val errors: List<String>) : ProApiResponse<Nothing, S>
+sealed interface ProApiResponse<out Res> {
+    data class Success<T>(val data: T) : ProApiResponse<T>
+    data class Failure(val error: ProApiError) : ProApiResponse<Nothing>
 }
 
-fun <T> ProApiResponse<T, *>.successOrThrow(): T {
+fun <T> ProApiResponse<T>.successOrThrow(): T {
     return when (this) {
         is ProApiResponse.Success -> this.data
-        is ProApiResponse.Failure -> throw RuntimeException("Fail with status = $status, errors = $errors")
+        is ProApiResponse.Failure -> throw RuntimeException(
+            "Pro API failed: status=${error.status}, code=${error.errorCode}, error=${error.error}"
+        )
     }
 }
 
-fun <Resp: Any, ErrorStatus> ServerApiRequest(
+fun <Resp : ProResponse> ServerApiRequest(
     proBackendConfig: ProBackendConfig,
-    api: ProApi<ErrorStatus, Resp>
-): ServerApiRequest<ProApiResponse<Resp, ErrorStatus>> {
-    return ServerApiRequest<ProApiResponse<Resp, ErrorStatus>>(
+    api: ProApi<Resp>
+): ServerApiRequest<ProApiResponse<Resp>> {
+    return ServerApiRequest<ProApiResponse<Resp>>(
         serverBaseUrl = proBackendConfig.url.toString(),
         serverX25519PubKeyHex = proBackendConfig.x25519PubKeyHex,
         api = api

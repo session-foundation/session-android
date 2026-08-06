@@ -26,8 +26,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 451
-val canonicalVersionName = "1.33.4"
+val canonicalVersionCode = 453
+val canonicalVersionName = "1.34.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -57,6 +57,19 @@ fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
         "DEFAULT_ENVIRONMENT",
         if (defaultOn) "$fqEnumClass.DEV_NET" else "$fqEnumClass.MAIN_NET"
     )
+}
+
+/**
+ * Whether this build honours the automated-test configuration passed as launch intent extras
+ * (see QaLaunchConfig).
+ *
+ * This is a SECURITY boundary, not a convenience flag: the launcher activity-alias is
+ * `android:exported="true"`, so any app on the device can start it with extras. Only QA/debug
+ * builds may act on them. Being a compile-time constant, R8 strips the reader entirely from
+ * builds where this is false. Default off — new build types must opt in explicitly.
+ */
+fun VariantDimension.allowQaLaunchConfig(allow: Boolean) {
+    buildConfigField("boolean", "ALLOW_QA_LAUNCH_CONFIG", allow.toString())
 }
 
 fun VariantDimension.enablePermissiveNetworkSecurityConfig(permissive: Boolean) {
@@ -144,12 +157,16 @@ android {
         buildConfigField("String", "USER_AGENT", "\"OWA\"")
         buildConfigField("int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode")
 
-        buildConfigField("org.thoughtcrime.securesms.pro.ProBackendConfig", "PRO_BACKEND_DEV", """
-            new org.thoughtcrime.securesms.pro.ProBackendConfig(
-                "https://pro-backend-dev.getsession.org",
-                "fc947730f49eb01427a66e050733294d9e520e545c7a27125a780634e0860a27"
-            )
-        """.trimIndent())
+        // Safe default, so a build type that neither calls allowQaLaunchConfig() nor inherits it via
+        // initWith() is off rather than missing the field. See allowQaLaunchConfig above.
+        allowQaLaunchConfig(false)
+
+        // NOTE: there is deliberately no PRO_BACKEND_DEV buildConfigField here. The Pro backend URL
+        // and signing pubkey are single-sourced from libsession (`BackendRequests.proBackendUrl()` /
+        // `proBackendPubKeyHex()`, wired up in ProModule); a second copy in the build script is a
+        // launch trap, since it would keep shipping the dev URL and debug pubkey after libsession
+        // moved to production. If a client-side override is ever wanted, add it deliberately as an
+        // override *of* the libsession default, not as a parallel source of truth.
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
@@ -167,6 +184,7 @@ android {
                 file("proguard-rules.pro")
             )
             devNetDefaultOn(false)
+            allowQaLaunchConfig(false)
             enableClientVersionCheck(true)
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
@@ -187,6 +205,7 @@ android {
             signingConfig = signingConfigs.getByName("debug")
 
             devNetDefaultOn(false)
+            allowQaLaunchConfig(true)
             enablePermissiveNetworkSecurityConfig(true)
             enableClientVersionCheck(false)
 
@@ -198,6 +217,7 @@ android {
             initWith(getByName("qa"))
 
             devNetDefaultOn(true)
+            allowQaLaunchConfig(true)
             enableClientVersionCheck(false)
             setAlternativeAppName("Session AQA")
         }
@@ -210,6 +230,7 @@ android {
             applicationIdSuffix = ".${name}"
             enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
+            allowQaLaunchConfig(true)
             enableClientVersionCheck(false)
             setAlternativeAppName("Session Debug")
             setAuthorityPostfix(".debug")
