@@ -80,14 +80,11 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsNavHost
 import org.thoughtcrime.securesms.pro.ProStatus
@@ -591,13 +588,9 @@ fun GenericProCTA(
         title = if(expired) stringResource(R.string.renew)
         else stringResource(R.string.upgradeTo),
         text = if(expired)  Phrase.from(context,R.string.proRenewMaxPotential)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
             .toString()
             else Phrase.from(context, R.string.proUserProfileModalCallToAction)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString(),
         features = listOf(
@@ -625,11 +618,9 @@ fun LongMessageProCTA(
         title = if(expired) stringResource(R.string.renew)
         else stringResource(R.string.upgradeTo),
         text = if(expired) Phrase.from(context,R.string.proRenewLongerMessages)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
             .toString()
         else Phrase.from(context, R.string.proCallToActionLongerMessages)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString(),
         features = listOf(
@@ -657,11 +648,9 @@ fun AnimatedProfilePicProCTA(
         title = if(expired) stringResource(R.string.renew)
         else stringResource(R.string.upgradeTo),
         text =if(expired)  Phrase.from(context,R.string.proRenewAnimatedDisplayPicture)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
             .toString()
         else  Phrase.from(context, R.string.proAnimatedDisplayPictureCallToActionDescription)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString(),
         features = listOf(
@@ -690,24 +679,20 @@ fun PinProCTA(
 
     val title = when{
         overTheLimit && expired -> Phrase.from(context, R.string.proRenewPinMoreConversations)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
             .toString()
 
         overTheLimit && !expired -> Phrase.from(context, R.string.proCallToActionPinnedConversations)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString()
 
         !overTheLimit && expired -> Phrase.from(context, R.string.proRenewPinFiveConversations)
             .put(LIMIT_KEY, ProStatusManager.MAX_PIN_REGULAR.toString())
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format()
             .toString()
 
         else -> Phrase.from(context, R.string.proCallToActionPinnedConversationsMoreThan)
             .put(LIMIT_KEY, ProStatusManager.MAX_PIN_REGULAR.toString())
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .format()
             .toString()
     }

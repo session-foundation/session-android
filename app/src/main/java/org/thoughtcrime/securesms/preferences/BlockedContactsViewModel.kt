@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.preferences
 
 import android.content.Context
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow

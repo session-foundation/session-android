@@ -7,16 +7,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
@@ -45,10 +41,8 @@ fun RefundPlanNonOriginating(
             sendCommand(ShowOpenUrlDialog(subscription.providerData.refundSupportUrl))
         },
         contentTitle = Phrase.from(context.getText(R.string.proRefunding))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         contentDescription = Phrase.from(context.getText(R.string.proPlanPlatformRefund))
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PLATFORM_STORE_KEY, subscription.providerData.store)
             .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
             .format(),
@@ -59,10 +53,8 @@ fun RefundPlanNonOriginating(
                     .put(DEVICE_TYPE_KEY, subscription.providerData.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.proRefundAccountDevice))
-                    .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(DEVICE_TYPE_KEY, subscription.providerData.device)
                     .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format(),
                 iconRes = R.drawable.ic_smartphone
             ),
@@ -73,7 +65,6 @@ fun RefundPlanNonOriginating(
                 info = Phrase.from(context.getText(R.string.requestRefundPlatformWebsite))
                     .put(PLATFORM_KEY, subscription.providerData.platform)
                     .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
                 iconRes = R.drawable.ic_globe
             )
