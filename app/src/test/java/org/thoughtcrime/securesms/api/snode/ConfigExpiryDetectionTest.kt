@@ -81,6 +81,30 @@ class ConfigExpiryDetectionTest {
     }
 
     /**
+     * V5's companion, and the only fixture that isolates the `failed` term.
+     *
+     * A sub-response is usable only if it is `!failed` **and** carries `unchanged`. Every other failed-node
+     * fixture — V5's and V6's — leaves `unchanged` absent, so the second term does the excluding and the
+     * first is never consulted: deleting `!it.failed` passes the whole suite. Verified, not assumed, by
+     * dropping that term alongside a control mutation known to kill two tests; the control fired and this
+     * hole survived it.
+     *
+     * So the fixture below is a node reporting failure that *nevertheless* carries `unchanged`. With the
+     * term present it is excluded and the healthy node's answer stands. Without it, the failed node's empty
+     * arrays are read as authority and **every requested hash is reported missing** — a false positive that
+     * authorises re-storing configs the swarm still holds, on the word of a snode that said it failed.
+     */
+    @Test
+    fun `a failed sub-response is excluded even when it carries an unchanged map`() {
+        val report = detect(
+            "healthy" to SnodeExpiryState(updated = listOf(h1, h2), unchanged = emptyMap()),
+            "broken" to SnodeExpiryState(failed = true, unchanged = emptyMap()),
+        )
+
+        assertEquals(ConfigExpiryReport.Checked(emptySet()), report)
+    }
+
+    /**
      * V7 and V15 are the same wire response, and the point of testing it is the distinction it draws
      * with V8: `unchanged: {}` is a *valid answer* meaning "I hold none of the rest", so total loss
      * must come out as "everything missing" rather than being mistaken for unavailability — which
