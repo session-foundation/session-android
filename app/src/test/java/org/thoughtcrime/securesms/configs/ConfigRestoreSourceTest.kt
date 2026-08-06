@@ -143,6 +143,12 @@ class ConfigRestoreSourceTest {
         assertEquals(2, source.groupConfigsToRestore(groupId, setOf(h2)).size)
     }
 
+    /**
+     * Note what this does *not* establish: the mock presents dirty-with-intersecting-hashes directly, and
+     * a real config reaches that state only through the pending-multipart component of `activeHashes()`,
+     * since dirtying clears the current hashes. Driving it realistically needs the native library. See
+     * [shouldRestore]'s doc for why the check stays regardless.
+     */
     @Test
     fun `a config with changes of its own is left to the uploader`() {
         assertFalse(

@@ -53,6 +53,23 @@ class PendingRestore(
  *   signature, so it loses the signature it was received with. For a group member — who has no signing
  *   key to make a new one — the bytes would then no longer reproduce the original hash. Recovery only
  *   ever touches clean configs, so the property it depends on holds exactly where it runs.
+ *
+ * **How reachable the clean check is, since it looks redundant and mostly is.** Dirtying a config moves
+ * its current hashes into the *old* set and clears them (libsession `base.cpp`, `set_state`), so a dirty
+ * config's [activeHashes] usually no longer contains anything the swarm reported missing — and the first
+ * condition rejects it before this one is consulted.
+ *
+ * It is **not** wholly redundant, though, and the exception is the reason to keep it: [activeHashes] is
+ * current hashes *plus the parts of any pending multipart set* that is neither done nor expired, and that
+ * second component survives dirtying. So a config that went dirty while a multipart set was still
+ * arriving, one of whose part hashes the swarm has lost, reaches this check with a non-empty
+ * intersection. Rare, and exactly the case where re-uploading would fight the uploader.
+ *
+ * That reachability rests on libsession's behaviour rather than ours, and **cannot be asserted here**: it
+ * would need `activeHashes()` to run against the real native library, which no JVM unit test in this
+ * project can load. The tests below reach this branch through a mocked config, which can present
+ * dirty-with-intersecting-hashes freely. So do not delete this check on the grounds that no test drives
+ * it from a realistic state, and do not delete the tests on the grounds the check looks unreachable.
  */
 internal fun shouldRestore(
     label: String,
