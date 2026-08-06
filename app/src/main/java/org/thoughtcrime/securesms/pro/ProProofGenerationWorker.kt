@@ -27,8 +27,9 @@ import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.pro.api.GenerateProProofApi
+import org.thoughtcrime.securesms.pro.api.ProApiResponse
+import org.thoughtcrime.securesms.pro.api.ProErrorCode
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
-import org.thoughtcrime.securesms.pro.api.successOrThrow
 import org.thoughtcrime.securesms.util.findCause
 import java.time.Duration
 import java.time.Instant
@@ -75,7 +76,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
             val rotatingSeed = ED25519.proRotatingSeed(proMasterKey, snodeClock.currentTime().epochSecond)
             val rotatingPrivateKey = ED25519.generate(rotatingSeed).secretKey.data
 
-            val response = apiExecutor.execute(
+            val result = apiExecutor.execute(
                 ServerApiRequest(
                     proBackendConfig = proBackendConfig.get(),
                     api = generateProProofApi.create(
@@ -83,36 +84,74 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         rotatingPrivateKey = rotatingPrivateKey
                     ),
                 )
-            ).successOrThrow()
-            // §5.2 invariant: an `ok` proof response always carries the proof.
-            val proof = requireNotNull(response.proof) { "generate-proof returned ok without a proof" }
+            )
 
-            configFactory.withMutableUserConfigs { configs ->
-                // Upgrade guard: only replace the proof if it extends coverage (monotonic merge;
-                // same-period races round to the same expiry -> byte-identical -> no-op). Avoids
-                // churning a proof another device just landed.
-                val current = configs.userProfile.getProConfig()?.proProof
-                if (current == null || proof.expirySeconds > current.expirySeconds) {
-                    configs.userProfile.setProConfig(ProConfig(
-                        proProof = proof,
-                        rotatingPrivateKey = rotatingPrivateKey))
+            when (result) {
+                is ProApiResponse.Success -> {
+                    val response = result.data
+                    // §5.2 invariant: an `ok` proof response always carries the proof.
+                    val proof = requireNotNull(response.proof) { "generate-proof returned ok without a proof" }
+
+                    configFactory.withMutableUserConfigs { configs ->
+                        // Upgrade guard: only replace the proof if it extends coverage (monotonic merge;
+                        // same-period races round to the same expiry -> byte-identical -> no-op). Avoids
+                        // churning a proof another device just landed.
+                        val current = configs.userProfile.getProConfig()?.proProof
+                        if (current == null || proof.expirySeconds > current.expirySeconds) {
+                            configs.userProfile.setProConfig(ProConfig(
+                                proProof = proof,
+                                rotatingPrivateKey = rotatingPrivateKey))
+                        }
+                        // Refresh the cached access-expiry from the advisory account_expiry that rides the
+                        // proof response, so the renewal path keeps E fresh without a separate get_pro_status.
+                        response.accountExpiry?.let { configs.userProfile.setProAccessExpiry(it.epochSecond) }
+                    }
+
+                    Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
+                    Result.success()
                 }
-                // Refresh the cached access-expiry from the advisory account_expiry that rides the
-                // proof response, so the renewal path keeps E fresh without a separate get_pro_status.
-                response.accountExpiry?.let { configs.userProfile.setProAccessExpiry(it.epochSecond) }
+
+                is ProApiResponse.Failure -> {
+                    val code = result.error.errorCode
+                    val notEntitled = code == ProErrorCode.NOT_SUBSCRIBED ||
+                        code == ProErrorCode.REVOKED ||
+                        code == ProErrorCode.SUBSCRIPTION_EXPIRED
+                    when {
+                        // A purchase in flight overrides "not entitled": the backend may just not have
+                        // ingested the payment yet, so keep polling (WorkManager backoff; the pro_prepaid
+                        // 1-week gate eventually terminates it).
+                        notEntitled && purchasePending -> Result.retry()
+
+                        notEntitled -> {
+                            // Backend authoritatively says we're not (or no longer) entitled. Clear the
+                            // synced access-expiry (E) so the renewal loop terminates: libsession's renewal
+                            // target now fires on "future E but no proof", so a stale future E left here
+                            // would spin. (subscription_expired's past account_expiry is redundant with the
+                            // get_pro_status horizon, so we clear E rather than re-set it.) Also drop a now-
+                            // defunct credential, guarded so a proof another device just landed survives.
+                            configFactory.withMutableUserConfigs { configs ->
+                                configs.userProfile.removeProAccessExpiry()
+                                val nowSeconds = snodeClock.currentTime().epochSecond
+                                val existing = configs.userProfile.getProConfig()?.proProof
+                                if (existing == null || existing.expirySeconds <= nowSeconds) {
+                                    configs.userProfile.removeProConfig()
+                                }
+                            }
+                            Log.w(WORK_NAME, "Pro proof denied (code=$code); cleared access-expiry, ending the acquire loop")
+                            Result.failure()
+                        }
+
+                        result.error.isRetryable -> Result.retry()
+                        else -> Result.failure()
+                    }
+                }
             }
-
-
-            Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
-            Result.success()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
             Log.e(WORK_NAME, "Error generating Pro proof", e)
-            // 403 / NonRetryable normally means "not entitled" -> stop. But while a purchase is in flight
-            // that same "not Pro yet" response just means the backend hasn't ingested the payment yet, so
-            // keep polling (WorkManager's exponential backoff is our capped poll; the pro_prepaid 1-week
-            // gate checked at the top of doWork() eventually terminates it).
+            // A raw transport-level 403 (not a parsed slug) likewise means "not entitled" -> stop, unless a
+            // purchase is pending (payment may be un-ingested); everything else is a retryable transport error.
             val notEntitled = e is NonRetryableException ||
                 e.findCause<UnhandledStatusCodeException>()?.code == 403
             if (notEntitled && !purchasePending) {
