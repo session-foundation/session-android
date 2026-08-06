@@ -117,6 +117,39 @@ open class PathManager @Inject constructor(
     // Public API
     // -----------------------------
 
+    /**
+     * Drops every path, in memory and in storage.
+     *
+     * For when the snode pool itself has been invalidated (see `SnodeDirectory`): paths are built
+     * out of pool members, so a pool belonging to a different network leaves every path routing over
+     * snodes that no longer exist. [sanitizePaths] only checks that paths are disjoint, so nothing
+     * else notices a path whose snodes are gone — it just fails, repeatedly, until strikes evict it.
+     *
+     * Deliberately takes no lock. This is reachable from `SnodeDirectory.ensurePoolPopulated`, which
+     * [rebuildPaths] calls while holding [buildMutex]; acquiring it here would deadlock on a mutex
+     * the same coroutine already owns. The cost is that a rebuild already in flight can commit its
+     * result after this returns — acceptable because that rebuild re-enters `ensurePoolPopulated`
+     * and so picks up the new network's pool anyway.
+     */
+    suspend fun clearPaths() {
+        // Awaited because warm-up is lazy: if it has not run yet it would otherwise fire later, read
+        // the rows we are about to delete, and put them straight back into _paths. A warm-up failure
+        // is no reason to skip the clear, hence runCatching.
+        runCatching { warmUpJob.await() }
+
+        Log.i("Onion Request", "Clearing all onion paths")
+
+        _paths.value = emptyList()
+
+        // The collector in init also turns an empty value into a storage clear, but that runs on
+        // another coroutine — doing it here makes storage deterministic by the time this returns.
+        storage.clearOnionRequestPaths()
+
+        // Count the coming rebuild as a fresh rotation. rebuildPaths does not touch this timestamp,
+        // so leaving the old one in place makes the next getPath() rotate paths it has just built.
+        prefs.setLastPathRotation(System.currentTimeMillis())
+    }
+
     suspend fun getPath(exclude: Snode? = null): Path {
         // Ensure persisted paths are loaded before checking. No-op after first completion.
         warmUpJob.await()

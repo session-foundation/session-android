@@ -36,12 +36,10 @@ import network.loki.messenger.databinding.ActivityPathBinding
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
 import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
-import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.openUrl
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.IP2Country
@@ -90,8 +88,7 @@ class PathActivity : ScreenLockActionBarActivity() {
         setContentView(binding.root)
         supportActionBar!!.title = resources.getString(R.string.onionRoutingPath)
 
-        // Substitute "Session" into the path description. Note: This is a non-translatable string.
-        val txt = applicationContext.getSubbedString(R.string.onionRoutingPathDescription,APP_NAME_KEY to APP_NAME)
+        val txt = applicationContext.getString(R.string.onionRoutingPathDescription)
         binding.pathDescription.text = txt
 
         binding.pathRowsContainer.disableClipping()

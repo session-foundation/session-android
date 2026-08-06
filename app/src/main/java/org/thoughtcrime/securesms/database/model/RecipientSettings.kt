@@ -26,7 +26,7 @@ data class RecipientSettings(
     data class ProData(
         @Serializable(with = InstantAsMillisSerializer::class)
         val expiry: Instant,
-        val genIndexHash: String,
+        val revocationTag: String,
         val showProBadge: Boolean,
     ) {
 
@@ -35,7 +35,7 @@ data class RecipientSettings(
             features: BitSet<ProProfileFeature>,
         ): this(
             expiry = info.expiry,
-            genIndexHash = info.genIndexHash.data.toHexString(),
+            revocationTag = info.revocationTag.data.toHexString(),
             showProBadge = features.contains(ProProfileFeature.PRO_BADGE),
         )
         fun isExpired(now: Instant): Boolean {

@@ -21,7 +21,6 @@ import network.loki.messenger.databinding.ViewControlMessageBinding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
@@ -236,8 +235,7 @@ class ControlMessageView : LinearLayout {
                                         Permissions.with(context.findActivity())
                                             .request(Manifest.permission.RECORD_AUDIO)
                                             .withPermanentDenialDialog(
-                                                context.getSubbedString(R.string.permissionsMicrophoneAccessRequired,
-                                                    APP_NAME_KEY to context.getString(R.string.app_name))
+                                                context.getString(R.string.permissionsMicrophoneAccessRequired)
                                             )
                                             .execute()
                                     }

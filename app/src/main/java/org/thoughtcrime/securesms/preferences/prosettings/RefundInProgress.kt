@@ -16,13 +16,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
@@ -85,8 +82,6 @@ fun RefundInProgress(
                 text = annotatedStringResource(
                     Phrase.from(context.getText(R.string.proRefundNextSteps))
                         .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .format()
                 ),
                 style = LocalType.current.base,
@@ -112,7 +107,6 @@ fun RefundInProgress(
                 text = annotatedStringResource(
                     Phrase.from(context.getText(R.string.proRefundSupport))
                         .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
-                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .put(ICON_KEY, iconExternalLink)
                         .format()
                 ),

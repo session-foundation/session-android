@@ -49,15 +49,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
@@ -166,7 +162,6 @@ fun ProSettingsHome(
                                     is ProStatus.Active -> R.string.proStatusLoadingSubtitle
                                     else -> R.string.checkingProStatus
                                 }))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             style = LocalType.current.base,
                             color = LocalColors.current.text
@@ -188,7 +183,6 @@ fun ProSettingsHome(
                                     is ProStatus.Active -> R.string.proErrorRefreshingStatus
                                     else -> R.string.errorCheckingProStatus
                                 }))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             style = LocalType.current.base,
                             color = LocalColors.current.warning
@@ -216,12 +210,8 @@ fun ProSettingsHome(
 
             Text(
                 text = if(expiredInSheet) Phrase.from(context.getText(R.string.proAccessRenewStart))
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format().toString()
                     else Phrase.from(context.getText(R.string.proFullestPotential))
-                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format().toString(),
                 style = LocalType.current.base,
                 textAlign = TextAlign.Center,
@@ -327,7 +317,6 @@ fun ProStats(
         modifier = modifier,
         dropShadow = LocalColors.current.isLight,
         title = Phrase.from(LocalContext.current, R.string.proStats)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         titleIcon = {
             val tooltipState = rememberTooltipState(isPersistent = true)
@@ -335,7 +324,6 @@ fun ProStats(
 
             SpeechBubbleTooltip(
                 text = Phrase.from(LocalContext.current, R.string.proStatsTooltip)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format().toString(),
                 tooltipState = tooltipState
             ) {
@@ -414,8 +402,7 @@ fun ProStats(
                         R.plurals.proBadgesSent,
                         stats?.proBadges ?: 0,
                         if(stats != null) NumberUtil.getFormattedNumber(stats.proBadges.toLong())
-                        else  "",
-                        NonTranslatableStringConstants.PRO
+                        else  ""
                     ).trim(),
                     loading = data !is State.Success,
                     icon = R.drawable.ic_rectangle_ellipsis
@@ -531,7 +518,6 @@ fun ProSettings(
     CategoryCell(
         modifier = modifier,
         title = Phrase.from(LocalContext.current, R.string.proSettings)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
     ) {
         val refunding = proStatus.refundInProgress
@@ -555,7 +541,6 @@ fun ProSettings(
             val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                 is State.Loading -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
                         Phrase.from(LocalContext.current, R.string.proAccessLoadingEllipsis)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString(),
                             LocalColors.current.text,
                     { SmallCircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) }
@@ -563,7 +548,6 @@ fun ProSettings(
                 
                 is State.Error -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
                         Phrase.from(LocalContext.current, R.string.errorLoadingProAccess)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString(),
                             LocalColors.current.warning, chevronIcon
                     )
@@ -594,7 +578,6 @@ fun ProSettings(
                 title = if(refunding) annotatedStringResource(R.string.proRequestedRefund)
                 else annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.updateAccess)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(subtitle),
@@ -614,12 +597,10 @@ fun ProSettings(
             SwitchActionRowItem(
                 title = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proBadge)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proBadgeVisible)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format().toString()
                 ),
                 checked = showProBadge,
@@ -641,7 +622,6 @@ fun ProFeatures(
     CategoryCell(
         modifier = modifier,
         title = Phrase.from(LocalContext.current, R.string.proBetaFeatures)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
     ) {
         // Cell content
@@ -696,7 +676,6 @@ fun ProFeatures(
                 title = stringResource(R.string.proBadges),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proBadgesDescription)
-                        .put(APP_NAME_KEY, stringResource(R.string.app_name))
                         .format().toString()
                 ),
                 icon = R.drawable.ic_rectangle_ellipsis,
@@ -711,8 +690,6 @@ fun ProFeatures(
                 title = stringResource(R.string.plusLoadsMore),
                 subtitle = annotatedStringResource(
                     text = Phrase.from(LocalContext.current.getText(R.string.plusLoadsMoreDescription))
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .put(ICON_KEY, iconExternalLink)
                         .format()
                 ),
@@ -805,7 +782,6 @@ fun ProManage(
     CategoryCell(
         modifier = modifier,
         title = Phrase.from(LocalContext.current, R.string.managePro)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         dropShadow = LocalColors.current.isLight && data is ProStatus.Expired
     ) {
@@ -830,7 +806,6 @@ fun ProManage(
                 IconActionRowItem(
                     title = annotatedStringResource(
                         Phrase.from(LocalContext.current, R.string.proAccessRecover)
-                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                             .format().toString()
                     ),
                     icon = R.drawable.ic_refresh_cw,
@@ -846,7 +821,6 @@ fun ProManage(
                     IconActionRowItem(
                         title = annotatedStringResource(
                             Phrase.from(LocalContext.current, R.string.cancelAccess)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
                         titleColor = LocalColors.current.danger,
@@ -885,7 +859,6 @@ fun ProManage(
                     val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                         is State.Loading -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             Phrase.from(LocalContext.current, R.string.checkingProStatusEllipsis)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             LocalColors.current.text,
                             { SmallCircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) }
@@ -893,7 +866,6 @@ fun ProManage(
 
                         is State.Error -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             Phrase.from(LocalContext.current, R.string.errorCheckingProStatus)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             LocalColors.current.warning, renewIcon(LocalColors.current.text)
                         )
@@ -907,7 +879,6 @@ fun ProManage(
                     ActionRowItem(
                         title = annotatedStringResource(
                             Phrase.from(LocalContext.current, R.string.proAccessRenew)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
                         titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accentText
@@ -968,12 +939,10 @@ fun ProSettingsFooter(
             IconActionRowItem(
                 title = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proFaq)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proFaqDescription)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format().toString()
                 ),
                 icon = R.drawable.ic_square_arrow_up_right,
@@ -989,7 +958,6 @@ fun ProSettingsFooter(
                 title = annotatedStringResource(R.string.helpSupport),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proSupportDescription)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 icon = R.drawable.ic_square_arrow_up_right,

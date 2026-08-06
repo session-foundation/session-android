@@ -16,7 +16,7 @@ import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.logging.PersistentLogger
@@ -58,7 +57,6 @@ fun ExportLogsDialog(
             onDismissRequest = onDismissRequest,
             title = stringResource(R.string.helpReportABugExportLogs),
             text = Phrase.from(context, R.string.helpReportABugDescription)
-                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                 .format().toString(),
             buttons = listOf(
                 DialogButtonData(
