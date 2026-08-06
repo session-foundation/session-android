@@ -491,9 +491,15 @@ class ProStatusManager @Inject constructor(
     }
 
     companion object {
-        // Single-sourced from libsession (see SessionProtocol) rather than hard-coded here.
-        val MAX_CHARACTER_PRO = SessionProtocol.PRO_HIGHER_CHARACTER_LIMIT // max message codepoints for pro users
-        private val MAX_CHARACTER_REGULAR = SessionProtocol.STANDARD_CHARACTER_LIMIT // max message codepoints for non-pro users
+        // Single-sourced from libsession (see SessionProtocol) rather than hard-coded here. Read
+        // through getters, not stored in the initialiser: touching SessionProtocol loads the
+        // session_util native library, and doing that from ProStatusManager's <clinit> makes the
+        // class impossible to even load (let alone mock) on the JVM, where there is no native
+        // library. SessionProtocol already caches both values, so this stays a cheap field read.
+        val MAX_CHARACTER_PRO: Int // max message codepoints for pro users
+            get() = SessionProtocol.PRO_HIGHER_CHARACTER_LIMIT
+        private val MAX_CHARACTER_REGULAR: Int // max message codepoints for non-pro users
+            get() = SessionProtocol.STANDARD_CHARACTER_LIMIT
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
