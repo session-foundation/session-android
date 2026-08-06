@@ -95,12 +95,20 @@ class ConfigExpiryDetectionTest {
         assertEquals(ConfigExpiryReport.Checked(setOf(h1, h2)), report)
     }
 
+    /**
+     * V8 — no extend was asked for, so the response says nothing about absence whatever it contains.
+     *
+     * The sub-response is deliberately **readable** (`unchanged` present and empty) so that the extend
+     * flag is the only thing that can produce Inconclusive. The first version passed `unchanged = null`,
+     * which is unreadable on its own (V8b) — so the test went green whether or not the extend flag was
+     * consulted at all, and a mutation deleting that guard left it passing. It now fails on that mutation.
+     */
     @Test
     fun `V8 - detection is unavailable without an extend request`() {
         val report = detectMissingConfigHashes(
             requestedHashes = requested,
             extendRequested = false,
-            swarm = mapOf("snodeA" to SnodeExpiryState(updated = listOf(h1), unchanged = null)),
+            swarm = mapOf("snodeA" to SnodeExpiryState(updated = listOf(h1), unchanged = emptyMap())),
         )
 
         assertEquals(ConfigExpiryReport.Inconclusive, report)

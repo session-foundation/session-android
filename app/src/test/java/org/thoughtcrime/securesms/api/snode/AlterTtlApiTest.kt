@@ -105,9 +105,15 @@ class AlterTtlApiTest {
 
     @Test
     fun `a shorten response is never read for missing hashes`() = runTest {
+        // The body is deliberately **fully readable** — `unchanged` present and empty — so the shorten
+        // short-circuit is the ONLY thing that can produce Inconclusive here. With an absent `unchanged`
+        // key (the first version of this fixture) the response is unreadable anyway, and the test passed
+        // whether or not the alter type was checked at all: it would have gone green against an
+        // implementation that read shorten responses for absence. Read this way it discriminates —
+        // drop the alter-type guard and both hashes come back as Checked missing.
         val report = handle(
             AlterTtlApi.AlterType.Shorten,
-            """{ "swarm": { "aa": { "updated": [], "expiry": 1 } } }"""
+            """{ "swarm": { "aa": { "updated": [], "unchanged": {}, "expiry": 1 } } }"""
         )
 
         assertEquals(ConfigExpiryReport.Inconclusive, report)
