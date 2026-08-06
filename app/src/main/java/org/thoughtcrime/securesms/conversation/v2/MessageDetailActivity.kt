@@ -59,7 +59,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.launch
@@ -70,9 +70,6 @@ import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -398,7 +395,6 @@ fun MessageProFeatures(
 
         Text(
             text = Phrase.from(LocalContext.current,R.string.proMessageInfoFeatures)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format().toString(),
             style = LocalType.current.large
         )
@@ -410,7 +406,6 @@ fun MessageProFeatures(
                 data = CTAFeature.Icon(
                     text = when (feature){
                         ProProfileFeature.PRO_BADGE -> Phrase.from(LocalContext.current, R.string.appProBadge)
-                            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format()
                             .toString()
                         ProMessageFeature.HIGHER_CHARACTER_LIMIT -> stringResource(id = R.string.proIncreasedMessageLengthFeature)

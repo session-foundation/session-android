@@ -15,12 +15,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
@@ -108,7 +105,6 @@ fun RefundPlan(
         Column {
             Text(
                 text = Phrase.from(context.getText(R.string.proRefunding))
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format().toString(),
                 style = LocalType.current.base.bold(),
                 color = LocalColors.current.text,
@@ -121,11 +117,8 @@ fun RefundPlan(
                     if(isQuickRefund)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))
                             .put(PLATFORM_KEY, data.providerData.platform)
-                            .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .format()
                     else Phrase.from(context.getText(R.string.proRefundRequestSessionSupport))
-                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .format()
                 ),
                 style = LocalType.current.base,
@@ -145,8 +138,6 @@ fun RefundPlan(
             Text(
                 text = annotatedStringResource(
                     Phrase.from(context.getText(R.string.proImportantDescription))
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format()
                 ),
                 style = LocalType.current.base,

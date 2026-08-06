@@ -1,10 +1,4 @@
-#!/usr/bin/env -S uv run --script
-
-# /// script
-# dependencies = [
-#   "fdroidserver",
-# ]
-# ///
+#!/usr/bin/env python3
 
 import subprocess
 import json
@@ -19,6 +13,8 @@ import base64
 import string
 import glob
 import argparse
+
+from _keyring import get_secret
 
 
 # Number of versions to keep in the fdroid repo. Will remove all the older versions.
@@ -53,27 +49,39 @@ def build_releases(project_root: str,
                    extra_gradle_opts: str = '',
                    build_type: string = 'release',
                    build_bundle: bool = False,
-                   split_apks: bool = False) -> BuildResult:
+                   split_apks: bool = False,
+                   libsession_util_path: str = None) -> BuildResult:
     (keystore_fd, keystore_file) = tempfile.mkstemp(prefix='keystore_', suffix='.jks', dir=build_dir)
     try:
         with os.fdopen(keystore_fd, 'wb') as f:
             f.write(base64.b64decode(credentials.keystore_b64))
 
-        gradle_commands = f"""./gradlew \
-                    -P{credentials_property_prefix}_STORE_FILE='{keystore_file}'\
-                    -P{credentials_property_prefix}_STORE_PASSWORD='{credentials.keystore_password}' \
-                    -P{credentials_property_prefix}_KEY_ALIAS='{credentials.key_alias}' \
-                    -P{credentials_property_prefix}_KEY_PASSWORD='{credentials.key_password}' {extra_gradle_opts}"""
+        # Build the glue (and its native libsession-util) from source at this path instead of the
+        # published AAR; settings.gradle.kts reads this system property (see its comment there).
+        lib_source_opt = (f" -Dsession.libsession_util.project.path='{libsession_util_path}'"
+                          if libsession_util_path else "")
+        # Pass signing secrets via ORG_GRADLE_PROJECT_* env vars, NOT -P command-line args: argv is
+        # world-readable (`ps`, /proc/<pid>/cmdline) and gets echoed into subprocess exceptions on
+        # failure, whereas /proc/<pid>/environ is owner-only. Gradle maps ORG_GRADLE_PROJECT_<name>
+        # to the `<name>` project property, so the app's signingConfig reads these unchanged.
+        gradle_env = {
+            **os.environ,
+            f'ORG_GRADLE_PROJECT_{credentials_property_prefix}_STORE_FILE': keystore_file,
+            f'ORG_GRADLE_PROJECT_{credentials_property_prefix}_STORE_PASSWORD': credentials.keystore_password,
+            f'ORG_GRADLE_PROJECT_{credentials_property_prefix}_KEY_ALIAS': credentials.key_alias,
+            f'ORG_GRADLE_PROJECT_{credentials_property_prefix}_KEY_PASSWORD': credentials.key_password,
+        }
+        gradle_commands = f"./gradlew{lib_source_opt} {extra_gradle_opts}"
         
         if build_bundle:
             bundle_path = os.path.join(project_root, f'app/build/outputs/bundle/{flavor}{build_type.capitalize()}/app-{flavor}-{build_type}.aab')
             subprocess.run(f"""{gradle_commands} -PsplitApks=false \
-                    bundle{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root)
+                    bundle{flavor.capitalize()}{build_type.capitalize()} --stacktrace""", shell=True, check=True, cwd=project_root, env=gradle_env)
         else:
             bundle_path = None
 
         subprocess.run(f"""{gradle_commands} \
-                    assemble{flavor.capitalize()}{build_type.capitalize()} -PsplitApks={str(split_apks).lower()} --stacktrace""", shell=True, check=True, cwd=project_root)
+                    assemble{flavor.capitalize()}{build_type.capitalize()} -PsplitApks={str(split_apks).lower()} --stacktrace""", shell=True, check=True, cwd=project_root, env=gradle_env)
 
         apk_output_dir = os.path.join(project_root, f'app/build/outputs/apk/{flavor}/{build_type}')
 
@@ -100,7 +108,7 @@ def build_releases(project_root: str,
 
 project_root = os.path.dirname(sys.path[0])
 build_dir = os.path.join(project_root, 'build')
-credentials_file_path = os.path.join(project_root, 'release-creds.toml')
+RELEASE_CREDS_KEYRING_NAME = 'release-creds'
 fdroid_repo_path = os.path.join(build_dir, 'fdroidrepo')
 
 def detect_android_sdk() -> str:
@@ -222,10 +230,16 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
     print('Committing the changes...')
     subprocess.run(f'git add . && git commit -am "Prepare for release {build.version_name}"', shell=True, check=True, cwd=fdroid_workspace)
 
-    # Create Pull Request for releases
+    # Push the branch explicitly to origin (session-foundation/session-fdroid) first, so
+    # `gh pr create` has nothing to push and won't prompt. `gh repo clone` adds an `upstream`
+    # remote (oxen-io), so with two remotes gh otherwise can't decide where to push the head.
+    print('Pushing the release branch...')
+    subprocess.run(f'git push -u origin {branch_name} --force-with-lease', shell=True, check=True, cwd=fdroid_workspace)
+
+    # Create Pull Request for releases (--head names the already-pushed branch => no prompt)
     print('Creating a pull request...')
     subprocess.run(f'''\
-                   gh pr create --base master \
+                   gh pr create --base master --head {branch_name} \
                     --title "Release {build.version_name}" \
                     -R session-foundation/session-fdroid \
                     --body "This is an automated release preparation for Release {build.version_name}. Human beings are still required to approve and merge this PR."\
@@ -237,27 +251,38 @@ parser = argparse.ArgumentParser(
  )
 
 parser.add_argument('--build-only', action='store_true', help='If set, will only build APKs and skip all upload/fdroid actions')
+parser.add_argument('--play-only', action='store_true', help='Build only the signed play AAB (for a dev/test upload to the internal track); skips the fdroid and huawei flavors and all upload/PR steps')
 parser.add_argument('--build-type', help='Build with specified build type. Default: release', default = 'release')
+parser.add_argument('--libsession', metavar='PATH', help="Build libsession-util-android (and its native libsession-util) from source at this path (the glue repo root), instead of the published AAR. Passed to Gradle as -Dsession.libsession_util.project.path; overrides any local.properties setting.")
 
 args = parser.parse_args()
 
-# Make sure gh command is available
-if shutil.which('gh') is None:
+# Resolve to an absolute path: settings.gradle.kts resolves a relative path against the app's
+# rootDir, so an absolute path is unambiguous regardless of where the glue is checked out.
+lib_util_path = os.path.abspath(args.libsession) if args.libsession else None
+
+# Make sure gh command is available (not needed for a play-only build)
+if not args.play_only and shutil.which('gh') is None:
     print('`gh` command not found. It is required to automate fdroid releases. Please install it from https://cli.github.com/', file=sys.stderr)
     sys.exit(1)
 
-# Make sure fdroid command is available
-if shutil.which('fdroid') is None:
-    print('`fdroid` command not found. It is required to automate fdroid releases. Please install it from https://f-droid.org/', file=sys.stderr)
+# Make sure fdroid command is available (not needed for a play-only build)
+if not args.play_only and shutil.which('fdroid') is None:
+    print('`fdroid` command not found. Install fdroidserver via your system package manager:\n'
+          '  Debian/Ubuntu:  apt install fdroidserver\n'
+          '  Homebrew:       brew install fdroidserver\n'
+          '  MacPorts:       port install fdroidserver\n'
+          'Other methods: https://f-droid.org/docs/Installing_the_Server_and_Repo_Tools/',
+          file=sys.stderr)
     sys.exit(1)
 
-# Make sure credentials file exists
-if not os.path.isfile(credentials_file_path):
-    print(f'Credentials file not found at {credentials_file_path}. You should ask the project maintainer for the file.', file=sys.stderr)
-    sys.exit(1)
-
-with open(credentials_file_path, 'rb') as f:
-    credentials = tomllib.load(f)
+# Load signing credentials (a TOML blob) from the OS keyring, so they never sit
+# on disk in plaintext. Store them once with:
+#   python3 scripts/_keyring.py set release-creds < release-creds.toml
+# then delete the plaintext file.
+credentials = tomllib.loads(get_secret(
+    RELEASE_CREDS_KEYRING_NAME,
+    what='Release signing credentials (release-creds.toml contents)'))
 
 # Make sure build folder exists
 if not os.path.isdir(build_dir):
@@ -272,7 +297,19 @@ play_build_result = build_releases(
     build_type=args.build_type,
     build_bundle=True,
     split_apks=True,
+    libsession_util_path=lib_util_path,
     )
+
+# A play-only build is just the signed AAB for a dev/test upload to the internal
+# track, so skip the other flavors and every upload/PR step below.
+if args.play_only:
+    print('\n=====================')
+    print('Build result (play only):')
+    for apk in play_build_result.apk_paths:
+        print(f'\t{apk}')
+    print(f'\t{play_build_result.bundle_path}')
+    print('=====================')
+    sys.exit(0)
 
 print("Building fdroid releases...")
 fdroid_build_result = build_releases(
@@ -283,6 +320,7 @@ fdroid_build_result = build_releases(
     build_type=args.build_type,
     build_bundle=False,
     split_apks=True,
+    libsession_util_path=lib_util_path,
     )
 
 if not args.build_only:
@@ -299,18 +337,19 @@ huawei_build_result = build_releases(
     build_type=args.build_type,
     build_bundle=False,
     split_apks=False,
+    libsession_util_path=lib_util_path,
     )
 
 # If the a github release draft exists, upload the apks to the release
 if not args.build_only:
     try:
-        release_info = json.loads(subprocess.check_output(f'gh release view --json isDraft {play_build_result.version_name}', shell=True, cwd=project_root))
+        release_info = json.loads(subprocess.check_output(f'gh release view -R session-foundation/session-android --json isDraft {play_build_result.version_name}', shell=True, cwd=project_root))
         if release_info['isDraft'] == True:
             print(f'Uploading build artifact to the release {play_build_result.version_name} draft...')
             files_to_upload = [*play_build_result.apk_paths,
                                play_build_result.bundle_path,
                                *huawei_build_result.apk_paths]
-            upload_commands = ['gh', 'release', 'upload', play_build_result.version_name, '--clobber', *files_to_upload]
+            upload_commands = ['gh', 'release', 'upload', '-R', 'session-foundation/session-android', play_build_result.version_name, '--clobber', *files_to_upload]
             subprocess.run(upload_commands, shell=False, cwd=project_root, check=True)
 
             print('Successfully uploaded these files to the draft release: ')

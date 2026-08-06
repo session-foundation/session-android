@@ -10,7 +10,7 @@ import org.session.protos.SessionProtos
 fun SessionProtos.ProProof.Builder.copyFromLibSession(
     proProof: ProProof
 ): SessionProtos.ProProof.Builder = setVersion(proProof.version)
-    .setExpiryUnixTs(proProof.expiryMs)
-    .setGenIndexHash(ByteString.copyFrom(proProof.genIndexHashHex.hexToByteArray()))
+    .setExpiryUnixTs(proProof.expirySeconds)
+    .setRevocationTag(ByteString.copyFrom(proProof.revocationTagHex.hexToByteArray()))
     .setRotatingPublicKey(ByteString.copyFrom(proProof.rotatingPubKeyHex.hexToByteArray()))
     .setSig(ByteString.copyFrom(proProof.signatureHex.hexToByteArray()))

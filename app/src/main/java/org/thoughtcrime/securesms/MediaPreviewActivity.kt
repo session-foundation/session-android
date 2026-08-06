@@ -55,7 +55,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -75,7 +75,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.isLegacyGroup
@@ -557,7 +556,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             applicationContext,
             R.string.permissionsStorageDeniedLegacy
         )
-            .put(APP_NAME_KEY, getString(R.string.app_name))
             .format().toString()
 
     private fun sendMediaSavedNotificationIfNeeded() {

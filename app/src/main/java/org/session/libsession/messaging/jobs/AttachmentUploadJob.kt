@@ -96,7 +96,12 @@ class AttachmentUploadJob @AssistedInject constructor(
                             )
                         )
                     )
-                    id to "${threadAddress.serverUrl}/file/$id"
+                    // Use the canonical community file URL (including the room) so other clients
+                    // (notably iOS, whose parser requires the `/room/<room>/file/<id>` form) can
+                    // download it. Android download is unaffected: it derives the file id from the
+                    // URL's last path segment and the room from the thread, so both this and the
+                    // legacy `<server>/file/<id>` form continue to work.
+                    id to "${threadAddress.serverUrl}/room/${threadAddress.room}/file/$id"
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
