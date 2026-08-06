@@ -249,6 +249,11 @@ class HomeViewModel @Inject constructor(
                     }
                 }
                 else if(subscription.type is ProStatus.Expired
+                    // Only after a SUCCESSFUL get_pro_status request (the round-trip completed and the
+                    // backend answered — even if with "expired"/"not pro"), never off stale data from a
+                    // failed or in-flight fetch: on foreground the cached status can be pre-renewal, and a
+                    // network failure must not surface a false "expired". Consistent with the iOS fix.
+                    && subscription.refreshState is org.thoughtcrime.securesms.util.State.Success
                     && !prefs.hasSeenProExpired()) {
                     val validUntil = subscription.type.expiredAt
                     showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
