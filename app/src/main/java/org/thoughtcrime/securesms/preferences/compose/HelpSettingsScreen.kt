@@ -12,9 +12,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
@@ -25,7 +24,6 @@ import org.thoughtcrime.securesms.ui.components.LogExporter
 import org.thoughtcrime.securesms.ui.components.SlimFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.findActivity
-import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.openUrl
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -51,16 +49,10 @@ fun HelpSettingsScreen(
                         .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                         .maxSdkVersion(Build.VERSION_CODES.P)
                         .withPermanentDenialDialog(
-                            context.getSubbedString(
-                                R.string.permissionsStorageDeniedLegacy,
-                                APP_NAME_KEY to context.applicationContext.getString(R.string.app_name)
-                            )
+                            context.getString(R.string.permissionsStorageDeniedLegacy)
                         )
                         .onAnyDenied {
-                            val txt = context.getSubbedString(
-                                R.string.permissionsStorageDeniedLegacy,
-                                APP_NAME_KEY to context.applicationContext.getString(R.string.app_name)
-                            )
+                            val txt = context.getString(R.string.permissionsStorageDeniedLegacy)
                             Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
                         }
                         .onAllGranted {
@@ -110,7 +102,6 @@ fun HelpSettings(
                     title = annotatedStringResource(R.string.helpReportABug),
                     subtitle = annotatedStringResource(
                         Phrase.from(context, R.string.helpReportABugExportLogsDescription)
-                            .put(APP_NAME_KEY, stringResource(R.string.app_name))
                             .format()
                     ),
                     subtitleStyle = LocalType.current.large,
@@ -136,7 +127,6 @@ fun HelpSettings(
                     modifier = Modifier.fillMaxWidth(),
                     title = annotatedStringResource(
                         Phrase.from(context, R.string.helpHelpUsTranslateSession)
-                            .put(APP_NAME_KEY, stringResource(R.string.app_name))
                             .format()
                     ),
                     icon = R.drawable.ic_square_arrow_up_right,

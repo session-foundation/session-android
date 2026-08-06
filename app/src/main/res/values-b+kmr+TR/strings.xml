@@ -9,13 +9,13 @@
     <string name="accountIdErrorInvalid">Ev ID ya Hesabê hatî bixebiterin. Ji kerema xwe vegere û dubare biceribîne.</string>
     <string name="accountIdOrOnsEnter">IDya Hesabê an ONS binivîse</string>
     <string name="accountIdOrOnsInvite">Daxwazê Nasnameya Kontê bikî jan ONS</string>
-    <string name="accountIdShare">Hey, min {app_name} bi temamî taybetî û ewlekariyê ji bo sohbetê dikarim bikar bînim. Were bi min re be! ID hesabê min \n\n{account_id}\n\nDaxistina ji {session_download_url} ve bikin</string>
+    <string name="accountIdShare">Hey, min Session bi temamî taybetî û ewlekariyê ji bo sohbetê dikarim bikar bînim. Were bi min re be! ID hesabê min \n\n{account_id}\n\nDaxistina ji https://getsession.org/download ve bikin</string>
     <string name="accountIdYours">ID Hesabê Te</string>
     <string name="accountIdYoursDescription">Ev ID ya Hesabê te ye. Bi karîdana pergale ya scan li ser vexbeşîte peyama te bişşe û şandina min.</string>
     <string name="actualSize">Mezinahiya eslî</string>
     <string name="add">Îlawe bike</string>
     <string name="adminCannotBeRemoved">Admîn nikarin werin rakirin.</string>
-    <string name="adminMorePromotedToAdmin"><b>{name}</b> û <b>{count} yên din</b> wekî admîn hatin xwepêşandin.</string>
+    <string name="adminMorePromotedToAdmin"><b>{name}</b> û <b>{count} yên din</b> wekî admîn hatin terfîkirin.</string>
     <string name="adminPromote">Admînan Belind</string>
     <string name="adminPromoteDescription">Tu piştrast î ku dixwazî <b>{name}</b> wek admîn bidî terfîkirin? Admîn nikarin werin rakirin.</string>
     <string name="adminPromoteMoreDescription">Tu piştrast î ku dixwazî <b>{name}</b> û <b>{count} yên din</b> wek admîn bidî terfîkirin? Admîn nikarin werin rakirin.</string>
@@ -41,14 +41,14 @@
         <item quantity="other">Terfîyên admînan dişîne</item>
     </plurals>
     <string name="adminSettings">Mîhengên Admînê</string>
-    <string name="adminTwoPromotedToAdmin"><b>{name}</b> û <b>{other_name}</b> wekî admîn hatin xwepêşandin.</string>
+    <string name="adminTwoPromotedToAdmin"><b>{name}</b> û <b>{other_name}</b> wekî admîn hatin terfîkirin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonîm</string>
     <string name="appIcon">ئایکۆنی ئەپ</string>
     <string name="appIconSelect">ئایکۆن ئەپی جێگرەوە هەڵبژێرە</string>
     <string name="appearanceHideMenuBar">Darikê Menuyê Biveşêre</string>
     <string name="appearanceLanguage">Ziman</string>
-    <string name="appearanceLanguageDescription">Hilbijartina zimanê xwe ya bo {app_name} bijêre. {app_name} di nava biguherîne leyenda zimanê nava.</string>
+    <string name="appearanceLanguageDescription">Hilbijartina zimanê xwe ya bo Session bijêre. Session di nava biguherîne leyenda zimanê nava.</string>
     <string name="appearancePreview1">Tu çawa yî?</string>
     <string name="appearancePreview2">Ez baş im, tu?</string>
     <string name="appearancePreview3">Ez baş im, spas bikim.</string>
@@ -117,7 +117,7 @@
     <string name="authenticateFailed">Teyîdkirina nasnameyê bi ser neket</string>
     <string name="authenticateFailedTooManyAttempts">Pŷ îdiçî ya ne. Ji kerem xwî gerar bike den du cara raste deker</string>
     <string name="authenticateNotAccessed">Nebû ku bigihe teyîdkirina nasnameyê.</string>
-    <string name="authenticateToOpen">Bi krediyal bide ku {app_name} veke.</string>
+    <string name="authenticateToOpen">Bi krediyal bide ku Session veke.</string>
     <string name="back">Paş</string>
     <string name="banDeleteAll">Asteng Bike û Wan Tevan Jê Bibe</string>
     <string name="banErrorFailed">Astengkirin têk çû</string>
@@ -155,7 +155,7 @@
     <string name="callsPermissionsRequiredDescription">Hûn dikarin destûrê \"Deng û Vîdeoyê\" leyîn û mîhengên bi te birûskbike.</string>
     <string name="callsReconnecting">Herî dîsa bi têkiliye dike…</string>
     <string name="callsRinging">Lê dide...</string>
-    <string name="callsSessionCall">{app_name} Bang</string>
+    <string name="callsSessionCall">Session Bang</string>
     <string name="callsSettings">Bangên (Beta)</string>
     <string name="callsVoiceAndVideo">Lêgerînên Dengî û Vîdeoyî</string>
     <string name="callsVoiceAndVideoBeta">Lêgerînên Dengî û Vîdeoyî (Beta)</string>
@@ -165,9 +165,9 @@
     <string name="cameraErrorNotFound">Kamera nehatin dîtin</string>
     <string name="cameraErrorUnavailable">Kamera neberdest e.</string>
     <string name="cameraGrantAccess">Destûra Kamerayê bide</string>
-    <string name="cameraGrantAccessDenied">{app_name} permiya kamera hewce dike da ku wêneyên û vedîdarê twist bike, lê ew daîmen rehtirî ye. Ji kerema xwe berdewam bike mîhengan mîhengên aplikasiya veçînsawî da bixe û \'Kamera\' aktîv bike.</string>
-    <string name="cameraGrantAccessDescription">{app_name} permiya kamera hewce dike da ku wêneyên û vedîdarên twist bike, an QR kodên scanner bike.</string>
-    <string name="cameraGrantAccessQr">{app_name} permiya kamera hewce dike da ku QR kodên scanner bike</string>
+    <string name="cameraGrantAccessDenied">Session permiya kamera hewce dike da ku wêneyên û vedîdarê twist bike, lê ew daîmen rehtirî ye. Ji kerema xwe berdewam bike mîhengan mîhengên aplikasiya veçînsawî da bixe û \'Kamera\' aktîv bike.</string>
+    <string name="cameraGrantAccessDescription">Session permiya kamera hewce dike da ku wêneyên û vedîdarên twist bike, an QR kodên scanner bike.</string>
+    <string name="cameraGrantAccessQr">Session permiya kamera hewce dike da ku QR kodên scanner bike</string>
     <string name="cancel">Betal bike</string>
     <string name="changePasswordFail">Bi ser neket ku şîfre veguherîne</string>
     <string name="clear">Paqij bike</string>
@@ -254,8 +254,8 @@
     <string name="copy">Kopî bike</string>
     <string name="create">Çêke</string>
     <string name="cut">Biqusîne</string>
-    <string name="databaseErrorTimeout">Em teswîr kirin {app_name} bimînte ye.\n\nHûn dikarin perê nîşan bibinine rewşa sernîşana hûn perê logoya ten do dike bibirûje, an berbijîhengê {app_name} dîsa baş.herşe cereyan bike.</string>
-    <string name="databaseErrorUpdate">بنکەی زانیاری بەرنامەکەت ناگەلێرد بەم وه‌ شەپکنیکی {app_name}. بەخێربەستەوە بەرنامەکە و ئەژمێرت پاشەکەوتی بکەیت بۆ بەکاربردنی {app_name}.\n\nئاگاداری: ئەمە دوای دیترین مەکموو بەرەوکردنەکان و هاوبەشەکان بەکارە لأختە دەکاتە دوو هەفتە ئەگەری پەیامەکان.</string>
+    <string name="databaseErrorTimeout">Em teswîr kirin Session bimînte ye.\n\nHûn dikarin perê nîşan bibinine rewşa sernîşana hûn perê logoya ten do dike bibirûje, an berbijîhengê Session dîsa baş.herşe cereyan bike.</string>
+    <string name="databaseErrorUpdate">بنکەی زانیاری بەرنامەکەت ناگەلێرد بەم وه‌ شەپکنیکی Session. بەخێربەستەوە بەرنامەکە و ئەژمێرت پاشەکەوتی بکەیت بۆ بەکاربردنی Session.\n\nئاگاداری: ئەمە دوای دیترین مەکموو بەرەوکردنەکان و هاوبەشەکان بەکارە لأختە دەکاتە دوو هەفتە ئەگەری پەیامەکان.</string>
     <string name="databaseOptimizing">Danegehê baştir dike</string>
     <string name="debugLog">Loga pînekirina çewtiyan</string>
     <string name="decline">Red bike</string>
@@ -264,7 +264,7 @@
     <string name="deleteAfterGroupPR1BlockThisUser">Blok Bike Vê Bikarhênerê</string>
     <string name="deleteAfterGroupPR1BlockUser">Bikarhênerê Blok Bike</string>
     <string name="deleteAfterGroupPR1GroupSettings">Mîhengên Komê</string>
-    <string name="deleteAfterGroupPR1MentionsOnly">Tenê tiya din ji bo peyamên şaneke edə par kendiakirinani wallah</string>
+    <string name="deleteAfterGroupPR1MentionsOnly">Tenê ji bo Behskirinan Agahdar Bike</string>
     <string name="deleteAfterGroupPR1MentionsOnlyDescription">Gava pêveka aktîv bike, hûn ten foraan bêjin mesajên yedi nexşanda te kirîna hûncarî.</string>
     <string name="deleteAfterGroupPR1MessageSound">Peyama Dengî</string>
     <string name="deleteAfterGroupPR3DeleteMessagesConfirmation">Bila ev mesajên di vê sohbetê de daîmen were jêbirin?</string>
@@ -295,7 +295,7 @@
     </plurals>
     <string name="deleteMessageDescriptionEveryone">Tu piştrast î ku tu dixwazî vê peyamê ji bo tevan jê bibî?</string>
     <string name="deleteMessageDeviceOnly">Tenê ji ser vê cîhazê bibe</string>
-    <string name="deleteMessageDevicesAll">Peymaneyan di ser hemû amêrakên min de jê bibe</string>
+    <string name="deleteMessageDevicesAll">Li ser temamê cîhazên min jê bibe</string>
     <string name="deleteMessageEveryone">Ji bo tevan jê bibe</string>
     <plurals name="deleteMessageFailed">
         <item quantity="one">Bi ser neket ku peyama jê derbike.</item>
@@ -344,7 +344,7 @@
     <string name="disappearingMessagesTurnedOffYouGroup"><b>Tu</b> peyamekên winda bike<b>vegerandin</b>.</string>
     <string name="disappearingMessagesTypeRead">xwendin</string>
     <string name="disappearingMessagesTypeSent">hate şandin</string>
-    <string name="disappearingMessagesUpdated"><b>{admin_name} </b> mîhengên peyamên windabûna nûve kir.</string>
+    <string name="disappearingMessagesUpdated"><b>{admin_name} </b> mîhengên peyamên windaber rojane kir.</string>
     <string name="disappearingMessagesUpdatedYou"><b>Te</b> mîhengan peyamên wîndaber rojane kir.</string>
     <string name="dismiss">Betal bike</string>
     <string name="displayNameDescription">Divê navê te rastîn, yekê pirgir yan tiştê din be. Hevbihêle bê canê ku tu dikarî wî/aña guherîne bi her dem.</string>
@@ -377,9 +377,9 @@
         <item quantity="one">Û %1$d bi %2$s bi vê peyamê bertexî dike.</item>
         <item quantity="other">Û %1$d bi %2$s ji vê peyamê bertex dikin.</item>
     </plurals>
-    <string name="emojiReactsHoverNameDesktop">{name} bi {emoji_name} re agirandin</string>
+    <string name="emojiReactsHoverNameDesktop">{name} bi {emoji_name} bertek da</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} û {other_name} bi {emoji_name} re agirandin</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} û <font color="0">{count} yên din</font> bi {emoji_name} re agirandin</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} û <font color="0">{count} yên din</font> bi {emoji_name} bertek dan</string>
     <string name="emojiReactsHoverYouNameDesktop">Hûn bi {emoji_name} re agirandin</string>
     <string name="emojiReactsHoverYouNameMultipleDesktop">Hûn û <font color="0">{count} yên din</font> bi {emoji_name} re agirandin</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Hûn û {name} bi {emoji_name} re agirandin</string>
@@ -396,7 +396,7 @@
     <string name="fullScreenToggle">Bike Ekrana Dagirtî/Jê Derkeve</string>
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
-    <string name="giphyWarningDescription">{app_name} bi Giphy vegire da ku encamên lêgerînê bikar anîne. Tu yê xwedî muhafazeya full ya metadaneyê nebî gava ku GIF bişînî.</string>
+    <string name="giphyWarningDescription">Session bi Giphy vegire da ku encamên lêgerînê bikar anîne. Tu yê xwedî muhafazeya full ya metadaneyê nebî gava ku GIF bişînî.</string>
     <string name="groupAddMemberMaximum">Di komê de maksîmum 100 endam karin cih bigirin</string>
     <string name="groupCreate">Komê Çêke</string>
     <string name="groupCreateErrorNoMembers">Ji kerema xwe bi kêmanî 1 yekê din bibijêre.</string>
@@ -472,10 +472,10 @@
     <string name="groupUpdated">Kom hat rojanekirin</string>
     <string name="handlingConnectionCandidates">مامەڵەکردن لەگەڵ کاندیدەکانی پەیوەندی</string>
     <string name="helpFAQ">PPP</string>
-    <string name="helpHelpUsTranslateSession">{app_name} ji me alîkarî bike ku bi cîh bike</string>
-    <string name="helpReportABugDescription">Hin hûrdahalan binêrin ku hûn diyarî karê xwe bikaribinên. Logên xwe berriṇ, paşê pelê bi riya Pêşniyara Alîkarî ya {app_name} bicikin.</string>
+    <string name="helpHelpUsTranslateSession">Session ji me alîkarî bike ku bi cîh bike</string>
+    <string name="helpReportABugDescription">Hin hûrdahalan binêrin ku hûn diyarî karê xwe bikaribinên. Logên xwe berriṇ, paşê pelê bi riya Pêşniyara Alîkarî ya Session bicikin.</string>
     <string name="helpReportABugExportLogs">Logan derxîne</string>
-    <string name="helpReportABugExportLogsDescription">Logên xwe eksport bike, paşê bi wasiteya Maseya Alîkariyê ya {app_name} hilbar bike.</string>
+    <string name="helpReportABugExportLogsDescription">Logên xwe eksport bike, paşê bi wasiteya Maseya Alîkariyê ya Session hilbar bike.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Qeyd bike li sermaseyê</string>
     <string name="helpSupport">Destek</string>
     <string name="helpWedLoveYourFeedback">Em hez dikin paşragihana te hîn bibin</string>
@@ -510,23 +510,23 @@
     <string name="linkPreviewsEnable">Pêşdîtinên lînkan aktîv bike</string>
     <string name="linkPreviewsErrorLoad">Ne kilkiya veger</string>
     <string name="linkPreviewsErrorUnsecure">Pêşdîtina gîrek têne girêdan</string>
-    <string name="linkPreviewsFirstDescription">Ji bo URLyên dişînî û werdigirî, pêşdîtinê nîşan bide. Ev kare kêrhatî be, lê belê divê {app_name} ji bo çêkirina pêşdîtinan bigihe malperên eleqedar. Tu herdem karî pêşdîtinên lînkan ji mîhengên {app_name} bigirî.</string>
+    <string name="linkPreviewsFirstDescription">Ji bo URLyên dişînî û werdigirî, pêşdîtinê nîşan bide. Ev kare kêrhatî be, lê belê divê Session ji bo çêkirina pêşdîtinan bigihe malperên eleqedar. Tu herdem karî pêşdîtinên lînkan ji mîhengên Session bigirî.</string>
     <string name="linkPreviewsSend">Pêşniyazên Linkê Bişîne</string>
     <string name="linkPreviewsSendModalDescription">Tu himaya metadatâya kesanehin di peyama bikevin di herela peyama bikar an peyam bikar an nebesıkra.</string>
     <string name="linkPreviewsTurnedOff">Pêşdîtinên Lînkan Vê Girtî</string>
-    <string name="linkPreviewsTurnedOffDescription">{app_name} divê bi malperan re veberdayîvan bike da ku pêşdîtinên lînkan çêke yim bixwe. \n\nTu dikarî wan di mîhengan {app_name}\'s de bixebitîne.</string>
+    <string name="linkPreviewsTurnedOffDescription">Session divê bi malperan re veberdayîvan bike da ku pêşdîtinên lînkan çêke yim bixwe. \n\nTu dikarî wan di mîhengan Session\'s de bixebitîne.</string>
     <string name="loadAccount">Hesabê bar bike</string>
     <string name="loadAccountProgressMessage">Hesabê te bar dike</string>
     <string name="loading">Bar dibe...</string>
     <string name="lockApp">Appê Qefil bike</string>
-    <string name="lockAppDescription">Piwanideya nîşan, şîfre anpattern an şîfre an şîfre ji bo vekirina {app_name}.</string>
-    <string name="lockAppDescriptionIos">Touch ID, Face ID an şîfreya xwe divê bikar bînî ku {app_name} vekir.</string>
+    <string name="lockAppDescription">Piwanideya nîşan, şîfre anpattern an şîfre an şîfre ji bo vekirina Session.</string>
+    <string name="lockAppDescriptionIos">Touch ID, Face ID an şîfreya xwe divê bikar bînî ku Session vekir.</string>
     <string name="lockAppEnablePasscode">Te divê di Mîhengekên iOS-ê xwe de şîfreekê saz bikî da ku Têketinê bikar bînî.</string>
-    <string name="lockAppLocked">{app_name} hate qefilandin</string>
-    <string name="lockAppQuickResponse">Bersiva zû nayê ava gava ku {app_name} hate qefilandin!</string>
+    <string name="lockAppLocked">Session hate qefilandin</string>
+    <string name="lockAppQuickResponse">Bersiva zû nayê ava gava ku Session hate qefilandin!</string>
     <string name="lockAppStatus">Rewşa qefilanî</string>
     <string name="lockAppUnlock">Lîsto be ku bikirtîne</string>
-    <string name="lockAppUnlocked">{app_name} hate vekirin</string>
+    <string name="lockAppUnlocked">Session hate vekirin</string>
     <string name="max">Max</string>
     <string name="media">Medya</string>
     <plurals name="members">
@@ -535,13 +535,13 @@
     </plurals>
     <plurals name="membersActive">
         <item quantity="one">%1$d endamê aktîv</item>
-        <item quantity="other">%1$d endamên aktîf</item>
+        <item quantity="other">%1$d endamên aktîv</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">IDya Hesabê an ONS tevlî bike</string>
     <string name="membersInvite">Kontaktan dawet bike</string>
     <plurals name="membersInviteSend">
         <item quantity="one">Dawetnameyek bişîne</item>
-        <item quantity="other">Şandina Davetan</item>
+        <item quantity="other">Dawetname bişîne</item>
     </plurals>
     <string name="membersInviteShareDescription">Hûn dixwazin dîrokê peyamên şexsî ji <b>{name}</b> girî?</string>
     <string name="membersInviteShareDescriptionMultiple">Hûn dixwazin dîrokê peyamên şexsî ji <b>{name}</b> û <b>{count} yên din</b> girîftin?</string>
@@ -553,7 +553,7 @@
     <string name="messageEmpty">Ev peyama vê demedan e.</string>
     <string name="messageErrorDelivery">Teslîmkirina peyamê bi ser neket</string>
     <string name="messageErrorLimit">Gihaye sînorê mesajê</string>
-    <string name="messageErrorOld">Peyameke ji versiyona kevn a {app_name} ve hate bistîne ku nabe bikar bî. Ji kerema xwe ji şandinê daxwaz bike ku yeni versiyonê vegerîne û peyama dubare biaxife.</string>
+    <string name="messageErrorOld">Peyameke ji versiyona kevn a Session ve hate bistîne ku nabe bikar bî. Ji kerema xwe ji şandinê daxwaz bike ku yeni versiyonê vegerîne û peyama dubare biaxife.</string>
     <string name="messageErrorOriginal">Peyama orjînal peyda nebû</string>
     <string name="messageInfo">Agahdariya Peyamê</string>
     <string name="messageMarkRead">Wekî Xwendî Nîşan Bide</string>
@@ -566,7 +566,7 @@
     <string name="messageNewDescriptionMobile">Bi navê hesabê hevalê xwe Account ID, ONS an scanê QR code-yê têlepeqîne.</string>
     <plurals name="messageNewYouveGot">
         <item quantity="one">Peyameke te yê nû heye.</item>
-        <item quantity="other">%1$d peyama nû hîn tuneyê.</item>
+        <item quantity="other">%1$d peyamên te yên nû hene.</item>
     </plurals>
     <plurals name="messageNewYouveGotGroup">
         <item quantity="one">Peyameke te yê nû heye di %1$s de.</item>
@@ -626,7 +626,7 @@
     <string name="notificationsHeaderAllMessages">Agahdarî - Hemû</string>
     <string name="notificationsHeaderMentionsOnly">Agahdarî - Tenê Behskirin</string>
     <string name="notificationsHeaderMute">Agahdarî - Bêdeng</string>
-    <string name="notificationsIosGroup">{name} ji {conversation_name}</string>
+    <string name="notificationsIosGroup">{name} ji bo {conversation_name}</string>
     <string name="notificationsIosRestart">Gava ku {device}ê te vedigere, tu pêvajo hildîsti.</string>
     <string name="notificationsLedColor">Rengê LED</string>
     <string name="notificationsMentionsOnly">Tenê behskirin</string>
@@ -637,7 +637,7 @@
     <string name="notificationsMuteUnmute">Ladaniyê bi ser ke</string>
     <string name="notificationsMuted">Bêdengkirî</string>
     <string name="notificationsSlowMode">Slow Mode</string>
-    <string name="notificationsSlowModeDescription">{app_name} hema nû peşiyerkan kontrol dike di piştî deran de.</string>
+    <string name="notificationsSlowModeDescription">Session hema nû peşiyerkan kontrol dike di piştî deran de.</string>
     <string name="notificationsSound">Deng</string>
     <string name="notificationsSoundDescription">Deng gave bikarhêra actîv e</string>
     <string name="notificationsSoundDesktop">Agahdariyên dengî</string>
@@ -651,20 +651,22 @@
     <string name="onboardingAccountCreate">Hesabê çêke</string>
     <string name="onboardingAccountCreated">Hesab hate çêkirin</string>
     <string name="onboardingAccountExists">Ez hesabe yekî hebûme</string>
-    <string name="onboardingBackAccountCreation">Hûn naxwazin vegerin paşê. Bo qebûl nekirina çêkirina hesabê we, {app_name} divê bigire.</string>
-    <string name="onboardingBackLoadAccount">Hûn naxwazin paşê vegerin. Bo rawestgiryayî hewldana hesabê we, {app_name} divê bigire.</string>
+    <string name="onboardingBackAccountCreation">Hûn naxwazin vegerin paşê. Bo qebûl nekirina çêkirina hesabê we, Session divê bigire.</string>
+    <string name="onboardingBackLoadAccount">Hûn naxwazin paşê vegerin. Bo rawestgiryayî hewldana hesabê we, Session divê bigire.</string>
     <string name="onboardingBubbleCreatingAnAccountIsEasy">Çêkirina hesabê instant, belaş û anonim e {emoji}</string>
     <string name="onboardingBubbleNoPhoneNumber">Te jî bi we hêxam nayê nîşandin ku bi telefoneke ser girêdan peyda bicinûsin.</string>
     <string name="onboardingBubblePrivacyInYourPocket">Nihênî di hindurê te de.</string>
-    <string name="onboardingBubbleSessionIsEngineered">{app_name} bi meşxulekariyê weşanê te razî dike.</string>
-    <string name="onboardingBubbleWelcomeToSession">Bi xêr hatî {app_name} {emoji}</string>
+    <string name="onboardingBubbleSessionIsEngineered">Session bi meşxulekariyê weşanê te razî dike.</string>
+    <string name="onboardingBubbleWelcomeToSession">Bi xêr hatî Session {emoji}</string>
     <string name="onboardingHitThePlusButton">Bişkojka plus bikirtînin da ku danûstendinek dest pê bikin, komek biafirînin, an beşdarî civatek fermî bibin!</string>
-    <string name="onboardingMessageNotificationExplanation">Tu navên kîjan {app_name} temen bi peyamên nû agahiş dike.</string>
+    <string name="onboardingMessageNotificationExplanation">Tu navên kîjan Session temen bi peyamên nû agahiş dike.</string>
     <string name="onboardingPrivacy">Naha:  Meta</string>
     <string name="onboardingTos">Têkiliyên Xizmetkarî</string>
     <string name="onboardingTosPrivacy">Bila ku hûn bi karanîna mâreyê em wergirtinên me yên <b>Şertên Xezûrî</b> û <b>Siyaseta Arzûya Kesayetiê</b> qebûl bikin</string>
+    <string name="ongoingAppeal">Hêviyek Nû ji bo Session</string>
+    <string name="ongoingAppealDescription">Dema ku wisa xuya dikir ku Session dibe ku winda bibe, we gave gavê pêş.\n\nBeşdariyên we ji bo Session Technology Foundation (STF) têra fînansek peyda kirine ku tîmeke biçûk ji beşdarvanan bikaribe sepanê biparêze.\n\nNiha, armanc ew e ku Session ewle, aram û li serhêl were parastin.\n\nBeşdariyên we dikarin di vê demê de ya girîng de alîkariya piştgirîkirina Session bikin. Beşdariyên zêdetir dibe ku rê bidin ku pêşdebirên zêdetir werin xebitandin û bibin alîkar ku taybetmendiyên pêwîst ji bo pêşxistina Session bi lezter were peydakirin.</string>
     <string name="onionRoutingPath">Rê</string>
-    <string name="onionRoutingPathDescription">{app_name} IP-ya te veşêre bi riya peyaman te bi nexşên parastina xizmeta pirçavan di toraya qedaxkirî {app_name}\'s de re radike. Ev rêya weya niha ye:</string>
+    <string name="onionRoutingPathDescription">Session IP-ya te veşêre bi riya peyaman te bi nexşên parastina xizmeta pirçavan di toraya qedaxkirî Session\'s de re radike. Ev rêya weya niha ye:</string>
     <string name="onionRoutingPathDestination">Hedef</string>
     <string name="onionRoutingPathEntryNode">Niqteya Têketinê</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
@@ -686,33 +688,33 @@
     <string name="passwordRemove">Şîfreyê Rake</string>
     <string name="passwordSet">Şîfre çêkirin</string>
     <string name="paste">Pêve bike</string>
-    <string name="permissionMusicAudioDenied">{app_name} hewl dibe da ku bikarhênina muzîk û dengwêje bike ji bo senden dosyayan, muzîk û dengwêje, lê permîsiya wî daîmen hewce ye. Bibînin Mîhengên → Permîsyan, û \"Muzîk û dengwêje\" bike.</string>
-    <string name="permissionsAppleMusic">{app_name} permiya bikar anînina Apple Music hewce dike da ku tesawirên medyayê bixebitîne.</string>
+    <string name="permissionMusicAudioDenied">Session hewl dibe da ku bikarhênina muzîk û dengwêje bike ji bo senden dosyayan, muzîk û dengwêje, lê permîsiya wî daîmen hewce ye. Bibînin Mîhengên → Permîsyan, û \"Muzîk û dengwêje\" bike.</string>
+    <string name="permissionsAppleMusic">Session permiya bikar anînina Apple Music hewce dike da ku tesawirên medyayê bixebitîne.</string>
     <string name="permissionsAutoUpdate">Rojanekirina otomatîk</string>
     <string name="permissionsAutoUpdateDescription">Di destpêkê de rojanekirina otomatîken kontrol dike</string>
-    <string name="permissionsCameraDenied">{app_name} hewl dibe da ku bikarhênina kamera bibe ji bo twistsen wêneyan û vedîdarê, lê permîsiya wî daîmen hewce ye. Bibînin Mîhengên → Permîsyan, û \"Kamera\" bike.</string>
-    <string name="permissionsFaceId">Taybetmendiya serrnderkî ya {app_name} bi Face ID bicîh dike.</string>
+    <string name="permissionsCameraDenied">Session hewl dibe da ku bikarhênina kamera bibe ji bo twistsen wêneyan û vedîdarê, lê permîsiya wî daîmen hewce ye. Bibînin Mîhengên → Permîsyan, û \"Kamera\" bike.</string>
+    <string name="permissionsFaceId">Taybetmendiya serrnderkî ya Session bi Face ID bicîh dike.</string>
     <string name="permissionsKeepInSystemTray">Di Sênîka Sîstemê de Bihêle</string>
-    <string name="permissionsLibrary">{app_name} permiya maktaba wêneyê hewce dike da ku berdewam bike. Tu dikarî permiya aktîv bike di mîhengên iOS de.</string>
+    <string name="permissionsLibrary">Session permiya maktaba wêneyê hewce dike da ku berdewam bike. Tu dikarî permiya aktîv bike di mîhengên iOS de.</string>
     <string name="permissionsMicrophone">Mîkrofon</string>
-    <string name="permissionsMicrophoneAccessRequired">{app_name} permiya mîkrofonê hewce dike da ku bang û peyamekên dengî bişîne, lê bû daîmî refuze kirin. Kerem bike mîhengan → destûran bikişîne, û \'Mîkrofon\' yê aç bikî.</string>
-    <string name="permissionsMicrophoneAccessRequiredDesktop">Hûn dikarin akses mikrafona li rêza taybetmendiya {app_name} veke</string>
-    <string name="permissionsMicrophoneAccessRequiredIos">{app_name} permiya mîkrofon hewce dike da ku lêgerîn bike û peyman dengî record bike.</string>
+    <string name="permissionsMicrophoneAccessRequired">Session permiya mîkrofonê hewce dike da ku bang û peyamekên dengî bişîne, lê bû daîmî refuze kirin. Kerem bike mîhengan → destûran bikişîne, û \'Mîkrofon\' yê aç bikî.</string>
+    <string name="permissionsMicrophoneAccessRequiredDesktop">Hûn dikarin akses mikrafona li rêza taybetmendiya Session veke</string>
+    <string name="permissionsMicrophoneAccessRequiredIos">Session permiya mîkrofon hewce dike da ku lêgerîn bike û peyman dengî record bike.</string>
     <string name="permissionsMicrophoneDescription">Îzn bide ji bo gihîna mîkrofonê.</string>
-    <string name="permissionsMusicAudio">{app_name} hewl dibe da ku bikarhênina muzîk û dengwêje bike ji bo senden dosyayan, muzîk û dengwêje.</string>
+    <string name="permissionsMusicAudio">Session hewl dibe da ku bikarhênina muzîk û dengwêje bike ji bo senden dosyayan, muzîk û dengwêje.</string>
     <string name="permissionsRequired">Destûr pêdivî ye</string>
-    <string name="permissionsStorageDenied">{app_name} pêwîstî heye da ku libraryê wêneyan bikarhênin ji bo senden wêneyan û vedîdar, lê permîsiya wî daîmen hewce ye. Bibînin Mîhengên → Permîsyan, û \"Wêneyan\" bike.</string>
-    <string name="permissionsStorageDeniedLegacy">{app_name} çêdutina hilberî dibeekenî ji bo senden û hildegirtin ataşmankî bikar bîne. Bibînin Mîhengên → Permîsyan, û hilka \"Hilberî\" bike.</string>
-    <string name="permissionsStorageSave">{app_name} permiya hilkişina xelasî û medyayê hewce dike.</string>
-    <string name="permissionsStorageSaveDenied">{app_name} permiya hilkişina wêneyên û vedîdarên hewce dike, lê ew daîmen rehtirî ye. Ji kerema xwe berdewam bike mîhengan mîhengên aplikasiya veçînsawî da bixe û \'Hilkişin\' aktîv bike.</string>
-    <string name="permissionsStorageSend">{app_name} permiya hilkişina wêneyên û vedîdarên bişîne.</string>
+    <string name="permissionsStorageDenied">Session pêwîstî heye da ku libraryê wêneyan bikarhênin ji bo senden wêneyan û vedîdar, lê permîsiya wî daîmen hewce ye. Bibînin Mîhengên → Permîsyan, û \"Wêneyan\" bike.</string>
+    <string name="permissionsStorageDeniedLegacy">Session çêdutina hilberî dibeekenî ji bo senden û hildegirtin ataşmankî bikar bîne. Bibînin Mîhengên → Permîsyan, û hilka \"Hilberî\" bike.</string>
+    <string name="permissionsStorageSave">Session permiya hilkişina xelasî û medyayê hewce dike.</string>
+    <string name="permissionsStorageSaveDenied">Session permiya hilkişina wêneyên û vedîdarên hewce dike, lê ew daîmen rehtirî ye. Ji kerema xwe berdewam bike mîhengan mîhengên aplikasiya veçînsawî da bixe û \'Hilkişin\' aktîv bike.</string>
+    <string name="permissionsStorageSend">Session permiya hilkişina wêneyên û vedîdarên bişîne.</string>
     <string name="pin">Bizeliqîne</string>
     <string name="pinConversation">Sohbetê Bizeliqîne</string>
     <string name="pinUnpin">Pulina bikarînî</string>
     <string name="pinUnpinConversation">Pulina Peyven</string>
     <string name="preview">Pêşdîtin</string>
     <string name="profile">Profîl</string>
-    <string name="profileDisplayPicture">Resmê Xuya bike</string>
+    <string name="profileDisplayPicture">Rismê Nîşan Bide</string>
     <string name="profileDisplayPictureRemoveError">Rûberê profîlê remove têbîne</string>
     <string name="profileDisplayPictureSet">Rismê Profîlê Çêke</string>
     <string name="profileDisplayPictureSizeError">Ji kerema xwe pêveke zêdetir bicikne.</string>
@@ -732,7 +734,7 @@
     <string name="qrScan">QR Kodê li têqrîne</string>
     <string name="qrView">Vaziniya QR</string>
     <string name="qrYoursDescription">Hevalên te karin bi skenkirina koda te ya QRê mesaj bişînin te.</string>
-    <string name="quit">Rake {app_name}</string>
+    <string name="quit">Rake Session</string>
     <string name="quitButton">Rake</string>
     <string name="read">Xwendin</string>
     <string name="readReceipts">Agahiyên Xwendinê</string>
@@ -775,11 +777,11 @@
     <string name="screenshotTaken"><b>{name}</b> wêneyekî ekranê kişand.</string>
     <string name="search">Gerr</string>
     <string name="searchContacts">Li kontaktekî bigerrin</string>
-    <string name="searchConversation">Li söylek bigerrin</string>
+    <string name="searchConversation">Li sohbetekê bigere</string>
     <string name="searchEnter">Kerem bike tu li ser Giphy ne girêdane - ne têketina gêrê, usbikirina tambûra têkeve</string>
     <plurals name="searchMatches">
         <item quantity="one">%1$d ji %2$d li hev tê</item>
-        <item quantity="other">%1$d li li %2$d yên din</item>
+        <item quantity="other">%1$d ji %2$d li hev tên</item>
     </plurals>
     <string name="searchMatchesNone">Encam peyda nebû</string>
     <string name="searchMatchesNoneSpecific">Encam peyda nebû ji bo {query}</string>
@@ -804,13 +806,13 @@
     <string name="sessionRecoveryPassword">Şîfreya Veşartinê</string>
     <string name="sessionSettings">Mîheng</string>
     <string name="set">Danîn</string>
-    <string name="settingsRestartDescription">Ji bo bi aliyekî kirina mîhengekên xwe yên nû, {app_name}ê ji nû ve vekin.</string>
+    <string name="settingsRestartDescription">Ji bo bi aliyekî kirina mîhengekên xwe yên nû, Sessionê ji nû ve vekin.</string>
     <string name="settingsScreenSecurityDesktop">Parastina Ekranê</string>
     <string name="share">Par</string>
-    <string name="shareAccountIdDescription">Hevalê xwe dawet bike ku bi te li ser {app_name} sohbet bike bi şêrnînasî Nasnameya Kontê xwe re.</string>
+    <string name="shareAccountIdDescription">Hevalê xwe dawet bike ku bi te li ser Session sohbet bike bi şêrnînasî Nasnameya Kontê xwe re.</string>
     <string name="shareAccountIdDescriptionCopied">Bi hevalên xwe bi hû zekê qeseyê bikin û niha baye birre deri zanînuwe.</string>
     <string name="shareExtensionDatabaseError">Hingehî bibe dazik xwe tisteka te bide qedandin. Ji kerema xwe karan daye ber xwe xwe dubare agir bike.</string>
-    <string name="shareToSession">Bi {app_name} re parve bike</string>
+    <string name="shareToSession">Bi Session re parve bike</string>
     <string name="show">Nîşan bide</string>
     <string name="showAll">Temamê wan nîşan bide</string>
     <string name="showLess">Kêmtir nîşan bide</string>
@@ -829,11 +831,11 @@
     <string name="updateDownloaded">Nûveker tê zêdekirin, bişkînin ji bo destzê kirina xwerê</string>
     <string name="updateDownloading">Rojanekirin tê daxistin: {percent_loader}%</string>
     <string name="updateError">Nikare Rojane Bike</string>
-    <string name="updateErrorDescription">{app_name} nêteweyên nûvekirinê bi ser neket. Ji kerema xwe biçe {session_download_url} û wersionekî nû bi destê xwe saz bike, paşê bi Merkezê Yêrimeda me bigere ji bo agahî kirina me vê pirsgirêkê.</string>
-    <string name="updateNewVersion">Versîyoneke nû ya {app_name} berdest e, ji bo rojanekirinê lê bitikîne</string>
-    <string name="updateNewVersionDescription">Versîyoneke nû ({version}) ya {app_name} berdest e.</string>
+    <string name="updateErrorDescription">Session rojanekirin bi ser neket. Ji kerema xwe biçe https://getsession.org/download û versîyonekî nû bi destê xwe saz bike, paşê ji bo me ji vê pirsgirêkê agahdar bikî bi Merkeza me ya Alîkarîyê re îrtîbat deyne.</string>
+    <string name="updateNewVersion">Versîyoneke nû ya Session berdest e, ji bo rojanekirinê lê bitikîne</string>
+    <string name="updateNewVersionDescription">Versîyoneke nû ({version}) ya Session berdest e.</string>
     <string name="updateReleaseNotes">Here Notên Versiyonê</string>
-    <string name="updateSession">{app_name} Nûvekirin</string>
+    <string name="updateSession">Session Nûvekirin</string>
     <string name="updateVersion">Versîyon {version}</string>
     <string name="uploading">Tomarkirin</string>
     <string name="urlCopy">URLyê kopî bike</string>

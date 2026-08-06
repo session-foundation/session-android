@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -69,7 +69,6 @@ import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.CommunityUrlParser
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.UserConfigType
@@ -1444,7 +1443,6 @@ class ConversationViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = application.getString(R.string.linkPreviewsEnable),
                     message = Phrase.from(application, R.string.linkPreviewsFirstDescription)
-                        .put(APP_NAME_KEY, APP_NAME)
                         .format(),
                     positiveStyleDanger = true,
                     positiveText = application.getString(R.string.enable),

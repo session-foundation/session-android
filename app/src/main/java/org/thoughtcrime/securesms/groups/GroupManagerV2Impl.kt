@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.groups
 
 import android.content.Context
 import com.google.protobuf.ByteString
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers

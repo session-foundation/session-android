@@ -33,10 +33,9 @@ import android.widget.Toast
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import java.lang.Exception
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
@@ -303,7 +302,6 @@ class ScreenLockActivity : BaseActionBarActivity() {
     private fun initializeResources() {
         val statusTitle = findViewById<TextView>(R.id.app_lock_status_title)
         statusTitle?.text = Phrase.from(applicationContext, R.string.lockAppLocked)
-            .put(APP_NAME_KEY, getString(R.string.app_name))
             .format().toString()
 
         fingerprintPrompt = findViewById(R.id.fingerprint_auth_container)
