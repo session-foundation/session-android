@@ -134,13 +134,19 @@ class ConfigRestoreSource @Inject constructor(
             // two facts cancel rather than compound — a member re-stores and simply never prunes.
             //
             // The keys config is absent here, and the reason is the **Android wrapper**, not libsession:
-            // libsession retains the raw bytes of active keys messages and exposes them
-            // (Keys::active_key_messages), but no JNI binding for that exists yet, so the only thing
-            // reachable from Kotlin is pendingConfig(), which is a key
-            // message that hasn't been pushed yet), and each member holds a different subset of the
-            // keys namespace anyway because key supplements are encrypted per session id. A group
-            // whose keys have expired is detected and flagged — that's what the expired-group banner
-            // is for, since only an admin rekey can fix it — but never recovered.
+            // libsession retains the raw bytes of every active keys message and exposes them
+            // (Keys::active_key_messages), but no JNI binding for that exists yet. The only keys bytes
+            // reachable from Kotlin are pendingConfig(), which is a message this device authored and has
+            // not pushed — the wrong thing entirely, because retention is a property of having *loaded* a
+            // message, not of having authored one. So a group whose keys have expired is detected and
+            // flagged, and not recovered, until that binding lands.
+            //
+            // When it does, note what it is *not*: an admin path. Any device that loaded the message holds
+            // the bytes and can push them back unchanged — a member included, since the bytes carry the
+            // admin's signature already. Immediately after its own rekey an admin holds no bytes for the
+            // message it just created and is the device *least* able to repair it. An admin rekey remains
+            // the only remedy when no device anywhere still holds the bytes, which is what the banner is
+            // for; it is not the remedy when some device does.
             listOfNotNull(
                 configs.groupInfo.toRestore(
                     label = "group info for $groupId",
