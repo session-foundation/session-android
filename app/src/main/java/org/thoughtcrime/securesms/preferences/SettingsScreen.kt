@@ -314,7 +314,6 @@ fun Settings(
             Buttons(
                 recoveryHidden = uiState.recoveryHidden,
                 pathStatus = uiState.pathStatus,
-                postPro = uiState.isPostPro,
                 proDataState = uiState.proDataState,
                 sendCommand = sendCommand
             )
@@ -398,7 +397,6 @@ fun Settings(
             AvatarDialog(
                 state = uiState.avatarDialogState,
                 isPro = uiState.proDataState.type is ProStatus.Active,
-                isPostPro = uiState.isPostPro,
                 sendCommand = sendCommand,
                 startAvatarSelection = startAvatarSelection
             )
@@ -537,7 +535,6 @@ fun Settings(
 fun Buttons(
     recoveryHidden: Boolean,
     pathStatus: PathStatus,
-    postPro: Boolean,
     proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ) {
@@ -580,10 +577,9 @@ fun Buttons(
 
         Cell {
             Column {
-                if(postPro){
-                   ItemButton(
-                        text = annotatedStringResource(
-                            when (proDataState.type) {
+                ItemButton(
+                    text = annotatedStringResource(
+                        when (proDataState.type) {
                                 is ProStatus.Active -> Phrase.from(
                                     LocalContext.current,
                                     R.string.sessionProBeta
@@ -618,7 +614,6 @@ fun Buttons(
                     }
 
                     Divider()
-                }
 
                 // Invite a friend
                 ItemButton(
@@ -921,7 +916,6 @@ fun AvatarOption(
 fun AvatarDialog(
     state: SettingsViewModel.AvatarDialogState,
     isPro: Boolean,
-    isPostPro: Boolean,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
     startAvatarSelection: () -> Unit,
 ){
@@ -934,22 +928,20 @@ fun AvatarDialog(
             // custom content that has the displayed images
 
             // animated Pro title
-            if(isPostPro){
-                ProBadgeText(
-                    modifier = Modifier
-                        .padding(
-                            top = LocalDimensions.current.xxxsSpacing,
-                            bottom = LocalDimensions.current.xsSpacing,
-                        )
-                        .clickable {
-                            sendCommand(ShowAnimatedProCTA)
-                        },
-                    text = stringResource(if(isPro) R.string.proAnimatedDisplayPictureModalDescription
-                    else R.string.proAnimatedDisplayPicturesNonProModalDescription),
-                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary),
-                    badgeAtStart = isPro
-                )
-            }
+            ProBadgeText(
+                modifier = Modifier
+                    .padding(
+                        top = LocalDimensions.current.xxxsSpacing,
+                        bottom = LocalDimensions.current.xsSpacing,
+                    )
+                    .clickable {
+                        sendCommand(ShowAnimatedProCTA)
+                    },
+                text = stringResource(if(isPro) R.string.proAnimatedDisplayPictureModalDescription
+                else R.string.proAnimatedDisplayPicturesNonProModalDescription),
+                textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary),
+                badgeAtStart = isPro
+            )
 
             // main container that control the overall size and adds the rounded bg
             Box(
@@ -1069,7 +1061,6 @@ private fun SettingsScreenPreview() {
                         )
                     )
                 ),
-                isPostPro = true,
                 proDataState = ProDataState(
                     type = previewAutoRenewingApple,
                     refreshState = State.Success(Unit),
@@ -1099,7 +1090,6 @@ fun PreviewAvatarDialog(
         AvatarDialog(
             state = SettingsViewModel.AvatarDialogState.NoAvatar,
             isPro = false,
-            isPostPro = false,
             sendCommand = {},
             startAvatarSelection = {}
         )

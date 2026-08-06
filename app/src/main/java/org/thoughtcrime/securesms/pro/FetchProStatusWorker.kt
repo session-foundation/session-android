@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
@@ -55,14 +54,8 @@ class FetchProStatusWorker @AssistedInject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val snodeClock: SnodeClock,
     private val configFactory: ConfigFactoryProtocol,
-    private val prefs: TextSecurePreferences,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        if (!prefs.forcePostPro()) {
-            Log.d(TAG, "Pro status fetch skipped because pro is not enabled")
-            return Result.success()
-        }
-
         val proMasterKey =
             requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
                 "User must be logged in to fetch pro status"
