@@ -5,7 +5,7 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +33,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.CommunityUrlParser
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
@@ -198,10 +197,8 @@ class HomeViewModel @Inject constructor(
                     it.copy(
                         showSimpleDialog = SimpleDialogData(
                             title = Phrase.from(context, R.string.runSessionBackground)
-                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                 .format().toString(),
                             message = Phrase.from(context, R.string.runSessionBackgroundDescription)
-                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                 .format().toString(),
                             positiveText = context.getString(R.string.allow),
                             negativeText = context.getString(R.string.cancel),

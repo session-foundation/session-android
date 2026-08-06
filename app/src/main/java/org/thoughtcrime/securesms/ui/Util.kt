@@ -34,7 +34,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
@@ -76,7 +76,7 @@ fun Context.openUrl(url: String): Boolean {
 }
 
 // Extension method to use the Phrase library to substitute strings & return a CharSequence.
-// The pair is the key name, such as APP_NAME_KEY and the value is the localised string, such as context.getString(R.string.app_name).
+// The pair is the key name, such as NAME_KEY and the value is the text to substitute in.
 // Note: We cannot have Pair<String, Int> versions of this or the `getSubbedString` method because the JVM sees the signatures as identical.
 fun Context.getSubbedCharSequence(
     stringId: Int,
@@ -90,7 +90,7 @@ fun Context.getSubbedCharSequence(
 }
 
 // Extension method to use the Phrase library to substitute strings & return the substituted String.
-// The pair is the key name, such as APP_NAME_KEY and the value is the localised string, such as context.getString(R.string.app_name).
+// The pair is the key name, such as NAME_KEY and the value is the text to substitute in.
 fun Context.getSubbedString(stringId: Int, vararg substitutionPairs: Pair<String, String>): String {
     return getSubbedCharSequence(stringId, *substitutionPairs).toString()
 }

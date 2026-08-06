@@ -463,7 +463,7 @@ class RecipientRepository @Inject constructor(
 
         // Safety: Let's filter again for the flow logic to be 100% sure we are only setting timers for valid proofs
         val validProDataList = proDataContext?.proDataList?.filter {
-            !it.isExpired(now) && !proDatabase.isRevoked(it.genIndexHash, snodeClock.get().currentTime())
+            !it.isExpired(now) && !proDatabase.isRevoked(it.revocationTag, snodeClock.get().currentTime())
         }
 
         if (changeSources != null) {
@@ -505,7 +505,7 @@ class RecipientRepository @Inject constructor(
 
         // 1. Filter invalid proofs
         proDataList?.removeAll {
-            it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash, snodeClock.get().currentTime())
+            it.isExpired(now) || proDatabase.isRevoked(it.revocationTag, snodeClock.get().currentTime())
         }
 
         // 2. Determine base Pro Data from valid proofs or ProStatusManager
@@ -687,7 +687,7 @@ class RecipientRepository @Inject constructor(
                                         ProProfileFeature.PRO_BADGE
                                     ),
                                     expiry = Instant.now().plusSeconds(3600),
-                                    genIndexHash = "a1b2c3d4",
+                                    revocationTag = "a1b2c3d4",
                                 )
                             )
                         } else if (pro != null) {
@@ -696,8 +696,8 @@ class RecipientRepository @Inject constructor(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
                                         ProProfileFeature.PRO_BADGE
                                     ),
-                                    expiry = Instant.ofEpochMilli(pro.proProof.expiryMs),
-                                    genIndexHash = pro.proProof.genIndexHashHex,
+                                    expiry = Instant.ofEpochSecond(pro.proProof.expirySeconds),
+                                    revocationTag = pro.proProof.revocationTagHex,
                                 )
                             )
                         }
@@ -724,7 +724,7 @@ class RecipientRepository @Inject constructor(
                                 RecipientSettings.ProData(
                                     showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                                     expiry = convo.proProofInfo!!.expiry,
-                                    genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                                    revocationTag = convo.proProofInfo!!.revocationTag.data.toHexString(),
                                 )
                             )
                         }
@@ -784,7 +784,7 @@ class RecipientRepository @Inject constructor(
                         RecipientSettings.ProData(
                             showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                             expiry = convo.proProofInfo!!.expiry,
-                            genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                            revocationTag = convo.proProofInfo!!.revocationTag.data.toHexString(),
                         )
                     )
                 }

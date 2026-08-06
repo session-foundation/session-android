@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.sp
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address

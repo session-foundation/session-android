@@ -2,12 +2,11 @@ package org.thoughtcrime.securesms
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.Util
 import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatus
@@ -34,7 +33,8 @@ abstract class InputbarViewModel(
     fun onTextChanged(text: CharSequence) {
         // check the character limit
         val maxChars = proStatusManager.getCharacterLimit(currentUser.isPro)
-        val charsLeft = maxChars - Util.countCodepoints(text.toString())
+        val message = text.toString()
+        val charsLeft = maxChars - message.codePointCount(0, message.length)
 
         // update the char limit state based on characters left
         val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
