@@ -257,8 +257,8 @@ class ExpiredConfigRecovery @Inject constructor(
     }
 
     /**
-     * Whether local state is known to be level with [swarmPubKeyHex] this session — the §4.1
-     * precondition, and the only thing that may authorise a re-store.
+     * Whether local state is known to be level with [swarmPubKeyHex] this session — the
+     * precondition for recovery, and the only thing that may authorise a re-store.
      */
     private fun localStateIsLevelWithSwarm(swarmPubKeyHex: String): Boolean =
         swarmPubKeyHex in swarmsLevelWithLocalState
@@ -390,7 +390,7 @@ class ExpiredConfigRecovery @Inject constructor(
      * Runs one round's stores and deletes, chunked so no batch can exceed the server's sub-request limit.
      *
      * @return per-restore success, index-aligned with [restores]. A restore succeeded only if *every* one of
-     *  its messages stored — §3.4: a multipart config with one bad part is not stored at all.
+     *  its messages stored: a multipart config with one bad part is not stored at all.
      */
     private suspend fun runRound(auth: SwarmAuth, restores: List<PendingRestore>): List<Boolean> {
         val succeeded = MutableList(restores.size) { true }
@@ -404,7 +404,7 @@ class ExpiredConfigRecovery @Inject constructor(
         // than a hope about timing.
         //
         // One config's parts SPAN chunks freely, and must: at ~66 parts a large config needs four of them.
-        // §3.4 governs when a config counts as *stored* — every part, tracked per restore below — not which
+        // What counts as *stored* is every part of the config — tracked per restore below — not which
         // transport the parts travel in. Skipping an over-sized config instead would make anything past
         // ~1.5MB permanently unrecoverable, which is the largest-accounts population the feature is for.
         runChunked(auth, stores) { op, failure ->
@@ -445,10 +445,10 @@ class ExpiredConfigRecovery @Inject constructor(
             if (ok) {
                 Log.i(TAG, "Recovered ${restores[index].label}")
             } else {
-                // Release the claims so a later round can retry. §5.5 bars a hash whose store SUCCEEDED,
+                // Release the claims so a later round can retry. The bar applies to a hash whose store SUCCEEDED,
                 // not one that was merely attempted — and "succeeded" means every message's own
                 // sub-response was 2xx, since each is a separate execute() that throws on its own non-2xx.
-                // A multipart config with one bad part therefore stays retryable in full (§3.4): a
+                // A multipart config with one bad part therefore stays retryable in full: a
                 // half-uploaded config can't be reconstructed, so banking it would leave it broken.
                 attemptedHashes.keys.removeAll(restores[index].claimedHashes)
             }

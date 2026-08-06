@@ -24,8 +24,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Vectors V11 and V12 of the shared config-expiry detection spec — whether a given config is
- * eligible to be put back at all — plus the shared [shouldRestore] rules those vectors rest on.
+ * Whether a given config is eligible to be put back at all (V11 and V12), plus the [shouldRestore]
+ * rules those cases rest on.
  *
  * Everything here goes through the *group* path, and [shouldRestore] is also exercised directly. The
  * user path can't be driven from a JVM unit test: reaching it touches `UserConfigType`, whose class

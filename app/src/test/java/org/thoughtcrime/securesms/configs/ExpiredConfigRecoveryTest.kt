@@ -33,10 +33,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Vectors V10 and V13 of the shared config-expiry detection spec — the session-scoped guards around
- * the recovery action.
+ * The session-scoped guards around the recovery action (V10 and V13 and their variants).
  *
- * The other vectors live where the logic they exercise does: V1-V9 in
+ * The other cases live where the logic they exercise does: V1-V9 in
  * [org.thoughtcrime.securesms.api.snode.ConfigExpiryDetectionTest], and V11/V12 in
  * [ConfigRestoreSourceTest], which owns the per-config eligibility rules.
  */
@@ -294,11 +293,12 @@ class ExpiredConfigRecoveryTest {
      * wall. One config can split into ~66 parts (`MAX_MULTIPART_SIZE / MAX_MESSAGE_SIZE`), each its own
      * store, so a single large config is already three times over.
      *
-     * §4.4a again, and the worst instance of it: **the accounts with the largest configs have the most to
-     * lose and are exactly the ones whose recovery would be rejected wholesale.**
+     * And it is the worst instance of this feature's recurring trap — a limit that excludes the very
+     * population the repair exists for: **the accounts with the largest configs have the most to lose and
+     * are exactly the ones whose recovery would be rejected wholesale.**
      *
      * Asserts the **boundary**, not eventual success — the fixture is 25 parts plus a delete, so it
-     * genuinely crosses 19, and the assertion is on the observed chunk sizes. A test that only checked
+     * genuinely crosses 20, and the assertion is on the observed chunk sizes. A test that only checked
      * "everything eventually stored" would pass on an implementation that got lucky with a small fixture.
      */
     @Test
@@ -390,11 +390,11 @@ class ExpiredConfigRecoveryTest {
     /**
      * V13b — "stored" must mean every *sub-response's own* code was 2xx, not merely that the outer call
      * returned. A batch returns 200 while its sub-requests carry their own codes, so a client that discards
-     * the response bars every hash for the session having written nothing — and the §5.5 diff looks
+     * the response bars every hash for the session having written nothing — and the bar's bookkeeping looks
      * perfectly correct while the semantics are wrong.
      *
      * Here each message is its own `execute()`, which throws on its own non-2xx, so a multipart config with
-     * one bad part stays retryable **in full** (§3.4). This test drives that: part 2 of 3 fails.
+     * one bad part stays retryable **in full**. This test drives that: part 2 of 3 fails.
      */
     @Test
     fun `V13b - one failed part of a multipart store leaves the whole config retryable`() = runTest {
@@ -455,8 +455,8 @@ class ExpiredConfigRecoveryTest {
 
     /**
      * V13d — retry never stops. The ceiling bounds the *interval*, never the number of attempts: a cap on
-     * attempts is the §4.4a shape this feature has already produced twice, and it would exclude exactly the
-     * swarms most in need of repair.
+     * attempts is the population-exclusion shape this feature has already produced twice, and it would
+     * exclude exactly the swarms most in need of repair.
      */
     @Test
     fun `V13d - retrying never stops, however long the session fails`() = runTest {
@@ -668,9 +668,9 @@ class ExpiredConfigRecoveryTest {
     /**
      * V13e — a hash a **guard** ruled out is barred like a success, not treated as a retryable failure.
      *
-     * (Named in prose until the spec assigned it a number: two clients independently used "V13b" for two
-     * different tests, which is silent by construction and only surfaces when suites are compared — which
-     * is this feature's entire verification model.)
+     * (Two of the Session clients independently used "V13b" for two different tests, which is silent by
+     * construction and only surfaces when suites are compared — which is this feature's entire
+     * verification model.)
      *
      * Folding guard-rejections into "failure" costs no requests, which is why it doesn't look like a
      * problem — but the gather re-runs on every poll, taking the config write lock and re-logging the same

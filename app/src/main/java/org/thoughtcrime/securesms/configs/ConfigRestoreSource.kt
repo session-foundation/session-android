@@ -112,7 +112,7 @@ class ConfigRestoreSource @Inject constructor(
             // verbatim, and that signature survives the dump round trip, so the bytes it produces are
             // identical to the admin's. Do not gate this on adminKey.
             //
-            // What *is* admin-only is the prune below (§5.1): libsession never hands a read-only
+            // What *is* admin-only is the prune below: libsession never hands a read-only
             // config its obsolete hashes, and a member subaccount has no Delete access anyway. Those
             // two facts cancel rather than compound — a member re-stores and simply never prunes.
             //

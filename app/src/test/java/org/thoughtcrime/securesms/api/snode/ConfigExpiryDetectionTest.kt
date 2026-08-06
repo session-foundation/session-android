@@ -8,9 +8,12 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 /**
- * Vectors V1-V9 of the shared config-expiry detection spec, which iOS, Android and Desktop each
- * implement separately. The vector numbering is deliberately preserved in the test names so a
- * divergence between the three clients can be pinned to a specific rule.
+ * How an `expire` response is read: which of the hashes we asked about the swarm has lost.
+ *
+ * The V-numbers in the test names are a vocabulary shared with the other Session clients, which
+ * implement this detection separately from the same set of cases. Keeping the numbering aligned is what
+ * lets a disagreement between two clients be pinned to one specific rule rather than a whole feature;
+ * they are not references to anything outside this repo.
  *
  * V10-V13 cover the guards around the recovery action rather than the reading of the response, so
  * they live in [org.thoughtcrime.securesms.configs.ExpiredConfigRecoveryTest].
@@ -183,7 +186,7 @@ class ConfigExpiryDetectionTest {
         )
     }
 
-    // --- §3.5: which mechanism decides that a group has expired ---
+    // --- Which mechanism decides that a group has expired ---
 
     @Test
     fun `V16 - every requested keys hash gone means the group is expired`() {
