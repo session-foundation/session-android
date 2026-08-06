@@ -162,9 +162,21 @@ class ConfigExpiryDetectionTest {
 
     @Test
     fun `V8c - an unreadable sub-response is skipped while a readable one still counts`() {
+        // Both ways a sub-response becomes unusable, in one fixture, because this vector's subject is
+        // unusable sub-responses and there are two routes to it. The first version had no `failed` node at
+        // all, so it exercised the readability route twice over and was insensitive to the other.
+        //
+        // Each node is shaped so its exclusion is load-bearing:
+        //
+        //  - `failed` claims to hold NOTHING. Include it and h1 is reported missing too, so the verdict
+        //    changes. A failed node that *held* the hashes would prove nothing, since one snode reporting
+        //    absence is already enough (V4) and a node holding them cannot cancel that.
+        //  - `noUnchanged` omits h2 from `updated`, so including it reaches the `unchanged!!` deref that
+        //    the readability filter is what protects.
         val report = detect(
-            "snodeA" to SnodeExpiryState(updated = listOf(h1), unchanged = null),
-            "snodeB" to SnodeExpiryState(updated = listOf(h1), unchanged = emptyMap()),
+            "failed" to SnodeExpiryState(failed = true, updated = emptyList(), unchanged = emptyMap()),
+            "noUnchanged" to SnodeExpiryState(updated = listOf(h1), unchanged = null),
+            "readable" to SnodeExpiryState(updated = listOf(h1), unchanged = emptyMap()),
         )
 
         assertEquals(ConfigExpiryReport.Checked(setOf(h2)), report)
