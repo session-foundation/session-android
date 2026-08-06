@@ -133,8 +133,10 @@ class ConfigRestoreSource @Inject constructor(
             // config its obsolete hashes, and a member subaccount has no Delete access anyway. Those
             // two facts cancel rather than compound — a member re-stores and simply never prunes.
             //
-            // The keys config is absent here and cannot be added: libsession exposes no way to
-            // re-serialise keys that have already been loaded (only pendingConfig(), which is a key
+            // The keys config is absent here, and the reason is the **Android wrapper**, not libsession:
+            // libsession retains the raw bytes of active keys messages and exposes them
+            // (Keys::active_key_messages), but no JNI binding for that exists yet, so the only thing
+            // reachable from Kotlin is pendingConfig(), which is a key
             // message that hasn't been pushed yet), and each member holds a different subset of the
             // keys namespace anyway because key supplements are encrypted per session id. A group
             // whose keys have expired is detected and flagged — that's what the expired-group banner

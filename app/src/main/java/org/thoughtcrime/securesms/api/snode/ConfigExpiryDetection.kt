@@ -71,7 +71,8 @@ class SnodeExpiryState(
  * Whether an expiry check is authoritative about a group having expired, and if so what it says.
  *
  * The group keys config decides this on its own. It is the only one of the three whose absence is both
- * unambiguous and unrepairable by the device that noticed: there is no way to re-serialise keys that
+ * unambiguous, and not repairable by this device *yet*: libsession retains the bytes of active keys
+ * messages, but the Android wrapper exposes no binding for them, so there is no way from Kotlin to re-emit keys that
  * have already been loaded, so unlike info and members there is no recovery to wait for before
  * flagging. Info or members going missing drives a re-store, never the banner.
  *

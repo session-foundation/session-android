@@ -125,8 +125,14 @@ class ConfigRestoreSourceTest {
     }
 
     /**
-     * The keys config is not in the restorable set at all. It has no re-serialise API, and a missing keys
-     * hash goes straight to the expired-group flag instead.
+     * The keys config is not in the restorable set at all, and a missing keys hash goes straight to the
+     * expired-group flag instead.
+     *
+     * ⚠️ This is a **platform** limitation with a known expiry date, not a property of the format: libsession
+     * retains the bytes of active keys messages and exposes them, and once the Android wrapper binds that
+     * accessor a member will be able to repair a group's keys by pushing the retained bytes back. At that
+     * point this test inverts rather than being deleted — keys become restorable when their bytes are held,
+     * and the flag is only for a device that holds none.
      *
      * Deliberately unlabelled: V16 is the *detection* rule (all keys hashes gone ⇒ group expired) and lives
      * in ConfigExpiryDetectionTest. This is the same input on the *restore* path, which is a separate
@@ -134,7 +140,7 @@ class ConfigRestoreSourceTest {
      * already on the detection test.
      */
     @Test
-    fun `a missing group keys hash produces no re-store, since keys cannot be re-serialised`() {
+    fun `a missing group keys hash produces no re-store while the wrapper exposes no key bytes`() {
         // The keys hash is not among any restorable config's active hashes, so nothing matches.
         assertEquals(emptyList(), source.groupConfigsToRestore(groupId, setOf("keys-hash")))
 
