@@ -16,7 +16,6 @@
  */
 package org.thoughtcrime.securesms.conversation.v2.utilities;
 
-import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -36,7 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.RequestManager;
-import com.squareup.phrase.Phrase;
+import org.session.libsession.utilities.Phrase;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -245,18 +244,16 @@ public class AttachmentManager {
                                     Manifest.permission.READ_MEDIA_AUDIO)
                     .withRationaleDialog(
                             Phrase.from(c, R.string.permissionsMusicAudio)
-                                    .put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString()
+                                    .format().toString()
                     )
                     .withPermanentDenialDialog(
                             Phrase.from(c, R.string.permissionMusicAudioDenied)
-                                    .put(APP_NAME_KEY, c.getString(R.string.app_name))
                                     .format().toString()
                     );
         } else {
             builder = builder.request(Manifest.permission.READ_EXTERNAL_STORAGE)
                     .withPermanentDenialDialog(
                             Phrase.from(c, R.string.permissionsStorageDeniedLegacy)
-                                    .put(APP_NAME_KEY, c.getString(R.string.app_name))
                                     .format().toString()
                     );
         }
@@ -302,7 +299,6 @@ public class AttachmentManager {
                     })
                     .withPermanentDenialDialog(
                             Phrase.from(c, R.string.permissionsStorageDenied)
-                                    .put(APP_NAME_KEY, activity.getString(R.string.app_name))
                                     .format().toString()
                     )
                     .execute();
@@ -321,7 +317,6 @@ public class AttachmentManager {
                     .onAllGranted(openGallery)
                     .withPermanentDenialDialog(
                             Phrase.from(c, R.string.permissionsStorageDenied)
-                                    .put(APP_NAME_KEY, activity.getString(R.string.app_name))
                                     .format().toString()
                     )
                     .execute();
@@ -339,7 +334,6 @@ public class AttachmentManager {
                 .onAllGranted(openGallery)
                 .withPermanentDenialDialog(
                         Phrase.from(c, R.string.permissionsStorageDeniedLegacy)
-                                .put(APP_NAME_KEY, activity.getString(R.string.app_name))
                                 .format().toString()
                 )
                 .execute();
@@ -412,7 +406,6 @@ public class AttachmentManager {
     public void capturePhoto(Activity activity, int requestCode, Address recipient, @NonNull String body) {
 
         String cameraPermissionDeniedTxt = Phrase.from(context, R.string.permissionsCameraDenied)
-                .put(APP_NAME_KEY, context.getString(R.string.app_name))
                 .format().toString();
 
         Permissions.with(activity)

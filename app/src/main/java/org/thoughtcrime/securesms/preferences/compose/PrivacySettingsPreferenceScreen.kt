@@ -18,12 +18,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_FOUNDATION
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.SESSION_FOUNDATION_KEY
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.NotificationSettingsActivity
 import org.thoughtcrime.securesms.preferences.compose.PrivacySettingsPreferenceViewModel.Commands.*
@@ -37,7 +35,6 @@ import org.thoughtcrime.securesms.ui.SwitchActionRowItem
 import org.thoughtcrime.securesms.ui.components.TypingIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.findActivity
-import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.util.IntentUtils
@@ -79,10 +76,7 @@ fun PrivacySettingsPreferenceScreen(
                             viewModel.onCommand(ToggleCallsNotification(true))
                         }
                         .withPermanentDenialDialog(
-                            context.getSubbedString(
-                                R.string.permissionsMicrophoneAccessRequired,
-                                APP_NAME_KEY to context.applicationContext.getString(R.string.app_name)
-                            )
+                            context.getString(R.string.permissionsMicrophoneAccessRequired)
                         )
                         .onAnyDenied {
                             viewModel.onCommand(ToggleCallsNotification(false))
@@ -168,7 +162,6 @@ fun PrivacySettingsPreference(
                         title = annotatedStringResource(R.string.lockApp),
                         subtitle = annotatedStringResource(
                             Phrase.from(context, R.string.lockAppDescription)
-                                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                 .format()
                         ),
                         subtitleStyle = LocalType.current.large,
@@ -321,7 +314,6 @@ fun PrivacySettingsPreference(
             },
             title = stringResource(R.string.notificationWarning),
             text = Phrase.from(context, R.string.notificationWarningDescription)
-                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                 .format().toString(),
             buttons = listOf(
                 DialogButtonData(
@@ -348,7 +340,6 @@ fun PrivacySettingsPreference(
             },
             title = stringResource(R.string.callsVoiceAndVideoBeta),
             text = Phrase.from(context, R.string.callsVoiceAndVideoModalDescription)
-                .put(SESSION_FOUNDATION_KEY, SESSION_FOUNDATION)
                 .format().toString(),
             buttons = listOf(
                 DialogButtonData(

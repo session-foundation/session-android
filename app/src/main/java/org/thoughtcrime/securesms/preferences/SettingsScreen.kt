@@ -63,15 +63,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.network.model.PathStatus
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -592,21 +588,18 @@ fun Buttons(
                                     LocalContext.current,
                                     R.string.sessionProBeta
                                 )
-                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                                     .format().toString()
 
                                 is ProStatus.NeverSubscribed -> Phrase.from(
                                     LocalContext.current,
                                     R.string.upgradeSession
                                 )
-                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                     .format().toString()
 
                                 is ProStatus.Expired -> Phrase.from(
                                     LocalContext.current,
                                     R.string.proRenewBeta
                                 )
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString()
                             }
                         ),
@@ -758,16 +751,12 @@ fun ShowClearDataDialog(
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro -> {
                 annotatedStringResource(
                     Phrase.from(context.getText(R.string.proClearAllDataDevice))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format()
                 )
             }
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro -> {
                 annotatedStringResource(
                     Phrase.from(context.getText(R.string.proClearAllDataNetwork))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format()
                 )
             }

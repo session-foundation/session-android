@@ -34,6 +34,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SEEN_DONATION_CTA_AMOUNT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEVNET_SEED_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SNODE_POOL_SEED_MARKER
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
@@ -184,6 +186,20 @@ interface TextSecurePreferences {
     fun setLastVersionCheck()
     fun getEnvironment(): Environment
     fun setEnvironment(value: Environment)
+
+    /**
+     * Overrides the seed node used when the environment is [Environment.DEV_NET], so a devnet can be
+     * targeted without rebuilding the app. `null` (the default) means use the built-in devnet seed.
+     */
+    fun getDevnetSeedUrl(): String?
+    fun setDevnetSeedUrl(value: String?)
+
+    /**
+     * Identifies the seed configuration the cached snode pool was fetched from, so a pool belonging
+     * to a previous network can be discarded (see SnodeDirectory). Opaque; do not parse.
+     */
+    fun getSnodePoolSeedMarker(): String?
+    fun setSnodePoolSeedMarker(value: String?)
     fun hasSeenTokenPageNotification(): Boolean
     fun setHasSeenTokenPageNotification(value: Boolean)
     fun forcedShortTTL(): Boolean
@@ -302,6 +318,8 @@ interface TextSecurePreferences {
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
         const val LAST_VERSION_CHECK = "pref_last_version_check"
         const val ENVIRONMENT = "debug_environment"
+        const val DEVNET_SEED_URL = "debug_devnet_seed_url"
+        const val SNODE_POOL_SEED_MARKER = "snode_pool_seed_marker"
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
 
@@ -364,11 +382,11 @@ interface TextSecurePreferences {
 
 
         // Donation
-        const val HAS_DONATED = "has_donated_v3"
-        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url_v3"
-        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount_v3"
-        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta_v3"
-        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review_v3"
+        const val HAS_DONATED = "has_donated_v4"
+        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url_v4"
+        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount_v4"
+        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta_v4"
+        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review_v4"
 
         const val DEBUG_HAS_DONATED = "debug_has_donated"
         const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
@@ -929,6 +947,18 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setEnvironment(value: Environment) {
         setStringPreference(ENVIRONMENT, value.name)
+    }
+
+    override fun getDevnetSeedUrl(): String? = getStringPreference(DEVNET_SEED_URL, null)
+
+    override fun setDevnetSeedUrl(value: String?) {
+        setStringPreference(DEVNET_SEED_URL, value)
+    }
+
+    override fun getSnodePoolSeedMarker(): String? = getStringPreference(SNODE_POOL_SEED_MARKER, null)
+
+    override fun setSnodePoolSeedMarker(value: String?) {
+        setStringPreference(SNODE_POOL_SEED_MARKER, value)
     }
 
     override fun setShownCallNotification(): Boolean {

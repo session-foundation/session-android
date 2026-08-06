@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.canhub.cropper.CropImage
 import com.canhub.cropper.CropImageView
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -59,7 +59,7 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProDataState
-import org.thoughtcrime.securesms.pro.ProDetailsRepository
+import org.thoughtcrime.securesms.pro.ProStatusRepository
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
@@ -93,7 +93,7 @@ class SettingsViewModel @Inject constructor(
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
     private val attachmentProcessor: AttachmentProcessor,
-    private val proDetailsRepository: ProDetailsRepository,
+    private val proStatusRepository: ProStatusRepository,
     private val donationManager: DonationManager,
     private val pathManager: PathManager,
     private val swarmApiExecutor: SwarmApiExecutor,
@@ -172,9 +172,9 @@ class SettingsViewModel @Inject constructor(
                 }
         }
 
-        // refreshes the pro details data
+        // refreshes the pro status data
         viewModelScope.launch {
-            proDetailsRepository.requestRefresh()
+            proStatusRepository.requestRefresh()
         }
     }
 

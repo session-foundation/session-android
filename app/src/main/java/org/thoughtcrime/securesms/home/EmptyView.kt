@@ -16,9 +16,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -51,7 +50,6 @@ internal fun EmptyView(newAccount: Boolean) {
                 stringResource(R.string.onboardingBubbleWelcomeToSession).let { txt ->
                     val c = LocalContext.current
                     Phrase.from(txt)
-                        .put(APP_NAME_KEY, c.getString(R.string.app_name))
                         .put(EMOJI_KEY, "\uD83D\uDC4B") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                         .format().toString()
                 },

@@ -139,7 +139,7 @@ class MessageSender @Inject constructor(
 
             // Attach pro proof
             val proProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
-            if (proProof != null && proProof.expiryMs > snodeClock.currentTimeMillis()) {
+            if (proProof != null && proProof.expirySeconds > snodeClock.currentTimeMillis() / 1000) {
                 builder.proMessageBuilder.proofBuilder.copyFromLibSession(proProof)
             } else {
                 // If we don't have any valid pro proof, clear the pro message

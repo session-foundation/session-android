@@ -69,7 +69,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.CancellationException
@@ -115,7 +115,6 @@ import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
@@ -210,7 +209,6 @@ import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.ui.LatchedAnimatedVisibility
 import org.thoughtcrime.securesms.ui.components.AudioMiniPlayer
 import org.thoughtcrime.securesms.ui.components.ConversationAppBar
-import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
@@ -1733,8 +1731,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
                 .withPermanentDenialDialog(
-                    getSubbedString(R.string.permissionsMicrophoneAccessRequired,
-                        APP_NAME_KEY to getString(R.string.app_name))
+                    getString(R.string.permissionsMicrophoneAccessRequired)
                 )
                 .execute()
 
@@ -2578,7 +2575,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (!hasSeenGIFMetaDataWarning) {
             showSessionDialog {
                 title(R.string.giphyWarning)
-                text(Phrase.from(context, R.string.giphyWarningDescription).put(APP_NAME_KEY, getString(R.string.app_name)).format())
+                text(Phrase.from(context, R.string.giphyWarningDescription).format())
                 button(R.string.theContinue) {
                     textSecurePreferences.setHasSeenGIFMetaDataWarning()
                     selectGif()
@@ -2738,7 +2735,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
                 .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsMicrophoneAccessRequired)
-                    .put(APP_NAME_KEY, getString(R.string.app_name))
                     .format().toString())
                 .execute()
         }
@@ -3041,7 +3037,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .maxSdkVersion(Build.VERSION_CODES.P) // P is 28
                 .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsStorageDeniedLegacy)
-                    .put(APP_NAME_KEY, getString(R.string.app_name))
                     .format().toString())
                 .onAnyDenied {
                     endActionMode()
@@ -3051,7 +3046,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         title(R.string.permissionsRequired)
 
                         val txt = Phrase.from(applicationContext, R.string.permissionsStorageDeniedLegacy)
-                            .put(APP_NAME_KEY, getString(R.string.app_name))
                             .format().toString()
                         text(txt)
 
