@@ -108,6 +108,12 @@ class ProProofGenerationWorker @AssistedInject constructor(
                     }
 
                     Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
+                    // Minting the proof is what makes the backend validate the payment and mark the
+                    // account active, so a get_pro_status fetched before now (e.g. the one behind the
+                    // Pro settings screen right after a purchase) is stale "expired". Refresh the
+                    // display-only status so the UI flips to active on its own, instead of the user
+                    // having to hit "Check Pro Status" manually.
+                    proStatusRepository.requestRefresh(force = true)
                     Result.success()
                 }
 
