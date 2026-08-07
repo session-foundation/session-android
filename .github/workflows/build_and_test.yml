@@ -23,7 +23,7 @@ jobs:
           - variant: 'huawei'
             extra_build_command_options: '-Phuawei=1'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Restore gradle cache
         uses: actions/cache/restore@v5
@@ -73,7 +73,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Restore Gradle cache
         uses: actions/cache/restore@v5
         with:
