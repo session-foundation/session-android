@@ -73,6 +73,49 @@ locally-built, identically-signed `./gradlew :app:installPlayRelease` with the
 **same** versionCode installs over adb and Play Billing keeps working — only
 bump + re-upload when you deliberately move the versionCode.
 
+### Fastest loop: a local signed build onto an emulator
+
+For iterating on Pro (or anything needing Google's signature + Play Billing) against a
+running emulator, without touching a track at all. This is what "signed but mostly local"
+means: the **app** is built locally, but against the **published** libsession glue AAR and
+Google-signed via Internal App Sharing (which consumes no versionCode, so you can re-upload
+the same code freely).
+
+1. **Pick the glue source.** `local.properties` may point the build at a local
+   `libsession-util-android` checkout (a composite build) via
+   `session.libsession_util.project.path=…`. To build against the **published** AAR instead —
+   the production path, and what CI uses — **comment that line out**:
+
+   ```
+   #session.libsession_util.project.path=/…/libsession-util-android
+   ```
+
+   Prefer the published AAR unless you're specifically testing local glue changes: the local
+   composite can hit AGP/Kotlin-plugin mismatches, and the published AAR is the faithful
+   production test.
+
+2. **Build the signed AAB.** Use a **JDK 17 or 21** — *not* 25 (a too-new JDK, e.g. an Android
+   Studio bundled JBR that has moved to 25, breaks Gradle), so set `JAVA_HOME` explicitly:
+
+   ```sh
+   JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 scripts/build-and-release.py --play-only
+   # → app/build/outputs/bundle/playRelease/app-play-release.aab
+   ```
+
+3. **Push it onto the emulator via Internal App Sharing:**
+
+   ```sh
+   scripts/play-store.py share --open-emu   # upload + fire the link at a running emulator
+   ```
+
+   `--open-emu` uploads, sends the install link to the running emulator, and polls the Play
+   Store UI until the **Install/Update** button appears; then **tap it on the emulator** to
+   install (the script surfaces the button but doesn't tap for you). The emulator must be a
+   **Play Store image** (`google_apis_playstore`) for Internal App Sharing to work.
+
+   Without `--open-emu`, plain `scripts/play-store.py share` just prints the install link —
+   open it in the emulator's own browser to land on the same Play Store install page.
+
 ## Google Play
 
 **`play-store.py`** — command-line control of the Google Play release via the
