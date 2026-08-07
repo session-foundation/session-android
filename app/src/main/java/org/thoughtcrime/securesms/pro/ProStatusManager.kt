@@ -171,6 +171,12 @@ class ProStatusManager @Inject constructor(
                             inGracePeriod = false
                         )
 
+                        // 2 days is deliberate and load-bearing: it is INSIDE the 7-day window that
+                        // gates the expiring CTA (`HomeViewModel`, `validUntil.isBefore(now.plus(7, DAYS))`),
+                        // which is what makes this the fixture you pick to eyeball that CTA. The
+                        // `_LATER` variant below is the deliberate opposite. Moving this outside 7 days
+                        // would make the two behaviourally identical and leave no way to trigger the CTA
+                        // by hand.
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
                             renewingAt = Instant.now() + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS.period,
@@ -180,7 +186,7 @@ class ProStatusManager @Inject constructor(
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
-                            renewingAt = Instant.now() + Duration.ofDays(40),
+                            renewingAt = Instant.now() + Duration.ofDays(EXPIRING_LATER_DAYS),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
                             quickRefundExpiry = Instant.now() + Duration.ofDays(7),
@@ -516,5 +522,24 @@ class ProStatusManager @Inject constructor(
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
+
+        /**
+         * Remaining access for the `EXPIRING_GOOGLE_LATER` debug fixture, in days. **A test pins this
+         * value** — don't change it casually.
+         *
+         * Two non-obvious properties keep that safe, both worth preserving:
+         *
+         * The label reads "30 days" **only because `DateUtils.getExpiryString` rounds up.** The fixture
+         * sets `renewingAt = now + 30d` when `proDataState` recomputes, but the label is rendered from a
+         * *later* `now`, so the true remaining is always slightly under 30. That ceiling is load-bearing:
+         * make it floor for unrelated reasons and the label silently becomes "29 days".
+         *
+         * The `Instant.now()` here is understood, not an oversight — the rest of the Pro stack uses
+         * `SnodeClock`. It is safe because **both** sides of `Duration.between(now, renewingAt)` read the
+         * same device clock, so skew cancels and the ceiling absorbs the remainder. Don't tidy it into
+         * `SnodeClock` assuming it is a latent bug; it is safe by that cancellation, not by the clock
+         * being right.
+         */
+        private const val EXPIRING_LATER_DAYS = 30L
     }
 }

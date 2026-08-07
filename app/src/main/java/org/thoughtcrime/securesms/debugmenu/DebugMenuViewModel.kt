@@ -659,13 +659,20 @@ class DebugMenuViewModel @AssistedInject constructor(
         STOPPED,
     }
 
+    /**
+     * The `label` is what the debug menu shows for selection, so the day counts in it MUST match the
+     * offsets the fixtures actually use in `ProStatusManager`'s debug branch. Two of these were out of
+     * step (they said 14 days where the code did 2), which cost a wrong expected string in an Appium
+     * spec — the label was read as if it were the source of truth. If you change a fixture offset,
+     * change its label in the same commit.
+     */
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
         AUTO_APPLE_REFUNDING("Refunding (Apple, 3 months)"),
-        EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 14 days, Google, 12 months)"),
-        EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 40 days, Google, 12 months)"),
+        EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 2 days, Google, 12 months)"),
+        EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 30 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
-        EXPIRING_APPLE("Expiring/Cancelled (Expires in 14 days, Apple, 1 months)"),
+        EXPIRING_APPLE("Expiring/Cancelled (Expires in 2 days, Apple, 1 months)"),
         EXPIRED("Expired (Expired 2 days ago, Google)"),
         EXPIRED_EARLIER("Expired (Expired 60 days ago, Google)"),
         EXPIRED_APPLE("Expired (Expired 2 days ago, Apple)"),
