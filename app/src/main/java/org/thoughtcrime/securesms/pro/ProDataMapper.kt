@@ -30,6 +30,30 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context, refundInProg
     return when (userStatus) {
         ProUserStatus.ACTIVE -> {
             val paymentItem = latestPayment ?: return ProStatus.NeverSubscribed
+            // 🔴 THE COMMENT BELOW IS KNOWN TO BE FALSE — held under F8, unresolved as of 2026-08-07.
+            // Read this first; the logic still implements the superseded premise on purpose.
+            //
+            // The backend does NOT judge status against `expiry + grace_period_duration`. It folds
+            // grace into the stored expiry BEFORE sending it — `Session-Pro-Backend`
+            // `backend.py` `_lookup_user_expiry`: `payment_expiry_at = expiry_at + grace if
+            // auto_renewing else expiry_at` -> `users.expiry_at` -> the wire `expiry_ts`
+            // (`server.py:317`), with the status boundary using that same value (`server.py:322`).
+            // Its own test subtracts grace from the wire value to recover the store's paid-through
+            // date (`tests/test_google.py:556-560`).
+            //
+            // So `expiry` is COVERAGE END, not paid-through. The real grace window is
+            // `expiry - gracePeriod <= now < expiry`, and two things below are therefore wrong:
+            //   * `inGracePeriod = nowMs >= expiryMs` sits in a branch that requires `now <= expiry`,
+            //     so the two are satisfiable only at a single instant — the indicator is dead code.
+            //   * `renewingAt = expiry` renders the renewal date one whole grace period late.
+            //
+            // Not fixed here because it is a user-visible date on all three clients, which encode the
+            // same premise in three different wordings — which is why it read as corroboration rather
+            // than one mistake copied three times, and why it must be corrected on all three together
+            // rather than by whoever gets there first.
+            //
+            // --- SUPERSEDED (kept verbatim: it explains the existing diff, and the other two clients'
+            // --- comments echo this text, so it stays greppable for whoever does the three-client fix)
             // `expiry` is the paid-through end. user_status stays `active` through the grace window —
             // the backend judges status against coverage_end = expiry + grace_period_duration (both gated
             // on auto_renewing) — so being in this ACTIVE branch already means we are still covered. The
