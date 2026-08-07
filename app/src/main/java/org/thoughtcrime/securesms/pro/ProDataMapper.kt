@@ -30,10 +30,15 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context, refundInProg
     return when (userStatus) {
         ProUserStatus.ACTIVE -> {
             val paymentItem = latestPayment ?: return ProStatus.NeverSubscribed
-            // Access expiry (incl. grace); "renew due" is expiry minus the grace period.
-            val expiryMs = (expiry ?: return ProStatus.NeverSubscribed).toEpochMilli()
-            val renewingAtMs = expiryMs - gracePeriod.toMillis()
-            val renewingAt = Instant.ofEpochMilli(renewingAtMs)
+            // `expiry` is the paid-through end. user_status stays `active` through the grace window —
+            // the backend judges status against coverage_end = expiry + grace_period_duration (both gated
+            // on auto_renewing) — so being in this ACTIVE branch already means we are still covered. The
+            // renewal is due AT the paid-through end; being past it while still active IS the grace period.
+            // Never subtract grace here: that put "renew due" a whole grace period in the past, which
+            // (in sandbox, where grace ≫ the compressed period) made inGracePeriod perpetually true.
+            val accountExpiry = expiry ?: return ProStatus.NeverSubscribed
+            val expiryMs = accountExpiry.toEpochMilli()
+            val renewingAt = accountExpiry
             val providerData = providerMetadata(paymentItem.paymentProvider, context)
             val duration = paymentItem.toProPlanPeriod()
 
@@ -53,11 +58,12 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context, refundInProg
                     providerData = providerData,
                     quickRefundExpiry = paymentItem.platformRefundExpiry,
                     refundInProgress = refundInProgress,
-                    inGracePeriod = nowMs >= renewingAtMs && nowMs < expiryMs,
+                    // In this ACTIVE branch we're covered; past the paid-through end (renewingAt) = grace.
+                    inGracePeriod = nowMs >= expiryMs,
                 )
             } else {
                 ProStatus.Active.Expiring(
-                    renewingAt = renewingAt, // equals expiry when the grace period is zero
+                    renewingAt = renewingAt, // the paid-through end (not auto-renewing → it just expires then)
                     duration = duration,
                     providerData = providerData,
                     quickRefundExpiry = paymentItem.platformRefundExpiry,

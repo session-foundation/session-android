@@ -10,9 +10,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
@@ -228,28 +227,9 @@ class ProStatusManager @Inject constructor(
         initialValue = getDefaultSubscriptionStateData()
     )
 
-    private val _postProLaunchStatus = MutableStateFlow(isPostPro())
-    val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
-
-
-    init {
-        scope.launch {
-            prefs.watchPostProStatus().collect {
-                _postProLaunchStatus.update { isPostPro() }
-            }
-        }
-    }
-
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
         launch {
-            postProLaunchStatus
-                .collectLatest { postLaunch ->
-                    if (postLaunch) {
-                        RevocationListPollingWorker.schedule(application)
-                    } else {
-                        RevocationListPollingWorker.cancel(application)
-                    }
-                }
+            RevocationListPollingWorker.schedule(application)
         }
 
         launch { manageOtherPeoplePro() }
@@ -264,145 +244,128 @@ class ProStatusManager @Inject constructor(
     }
 
     private suspend fun manageOtherPeoplePro() {
-        postProLaunchStatus.collectLatest { postLaunch ->
-            if (postLaunch) {
-                merge(
-                    configFactory.get().userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE)),
-                    proDatabase.revocationChangeNotification,
-                ).onStart { emit(Unit) }
-                    .collect {
-                        // Go through all convo's pro proof and remove the ones that are revoked
-                        val revokedConversations = configFactory.get()
-                            .withUserConfigs { it.convoInfoVolatile.all() }
-                            .asSequence()
-                            .filterIsInstance<Conversation.WithProProofInfo>()
-                            .filter { convo ->
-                                convo.proProofInfo?.revocationTag?.let { proDatabase.isRevoked(it.data.toHexString(), snodeClock.currentTime()) } == true
-                            }
-                            .onEach { convo ->
-                                convo.proProofInfo = null
-                            }
-                            .toList()
-
-                        if (revokedConversations.isNotEmpty()) {
-                            Log.d(
-                                DebugLogGroup.PRO_DATA.label,
-                                "Clearing Pro proof info for ${revokedConversations.size} conversations due to revocation"
-                            )
-
-                            configFactory.get()
-                                .withMutableUserConfigs { configs ->
-                                    for (convo in revokedConversations) {
-                                        configs.convoInfoVolatile.set(convo)
-                                    }
-                                }
-                        }
+        merge(
+            configFactory.get().userConfigsChanged(EnumSet.of(UserConfigType.CONVO_INFO_VOLATILE)),
+            proDatabase.revocationChangeNotification,
+        ).onStart { emit(Unit) }
+            .collect {
+                // Go through all convo's pro proof and remove the ones that are revoked
+                val revokedConversations = configFactory.get()
+                    .withUserConfigs { it.convoInfoVolatile.all() }
+                    .asSequence()
+                    .filterIsInstance<Conversation.WithProProofInfo>()
+                    .filter { convo ->
+                        convo.proProofInfo?.revocationTag?.let { proDatabase.isRevoked(it.data.toHexString(), snodeClock.currentTime()) } == true
                     }
-            }
-        }
+                    .onEach { convo ->
+                        convo.proProofInfo = null
+                    }
+                    .toList()
 
-    }
+                if (revokedConversations.isNotEmpty()) {
+                    Log.d(
+                        DebugLogGroup.PRO_DATA.label,
+                        "Clearing Pro proof info for ${revokedConversations.size} conversations due to revocation"
+                    )
 
-    @OptIn(FlowPreview::class)
-    private suspend fun manageProStatusRefreshScheduling() {
-        postProLaunchStatus
-            .collectLatest { postLaunch ->
-                if (postLaunch) {
-                    merge(
-                        configFactory.get()
-                            .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
-                            .map {
-                                configFactory.get().withUserConfigs { configs ->
-                                    // Watch both the access expiry (E) and the prepaid marker (I): a
-                                    // synced prepaid from another device's purchase must kick the
-                                    // redemption poll here too, so any device can pull the entitlement
-                                    // through even if the purchasing device goes offline before redeeming.
-                                    configs.userProfile.getProAccessExpiry() to
-                                        configs.userProfile.getProPrepaid()
-                                }
+                    configFactory.get()
+                        .withMutableUserConfigs { configs ->
+                            for (convo in revokedConversations) {
+                                configs.convoInfoVolatile.set(convo)
                             }
-                            .distinctUntilChanged()
-                            .map { "ProAccessExpiry/prepaid in config changes" },
-
-                        proStatusRepository.get().loadState
-                            .mapNotNull { it.lastUpdated?.first?.expiry }
-                            .distinctUntilChanged()
-                            .transformLatest { expiry ->
-                                // Schedule a refresh for 30 seconds after access expiry
-                                if (snodeClock.delayUntil(expiry.plusSeconds(30))) {
-                                    emit("30 seconds after Access expiry reached")
-                                }
-                            },
-
-                        configFactory.get()
-                            .watchUserProConfig()
-                            .filterNotNull()
-                            .distinctUntilChanged()
-                            .mapLatest { proConfig ->
-                                val expiry = Instant.ofEpochSecond(proConfig.proProof.expirySeconds)
-                                // Wake ~1h before proof expiry so the renewal path runs. Deterministic
-                                // (no client-side jitter): per-device random offsets leak device count
-                                // via the landed-renewal order statistic; libsession owns the timing
-                                // (renewal_target), and config resolution settles concurrent renewals.
-                                val refreshTime = expiry.minus(Duration.ofMinutes(60))
-
-                                snodeClock.delayUntil(refreshTime)
-                                "Pro proof expiry reached"
-                            },
-
-                        flowOf("App starting up")
-                    ).debounce(500.milliseconds)
-                        .collect { refreshReason ->
-                            Log.d(
-                                DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                "Scheduling ProStatus fetch due to: $refreshReason"
-                            )
-
-                            proStatusRepository.get().requestRefresh(force = true)
                         }
-                } else {
-                    FetchProStatusWorker.cancel(application)
                 }
             }
     }
 
-    private suspend fun manageCurrentProProofRevocation() {
-        postProLaunchStatus.collectLatest { postLaunch ->
-            if (postLaunch) {
-                combine(
-                    configFactory.get()
-                        .watchUserProConfig()
-                        .mapNotNull { it?.proProof?.revocationTagHex },
-
-                    proDatabase.revocationChangeNotification
-                        .onStart { emit(Unit) },
-
-                    { proofRevocationTag, _ ->
-                        proofRevocationTag.takeIf { proDatabase.isRevoked(it, snodeClock.currentTime()) }
+    @OptIn(FlowPreview::class)
+    private suspend fun manageProStatusRefreshScheduling() {
+        merge(
+            configFactory.get()
+                .userConfigsChanged(EnumSet.of(UserConfigType.USER_PROFILE))
+                .map {
+                    configFactory.get().withUserConfigs { configs ->
+                        // Watch both the access expiry (E) and the prepaid marker (I): a
+                        // synced prepaid from another device's purchase must kick the
+                        // redemption poll here too, so any device can pull the entitlement
+                        // through even if the purchasing device goes offline before redeeming.
+                        configs.userProfile.getProAccessExpiry() to
+                            configs.userProfile.getProPrepaid()
                     }
+                }
+                .distinctUntilChanged()
+                .map { "ProAccessExpiry/prepaid in config changes" },
+
+            proStatusRepository.get().loadState
+                .mapNotNull { it.lastUpdated?.first?.expiry }
+                .distinctUntilChanged()
+                .transformLatest { expiry ->
+                    // Schedule a refresh for 30 seconds after access expiry
+                    if (snodeClock.delayUntil(expiry.plusSeconds(30))) {
+                        emit("30 seconds after Access expiry reached")
+                    }
+                },
+
+            configFactory.get()
+                .watchUserProConfig()
+                .filterNotNull()
+                .distinctUntilChanged()
+                .mapLatest { proConfig ->
+                    val expiry = Instant.ofEpochSecond(proConfig.proProof.expirySeconds)
+                    // Wake ~1h before proof expiry so the renewal path runs. Deterministic
+                    // (no client-side jitter): per-device random offsets leak device count
+                    // via the landed-renewal order statistic; libsession owns the timing
+                    // (renewal_target), and config resolution settles concurrent renewals.
+                    val refreshTime = expiry.minus(Duration.ofMinutes(60))
+
+                    snodeClock.delayUntil(refreshTime)
+                    "Pro proof expiry reached"
+                },
+
+            flowOf("App starting up")
+        ).debounce(500.milliseconds)
+            .collect { refreshReason ->
+                Log.d(
+                    DebugLogGroup.PRO_SUBSCRIPTION.label,
+                    "Scheduling ProStatus fetch due to: $refreshReason"
                 )
-                    .filterNotNull()
-                    .collectLatest { revokedHash ->
-                        configFactory.get().withMutableUserConfigs { configs ->
-                            if (configs.userProfile.getProConfig()?.proProof?.revocationTagHex == revokedHash) {
-                                Log.w(
-                                    DebugLogGroup.PRO_SUBSCRIPTION.label,
-                                    "Current Pro proof has been revoked, clearing Pro config"
-                                )
-                                configs.userProfile.removeProConfig()
-                            }
-                        }
-                    }
-            }
-        }
 
+                proStatusRepository.get().requestRefresh(force = true)
+            }
+    }
+
+    private suspend fun manageCurrentProProofRevocation() {
+        combine(
+            configFactory.get()
+                .watchUserProConfig()
+                .mapNotNull { it?.proProof?.revocationTagHex },
+
+            proDatabase.revocationChangeNotification
+                .onStart { emit(Unit) },
+
+            { proofRevocationTag, _ ->
+                proofRevocationTag.takeIf { proDatabase.isRevoked(it, snodeClock.currentTime()) }
+            }
+        )
+            .filterNotNull()
+            .collectLatest { revokedHash ->
+                configFactory.get().withMutableUserConfigs { configs ->
+                    if (configs.userProfile.getProConfig()?.proProof?.revocationTagHex == revokedHash) {
+                        Log.w(
+                            DebugLogGroup.PRO_SUBSCRIPTION.label,
+                            "Current Pro proof has been revoked, clearing Pro config"
+                        )
+                        configs.userProfile.removeProConfig()
+                    }
+                }
+            }
     }
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(recipient: Recipient): Boolean{
-        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.isPro
+        return if(recipient.isCommunityRecipient) false else !recipient.isPro
     }
 
     /**
@@ -410,8 +373,7 @@ class ProStatusManager @Inject constructor(
      */
     fun getIncomingMessageMaxLength(message: VisibleMessage): Int {
         // if the debug is set, return that
-        // of if we are in pre-pro world
-        if (prefs.forceIncomingMessagesAsPro() || !isPostPro()) return MAX_CHARACTER_PRO
+        if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
 
         if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
             return MAX_CHARACTER_PRO
@@ -420,18 +382,11 @@ class ProStatusManager @Inject constructor(
         return MAX_CHARACTER_REGULAR
     }
 
-    // Temporary method and concept that we should remove once Pro is out
-    fun isPostPro(): Boolean {
-        return prefs.forcePostPro()
-    }
-
     fun getCharacterLimit(isPro: Boolean): Int {
         return if (isPro) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
 
     fun getPinnedConversationLimit(isPro: Boolean): Int {
-        if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
-
         return if (isPro) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
@@ -488,9 +443,65 @@ class ProStatusManager @Inject constructor(
         }
         Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Purchase in flight; set pro_prepaid, scheduling proof redemption")
         ProProofGenerationWorker.schedule(application)
+        pollProStatusAfterPurchase()
+    }
+
+    /**
+     * After a purchase, chase the ACCOUNT expiry (get_pro_status) — not the proof. The store took the
+     * payment but the backend only learns of it out-of-band (an async store notification), so a single
+     * refresh right after the purchase usually fires before the backend knows and reads a stale
+     * "expired" — and nothing else re-fetches (the proof is still valid so the renewal loop is dormant,
+     * and pro_prepaid is suppressed while a proof is held). We deliberately do NOT rotate the proof
+     * early (that would leak the subscription change via the rotating seed); we only re-fetch the
+     * display-only status, on a bounded poll, until the account flips to active.
+     */
+    private fun pollProStatusAfterPurchase() {
+        scope.launch {
+            val repo = proStatusRepository.get()
+            // We're done when the ACCOUNT expiry advances past this pre-purchase value — that's the field
+            // that moves once the backend redeems the new payment.
+            val baselineExpiry = repo.loadState.value.lastUpdated?.first?.expiry
+            // Keep firing until it's been ~2 minutes since the FIRST request: an onion-routed fetch can
+            // take a while (or time out around 30s), so a short window would only manage one attempt.
+            val stopFiringAfter = snodeClock.currentTime().plusMillis(PURCHASE_POLL_WINDOW_MS)
+            // Backstop in case a fetch never settles (it should always resolve to Loaded/Error) so we
+            // never leave this polling indefinitely.
+            withTimeoutOrNull(PURCHASE_POLL_MAX_MS) {
+                while (true) {
+                    // Fire immediately (over onion routing the request often reaches the backend after
+                    // the store's async notification already did).
+                    val before = repo.loadState.value.lastUpdated?.second
+                    repo.requestRefresh(force = true)
+                    // Pace off COMPLETION, not request-start: requestRefresh enqueues with REPLACE, so
+                    // re-firing while a slow request is in flight would just cancel and restart it forever.
+                    // Wait for THIS fetch to settle — a newer Loaded, or an Error (failure/timeout).
+                    val settled = repo.loadState.first { st ->
+                        (st is ProStatusRepository.LoadState.Loaded && st.lastUpdated.second != before) ||
+                            st is ProStatusRepository.LoadState.Error
+                    }
+                    val newExpiry = (settled as? ProStatusRepository.LoadState.Loaded)
+                        ?.lastUpdated?.first?.expiry
+                    if (newExpiry != null && (baselineExpiry == null || newExpiry.isAfter(baselineExpiry))) {
+                        break
+                    }
+                    // Failure/timeout, or a response whose account expiry hasn't advanced yet: wait 5s and
+                    // retry, as long as we're still within the ~2-minute window.
+                    if (!snodeClock.currentTime().isBefore(stopFiringAfter)) break
+                    delay(PURCHASE_POLL_INTERVAL_MS)
+                }
+            }
+        }
     }
 
     companion object {
+        // Bounded post-purchase get_pro_status poll (the backend learns of the payment out-of-band via
+        // an async store notification): after each fetch settles, wait 5s and retry until it's been ~2
+        // minutes since the first request, so slow/timing-out onion requests still get a few attempts.
+        private const val PURCHASE_POLL_INTERVAL_MS = 5_000L
+        private const val PURCHASE_POLL_WINDOW_MS = 120_000L
+        // Hard backstop (> the window) so a fetch that never settles can't poll forever.
+        private const val PURCHASE_POLL_MAX_MS = 150_000L
+
         // Single-sourced from libsession (see SessionProtocol) rather than hard-coded here.
         val MAX_CHARACTER_PRO = SessionProtocol.PRO_HIGHER_CHARACTER_LIMIT // max message codepoints for pro users
         private val MAX_CHARACTER_REGULAR = SessionProtocol.STANDARD_CHARACTER_LIMIT // max message codepoints for non-pro users

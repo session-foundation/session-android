@@ -211,11 +211,7 @@ class RecipientRepository @Inject constructor(
     ): Pair<Recipient, Flow<*>?> {
         val now = snodeClock.get().currentTime()
 
-        val proDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
-            ProDataContext()
-        } else {
-            null
-        }
+        val proDataContext = ProDataContext()
 
         // Fetch data from config first, this may contain partial information for some kind of recipient
         val configData = getDataFromConfig(
@@ -482,8 +478,6 @@ class RecipientRepository @Inject constructor(
             }
         }
 
-        changeSources?.add(proStatusManager.get().postProLaunchStatus.drop(1))
-
         return updatedValue to changeSources?.let { merge(*it.toTypedArray()) }
     }
 
@@ -554,11 +548,7 @@ class RecipientRepository @Inject constructor(
         settingsFetcher: (address: Address) -> RecipientSettings
     ): Recipient {
         // 1. Create a local context specifically for this member
-        val memberProDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
-            ProDataContext()
-        } else {
-            null
-        }
+        val memberProDataContext = ProDataContext()
 
         // 2. Fetch the basic recipient data
         val rawRecipient = when (val configData = getDataFromConfig(member.address, memberProDataContext)) {
@@ -603,11 +593,7 @@ class RecipientRepository @Inject constructor(
         settingsFetcher: (address: Address) -> RecipientSettings,
     ): Recipient {
         // 1. Create Local Context
-        val memberProDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
-            ProDataContext()
-        } else {
-            null
-        }
+        val memberProDataContext = ProDataContext()
 
         // 2. Fetch Data
         val rawRecipient = when (val configData = getDataFromConfig(address, memberProDataContext)) {
