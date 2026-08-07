@@ -39,8 +39,9 @@ import javax.inject.Provider
  * A worker that generates a new [network.loki.messenger.libsession_util.pro.ProProof] and stores it
  * locally.
  *
- * Normally you don't need to interact with this worker directly, as it is scheduled
- * automatically when needed based on the Pro status state, by the [FetchProStatusWorker].
+ * Normally you don't need to interact with this worker directly:
+ * [ProStatusManager.manageProofRenewalScheduling] schedules it off libsession's
+ * `pro_renewal_target`, recomputed whenever the config inputs to that target change.
  */
 @HiltWorker
 class ProProofGenerationWorker @AssistedInject constructor(
@@ -49,7 +50,6 @@ class ProProofGenerationWorker @AssistedInject constructor(
     private val apiExecutor: ServerApiExecutor,
     private val proBackendConfig: Provider<ProBackendConfig>,
     private val generateProProofApi: GenerateProProofApi.Factory,
-    private val proStatusRepository: ProStatusRepository,
     private val loginStateRepository: LoginStateRepository,
     private val configFactory: ConfigFactoryProtocol,
     private val snodeClock: SnodeClock,
@@ -59,28 +59,41 @@ class ProProofGenerationWorker @AssistedInject constructor(
             "User must be logged to generate proof"
         }
 
-        // Run when we're already Pro (proof renewal) OR when a purchase is in flight (redemption): in the
-        // latter case get_pro_status may not be ACTIVE yet, and calling generate_pro_proof is what pulls
-        // the entitlement through once the backend has ingested the payment. If neither holds, nothing to do.
-        val isActive = proStatusRepository.loadState.value.lastUpdated?.first?.userStatus == ProUserStatus.ACTIVE
-        val purchasePending = configFactory.withUserConfigs { it.userProfile.getProPrepaid() } != null
-        if (!isActive && !purchasePending) {
-            Log.d(WORK_NAME, "Not Pro and no purchase in flight; nothing to generate")
+        // Ask libsession, from config, whether a proof is wanted at all — the same question
+        // ProStatusManager asked to schedule us. It covers proof renewal, a purchase in flight
+        // (redemption, where get_pro_status is not ACTIVE yet and minting the proof is what pulls
+        // the entitlement through), and an entitlement held with no proof to attach.
+        //
+        // This used to read `proStatusRepository.loadState` for an ACTIVE status instead. That was
+        // the last status->proof dependency, and it was wrong in a way that only showed after a
+        // process restart: WorkManager persists our schedule, but `loadState` starts at Init, so a
+        // renewal that came due while the app was dead saw "not active, no purchase" and returned
+        // without renewing.
+        val now = snodeClock.currentTime()
+        val (renewalTarget, purchasePending, proof) = configFactory.withUserConfigs { configs ->
+            Triple(
+                configs.userProfile.getProRenewalTarget(now.epochSecond),
+                configs.userProfile.getProPrepaid() != null,
+                configs.userProfile.getProConfig()?.proProof,
+            )
+        }
+
+        if (renewalTarget == null) {
+            Log.d(WORK_NAME, "No Pro proof renewal is due; nothing to generate")
             return Result.success()
         }
 
-        // Pace acquisition. Without a floor this path is a closed loop: a successful generate
-        // force-refreshes get_pro_status (below), the fetch asks libsession for a renewal target, and
-        // `target = proofExpiry - PRO_RENEWAL_LEAD` is permanently in the past whenever a proof lives
-        // for less than the 60-minute lead, so it reschedules us immediately, forever.
+        // Pace acquisition. Without a floor this path is a closed loop: a successful generate writes
+        // the new proof to config, ProStatusManager.manageProofRenewalScheduling re-reads the renewal
+        // target off that write, and `target = proofExpiry - PRO_RENEWAL_LEAD` is permanently in the
+        // past whenever a proof lives for less than the 60-minute lead — so it reschedules us
+        // immediately, forever. (Before the status/proof split the loop ran through a forced
+        // get_pro_status instead; same shape, and the floor is what bounds it either way.)
         //
         // Mirrors iOS `SessionProManager.reconcileProofRenewal` and Desktop `ducks/proBackendData.ts`,
         // constants included. Note it RE-ARMS rather than skipping: `target <= now` is the normal
         // "renewal due" signal, so dropping the work would break real renewals.
-        val now = snodeClock.currentTime()
-        val covered = configFactory.withUserConfigs { configs ->
-            configs.userProfile.getProConfig()?.proProof
-        }?.let { it.expirySeconds > now.epochSecond } == true
+        val covered = proof?.let { it.expirySeconds > now.epochSecond } == true
 
         if (covered) darkAttempt = 0
         val intervalSeconds = if (covered) {
@@ -144,12 +157,12 @@ class ProProofGenerationWorker @AssistedInject constructor(
                     }
 
                     Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
-                    // Minting the proof is what makes the backend validate the payment and mark the
-                    // account active, so a get_pro_status fetched before now (e.g. the one behind the
-                    // Pro settings screen right after a purchase) is stale "expired". Refresh the
-                    // display-only status so the UI flips to active on its own, instead of the user
-                    // having to hit "Check Pro Status" manually.
-                    proStatusRepository.requestRefresh(force = true)
+                    // No status refresh is requested here. Minting the proof does flip the account
+                    // active at the backend, so the display status does need re-reading — but the
+                    // `setProAccessExpiry` write above already fires the (E, prepaid) config-change
+                    // trigger in ProStatusManager, which schedules exactly that fetch. Asking for
+                    // one here as well made the proof loop a *source* of status fetches, which is
+                    // the coupling this rework removes.
                     Result.success()
                 }
 
