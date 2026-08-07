@@ -6,6 +6,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.session.libsignal.utilities.Log
 
 /**
@@ -49,6 +50,9 @@ import org.session.libsignal.utilities.Log
 object QaLaunchConfig {
     private const val TAG = "QaLaunchConfig"
 
+    /** iOS's explicit-clear sentinel, accepted on every Pro mock key so both platforms spell it alike. */
+    private const val USE_ACTUAL = "useactual"
+
     /** Seed node to use when the environment is devnet. Must be a valid http(s) URL. */
     private const val EXTRA_DEVNET_SEED_URL = "sessionDevnetSeedUrl"
 
@@ -70,6 +74,27 @@ object QaLaunchConfig {
      */
     private const val EXTRA_PRO_BACKEND_URL = "sessionProBackendUrl"
     private const val EXTRA_PRO_BACKEND_PUBKEY = "sessionProBackendPubkey"
+
+    /**
+     * Current user's Pro state. Named after the iOS concept rather than the Android preference,
+     * because this is a cross-platform contract the Appium suite is written against — iOS's key is
+     * `mockCurrentUserSessionProBackendStatus`.
+     *
+     * `useActual` | `never` | `active` | `expired`. `useActual` is the same explicit-clear sentinel
+     * iOS uses on every mockable Pro feature; an ABSENT extra leaves the preferences untouched.
+     *
+     * Maps to TWO preferences, because Android splits the concerns iOS keeps in one key:
+     * `forceCurrentUserAsPro` is the "use mocked state at all" gate, and `DEBUG_SUBSCRIPTION_STATUS`
+     * picks which state. Collapsing them here is what keeps one `bothPlatformsIt` setup meaning the
+     * same thing on both platforms.
+     */
+    private const val EXTRA_PRO_BACKEND_STATUS = "sessionProBackendStatus"
+
+    /**
+     * Load state of the Pro settings screen: `useActual` | `loading` | `error` | `success`.
+     * iOS's `mockCurrentUserSessionProLoadingState`. `success` maps to Android's `NORMAL`.
+     */
+    private const val EXTRA_PRO_LOADING_STATE = "sessionProLoadingState"
 
     /**
      * Read any supported extras off [intent] and persist them. Safe to call on every launch: absent
@@ -100,6 +125,8 @@ object QaLaunchConfig {
             applyDevnetSeedUrl(intent, prefs)
             applyServiceNetwork(intent, prefs)
             applyProBackend(intent, prefs)
+            applyProBackendStatus(intent, prefs)
+            applyProLoadingState(intent, prefs)
         } catch (e: RuntimeException) {
             Log.e(TAG, "Ignoring unreadable launch extras", e)
             return
@@ -248,4 +275,76 @@ object QaLaunchConfig {
         prefs.setDevnetSeedUrl(raw)
         return true
     }
+
+    /**
+     * Sets the mocked Pro state for the current user.
+     *
+     * Values are mapped EXPLICITLY rather than derived from the enum names, deliberately: this is an
+     * external contract the Appium suite is written against, so it stays readable and stable
+     * independently of how [DebugMenuViewModel.DebugSubscriptionStatus] is renamed or reordered. The
+     * same reasoning iOS documents for its own key.
+     *
+     * `expired` is reachable because the debug enum already models it — no new product state was
+     * needed. Note the expiry it produces is a FIXED offset baked into `ProStatusManager`
+     * (`EXPIRED` = 2 days ago), so this key can express *that the account has lapsed* but not *when*;
+     * an arbitrary access-expiry instant is not expressible today.
+     */
+    private fun applyProBackendStatus(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_BACKEND_STATUS)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_BACKEND_STATUS).orEmpty().trim()
+        // null = don't mock at all (fall through to the real backend-derived state).
+        val mocked: DebugMenuViewModel.DebugSubscriptionStatus? = when (raw.lowercase()) {
+            USE_ACTUAL, "never" -> null
+            "active" -> DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+            "expired" -> DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_BACKEND_STATUS' extra: '$raw'. " +
+                        "Use $USE_ACTUAL | never | active | expired."
+                )
+                return false
+            }
+        }
+
+        // Written through the specific setters, not setStringPreference: these emit on
+        // TextSecurePreferences.events, which is what ProStatusManager.proDataState collects. A generic
+        // write would persist the value and emit nothing, so the mock would appear not to apply until
+        // the next launch.
+        prefs.setForceCurrentUserAsPro(mocked != null)
+        prefs.setDebugSubscriptionType(mocked)
+        Log.i(TAG, "Set mocked Pro state to '$raw' (debug subscription = ${mocked?.name ?: "off"})")
+        return true
+    }
+
+    /** Sets the mocked load state of the Pro settings screen. See [EXTRA_PRO_LOADING_STATE]. */
+    private fun applyProLoadingState(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_LOADING_STATE)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_LOADING_STATE).orEmpty().trim()
+        val mocked: DebugMenuViewModel.DebugProPlanStatus? = when (raw.lowercase()) {
+            USE_ACTUAL -> null
+            "loading" -> DebugMenuViewModel.DebugProPlanStatus.LOADING
+            "error" -> DebugMenuViewModel.DebugProPlanStatus.ERROR
+            "success" -> DebugMenuViewModel.DebugProPlanStatus.NORMAL
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_LOADING_STATE' extra: '$raw'. " +
+                        "Use $USE_ACTUAL | loading | error | success."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugProPlanStatus(mocked)
+        Log.i(TAG, "Set mocked Pro load state to '$raw' (${mocked?.name ?: "off"})")
+        return true
+    }
+
 }
