@@ -22,10 +22,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -64,6 +67,7 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
 import java.math.BigDecimal
 import java.time.Duration
+import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -106,6 +110,22 @@ class ProSettingsViewModel @AssistedInject constructor(
     private var recovering: Boolean = false
 
     init {
+        // Trigger #3 — refresh on entering Pro settings. Floored, not `immediate`: this screen is
+        // the one place the status is actually read, so it should not be showing a value from an
+        // arbitrarily old background fetch, but arriving here is not on its own a reason to bypass
+        // the 60s floor.
+        //
+        // Deliberately NOT via refreshProStatus(): that early-returns while `refreshState` is
+        // Loading, and since F15 a process that hasn't confirmed a fetch of its own reports Loading
+        // from launch. Routing on-enter through that guard would mean the one trigger able to
+        // resolve the state is the one the state suppresses — a spinner that never clears, which is
+        // the failure iOS hit from the same direction. The repository single-flights anyway
+        // (WorkManager REPLACE), so the guard buys nothing here.
+        proStatusRepository.requestRefresh(immediate = false)
+
+        // Trigger #4 — the bounded grace poll, for as long as this screen is open.
+        pollProStatusDuringGraceWhileOpen()
+
         // observe subscription status
         viewModelScope.launch {
             proStatusManager
@@ -196,17 +216,35 @@ class ProSettingsViewModel @AssistedInject constructor(
             recovering = false
         }
 
+        // Addendum item 2 debounce, extended from the home splash gate to the in-settings label.
+        // A status snapshot taken BEFORE the renewal fell due cannot tell us the renewal failed —
+        // it predates the event. Showing the grace warning off one turns an ordinary boundary
+        // crossing into a "renewal unsuccessful" alarm the backend never reported.
+        //
+        // The condition is a COMPLETED fetch at or after the crossing, not "a fetch succeeded at
+        // some point": `lastUpdated` is stamped by ProDatabase.updateProStatus once the response
+        // has landed, so a request still in flight when the threshold passed doesn't satisfy it.
+        // Cross-client contract, matching iOS's `lastStatusFetch >= E`.
+        val confirmedSinceRenewalDue = proStatusRepository.loadState.value.lastUpdated
+            ?.let { (status, fetchedAt) ->
+                status.renewalDueAt()?.let { !fetchedAt.isBefore(it) }
+            } == true
+
         while (true) {
             val now = clock.currentTime()
 
             _proSettingsUIState.update {
                 it.copy(
                     proDataState = proDataState,
-                    inGracePeriod = (subType as? ProStatus.Active.AutoRenewing)?.inGracePeriod ?: false,
+                    inGracePeriod = confirmedSinceRenewalDue &&
+                        (subType as? ProStatus.Active.AutoRenewing)?.inGracePeriod == true,
                     subscriptionExpiryLabel = when(subType){
                         is ProStatus.Active.AutoRenewing -> {
-                            // in grace period
-                            if(subType.inGracePeriod) {
+                            // in grace period — debounced, same condition as the `inGracePeriod`
+                            // flag above. Reading `subType.inGracePeriod` directly here would
+                            // reintroduce the unconfirmed alarm through the label while the flag
+                            // driving the warning colour stayed correctly suppressed.
+                            if(confirmedSinceRenewalDue && subType.inGracePeriod) {
                                 Phrase.from(context, R.string.proRenewalUnsuccessful)
                                     .format()
                             } else {
@@ -696,12 +734,74 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun refreshProStatus(force: Boolean){
+    /**
+     * Trigger #4 — poll `get_pro_status` while the renewal is overdue and this screen is open.
+     *
+     * Deliberately NOT a 60s timer on the screen. It sleeps until the renewal falls due and only
+     * then polls, once a minute, while the renewal still hasn't landed. Three things stop it: the
+     * renewal arrives (`expiry` advances, which restarts this from the new date), the account runs
+     * past coverage, or the screen closes and cancels `viewModelScope`.
+     *
+     * Note it needs no `auto_renewing` check. The wire zeroes `grace_period_duration` when the
+     * subscription isn't auto-renewing, so for those accounts coverage ends exactly when the
+     * renewal falls due and the loop below never runs a single iteration — there is no renewal in
+     * flight to poll for, and the arithmetic already says so.
+     *
+     * Exempt from the freshness floor (spec §4: bounded polls carry their own cadence and their own
+     * termination). At 60s this poll sits exactly on the 60s floor, so leaving it floored would drop
+     * ticks to timing jitter alone.
+     */
+    private fun pollProStatusDuringGraceWhileOpen() {
+        viewModelScope.launch {
+            proStatusRepository.loadState
+                .map { it.lastUpdated?.first }
+                .distinctUntilChanged { old, new -> old?.expiry == new?.expiry }
+                .collectLatest { status ->
+                    val renewalDue = status?.renewalDueAt() ?: return@collectLatest
+                    val coverageEnd = status.coverageEndsAt() ?: return@collectLatest
+
+                    // Returns immediately when already past it — i.e. the screen was opened
+                    // mid-grace — which is exactly when we want the first poll to be now.
+                    clock.delayUntil(renewalDue)
+
+                    while (clock.currentTime().isBefore(coverageEnd)) {
+                        proStatusRepository.requestRefresh(immediate = true)
+                        delay(GRACE_POLL_INTERVAL_MS)
+                    }
+                }
+        }
+    }
+
+    /**
+     * The instant the renewal falls due — the account's paid-through end.
+     *
+     * ⚠️ CONTESTED, and this pair of functions is the whole of the disagreement. The spec (§0, §6)
+     * reads `expiry` as the paid-through end, so the renewal is due at `expiry` and grace runs from
+     * there to `expiry + gracePeriod`. The Pro backend disagrees: it folds grace into the stored
+     * expiry before sending it (`backend.py` `_lookup_user_expiry`), so `expiry` is already the end
+     * of coverage and the paid-through end is `expiry - gracePeriod`.
+     *
+     * That is with Morgan and the architect. Until it is ruled on these follow the SPEC, so Android
+     * does not quietly disagree with Desktop and iOS about a user-visible date. If the backend
+     * reading wins, swap the two bodies — the poll's structure holds under either, and nothing else
+     * in this file reads the boundary.
+     */
+    private fun GetProStatusResponse.renewalDueAt(): Instant? = expiry
+
+    /** The instant coverage ends. See [renewalDueAt] — same caveat, same seam. */
+    private fun GetProStatusResponse.coverageEndsAt(): Instant? = expiry?.plus(gracePeriod)
+
+    /**
+     * [immediate] bypasses the repository's freshness floor. Every caller here is a user-initiated
+     * refresh (a retry button, recover, returning from cancellation) — trigger #5 — so they pass
+     * true: the user is looking at the screen waiting for the answer.
+     */
+    private fun refreshProStatus(immediate: Boolean){
         // stop early if we are already refreshing
         if(_proSettingsUIState.value.proDataState.refreshState is State.Loading) return
 
         // refreshes the pro status data
-        proStatusRepository.requestRefresh(force = force)
+        proStatusRepository.requestRefresh(immediate = immediate)
     }
 
     private fun getSelectedPlan(): ProPlan? {
@@ -988,4 +1088,18 @@ class ProSettingsViewModel @AssistedInject constructor(
         val showTCPolicyDialog: Boolean = false,
         val showSimpleDialog: SimpleDialogData? = null,
     )
+
+    companion object {
+        /**
+         * Cadence of the #4 grace poll. Shared cross-client contract (spec §9.3) — the same 60s
+         * Desktop and iOS use for their while-open poll; keep them in step.
+         *
+         * **This equals `ProStatusRepository.MIN_UPDATE_INTERVAL_SECONDS`, and that equality is the
+         * reason #4 bypasses the freshness floor** rather than being floored like the other routine
+         * triggers. A poll running at exactly the floor would have roughly every other tick dropped
+         * by timing jitter alone, silently halving the rate. Two files apart the two constants look
+         * coincidentally equal; they are not, so change neither without the other.
+         */
+        private const val GRACE_POLL_INTERVAL_MS = 60_000L
+    }
 }

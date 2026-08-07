@@ -27,7 +27,6 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.server.ServerApiExecutor
 import org.thoughtcrime.securesms.api.server.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
-import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import org.thoughtcrime.securesms.pro.api.GetProStatusApi
 import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.api.successOrThrow
@@ -39,13 +38,13 @@ import javax.inject.Provider
  * A worker that fetches the user's Pro status from the server and updates the local database.
  *
  * This worker doesn't do any business logic in terms of when to schedule itself, it simply performs
- * the fetch and update operation regardlessly. It, however, does schedule the [ProProofGenerationWorker]
- * if needed based on the fetched Pro status, this is because the proof generation logic
- * is tightly coupled to the fetched Pro status state.
+ * the fetch and update operation regardlessly — and that is now the whole of its job. It used to
+ * also schedule [ProProofGenerationWorker], which made proof renewal a downstream effect of a
+ * status fetch; that scheduling lives in [ProStatusManager] and keys off config instead.
  */
 @HiltWorker
 class FetchProStatusWorker @AssistedInject constructor(
-    @Assisted private val context: Context,
+    @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val proBackendConfig: Provider<ProBackendConfig>,
     private val serverApiExecutor: ServerApiExecutor,
@@ -60,6 +59,11 @@ class FetchProStatusWorker @AssistedInject constructor(
             requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
                 "User must be logged in to fetch pro status"
             }
+
+        // Record the attempt before making it, so one that fails still spaces out the next. The
+        // success timestamp can't do this job: it is stored as a pair with the response blob, so a
+        // failed fetch leaves nothing behind and a failing network was never throttled at all.
+        proDatabase.setProStatusLastAttemptAt(snodeClock.currentTime())
 
         return try {
             Log.d(TAG, "Fetching Pro status from server")
@@ -86,12 +90,24 @@ class FetchProStatusWorker @AssistedInject constructor(
                     configs.userProfile.removeProAccessExpiry()
                 }
 
+                // Persist auto-renewing into synced config alongside E, so a linked device has the
+                // account state without its own fetch. Written unconditionally and deliberately so:
+                // libsession's set_nonzero_int short-circuits a no-change write on a clean config
+                // (`assign_if_changed`), exactly as the E write above already relies on, so a
+                // client-side "only if changed" guard would add nothing. A presence-based guard
+                // would be actively wrong — the key is erased rather than stored when false, so
+                // presence flips on every transition and would read as churn that isn't there.
+                //
+                // No `t`/`T` bump either: this is backend-derived state like E and I, not a user
+                // profile edit, and libsession omits the bump for it on purpose.
+                configs.userProfile.setProAutoRenewing(details.autoRenewing)
+
                 // Remove the pro config only when the backend authoritatively says we are no longer
                 // pro (expired) or never were (never). An unknown/future status is NOT a basis to
                 // delete it: removeProConfig() writes the SYNCED user profile, so clearing on an
                 // unrecognised status would erase a valid proof across all the user's devices. Leave
                 // it — the proof's own expiry governs, and the backend won't refresh (or will revoke)
-                // a genuinely-lapsed account. We schedule proof generation below if we are still pro.
+                // a genuinely-lapsed account.
                 if (details.userStatus == ProUserStatus.EXPIRED ||
                     details.userStatus == ProUserStatus.NEVER
                 ) {
@@ -107,8 +123,10 @@ class FetchProStatusWorker @AssistedInject constructor(
             }
             proDatabase.updateProStatus(proStatus = details, updatedAt = snodeClock.currentTime())
 
-            scheduleProofGenerationIfNeeded(details)
-
+            // Proof generation is NOT scheduled from here. It runs off libsession's
+            // `pro_renewal_target`, watched from config by
+            // ProStatusManager.manageProofRenewalScheduling — so the config writes above reach it
+            // anyway, and a renewal no longer depends on a status fetch having happened.
             Result.success()
         } catch (e: CancellationException) {
             Log.d(TAG, "Work cancelled")
@@ -122,43 +140,6 @@ class FetchProStatusWorker @AssistedInject constructor(
         }
     }
 
-
-    private suspend fun scheduleProofGenerationIfNeeded(details: GetProStatusResponse) {
-        if (details.userStatus != ProUserStatus.ACTIVE) {
-            // Not (yet) Pro — but if a purchase is in flight (possibly synced from another device that
-            // bought and set pro_prepaid), keep driving the redemption poll so any device can pull the
-            // entitlement through. Otherwise there's nothing to generate.
-            val purchasePending = configFactory.withUserConfigs { it.userProfile.getProPrepaid() } != null
-            if (purchasePending) {
-                Log.d(TAG, "Not active but a purchase is in flight; scheduling proof redemption")
-                ProProofGenerationWorker.schedule(context)
-            } else {
-                Log.d(TAG, "Pro is not active, cancelling any existing proof generation work")
-                ProProofGenerationWorker.cancel(context)
-            }
-            return
-        }
-
-        // libsession owns the renewal schedule now — no more client-side autoRenewing/expiry logic (which
-        // was inconsistent and skipped non-auto-renewing but still-valid entitlements). getProRenewalTarget
-        // returns null (valid proof, no renewal needed), a target <= now (renew now), or a future target
-        // (~1h before proof expiry, nudged off the rotation-period boundary so all devices converge).
-        val nowSeconds = snodeClock.currentTime().epochSecond
-        val target = configFactory.withUserConfigs { it.userProfile.getProRenewalTarget(nowSeconds) }
-        if (target == null) {
-            Log.d(TAG, "Pro proof is still valid; no renewal needed")
-            return
-        }
-
-        val delay = Duration.ofSeconds((target - nowSeconds).coerceAtLeast(0L))
-        if (delay.isZero) {
-            Log.d(TAG, "Pro proof needs (re)generation now, scheduling immediately")
-            ProProofGenerationWorker.schedule(context)
-        } else {
-            Log.d(TAG, "Pro proof renewal due in $delay, scheduling")
-            ProProofGenerationWorker.schedule(context, delay)
-        }
-    }
 
     companion object {
         private const val TAG = "FetchProStatusWorker"
