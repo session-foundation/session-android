@@ -354,12 +354,19 @@ class ProStatusManager @Inject constructor(
                 .map { "ProAccessExpiry/prepaid in config changes" },
 
             proStatusRepository.get().loadState
-                .mapNotNull { it.lastUpdated?.first?.expiry }
+                .mapNotNull { state ->
+                    // The instant the renewal falls DUE, not when coverage ends. The expiry the
+                    // backend sends is grace-inclusive, so waking at it would fire after the window
+                    // this trigger exists to catch has already closed — the renewal became overdue a
+                    // whole grace period earlier. Subtracting is a no-op for a non-auto-renewing
+                    // account, where the wire sends grace = 0.
+                    state.lastUpdated?.first?.let { it.expiry?.minus(it.gracePeriod) }
+                }
                 .distinctUntilChanged()
-                .transformLatest { expiry ->
-                    // Schedule a refresh for 30 seconds after access expiry
-                    if (snodeClock.delayUntil(expiry.plusSeconds(30))) {
-                        emit("30 seconds after Access expiry reached")
+                .transformLatest { renewalDue ->
+                    // Schedule a refresh for 30 seconds after the renewal fell due.
+                    if (snodeClock.delayUntil(renewalDue.plusSeconds(30))) {
+                        emit("30 seconds after the renewal fell due")
                     }
                 },
 
