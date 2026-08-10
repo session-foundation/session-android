@@ -154,6 +154,34 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         // Refresh the cached access-expiry from the advisory account_expiry that rides the
                         // proof response, so the renewal path keeps E fresh without a separate get_pro_status.
                         response.accountExpiry?.let { configs.userProfile.setProAccessExpiry(it.epochSecond) }
+
+                        // ⚠️ BLOCKED — the two lines below are the intended write and cannot compile yet.
+                        //
+                        //     configs.userProfile.setProAutoRenewing(response.accountAutoRenewing)
+                        //     configs.userProfile.setProGracePeriod(response.accountGracePeriod)
+                        //
+                        // Writing the access expiry here WITHOUT them leaves two incoherences, both of
+                        // which are live today:
+                        //
+                        //  * auto-renewing goes stale. An account whose expiry only ever came from a
+                        //    proof reads back as not-renewing while it is in fact renewing, because
+                        //    the key is presence-only and nothing on this path sets it.
+                        //  * the grace period pairs with the wrong expiry. Everything derives the
+                        //    paid-through instant as `E - G`; writing a fresh E beside a G from an
+                        //    older response makes that subtraction wrong by the difference between
+                        //    them. Worst at the transition that matters: Google reports its real,
+                        //    multi-day grace only once the subscriber ENTERS grace, so a proof landing
+                        //    first pairs a new coverage end with the old ~1h stand-in.
+                        //
+                        // The backend sends both fields (`account_auto_renewing`,
+                        // `account_grace_period_duration`). The hole is in the middle: libsession's
+                        // `parse_pro_proof` reads only `account_expiry_ts`
+                        // (`src/pro_backend.cpp`), so neither field reaches
+                        // `GenerateProProofResponse` and neither is exposed by the glue. Uncomment
+                        // once core parses them and the wrapper surfaces them; no client-side
+                        // workaround is appropriate — reading the raw response behind libsession, or
+                        // sourcing the flag from anywhere other than this outcome, would both be worse
+                        // than the staleness.
                     }
 
                     Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
