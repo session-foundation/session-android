@@ -162,14 +162,14 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         // reports its real multi-day grace only once the subscriber ENTERS grace, so a
                         // proof landing first would pair a new coverage end with the ~1h stand-in.
                         //
-                        // ⚠️ Written ONLY when the backend actually said. `null` means "did not say",
-                        // NOT false or zero, and the distinction is destructive to lose: both config
-                        // keys are presence-only, so writing false/zero ERASES them. A backend that
-                        // predates these fields sends neither, and collapsing absent — a `?: false`
-                        // anywhere in this path — would make every proof fetch wipe a value correctly
-                        // learned from get_pro_status. That is worse than the staleness it would fix.
-                        response.accountAutoRenewing?.let { configs.userProfile.setProAutoRenewing(it) }
-                        response.accountGracePeriod?.let { configs.userProfile.setProGracePeriod(it) }
+                        // Unconditional, and that is safe for a specific reason: libsession REQUIRES
+                        // both fields on a successful proof, so there is no "the backend did not say"
+                        // state to guard against. A missing or malformed field fails the parse and we
+                        // never reach here, which is deliberate — writing `false` to a presence-only
+                        // config key ERASES it, so a defaulted false would be destructive rather than
+                        // inert. We are inside the success branch, so both values are truthful.
+                        configs.userProfile.setProAutoRenewing(response.accountAutoRenewing)
+                        configs.userProfile.setProGracePeriod(response.accountGracePeriod)
                     }
 
                     Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
