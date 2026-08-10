@@ -162,7 +162,9 @@ class ProStatusManager @Inject constructor(
                 val refundInProgress = configFactory.get()
                     .withUserConfigs { it.userProfile.getRefundRequested() != null }
                 ProDataState(
-                    type = proStatusState.lastUpdated?.first?.toProStatus(nowMs, application, refundInProgress) ?: ProStatus.NeverSubscribed,
+                    type = proStatusState.lastUpdated?.let { (response, confirmedAt) ->
+                        response.toProStatus(nowMs, application, refundInProgress, confirmedAt)
+                    } ?: ProStatus.NeverSubscribed,
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
@@ -403,12 +405,15 @@ class ProStatusManager @Inject constructor(
             return@flow
         }
 
-        val (accessExpiry, autoRenewing) = configFactory.get().withUserConfigs { configs ->
-            configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond) to
-                configs.userProfile.getProAutoRenewing()
+        val (coverageEnd, autoRenewing, grace) = configFactory.get().withUserConfigs { configs ->
+            Triple(
+                configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond),
+                configs.userProfile.getProAutoRenewing(),
+                configs.userProfile.getProGracePeriod(),
+            )
         }
 
-        val reason = startupFetchReason(accessExpiry, autoRenewing, now)
+        val reason = startupFetchReason(coverageEnd, autoRenewing, grace, now)
         if (reason == null) {
             Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Startup gate: no CTA could fire, skipping the startup fetch")
             return@flow
@@ -641,58 +646,56 @@ class ProStatusManager @Inject constructor(
          * Whether a cold start should fetch `get_pro_status`, and why — or null to stay off the
          * network. Pure over plain values so it can be tested without a clock, a database or config.
          *
-         * The architect's four rows, which REPLACE the spec's `E + grace ≤ now` expired test (grace
-         * is not in config, so that test is unimplementable):
+         * [coverageEnd] is the access expiry as the backend sends it, which is **grace-inclusive**;
+         * the renewal falls due at `coverageEnd - grace`. Subtracting is unconditional and needs no
+         * provider branching, because the wire sends grace = 0 whenever the subscription is not
+         * auto-renewing.
          *
-         * | config state                                | action                                  |
-         * |---------------------------------------------|-----------------------------------------|
-         * | `auto_renewing && now < E`                   | no fetch — comfortably active           |
-         * | `auto_renewing && now ≥ E`                   | fetch; grace is unknowable from config  |
-         * | `!auto_renewing && E` within the CTA window  | fetch — the Expiring CTA may fire       |
-         * | `!auto_renewing && now ≥ E`                  | confirm-fetch before the Expired CTA    |
+         * The four rows, which replace the spec's `E + grace <= now` expired test (that test both
+         * double-counted grace and was unimplementable when written, because grace was not in config):
          *
-         * ⚠️ **Row 1 is known to be wrong, and is built this way deliberately — see F8.** `E` is
-         * grace-INCLUSIVE (the backend folds grace in before sending it), so the real grace window
-         * `E − grace ≤ now < E` lies entirely inside `now < E` — the row that declines to fetch. The
-         * state this redesign exists to surface is therefore the one the gate is currently blind to.
-         * Desktop and iOS ship the identical row; correcting it is a three-client change and all
-         * three PRs document it. Do not fix it here alone.
+         * | config state                                       | action                            |
+         * |----------------------------------------------------|-----------------------------------|
+         * | `auto_renewing && now < renewalDue`                 | no fetch — comfortably active     |
+         * | `auto_renewing && now >= renewalDue`                | fetch — the renewal is overdue    |
+         * | `!auto_renewing && renewalDue` in the CTA window    | fetch — the Expiring CTA may fire |
+         * | `!auto_renewing && now >= renewalDue`               | confirm before the Expired CTA    |
          *
-         * ⚠️ **The `!auto_renewing && now < E && outside the CTA window` case is HELD — see F2.** It
-         * returns null (the spec's letter: comfortably-active users never fetch on startup), but that
-         * is not a settled answer. `A` is presence-only, so `false` also means "never written" — and
-         * every existing subscriber lands here on their first run after this ships, where declining
-         * to fetch means `A` is never written and the gate never changes its mind. Whether that needs
-         * a bootstrap fetch is Morgan's, and it is one branch of this `when`.
+         * Row 1 keying off `renewalDue` rather than `coverageEnd` is the point: the grace window is
+         * `renewalDue <= now < coverageEnd`, so keying off coverage end would have declined to fetch
+         * for exactly the state this exists to surface.
          */
         internal fun startupFetchReason(
-            accessExpiry: Instant?,
+            coverageEnd: Instant?,
             autoRenewing: Boolean,
+            grace: Duration,
             now: Instant,
         ): String? {
             // No access expiry at all: never subscribed, so no CTA can fire and nothing to confirm.
-            if (accessExpiry == null) return null
+            if (coverageEnd == null) return null
 
-            val pastExpiry = !now.isBefore(accessExpiry)
+            val renewalDue = coverageEnd.minus(grace)
+            val overdue = !now.isBefore(renewalDue)
 
             return when {
-                autoRenewing && !pastExpiry -> null
+                autoRenewing && !overdue -> null
 
-                autoRenewing -> "auto-renewing and past the access expiry; grace is not knowable from config"
+                autoRenewing -> "auto-renewing and past the renewal date; grace is running"
 
-                !pastExpiry ->
-                    if (accessExpiry.isBefore(now.plus(EXPIRING_CTA_WINDOW))) {
+                !overdue ->
+                    if (renewalDue.isBefore(now.plus(EXPIRING_CTA_WINDOW))) {
                         "not auto-renewing and expiring within $EXPIRING_CTA_WINDOW"
                     } else {
-                        // HELD (F2) — the unnamed row.
+                        // Comfortably active and not renewing — a prepaid or long non-renewing
+                        // subscription. No CTA can fire, so nothing to fetch for.
                         null
                     }
 
-                // Past expiry and not auto-renewing. Confirm with the backend before showing the
-                // Expired CTA: config can read expired while a renewal landed on another device and
-                // hasn't synced. Bounded by the CTA's own window — once the CTA can no longer fire
-                // there is nothing for the fetch to serve.
-                accessExpiry.plus(EXPIRED_CTA_WINDOW).isAfter(now) ->
+                // Past the renewal date and not auto-renewing. Confirm with the backend before
+                // showing the Expired CTA: config can read expired while a renewal landed on another
+                // device and hasn't synced. Bounded by the CTA's own window — once the CTA can no
+                // longer fire there is nothing for the fetch to serve.
+                renewalDue.plus(EXPIRED_CTA_WINDOW).isAfter(now) ->
                     "not auto-renewing and expired within $EXPIRED_CTA_WINDOW; confirming before the Expired CTA"
 
                 else -> null

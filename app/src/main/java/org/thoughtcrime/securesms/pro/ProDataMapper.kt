@@ -26,43 +26,48 @@ object ProUserStatus {
  * Map a libsession-parsed get-pro-status response to the app's [ProStatus] domain model. Needs a [Context]
  * to resolve the (client-owned) provider display strings.
  */
-fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context, refundInProgress: Boolean): ProStatus {
+/**
+ * @param confirmedAt when the fetch behind this response COMPLETED, or null if nothing has been
+ *   confirmed. Used to gate [ProStatus.Active.AutoRenewing.inGracePeriod]: a snapshot taken before the
+ *   renewal fell due cannot have observed it failing, so raising the "renewal unsuccessful" warning off
+ *   one turns an ordinary boundary crossing into an alarm the backend never reported.
+ *
+ *   Gated **here**, where the flag is produced, rather than at each consumer. Five call sites read it
+ *   today; a sixth would inherit no protection if the check lived in front of the value instead of
+ *   inside it — and there would be nothing to tell whoever added it.
+ */
+fun GetProStatusResponse.toProStatus(
+    nowMs: Long,
+    context: Context,
+    refundInProgress: Boolean,
+    confirmedAt: Instant?,
+): ProStatus {
     return when (userStatus) {
         ProUserStatus.ACTIVE -> {
             val paymentItem = latestPayment ?: return ProStatus.NeverSubscribed
-            // 🔴 THE COMMENT BELOW IS KNOWN TO BE FALSE — held under F8, unresolved as of 2026-08-07.
-            // Read this first; the logic still implements the superseded premise on purpose.
+            // `expiry` is COVERAGE END, not the paid-through date: the backend folds grace into it
+            // before sending it (`Session-Pro-Backend` `backend.py` `_lookup_user_expiry`:
+            // `payment_expiry_at = expiry_at + grace if auto_renewing else expiry_at` ->
+            // `users.expiry_at` -> the wire `expiry_ts`, `server.py:317`), and judges `active` against
+            // that same value (`:322`). Its own test subtracts grace from the wire value to recover
+            // the store's date (`tests/test_google.py:556-560`).
             //
-            // The backend does NOT judge status against `expiry + grace_period_duration`. It folds
-            // grace into the stored expiry BEFORE sending it — `Session-Pro-Backend`
-            // `backend.py` `_lookup_user_expiry`: `payment_expiry_at = expiry_at + grace if
-            // auto_renewing else expiry_at` -> `users.expiry_at` -> the wire `expiry_ts`
-            // (`server.py:317`), with the status boundary using that same value (`server.py:322`).
-            // Its own test subtracts grace from the wire value to recover the store's paid-through
-            // date (`tests/test_google.py:556-560`).
+            // So the renewal is due at `expiry - gracePeriod`, and the grace window is
+            // `expiry - gracePeriod <= now < expiry`. Subtracting is unconditional and needs no
+            // provider branching: the wire sends grace = 0 whenever the subscription is not
+            // auto-renewing (`server.py:335`), so `expiry - 0 == expiry` for those accounts.
             //
-            // So `expiry` is COVERAGE END, not paid-through. The real grace window is
-            // `expiry - gracePeriod <= now < expiry`, and two things below are therefore wrong:
-            //   * `inGracePeriod = nowMs >= expiryMs` sits in a branch that requires `now <= expiry`,
-            //     so the two are satisfiable only at a single instant — the indicator is dead code.
-            //   * `renewingAt = expiry` renders the renewal date one whole grace period late.
-            //
-            // Not fixed here because it is a user-visible date on all three clients, which encode the
-            // same premise in three different wordings — which is why it read as corroboration rather
-            // than one mistake copied three times, and why it must be corrected on all three together
-            // rather than by whoever gets there first.
-            //
-            // --- SUPERSEDED (kept verbatim: it explains the existing diff, and the other two clients'
-            // --- comments echo this text, so it stays greppable for whoever does the three-client fix)
-            // `expiry` is the paid-through end. user_status stays `active` through the grace window —
-            // the backend judges status against coverage_end = expiry + grace_period_duration (both gated
-            // on auto_renewing) — so being in this ACTIVE branch already means we are still covered. The
-            // renewal is due AT the paid-through end; being past it while still active IS the grace period.
-            // Never subtract grace here: that put "renew due" a whole grace period in the past, which
-            // (in sandbox, where grace ≫ the compressed period) made inGracePeriod perpetually true.
-            val accountExpiry = expiry ?: return ProStatus.NeverSubscribed
-            val expiryMs = accountExpiry.toEpochMilli()
-            val renewingAt = accountExpiry
+            // This was wrong in the opposite direction until 2026-08-10 — it treated `expiry` as
+            // paid-through and never subtracted, which made `inGracePeriod` unreachable (it sits in a
+            // branch requiring `now <= expiry`) and rendered the renewal date a whole grace period
+            // late. Not cosmetic where it mattered: Apple's grace is the backend's own ~1h stand-in,
+            // but Google's is the operator-configured base-plan value in DAYS, fetched exactly when
+            // the subscriber enters grace — so the date was days wrong on the screen whose purpose is
+            // that date, and most wrong precisely when someone was looking at it.
+            val coverageEnd = expiry ?: return ProStatus.NeverSubscribed
+            // The paid-through end — when the renewal actually falls due.
+            val renewingAt = coverageEnd.minus(gracePeriod)
+            val renewingAtMs = renewingAt.toEpochMilli()
             val providerData = providerMetadata(paymentItem.paymentProvider, context)
             val duration = paymentItem.toProPlanPeriod()
 
@@ -82,8 +87,14 @@ fun GetProStatusResponse.toProStatus(nowMs: Long, context: Context, refundInProg
                     providerData = providerData,
                     quickRefundExpiry = paymentItem.platformRefundExpiry,
                     refundInProgress = refundInProgress,
-                    // In this ACTIVE branch we're covered; past the paid-through end (renewingAt) = grace.
-                    inGracePeriod = nowMs >= expiryMs,
+                    // Covered but past the paid-through end = the renewal is overdue and grace is
+                    // running. Reachable now that renewingAt is `coverageEnd - grace` rather than
+                    // `coverageEnd`, which no `now` in this branch could ever be at or past.
+                    //
+                    // Requires a fetch that COMPLETED at or after the renewal fell due — see
+                    // `confirmedAt`. Never constructed true on an unconfirmed snapshot.
+                    inGracePeriod = nowMs >= renewingAtMs &&
+                        confirmedAt != null && !confirmedAt.isBefore(renewingAt),
                 )
             } else {
                 ProStatus.Active.Expiring(

@@ -116,8 +116,8 @@ class ProSettingsViewModel @AssistedInject constructor(
         // the 60s floor.
         //
         // Deliberately NOT via refreshProStatus(): that early-returns while `refreshState` is
-        // Loading, and since F15 a process that hasn't confirmed a fetch of its own reports Loading
-        // from launch. Routing on-enter through that guard would mean the one trigger able to
+        // Loading, and a process that hasn't confirmed a fetch of its own reports Loading from
+        // launch. Routing on-enter through that guard would mean the one trigger able to
         // resolve the state is the one the state suppresses — a spinner that never clears, which is
         // the failure iOS hit from the same direction. The repository single-flights anyway
         // (WorkManager REPLACE), so the guard buys nothing here.
@@ -216,35 +216,21 @@ class ProSettingsViewModel @AssistedInject constructor(
             recovering = false
         }
 
-        // Addendum item 2 debounce, extended from the home splash gate to the in-settings label.
-        // A status snapshot taken BEFORE the renewal fell due cannot tell us the renewal failed —
-        // it predates the event. Showing the grace warning off one turns an ordinary boundary
-        // crossing into a "renewal unsuccessful" alarm the backend never reported.
-        //
-        // The condition is a COMPLETED fetch at or after the crossing, not "a fetch succeeded at
-        // some point": `lastUpdated` is stamped by ProDatabase.updateProStatus once the response
-        // has landed, so a request still in flight when the threshold passed doesn't satisfy it.
-        // Cross-client contract, matching iOS's `lastStatusFetch >= E`.
-        val confirmedSinceRenewalDue = proStatusRepository.loadState.value.lastUpdated
-            ?.let { (status, fetchedAt) ->
-                status.renewalDueAt()?.let { !fetchedAt.isBefore(it) }
-            } == true
-
+        // The grace warning's "a completed fetch at or after the crossing" condition is applied
+        // inside `toProStatus`, where inGracePeriod is produced — so `subType.inGracePeriod` is
+        // already safe to read directly here and at the label below. It used to be gated at each
+        // consumer instead, which meant a new reader inherited no protection.
         while (true) {
             val now = clock.currentTime()
 
             _proSettingsUIState.update {
                 it.copy(
                     proDataState = proDataState,
-                    inGracePeriod = confirmedSinceRenewalDue &&
-                        (subType as? ProStatus.Active.AutoRenewing)?.inGracePeriod == true,
+                    inGracePeriod = (subType as? ProStatus.Active.AutoRenewing)?.inGracePeriod == true,
                     subscriptionExpiryLabel = when(subType){
                         is ProStatus.Active.AutoRenewing -> {
-                            // in grace period — debounced, same condition as the `inGracePeriod`
-                            // flag above. Reading `subType.inGracePeriod` directly here would
-                            // reintroduce the unconfirmed alarm through the label while the flag
-                            // driving the warning colour stayed correctly suppressed.
-                            if(confirmedSinceRenewalDue && subType.inGracePeriod) {
+                            // in grace period — already debounced at construction (see toProStatus)
+                            if(subType.inGracePeriod) {
                                 Phrase.from(context, R.string.proRenewalUnsuccessful)
                                     .format()
                             } else {
@@ -775,21 +761,14 @@ class ProSettingsViewModel @AssistedInject constructor(
     /**
      * The instant the renewal falls due — the account's paid-through end.
      *
-     * ⚠️ CONTESTED, and this pair of functions is the whole of the disagreement. The spec (§0, §6)
-     * reads `expiry` as the paid-through end, so the renewal is due at `expiry` and grace runs from
-     * there to `expiry + gracePeriod`. The Pro backend disagrees: it folds grace into the stored
-     * expiry before sending it (`backend.py` `_lookup_user_expiry`), so `expiry` is already the end
-     * of coverage and the paid-through end is `expiry - gracePeriod`.
-     *
-     * That is with Morgan and the architect. Until it is ruled on these follow the SPEC, so Android
-     * does not quietly disagree with Desktop and iOS about a user-visible date. If the backend
-     * reading wins, swap the two bodies — the poll's structure holds under either, and nothing else
-     * in this file reads the boundary.
+     * `expiry` is COVERAGE END, not paid-through: the backend folds grace into it before sending it,
+     * so the renewal was due a grace period earlier. Subtracting is unconditional — the wire sends
+     * grace = 0 when the subscription is not auto-renewing, so this is a no-op for those accounts.
      */
-    private fun GetProStatusResponse.renewalDueAt(): Instant? = expiry
+    private fun GetProStatusResponse.renewalDueAt(): Instant? = expiry?.minus(gracePeriod)
 
-    /** The instant coverage ends. See [renewalDueAt] — same caveat, same seam. */
-    private fun GetProStatusResponse.coverageEndsAt(): Instant? = expiry?.plus(gracePeriod)
+    /** The instant coverage really ends — the wire value as sent. See [renewalDueAt]. */
+    private fun GetProStatusResponse.coverageEndsAt(): Instant? = expiry
 
     /**
      * [immediate] bypasses the repository's freshness floor. Every caller here is a user-initiated

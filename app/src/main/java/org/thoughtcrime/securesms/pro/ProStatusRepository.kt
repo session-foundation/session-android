@@ -185,9 +185,10 @@ class ProStatusRepository @Inject constructor(
         // The scope is GlobalScope (Dispatchers.Default), so the read is off the main thread; the
         // callers are all fire-and-forget.
         scope.launch {
-            // The ATTEMPT timestamp, not the success one (F10, pending Morgan): a failed fetch costs
-            // the backend the same as a successful one, and gating on success meant a failing
-            // network re-attempted on every trigger and every cold launch.
+            // The ATTEMPT timestamp, not the success one: a failed request that reached the server
+            // costs it the same as a successful one, and gating on success made a failing network
+            // re-attempt on every trigger and every cold launch — hardest exactly when the server is
+            // least able to take it.
             val lastFetchedAt = db.getProStatusLastAttemptAt()
             if (!shouldFetch(
                     immediate = false,
