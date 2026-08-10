@@ -58,12 +58,17 @@ fun GetProStatusResponse.toProStatus(
             // auto-renewing (`server.py:335`), so `expiry - 0 == expiry` for those accounts.
             //
             // This was wrong in the opposite direction until 2026-08-10 — it treated `expiry` as
-            // paid-through and never subtracted, which made `inGracePeriod` unreachable (it sits in a
-            // branch requiring `now <= expiry`) and rendered the renewal date a whole grace period
-            // late. Not cosmetic where it mattered: Apple's grace is the backend's own ~1h stand-in,
-            // but Google's is the operator-configured base-plan value in DAYS, fetched exactly when
-            // the subscriber enters grace — so the date was days wrong on the screen whose purpose is
-            // that date, and most wrong precisely when someone was looking at it.
+            // paid-through and never subtracted, so `inGracePeriod` was unreachable (it sits in a
+            // branch requiring `now <= expiry`) and the renewal date rendered a grace period late.
+            //
+            // Magnitude, stated carefully because it is easy to get wrong in both directions: a
+            // healthy auto-renewing subscriber has grace ≈ 1 HOUR on both stores. Google's
+            // operator-configured multi-day value is written only on the IN_GRACE_PERIOD notification
+            // and reset to the 1h stand-in on RECOVERED/RENEWED, so its lifetime is exactly the grace
+            // window. The renewal date a subscriber actually reads was therefore an hour late —
+            // invisible at day granularity — and the real defect was the unreachable grace state, not
+            // the date. (The startup gate's blindness WAS multi-day, because during grace the value
+            // is the real one; that is a different consequence of the same bug.)
             val coverageEnd = expiry ?: return ProStatus.NeverSubscribed
             // The paid-through end — when the renewal actually falls due.
             val renewingAt = coverageEnd.minus(gracePeriod)

@@ -355,18 +355,46 @@ class ProStatusManager @Inject constructor(
 
             proStatusRepository.get().loadState
                 .mapNotNull { state ->
-                    // The instant the renewal falls DUE, not when coverage ends. The expiry the
-                    // backend sends is grace-inclusive, so waking at it would fire after the window
-                    // this trigger exists to catch has already closed — the renewal became overdue a
-                    // whole grace period earlier. Subtracting is a no-op for a non-auto-renewing
-                    // account, where the wire sends grace = 0.
-                    state.lastUpdated?.first?.let { it.expiry?.minus(it.gracePeriod) }
+                    state.lastUpdated?.first?.let { status ->
+                        status.expiry?.let { coverageEnd ->
+                            // The renewal falls due a grace period BEFORE coverage ends, because the
+                            // expiry the backend sends is grace-inclusive. Waking only at coverage end
+                            // would fire after the window this trigger exists to catch had closed.
+                            coverageEnd.minus(status.gracePeriod) to coverageEnd
+                        }
+                    }
                 }
                 .distinctUntilChanged()
-                .transformLatest { renewalDue ->
-                    // Schedule a refresh for 30 seconds after the renewal fell due.
+                .transformLatest { (renewalDue, coverageEnd) ->
+                    // TWO wakes, and the second is not redundant with the first.
+                    //
+                    // 1. renewal due — did the charge succeed or fail?
+                    // 2. coverage end — did grace run out without recovery?
+                    //
+                    // (2) looks covered by the proof loop, and isn't. The backend issues a proof
+                    // good until roughly an hour past coverage end and the renewal target sits ~1h
+                    // before that, so a proof attempt lands near coverage end and its config write
+                    // fires the config-change trigger. But that chain needs `E` to MOVE:
+                    //
+                    //     renewal succeeded -> E advances  -> config change -> refresh   ✅
+                    //     renewal failed    -> E unchanged -> no change     -> nothing   ❌
+                    //
+                    // The uncovered branch is the one the grace warning exists for.
+                    //
+                    // No wake handles to leak here: `transformLatest` cancels this whole body when
+                    // `E` moves, so a second wake armed against a superseded expiry cannot outlive
+                    // it. A scheduler holding ids would need a COLLECTION for two instants — holding
+                    // one and scheduling two orphans a timer every period, and both wakes still fire
+                    // correctly while it accumulates.
                     if (snodeClock.delayUntil(renewalDue.plusSeconds(30))) {
                         emit("30 seconds after the renewal fell due")
+                    }
+
+                    // Guarded on the two instants COINCIDING rather than on grace being zero: same
+                    // condition today, but it says what actually matters, so it survives a change to
+                    // how the instants are derived.
+                    if (coverageEnd != renewalDue && snodeClock.delayUntil(coverageEnd.plusSeconds(30))) {
+                        emit("30 seconds after coverage ended")
                     }
                 },
 
