@@ -393,6 +393,22 @@ class ProStatusManager @Inject constructor(
                     // Guarded on the two instants COINCIDING rather than on grace being zero: same
                     // condition today, but it says what actually matters, so it survives a change to
                     // how the instants are derived.
+                    //
+                    // ⚠️ If you are here because this wake "didn't fire" on a QA backend: it fired.
+                    // The FETCH was dropped. Both emits go through the floored path
+                    // (`requestRefresh()`, not `immediate`), so when grace is shorter than
+                    // `MIN_UPDATE_INTERVAL_SECONDS` = 60s the second wake lands inside the floor that
+                    // the first one just armed. The symptom is indistinguishable from the wake never
+                    // having been scheduled, which is why this comment exists.
+                    //
+                    // Only reachable on a compressed testing backend — `google_play/mule.py`
+                    // overrides grace with `testing_grace_period_duration_ms` = 10s. Production grace
+                    // is the ~1h stand-in or an operator value in days, both far outside the floor.
+                    //
+                    // Left alone deliberately (ruled 2026-08-10): the escape hatch is an env-var
+                    // override of the floor, owned by the Pro UI-test work. Do not make this wake
+                    // `immediate` — a scheduled trigger bypassing the floor is what `force` ->
+                    // `immediate` was introduced to stop.
                     if (coverageEnd != renewalDue && snodeClock.delayUntil(coverageEnd.plusSeconds(30))) {
                         emit("30 seconds after coverage ended")
                     }

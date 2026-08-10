@@ -211,7 +211,24 @@ class ProStatusRepository @Inject constructor(
     companion object {
         /**
          * The status freshness floor. **Shared cross-client contract** — Desktop and iOS use the
-         * same 60s; keep them in step, and say why in the commit if they ever have to diverge.
+         * same 60s (`SessionPro.StatusRefresh.floorSeconds`, `STATUS_FLOOR_MS`); keep them in step,
+         * and say why in the commit if they ever have to diverge.
+         *
+         * ⚠️ **A scheduled wake depends on this not being crossed.** `ProStatusManager`'s
+         * `user_expiry` trigger arms two wakes — at the renewal date and at coverage end — and both
+         * reach the network through the FLOORED path here, not through `immediate`. When the grace
+         * period is shorter than this floor the two wakes land inside it and **the second one's fetch
+         * is dropped.**
+         *
+         * In production that cannot happen: grace is either the backend's ~1h stand-in or an
+         * operator-configured value in days. It happens on a **compressed testing backend**, where
+         * `providers/google_play/mule.py` overrides grace with
+         * `api.testing_grace_period_duration_ms` = 10 seconds.
+         *
+         * Deliberately not worked around here (ruled 2026-08-10). If UI-test work needs to exercise
+         * the coverage-end wake, the sanctioned escape hatch is an **env-var override of this
+         * constant**, owned by that work — not an `immediate` fetch for a scheduled trigger, which
+         * would reopen exactly what `force` -> `immediate` closed.
          */
         const val MIN_UPDATE_INTERVAL_SECONDS = 60L
 
