@@ -162,12 +162,23 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         // reports its real multi-day grace only once the subscriber ENTERS grace, so a
                         // proof landing first would pair a new coverage end with the ~1h stand-in.
                         //
-                        // Unconditional, and that is safe for a specific reason: libsession REQUIRES
-                        // both fields on a successful proof, so there is no "the backend did not say"
-                        // state to guard against. A missing or malformed field fails the parse and we
-                        // never reach here, which is deliberate — writing `false` to a presence-only
-                        // config key ERASES it, so a defaulted false would be destructive rather than
-                        // inert. We are inside the success branch, so both values are truthful.
+                        // ⚠️ These two are only meaningful HERE, inside the success branch, and nothing
+                        // in the type system says so — that is the hazard.
+                        //
+                        // libsession's `parse_pro_proof` returns on the failure path BEFORE it fills
+                        // them, so on every non-OK outcome they hold struct defaults: grace 0,
+                        // renewing false. The C struct carries no presence flag and the Kotlin type is
+                        // non-nullable, so a read outside this branch gets `false` and cannot tell it
+                        // from a backend that genuinely said "not renewing".
+                        //
+                        // That matters because writing `false` to a presence-only config key ERASES
+                        // it. On `subscription_expired`/`not_subscribed`/`revoked` erasing is truthful;
+                        // on a protocol error, a stale request or a transport failure it would wipe a
+                        // flag `get_pro_status` had correctly learned, on the strength of a response
+                        // that said nothing about the account.
+                        //
+                        // So the protection is PLACEMENT — not the parse, and not the type. Do not
+                        // hoist these two out of the success branch.
                         configs.userProfile.setProAutoRenewing(response.accountAutoRenewing)
                         configs.userProfile.setProGracePeriod(response.accountGracePeriod)
                     }
