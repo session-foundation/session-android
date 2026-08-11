@@ -12,8 +12,12 @@ import java.time.Instant
  *
  * The backend only reports EXPIRED once coverage has ended, and coverage ends a grace period after the
  * payment-due date it sends. So a window measured from the payment date is short by exactly the grace
- * period, and empty once grace reaches the window length — which Google Play grace can, being
- * operator-configurable up to 30 days.
+ * period, and empty once grace reaches the window length.
+ *
+ * A multi-day grace on the wire means an Apple account whose dunning window ran out: Apple states its
+ * retry window separately, so it arrives as grace. Play folds grace into the expiry it reports, so a
+ * Play account's grace is only the ~1h renewal-latency allowance and the two anchors all but coincide.
+ * The cases below therefore sweep grace as a parameter rather than asserting one store's number.
  *
  * These pin the anchor. The CTA condition itself lives in `HomeViewModel`, which needs Android; what
  * is testable here is the instant it keys off, and that is the part that was wrong.

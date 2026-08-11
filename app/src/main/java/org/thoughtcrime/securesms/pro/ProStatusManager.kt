@@ -407,9 +407,9 @@ class ProStatusManager @Inject constructor(
                     // having been scheduled, which is why this comment exists.
                     //
                     // Only reachable where grace is shorter than the floor, which production grace
-                    // never is — it is at least the ~1h latency allowance, and an operator value in
-                    // days once a subscriber is actually in grace. Compressed QA backends do set grace
-                    // to seconds, which is where this shows up.
+                    // never is: while a renewal is still going to be attempted the backend always adds
+                    // a ~1h renewal-latency allowance on top of any window the store stated.
+                    // Compressed QA backends do set grace to seconds, which is where this shows up.
                     //
                     // Left alone deliberately (ruled 2026-08-10): the escape hatch is an env-var
                     // override of the floor, owned by the Pro UI-test work. Do not make this wake

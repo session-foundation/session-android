@@ -215,8 +215,9 @@ class ProStatusRepository @Inject constructor(
          * period is shorter than this floor the two wakes land inside it and **the second one's fetch
          * is dropped.**
          *
-         * In production that cannot happen: grace is at least the ~1h latency allowance, and an
-         * operator-configured value in days once a subscriber is actually in grace. It happens on
+         * In production that cannot happen: while a renewal is still going to be attempted the backend
+         * always adds a ~1h renewal-latency allowance, on top of any window the store stated. It
+         * happens on
          * **compressed QA backends**, which set grace to seconds so the window can be exercised in a
          * test run.
          *

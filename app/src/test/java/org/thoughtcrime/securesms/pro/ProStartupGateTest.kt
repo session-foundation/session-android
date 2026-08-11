@@ -26,7 +26,11 @@ class ProStartupGateTest {
 
     private val now: Instant = Instant.parse("2026-08-07T00:00:00Z")
 
-    /** A realistic Google Play base-plan grace period. Apple's is ~1h; Google's is days. */
+    /**
+     * A realistic multi-day grace period, which on the wire means an Apple account mid-dunning: Apple
+     * states its retry window separately, so it arrives as grace. Play folds its grace into the expiry
+     * instead, so a Play account's grace is just the ~1h renewal-latency allowance.
+     */
     private val grace: Duration = Duration.ofDays(14)
     private val noGrace: Duration = Duration.ZERO
 

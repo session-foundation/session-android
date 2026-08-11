@@ -70,8 +70,12 @@ sealed interface ProStatus{
          *
          * The backend only reports EXPIRED once coverage has ended, so measuring an "expired
          * recently" window from [expiredAt] instead shortens it by exactly [gracePeriod] — and
-         * empties it when the grace period is at least as long as the window. Google Play grace is
-         * operator-configurable up to 30 days, so that is reachable and not a corner case.
+         * empties it when the grace period is at least as long as the window.
+         *
+         * [gracePeriod] is multi-day for an Apple account whose dunning window ran out, because Apple
+         * states its retry window separately and it arrives here as grace. It is only the ~1h
+         * renewal-latency allowance on Play, which folds grace into the expiry it reports, and zero for
+         * an account that is not renewing at all — for those two the anchors effectively coincide.
          *
          * Derived here rather than at the consumer so a second reader cannot pick the other anchor.
          */
