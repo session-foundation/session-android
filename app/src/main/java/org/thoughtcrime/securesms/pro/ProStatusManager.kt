@@ -540,14 +540,37 @@ class ProStatusManager @Inject constructor(
         )
             .filterNotNull()
             .collectLatest { revokedHash ->
-                configFactory.get().withMutableUserConfigs { configs ->
+                val cleared = configFactory.get().withMutableUserConfigs { configs ->
                     if (configs.userProfile.getProConfig()?.proProof?.revocationTagHex == revokedHash) {
                         Log.w(
                             DebugLogGroup.PRO_SUBSCRIPTION.label,
                             "Current Pro proof has been revoked, clearing Pro config"
                         )
                         configs.userProfile.removeProConfig()
+                        true
+                    } else {
+                        false
                     }
+                }
+
+                // Ask the server what the state actually is now. Clearing the proof leaves the account
+                // asserting a future access expiry with nothing to back it, and NOTHING ELSE HERE WILL
+                // CORRECT THAT: the config-change trigger watches `E` and the prepaid marker, and this
+                // path deliberately touches neither. Without this the user sits on a stale expiry with
+                // no proof until some unrelated trigger happens to fire.
+                //
+                // `E` is deliberately NOT cleared locally. A revocation says this proof is void, not
+                // what the subscription is now — the account may be fine and re-provable, or genuinely
+                // gone. Deciding that here would be the client overruling the only party that knows.
+                //
+                // Floored, not `immediate`: nobody is waiting on a screen. `immediate` is for the
+                // post-purchase poll and manual/recover.
+                //
+                // Outside the mutation block on purpose. It must also be gated on the clear actually
+                // happening — this collector can fire for a hash that is no longer the stored proof,
+                // and a refresh for someone else's revocation is a request with no reason.
+                if (cleared) {
+                    proStatusRepository.get().requestRefresh()
                 }
             }
     }
