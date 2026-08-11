@@ -759,7 +759,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     /**
-     * The instant the renewal falls due — the account's paid-through end.
+     * The instant the renewal falls due.
      *
      * `expiry` IS the payment-due date. Coverage runs a further `gracePeriod` past it — the backend's
      * contract is "`expiry_ts` + `grace_period_duration` is exactly when we stop serving" — so do not

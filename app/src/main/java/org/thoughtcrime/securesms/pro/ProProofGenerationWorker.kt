@@ -156,11 +156,11 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         response.accountExpiry?.let { configs.userProfile.setProAccessExpiry(it.epochSecond) }
 
                         // Keep the renewing flag and the grace period coherent with the expiry above.
-                        // Both must travel with it: everything derives the paid-through instant as
-                        // `E - G`, so a fresh E beside a G from an older response is wrong by the
-                        // difference between them — worst exactly where it matters, since Google
-                        // reports its real multi-day grace only once the subscriber ENTERS grace, so a
-                        // proof landing first would pair a new coverage end with the ~1h stand-in.
+                        // Both must travel with it: everything derives coverage end as `E + G`, so a
+                        // fresh E beside a G from an older response is wrong by the difference between
+                        // them — worst exactly where it matters, since Google reports its real
+                        // multi-day grace only once the subscriber ENTERS grace, so a proof landing
+                        // first would pair a new payment date with the ~1h stand-in.
                         //
                         // ⚠️ These two are only meaningful HERE, inside the success branch, and nothing
                         // in the type system says so — that is the hazard.
