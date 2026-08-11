@@ -102,6 +102,17 @@ class FetchProStatusWorker @AssistedInject constructor(
                 // profile edit, and libsession omits the bump for it on purpose.
                 configs.userProfile.setProAutoRenewing(details.autoRenewing)
 
+                // And the grace period, from the SAME response as the expiry above. Everything
+                // downstream reads coverage as `E + G`, so an E written without its G pairs with
+                // whatever G happens to be sitting there — which, before this, was whatever a proof
+                // outcome last left, or nothing at all. Writing E and A here but not G made the
+                // gate's arithmetic a no-op.
+                //
+                // This is the ACCOUNT-level grace ("how much longer we serve past the expiry shown"),
+                // not `latestPayment.gracePeriod`, which reports what a store declared about one
+                // transaction. Same field name, different question.
+                configs.userProfile.setProGracePeriod(details.gracePeriod)
+
                 // Remove the pro config only when the backend authoritatively says we are no longer
                 // pro (expired) or never were (never). An unknown/future status is NOT a basis to
                 // delete it: removeProConfig() writes the SYNCED user profile, so clearing on an
