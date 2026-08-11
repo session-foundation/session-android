@@ -176,7 +176,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
                     // account active at the backend, but the `setProAccessExpiry` write above already
                     // fires the (E, prepaid) config-change trigger, which schedules that fetch.
                     // Requesting one here as well would make the proof loop a SOURCE of status
-                    // fetches, which is the coupling this design keeps out.
+                    // fetches, coupling the two loops.
                     Result.success()
                 }
 

@@ -13,11 +13,9 @@ import java.time.Instant
  * Scope: the decision only. These do NOT cover the persisted 24h interval or the config read — both
  * need a database, and the interval is checked before this function is reached.
  *
- * The model every case turns on: the access expiry the backend sends IS the payment-due date, and
- * coverage runs a further grace period past it — `expiry_ts + grace_period_duration` is when it stops
- * serving. So the grace window is `[expiry, expiry + grace)` and there is no subtraction anywhere;
- * adding one double-counts. `the auto-renewing bound is measured from coverage end, not the payment
- * date` pins the direction.
+ * Every case turns on the wire model stated in `toProStatus`: the expiry IS the payment-due date and
+ * grace runs forward from it, so there is no subtraction anywhere and adding one double-counts. `the
+ * auto-renewing bound is measured from coverage end, not the payment date` pins the direction.
  */
 class ProStartupGateTest {
 

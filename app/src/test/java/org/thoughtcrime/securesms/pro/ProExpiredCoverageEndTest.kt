@@ -10,13 +10,11 @@ import java.time.Instant
 /**
  * [ProStatus.Expired.coverageEndedAt] and the 30-day Expired-CTA window measured from it.
  *
- * The backend only reports EXPIRED once coverage has ended, and coverage ends a grace period after the
- * payment-due date it sends. So a window measured from the payment date is short by exactly the grace
- * period, and empty once grace reaches the window length.
+ * The backend only reports EXPIRED once coverage has ended, so a window measured from the payment date
+ * is short by exactly the grace period and empty once grace reaches the window length.
  *
- * A multi-day grace means an Apple account whose dunning ran out, since Apple states its retry window
- * separately; on Play it is only the ~1h latency allowance. The cases sweep grace as a parameter rather
- * than asserting either store's number.
+ * A multi-day grace means an Apple account whose dunning ran out; on Play it is only the ~1h latency
+ * allowance. The cases sweep grace as a parameter rather than asserting either store's number.
  *
  * The CTA condition itself lives in `HomeViewModel`, which needs Android. What is testable here is the
  * instant it keys off.

@@ -360,9 +360,7 @@ class ProStatusManager @Inject constructor(
                 .mapNotNull { state ->
                     state.lastUpdated?.first?.let { status ->
                         status.expiry?.let { renewalDue ->
-                            // `expiry` is the payment-due date; coverage runs a further grace period
-                            // past it. So the renewal falls due at `expiry`, and grace ends at
-                            // `expiry + gracePeriod`.
+                            // Renewal falls due at `expiry`, grace ends at `expiry + gracePeriod`.
                             renewalDue to renewalDue.plus(status.gracePeriod)
                         }
                     }
@@ -689,9 +687,8 @@ class ProStatusManager @Inject constructor(
          * Whether a cold start should fetch `get_pro_status`, and why — or null to stay off the
          * network. Pure over plain values so it can be tested without a clock, a database or config.
          *
-         * [renewalDue] is the access expiry as the backend sends it — the payment-due date. Coverage
-         * runs a further [grace] past it: `expiry + grace_period_duration` is when the backend stops
-         * serving.
+         * [renewalDue] is the access expiry as sent — the payment-due date, with coverage running a
+         * further [grace] past it (see `toProStatus`).
          *
          * | config state                                       | action                            |
          * |----------------------------------------------------|-----------------------------------|
