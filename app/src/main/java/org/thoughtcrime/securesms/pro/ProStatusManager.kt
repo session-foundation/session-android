@@ -400,9 +400,10 @@ class ProStatusManager @Inject constructor(
                     // the first one just armed. The symptom is indistinguishable from the wake never
                     // having been scheduled, which is why this comment exists.
                     //
-                    // Only reachable on a compressed testing backend — `google_play/mule.py`
-                    // overrides grace with `testing_grace_period_duration_ms` = 10s. Production grace
-                    // is the ~1h stand-in or an operator value in days, both far outside the floor.
+                    // Only reachable where grace is shorter than the floor, which production grace
+                    // never is — it is at least the ~1h latency allowance, and an operator value in
+                    // days once a subscriber is actually in grace. Compressed QA backends do set grace
+                    // to seconds, which is where this shows up.
                     //
                     // Left alone deliberately (ruled 2026-08-10): the escape hatch is an env-var
                     // override of the floor, owned by the Pro UI-test work. Do not make this wake

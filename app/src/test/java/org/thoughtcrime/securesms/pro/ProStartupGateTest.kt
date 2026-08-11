@@ -18,9 +18,9 @@ import java.time.Instant
  * `grace_period_duration` is exactly when we stop serving". So `expiry` needs no adjustment to get the
  * renewal date, and the grace window is `[expiry, expiry + grace)`.
  *
- * A note for anyone tempted to "fix" this by subtracting grace: that WAS the shape here, built against a
- * backend that folded grace into the stored expiry. The fold was removed upstream and the field now
- * reports how much longer we serve PAST the shown expiry. Subtracting now double-counts.
+ * If you are here because you expected a subtraction: there isn't one, and adding it double-counts.
+ * Grace runs FORWARD from the expiry. `the auto-renewing bound is measured from coverage end, not the
+ * payment date` is the case that pins the direction.
  */
 class ProStartupGateTest {
 

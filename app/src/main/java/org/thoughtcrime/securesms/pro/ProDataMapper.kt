@@ -52,9 +52,8 @@ fun GetProStatusResponse.toProStatus(
             // ACTIVE branch past `expiry` IS the grace period.
             //
             // Two traps here, both of which have caught someone:
-            //  * Do NOT subtract grace to get the renewal date. `expiry` already IS that date. An
-            //    earlier reading of the backend had grace folded into the stored expiry; that fold was
-            //    removed and the field now reports how much longer we serve PAST the shown expiry.
+            //  * Do NOT subtract grace to get the renewal date. `expiry` already IS that date, and
+            //    grace runs forward from it — subtracting double-counts.
             //  * `gracePeriod` on THIS type is the account-level field — "how much longer we serve" —
             //    and is not the same quantity as `ProPaymentItem.gracePeriod`, which reports what a
             //    store declared about one transaction. They share a name and answer different

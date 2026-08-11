@@ -220,10 +220,10 @@ class ProStatusRepository @Inject constructor(
          * period is shorter than this floor the two wakes land inside it and **the second one's fetch
          * is dropped.**
          *
-         * In production that cannot happen: grace is either the backend's ~1h stand-in or an
-         * operator-configured value in days. It happens on a **compressed testing backend**, where
-         * `providers/google_play/mule.py` overrides grace with
-         * `api.testing_grace_period_duration_ms` = 10 seconds.
+         * In production that cannot happen: grace is at least the ~1h latency allowance, and an
+         * operator-configured value in days once a subscriber is actually in grace. It happens on
+         * **compressed QA backends**, which set grace to seconds so the window can be exercised in a
+         * test run.
          *
          * Deliberately not worked around here (ruled 2026-08-10). If UI-test work needs to exercise
          * the coverage-end wake, the sanctioned escape hatch is an **env-var override of this
