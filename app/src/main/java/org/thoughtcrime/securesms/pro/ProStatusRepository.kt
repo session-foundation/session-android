@@ -147,12 +147,12 @@ class ProStatusRepository @Inject constructor(
             return
         }
 
-        // The floor reads the persisted timestamp rather than `loadState`. `loadState` is a
+        // The floor reads a persisted timestamp rather than `loadState`. `loadState` is a
         // StateFlow starting at LoadState.Init, and Init is neither Loading nor Loaded, so the
         // old check was skipped outright until the database combine had emitted — which the
         // startup trigger beats. The result was that the floor never applied to the one fetch it
-        // most needed to cover. `pro_status_updated_at` is already written by every successful
-        // fetch (ProDatabase.updateProStatus), so there is nothing new to persist.
+        // most needed to cover. So it instead reads `pro_status_last_attempt_at`, stamped on every
+        // fetch attempt (see below), which survives process death.
         //
         // The scope is GlobalScope (Dispatchers.Default), so the read is off the main thread; the
         // callers are all fire-and-forget.
