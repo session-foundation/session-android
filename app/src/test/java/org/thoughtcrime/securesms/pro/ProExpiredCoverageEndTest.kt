@@ -14,13 +14,12 @@ import java.time.Instant
  * payment-due date it sends. So a window measured from the payment date is short by exactly the grace
  * period, and empty once grace reaches the window length.
  *
- * A multi-day grace on the wire means an Apple account whose dunning window ran out: Apple states its
- * retry window separately, so it arrives as grace. Play folds grace into the expiry it reports, so a
- * Play account's grace is only the ~1h renewal-latency allowance and the two anchors all but coincide.
- * The cases below therefore sweep grace as a parameter rather than asserting one store's number.
+ * A multi-day grace means an Apple account whose dunning ran out, since Apple states its retry window
+ * separately; on Play it is only the ~1h latency allowance. The cases sweep grace as a parameter rather
+ * than asserting either store's number.
  *
- * These pin the anchor. The CTA condition itself lives in `HomeViewModel`, which needs Android; what
- * is testable here is the instant it keys off, and that is the part that was wrong.
+ * The CTA condition itself lives in `HomeViewModel`, which needs Android. What is testable here is the
+ * instant it keys off.
  */
 class ProExpiredCoverageEndTest {
 
@@ -47,15 +46,13 @@ class ProExpiredCoverageEndTest {
 
     @Test
     fun `zero grace leaves the payment date as coverage end`() {
-        // The wire sends grace = 0 for an account that is not renewing, so the two anchors coincide and
-        // this fix is a no-op for those accounts rather than a change.
+        // Grace is 0 when not renewing, so the anchors coincide and this is a no-op for those accounts.
         assertEquals(paymentDue, expired(Duration.ZERO).coverageEndedAt)
     }
 
     @Test
     fun `the window is a full 30 days of coverage having ended, whatever grace was`() {
-        // The property that matters: window length is independent of grace. A 16-day store grace used to
-        // cost 16 of the 30 days.
+        // The property: window length is independent of grace.
         for (graceDays in listOf(0L, 1L, 16L, 29L, 45L)) {
             val grace = Duration.ofDays(graceDays)
             val coverageEnd = paymentDue.plus(grace)
@@ -76,9 +73,8 @@ class ProExpiredCoverageEndTest {
 
     @Test
     fun `a grace period as long as the window does not empty it`() {
-        // The reachable failure of the payment-date anchor, not a corner case: with 30 days of grace,
-        // `now` is already past `paymentDue + 30d` the moment EXPIRED can first be reported, so that
-        // anchor yields no window at all and the CTA could never fire.
+        // With 30 days of grace, `now` is already past `paymentDue + 30d` the moment EXPIRED can first
+        // be reported, so the payment-date anchor yields no window at all.
         val grace = ctaWindow
         val firstMomentExpiredIsReportable = paymentDue.plus(grace).plusSeconds(1)
 

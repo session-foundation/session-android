@@ -59,16 +59,14 @@ class ProProofGenerationWorker @AssistedInject constructor(
             "User must be logged to generate proof"
         }
 
-        // Ask libsession, from config, whether a proof is wanted at all — the same question
-        // ProStatusManager asked to schedule us. It covers proof renewal, a purchase in flight
-        // (redemption, where get_pro_status is not ACTIVE yet and minting the proof is what pulls
-        // the entitlement through), and an entitlement held with no proof to attach.
+        // Whether a proof is wanted at all — proof renewal, a purchase in flight (redemption, where
+        // get_pro_status is not ACTIVE yet and minting the proof is what pulls the entitlement
+        // through), or an entitlement held with no proof to attach.
         //
         // Ask CONFIG, never `proStatusRepository.loadState`. WorkManager persists this worker's
-        // schedule across process death; `loadState` does not survive it and restarts at `Init`. An
-        // in-memory status check therefore reads "not active, no purchase" and returns without
-        // renewing, for exactly the renewal that came due while the app was dead — the case the
-        // persisted schedule exists to serve.
+        // schedule across process death and `loadState` does not, restarting at `Init` — so an
+        // in-memory check reads "not active, no purchase" and returns without renewing, for exactly
+        // the renewal that came due while the app was dead.
         val now = snodeClock.currentTime()
         val (renewalTarget, purchasePending, proof) = configFactory.withUserConfigs { configs ->
             Triple(
@@ -87,8 +85,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
         // the new proof to config, ProStatusManager.manageProofRenewalScheduling re-reads the renewal
         // target off that write, and `target = proofExpiry - PRO_RENEWAL_LEAD` is permanently in the
         // past whenever a proof lives for less than the 60-minute lead — so it reschedules us
-        // immediately, forever. (Before the status/proof split the loop ran through a forced
-        // get_pro_status instead; same shape, and the floor is what bounds it either way.)
+        // immediately, forever.
         //
         // Mirrors iOS `SessionProManager.reconcileProofRenewal` and Desktop `ducks/proBackendData.ts`,
         // constants included. Note it RE-ARMS rather than skipping: `target <= now` is the normal
@@ -155,41 +152,31 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         // proof response, so the renewal path keeps E fresh without a separate get_pro_status.
                         response.accountExpiry?.let { configs.userProfile.setProAccessExpiry(it.epochSecond) }
 
-                        // Keep the renewing flag and the grace period coherent with the expiry above.
-                        // Both must travel with it: everything derives coverage end as `E + G`, so a
-                        // fresh E beside a G from an older response is wrong by the difference between
-                        // them — worst exactly where it matters, since Google reports its real
-                        // multi-day grace only once the subscriber ENTERS grace, so a proof landing
-                        // first would pair a new payment date with the ~1h stand-in.
+                        // The renewing flag and the grace period must travel with the expiry above:
+                        // coverage end is derived as `E + G`, so a fresh E beside a G from an older
+                        // response is wrong by the difference between them.
                         //
-                        // ⚠️ These two are only meaningful HERE, inside the success branch, and nothing
-                        // in the type system says so — that is the hazard.
+                        // Do not hoist these two out of the success branch. Their protection is
+                        // PLACEMENT — not the parse, and not the type. libsession's `parse_pro_proof`
+                        // returns on the failure path before filling them, so every non-OK outcome
+                        // leaves struct defaults of grace 0 and renewing false; the C struct has no
+                        // presence flag and the Kotlin type is non-nullable, so a read outside this
+                        // branch cannot tell that from a backend that said "not renewing".
                         //
-                        // libsession's `parse_pro_proof` returns on the failure path BEFORE it fills
-                        // them, so on every non-OK outcome they hold struct defaults: grace 0,
-                        // renewing false. The C struct carries no presence flag and the Kotlin type is
-                        // non-nullable, so a read outside this branch gets `false` and cannot tell it
-                        // from a backend that genuinely said "not renewing".
-                        //
-                        // That matters because writing `false` to a presence-only config key ERASES
-                        // it. On `subscription_expired`/`not_subscribed`/`revoked` erasing is truthful;
-                        // on a protocol error, a stale request or a transport failure it would wipe a
-                        // flag `get_pro_status` had correctly learned, on the strength of a response
-                        // that said nothing about the account.
-                        //
-                        // So the protection is PLACEMENT — not the parse, and not the type. Do not
-                        // hoist these two out of the success branch.
+                        // Writing `false` to a presence-only config key ERASES it. On
+                        // `subscription_expired`/`not_subscribed`/`revoked` erasing is truthful; on a
+                        // protocol error or transport failure it would wipe a flag `get_pro_status`
+                        // had correctly learned, on the strength of a response that said nothing.
                         configs.userProfile.setProAutoRenewing(response.accountAutoRenewing)
                         configs.userProfile.setProGracePeriod(response.accountGracePeriod)
                     }
 
                     Log.d(WORK_NAME, "Successfully generated a new pro proof expiring at ${Instant.ofEpochSecond(proof.expirySeconds)}")
-                    // No status refresh is requested here. Minting the proof does flip the account
-                    // active at the backend, so the display status does need re-reading — but the
-                    // `setProAccessExpiry` write above already fires the (E, prepaid) config-change
-                    // trigger in ProStatusManager, which schedules exactly that fetch. Asking for
-                    // one here as well made the proof loop a *source* of status fetches, which is
-                    // the coupling this rework removes.
+                    // No status refresh requested here, deliberately. Minting the proof does flip the
+                    // account active at the backend, but the `setProAccessExpiry` write above already
+                    // fires the (E, prepaid) config-change trigger, which schedules that fetch.
+                    // Requesting one here as well would make the proof loop a SOURCE of status
+                    // fetches, which is the coupling this design keeps out.
                     Result.success()
                 }
 

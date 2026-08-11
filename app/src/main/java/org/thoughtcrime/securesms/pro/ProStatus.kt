@@ -66,16 +66,13 @@ sealed interface ProStatus{
         val providerData: PaymentProviderMetadata
     ): ProStatus {
         /**
-         * When access actually ended, and the anchor for anything measuring how long ago that was.
+         * When access actually ended, and the anchor for any window measuring how long ago that was.
          *
-         * The backend only reports EXPIRED once coverage has ended, so measuring an "expired
-         * recently" window from [expiredAt] instead shortens it by exactly [gracePeriod] — and
-         * empties it when the grace period is at least as long as the window.
-         *
-         * [gracePeriod] is multi-day for an Apple account whose dunning window ran out, because Apple
-         * states its retry window separately and it arrives here as grace. It is only the ~1h
-         * renewal-latency allowance on Play, which folds grace into the expiry it reports, and zero for
-         * an account that is not renewing at all — for those two the anchors effectively coincide.
+         * The backend only reports EXPIRED once coverage has ended, so a window measured from
+         * [expiredAt] instead is short by exactly [gracePeriod], and empty once grace reaches the
+         * window length. [gracePeriod] is multi-day for an Apple account whose dunning ran out, since
+         * Apple states its retry window separately; on Play it is only the ~1h renewal-latency
+         * allowance, because Play folds grace into the expiry it reports.
          *
          * Derived here rather than at the consumer so a second reader cannot pick the other anchor.
          */

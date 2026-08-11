@@ -126,18 +126,15 @@ class ProStatusManager @Inject constructor(
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
                 else -> {
-                    // The real refresh state. `Success` means THIS PROCESS has had a fetch confirmed
-                    // by the backend — nothing weaker. Consumers gate on it to avoid acting on stale
-                    // data (`HomeViewModel`'s Expired CTA above all), so anything else must not
-                    // report success.
+                    // `Success` means THIS PROCESS has had a fetch confirmed by the backend, nothing
+                    // weaker: consumers gate on it to avoid acting on stale data, `HomeViewModel`'s
+                    // Expired CTA above all.
                     //
-                    // Exhaustive on purpose — no `else`, and do not add one. Two states are not
-                    // successes and a catch-all sweeps up both: `Init`, where nothing has been asked
-                    // yet, and a `Loaded` restored from WorkManager's PERSISTED work state, which is
-                    // a fetch some EARLIER process made. The second is the dangerous one — a renewal
-                    // landing while the app is closed leaves a stale cache that reads as confirmed,
-                    // and the home Expired CTA fires off it. Listing every case forces the next state
-                    // added here to declare which it is.
+                    // Exhaustive on purpose — do not add an `else`. It would sweep up two states that
+                    // are not successes: `Init`, where nothing has been asked yet, and a `Loaded`
+                    // restored from WorkManager's PERSISTED work state, i.e. a fetch from an EARLIER
+                    // process. The second is the dangerous one — a renewal landing while the app is
+                    // closed leaves a stale cache reading as confirmed, and the CTA fires off it.
                     when(proStatusState){
                         is ProStatusRepository.LoadState.Loading -> {
                             if(proStatusState.waitingForNetwork) State.Error(Exception())
@@ -372,58 +369,32 @@ class ProStatusManager @Inject constructor(
                 }
                 .distinctUntilChanged()
                 .transformLatest { (renewalDue, coverageEnd) ->
-                    // TWO wakes, and the second is not redundant with the first.
+                    // Two wakes: the renewal date (did the charge land?) and coverage end (did grace
+                    // run out?). The second is not redundant, because the proof loop only covers it
+                    // when `E` MOVES — a successful renewal advances `E` and fires the config-change
+                    // trigger, a failed one leaves `E` alone and fires nothing. The failed branch is
+                    // the one the grace warning exists for.
                     //
-                    // 1. renewal due — did the charge succeed or fail?
-                    // 2. coverage end — did grace run out without recovery?
-                    //
-                    // (2) looks covered by the proof loop, and isn't. A proof attempt near the end
-                    // of coverage writes config, and that write fires the config-change trigger. But
-                    // that chain needs `E` to MOVE:
-                    //
-                    //     renewal succeeded -> E advances  -> config change -> refresh   ✅
-                    //     renewal failed    -> E unchanged -> no change     -> nothing   ❌
-                    //
-                    // The uncovered branch is the one the grace warning exists for.
-                    //
-                    // No wake handles to leak here: `transformLatest` cancels this whole body when
-                    // `E` moves, so a second wake armed against a superseded expiry cannot outlive
-                    // it. A scheduler holding ids would need a COLLECTION for two instants — holding
-                    // one and scheduling two orphans a timer every period, and both wakes still fire
-                    // correctly while it accumulates.
-                    if (snodeClock.delayUntil(renewalDue.plusSeconds(30))) {
-                        emit("30 seconds after the renewal fell due")
+                    // `transformLatest` cancels this body when `E` moves, so a wake armed against a
+                    // superseded expiry cannot outlive it and there are no handles to track.
+                    if (snodeClock.delayUntil(renewalDue.plus(WAKE_SLACK))) {
+                        emit("$WAKE_SLACK after the renewal fell due")
                     }
 
-                    // Guarded on the two instants COINCIDING rather than on grace being zero: same
-                    // condition today, but it says what actually matters, so it survives a change to
-                    // how the instants are derived.
+                    // Guarded on the two instants coinciding rather than on grace being zero: the same
+                    // condition today, but it survives a change to how the instants are derived.
                     //
-                    // ⚠️ If you are here because this wake "didn't fire" on a QA backend: it fired.
-                    // The FETCH was dropped. Both emits go through the floored path
-                    // (`requestRefresh()`, not `immediate`), so when grace is shorter than
-                    // `MIN_UPDATE_INTERVAL_SECONDS` = 60s the second wake lands inside the floor that
-                    // the first one just armed. The symptom is indistinguishable from the wake never
-                    // having been scheduled, which is why this comment exists.
-                    //
-                    // Only reachable where grace is shorter than the floor, which production grace
-                    // never is: while a renewal is still going to be attempted the backend always adds
-                    // a ~1h renewal-latency allowance on top of any window the store stated.
-                    // Compressed QA backends do set grace to seconds, which is where this shows up.
-                    //
-                    // Left alone deliberately (ruled 2026-08-10): the escape hatch is an env-var
-                    // override of the floor, owned by the Pro UI-test work. Do not make this wake
-                    // `immediate` — a scheduled trigger bypassing the floor is what `force` ->
-                    // `immediate` was introduced to stop.
-                    if (coverageEnd != renewalDue && snodeClock.delayUntil(coverageEnd.plusSeconds(30))) {
-                        emit("30 seconds after coverage ended")
+                    // If this wake looks like it never fired on a QA backend, it fired and the FETCH
+                    // was dropped — see [ProStatusRepository.MIN_UPDATE_INTERVAL_SECONDS], which owns
+                    // that interaction. Do not make this wake `immediate` to work around it.
+                    if (coverageEnd != renewalDue && snodeClock.delayUntil(coverageEnd.plus(WAKE_SLACK))) {
+                        emit("$WAKE_SLACK after coverage ended")
                     }
                 },
 
-            // NOTE: there is deliberately no trigger keyed to PROOF expiry here. Proof timing
-            // drives proof renewal (see manageProofRenewalScheduling) and nothing else; a status
-            // fetch scheduled off the proof's clock coupled the two loops together, so a proof
-            // that renewed early or late dragged the status fetch with it.
+            // No trigger keyed to PROOF expiry, deliberately: proof timing drives proof renewal
+            // (see manageProofRenewalScheduling) and nothing else. A status fetch on the proof's clock
+            // couples the two loops, so a proof renewing early or late drags the status fetch with it.
 
             startupGate()
         ).debounce(500.milliseconds)
@@ -443,22 +414,20 @@ class ProStatusManager @Inject constructor(
      * Trigger #1 — the startup fetch, gated.
      *
      * An ungated cold-start fetch has no consumer for most users: entitlement runs off the proof, the
-     * settings screen refreshes when opened, and account-expiry awareness is the `E+30s` wake. The
-     * only real consumer is the home CTAs — so the gate asks whether a CTA could plausibly fire, from
-     * synced config alone, and otherwise stays off the network entirely. Users who never subscribed
-     * and users comfortably paid up therefore make no request at all, which matters because "cold
-     * start" is something mobile does constantly.
+     * settings screen refreshes when opened, and account-expiry awareness is the wake. The only real
+     * consumer is the home CTAs, so the gate asks whether one could plausibly fire, from synced config
+     * alone. Never-subscribed and comfortably-paid-up accounts make no request at all.
      *
-     * Two independent brakes: the CTA-worthiness test below, and a persisted 24h minimum between
-     * startup fetches. The interval has its own key — a routine refresh must not consume the gate's
-     * budget, and a startup fetch from twenty hours ago must not satisfy the 60s floor.
+     * Two independent brakes: the CTA-worthiness test, and a persisted 24h minimum. The interval needs
+     * its own key — a routine refresh must not consume the gate's budget, and a startup fetch from
+     * twenty hours ago must not satisfy the 60s floor.
      */
     private fun startupGate(): Flow<String> = flow {
         val now = snodeClock.currentTime()
 
         val lastStartupFetch = proDatabase.getProStatusLastStartupFetchAttemptAt()
-        if (lastStartupFetch != null && lastStartupFetch.plus(STARTUP_MIN_INTERVAL).isAfter(now)) {
-            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Startup gate: fetched within the last $STARTUP_MIN_INTERVAL, skipping")
+        if (lastStartupFetch != null && lastStartupFetch.plus(ProRefreshWindows.STARTUP_MIN_INTERVAL).isAfter(now)) {
+            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Startup gate: fetched within the last ${ProRefreshWindows.STARTUP_MIN_INTERVAL}, skipping")
             return@flow
         }
 
@@ -485,14 +454,13 @@ class ProStatusManager @Inject constructor(
     /**
      * Drives proof acquisition/renewal purely from config, off libsession's `pro_renewal_target`.
      *
-     * The inputs libsession needs for `pro_renewal_target` — the stored proof, the access expiry (E)
-     * and the prepaid marker (I) — all live in the user profile, so watching them directly is
-     * sufficient. Do not drive this off a `get_pro_status` response instead: that makes the proof
-     * loop a downstream effect of a display fetch, so no fetch means no renewal.
+     * The inputs to `pro_renewal_target` — the stored proof, the access expiry (E) and the prepaid
+     * marker (I) — all live in the user profile, so watching them directly is sufficient. Do not drive
+     * this off a `get_pro_status` response: that makes the proof loop a downstream effect of a display
+     * fetch, so no fetch means no renewal.
      *
-     * The loop closes without a status fetch anywhere in it: the proof worker's own config writes
-     * (a new proof, a refreshed or cleared E) re-enter here and schedule the next attempt, and a
-     * `null` target — no proof and no entitlement signalled — cancels the work outright.
+     * The loop closes with no status fetch in it. The proof worker's own config writes re-enter here
+     * and schedule the next attempt; a `null` target cancels the work outright.
      */
     @OptIn(FlowPreview::class)
     private suspend fun manageProofRenewalScheduling() {
@@ -558,22 +526,20 @@ class ProStatusManager @Inject constructor(
                     }
                 }
 
-                // Ask the server what the state actually is now. Clearing the proof leaves the account
-                // asserting a future access expiry with nothing to back it, and NOTHING ELSE HERE WILL
-                // CORRECT THAT: the config-change trigger watches `E` and the prepaid marker, and this
-                // path deliberately touches neither. Without this the user sits on a stale expiry with
-                // no proof until some unrelated trigger happens to fire.
+                // Ask the server what the state is now. Clearing the proof leaves the account
+                // asserting a future access expiry with nothing behind it, and nothing else corrects
+                // that: the config-change trigger watches `E` and the prepaid marker, and this path
+                // touches neither, so the stale expiry stands until some unrelated trigger fires.
                 //
-                // `E` is deliberately NOT cleared locally. A revocation says this proof is void, not
-                // what the subscription is now — the account may be fine and re-provable, or genuinely
-                // gone. Deciding that here would be the client overruling the only party that knows.
+                // `E` is not cleared locally. A revocation says this proof is void, not what the
+                // subscription is now — the account may be fine and re-provable, or genuinely gone,
+                // and only the server knows which.
                 //
-                // Floored, not `immediate`: nobody is waiting on a screen. `immediate` is for the
-                // post-purchase poll and manual/recover.
+                // Floored, not `immediate`: nobody is waiting on a screen.
                 //
-                // Outside the mutation block on purpose. It must also be gated on the clear actually
-                // happening — this collector can fire for a hash that is no longer the stored proof,
-                // and a refresh for someone else's revocation is a request with no reason.
+                // Requested outside the mutation block, and gated on the clear having happened: this
+                // collector can fire for a hash that is no longer the stored proof, and a refresh
+                // triggered by someone else's revocation has no reason behind it.
                 if (cleared) {
                     proStatusRepository.get().requestRefresh()
                 }
@@ -714,25 +680,18 @@ class ProStatusManager @Inject constructor(
 
     companion object {
         /**
-         * Startup-gate constants. **Shared cross-client contract** (spec §9.3) — Desktop and iOS use
-         * the same values; keep them in step, and say why in the commit if they ever diverge.
+         * How long after a wake instant to fetch. The backend judges against its own clock, so a wake
+         * landing exactly on the boundary can read the pre-crossing state.
          */
-        private val STARTUP_MIN_INTERVAL: Duration = Duration.ofHours(24)
-        private val EXPIRING_CTA_WINDOW: Duration = Duration.ofDays(7)
-        private val EXPIRED_CTA_WINDOW: Duration = Duration.ofDays(30)
+        private val WAKE_SLACK: Duration = Duration.ofSeconds(30)
 
         /**
          * Whether a cold start should fetch `get_pro_status`, and why — or null to stay off the
          * network. Pure over plain values so it can be tested without a clock, a database or config.
          *
-         * [renewalDue] is the access expiry as the backend sends it — the **payment-due date**. Coverage
-         * runs a further [grace] past it, so the grace window is `[renewalDue, renewalDue + grace)`.
-         * The backend states the contract as "`expiry_ts` + `grace_period_duration` is exactly when we
-         * stop serving".
-         *
-         * The decision is four rows over config state. Note that none of them tests
-         * `renewalDue + grace <= now`: coverage end is not what a cold start needs to know, and keying
-         * any row to it double-counts grace against the payment date the rows already turn on.
+         * [renewalDue] is the access expiry as the backend sends it — the payment-due date. Coverage
+         * runs a further [grace] past it: `expiry + grace_period_duration` is when the backend stops
+         * serving.
          *
          * | config state                                       | action                            |
          * |----------------------------------------------------|-----------------------------------|
@@ -741,9 +700,8 @@ class ProStatusManager @Inject constructor(
          * | `!auto_renewing && renewalDue` in the CTA window    | fetch — the Expiring CTA may fire |
          * | `!auto_renewing && now >= renewalDue`               | confirm before the Expired CTA    |
          *
-         * Row 2 is what surfaces grace: past the payment-due date while still covered is exactly the
-         * state the grace warning exists for, and it is reachable because coverage extends to
-         * `renewalDue + grace`. It is also the only row [grace] enters — see the comment there.
+         * No row tests `renewalDue + grace <= now`: a cold start does not need to know when coverage
+         * ends, and testing it would double-count grace against the payment date the rows turn on.
          */
         internal fun startupFetchReason(
             renewalDue: Instant?,
@@ -759,27 +717,24 @@ class ProStatusManager @Inject constructor(
             return when {
                 autoRenewing && !overdue -> null
 
-                // Past the payment date while auto-renewing: either the charge is retrying (grace
-                // is running) or it ultimately failed and coverage has since ended. Both want a
-                // fetch — the first to raise the grace warning, the second to confirm before the
-                // Expired CTA.
+                // Past the payment date while auto-renewing: the charge is either still retrying or
+                // it failed and coverage has since ended. Both want a fetch — to raise the grace
+                // warning, or to confirm before the Expired CTA.
                 //
-                // Bounded from COVERAGE end, not from the payment date, and this is the one place
-                // `grace` does any work. Every other row here needs only "is the renewal overdue",
-                // which the payment date answers on its own — grace has no part in them. Keeping
-                // this bound measured from `renewalDue + grace` means an account
-                // still inside a multi-day grace is never mistaken for a long-dead one, and an
-                // account dead for a year stops fetching on every cold start.
+                // The bound is measured from COVERAGE end, which is the only place [grace] does any
+                // work here. Anchored at the payment date instead, an account still inside a multi-day
+                // grace reads as long-dead; unbounded, an account whose renewing flag was never
+                // cleared fetches on every cold start forever.
                 autoRenewing ->
-                    if (renewalDue.plus(grace).plus(EXPIRED_CTA_WINDOW).isAfter(now)) {
+                    if (renewalDue.plus(grace).plus(ProRefreshWindows.EXPIRED_CTA).isAfter(now)) {
                         "auto-renewing and past the payment date; grace or a failed renewal"
                     } else {
                         null
                     }
 
                 !overdue ->
-                    if (renewalDue.isBefore(now.plus(EXPIRING_CTA_WINDOW))) {
-                        "not auto-renewing and expiring within $EXPIRING_CTA_WINDOW"
+                    if (renewalDue.isBefore(now.plus(ProRefreshWindows.EXPIRING_CTA))) {
+                        "not auto-renewing and expiring within ${ProRefreshWindows.EXPIRING_CTA}"
                     } else {
                         // Comfortably active and not renewing — a prepaid or long non-renewing
                         // subscription. No CTA can fire, so nothing to fetch for.
@@ -790,8 +745,8 @@ class ProStatusManager @Inject constructor(
                 // showing the Expired CTA: config can read expired while a renewal landed on another
                 // device and hasn't synced. Bounded by the CTA's own window — once the CTA can no
                 // longer fire there is nothing for the fetch to serve.
-                renewalDue.plus(EXPIRED_CTA_WINDOW).isAfter(now) ->
-                    "not auto-renewing and expired within $EXPIRED_CTA_WINDOW; confirming before the Expired CTA"
+                renewalDue.plus(ProRefreshWindows.EXPIRED_CTA).isAfter(now) ->
+                    "not auto-renewing and expired within ${ProRefreshWindows.EXPIRED_CTA}; confirming before the Expired CTA"
 
                 else -> null
             }

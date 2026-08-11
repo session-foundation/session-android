@@ -89,27 +89,20 @@ class FetchProStatusWorker @AssistedInject constructor(
                     configs.userProfile.removeProAccessExpiry()
                 }
 
-                // Persist auto-renewing into synced config alongside E, so a linked device has the
-                // account state without its own fetch. Written unconditionally and deliberately so:
-                // libsession's set_nonzero_int short-circuits a no-change write on a clean config
-                // (`assign_if_changed`), exactly as the E write above already relies on, so a
-                // client-side "only if changed" guard would add nothing. A presence-based guard
-                // would be actively wrong — the key is erased rather than stored when false, so
-                // presence flips on every transition and would read as churn that isn't there.
+                // A and G go into synced config beside E, so a linked device has the account state
+                // without its own fetch. All three must come from ONE response: coverage is read as
+                // `E + G` downstream, so an E stored without its G pairs with whatever G was already
+                // there.
                 //
-                // No `t`/`T` bump either: this is backend-derived state like E and I, not a user
-                // profile edit, and libsession omits the bump for it on purpose.
+                // Written unconditionally. `set_nonzero_int` short-circuits a no-change write on a
+                // clean config, so a client-side "only if changed" guard adds nothing, and a
+                // presence-based guard would be wrong — the key is erased rather than stored when
+                // false, so presence flips on every transition. No `t`/`T` bump either: this is
+                // backend-derived state like E and I, not a user profile edit.
+                //
+                // `details.gracePeriod` is the ACCOUNT-level field, not `latestPayment.gracePeriod`,
+                // which reports one store transaction and is not gated on auto-renewing.
                 configs.userProfile.setProAutoRenewing(details.autoRenewing)
-
-                // And the grace period, from the SAME response as the expiry above. Everything
-                // downstream reads coverage as `E + G`, so an E written without its G pairs with
-                // whatever G happens to be sitting there — which, before this, was whatever a proof
-                // outcome last left, or nothing at all. Writing E and A here but not G made the
-                // gate's arithmetic a no-op.
-                //
-                // This is the ACCOUNT-level grace ("how much longer we serve past the expiry shown"),
-                // not `latestPayment.gracePeriod`, which reports what a store declared about one
-                // transaction. Same field name, different question.
                 configs.userProfile.setProGracePeriod(details.gracePeriod)
 
                 // Remove the pro config only when the backend authoritatively says we are no longer
@@ -133,10 +126,6 @@ class FetchProStatusWorker @AssistedInject constructor(
             }
             proDatabase.updateProStatus(proStatus = details, updatedAt = snodeClock.currentTime())
 
-            // Proof generation is NOT scheduled from here. It runs off libsession's
-            // `pro_renewal_target`, watched from config by
-            // ProStatusManager.manageProofRenewalScheduling, which the config writes above reach on
-            // their own — so renewal does not depend on a status fetch having happened.
             Result.success()
         } catch (e: CancellationException) {
             Log.d(TAG, "Work cancelled")

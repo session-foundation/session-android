@@ -188,11 +188,9 @@ class ProDatabase @Inject constructor(
     /**
      * When a `get_pro_status` fetch was last **attempted**, successful or not.
      *
-     * Deliberately separate from [getProStatusAndLastUpdated]'s timestamp, which cannot serve this
-     * purpose: that value is written as a pair with the response blob and is only readable when both
-     * are present, so a failed fetch has nothing to record there. Using it as the freshness floor
-     * therefore meant a failing network was never throttled at all — every trigger and every cold
-     * launch re-attempted, which is the load the floor exists to prevent.
+     * Separate from [getProStatusAndLastUpdated]'s timestamp, which cannot serve this purpose: that
+     * value is written as a pair with the response blob and is unreadable without it, so a failed fetch
+     * records nothing and a failing network goes unthrottled entirely.
      */
     fun getProStatusLastAttemptAt(): Instant? {
         return readableDatabase.query(
@@ -204,10 +202,9 @@ class ProDatabase @Inject constructor(
     }
 
     /**
-     * When the STARTUP GATE last attempted a fetch. Separate from [getProStatusLastAttemptAt] on
-     * purpose: the gate's 24h interval must not be consumed or reset by a routine refresh, and the
-     * 60s floor must not be satisfied by a startup fetch from twenty hours ago. One value cannot
-     * answer both questions.
+     * When the STARTUP GATE last attempted a fetch. Separate from [getProStatusLastAttemptAt]: the
+     * gate's 24h interval must not be consumed by a routine refresh, and the 60s floor must not be
+     * satisfied by a startup fetch from twenty hours ago.
      */
     fun getProStatusLastStartupFetchAttemptAt(): Instant? {
         return readableDatabase.query(
@@ -273,12 +270,11 @@ class ProDatabase @Inject constructor(
         private const val STATE_PRO_STATUS = "pro_status"
         private const val STATE_PRO_STATUS_UPDATED_AT = "pro_status_updated_at"
 
-        // Written on every fetch ATTEMPT, unlike STATE_PRO_STATUS_UPDATED_AT which is written only
-        // alongside a successful response. No migration needed: pro_state is a name/value table.
+        // Written on every ATTEMPT, unlike STATE_PRO_STATUS_UPDATED_AT which is written only alongside
+        // a successful response. No migration needed: pro_state is a name/value table.
         private const val STATE_PRO_STATUS_LAST_ATTEMPT_AT = "pro_status_last_attempt_at"
 
-        // The startup gate's own 24h interval. Attempt-stamped like the above, and deliberately a
-        // SEPARATE key — see getProStatusLastStartupFetchAttemptAt.
+        // The startup gate's 24h interval — a separate key, see getProStatusLastStartupFetchAttemptAt.
         private const val STATE_PRO_STATUS_LAST_STARTUP_FETCH_ATTEMPT_AT =
             "pro_status_last_startup_fetch_attempt_at"
 

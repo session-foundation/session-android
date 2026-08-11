@@ -10,17 +10,12 @@ import java.time.Instant
 /**
  * The `get_pro_status` freshness floor.
  *
- * Scope, stated plainly: these cover the floor's **decision**, which is a pure function of
- * (immediate, last-fetch timestamp, now). They do NOT cover the wiring — that `requestRefresh`
- * reads the timestamp from `pro_state` rather than from `loadState`, and that a dropped request
- * really does skip `FetchProStatusWorker`. Both of those need WorkManager and a real database, so
- * they are not reachable from a JVM unit test here.
+ * Scope: the floor's decision, a pure function of (immediate, last-fetch timestamp, now). NOT the
+ * wiring — that `requestRefresh` reads the timestamp from `pro_state` rather than `loadState`, and that
+ * a dropped request really skips `FetchProStatusWorker`. Both need WorkManager and a database.
  *
- * That boundary matters because the wiring is where the original bug was: the floor asked whether
- * the in-memory load state was `Loading`/`Loaded`, and a cold start begins at `Init`, which is
- * neither — so the floor was skipped on precisely the path it existed for. What these tests pin is
- * the shape that prevents it recurring: the decision is expressed over the timestamp, and "no
- * timestamp" is a distinct, deliberate answer rather than a state that falls between the cases.
+ * What these pin is the shape: the decision is keyed off the timestamp, and "no timestamp" is a
+ * deliberate answer rather than a value that falls between the cases.
  */
 class ProStatusFreshnessFloorTest {
 
@@ -28,8 +23,7 @@ class ProStatusFreshnessFloorTest {
 
     @Test
     fun `no recorded fetch means fetch`() {
-        // A cold start with an empty pro_state, or a user who has never fetched. Distinct from the
-        // old failure: this is "no evidence of a recent fetch", not "the state enum hasn't settled".
+        // A cold start with an empty pro_state: no evidence of a recent fetch, which is a reason to go.
         assertTrue(shouldFetch(immediate = false, fetchedInThisProcess = true, lastFetchedAt = null, now = now))
     }
 
@@ -47,9 +41,8 @@ class ProStatusFreshnessFloorTest {
 
     @Test
     fun `the interval boundary is inclusive - exactly the interval ago is allowed`() {
-        // Pinned deliberately: at exactly the floor the request goes through. The #4 grace poll
-        // runs at exactly this cadence, so an exclusive boundary here would drop alternate ticks
-        // to nothing but timing jitter.
+        // Inclusive on purpose: the #4 grace poll runs at exactly this cadence, so an exclusive
+        // boundary would drop alternate ticks to timing jitter.
         val exactly = now.minusSeconds(MIN_UPDATE_INTERVAL_SECONDS)
         assertTrue(shouldFetch(immediate = false, fetchedInThisProcess = true, lastFetchedAt = exactly, now = now))
     }
@@ -61,17 +54,14 @@ class ProStatusFreshnessFloorTest {
 
     @Test
     fun `immediate is the only bypass - a just-completed fetch is otherwise dropped`() {
-        // The negative control for the test above: same inputs, immediate off. Without this pair,
-        // the immediate test passes just as well against a function that always returns true.
+        // Negative control: without it the immediate test passes against a function returning true.
         assertFalse(shouldFetch(immediate = false, fetchedInThisProcess = true, lastFetchedAt = now, now = now))
     }
 
     @Test
     fun `the first request of a process is never floored`() {
-        // Second exemption. A relaunch inside 60s of the last fetch would otherwise be dropped, and
-        // several things downstream key off THIS process having confirmed the status rather than
-        // off the stored value being recent — on Android, the home Expired CTA, which is gated on a
-        // `Loading` transition that only a real fetch produces.
+        // Second exemption: downstream consumers key off THIS process having confirmed the status, not
+        // off the stored value being recent. See `ProStatusRepository.fetchedInThisProcess`.
         assertTrue(
             shouldFetch(
                 immediate = false,
@@ -84,8 +74,7 @@ class ProStatusFreshnessFloorTest {
 
     @Test
     fun `once this process has fetched the floor applies again`() {
-        // Negative control for the exemption: same inputs, flag flipped. Without this the test
-        // above passes against an exemption that never turns off.
+        // Negative control: without it the test above passes against an exemption that never turns off.
         assertFalse(
             shouldFetch(
                 immediate = false,
@@ -98,9 +87,8 @@ class ProStatusFreshnessFloorTest {
 
     @Test
     fun `a future timestamp still floors`() {
-        // Clock skew, or a fetch recorded against network time while we compare against a slightly
-        // behind reading. Treat it as fresh rather than fetching: the alternative reads a skewed
-        // clock as a licence to bypass the floor entirely.
+        // Clock skew: a fetch recorded against network time compared with a slightly behind reading.
+        // Treat as fresh — the alternative makes a skewed clock a licence to bypass the floor.
         val future = now.plusSeconds(MIN_UPDATE_INTERVAL_SECONDS)
         assertFalse(shouldFetch(immediate = false, fetchedInThisProcess = true, lastFetchedAt = future, now = now))
     }

@@ -25,16 +25,14 @@ object ProUserStatus {
 /**
  * Map a libsession-parsed get-pro-status response to the app's [ProStatus] domain model. Needs a [Context]
  * to resolve the (client-owned) provider display strings.
- */
-/**
- * @param confirmedAt when the fetch behind this response COMPLETED, or null if nothing has been
- *   confirmed. Used to gate [ProStatus.Active.AutoRenewing.inGracePeriod]: a snapshot taken before the
- *   renewal fell due cannot have observed it failing, so raising the "renewal unsuccessful" warning off
- *   one turns an ordinary boundary crossing into an alarm the backend never reported.
  *
- *   Gated **here**, where the flag is produced, rather than at each consumer. Five call sites read it
- *   today; a sixth would inherit no protection if the check lived in front of the value instead of
- *   inside it — and there would be nothing to tell whoever added it.
+ * @param confirmedAt when the fetch behind this response COMPLETED, or null if nothing has been
+ *   confirmed. Gates [ProStatus.Active.AutoRenewing.inGracePeriod]: a snapshot taken before the renewal
+ *   fell due cannot have observed it failing, so raising the "renewal unsuccessful" warning off one
+ *   turns an ordinary boundary crossing into an alarm the backend never reported.
+ *
+ *   Applied here, where the flag is produced, rather than at each consumer — so a new reader inherits
+ *   the protection instead of having to know about it.
  */
 fun GetProStatusResponse.toProStatus(
     nowMs: Long,
@@ -45,19 +43,17 @@ fun GetProStatusResponse.toProStatus(
     return when (userStatus) {
         ProUserStatus.ACTIVE -> {
             val paymentItem = latestPayment ?: return ProStatus.NeverSubscribed
-            // `expiry` is the PAYMENT-DUE date — the renewal is due then, and coverage runs a
-            // further `gracePeriod` past it. The backend states the contract directly: "`expiry_ts` +
-            // `grace_period_duration` is exactly when we stop serving", derived from the same instant
-            // the status is judged against (`server.py`, `account_coverage_end`). So being in this
-            // ACTIVE branch past `expiry` IS the grace period.
+            // `expiry` is the PAYMENT-DUE date and coverage runs a further `gracePeriod` past it:
+            // `expiry_ts + grace_period_duration` is when the backend stops serving, derived from the
+            // same instant it judged this status against. So being in the ACTIVE branch past `expiry`
+            // IS the grace period.
             //
-            // Two traps here, both of which have caught someone:
-            //  * Do NOT subtract grace to get the renewal date. `expiry` already IS that date, and
-            //    grace runs forward from it — subtracting double-counts.
-            //  * `gracePeriod` on THIS type is the account-level field — "how much longer we serve" —
-            //    and is not the same quantity as `ProPaymentItem.gracePeriod`, which reports what a
-            //    store declared about one transaction. They share a name and answer different
-            //    questions.
+            // Two traps:
+            //  * Do not subtract grace to get the renewal date. `expiry` already is that date and
+            //    grace runs forward from it, so subtracting double-counts.
+            //  * `gracePeriod` here is the ACCOUNT-level field — how much longer we serve — and not
+            //    `ProPaymentItem.gracePeriod`, which reports what a store declared about one
+            //    transaction and is not gated on auto-renewing.
             val renewingAt = expiry ?: return ProStatus.NeverSubscribed
             val renewingAtMs = renewingAt.toEpochMilli()
             val providerData = providerMetadata(paymentItem.paymentProvider, context)
@@ -101,15 +97,10 @@ fun GetProStatusResponse.toProStatus(
         }
 
         ProUserStatus.EXPIRED -> ProStatus.Expired(
-            // `expiry` and `gracePeriod` are only meaningful as a PAIR, from one response. The backend
-            // derives the grace it sends from the same coverage-end instant it judged this status
-            // against, so together they describe one moment; separately they describe none.
-            //
-            // That is why both come off the response and neither is read from config. Config is not an
-            // equivalent source: not every status branch writes `G` there, and the branches that clear
-            // `E` cascade `G` away with it — so a config read here would pair THIS response's expiry
-            // with a grace period from a different response, or with nothing at all, and the resulting
-            // coverage end would be short by however much they disagreed.
+            // Both values come off the response, and neither may be read from config: they are only
+            // meaningful as a PAIR from one response. Not every status branch writes `G` to config, and
+            // the branches that clear `E` cascade `G` away with it, so a config read would pair this
+            // response's expiry with a grace period from a different one.
             expiredAt = expiry ?: Instant.EPOCH,
             gracePeriod = gracePeriod,
             providerData = providerMetadata(

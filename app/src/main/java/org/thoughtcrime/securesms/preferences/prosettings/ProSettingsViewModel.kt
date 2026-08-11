@@ -110,16 +110,12 @@ class ProSettingsViewModel @AssistedInject constructor(
     private var recovering: Boolean = false
 
     init {
-        // Trigger #3 — refresh on entering Pro settings. Floored, not `immediate`: this screen is
-        // the one place the status is actually read, so it should not be showing a value from an
-        // arbitrarily old background fetch, but arriving here is not on its own a reason to bypass
-        // the 60s floor.
+        // Trigger #3 — refresh on entering Pro settings. Floored: arriving here is not on its own a
+        // reason to bypass the floor.
         //
-        // Deliberately NOT via refreshProStatus(): that early-returns while `refreshState` is
-        // Loading, and a process that hasn't confirmed a fetch of its own reports Loading from
-        // launch. Routing on-enter through that guard would mean the one trigger able to
-        // resolve the state is the one the state suppresses — a spinner that never clears, which is
-        // the failure iOS hit from the same direction. The repository single-flights anyway
+        // Not via refreshProStatus(), which early-returns while `refreshState` is Loading — and a
+        // process that has not confirmed a fetch reports Loading from launch, so that guard would
+        // suppress the one trigger able to clear it. The repository single-flights anyway
         // (WorkManager REPLACE), so the guard buys nothing here.
         proStatusRepository.requestRefresh(immediate = false)
 
@@ -216,11 +212,8 @@ class ProSettingsViewModel @AssistedInject constructor(
             recovering = false
         }
 
-        // The grace warning's "a completed fetch at or after the crossing" condition is applied
-        // inside `toProStatus`, where inGracePeriod is produced — so `subType.inGracePeriod` is
-        // already safe to read directly here and at the label below. Gating where the flag is
-        // produced rather than at each consumer means a new reader inherits the protection instead of
-        // having to know about it.
+        // `inGracePeriod` is safe to read directly here and at the label below: the "completed fetch at
+        // or after the crossing" condition is applied in `toProStatus`, where the flag is produced.
         while (true) {
             val now = clock.currentTime()
 
@@ -724,19 +717,16 @@ class ProSettingsViewModel @AssistedInject constructor(
     /**
      * Trigger #4 — poll `get_pro_status` while the renewal is overdue and this screen is open.
      *
-     * Deliberately NOT a 60s timer on the screen. It sleeps until the renewal falls due and only
-     * then polls, once a minute, while the renewal still hasn't landed. Three things stop it: the
-     * renewal arrives (`expiry` advances, which restarts this from the new date), the account runs
-     * past coverage, or the screen closes and cancels `viewModelScope`.
+     * Not a 60s timer on the screen: it sleeps until the renewal falls due, then polls once a minute
+     * while the renewal still hasn't landed. Three things stop it — the renewal arrives (`expiry`
+     * advances, restarting this from the new date), the account runs past coverage, or the screen
+     * closes and cancels `viewModelScope`.
      *
-     * Note it needs no `auto_renewing` check. The wire zeroes `grace_period_duration` when the
-     * subscription isn't auto-renewing, so for those accounts coverage ends exactly when the
-     * renewal falls due and the loop below never runs a single iteration — there is no renewal in
-     * flight to poll for, and the arithmetic already says so.
+     * No `auto_renewing` check needed: the wire zeroes `grace_period_duration` when the subscription
+     * is not auto-renewing, so coverage ends exactly when the renewal falls due and the loop runs no
+     * iterations at all.
      *
-     * Exempt from the freshness floor (spec §4: bounded polls carry their own cadence and their own
-     * termination). At 60s this poll sits exactly on the 60s floor, so leaving it floored would drop
-     * ticks to timing jitter alone.
+     * Exempt from the freshness floor — see [GRACE_POLL_INTERVAL_MS] for why.
      */
     private fun pollProStatusDuringGraceWhileOpen() {
         viewModelScope.launch {
@@ -760,11 +750,8 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     /**
-     * The instant the renewal falls due.
-     *
-     * `expiry` IS the payment-due date. Coverage runs a further `gracePeriod` past it — the backend's
-     * contract is "`expiry_ts` + `grace_period_duration` is exactly when we stop serving" — so do not
-     * subtract to get this instant.
+     * The instant the renewal falls due. `expiry` IS that date — do not subtract grace, which runs
+     * forward from it.
      */
     private fun GetProStatusResponse.renewalDueAt(): Instant? = expiry
 
@@ -1074,11 +1061,9 @@ class ProSettingsViewModel @AssistedInject constructor(
          * Cadence of the #4 grace poll. Shared cross-client contract (spec §9.3) — the same 60s
          * Desktop and iOS use for their while-open poll; keep them in step.
          *
-         * **This equals `ProStatusRepository.MIN_UPDATE_INTERVAL_SECONDS`, and that equality is the
-         * reason #4 bypasses the freshness floor** rather than being floored like the other routine
-         * triggers. A poll running at exactly the floor would have roughly every other tick dropped
-         * by timing jitter alone, silently halving the rate. Two files apart the two constants look
-         * coincidentally equal; they are not, so change neither without the other.
+         * This equals `ProStatusRepository.MIN_UPDATE_INTERVAL_SECONDS`, and that equality is why #4
+         * bypasses the floor: a poll running exactly at the floor loses every other tick to timing
+         * jitter. The two constants are not coincidentally equal — change neither without the other.
          */
         private const val GRACE_POLL_INTERVAL_MS = 60_000L
     }
