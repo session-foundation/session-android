@@ -4,6 +4,7 @@ import network.loki.messenger.BuildConfig
 import org.thoughtcrime.securesms.pro.subscription.ProPlanPeriod
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
+import java.time.Duration
 import java.time.Instant
 
 sealed interface ProStatus{
@@ -56,9 +57,26 @@ sealed interface ProStatus{
     }
 
     data class Expired(
+        /**
+         * The payment-due date, as the backend sends it. This is the date to display; coverage ran a
+         * further [gracePeriod] past it.
+         */
         val expiredAt: Instant,
+        val gracePeriod: Duration,
         val providerData: PaymentProviderMetadata
-    ): ProStatus
+    ): ProStatus {
+        /**
+         * When access actually ended, and the anchor for anything measuring how long ago that was.
+         *
+         * The backend only reports EXPIRED once coverage has ended, so measuring an "expired
+         * recently" window from [expiredAt] instead shortens it by exactly [gracePeriod] — and
+         * empties it when the grace period is at least as long as the window. Google Play grace is
+         * operator-configurable up to 30 days, so that is reachable and not a corner case.
+         *
+         * Derived here rather than at the consumer so a second reader cannot pick the other anchor.
+         */
+        val coverageEndedAt: Instant get() = expiredAt.plus(gracePeriod)
+    }
 }
 
 data class ProDataState(

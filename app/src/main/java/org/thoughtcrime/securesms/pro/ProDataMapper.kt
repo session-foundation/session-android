@@ -102,6 +102,7 @@ fun GetProStatusResponse.toProStatus(
 
         ProUserStatus.EXPIRED -> ProStatus.Expired(
             expiredAt = expiry ?: Instant.EPOCH,
+            gracePeriod = gracePeriod,
             providerData = providerMetadata(
                 latestPayment?.paymentProvider ?: PAYMENT_PROVIDER_GOOGLE_PLAY,
                 context,
@@ -174,5 +175,7 @@ val previewAutoRenewingApple = ProStatus.Active.AutoRenewing(
 
 val previewExpiredApple = ProStatus.Expired(
     expiredAt = Instant.now() - Duration.ofDays(14),
+    // Zero grace, so expiredAt and coverage end coincide: the fixture means what it reads as.
+    gracePeriod = Duration.ZERO,
     providerData = previewAppleMetaData
 )

@@ -255,12 +255,15 @@ class HomeViewModel @Inject constructor(
                     // network failure must not surface a false "expired". Consistent with the iOS fix.
                     && subscription.refreshState is org.thoughtcrime.securesms.util.State.Success
                     && !prefs.hasSeenProExpired()) {
-                    val validUntil = subscription.type.expiredAt
-                    showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
+                    // Anchored at coverage end, not at the payment date: the backend only reports
+                    // EXPIRED once coverage has ended, so measuring from the payment date shortens
+                    // this window by exactly the grace period and empties it entirely when grace is
+                    // 30 days or more.
+                    val coverageEnded = subscription.type.coverageEndedAt
+                    showExpired = now.isBefore(coverageEnded.plus(30, ChronoUnit.DAYS))
 
-                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $showExpired")
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Coverage ended: $coverageEnded - Should show Expired CTA? $showExpired")
 
-                    // Check if now is within 30 days after expiry
                     if (showExpired) {
                         _dialogsState.update { state ->
                             state.copy(proExpiredCTA = true)

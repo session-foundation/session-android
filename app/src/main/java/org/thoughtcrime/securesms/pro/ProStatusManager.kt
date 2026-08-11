@@ -243,14 +243,20 @@ class ProStatusManager @Inject constructor(
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
                             expiredAt = now - Duration.ofDays(14),
+                            // Zero grace: these fixtures mean "coverage ended N days ago".
+                            gracePeriod = Duration.ZERO,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
                             expiredAt = now - Duration.ofDays(60),
+                            // Zero grace: these fixtures mean "coverage ended N days ago".
+                            gracePeriod = Duration.ZERO,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
                             expiredAt = now - Duration.ofDays(14),
+                            // Zero grace: these fixtures mean "coverage ended N days ago".
+                            gracePeriod = Duration.ZERO,
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application)
                         )
                     }.withMockedExpiry(debugAccessExpiry),
