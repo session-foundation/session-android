@@ -64,11 +64,11 @@ class ProProofGenerationWorker @AssistedInject constructor(
         // (redemption, where get_pro_status is not ACTIVE yet and minting the proof is what pulls
         // the entitlement through), and an entitlement held with no proof to attach.
         //
-        // This used to read `proStatusRepository.loadState` for an ACTIVE status instead. That was
-        // the last status->proof dependency, and it was wrong in a way that only showed after a
-        // process restart: WorkManager persists our schedule, but `loadState` starts at Init, so a
-        // renewal that came due while the app was dead saw "not active, no purchase" and returned
-        // without renewing.
+        // Ask CONFIG, never `proStatusRepository.loadState`. WorkManager persists this worker's
+        // schedule across process death; `loadState` does not survive it and restarts at `Init`. An
+        // in-memory status check therefore reads "not active, no purchase" and returns without
+        // renewing, for exactly the renewal that came due while the app was dead — the case the
+        // persisted schedule exists to serve.
         val now = snodeClock.currentTime()
         val (renewalTarget, purchasePending, proof) = configFactory.withUserConfigs { configs ->
             Triple(

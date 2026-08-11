@@ -37,10 +37,9 @@ import javax.inject.Provider
 /**
  * A worker that fetches the user's Pro status from the server and updates the local database.
  *
- * This worker doesn't do any business logic in terms of when to schedule itself, it simply performs
- * the fetch and update operation regardlessly — and that is now the whole of its job. It used to
- * also schedule [ProProofGenerationWorker], which made proof renewal a downstream effect of a
- * status fetch; that scheduling lives in [ProStatusManager] and keys off config instead.
+ * Performs the fetch and the update, and makes no scheduling decisions — not even its own. Proof
+ * renewal is scheduled by [ProStatusManager]'s config watcher, deliberately not from here: keying it
+ * to a status response would make renewal a downstream effect of a display fetch.
  */
 @HiltWorker
 class FetchProStatusWorker @AssistedInject constructor(
@@ -136,8 +135,8 @@ class FetchProStatusWorker @AssistedInject constructor(
 
             // Proof generation is NOT scheduled from here. It runs off libsession's
             // `pro_renewal_target`, watched from config by
-            // ProStatusManager.manageProofRenewalScheduling — so the config writes above reach it
-            // anyway, and a renewal no longer depends on a status fetch having happened.
+            // ProStatusManager.manageProofRenewalScheduling, which the config writes above reach on
+            // their own — so renewal does not depend on a status fetch having happened.
             Result.success()
         } catch (e: CancellationException) {
             Log.d(TAG, "Work cancelled")

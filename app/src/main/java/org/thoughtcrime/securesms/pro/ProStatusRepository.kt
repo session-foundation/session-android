@@ -135,8 +135,8 @@ class ProStatusRepository @Inject constructor(
      * redundant, and it is not: the persisted value answers *"was the last fetch recent?"*, this
      * answers *"has this process asked at all?"*.
      *
-     * Its remaining job is to guarantee the FIRST request of a process reaches the network — and to
-     * be precise about why that job exists: **this is what stops the floor becoming a mutex.**
+     * Its job is to guarantee the FIRST request of a process reaches the network. Precisely: **this is
+     * what stops the floor becoming a mutex.**
      *
      * Three separate things can refuse to start a status fetch, and they are easy to conflate:
      *
@@ -151,18 +151,13 @@ class ProStatusRepository @Inject constructor(
      * refused by a decision no part of this process ever took, and after the startup gate nothing
      * else would ask.
      *
-     * That reasoning survives someone fixing the confirmed-status problem another way, which the
-     * previous "restores the Loading transition" justification did not.
+     * Note that (2) being handled properly by [LoadState.Loaded.confirmedInThisProcess] does **not**
+     * make this removable — the two guard different refusals, and only this one is reachable in a
+     * process that has not fetched.
      *
-     * (It used to have a second job — restoring the `Loading` transition that suppressed the home
-     * Expired CTA. That is now done properly by [LoadState.Loaded.confirmedInThisProcess], so this
-     * field is no longer what stands between a stale cache and a false CTA. The retirement condition
-     * is therefore no longer "when the predicate is fixed" — the predicate IS fixed and this is still
-     * needed.)
-     *
-     * The tempting cleanup is a demonstrated failure, not a hypothetical one: the Desktop client
-     * removed its equivalent per-run value during the same rework and would have shipped a
-     * permanently-spinning Pro screen.
+     * What deleting it costs, concretely: the Pro settings screen refreshes on entry through the
+     * floored path, so on a relaunch inside the interval that refresh is refused, the screen has no
+     * confirmed status to render, and nothing remaining will ask. It spins until the interval expires.
      */
     @Volatile
     private var fetchedInThisProcess = false

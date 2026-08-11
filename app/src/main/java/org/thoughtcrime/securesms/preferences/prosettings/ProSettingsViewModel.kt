@@ -218,8 +218,9 @@ class ProSettingsViewModel @AssistedInject constructor(
 
         // The grace warning's "a completed fetch at or after the crossing" condition is applied
         // inside `toProStatus`, where inGracePeriod is produced — so `subType.inGracePeriod` is
-        // already safe to read directly here and at the label below. It used to be gated at each
-        // consumer instead, which meant a new reader inherited no protection.
+        // already safe to read directly here and at the label below. Gating where the flag is
+        // produced rather than at each consumer means a new reader inherits the protection instead of
+        // having to know about it.
         while (true) {
             val now = clock.currentTime()
 

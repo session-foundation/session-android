@@ -131,13 +131,13 @@ class ProStatusManager @Inject constructor(
                     // data (`HomeViewModel`'s Expired CTA above all), so anything else must not
                     // report success.
                     //
-                    // Exhaustive on purpose, with no `else`. It previously ended in
-                    // `else -> State.Success(Unit)`, which quietly swept up two states that are not
-                    // successes: `Init` (nothing has happened yet) and — the one that caused a live
-                    // bug — a `Loaded` restored from WorkManager's PERSISTED work state, i.e. a fetch
-                    // some earlier process made. A renewal that happened while the app was closed
-                    // then showed the Expired CTA off the stale cache on the next launch. Listing
-                    // every case means the next state added here has to declare which it is.
+                    // Exhaustive on purpose — no `else`, and do not add one. Two states are not
+                    // successes and a catch-all sweeps up both: `Init`, where nothing has been asked
+                    // yet, and a `Loaded` restored from WorkManager's PERSISTED work state, which is
+                    // a fetch some EARLIER process made. The second is the dangerous one — a renewal
+                    // landing while the app is closed leaves a stale cache that reads as confirmed,
+                    // and the home Expired CTA fires off it. Listing every case forces the next state
+                    // added here to declare which it is.
                     when(proStatusState){
                         is ProStatusRepository.LoadState.Loading -> {
                             if(proStatusState.waitingForNetwork) State.Error(Exception())
@@ -436,12 +436,12 @@ class ProStatusManager @Inject constructor(
     /**
      * Trigger #1 — the startup fetch, gated.
      *
-     * Every client used to fetch `get_pro_status` on every cold start, including users who have never
-     * subscribed and users who are comfortably paid up. "Cold start" is something mobile does
-     * constantly, and none of those fetches had a consumer: entitlement runs off the proof, the
+     * An ungated cold-start fetch has no consumer for most users: entitlement runs off the proof, the
      * settings screen refreshes when opened, and account-expiry awareness is the `E+30s` wake. The
-     * only real consumer is the home CTAs, so the gate asks whether a CTA could plausibly fire, from
-     * synced config alone, and otherwise stays off the network entirely.
+     * only real consumer is the home CTAs — so the gate asks whether a CTA could plausibly fire, from
+     * synced config alone, and otherwise stays off the network entirely. Users who never subscribed
+     * and users comfortably paid up therefore make no request at all, which matters because "cold
+     * start" is something mobile does constantly.
      *
      * Two independent brakes: the CTA-worthiness test below, and a persisted 24h minimum between
      * startup fetches. The interval has its own key — a routine refresh must not consume the gate's
@@ -479,11 +479,10 @@ class ProStatusManager @Inject constructor(
     /**
      * Drives proof acquisition/renewal purely from config, off libsession's `pro_renewal_target`.
      *
-     * This used to be kicked by [FetchProStatusWorker] off the get_pro_status response, which made
-     * the proof loop a downstream effect of a status fetch: no fetch, no renewal. The inputs
-     * libsession actually needs — the stored proof, the access expiry (E) and the prepaid marker
-     * (I) — all live in the user profile, so watching them directly is both sufficient and honest
-     * about the dependency.
+     * The inputs libsession needs for `pro_renewal_target` — the stored proof, the access expiry (E)
+     * and the prepaid marker (I) — all live in the user profile, so watching them directly is
+     * sufficient. Do not drive this off a `get_pro_status` response instead: that makes the proof
+     * loop a downstream effect of a display fetch, so no fetch means no renewal.
      *
      * The loop closes without a status fetch anywhere in it: the proof worker's own config writes
      * (a new proof, a refreshed or cleared E) re-enter here and schedule the next attempt, and a
@@ -760,9 +759,8 @@ class ProStatusManager @Inject constructor(
                 //
                 // Bounded from COVERAGE end, not from the payment date, and this is the one place
                 // `grace` does any work. Every other row here needs only "is the renewal overdue",
-                // which is why grace no longer appears in them: under the corrected model the
-                // payment date arrives as `expiry` directly and nothing has to be reconstructed
-                // from it. Keeping the bound measured from `renewalDue + grace` means an account
+                // which the payment date answers on its own — grace has no part in them. Keeping
+                // this bound measured from `renewalDue + grace` means an account
                 // still inside a multi-day grace is never mistaken for a long-dead one, and an
                 // account dead for a year stops fetching on every cold start.
                 autoRenewing ->
