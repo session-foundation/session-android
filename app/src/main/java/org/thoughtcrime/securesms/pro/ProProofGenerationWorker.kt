@@ -69,6 +69,42 @@ class ProProofGenerationWorker @AssistedInject constructor(
             return Result.success()
         }
 
+        // Pace acquisition. Without a floor this path is a closed loop: a successful generate
+        // force-refreshes get_pro_status (below), the fetch asks libsession for a renewal target, and
+        // `target = proofExpiry - PRO_RENEWAL_LEAD` is permanently in the past whenever a proof lives
+        // for less than the 60-minute lead, so it reschedules us immediately, forever.
+        //
+        // Mirrors iOS `SessionProManager.reconcileProofRenewal` and Desktop `ducks/proBackendData.ts`,
+        // constants included. Note it RE-ARMS rather than skipping: `target <= now` is the normal
+        // "renewal due" signal, so dropping the work would break real renewals.
+        val now = snodeClock.currentTime()
+        val covered = configFactory.withUserConfigs { configs ->
+            configs.userProfile.getProConfig()?.proProof
+        }?.let { it.expirySeconds > now.epochSecond } == true
+
+        if (covered) darkAttempt = 0
+        val intervalSeconds = if (covered) {
+            COVERED_INTERVAL_SECONDS
+        } else {
+            (DARK_STEP_SECONDS * darkAttempt).coerceAtMost(DARK_CAP_SECONDS)
+        }
+
+        val sinceLast = now.epochSecond - lastProofRequestAt
+        if (sinceLast < intervalSeconds) {
+            val waitSeconds = intervalSeconds - sinceLast
+            Log.d(
+                WORK_NAME,
+                "Last proof request was ${sinceLast}s ago (interval ${intervalSeconds}s, " +
+                    "covered=$covered); re-arming in ${waitSeconds}s"
+            )
+            schedule(applicationContext, Duration.ofSeconds(waitSeconds))
+            return Result.success()
+        }
+
+        // Count the attempt before making it, so one that fails still advances the backoff.
+        lastProofRequestAt = now.epochSecond
+        if (!covered) darkAttempt++
+
         return try {
             // Rotating key is the deterministic seed derived from the Pro master key for the current
             // time (libsession owns the rotation schedule), so every device converges on the same key
@@ -170,6 +206,25 @@ class ProProofGenerationWorker @AssistedInject constructor(
 
     companion object {
         private const val WORK_NAME = "ProProofGenerationWorker"
+
+        /**
+         * Minimum spacing between proof requests. **Shared cross-client contract** — iOS
+         * (`SessionProManager.reconcileProofRenewal`) and Desktop use exactly these values; keep them
+         * in step, and say why in the commit if they ever have to diverge.
+         */
+        private const val COVERED_INTERVAL_SECONDS = 60L   // holding a valid proof: brisk
+        private const val DARK_STEP_SECONDS = 15L          // no valid proof: 15s * attempt …
+        private const val DARK_CAP_SECONDS = 900L          // … capped at 15 minutes
+
+        /**
+         * Pacing state, deliberately in-memory to match iOS and Desktop, which both hold it as an
+         * ordinary field. A process restart resets it, costing at most one extra request per launch
+         * — the loop this guards against was a tight re-schedule cycle within a single process.
+         */
+        // 0 rather than a sentinel minimum: `now - lastProofRequestAt` would overflow from Long.MIN_VALUE
+        // and come out negative, throttling the very first request instead of letting it through.
+        @Volatile private var lastProofRequestAt = 0L
+        @Volatile private var darkAttempt = 0
 
         suspend fun schedule(context: Context, delay: Duration? = null) {
             WorkManager.getInstance(context)
