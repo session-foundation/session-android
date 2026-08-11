@@ -724,8 +724,9 @@ class ProStatusManager @Inject constructor(
          * The backend states the contract as "`expiry_ts` + `grace_period_duration` is exactly when we
          * stop serving".
          *
-         * The four rows, which replace the spec's `E + grace <= now` expired test (that test both
-         * double-counted grace and was unimplementable when written, because grace was not in config):
+         * The decision is four rows over config state. Note that none of them tests
+         * `renewalDue + grace <= now`: coverage end is not what a cold start needs to know, and keying
+         * any row to it double-counts grace against the payment date the rows already turn on.
          *
          * | config state                                       | action                            |
          * |----------------------------------------------------|-----------------------------------|
