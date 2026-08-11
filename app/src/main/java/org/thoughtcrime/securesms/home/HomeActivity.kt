@@ -23,6 +23,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.WindowInsetsCompat
@@ -265,14 +268,25 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
             val pathStatus by pathManager.status.collectAsState()
 
+            // Carried on the Compose node rather than as an `android:contentDescription` on the hosting
+            // ComposeView, which is where it used to live. The host's attribute was unreliable: Compose
+            // publishes its own semantics tree for the content (the `clickable` below already gives this
+            // node a button role), so whether the host's description surfaced in the accessibility tree
+            // depended on composition timing — which showed up as an intermittent "element not found" in
+            // the Appium onboarding flow. On the tapped node it is deterministic, and it describes the
+            // thing that is actually actionable.
+            val openSettingsDescription = stringResource(R.string.AccessibilityId_profilePicture)
+
             Avatar(
                 size = LocalDimensions.current.iconMediumAvatar,
                 data = avatarUtils.getUIDataFromRecipient(recipient),
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = ::openSettings
-                ),
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = ::openSettings
+                    )
+                    .semantics { contentDescription = openSettingsDescription },
                 badge = AvatarBadge.ComposeBadge(
                     content = {
                         val glowSize = LocalDimensions.current.xxxsSpacing
