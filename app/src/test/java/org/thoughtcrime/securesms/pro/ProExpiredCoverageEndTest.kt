@@ -13,8 +13,8 @@ import java.time.Instant
  * The backend only reports EXPIRED once coverage has ended, so a window measured from the payment date
  * is short by exactly the grace period and empty once grace reaches the window length.
  *
- * A multi-day grace means an Apple account whose dunning ran out; on Play it is only the ~1h latency
- * allowance. The cases sweep grace as a parameter rather than asserting either store's number.
+ * A multi-day grace means a real dunning window is known, which happens on both providers. The cases
+ * sweep grace as a parameter rather than asserting any store's number.
  *
  * The CTA condition itself lives in `HomeViewModel`, which needs Android. What is testable here is the
  * instant it keys off.

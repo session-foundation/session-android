@@ -21,7 +21,7 @@ class ProStartupGateTest {
 
     private val now: Instant = Instant.parse("2026-08-07T00:00:00Z")
 
-    /** Multi-day grace means an Apple account mid-dunning; Play's is only the ~1h latency allowance. */
+    /** Multi-day grace means a real dunning window is known — on either provider. See `ProStatus`. */
     private val grace: Duration = Duration.ofDays(14)
     private val noGrace: Duration = Duration.ZERO
 
