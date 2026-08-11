@@ -35,8 +35,12 @@
                         android:layout_height="@dimen/very_small_profile_picture_size"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:contentDescription="@string/AccessibilityId_profilePicture" />
+                        app:layout_constraintBottom_toBottomOf="parent" />
+                    <!-- No contentDescription here on purpose: it is set on the Compose node inside
+                         (see HomeActivity's setThemedContent). Setting it on this host as well would put
+                         the same identifier on two nodes in one tree, which is the ambiguity this moved
+                         away from. -->
+
 
                     <ImageView
                         android:id="@+id/sessionHeaderImage"

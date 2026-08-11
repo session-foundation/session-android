@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -162,7 +163,14 @@ fun ProBadgeText(
     showBadge: Boolean = true,
     badgeColors: ProBadgeColors = proBadgeColorStandard(),
     badgeAtStart: Boolean = false,
-    onBadgeClick: (() -> Unit)? = null
+    onBadgeClick: (() -> Unit)? = null,
+    /**
+     * Overrides the badge icon's QA id. Defaults to the shared [R.string.qa_pro_badge_icon], which is
+     * on every badge in the app and so cannot identify a particular one. Pass a unique id where a test
+     * needs to address *this* badge, rather than having it reach the shared id by traversing from a
+     * parent — a traversal encodes a layout detail and breaks when the layout is restructured.
+     */
+    @StringRes badgeQaTag: Int = R.string.qa_pro_badge_icon
 ) {
     Row(
         modifier = modifier.qaTag(stringResource(R.string.qa_pro_badge_component)),
@@ -179,7 +187,7 @@ fun ProBadgeText(
                 }
                 ProBadge(
                     modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f)
-                        .qaTag(stringResource(R.string.qa_pro_badge_icon)),
+                        .qaTag(stringResource(badgeQaTag)),
                     colors = badgeColors
                 )
             }
@@ -1069,40 +1077,59 @@ fun SessionProSettingsHeader(
                     .padding(horizontal = LocalDimensions.current.spacing)
                     .onSizeChanged { newSizeDp ->
                         headerSize = newSizeDp
-                    }
-                    .clearAndSetSemantics{
-                        contentDescription = NonTranslatableStringConstants.APP_PRO
                     },
                 horizontalAlignment = Alignment.CenterHorizontally
 
             ) {
-                Image(
-                    modifier = Modifier.size(LocalDimensions.current.iconXXLarge),
-                    painter = painterResource(id = R.drawable.session_logo),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(color)
-                )
+                // The semantics collapse covers the DECORATIVE branding only — a logo, an icon and a
+                // badge that would otherwise surface as three unlabelled images. It deliberately does
+                // NOT extend to [extraContent].
+                //
+                // It used to sit on the outer Column, which swallowed extraContent too. Note
+                // `clearAndSetSemantics` ERASES descendants rather than merging them, so that had two
+                // effects worth remembering: any test tag inside was deleted rather than absorbed, and
+                // the status message's TEXT was absent from the tree entirely — meaning a TalkBack user
+                // heard "Session Pro" for the whole header and never heard "Checking Pro status…" or
+                // the error. If you widen this again, that is what you are re-breaking.
+                //
+                // The collapse stays OFF the outer Column for a second, unrelated reason: that one
+                // carries `onSizeChanged`, and `headerSize` drives the radial gradient's ratio above.
+                // Keeping extraContent inside the measured node is what stops the gradient's scale
+                // shifting whenever the banner is visible.
+                Column(
+                    modifier = Modifier.clearAndSetSemantics {
+                        contentDescription = NonTranslatableStringConstants.APP_PRO
+                    },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        modifier = Modifier.size(LocalDimensions.current.iconXXLarge),
+                        painter = painterResource(id = R.drawable.session_logo),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(color)
+                    )
 
-                Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                    Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
 
-                // Force the row to remain in LTR to preserve the image+icon order
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                    Row(
-                        modifier = Modifier.height(LocalDimensions.current.smallSpacing)
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_session),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(LocalColors.current.text)
-                        )
-
-                        Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
-
-                        ProBadge(
-                            colors = proBadgeColorStandard().copy(
-                                backgroundColor = color
+                    // Force the row to remain in LTR to preserve the image+icon order
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Row(
+                            modifier = Modifier.height(LocalDimensions.current.smallSpacing)
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.ic_session),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(LocalColors.current.text)
                             )
-                        )
+
+                            Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
+
+                            ProBadge(
+                                colors = proBadgeColorStandard().copy(
+                                    backgroundColor = color
+                                )
+                            )
+                        }
                     }
                 }
 

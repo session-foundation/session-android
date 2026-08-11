@@ -354,6 +354,21 @@
     <string name="qa_pro_badge_component">pro-badge-component</string>
     <string name="qa_pro_badge_text">pro-badge-text</string>
     <string name="qa_pro_badge_icon">pro-badge-icon</string>
+    <!-- Unique ids for elements a spec would otherwise have to reach by parent/child traversal.
+         A traversal encodes a layout detail rather than a contract, so it breaks on restructuring;
+         these are addressed directly instead. Same strings on iOS - one locator serves both. -->
+    <string name="qa_conversation_header_pro_badge">conversation-header-pro-badge</string>
+    <string name="qa_pro_settings_update_plan_subtitle">pro-settings-update-plan-subtitle</string>
+    <!-- Section headers on the Pro settings screen. Named for the section's role rather than its
+         visible title, so they survive a copy change. -->
+    <string name="qa_pro_settings_stats_header">pro-settings-stats-header</string>
+    <string name="qa_pro_settings_manage_header">pro-settings-manage-header</string>
+    <string name="qa_pro_settings_features_header">pro-settings-features-header</string>
+    <!-- The Pro settings header's loading/error status message. ONE id for the slot: the four
+         possible messages are told apart by their TEXT, so this must stay on the node carrying the
+         message and must not gain a contentDescription — that would be a second source of truth for
+         the same string, and the first thing to rot when the copy changes. Same string on iOS. -->
+    <string name="qa_pro_settings_status_banner">pro-settings-status-banner</string>
     <string name="qa_action_item_title">action-item-title</string>
     <string name="qa_action_item_subtitle">action-item-subtitle</string>
     <string name="qa_action_item_icon">action-item-icon</string>
