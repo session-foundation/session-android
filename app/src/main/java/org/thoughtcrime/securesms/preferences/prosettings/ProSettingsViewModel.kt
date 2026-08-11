@@ -761,14 +761,14 @@ class ProSettingsViewModel @AssistedInject constructor(
     /**
      * The instant the renewal falls due — the account's paid-through end.
      *
-     * `expiry` is COVERAGE END, not paid-through: the backend folds grace into it before sending it,
-     * so the renewal was due a grace period earlier. Subtracting is unconditional — the wire sends
-     * grace = 0 when the subscription is not auto-renewing, so this is a no-op for those accounts.
+     * `expiry` IS the payment-due date. Coverage runs a further `gracePeriod` past it — the backend's
+     * contract is "`expiry_ts` + `grace_period_duration` is exactly when we stop serving" — so do not
+     * subtract to get this instant.
      */
-    private fun GetProStatusResponse.renewalDueAt(): Instant? = expiry?.minus(gracePeriod)
+    private fun GetProStatusResponse.renewalDueAt(): Instant? = expiry
 
-    /** The instant coverage really ends — the wire value as sent. See [renewalDueAt]. */
-    private fun GetProStatusResponse.coverageEndsAt(): Instant? = expiry
+    /** The instant coverage really ends. See [renewalDueAt]. */
+    private fun GetProStatusResponse.coverageEndsAt(): Instant? = expiry?.plus(gracePeriod)
 
     /**
      * [immediate] bypasses the repository's freshness floor. Every caller here is a user-initiated

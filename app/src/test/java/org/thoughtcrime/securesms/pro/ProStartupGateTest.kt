@@ -8,15 +8,19 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * The startup gate's decision, as a pure function of
- * (coverage end, auto-renewing, grace, now).
+ * The startup gate's decision, as a pure function of (renewal due, auto-renewing, grace, now).
  *
  * Scope: the decision only. These do NOT cover the persisted 24h interval or the config read — both
  * need a database, and the interval is checked before this function is reached.
  *
- * The distinction every case below turns on: **the access expiry the backend sends is grace-inclusive**,
- * so it is coverage END, and the renewal falls due a grace period earlier. Anything keyed to coverage
- * end rather than to `coverageEnd - grace` is blind to the entire grace window.
+ * The model every case below turns on: **the access expiry the backend sends IS the payment-due date**,
+ * and coverage runs a further grace period past it — the backend's own words are "`expiry_ts` +
+ * `grace_period_duration` is exactly when we stop serving". So `expiry` needs no adjustment to get the
+ * renewal date, and the grace window is `[expiry, expiry + grace)`.
+ *
+ * A note for anyone tempted to "fix" this by subtracting grace: that WAS the shape here, built against a
+ * backend that folded grace into the stored expiry. The fold was removed upstream and the field now
+ * reports how much longer we serve PAST the shown expiry. Subtracting now double-counts.
  */
 class ProStartupGateTest {
 
@@ -43,34 +47,55 @@ class ProStartupGateTest {
 
     @Test
     fun `auto-renewing and comfortably active does not fetch`() {
-        // Renewal due in 6 days (coverage end 20 days out, less 14 days of grace).
+        // The renewal is 20 days out, so nothing can have gone wrong with it yet.
         assertNull(startupFetchReason(inDays(20), autoRenewing = true, grace = grace, now = now))
     }
 
     @Test
     fun `auto-renewing and inside the grace window DOES fetch`() {
-        // Coverage end is 7 days away, so `now` is comfortably before it — but the renewal fell due 7
-        // days ago and grace is running. This is the state the whole rework exists to surface, and a
-        // gate keyed to coverage end would sleep straight through it.
-        assertNotNull(startupFetchReason(inDays(7), autoRenewing = true, grace = grace, now = now))
+        // The renewal fell due 7 days ago and grace runs 14, so coverage is still live but the charge
+        // has not landed. This is the state the whole rework exists to surface.
+        assertNotNull(startupFetchReason(daysAgo(7), autoRenewing = true, grace = grace, now = now))
     }
 
     @Test
     fun `auto-renewing boundary - exactly at the renewal date fetches`() {
-        assertNotNull(startupFetchReason(now.plus(grace), autoRenewing = true, grace = grace, now = now))
+        assertNotNull(startupFetchReason(now, autoRenewing = true, grace = grace, now = now))
     }
 
     @Test
     fun `auto-renewing boundary - one second before the renewal date does not fetch`() {
         // The negative control for the pair above. Without it, "inside grace fetches" also passes
         // against a gate that fetches unconditionally whenever auto-renewing.
-        val justBefore = now.plus(grace).plusSeconds(1)
-        assertNull(startupFetchReason(justBefore, autoRenewing = true, grace = grace, now = now))
+        assertNull(startupFetchReason(now.plusSeconds(1), autoRenewing = true, grace = grace, now = now))
     }
 
     @Test
     fun `auto-renewing past coverage end still fetches`() {
-        assertNotNull(startupFetchReason(daysAgo(1), autoRenewing = true, grace = grace, now = now))
+        // Renewal due 20 days ago, grace 14, so coverage ended 6 days ago: the renewal ultimately
+        // failed. Still worth a fetch — this is the account about to be shown the Expired CTA, and
+        // config alone must never be the basis for that.
+        assertNotNull(startupFetchReason(daysAgo(20), autoRenewing = true, grace = grace, now = now))
+    }
+
+    @Test
+    fun `auto-renewing and long dead does not fetch`() {
+        // Renewal due 60 days ago, coverage ended 46 days ago, past the Expired CTA window. Without
+        // this bound an account whose renewing flag was never cleared fetches on every cold start
+        // forever.
+        assertNull(startupFetchReason(daysAgo(60), autoRenewing = true, grace = grace, now = now))
+    }
+
+    @Test
+    fun `the auto-renewing bound is measured from coverage end, not the payment date`() {
+        // 40 days past the payment date with 14 days of grace: coverage ended 26 days ago, so the
+        // Expired CTA can still fire and this must fetch.
+        //
+        // The discriminating case for where that bound is anchored. Measured from the payment date the
+        // account reads as 40 days gone — past the 30 day window — and this returns null. Only the
+        // coverage-end anchor gets it right, and only a grace period longer than the gap between the
+        // two anchors can tell them apart, which is why this uses the multi-day Google value.
+        assertNotNull(startupFetchReason(daysAgo(40), autoRenewing = true, grace = grace, now = now))
     }
 
     // --- not auto-renewing ----------------------------------------------------------------------
@@ -107,16 +132,19 @@ class ProStartupGateTest {
         assertNull(startupFetchReason(inDays(60), autoRenewing = false, grace = noGrace, now = now))
     }
 
-    // --- the subtraction is unconditional -------------------------------------------------------
+    // --- grace's blast radius -------------------------------------------------------------------
 
     @Test
-    fun `zero grace makes coverage end and the renewal date the same instant`() {
-        // The wire sends grace = 0 whenever the subscription is not auto-renewing, so subtracting
-        // needs no provider branching and no null handling — it is a no-op for those accounts. Pinned
-        // because a future reader may be tempted to guard the subtraction.
-        val expiring = startupFetchReason(inDays(3), autoRenewing = false, grace = noGrace, now = now)
-        val alsoExpiring = startupFetchReason(inDays(3), autoRenewing = false, grace = Duration.ZERO, now = now)
-        assertNotNull(expiring)
-        assertNotNull(alsoExpiring)
+    fun `grace does not widen the non-renewing rows`() {
+        // Grace belongs to ONE row — the auto-renewing one — and these pin that. A non-renewing
+        // account 31 days past its expiry is out of CTA range whatever grace says, and one expiring in
+        // 3 days is in range whatever grace says.
+        //
+        // This is the guard against grace being reintroduced into the other rows by someone who
+        // remembers it mattering more. It cannot matter here: the wire sends grace = 0 when the
+        // subscription is not auto-renewing, so any behaviour keyed to a non-zero grace on this path
+        // is behaviour that never runs in production and only ever fires on a test fixture.
+        assertNull(startupFetchReason(daysAgo(31), autoRenewing = false, grace = grace, now = now))
+        assertNotNull(startupFetchReason(inDays(3), autoRenewing = false, grace = grace, now = now))
     }
 }

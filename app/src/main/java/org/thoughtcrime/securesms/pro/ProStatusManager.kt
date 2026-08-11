@@ -356,11 +356,11 @@ class ProStatusManager @Inject constructor(
             proStatusRepository.get().loadState
                 .mapNotNull { state ->
                     state.lastUpdated?.first?.let { status ->
-                        status.expiry?.let { coverageEnd ->
-                            // The renewal falls due a grace period BEFORE coverage ends, because the
-                            // expiry the backend sends is grace-inclusive. Waking only at coverage end
-                            // would fire after the window this trigger exists to catch had closed.
-                            coverageEnd.minus(status.gracePeriod) to coverageEnd
+                        status.expiry?.let { renewalDue ->
+                            // `expiry` is the payment-due date; coverage runs a further grace period
+                            // past it. So the renewal falls due at `expiry`, and grace ends at
+                            // `expiry + gracePeriod`.
+                            renewalDue to renewalDue.plus(status.gracePeriod)
                         }
                     }
                 }
@@ -371,10 +371,9 @@ class ProStatusManager @Inject constructor(
                     // 1. renewal due — did the charge succeed or fail?
                     // 2. coverage end — did grace run out without recovery?
                     //
-                    // (2) looks covered by the proof loop, and isn't. The backend issues a proof
-                    // good until roughly an hour past coverage end and the renewal target sits ~1h
-                    // before that, so a proof attempt lands near coverage end and its config write
-                    // fires the config-change trigger. But that chain needs `E` to MOVE:
+                    // (2) looks covered by the proof loop, and isn't. A proof attempt near the end
+                    // of coverage writes config, and that write fires the config-change trigger. But
+                    // that chain needs `E` to MOVE:
                     //
                     //     renewal succeeded -> E advances  -> config change -> refresh   ✅
                     //     renewal failed    -> E unchanged -> no change     -> nothing   ❌
@@ -456,7 +455,7 @@ class ProStatusManager @Inject constructor(
             return@flow
         }
 
-        val (coverageEnd, autoRenewing, grace) = configFactory.get().withUserConfigs { configs ->
+        val (renewalDue, autoRenewing, grace) = configFactory.get().withUserConfigs { configs ->
             Triple(
                 configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond),
                 configs.userProfile.getProAutoRenewing(),
@@ -464,7 +463,7 @@ class ProStatusManager @Inject constructor(
             )
         }
 
-        val reason = startupFetchReason(coverageEnd, autoRenewing, grace, now)
+        val reason = startupFetchReason(renewalDue, autoRenewing, grace, now)
         if (reason == null) {
             Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Startup gate: no CTA could fire, skipping the startup fetch")
             return@flow
@@ -697,10 +696,10 @@ class ProStatusManager @Inject constructor(
          * Whether a cold start should fetch `get_pro_status`, and why — or null to stay off the
          * network. Pure over plain values so it can be tested without a clock, a database or config.
          *
-         * [coverageEnd] is the access expiry as the backend sends it, which is **grace-inclusive**;
-         * the renewal falls due at `coverageEnd - grace`. Subtracting is unconditional and needs no
-         * provider branching, because the wire sends grace = 0 whenever the subscription is not
-         * auto-renewing.
+         * [renewalDue] is the access expiry as the backend sends it — the **payment-due date**. Coverage
+         * runs a further [grace] past it, so the grace window is `[renewalDue, renewalDue + grace)`.
+         * The backend states the contract as "`expiry_ts` + `grace_period_duration` is exactly when we
+         * stop serving".
          *
          * The four rows, which replace the spec's `E + grace <= now` expired test (that test both
          * double-counted grace and was unimplementable when written, because grace was not in config):
@@ -712,26 +711,42 @@ class ProStatusManager @Inject constructor(
          * | `!auto_renewing && renewalDue` in the CTA window    | fetch — the Expiring CTA may fire |
          * | `!auto_renewing && now >= renewalDue`               | confirm before the Expired CTA    |
          *
-         * Row 1 keying off `renewalDue` rather than `coverageEnd` is the point: the grace window is
-         * `renewalDue <= now < coverageEnd`, so keying off coverage end would have declined to fetch
-         * for exactly the state this exists to surface.
+         * Row 2 is what surfaces grace: past the payment-due date while still covered is exactly the
+         * state the grace warning exists for, and it is reachable because coverage extends to
+         * `renewalDue + grace`. It is also the only row [grace] enters — see the comment there.
          */
         internal fun startupFetchReason(
-            coverageEnd: Instant?,
+            renewalDue: Instant?,
             autoRenewing: Boolean,
             grace: Duration,
             now: Instant,
         ): String? {
             // No access expiry at all: never subscribed, so no CTA can fire and nothing to confirm.
-            if (coverageEnd == null) return null
+            if (renewalDue == null) return null
 
-            val renewalDue = coverageEnd.minus(grace)
             val overdue = !now.isBefore(renewalDue)
 
             return when {
                 autoRenewing && !overdue -> null
 
-                autoRenewing -> "auto-renewing and past the renewal date; grace is running"
+                // Past the payment date while auto-renewing: either the charge is retrying (grace
+                // is running) or it ultimately failed and coverage has since ended. Both want a
+                // fetch — the first to raise the grace warning, the second to confirm before the
+                // Expired CTA.
+                //
+                // Bounded from COVERAGE end, not from the payment date, and this is the one place
+                // `grace` does any work. Every other row here needs only "is the renewal overdue",
+                // which is why grace no longer appears in them: under the corrected model the
+                // payment date arrives as `expiry` directly and nothing has to be reconstructed
+                // from it. Keeping the bound measured from `renewalDue + grace` means an account
+                // still inside a multi-day grace is never mistaken for a long-dead one, and an
+                // account dead for a year stops fetching on every cold start.
+                autoRenewing ->
+                    if (renewalDue.plus(grace).plus(EXPIRED_CTA_WINDOW).isAfter(now)) {
+                        "auto-renewing and past the payment date; grace or a failed renewal"
+                    } else {
+                        null
+                    }
 
                 !overdue ->
                     if (renewalDue.isBefore(now.plus(EXPIRING_CTA_WINDOW))) {
