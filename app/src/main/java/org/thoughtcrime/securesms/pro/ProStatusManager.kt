@@ -106,9 +106,15 @@ class ProStatusManager @Inject constructor(
                 }
                 .distinctUntilChanged(),
             proStatusRepository.get().loadState,
-            (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS } as Flow<*>)
+            // The fixture and its expiry override are collected as ONE flow, not two: `combine` is only
+            // overloaded to five typed flows, and these two answer one question ("what state do we
+            // want mocked") so splitting them would buy nothing.
+            (TextSecurePreferences.events.filter {
+                it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS ||
+                    it == TextSecurePreferences.DEBUG_PRO_ACCESS_EXPIRY
+            } as Flow<*>)
                 .onStart { emit(Unit) }
-                .map { prefs.getDebugSubscriptionType() },
+                .map { prefs.getDebugSubscriptionType() to prefs.getDebugProAccessExpiry() },
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.getDebugProPlanStatus() },
@@ -116,7 +122,7 @@ class ProStatusManager @Inject constructor(
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
         ){ showProBadgePreference, proStatusState,
-           debugSubscription, debugProPlanStatus, forceCurrentUserAsPro ->
+           (debugSubscription, debugAccessExpiry), debugProPlanStatus, forceCurrentUserAsPro ->
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
@@ -151,22 +157,31 @@ class ProStatusManager @Inject constructor(
                 Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting DEBUG Pro data state")
                 val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
 
+                // SnodeClock, not Instant.now(), because every consumer of these instants reads
+                // SnodeClock: the expiry label renders from `clock.currentTime()`
+                // (ProSettingsViewModel) and `isWithinQuickRefundWindow` documents the same
+                // requirement. Building a fixture off the device clock and rendering it against the
+                // snode clock leaves the offset between them in the result — which is how a "30 days"
+                // fixture rendered "31 days". Read ONCE so every instant in one recomputation shares
+                // an origin; 15 separate reads could straddle a clock update mid-fixture.
+                val now = snodeClock.currentTime()
+
                 ProDataState(
                     type = when(subscriptionState){
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE -> ProStatus.Active.AutoRenewing(
-                            renewingAt = Instant.now() + Duration.ofDays(14),
+                            renewingAt = now + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.THREE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
-                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            quickRefundExpiry = now + Duration.ofDays(7),
                             refundInProgress = false,
                             inGracePeriod = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE_REFUNDING -> ProStatus.Active.AutoRenewing(
-                            renewingAt = Instant.now() + Duration.ofDays(14),
+                            renewingAt = now + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.THREE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
-                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            quickRefundExpiry = now + Duration.ofDays(7),
                             refundInProgress = true,
                             inGracePeriod = false
                         )
@@ -178,51 +193,51 @@ class ProStatusManager @Inject constructor(
                         // would make the two behaviourally identical and leave no way to trigger the CTA
                         // by hand.
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE -> ProStatus.Active.Expiring(
-                            renewingAt = Instant.now() + Duration.ofDays(2),
+                            renewingAt = now + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
-                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            quickRefundExpiry = now + Duration.ofDays(7),
                             refundInProgress = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER -> ProStatus.Active.Expiring(
-                            renewingAt = Instant.now() + Duration.ofDays(EXPIRING_LATER_DAYS),
+                            renewingAt = now + Duration.ofDays(EXPIRING_LATER_DAYS),
                             duration = ProSubscriptionDuration.TWELVE_MONTHS.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application),
-                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            quickRefundExpiry = now + Duration.ofDays(7),
                             refundInProgress = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.AUTO_APPLE -> ProStatus.Active.AutoRenewing(
-                            renewingAt = Instant.now() + Duration.ofDays(14),
+                            renewingAt = now + Duration.ofDays(14),
                             duration = ProSubscriptionDuration.ONE_MONTH.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
-                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            quickRefundExpiry = now + Duration.ofDays(7),
                             refundInProgress = false,
                             inGracePeriod = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_APPLE -> ProStatus.Active.Expiring(
-                            renewingAt = Instant.now() + Duration.ofDays(2),
+                            renewingAt = now + Duration.ofDays(2),
                             duration = ProSubscriptionDuration.ONE_MONTH.period,
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application),
-                            quickRefundExpiry = Instant.now() + Duration.ofDays(7),
+                            quickRefundExpiry = now + Duration.ofDays(7),
                             refundInProgress = false
                         )
 
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
-                            expiredAt = Instant.now() - Duration.ofDays(14),
+                            expiredAt = now - Duration.ofDays(14),
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
-                            expiredAt = Instant.now() - Duration.ofDays(60),
+                            expiredAt = now - Duration.ofDays(60),
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
                         DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
-                            expiredAt = Instant.now() - Duration.ofDays(14),
+                            expiredAt = now - Duration.ofDays(14),
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application)
                         )
-                    },
+                    }.withMockedExpiry(debugAccessExpiry),
 
                     refreshState = proDataRefreshState,
                     showProBadge = showProBadgePreference,
@@ -232,6 +247,25 @@ class ProStatusManager @Inject constructor(
     }.stateIn(scope, SharingStarted.Eagerly,
         initialValue = getDefaultSubscriptionStateData()
     )
+
+    /**
+     * Replaces the fixed offset a debug fixture carries with an explicitly requested instant, leaving
+     * everything else about the fixture (plan length, provider, grace/refund flags) alone.
+     *
+     * This is what lets one fixture serve any expiry window, so a test that only cares *when* access
+     * ends doesn't need a new fixture — see `QaLaunchConfig.EXTRA_PRO_ACCESS_EXPIRY`. Null means "use
+     * the fixture's own offset", which is the default and the debug menu's behaviour.
+     *
+     * [ProStatus.NeverSubscribed] is returned untouched deliberately: it has no expiry to override,
+     * and inventing one would turn "never subscribed" into a subscription.
+     */
+    private fun ProStatus.withMockedExpiry(expiry: Instant?): ProStatus = when {
+        expiry == null -> this
+        this is ProStatus.Active.AutoRenewing -> copy(renewingAt = expiry)
+        this is ProStatus.Active.Expiring -> copy(renewingAt = expiry)
+        this is ProStatus.Expired -> copy(expiredAt = expiry)
+        else -> this
+    }
 
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
         launch {
@@ -524,21 +558,28 @@ class ProStatusManager @Inject constructor(
         const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
 
         /**
-         * Remaining access for the `EXPIRING_GOOGLE_LATER` debug fixture, in days. **A test pins this
-         * value** — don't change it casually.
-         *
-         * Two non-obvious properties keep that safe, both worth preserving:
+         * Remaining access for the `EXPIRING_GOOGLE_LATER` debug fixture, in days. **An Appium spec
+         * pins this value** — it is what `sessionProBackendStatus=active` selects — so don't change it
+         * casually. Prefer overriding the instant per-test with `sessionProAccessExpiry` over editing
+         * this.
          *
          * The label reads "30 days" **only because `DateUtils.getExpiryString` rounds up.** The fixture
          * sets `renewingAt = now + 30d` when `proDataState` recomputes, but the label is rendered from a
-         * *later* `now`, so the true remaining is always slightly under 30. That ceiling is load-bearing:
-         * make it floor for unrelated reasons and the label silently becomes "29 days".
+         * *later* `now`, so the true remaining is normally slightly under 30. That ceiling is
+         * load-bearing: make it floor for unrelated reasons and the label silently becomes "29 days".
          *
-         * The `Instant.now()` here is understood, not an oversight — the rest of the Pro stack uses
-         * `SnodeClock`. It is safe because **both** sides of `Duration.between(now, renewingAt)` read the
-         * same device clock, so skew cancels and the ceiling absorbs the remainder. Don't tidy it into
-         * `SnodeClock` assuming it is a latent bug; it is safe by that cancellation, not by the clock
-         * being right.
+         * ## Both sides read `SnodeClock`, and that is what makes the ceiling safe
+         *
+         * The fixture builds `renewingAt` from `snodeClock.currentTime()` and the label renders from
+         * `clock.currentTime()` — the same clock — so the offset between snode and device time cancels
+         * and only elapsed time remains, which the ceiling absorbs. **Don't "tidy" the fixture back to
+         * `Instant.now()`:** that is the version this had, and it left the snode-vs-device offset in
+         * the result. A snode clock running *behind* the device then made remaining exceed 30d and the
+         * ceiling rendered **"31 days"** — a one-day flake that reads as a test bug.
+         *
+         * The comment here used to assert this cancellation as already true while the code did the
+         * opposite. It is true now because both sides were changed to agree, not because it was ever
+         * self-evident — so if you change either side, check the other.
          */
         private const val EXPIRING_LATER_DAYS = 30L
     }

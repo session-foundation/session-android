@@ -665,6 +665,12 @@ class DebugMenuViewModel @AssistedInject constructor(
      * step (they said 14 days where the code did 2), which cost a wrong expected string in an Appium
      * spec — the label was read as if it were the source of truth. If you change a fixture offset,
      * change its label in the same commit.
+     *
+     * That warning was then proved on the very next pair: `EXPIRED`/`EXPIRED_APPLE` claimed 2 days
+     * while the code did 14, because the fix above only covered the `EXPIRING` labels. **Correcting
+     * the labels that lie is not the same as checking the ones that didn't**, so when this drifts
+     * again, re-read every offset rather than the ones a report names — the labels are now the
+     * documented contract an Appium spec is written against.
      */
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
@@ -673,9 +679,9 @@ class DebugMenuViewModel @AssistedInject constructor(
         EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 30 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
         EXPIRING_APPLE("Expiring/Cancelled (Expires in 2 days, Apple, 1 months)"),
-        EXPIRED("Expired (Expired 2 days ago, Google)"),
+        EXPIRED("Expired (Expired 14 days ago, Google)"),
         EXPIRED_EARLIER("Expired (Expired 60 days ago, Google)"),
-        EXPIRED_APPLE("Expired (Expired 2 days ago, Apple)"),
+        EXPIRED_APPLE("Expired (Expired 14 days ago, Apple)"),
     }
 
     enum class DebugProPlanStatus(val label: String){
