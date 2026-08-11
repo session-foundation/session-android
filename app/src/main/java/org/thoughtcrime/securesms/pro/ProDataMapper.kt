@@ -101,6 +101,15 @@ fun GetProStatusResponse.toProStatus(
         }
 
         ProUserStatus.EXPIRED -> ProStatus.Expired(
+            // `expiry` and `gracePeriod` are only meaningful as a PAIR, from one response. The backend
+            // derives the grace it sends from the same coverage-end instant it judged this status
+            // against, so together they describe one moment; separately they describe none.
+            //
+            // That is why both come off the response and neither is read from config. Config is not an
+            // equivalent source: not every status branch writes `G` there, and the branches that clear
+            // `E` cascade `G` away with it — so a config read here would pair THIS response's expiry
+            // with a grace period from a different response, or with nothing at all, and the resulting
+            // coverage end would be short by however much they disagreed.
             expiredAt = expiry ?: Instant.EPOCH,
             gracePeriod = gracePeriod,
             providerData = providerMetadata(
