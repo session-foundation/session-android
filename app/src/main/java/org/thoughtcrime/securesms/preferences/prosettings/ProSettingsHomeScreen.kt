@@ -157,6 +157,10 @@ fun ProSettingsHome(
                         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
                     ) {
                         Text(
+                            // One id for the slot, shared with the error state below: the four
+                            // possible messages are told apart by their text, not by separate ids, so
+                            // it belongs on the node that carries the message rather than the Row.
+                            modifier = Modifier.qaTag(R.string.qa_pro_settings_status_banner),
                             text = Phrase.from(context.getText(
                                 when(subscriptionType){
                                     is ProStatus.Active -> R.string.proStatusLoadingSubtitle
@@ -178,6 +182,8 @@ fun ProSettingsHome(
                         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
                     ) {
                         Text(
+                            // Same id as the loading state above — deliberately. See there.
+                            modifier = Modifier.qaTag(R.string.qa_pro_settings_status_banner),
                             text = Phrase.from(context.getText(
                                 when(subscriptionType){
                                     is ProStatus.Active -> R.string.proErrorRefreshingStatus
@@ -318,6 +324,7 @@ fun ProStats(
         dropShadow = LocalColors.current.isLight,
         title = Phrase.from(LocalContext.current, R.string.proStats)
             .format().toString(),
+        titleQaTag = R.string.qa_pro_settings_stats_header,
         titleIcon = {
             val tooltipState = rememberTooltipState(isPersistent = true)
             val scope = rememberCoroutineScope()
@@ -519,6 +526,7 @@ fun ProSettings(
         modifier = modifier,
         title = Phrase.from(LocalContext.current, R.string.proSettings)
             .format().toString(),
+        titleQaTag = R.string.qa_pro_settings_manage_header,
     ) {
         val refunding = proStatus.refundInProgress
 
@@ -590,6 +598,10 @@ fun ProSettings(
                     }
                 },
                 qaTag = R.string.qa_pro_settings_action_update_plan,
+                // The remaining-access line. Uniquely identified rather than left as the shared
+                // `action-item-subtitle`, which is on every row here and so can only be addressed by
+                // traversing from this row — a traversal that breaks whenever the layout is restructured.
+                subtitleQaTag = R.string.qa_pro_settings_update_plan_subtitle,
                 onClick = { sendCommand(GoToChoosePlan(inSheet)) }
             )
             Divider()
@@ -623,6 +635,7 @@ fun ProFeatures(
         modifier = modifier,
         title = Phrase.from(LocalContext.current, R.string.proBetaFeatures)
             .format().toString(),
+        titleQaTag = R.string.qa_pro_settings_features_header,
     ) {
         // Cell content
         Column(
