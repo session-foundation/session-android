@@ -4,13 +4,14 @@ import network.loki.messenger.BuildConfig
 import org.thoughtcrime.securesms.pro.subscription.ProPlanPeriod
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
+import java.time.Duration
 import java.time.Instant
 
 sealed interface ProStatus{
     data object NeverSubscribed: ProStatus
 
     sealed interface Active: ProStatus{
-        val renewingAt: Instant //this takes into account the expiry and the grace period
+        val renewingAt: Instant // the payment/renewal-due date (E), as the backend sends it
         val duration: ProPlanPeriod  // the backend's raw (count, unit) — rendered generically, never bucketed
         val providerData: PaymentProviderMetadata
         val quickRefundExpiry: Instant?
@@ -56,9 +57,29 @@ sealed interface ProStatus{
     }
 
     data class Expired(
+        /**
+         * The payment-due date, as the backend sends it. This is the date to display; coverage ran a
+         * further [gracePeriod] past it.
+         */
         val expiredAt: Instant,
+        val gracePeriod: Duration,
         val providerData: PaymentProviderMetadata
-    ): ProStatus
+    ): ProStatus {
+        /**
+         * When access actually ended, and the anchor for any window measuring how long ago that was.
+         *
+         * The backend only reports EXPIRED once coverage has ended, so a window measured from
+         * [expiredAt] instead is short by exactly [gracePeriod], and empty once grace reaches the
+         * window length. [gracePeriod] is coverage-past-expiry: the provider's dunning window plus the
+         * backend's ~1h renewal-latency allowance. It is multi-day once a real dunning window is known
+         * (Apple states its retry window directly; for Play the backend keeps the reported expiry at
+         * the paid-through date and carries Play's expiry extension as the grace instead), and ~1h
+         * before then.
+         *
+         * Derived here rather than at the consumer so a second reader cannot pick the other anchor.
+         */
+        val coverageEndedAt: Instant get() = expiredAt.plus(gracePeriod)
+    }
 }
 
 data class ProDataState(

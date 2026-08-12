@@ -52,6 +52,7 @@ import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SE
 import org.thoughtcrime.securesms.preferences.AppPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.pro.ProRefreshWindows
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -67,7 +68,6 @@ import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -236,7 +236,7 @@ class HomeViewModel @Inject constructor(
                     && !prefs.hasSeenProExpiring()
                 ){
                     val validUntil = subscription.type.renewingAt
-                    showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
+                    showExpiring = validUntil.isBefore(now.plus(ProRefreshWindows.EXPIRING_CTA))
                     Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $showExpiring")
                     if (showExpiring) {
                         _dialogsState.update { state ->
@@ -255,12 +255,15 @@ class HomeViewModel @Inject constructor(
                     // network failure must not surface a false "expired". Consistent with the iOS fix.
                     && subscription.refreshState is org.thoughtcrime.securesms.util.State.Success
                     && !prefs.hasSeenProExpired()) {
-                    val validUntil = subscription.type.expiredAt
-                    showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
+                    // Anchored at coverage end, not at the payment date: the backend only reports
+                    // EXPIRED once coverage has ended, so measuring from the payment date shortens
+                    // this window by exactly the grace period and empties it entirely when grace is
+                    // 30 days or more.
+                    val coverageEnded = subscription.type.coverageEndedAt
+                    showExpired = now.isBefore(coverageEnded.plus(ProRefreshWindows.EXPIRED_CTA))
 
-                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $showExpired")
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Coverage ended: $coverageEnded - Should show Expired CTA? $showExpired")
 
-                    // Check if now is within 30 days after expiry
                     if (showExpired) {
                         _dialogsState.update { state ->
                             state.copy(proExpiredCTA = true)

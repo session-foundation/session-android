@@ -185,6 +185,62 @@ class ProDatabase @Inject constructor(
         }
     }
 
+    /**
+     * When a `get_pro_status` fetch was last **attempted**, successful or not.
+     *
+     * Separate from [getProStatusAndLastUpdated]'s timestamp, which cannot serve this purpose: that
+     * value is written as a pair with the response blob and is unreadable without it, so a failed fetch
+     * records nothing and a failing network goes unthrottled entirely.
+     */
+    fun getProStatusLastAttemptAt(): Instant? {
+        return readableDatabase.query(
+            "SELECT value FROM pro_state WHERE name = ?",
+            arrayOf(STATE_PRO_STATUS_LAST_ATTEMPT_AT)
+        ).use { cursor ->
+            if (cursor.moveToFirst()) Instant.ofEpochMilli(cursor.getString(0).toLong()) else null
+        }
+    }
+
+    /**
+     * When the STARTUP GATE last attempted a fetch. Separate from [getProStatusLastAttemptAt]: the
+     * gate's 24h interval must not be consumed by a routine refresh, and the 60s floor must not be
+     * satisfied by a startup fetch from twenty hours ago.
+     */
+    fun getProStatusLastStartupFetchAttemptAt(): Instant? {
+        return readableDatabase.query(
+            "SELECT value FROM pro_state WHERE name = ?",
+            arrayOf(STATE_PRO_STATUS_LAST_STARTUP_FETCH_ATTEMPT_AT)
+        ).use { cursor ->
+            if (cursor.moveToFirst()) Instant.ofEpochMilli(cursor.getString(0).toLong()) else null
+        }
+    }
+
+    /** See [getProStatusLastStartupFetchAttemptAt]. Attempt-stamped, like the floor's key. */
+    fun setProStatusLastStartupFetchAttemptAt(attemptedAt: Instant) {
+        writableDatabase.compileStatement("""
+            INSERT OR REPLACE INTO pro_state (name, value)
+            VALUES (?, ?)
+        """).use { stmt ->
+            stmt.bindString(1, STATE_PRO_STATUS_LAST_STARTUP_FETCH_ATTEMPT_AT)
+            stmt.bindString(2, attemptedAt.toEpochMilli().toString())
+            // Must be executed — binding alone writes nothing, and the failure is silent.
+            stmt.executeInsert()
+        }
+    }
+
+    /** Records a fetch attempt. Deliberately no change notification — this is not display state. */
+    fun setProStatusLastAttemptAt(attemptedAt: Instant) {
+        writableDatabase.compileStatement("""
+            INSERT OR REPLACE INTO pro_state (name, value)
+            VALUES (?, ?)
+        """).use { stmt ->
+            stmt.bindString(1, STATE_PRO_STATUS_LAST_ATTEMPT_AT)
+            stmt.bindString(2, attemptedAt.toEpochMilli().toString())
+            // Must be executed — binding alone writes nothing, and the failure is silent.
+            stmt.executeInsert()
+        }
+    }
+
     fun updateProStatus(proStatus: GetProStatusResponse, updatedAt: Instant) {
         val changes = writableDatabase.compileStatement("""
             INSERT INTO pro_state (name, value)
@@ -213,6 +269,14 @@ class ProDatabase @Inject constructor(
 
         private const val STATE_PRO_STATUS = "pro_status"
         private const val STATE_PRO_STATUS_UPDATED_AT = "pro_status_updated_at"
+
+        // Written on every ATTEMPT, unlike STATE_PRO_STATUS_UPDATED_AT which is written only alongside
+        // a successful response. No migration needed: pro_state is a name/value table.
+        private const val STATE_PRO_STATUS_LAST_ATTEMPT_AT = "pro_status_last_attempt_at"
+
+        // The startup gate's 24h interval — a separate key, see getProStatusLastStartupFetchAttemptAt.
+        private const val STATE_PRO_STATUS_LAST_STARTUP_FETCH_ATTEMPT_AT =
+            "pro_status_last_startup_fetch_attempt_at"
 
         private const val ROTATING_KEY_VALIDITY_DAYS = 15
 
