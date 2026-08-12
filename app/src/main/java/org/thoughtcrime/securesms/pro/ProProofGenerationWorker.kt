@@ -157,16 +157,21 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         // response is wrong by the difference between them.
                         //
                         // Do not hoist these two out of the success branch. Their protection is
-                        // PLACEMENT — not the parse, and not the type. libsession's `parse_pro_proof`
-                        // returns on the failure path before filling them, so every non-OK outcome
-                        // leaves struct defaults of grace 0 and renewing false; the C struct has no
-                        // presence flag and the Kotlin type is non-nullable, so a read outside this
-                        // branch cannot tell that from a backend that said "not renewing".
+                        // PLACEMENT — not the parse, and not the type.
                         //
-                        // Writing `false` to a presence-only config key ERASES it. On
-                        // `subscription_expired`/`not_subscribed`/`revoked` erasing is truthful; on a
-                        // protocol error or transport failure it would wipe a flag `get_pro_status`
-                        // had correctly learned, on the strength of a response that said nothing.
+                        // Absent fields on a parsed response mean "not applicable" and arrive as grace
+                        // 0 / renewing false, which are genuine values. On a transport or protocol
+                        // failure the same defaults arrive having been parsed from nothing, and the C
+                        // struct has no presence flag and the Kotlin type is non-nullable, so a read
+                        // outside this branch cannot tell the two apart.
+                        //
+                        // That matters because writing `false` to a presence-only config key ERASES
+                        // it: it would wipe a flag `get_pro_status` had correctly learned, on the
+                        // strength of a response that said nothing about the account.
+                        //
+                        // The entitlement-denied path needs no equivalent write. It clears `E`, and
+                        // libsession erases `G` and `A` with it — a grace that outlived its expiry
+                        // would pair with whatever wrote `E` next.
                         configs.userProfile.setProAutoRenewing(response.accountAutoRenewing)
                         configs.userProfile.setProGracePeriod(response.accountGracePeriod)
                     }
