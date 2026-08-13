@@ -1066,7 +1066,6 @@
     <string name="proAccessRenew">Prodloužit přístup k Pro</string>
     <string name="proAccessRenewPlatformStoreWebsite">Prodlužte si přístup k Pro na <b><font color="0">webu {platform_store}</font></b> pomocí {platform_account}, kterým jste si zaregistrovali Pro.</string>
     <string name="proAccessRenewPlatformWebsite">Prodlužte na <b><font color="0">webu {platform}</font></b> pomocí {platform_account}, kterým jste si zaregistrovali Pro.</string>
-    <string name="proAccessRenewStart">Prodlužte svůj přístup k Pro, abyste mohli znovu používat výkonné funkce Session Pro Beta.</string>
     <string name="proAccessRestored">Přístup k Pro obnoven</string>
     <string name="proAccessRestoredDescription">Aplikace Session rozpoznala a obnovila vašemu účtu přístup k Pro. Váš stav Pro byl obnoven!</string>
     <string name="proAccessSignUp">Protože jste si původně zaregistrovali Session Pro přes <b>{platform_store}</b>, je třeba, abyste k aktualizaci svého přístupu k Pro využili svůj {platform_account}.</string>
@@ -1119,7 +1118,6 @@
     <string name="proFeatureListLoadsMore">A další exkluzivních funkce</string>
     <string name="proFeatureListLongerMessages">Zprávy až do 10000 znaků</string>
     <string name="proFeatureListPinnedConversations">Připněte neomezený počet konverzací</string>
-    <string name="proFullestPotential">Chcete využít potenciál Session naplno?\nPřejděte na Session Pro Beta a získejte přístup k mnoha exkluzivním výhodám a funkcím.</string>
     <string name="proGroupActivated">Skupina aktivována</string>
     <string name="proGroupActivatedDescription">Tato skupina má navýšenou kapacitu! Může podporovat až 300 členů, protože správce skupiny má</string>
     <plurals name="proGroupsUpgraded">

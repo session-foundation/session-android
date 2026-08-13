@@ -978,7 +978,6 @@
     <string name="proAccessRenew">续订 Pro 访问权限</string>
     <string name="proAccessRenewPlatformStoreWebsite">请使用您注册 Pro 时使用的 {platform_account}，在 <b><font color="0">{platform_store} 网站</font></b> 上续订您的 Pro 访问权限。</string>
     <string name="proAccessRenewPlatformWebsite">请使用您注册 Pro 所用的 {platform_account}，前往 <b><font color="0">{platform} 网站</font></b> 进行续订。</string>
-    <string name="proAccessRenewStart">续订您的 Pro 访问权限以重新使用强大的 Session Pro Beta 功能。</string>
     <string name="proAccessRestored">已恢复 Pro 访问权限</string>
     <string name="proAccessRestoredDescription">Session 检测并已为您的账户恢复 Pro 访问权限。您的 Pro 状态已恢复！</string>
     <string name="proAccessSignUp">由于您最初是通过 <b>{platform_store}</b> 注册 Session Pro 的，因此需要使用您的 {platform_account} 来更新 Pro 访问权限。</string>
@@ -1028,7 +1027,6 @@
     <string name="proFeatureListLoadsMore">还有更多专属功能等你解锁</string>
     <string name="proFeatureListLongerMessages">消息长度上限为 10,000 个字符</string>
     <string name="proFeatureListPinnedConversations">无限固定对话</string>
-    <string name="proFullestPotential">想要发挥 Session 的全部潜力吗？\n升级至 Session Pro Beta，即可解锁大量专属福利与功能。</string>
     <string name="proGroupActivated">群组已激活</string>
     <string name="proGroupActivatedDescription">该群组已扩容！因管理员升级为 PRO，现支持最多 300 名成员</string>
     <plurals name="proGroupsUpgraded">

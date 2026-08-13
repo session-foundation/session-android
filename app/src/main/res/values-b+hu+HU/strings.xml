@@ -1012,7 +1012,6 @@
     <string name="proAccessRenew">Pro hozzáférés megújítása</string>
     <string name="proAccessRenewPlatformStoreWebsite">Újítsd meg a Pro hozzáférésed a <b><font color="0">{platform_store} weboldalán</font></b>, azzal a {platform_account} fiókkal, amellyel eredetileg regisztráltál a Pro-ra.</string>
     <string name="proAccessRenewPlatformWebsite">Újítsa meg a <b><font color="0">{platform} weboldalon</font></b>, azzal a {platform_account} fiókkal, amellyel a Pro-ra regisztrált.</string>
-    <string name="proAccessRenewStart">Újítsa meg Pro hozzáférését, hogy ismét használhassa a nagy teljesítményű Session Pro béta funkciókat.</string>
     <string name="proAccessRestored">Pro hozzáférés visszaállítva</string>
     <string name="proAccessRestoredDescription">A(z) Session felismerte és visszaállította a(z) Pro hozzáférést a fiókodhoz. A(z) Pro státuszod vissza lett állítva!</string>
     <string name="proAccessSignUp">Mivel eredetileg a <b>{platform_store}</b> áruházon keresztül iratkoztál fel a Session Pro-ra, a {platform_account} fiókodat kell használnod a Pro hozzáférésed frissítéséhez.</string>
@@ -1063,7 +1062,6 @@
     <string name="proFeatureListLoadsMore">Plusz még több exkluzív funkció</string>
     <string name="proFeatureListLongerMessages">Legfeljebb 10 000 karakteres üzenetek</string>
     <string name="proFeatureListPinnedConversations">Tűzz ki korlátlan számú beszélgetést</string>
-    <string name="proFullestPotential">Szeretnéd teljes mértékben kihasználni a(z) Session lehetőségeit?\nFrissíts a(z) Session Pro Bétára, és szerezz hozzáférést rengeteg exkluzív előnyhöz és funkcióhoz.</string>
     <string name="proGroupActivated">Csoport aktiválva</string>
     <string name="proGroupActivatedDescription">Ez a csoport kibővített kapacitással rendelkezik! Akár 300 tagot is képes befogadni, mert egy csoportadminisztrátor</string>
     <plurals name="proGroupsUpgraded">

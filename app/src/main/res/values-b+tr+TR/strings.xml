@@ -1005,7 +1005,6 @@
     <string name="proAccessRenew">Pro Erişimini Yenile</string>
     <string name="proAccessRenewPlatformStoreWebsite">Pro erişiminizi, Pro için kaydolurken kullandığınız {platform_account} ile <b><font color="0">{platform_store} web sitesi</font></b> üzerinden yenileyin.</string>
     <string name="proAccessRenewPlatformWebsite">Pro için kaydolduğunuz {platform_account} hesabını kullanarak <b><font color="0">{platform} web sitesinde</font></b> yenileyin.</string>
-    <string name="proAccessRenewStart">Güçlü Session Pro Beta özelliklerini tekrar kullanmaya başlamak için Pro erişiminizi yenileyin.</string>
     <string name="proAccessRestored">Pro Erişimi Geri Yüklendi</string>
     <string name="proAccessRestoredDescription">Session, hesabınız için Pro erişimini algıladı ve geri yükledi. Pro durumunuz geri yüklendi!</string>
     <string name="proAccessSignUp">Session Pro\'ya ilk olarak <b>{platform_store}</b> üzerinden kaydolduğunuz için, Pro erişiminizi güncellemek üzere {platform_account} hesabınızı kullanmanız gerekir.</string>
@@ -1056,7 +1055,6 @@
     <string name="proFeatureListLoadsMore">Ayrıca daha birçok özel özellik</string>
     <string name="proFeatureListLongerMessages">10.000 karaktere kadar mesajlar</string>
     <string name="proFeatureListPinnedConversations">Sınırsız sohbet sabitleme</string>
-    <string name="proFullestPotential">Session uygulamasını tüm potansiyeliyle kullanmak ister misiniz?\nBirçok özel ayrıcalık ve özelliğe erişmek için Session Pro Beta\'ya yükseltin.</string>
     <string name="proGroupActivated">Grup Etkinleştirildi</string>
     <string name="proGroupActivatedDescription">Bu grubun kapasitesi artırıldı! Bir grup yöneticisi sayesinde artık 300 üyeye kadar destekleyebilir</string>
     <plurals name="proGroupsUpgraded">

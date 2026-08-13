@@ -1062,7 +1062,6 @@
     <string name="proAccessRenew">Renovar acceso Pro</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renueva tu acceso Pro en el <b><font color="0">sitio web de {platform_store}</font></b> utilizando la cuenta {platform_account} con la que te registraste para Pro.</string>
     <string name="proAccessRenewPlatformWebsite">Renueva en el <b><font color="0">sitio web de {platform}</font></b> utilizando la cuenta {platform_account} con la que te registraste en Pro.</string>
-    <string name="proAccessRenewStart">Renueva tu acceso Pro para volver a utilizar las potentes funciones beta de Session Pro.</string>
     <string name="proAccessRestored">Acceso Pro recuperado</string>
     <string name="proAccessRestoredDescription">Session detectó y recuperó el acceso Pro para tu cuenta. ¡Tu estado Pro ha sido restaurado!</string>
     <string name="proAccessSignUp">Como te registraste originalmente en Session Pro a través de <b>{platform_store}</b>, deberás usar tu cuenta {platform_account} para actualizar tu acceso Pro.</string>
@@ -1113,7 +1112,6 @@
     <string name="proFeatureListLoadsMore">Y muchas funciones exclusivas más</string>
     <string name="proFeatureListLongerMessages">Messages up to 10 000 characters</string>
     <string name="proFeatureListPinnedConversations">Fija conversaciones sin límite</string>
-    <string name="proFullestPotential">¿Quieres usar Session al máximo?\nActualiza a Session Pro Beta para acceder a muchas ventajas y funciones exclusivas.</string>
     <string name="proGroupActivated">Grupo activado</string>
     <string name="proGroupActivatedDescription">¡Este grupo tiene capacidad ampliada! Puede admitir hasta 300 miembros porque un admin del grupo tiene</string>
     <plurals name="proGroupsUpgraded">

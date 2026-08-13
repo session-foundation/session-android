@@ -995,7 +995,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proAccessRecover">Palauta Pro-käyttöoikeus</string>
     <string name="proAccessRenew">Uudista Pro Pääsy</string>
     <string name="proAccessRenewPlatformStoreWebsite">Uudista Pro-käyttöoikeutesi <b><font color="0">{platform_store}-verkkosivustolla</font></b> käyttämällä {platform_account}-tiliä, jolla rekisteröidyit Pro-palveluun.</string>
-    <string name="proAccessRenewStart">Uusimalla Pro-käyttöoikeutesi voit jälleen käyttää tehokkaita Session Pro-betaominaisuuksia.</string>
     <string name="proAccessRestored">Pro Käyttöoikeus palautettu</string>
     <string name="proAccessRestoredDescription">Session havaitsi ja palautti Pro-käyttöoikeuden tilillesi. Pro-tilasi on palautettu!</string>
     <string name="proAccessSignUp">Koska rekisteröidyit alun perin Session Pro-palveluun <b>{platform_store}</b>-palvelun kautta, sinun on käytettävä {platform_account}-tiliäsi päivittääksesi Pro-käyttöoikeutesi.</string>
@@ -1046,7 +1045,6 @@ Ryhmän jäseniä ja asetuksia ei voida muuttaa ilman järjestelmänvalvojaa. Jo
     <string name="proFeatureListLoadsMore">Lisäksi paljon muita eksklusiivisia ominaisuuksia</string>
     <string name="proFeatureListLongerMessages">Viestit jopa 10 000 merkkiä pitkiä</string>
     <string name="proFeatureListPinnedConversations">Kiinnitä rajattomasti keskusteluja</string>
-    <string name="proFullestPotential">Haluatko hyödyntää Session sovellusta täysipainoisesti?\nPäivitä Session Pro Beta -versioon saadaksesi käyttöösi runsaasti ainutlaatuisia etuja ja ominaisuuksia.</string>
     <string name="proGroupActivated">Ryhmä Aktivoitu</string>
     <string name="proGroupActivatedDescription">Tämä ryhmä on laajennettu! Se voi nyt sisältää jopa 300 jäsentä, koska ryhmän ylläpitäjä on aktivoinut PRO-ominaisuuden</string>
     <plurals name="proGroupsUpgraded">

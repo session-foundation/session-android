@@ -1064,7 +1064,7 @@
     <string name="proAccessRenewDesktop">Currently, Pro access can only be purchased and renewed via support platforms:{pro_stores}\nBecause you are using Session Desktop, you\'re not able to renew here.\n\nSession developers are working hard on alternative payment options to allow users to purchase Pro access outside of the above platforms. <b>Pro Roadmap</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renew your Pro access on the <b><font color="0">{platform_store} website</font></b> using the {platform_account} you signed up for Pro with.</string>
     <string name="proAccessRenewPlatformWebsite">Renew on the <b><font color="0">{platform} website</font></b> using the {platform_account} you signed up for Pro with.</string>
-    <string name="proAccessRenewStart">Renew your Pro access to start using powerful Session Pro Beta features again.</string>
+    <string name="proAccessRenewStart">Renew your Pro access to start using powerful Session Pro Beta features and support the project again.</string>
     <string name="proAccessRestored">Pro Access Recovered</string>
     <string name="proAccessRestoredDescription">Session detected and recovered Pro access for your account. Your Pro status has been restored!</string>
     <string name="proAccessSignUp">Because you originally signed up for Session Pro via the <b>{platform_store}</b>, you\'ll need to use your {platform_account} to update your Pro access.</string>
@@ -1116,7 +1116,7 @@
     <string name="proFeatureListLoadsMore">Plus loads more exclusive features</string>
     <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
     <string name="proFeatureListPinnedConversations">Pin unlimited conversations</string>
-    <string name="proFullestPotential">Want to use Session to its fullest potential?\nUpgrade to Session Pro Beta to get access to loads of exclusive perks and features.</string>
+    <string name="proFullestPotential">Want to use Session to its fullest potential?\nUpgrade to Session Pro Beta to get access to exclusive features and help support the project.</string>
     <string name="proGroupActivated">Group Activated</string>
     <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
     <plurals name="proGroupsUpgraded">
@@ -1191,6 +1191,7 @@
     <string name="proStatusRefreshNetworkError">Unable to connect to the network to refresh your Pro status. Some actions on this page will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proStatusRenewError">Unable to connect to the network to load your current Pro access. Renewing Pro via Session will be disabled until connectivity is restored.\n\nPlease check your network connection and retry.</string>
     <string name="proSupportDescription">Need help with Pro? Submit a request to the support team.</string>
+    <string name="proThanksForSupporting">Thank you for supporting Session!</string>
     <string name="proTosDescription">By {action_type}, you are {activation_type} Session Pro via the Session Protocol. {entity} will facilitate that activation but is not the provider of Session Pro. {entity} is not responsible for the performance, availability, or functionality of Session Pro.</string>
     <string name="proTosPrivacy">By updating, you agree to the Session Pro <b>Terms of Service</b> {icon} and <b>Privacy Policy</b> {icon}</string>
     <string name="proUnlimitedPins">Unlimited Pins</string>
@@ -1222,6 +1223,7 @@
     <string name="pro_provider_google_play_device">Android</string>
     <string name="pro_provider_google_play_platform">Google</string>
     <string name="pro_provider_google_play_store">Google Play Store</string>
+    <string name="pro_provider_stf_platform">Session Technology Foundation</string>
     <string name="processingRefundRequest">{platform} is processing your refund request</string>
     <string name="profile">Profile</string>
     <string name="profileDisplayPicture">Display Picture</string>

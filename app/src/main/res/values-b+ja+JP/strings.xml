@@ -976,7 +976,6 @@
     <string name="proAccessRenew">Pro アクセスを更新</string>
     <string name="proAccessRenewPlatformStoreWebsite">Pro に登録した {platform_account} を使用して、<b><font color="0">{platform_store} ウェブサイト</font></b> 上で Pro アクセスを更新してください。</string>
     <string name="proAccessRenewPlatformWebsite"><b><font color="0">{platform} のウェブサイト</font></b> で、Pro に登録した {platform_account} を使って更新してください。</string>
-    <string name="proAccessRenewStart">Pro アクセスを更新して、強力な Session Pro ベータ機能を再びご利用ください。</string>
     <string name="proAccessRestored">Pro アクセスが復元されました</string>
     <string name="proAccessRestoredDescription">Session がアカウントの Pro アクセスを検出し、復元しました。Pro ステータスが復元されました！</string>
     <string name="proAccessSignUp">Session Pro に最初に <b>{platform_store}</b> を通じて登録したため、Pro へのアクセスを更新するには {platform_account} を使用する必要があります。</string>
@@ -1025,7 +1024,6 @@
     <string name="proFeatureListLoadsMore">さらに多数の限定機能</string>
     <string name="proFeatureListLongerMessages">最大10,000文字までのメッセージ</string>
     <string name="proFeatureListPinnedConversations">ピン留め可能な会話が無制限</string>
-    <string name="proFullestPotential">Session を最大限に活用したいですか？\nSession Pro Beta にアップグレードして、数多くの限定特典や機能にアクセスしましょう。</string>
     <string name="proGroupActivated">グループが有効化されました</string>
     <string name="proGroupActivatedDescription">このグループは拡張されています！グループ管理者の設定により、最大300人のメンバーに対応できます</string>
     <plurals name="proGroupsUpgraded">

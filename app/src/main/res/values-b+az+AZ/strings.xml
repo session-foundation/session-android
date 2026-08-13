@@ -970,7 +970,6 @@
     <string name="proAccessRecover">Pro erişimini geri qaytar</string>
     <string name="proAccessRenew">Pro erişimini yenilə</string>
     <string name="proAccessRenewPlatformStoreWebsite">Pro erişiminizi Pro üçün qeydiyyatdan keçdiyiniz {platform_account} istifadə edərək <b><font color="0">{platform_store} veb saytında</font></b> yeniləyin.</string>
-    <string name="proAccessRenewStart">Güclü Pro Beta özəlliklərini yenidən istifadə etməyə başlamaq üçün Session Pro erişiminizi yeniləyin.</string>
     <string name="proAccessRestored">Pro erişimi geri qaytarıldı</string>
     <string name="proAccessRestoredDescription">Session, hesabınız üçün Pro erişimini aşkarladı və geri qaytardı. Pro statusunuz bərpa edildi!</string>
     <string name="proAccessSignUp">Başlanğıcda <b>{platform_store}</b> üzərindən Session Pro üçün qeydiyyatdan keçdiyinizə görə, Pro erişiminizi {platform_account} istifadə edərək güncəlləməlisiniz.</string>

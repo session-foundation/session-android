@@ -1122,7 +1122,6 @@
     <string name="proAccessRenew">Возобновить доступ к Pro</string>
     <string name="proAccessRenewPlatformStoreWebsite">Продлите свой доступ к Pro на <b><font color="0">сайте {platform_store}</font></b>, используя {platform_account}, с которым вы оформили подписку на Pro.</string>
     <string name="proAccessRenewPlatformWebsite">Продлите на <b><font color="0">сайте {platform}</font></b>, используя аккаунт {platform_account}, с которым вы оформили подписку на Pro.</string>
-    <string name="proAccessRenewStart">Продлите доступ к Pro, чтобы продолжить использовать мощные функции бета-версии Session Pro.</string>
     <string name="proAccessRestored">Доступ к Pro восстановлен</string>
     <string name="proAccessRestoredDescription">Session обнаружил и восстановил доступ вашего аккаунта к Pro. Ваш статус Pro был восстановлен!</string>
     <string name="proAccessSignUp">Поскольку вы изначально оформили подписку на Session Pro через <b>{platform_store}</b>, для обновления доступа к Pro необходимо использовать аккаунт {platform_account}.</string>
@@ -1175,7 +1174,6 @@
     <string name="proFeatureListLoadsMore">И множество эксклюзивных функций</string>
     <string name="proFeatureListLongerMessages">Сообщения до 10 тысяч знаков</string>
     <string name="proFeatureListPinnedConversations">Неограниченное число прикреплённых чатов</string>
-    <string name="proFullestPotential">Хотите использовать Session на полную?\nПерейдите на Session Pro Beta, чтобы получить доступ ко множеству эксклюзивных преимуществ и функций.</string>
     <string name="proGroupActivated">Группа активирована</string>
     <string name="proGroupActivatedDescription">У этой группы увеличена вместимость! Теперь она поддерживает до 300 участников, потому что администратор группы активировал</string>
     <plurals name="proGroupsUpgraded">

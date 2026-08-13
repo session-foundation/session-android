@@ -1006,7 +1006,6 @@
     <string name="proAccessRenew">Pro पहुँच को नवीनीकृत करें</string>
     <string name="proAccessRenewPlatformStoreWebsite"><b><font color="0">{platform_store} वेबसाइट</font></b> पर जाकर उस {platform_account} से अपनी Pro एक्सेस नवीनीकृत करें जिससे आपने Pro के लिए साइन अप किया था।</string>
     <string name="proAccessRenewPlatformWebsite"><b><font color="0">{platform} वेबसाइट</font></b> पर जाकर उस {platform_account} के साथ नवीनीकरण करें जिससे आपने Pro के लिए साइन अप किया था।</string>
-    <string name="proAccessRenewStart">Session Pro के शक्तिशाली Beta फ़ीचर्स का फिर से उपयोग शुरू करने के लिए अपनी Pro एक्सेस नवीनीकृत करें।</string>
     <string name="proAccessRestored">Pro पहुँच पुनर्प्राप्त की गई</string>
     <string name="proAccessRestoredDescription">Session ने आपके खाते के लिए Pro एक्सेस का पता लगाया और उसे पुनर्प्राप्त किया। आपकी Pro स्थिति पुनः स्थापित कर दी गई है!</string>
     <string name="proAccessSignUp">चूंकि आपने मूल रूप से <b>{platform_store}</b> के माध्यम से Session Pro के लिए साइन अप किया था, इसलिए आपको अपने {platform_account} का उपयोग करके अपनी Pro पहुँच को अपडेट करना होगा।</string>
@@ -1057,7 +1056,6 @@
     <string name="proFeatureListLoadsMore">साथ में कई और विशेष सुविधाएं</string>
     <string name="proFeatureListLongerMessages">10,000 वर्णों तक संदेश</string>
     <string name="proFeatureListPinnedConversations">अनंत वार्तालाप पिन करें</string>
-    <string name="proFullestPotential">क्या आप Session का पूरा लाभ उठाना चाहते हैं?\nSession Pro बीटा में अपग्रेड करें और अनेक विशिष्ट फ़ायदों और सुविधाओं का अनुभव प्राप्त करें।</string>
     <string name="proGroupActivated">समूह सक्रिय किया गया</string>
     <string name="proGroupActivatedDescription">इस समूह की क्षमता बढ़ाई गई है! यह अब 300 सदस्यों तक का समर्थन कर सकता है क्योंकि एक समूह व्यवस्थापक के पास</string>
     <plurals name="proGroupsUpgraded">
