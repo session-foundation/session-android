@@ -1053,7 +1053,6 @@
     <string name="proAccessRenew">Поновити доступ до Pro</string>
     <string name="proAccessRenewPlatformStoreWebsite">Поновіть доступ до Pro на <b><font color="0">вебсайті {platform_store}</font></b>, використовуючи обліковий запис {platform_account}, з яким ви зареєструвалися у Pro.</string>
     <string name="proAccessRenewPlatformWebsite">Поновіть підписку на <b><font color="0">вебсайті {platform}</font></b>, використовуючи обліковий запис {platform_account}, з яким ви оформили Pro.</string>
-    <string name="proAccessRenewStart">Поновіть свій доступ до Pro, щоб знову почати використовувати потужні функції Session Pro Beta.</string>
     <string name="proAccessRestored">Доступ до Pro відновлено</string>
     <string name="proAccessRestoredDescription">Session виявив і відновив доступ до Pro для вашого облікового запису. Ваш статус Pro було відновлено!</string>
     <string name="proAccessSignUp">Оскільки ви спочатку зареєструвалися в Session Pro через <b>{platform_store}</b>, для оновлення доступу до Pro потрібно використати ваш обліковий запис {platform_account}.</string>
@@ -1105,7 +1104,6 @@
     <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>
     <string name="proFeatureListLongerMessages">Повідомлення до 10 000 символів</string>
     <string name="proFeatureListPinnedConversations">Закріплюйте необмежену кількість бесід</string>
-    <string name="proFullestPotential">Бажаєте використовувати Session на повну?\nОновіться до Session Pro Beta, щоб отримати доступ до безлічі ексклюзивних переваг та функцій.</string>
     <string name="proGroupActivated">Групу активовано</string>
     <string name="proGroupActivatedDescription">У цієї групи розширено можливості! Тепер вона може вміщати до 300 учасників, тому що адміністратор групи має</string>
     <plurals name="proGroupsUpgraded">

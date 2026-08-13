@@ -1032,7 +1032,6 @@
     <string name="proAccessRenew">Pro အသုံးပြုခွင့်ကို သက်တမ်းတိုးရန်</string>
     <string name="proAccessRenewPlatformStoreWebsite">Pro အတွက် စာရင်းသွင်းခဲ့သည့် {platform_account} ကို အသုံးပြုပြီး <b><font color="0">{platform_store} ဝဘ်ဆိုက်</font></b> တွင် သင့် Pro အသုံးပြုခွင့်ကို သက်တမ်းတိုးပါ။</string>
     <string name="proAccessRenewPlatformWebsite">Pro အတွက် စာရင်းသွင်းခဲ့သည့် {platform_account} ကို အသုံးပြုပြီး <b><font color="0">{platform} ဝဘ်ဆိုက်</font></b> တွင် သက်တမ်းတိုးပါ။</string>
-    <string name="proAccessRenewStart">အင်အားကောင်းသော Session Pro Beta လုပ်ဆောင်ချက်များကို ထပ်မံ စတင်အသုံးပြုရန် သင်၏ Pro အသုံးပြုခွင့်ကို သက်တမ်းတိုးပါ။</string>
     <string name="proAccessRestored">Pro ဝင်ခွင့်ကို ပြန်လည်ရရှိပြီး</string>
     <string name="proAccessRestoredDescription">Session သည် သင့်အကောင့်အတွက် Pro အသုံးပြုခွင့်ကို တွေ့ရှိပြီး ပြန်လည်ရယူပေးခဲ့သည်။ သင့်၏ Pro အခြေအနေကို ပြန်လည်ရရှိထားပါပြီ။</string>
     <string name="proAccessSignUp">သင်သည် မူလက Session Pro အတွက် <b>{platform_store}</b> မှတစ်ဆင့် စာရင်းသွင်းခဲ့သောကြောင့် သင်၏ Pro အသုံးပြုခွင့်ကို အပ်ဒိတ်လုပ်ရန် သင်၏ {platform_account} ကို အသုံးပြုရန် လိုအပ်ပါမည်။</string>
@@ -1082,7 +1081,6 @@
     <string name="proFeatureListLoadsMore">ထို့အပြင် သီးသန့်အင်္ဂါရပ်များစွာကိုလည်း ရရှိနိုင်သည်</string>
     <string name="proFeatureListLongerMessages">အက္ခရာ 10,000 အထိ မက်ဆေ့ချ်များ</string>
     <string name="proFeatureListPinnedConversations">အကန့်အသတ်မရှိ စကားဝိုင်းများကို ပင်တွဲပါ</string>
-    <string name="proFullestPotential">Session ကို အပြည့်အဝ အသုံးချလိုပါသလား။\nSession Pro Beta သို့ အဆင့်မြှင့်ပြီး သီးသန့် အကျိုးခံစားခွင့်များနှင့် လုပ်ဆောင်ချက်များစွာကို ရယူလိုက်ပါ။</string>
     <string name="proGroupActivated">အုပ်စုကို အသက်သွင်းပြီးပါပြီ</string>
     <string name="proGroupActivatedDescription">ဤအဖွဲ့၏ လက်ခံနိုင်စွမ်း တိုးချဲ့ထားပါသည်။ အဖွဲ့အက်ဒမင်တစ်ဦးက ၎င်းကို အသက်သွင်းထားသောကြောင့် ဤအဖွဲ့သည် အဖွဲ့ဝင် 300 ဦးအထိ ပံ့ပိုးနိုင်ပါသည်</string>
     <plurals name="proGroupsUpgraded">

@@ -1002,7 +1002,6 @@
     <string name="proAccessRenew">Pro-toegang verlengen</string>
     <string name="proAccessRenewPlatformStoreWebsite">Verleng je Pro-toegang op de <b><font color="0">{platform_store}-website</font></b> met het {platform_account} waarmee je je voor Pro hebt aangemeld.</string>
     <string name="proAccessRenewPlatformWebsite">Verleng via de <b><font color="0">{platform}-website</font></b> met het {platform_account} waarmee je je voor Pro hebt aangemeld.</string>
-    <string name="proAccessRenewStart">Verleng je Pro-toegang om opnieuw gebruik te maken van krachtige Session Pro bètaversie-functies.</string>
     <string name="proAccessRestored">Pro-toegang hersteld</string>
     <string name="proAccessRestoredDescription">Session heeft Pro-toegang voor je account gedetecteerd en hersteld. Je Pro-status is hersteld!</string>
     <string name="proAccessSignUp">Omdat je je oorspronkelijk voor Session Pro hebt aangemeld via de <b>{platform_store}</b>, moet je je {platform_account} gebruiken om je Pro-toegang bij te werken.</string>
@@ -1053,7 +1052,6 @@
     <string name="proFeatureListLoadsMore">En nog veel meer exclusieve functies</string>
     <string name="proFeatureListLongerMessages">Berichten tot 10.000 tekens</string>
     <string name="proFeatureListPinnedConversations">Onbeperkt gesprekken vastzetten</string>
-    <string name="proFullestPotential">Wilt u Session maximaal benutten?\nUpgrade naar Session Pro Beta om toegang te krijgen tot tal van exclusieve voordelen en functies.</string>
     <string name="proGroupActivated">Groep geactiveerd</string>
     <string name="proGroupActivatedDescription">Deze groep heeft een grotere capaciteit! Er kunnen nu tot 300 leden deelnemen omdat een groepsbeheerder een</string>
     <plurals name="proGroupsUpgraded">

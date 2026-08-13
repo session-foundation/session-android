@@ -1062,7 +1062,6 @@
     <string name="proAccessRenew">تمدید دسترسی Pro</string>
     <string name="proAccessRenewPlatformStoreWebsite">دسترسی Pro خود را با استفاده از {platform_account} که با آن برای Pro ثبت‌نام کردید در <b><font color="0">وب‌سایت {platform_store}</font></b>تمدید کنید.</string>
     <string name="proAccessRenewPlatformWebsite">دسترسی خود را با استفاده از {platform_account} که با آن برای Pro ثبت‌نام کردید، در <b><font color="0">وب‌سایت {platform}</font></b> تمدید کنید.</string>
-    <string name="proAccessRenewStart">برای استفادهٔ مجدد از قابلیت‌های قدرتمند بتای Session Pro، دسترسی Pro خود را تمدید کنید.</string>
     <string name="proAccessRestored">دسترسی Pro بازیابی شد</string>
     <string name="proAccessRestoredDescription">Session دسترسی Pro را برای حساب کاربری شما شناسایی و بازیابی کرد. وضعیت Pro شما بازگردانده شد!</string>
     <string name="proAccessSignUp">ازآنجاکه شما از ابتدا برای Session Pro از طریق <b>{platform_store}</b> ثبت‌نام کردید، برای به‌روزرسانی دسترسی Pro خود باید از {platform_account} خود استفاده کنید.</string>
@@ -1113,7 +1112,6 @@
     <string name="proFeatureListLoadsMore">بعلاوهٔ بسیاری قابلیت‌های انحصاری دیگر</string>
     <string name="proFeatureListLongerMessages">پیام‌ها تا سقف ۱۰٬۰۰۰ نویسه</string>
     <string name="proFeatureListPinnedConversations">سنجاق‌کردن نامحدود گفتگوها</string>
-    <string name="proFullestPotential">می‌خواهید از ظرفیت Session به‌طور کامل استفاده کنید؟\nبرای دسترسی به انبوهی از مزایا و قابلیت‌های انحصاری، به Session Pro بتا ارتقا دهید.</string>
     <string name="proGroupActivated">گروه فعال شد</string>
     <string name="proGroupActivatedDescription">ظرفیت این گروه افزایش یافته است! چون یکی از مدیران گروه Pro را فعال کرده است این گروه می‌تواند تا سقف ۳۰۰ عضو را پشتیبانی کند</string>
     <plurals name="proGroupsUpgraded">

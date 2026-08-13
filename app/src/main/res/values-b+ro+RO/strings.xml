@@ -1037,7 +1037,6 @@
     <string name="proAccessRenew">Reînnoiește accesul Pro</string>
     <string name="proAccessRenewPlatformStoreWebsite">Reînnoiește-ți accesul la Pro pe <b><font color="0">site-ul {platform_store}</font></b> folosind contul {platform_account} cu care te-ai înregistrat pentru Pro.</string>
     <string name="proAccessRenewPlatformWebsite">Reînnoiește pe <b><font color="0">site-ul {platform}</font></b> folosind contul {platform_account} cu care te-ai înregistrat la Pro.</string>
-    <string name="proAccessRenewStart">Reînnoiește-ți accesul Pro pentru a începe din nou să folosești funcționalitățile beta avansate Session Pro.</string>
     <string name="proAccessRestored">Acces Pro recuperat</string>
     <string name="proAccessRestoredDescription">Session a detectat și a readus accesul Pro pentru contul tău. Statutul tău Pro a fost restabilit!</string>
     <string name="proAccessSignUp">Deoarece te-ai înregistrat inițial la Session Pro prin <b>{platform_store}</b>, va trebui să folosești contul tău {platform_account} pentru a-ți actualiza accesul la Pro.</string>
@@ -1089,7 +1088,6 @@
     <string name="proFeatureListLoadsMore">Și multe alte funcții exclusive</string>
     <string name="proFeatureListLongerMessages">Mesaje de până la 10.000 de caractere</string>
     <string name="proFeatureListPinnedConversations">Fixează conversații nelimitate</string>
-    <string name="proFullestPotential">Vrei să folosești Session la întregul său potențial?\nFă upgrade la Session Pro Beta pentru a avea acces la o mulțime de beneficii și funcții exclusive.</string>
     <string name="proGroupActivated">Grup activat</string>
     <string name="proGroupActivatedDescription">Acest grup are capacitate extinsă! Poate susține până la 300 de membri deoarece un administrator de grup are</string>
     <plurals name="proGroupsUpgraded">
