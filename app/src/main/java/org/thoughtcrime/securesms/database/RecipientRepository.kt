@@ -502,15 +502,18 @@ class RecipientRepository @Inject constructor(
             it.isExpired(now) || proDatabase.isRevoked(it.revocationTag, snodeClock.get().currentTime())
         }
 
-        // 2. Determine base Pro Data from valid proofs or ProStatusManager
+        // 2. Determine base Pro Data from valid proofs
+        //
+        // ACCESS ("what may this device do") comes from the PROOF, for ourselves exactly as for anyone
+        // else — so it runs through the expiry and revocation filter above on every resolve. There is
+        // deliberately no `isSelf` short-circuit on the cached `get_pro_status` response here: that
+        // response is DISPLAY ("what state is the plan in"), it is not revocation-filtered, and trusting
+        // it for access let a cached `Active` outlive a revocation we had already been told about.
+        //
+        // The two are MEANT to disagree — a proof that outlives an expired status still grants the
+        // feature, which is the deliberate overhang. Read `ProStatusManager.proDataState` when you want
+        // to describe the plan; read this when you want to know what is permitted.
         var proData = when {
-            // For ourselves, we "trust" ProStatusManager more than the ProProofs
-            recipient.isSelf && proStatusManager.get().proDataState.value.type is ProStatus.Active -> {
-                RecipientData.ProData(
-                    showProBadge = proStatusManager.get().proDataState.value.showProBadge
-                )
-            }
-
             !proDataList.isNullOrEmpty() -> {
                 RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
             }

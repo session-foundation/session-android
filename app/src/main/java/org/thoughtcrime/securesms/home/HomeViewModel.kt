@@ -357,8 +357,11 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
+        // ENFORCEMENT: the ACCESS function, called at the moment of the decision. Was a full
+        // `getSelf().isPro` resolve, which reaches the same answer but by a second route — one function
+        // means a revocation or expiry cannot be honoured here and missed on the send path.
         val maxPins =
-            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+            proStatusManager.getPinnedConversationLimit(proStatusManager.currentUserHasProAccess())
         if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {

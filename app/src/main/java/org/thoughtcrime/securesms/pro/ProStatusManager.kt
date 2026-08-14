@@ -35,6 +35,7 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
+import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.pro.ProResponseStatus
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
@@ -360,7 +361,7 @@ class ProStatusManager @Inject constructor(
                             configs.userProfile.getProPrepaid()
                     }
                 }
-                .changesOnly()
+                .dropFirstProjection()
                 .map { "ProAccessExpiry/prepaid in config changes" },
 
             proStatusRepository.get().loadState
@@ -569,6 +570,50 @@ class ProStatusManager @Inject constructor(
     }
 
     /**
+     * ACCESS: the Pro proof this device may currently act on, or `null` if there is none.
+     *
+     * This is the single place that answers "what may this device do", so that a second opinion about
+     * our own Pro-ness cannot drift from this one. It validates on EVERY call rather than caching:
+     *
+     *  - expiry, against the network clock rather than the device clock, and
+     *  - the cached revocation list, honouring each entry's effective timestamp.
+     *
+     * Do NOT answer this from `proDataState` / `get_pro_status`. That is DISPLAY ("what state is the
+     * plan in"), it is not revocation-filtered, and a cached `Active` response can outlive a revocation
+     * we have already been told about. The two are meant to disagree: a still-valid proof under an
+     * expired status keeps the features, which is the deliberate overhang.
+     */
+    fun currentUserProProofForAccess(): ProProof? {
+        val proof = configFactory.get()
+            .withUserConfigs { it.userProfile.getProConfig() }
+            ?.proProof
+            ?: return null
+
+        val now = snodeClock.currentTime()
+        if (proof.expirySeconds <= now.epochSecond) return null
+        if (proDatabase.isRevoked(proof.revocationTagHex, now)) return null
+
+        return proof
+    }
+
+    /**
+     * ACCESS as a boolean, for ENFORCEMENT sites that grant or refuse rather than draw.
+     *
+     * Call this UNMEMOIZED at the moment of the decision — the send path, the compose limit, the pinned
+     * conversation gate. Rendering does not use this: a render site subscribes to an observed value
+     * recomputed at the existing change sites (config change, revocation update, proof expiry), because
+     * some of them redraw per keystroke and this takes the config lock.
+     *
+     * Honours the QA force-grant deliberately. Without it, rendering (which resolves through
+     * `RecipientRepository`, where the override lives) and enforcement would disagree under a fixture:
+     * the composer would offer the Pro limit and sending would then refuse it. Note the force grants
+     * ACCESS but conjures no PROOF, so a forced client still attaches nothing when it sends — which is
+     * the truncation state, and is correct rather than a gap here.
+     */
+    fun currentUserHasProAccess(): Boolean =
+        prefs.forceCurrentUserAsPro() || currentUserProProofForAccess() != null
+
+    /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(recipient: Recipient): Boolean{
@@ -703,25 +748,45 @@ class ProStatusManager @Inject constructor(
     companion object {
 
         /**
-         * Emits only GENUINE changes: distinct values, with the first one dropped.
+         * Emits only GENUINE changes: distinct values, with the FIRST PROJECTION dropped.
          *
-         * The drop is the point. `distinctUntilChanged` is per-collection and has no baseline for its
-         * first emission, so it always passes — and the first emission of a config projection in a new
-         * process is config the app *already had*, not a change. Without the drop, the
-         * access-expiry/prepaid trigger schedules a fetch on **every cold launch**, one second after the
-         * startup gate has just declined and regardless of what the gate decided. A never-subscribed
-         * account then makes a `get_pro_status` request on every start — exactly the traffic the gate
-         * exists to remove, invisible to it because it is a different trigger.
+         * A relaunching subscriber loads its access expiry from a dump on every launch. Treating that
+         * first projection as a change would fetch on every cold launch and defeat the startup gate.
          *
-         * Matches iOS's `hasProjectedUserConfig` guard (`SessionProManager.swift:550-563`), whose comment
-         * names the same failure. The first emission still establishes the baseline, so a value that
-         * changes afterwards — an `E` or prepaid marker synced from another device, which is the case this
-         * trigger exists for — is emitted normally.
+         * (That sentence is deliberately identical on iOS — `isFirstProjection`,
+         * `SessionProManager.swift:550-563` — and on Desktop. The shared concept is FIRST PROJECTION;
+         * each client spells it to fit its language, and this one is an operator because there is a Flow
+         * to decorate.)
          *
-         * Consequence worth knowing: a change arriving as the very FIRST emission is swallowed. On a
-         * brand-new account that is nothing (no Pro to lose), and it is the same trade iOS makes.
+         * The mechanics, since the sentence above does not give them: `distinctUntilChanged` is
+         * per-collection and has no baseline for its first emission, so it always passes. Without the
+         * drop, the access-expiry/prepaid trigger schedules a fetch one second after the startup gate has
+         * just declined and regardless of what the gate decided, so a never-subscribed account calls
+         * `get_pro_status` on every start — exactly the traffic the gate exists to remove, invisible to it
+         * because it is a different trigger.
+         *
+         * ⚠️ LIFETIME, AND THIS SIDE OF IT IS THE BUGGY ONE. This guard is scoped to the ACCOUNT SESSION,
+         * not the process: a restore or an account load re-arms it. The collector lives under
+         * [doWhileLoggedIn], which `AuthAwareComponentsHandler` drives with `collectLatest`, so a new
+         * `LoggedInState` tears it down and rebuilds it — and `drop(1)` starts again.
+         *
+         * So on a restore the post-restore projection is STRUCTURALLY the dropped one — always, not
+         * unluckily — and this guard cannot be the thing that discovers a restored subscriber. The
+         * config-change trigger is the only thing that fetches after a restore, so what a restored
+         * subscriber actually gets today is: no status until the next cold launch, or until they happen to
+         * open Pro settings, while the proof quietly grants the features.
+         *
+         * Do NOT "fix" that by removing the drop — that reinstates the every-cold-launch fetch. The fix
+         * under discussion is a separate trigger asking the SEMANTIC question ("is this config news we have
+         * never acted on") instead of the positional one, which is unruled and deliberately not built here.
+         *
+         * iOS's equivalent flag is per-PROCESS and set eagerly at app setup, so it is already true by the
+         * time a restore lands and iOS therefore fetches. That is the CORRECT outcome, reached by
+         * construction order rather than by design — do not port this file's lifetime to iOS to make the
+         * two match, which would regress iOS onto the behaviour described above. Same concept, same
+         * comment, different lifetime, and only one of them is right.
          */
-        internal fun <T> Flow<T>.changesOnly(): Flow<T> = distinctUntilChanged().drop(1)
+        internal fun <T> Flow<T>.dropFirstProjection(): Flow<T> = distinctUntilChanged().drop(1)
         /**
          * How long after a wake instant to fetch. The backend judges against its own clock, so a wake
          * landing exactly on the boundary can read the pre-crossing state.

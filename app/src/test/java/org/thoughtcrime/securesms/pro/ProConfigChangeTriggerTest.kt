@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.thoughtcrime.securesms.pro.ProStatusManager.Companion.changesOnly
+import org.thoughtcrime.securesms.pro.ProStatusManager.Companion.dropFirstProjection
 import java.time.Instant
 
 /**
@@ -33,7 +33,7 @@ class ProConfigChangeTriggerTest {
     fun `the first projection does not fetch`() = runTest {
         // A cold launch on an account whose expiry is already in config. Nothing changed, so nothing
         // should be scheduled — this is the whole point of the guard.
-        val emitted = flowOf(projection(e1, null)).changesOnly().toList()
+        val emitted = flowOf(projection(e1, null)).dropFirstProjection().toList()
 
         assertEquals(emptyList<Pair<Instant?, Long?>>(), emitted)
     }
@@ -45,7 +45,7 @@ class ProConfigChangeTriggerTest {
             projection(e1, null),
             projection(e1, null),
             projection(e1, null),
-        ).changesOnly().toList()
+        ).dropFirstProjection().toList()
 
         assertEquals(emptyList<Pair<Instant?, Long?>>(), emitted)
     }
@@ -57,7 +57,7 @@ class ProConfigChangeTriggerTest {
         val emitted = flowOf(
             projection(e1, null),
             projection(e2, null),
-        ).changesOnly().toList()
+        ).dropFirstProjection().toList()
 
         assertEquals(listOf(projection(e2, null)), emitted)
     }
@@ -69,7 +69,7 @@ class ProConfigChangeTriggerTest {
         val emitted = flowOf(
             projection(e1, null),
             projection(e1, 1_760_000_000L),
-        ).changesOnly().toList()
+        ).dropFirstProjection().toList()
 
         assertEquals(listOf(projection(e1, 1_760_000_000L)), emitted)
     }
@@ -82,7 +82,7 @@ class ProConfigChangeTriggerTest {
             projection(e2, null),   // real change
             projection(e2, null),   // unrelated profile edit
             projection(e2, 42L),    // real change
-        ).changesOnly().toList()
+        ).dropFirstProjection().toList()
 
         assertEquals(listOf(projection(e2, null), projection(e2, 42L)), emitted)
     }
@@ -94,7 +94,7 @@ class ProConfigChangeTriggerTest {
         // Harmless on a brand-new account, which has no Pro to lose, and it is the same trade iOS makes
         // with `hasProjectedUserConfig`. If a real transition is ever seen to land as the first emission
         // on an EXISTING account, this test is the thing to revisit.
-        val emitted = flowOf(projection(e2, null)).changesOnly().toList()
+        val emitted = flowOf(projection(e2, null)).dropFirstProjection().toList()
 
         assertEquals(emptyList<Pair<Instant?, Long?>>(), emitted)
     }
