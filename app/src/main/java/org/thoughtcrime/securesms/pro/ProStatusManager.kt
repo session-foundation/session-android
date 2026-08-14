@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
@@ -359,7 +360,7 @@ class ProStatusManager @Inject constructor(
                             configs.userProfile.getProPrepaid()
                     }
                 }
-                .distinctUntilChanged()
+                .changesOnly()
                 .map { "ProAccessExpiry/prepaid in config changes" },
 
             proStatusRepository.get().loadState
@@ -700,6 +701,27 @@ class ProStatusManager @Inject constructor(
     }
 
     companion object {
+
+        /**
+         * Emits only GENUINE changes: distinct values, with the first one dropped.
+         *
+         * The drop is the point. `distinctUntilChanged` is per-collection and has no baseline for its
+         * first emission, so it always passes — and the first emission of a config projection in a new
+         * process is config the app *already had*, not a change. Without the drop, the
+         * access-expiry/prepaid trigger schedules a fetch on **every cold launch**, one second after the
+         * startup gate has just declined and regardless of what the gate decided. A never-subscribed
+         * account then makes a `get_pro_status` request on every start — exactly the traffic the gate
+         * exists to remove, invisible to it because it is a different trigger.
+         *
+         * Matches iOS's `hasProjectedUserConfig` guard (`SessionProManager.swift:550-563`), whose comment
+         * names the same failure. The first emission still establishes the baseline, so a value that
+         * changes afterwards — an `E` or prepaid marker synced from another device, which is the case this
+         * trigger exists for — is emitted normally.
+         *
+         * Consequence worth knowing: a change arriving as the very FIRST emission is swallowed. On a
+         * brand-new account that is nothing (no Pro to lose), and it is the same trade iOS makes.
+         */
+        internal fun <T> Flow<T>.changesOnly(): Flow<T> = distinctUntilChanged().drop(1)
         /**
          * How long after a wake instant to fetch. The backend judges against its own clock, so a wake
          * landing exactly on the boundary can read the pre-crossing state.
