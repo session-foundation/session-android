@@ -233,6 +233,14 @@ class HomeViewModel @Inject constructor(
                     (prefs.hasSeenProExpiring() || prefs.hasSeenProExpired())){
                     prefs.clearProExpiryView() // reset expiry view if the user is active again
                 } else if(subscription.type is ProStatus.Active.Expiring
+                    // Same confirmed-fetch gate as the Expired branch below; both read the one
+                    // `refreshState` predicate, so tightening or loosening it moves both CTAs.
+                    // Success means THIS process has had a fetch confirmed, so a cold launch cannot
+                    // warn off a stale local proof: `status` is inferred from that proof at launch, and
+                    // nothing writes to config at renewal, so a single-device account that renewed
+                    // while the app was closed reads as expiring until get_pro_status says otherwise.
+                    // Consistent with the iOS fix, which gates both variants above the switch.
+                    && subscription.refreshState is org.thoughtcrime.securesms.util.State.Success
                     && !prefs.hasSeenProExpiring()
                 ){
                     val validUntil = subscription.type.renewingAt
