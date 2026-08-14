@@ -737,8 +737,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun pinConversation(){
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
+        // ENFORCEMENT: the ACCESS function, called at the moment of the decision. The pin limit is
+        // implemented in TWO ViewModels (see HomeViewModel.setPinned) and both must go through the one
+        // ACCESS function — a second route to "am I Pro" is how one of them ends up honouring a
+        // revocation while the other does not.
         val maxPins =
-            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+            proStatusManager.getPinnedConversationLimit(proStatusManager.currentUserHasProAccess())
         if (totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogState.update {
