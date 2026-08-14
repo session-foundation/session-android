@@ -87,11 +87,23 @@ object QaLaunchConfig {
      * iOS uses on every mockable Pro feature; an ABSENT extra leaves the preferences untouched.
      *
      * Maps to TWO preferences, because Android splits the concerns iOS keeps in one key:
-     * `forceCurrentUserAsPro` is the "use mocked state at all" gate, and `DEBUG_SUBSCRIPTION_STATUS`
-     * picks which state. Collapsing them here is what keeps one `bothPlatformsIt` setup meaning the
-     * same thing on both platforms.
+     * `DEBUG_SUBSCRIPTION_STATUS` mocks the DISPLAY status, and `forceCurrentUserAsPro` grants ACCESS.
+     * Setting both from this one key is what keeps a single `bothPlatformsIt` setup meaning the same
+     * thing on both platforms.
+     *
+     * They are no longer WELDED, though, and the difference matters: `forceCurrentUserAsPro` used to
+     * double as the "use mocked state at all" gate for DISPLAY too, so a mocked status necessarily also
+     * granted access and `get_pro_status`-says-Active-with-no-usable-proof could not be set up at all.
+     * DISPLAY now keys on the subscription type alone. Use [EXTRA_PRO_FORCE_ACCESS] to vary the access
+     * half independently.
      */
     private const val EXTRA_PRO_BACKEND_STATUS = "sessionProBackendStatus"
+
+    /**
+     * Grants/withholds mocked Pro ACCESS independently of [EXTRA_PRO_BACKEND_STATUS]'s DISPLAY mock.
+     * `true` | `false`; absent leaves whatever the status extra decided. See [applyProForceAccess].
+     */
+    private const val EXTRA_PRO_FORCE_ACCESS = "sessionProForceAccess"
 
     /**
      * When the mocked Pro access expires, overriding the fixed offset the fixture selected by
@@ -170,6 +182,8 @@ object QaLaunchConfig {
             applyServiceNetwork(intent, prefs)
             applyProBackend(intent, prefs)
             applyProBackendStatus(intent, prefs)
+            // After the status extra: it overrides the access half that one sets.
+            applyProForceAccess(intent, prefs)
             applyProAccessExpiry(intent, prefs)
             applyProLoadingState(intent, prefs)
         } catch (e: RuntimeException) {
@@ -195,6 +209,7 @@ object QaLaunchConfig {
         EXTRA_PRO_BACKEND_URL,
         EXTRA_PRO_BACKEND_PUBKEY,
         EXTRA_PRO_BACKEND_STATUS,
+        EXTRA_PRO_FORCE_ACCESS,
         EXTRA_PRO_ACCESS_EXPIRY,
         EXTRA_PRO_LOADING_STATE,
     )
@@ -413,9 +428,54 @@ object QaLaunchConfig {
         // TextSecurePreferences.events, which is what ProStatusManager.proDataState collects. A generic
         // write would persist the value and emit nothing, so the mock would appear not to apply until
         // the next launch.
+        //
+        // Still writes BOTH, so every existing spec that uses this extra alone to "make the client Pro"
+        // behaves exactly as before. The two are no longer welded together though: DISPLAY now keys on
+        // the subscription type and ACCESS on the force flag, and [EXTRA_PRO_FORCE_ACCESS] can override
+        // the access half afterwards. That is what makes status-without-access expressible.
         prefs.setForceCurrentUserAsPro(mocked != null)
         prefs.setDebugSubscriptionType(mocked)
         Log.i(TAG, "Set mocked Pro state to '$raw' (debug subscription = ${mocked?.name ?: "off"})")
+        return true
+    }
+
+    /**
+     * Grants or withholds mocked Pro ACCESS independently of the mocked DISPLAY status.
+     *
+     * ⚠️ NAME IS PROVISIONAL — the harness dictates keys identically across platforms, and I cannot read
+     * the Appium repo from here to see how iOS/Desktop spell "status without access". If they already
+     * have a spelling, rename this constant to match; it is referenced in exactly three places.
+     *
+     * Applied AFTER [applyProBackendStatus] so it overrides the access half that extra sets. To reach
+     * the truncation state — `get_pro_status` says Active, no usable proof:
+     *
+     *     sessionProBackendStatus=active  sessionProForceAccess=false
+     *
+     * Absent leaves whatever [applyProBackendStatus] decided, so existing specs are unaffected.
+     *
+     * Withholding access does NOT conjure an expired proof — it means no proof at all, which is the
+     * state under test: the composer offers the standard limit, and a send attaches nothing.
+     */
+    private fun applyProForceAccess(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_FORCE_ACCESS)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_FORCE_ACCESS).orEmpty().trim()
+        val grant: Boolean = when (raw.lowercase()) {
+            "true" -> true
+            "false" -> false
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_FORCE_ACCESS' extra: '$raw'. Use true | false."
+                )
+                return false
+            }
+        }
+
+        prefs.setForceCurrentUserAsPro(grant)
+        Log.i(TAG, "Set mocked Pro ACCESS to $grant (DISPLAY status left as set)")
         return true
     }
 

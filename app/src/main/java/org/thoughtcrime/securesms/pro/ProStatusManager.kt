@@ -158,7 +158,17 @@ class ProStatusManager @Inject constructor(
                 }
             }
 
-            if(!forceCurrentUserAsPro){
+            // Keyed on the DISPLAY mock being set, NOT on the access force-grant.
+            //
+            // These were one flag, so mocking a status necessarily also granted access, and the state
+            // "`get_pro_status` says Active while no usable proof exists" — the truncation case — could
+            // not be set up at all. iOS and Desktop can express it from their mocks; Android could not,
+            // which made an edge case reachable on two clients out of three.
+            //
+            // `forceCurrentUserAsPro` now means what it says: grant ACCESS. It is read by the ACCESS
+            // path (`RecipientRepository.resolveProStatus`'s debug override and
+            // [currentUserHasProAccess]) and deliberately has no say in DISPLAY.
+            if(debugSubscription == null){
                 Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
                 val nowMs = snodeClock.currentTimeMillis()
 
@@ -176,7 +186,10 @@ class ProStatusManager @Inject constructor(
             }// debug data
             else {
                 Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting DEBUG Pro data state")
-                val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+                // Non-null by the branch condition. The old `?: AUTO_GOOGLE` default existed because the
+                // branch was keyed on the force flag, so it could be entered with no status chosen; now
+                // that it is keyed on the status itself there is nothing to default to.
+                val subscriptionState = debugSubscription
 
                 // SnodeClock, not Instant.now(), because every consumer of these instants reads
                 // SnodeClock: the expiry label renders from `clock.currentTime()`
