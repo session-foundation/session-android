@@ -617,14 +617,20 @@ class ProStatusManager @Inject constructor(
      * recomputed at the existing change sites (config change, revocation update, proof expiry), because
      * some of them redraw per keystroke and this takes the config lock.
      *
-     * Honours the QA force-grant deliberately. Without it, rendering (which resolves through
+     * Honours the QA overrides deliberately. Without them, rendering (which resolves through
      * `RecipientRepository`, where the override lives) and enforcement would disagree under a fixture:
-     * the composer would offer the Pro limit and sending would then refuse it. Note the force grants
-     * ACCESS but conjures no PROOF, so a forced client still attaches nothing when it sends — which is
-     * the truncation state, and is correct rather than a gap here.
+     * the composer would offer the Pro limit and sending would then refuse it.
+     *
+     * The proof mock is TRI-STATE and is checked first, because `none` and "no override" are different
+     * answers whenever a real proof exists — which it can on a QA backend that mints them. `false` must
+     * deny such a proof; absent must let it through. A boolean cannot say both.
+     *
+     * Note an override grants ACCESS but conjures no PROOF, so a mocked-Pro client still attaches nothing
+     * when it sends. That is the truncation state and it is correct rather than a gap here.
      */
     fun currentUserHasProAccess(): Boolean =
-        prefs.forceCurrentUserAsPro() || currentUserProProofForAccess() != null
+        prefs.getDebugProAccessOverride()
+            ?: (prefs.forceCurrentUserAsPro() || currentUserProProofForAccess() != null)
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame

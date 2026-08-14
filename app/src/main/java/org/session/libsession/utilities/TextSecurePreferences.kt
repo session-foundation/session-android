@@ -219,6 +219,14 @@ interface TextSecurePreferences {
     fun  setDebugMessageFeatures(features: Set<ProFeature>)
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
+
+    /**
+     * Mocked Pro ACCESS override: `true` grants, `false` DENIES, `null` means no override so the real
+     * proof governs. Tri-state deliberately — `false` and `null` differ when a real proof exists, which
+     * it can on a QA backend that mints them.
+     */
+    fun getDebugProAccessOverride(): Boolean?
+    fun setDebugProAccessOverride(granted: Boolean?)
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
     fun getDebugProAccessExpiry(): Instant?
     fun setDebugProAccessExpiry(expiry: Instant?)
@@ -386,6 +394,7 @@ interface TextSecurePreferences {
         const val DEBUG_PRO_MESSAGE_FEATURES = "debug_pro_message_features"
         const val DEBUG_PRO_PROFILE_FEATURES = "debug_pro_profile_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+        const val DEBUG_PRO_ACCESS_OVERRIDE = "debug_pro_access_override"
         const val DEBUG_PRO_ACCESS_EXPIRY = "debug_pro_access_expiry"
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
@@ -1245,6 +1254,14 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
         setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
         _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
+    }
+
+    override fun getDebugProAccessOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugProAccessOverride(granted: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE, granted?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE)
     }
 
     override fun getDebugProAccessExpiry(): Instant? {

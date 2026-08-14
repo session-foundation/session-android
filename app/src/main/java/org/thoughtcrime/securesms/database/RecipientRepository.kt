@@ -523,7 +523,16 @@ class RecipientRepository @Inject constructor(
         }
 
         // 3. Apply Debug Overrides
-        if (recipient.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
+        //
+        // The mocked-proof override is tri-state and BOTH directions are applied here, not just the
+        // grant: rendering and enforcement must never disagree about what a mocked run is entitled to,
+        // and `ProStatusManager.currentUserHasProAccess` honours `none` as a denial even against a real
+        // proof. If this only honoured the grant, a `proProof=none` fixture would show a Pro badge while
+        // the composer offered the standard limit.
+        val proAccessOverride = if (recipient.isSelf) prefs.getDebugProAccessOverride() else null
+        if (recipient.isSelf && proAccessOverride == false) {
+            proData = null
+        } else if (recipient.isSelf && proData == null && (proAccessOverride == true || prefs.forceCurrentUserAsPro())) {
             proData = RecipientData.ProData(showProBadge = true)
         } else if (!recipient.isSelf
             && (recipient.address is Address.Standard)
