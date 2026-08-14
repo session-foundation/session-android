@@ -127,7 +127,14 @@ object QaLaunchConfig {
 
     /**
      * Load state of the Pro settings screen: `useActual` | `loading` | `error` | `success`.
-     * iOS's `mockCurrentUserSessionProLoadingState`. `success` maps to Android's `NORMAL`.
+     * iOS's `mockCurrentUserSessionProLoadingState`.
+     *
+     * `success` FORCES a successful refresh state, matching iOS's `.simulate(.success)`. It used to map to
+     * `NORMAL`, which only removed the override and deferred to the real state — and since a process that
+     * has not confirmed a fetch reports Loading from launch, `success` could not previously produce one.
+     * Note what it costs: a forced success asserts a confirmed fetch that never happened, so it defeats
+     * anything gating on one (`HomeViewModel`'s expiring/expired CTAs). Never use it in a test whose
+     * subject is one of those gates — see `DebugProPlanStatus.SUCCESS`.
      */
     private const val EXTRA_PRO_LOADING_STATE = "sessionProLoadingState"
 
@@ -487,7 +494,7 @@ object QaLaunchConfig {
             USE_ACTUAL -> null
             "loading" -> DebugMenuViewModel.DebugProPlanStatus.LOADING
             "error" -> DebugMenuViewModel.DebugProPlanStatus.ERROR
-            "success" -> DebugMenuViewModel.DebugProPlanStatus.NORMAL
+            "success" -> DebugMenuViewModel.DebugProPlanStatus.SUCCESS
             else -> {
                 Log.e(
                     TAG,

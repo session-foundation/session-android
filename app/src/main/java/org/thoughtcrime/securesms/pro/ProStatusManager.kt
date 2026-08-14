@@ -125,6 +125,12 @@ class ProStatusManager @Inject constructor(
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
+                // QA override, debug/QA builds only. Asserts a confirmed fetch that has not happened, so
+                // it DEFEATS every consumer gating on one — see the enum's KDoc. It sits here, alongside
+                // the other overrides, rather than being folded into the real calculation below: the
+                // `when` on `proStatusState` stays exhaustive and keeps refusing to call `Init` or a
+                // persisted `Loaded` a success.
+                DebugMenuViewModel.DebugProPlanStatus.SUCCESS -> State.Success(Unit)
                 else -> {
                     // `Success` means THIS PROCESS has had a fetch confirmed by the backend, nothing
                     // weaker: consumers gate on it to avoid acting on stale data, `HomeViewModel`'s
