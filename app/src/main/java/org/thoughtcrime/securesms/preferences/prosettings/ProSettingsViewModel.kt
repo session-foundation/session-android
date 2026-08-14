@@ -248,8 +248,10 @@ class ProSettingsViewModel @AssistedInject constructor(
 
                         else -> ""
                     },
+                    // WithPlan, not Active: a proof-seeded Active has no date, and the empty string
+                    // is the "render absent" answer rather than a formatted sentinel.
                     subscriptionExpiryDate = when(subType){
-                        is ProStatus.Active -> subType.renewingAtFormatted()
+                        is ProStatus.Active.WithPlan -> subType.renewingAtFormatted()
                         else -> ""
                     },
                 )
@@ -294,7 +296,7 @@ class ProSettingsViewModel @AssistedInject constructor(
             // or the user is pro but non originating
             val noPriceNeeded = !hasBillingCapacity
                     || (subType is ProStatus.Active && !hasValidSub)
-                    || (subType is ProStatus.Active && subType.providerData.isFromAnotherPlatform())
+                    || (subType is ProStatus.Active.WithPlan && subType.providerData.isFromAnotherPlatform())
 
             val plans = if(noPriceNeeded) emptyList()
             else {
@@ -325,7 +327,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
     fun ensureCancelState(){
         val sub = _proSettingsUIState.value.proDataState.type
-        if(sub !is ProStatus.Active) return
+        if(sub !is ProStatus.Active.WithPlan) return
 
         _cancelPlanState.update { State.Loading }
         viewModelScope.launch {
@@ -345,7 +347,7 @@ class ProSettingsViewModel @AssistedInject constructor(
 
     fun ensureRefundState(){
         val sub = _proSettingsUIState.value.proDataState.type
-        if(sub !is ProStatus.Active) return
+        if(sub !is ProStatus.Active.WithPlan) return
 
         _refundPlanState.update { State.Loading }
 
@@ -446,13 +448,13 @@ class ProSettingsViewModel @AssistedInject constructor(
                     // otherwise go to the "choose plan" screen
                     else -> {
                         // if we in the process of refunding on another platform, show that screen instead
-                        if((_proSettingsUIState.value.proDataState.type as? ProStatus.Active)?.refundInProgress == true){
+                        if((_proSettingsUIState.value.proDataState.type as? ProStatus.Active.WithPlan)?.refundInProgress == true){
                             navigateTo(ProSettingsDestination.RefundInProgress)
                             return
                         }
 
                         // otherwise handle the "Choose Plan"
-                        val provider = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)?.providerData
+                        val provider = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active.WithPlan)?.providerData
                         if(_proSettingsUIState.value.inGracePeriod){
                             _dialogState.update {
                                 it.copy(
@@ -481,14 +483,14 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             Commands.GoToRefund -> {
                 val sub = _proSettingsUIState.value.proDataState.type
-                if(sub !is ProStatus.Active) return
+                if(sub !is ProStatus.Active.WithPlan) return
 
                 navigateTo(ProSettingsDestination.RefundSubscription)
             }
 
             Commands.GoToCancel -> {
                 val sub = _proSettingsUIState.value.proDataState.type
-                if(sub !is ProStatus.Active) return
+                if(sub !is ProStatus.Active.WithPlan) return
 
                 navigateTo(ProSettingsDestination.CancelSubscription)
             }
@@ -501,7 +503,7 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             Commands.OpenCancelSubscriptionPage -> {
-                val subUrl = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)
+                val subUrl = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active.WithPlan)
                     ?.providerData?.cancelSubscriptionUrl
                 if(!subUrl.isNullOrEmpty()){
                     viewModelScope.launch {
@@ -565,7 +567,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                 val currentSubscription = _proSettingsUIState.value.proDataState.type
                 val selectedPlan = getSelectedPlan() ?: return
 
-                if(currentSubscription is ProStatus.Active){
+                if(currentSubscription is ProStatus.Active.WithPlan){
                     val newSubscriptionExpiryString = currentSubscription.renewingAtFormatted()
 
                     val currentSubscriptionDuration = DateUtils.getLocalisedProPlanLength(
@@ -786,7 +788,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         // by a fixed enum, so the unit is respected as transmitted. This is cosmetic and (count, unit) is
         // not a guaranteed-unique key, so we degrade gracefully: a SKU is "current" iff its period equals
         // the active plan's; if nothing matches (e.g. a "1y" plan vs a "12m" SKU), nothing is marked.
-        val activePeriod = (subType as? ProStatus.Active)?.duration
+        val activePeriod = (subType as? ProStatus.Active.WithPlan)?.duration
 
         // get prices from the subscription provider
         val prices = subscriptionCoordinator.getCurrentManager().getSubscriptionPrices()
@@ -1019,12 +1021,12 @@ class ProSettingsViewModel @AssistedInject constructor(
     )
 
     data class CancelPlanState(
-        val proStatus: ProStatus.Active,
+        val proStatus: ProStatus.Active.WithPlan,
         val hasValidSubscription: Boolean,  // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
     )
 
     data class RefundPlanState(
-        val proStatus: ProStatus.Active,
+        val proStatus: ProStatus.Active.WithPlan,
         val isQuickRefund: Boolean,
         val quickRefundUrl: String?
     )

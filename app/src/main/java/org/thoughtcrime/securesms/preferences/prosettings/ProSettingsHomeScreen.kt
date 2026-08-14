@@ -261,7 +261,9 @@ fun ProSettingsHome(
         }
 
         // Pro Stats
-        if(subscriptionType is ProStatus.Active){
+        // WithPlan: everything inside renders plan detail. A proof-seeded Active shows the
+        // header/refresh state above and no plan block, which is the "render absent" answer.
+        if(subscriptionType is ProStatus.Active.WithPlan){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProStats(
                 data = data.proStats,
@@ -270,11 +272,15 @@ fun ProSettingsHome(
         }
 
         // Pro account settings
-        if(subscriptionType is ProStatus.Active){
+        // WithPlan, not Active: everything in this block renders plan detail a response owns. A
+        // proof-seeded Active shows the header and refresh state above and no plan block, which is the
+        // "render absent" answer rather than a formatted sentinel.
+        if(subscriptionType is ProStatus.Active.WithPlan){
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
                 showProBadge = data.proDataState.showProBadge,
-                proStatus = data.proDataState.type,
+                // the smart-cast value, not `data.proDataState.type` — the cast does not carry to it
+                proStatus = subscriptionType,
                 subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
                 inGracePeriod = data.inGracePeriod,
@@ -520,7 +526,7 @@ fun ProStatItem(
 fun ProSettings(
     modifier: Modifier = Modifier,
     showProBadge: Boolean,
-    proStatus: ProStatus.Active,
+    proStatus: ProStatus.Active.WithPlan,
     subscriptionRefreshState: State<Unit>,
     inSheet: Boolean,
     expiry: CharSequence,
@@ -857,6 +863,12 @@ fun ProManage(
                     refundButton()
                 }
 
+                // Entitled from a local proof, with no plan detail yet. Every action here needs plan
+                // detail a response has not supplied — there is no plan to cancel and no payment to
+                // refund — so nothing is offered. This screen fetches on arrival, so it is a transient
+                // state, and the refresh indicator elsewhere is what explains it.
+                ProStatus.Active.FromProof -> Unit
+
                 is ProStatus.NeverSubscribed -> {
                     recoverButton()
                 }
@@ -931,7 +943,7 @@ fun ProSettingsFooter(
 ) {
     // Manage Pro - Expired has this in the header so exclude it here
     // We also don't want to show this while refund in process
-    val refunding = (proStatus as? ProStatus.Active)?.refundInProgress ?: false
+    val refunding = (proStatus as? ProStatus.Active.WithPlan)?.refundInProgress ?: false
     if(proStatus !is ProStatus.Expired && !refunding) {
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
         ProManage(

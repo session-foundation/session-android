@@ -77,7 +77,7 @@ fun RefundPlanScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun RefundPlan(
-    data: ProStatus.Active,
+    data: ProStatus.Active.WithPlan,
     isQuickRefund: Boolean,
     quickRefundUrl: String?,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,

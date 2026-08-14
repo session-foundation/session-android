@@ -23,7 +23,7 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun RefundPlanNonOriginating(
-    subscription: ProStatus.Active,
+    subscription: ProStatus.Active.WithPlan,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){

@@ -11,11 +11,61 @@ sealed interface ProStatus{
     data object NeverSubscribed: ProStatus
 
     sealed interface Active: ProStatus{
-        val renewingAt: Instant // the payment/renewal-due date (E), as the backend sends it
-        val duration: ProPlanPeriod  // the backend's raw (count, unit) — rendered generically, never bucketed
-        val providerData: PaymentProviderMetadata
-        val quickRefundExpiry: Instant?
-        val refundInProgress: Boolean
+
+        /**
+         * Entitled, with NO plan detail known — the DISPLAY seed, derived from a local proof when no
+         * `get_pro_status` response has ever been persisted.
+         *
+         * Carries no date DELIBERATELY, and that is the point of it being its own type rather than a
+         * dated variant holding a sentinel. `E`, `G` and the provider are response-owned: only a response
+         * carries `latest_payment` and the values that must agree with it, and the proof's own expiry is a
+         * short clamped credential lifetime rather than the plan's payment-due date — on a compressed QA
+         * clock they differ by ~300s against ~30 days. Seeding a date from the proof would therefore show
+         * an account paid through a month as expiring in minutes.
+         *
+         * Because it cannot HOLD a date, no reader can render one. That is why this is a type and not a
+         * nullable field: `ProSettingsViewModel` already floors a negative remaining duration to zero and
+         * renders "0 seconds" instead of "Expired", which is what discipline alone achieves here.
+         *
+         * `is Active` still matches, so every "are we Pro for display purposes" check keeps working. Code
+         * that needs the plan's dates must narrow to [WithPlan], and the compiler will say so.
+         */
+        data object FromProof: Active
+
+        /**
+         * Active WITH plan detail, i.e. sourced from a `get_pro_status` response.
+         *
+         * Everything a response owns lives here rather than on [Active], so a reader that wants a date has
+         * to prove it has one.
+         */
+        sealed interface WithPlan: Active {
+            val renewingAt: Instant // the payment/renewal-due date (E), as the backend sends it
+            val duration: ProPlanPeriod  // the backend's raw (count, unit) — rendered generically, never bucketed
+            val providerData: PaymentProviderMetadata
+            val quickRefundExpiry: Instant?
+            val refundInProgress: Boolean
+
+            /**
+             * Whether the store's own quick-refund window is still open, which decides between the
+             * <48h (#19/#22) and >48h (#20/#23) refund screens.
+             *
+             * [now] must come from [org.session.libsession.network.SnodeClock], as everywhere else in
+             * the Pro stack — `quickRefundExpiry` is a backend/store timestamp, so comparing it against
+             * the device clock lets clock skew flip the branch.
+             */
+            fun isWithinQuickRefundWindow(now: Instant): Boolean {
+                return quickRefundExpiry?.isAfter(now) == true
+            }
+
+            fun renewingAtFormatted(): String {
+                val pattern = if (BuildConfig.BUILD_TYPE != "release")
+                    "MMMM d, yyyy, h:mm a" // non prod builds can show seconds for debugging purposes
+                else "MMMM d, yyyy"
+                return DateUtils.getLocaleFormattedDate(
+                    renewingAt.toEpochMilli(), pattern
+                )
+            }
+        }
 
         data class AutoRenewing(
             override val renewingAt: Instant,
@@ -24,7 +74,7 @@ sealed interface ProStatus{
             override val quickRefundExpiry: Instant?,
             override val refundInProgress: Boolean,
             val inGracePeriod: Boolean
-        ): Active
+        ): WithPlan
 
         data class Expiring(
             override val renewingAt: Instant,
@@ -32,28 +82,8 @@ sealed interface ProStatus{
             override val providerData: PaymentProviderMetadata,
             override val quickRefundExpiry: Instant?,
             override val refundInProgress: Boolean,
-        ): Active
+        ): WithPlan
 
-        /**
-         * Whether the store's own quick-refund window is still open, which decides between the
-         * <48h (#19/#22) and >48h (#20/#23) refund screens.
-         *
-         * [now] must come from [org.session.libsession.network.SnodeClock], as everywhere else in
-         * the Pro stack — `quickRefundExpiry` is a backend/store timestamp, so comparing it against
-         * the device clock lets clock skew flip the branch.
-         */
-        fun isWithinQuickRefundWindow(now: Instant): Boolean {
-            return quickRefundExpiry?.isAfter(now) == true
-        }
-
-        fun renewingAtFormatted(): String {
-            val pattern = if (BuildConfig.BUILD_TYPE != "release")
-                "MMMM d, yyyy, h:mm a" // non prod builds can show seconds for debugging purposes
-            else "MMMM d, yyyy"
-            return DateUtils.getLocaleFormattedDate(
-                renewingAt.toEpochMilli(), pattern
-            )
-        }
     }
 
     data class Expired(
