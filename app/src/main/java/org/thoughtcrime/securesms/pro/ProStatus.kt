@@ -72,9 +72,9 @@ sealed interface ProStatus{
          * [expiredAt] instead is short by exactly [gracePeriod], and empty once grace reaches the
          * window length. [gracePeriod] is coverage-past-expiry: the provider's dunning window plus the
          * backend's ~1h renewal-latency allowance. It is multi-day once a real dunning window is known
-         * (Apple states its retry window directly; for Play the backend keeps the reported expiry at
-         * the paid-through date and carries Play's expiry extension as the grace instead), and ~1h
-         * before then.
+         * (Apple states its retry window directly; for Play the backend does NOT follow Play's expiry
+         * extension — it keeps the reported expiry at the original payment-due instant and carries the
+         * extension as the grace instead), and ~1h before then.
          *
          * Derived here rather than at the consumer so a second reader cannot pick the other anchor.
          */
