@@ -464,6 +464,16 @@ object QaLaunchConfig {
      */
     private fun applyProProof(intent: Intent, prefs: TextSecurePreferences): Boolean {
         if (!intent.hasExtra(EXTRA_PRO_PROOF)) {
+            // ABSENT CLEARS, because the contract says absent is identical to `useActual` and this
+            // preference PERSISTS across launches. Returning early instead would leave the previous
+            // launch's override in place, so a spec that set `valid` would silently make every later
+            // spec on the same device Pro — the leak Desktop hit needing `PRO_ENV_KEYS`. Android has no
+            // reset list; absence has to do that work.
+            //
+            // Note this clears only the launch-extra override. The debug menu's own
+            // `forceCurrentUserAsPro` toggle is a separate preference and is deliberately untouched, so
+            // a developer's setting survives a relaunch as they would expect.
+            prefs.setDebugProAccessOverride(null)
             return false
         }
 
