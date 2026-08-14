@@ -99,8 +99,14 @@ abstract class InputbarViewModel(
         val charsLeft = proStatusManager.getCharacterLimit(hasProAccess) - composedCodePointCount
 
         return if(charsLeft < 0){
-            // the user is trying to send a message that is too long - we should display a dialog
-            if(hasProAccess){
+            // The LIMIT is an access question; which dialog explains it is a DISPLAY one, and the two
+            // deliberately read different values.
+            //
+            // A user whose plan reads Active but who holds no usable proof is over the standard limit —
+            // that is ACCESS, correctly refusing. But offering them "upgrade to Pro" is inviting them to
+            // buy something they are already paying for. They get "message too long" instead, and the
+            // upsell is reserved for users whose plan says they are not subscribed.
+            if(proStatusManager.proDataState.value.type is ProStatus.Active){
                 showMessageTooLongSendDialog()
             } else {
                 showSessionProCTA()
@@ -113,7 +119,10 @@ abstract class InputbarViewModel(
     }
 
     fun onCharLimitTapped(){
-        if(isSelfPro.value){
+        // Same split as [validateMessageLength]: this chooses which explanation to show, so it is DISPLAY.
+        // `handleCharLimitTappedForRegularUser` is the upsell, and a subscriber with no usable proof must
+        // not be upsold their own plan.
+        if(proStatusManager.proDataState.value.type is ProStatus.Active){
             handleCharLimitTappedForProUser()
         } else {
             handleCharLimitTappedForRegularUser()
