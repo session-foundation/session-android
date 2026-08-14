@@ -179,7 +179,7 @@ class ProStatusManager @Inject constructor(
                 ProDataState(
                     type = proStatusState.lastUpdated?.let { (response, confirmedAt) ->
                         response.toProStatus(nowMs, application, refundInProgress, confirmedAt)
-                    } ?: ProStatus.NeverSubscribed,
+                    } ?: seedDisplayStatusFromProof(),
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
@@ -607,6 +607,44 @@ class ProStatusManager @Inject constructor(
         if (proDatabase.isRevoked(proof.revocationTagHex, now)) return null
 
         return proof
+    }
+
+    /**
+     * DISPLAY seeded from the local proof, for when no `get_pro_status` response has ever been persisted.
+     *
+     * The bug this exists for: a restored subscriber's settings row read "Upgrade Session" while their
+     * proof was quietly granting them the features, because DISPLAY came from a response and nothing else.
+     * A response still WINS wherever one exists — this is a seed, not a second source of truth.
+     *
+     * ⚠️ EXPIRY-ONLY, AND THAT IS DELIBERATE. This does NOT use the revocation-aware ACCESS function, and
+     * must not be "fixed" to. Revocation is an ACCESS concern; the two values are allowed to disagree and
+     * this is one of the places they may. Matches iOS's `proProofIsActive`, which is expiry-only for the
+     * same reason.
+     *
+     * Returns [ProStatus.Active.FromProof] — no date — because `E`, `G` and the provider are response-owned
+     * and the proof's own expiry is a different quantity from the plan's payment-due date.
+     *
+     * ⚠️ TWO KNOWN GAPS, both reported and neither mine to close here:
+     *
+     *  - An account holding an access expiry with NO proof reads `NeverSubscribed`, because this consults
+     *    the proof alone. Reachable — the startup gate exists partly for that state, where a config merged
+     *    one without the other. Adding `E` as a second seed source is a contract question for all three
+     *    clients, not an Android fix.
+     *  - An EXPIRED proof also reads `NeverSubscribed`, which is wrong for a subscriber whose proof simply
+     *    has not renewed yet. `Expired` would be equally wrong and needs response-owned dates. Both
+     *    available answers are wrong in different directions, so this takes the one that matches iOS.
+     */
+    private fun seedDisplayStatusFromProof(): ProStatus {
+        val proof = configFactory.get()
+            .withUserConfigs { it.userProfile.getProConfig() }
+            ?.proProof
+            ?: return ProStatus.NeverSubscribed
+
+        return if (proof.expirySeconds > snodeClock.currentTime().epochSecond) {
+            ProStatus.Active.FromProof
+        } else {
+            ProStatus.NeverSubscribed
+        }
     }
 
     /**

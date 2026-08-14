@@ -230,9 +230,13 @@ class ProSettingsViewModel @AssistedInject constructor(
                             } else {
                                 Phrase.from(context, R.string.proAutoRenewTime)
                                     .put(
+                                        // NOT floored at zero. `getExpiryString` already renders a
+                                        // negative remaining as "Expired", and the floor made that
+                                        // branch unreachable — a past renewal date rendered
+                                        // "0 seconds", which reads as a live countdown at the moment of
+                                        // lapse and gets chased as an expiry bug rather than a stale one.
                                         TIME_KEY, dateUtils.getExpiryString(
                                             remaining = Duration.between(now, subType.renewingAt)
-                                                .coerceAtLeast(Duration.ZERO)
                                         )
                                     )
                                     .format()
@@ -241,9 +245,9 @@ class ProSettingsViewModel @AssistedInject constructor(
 
                         is ProStatus.Active.Expiring ->
                             Phrase.from(context, R.string.proExpiringTime)
+                                // Not floored — see the AutoRenewing branch above.
                                 .put(TIME_KEY, dateUtils.getExpiryString(
-                                    remaining = Duration.between(now, subType.renewingAt)
-                                        .coerceAtLeast(Duration.ZERO)))
+                                    remaining = Duration.between(now, subType.renewingAt)))
                                 .format()
 
                         else -> ""

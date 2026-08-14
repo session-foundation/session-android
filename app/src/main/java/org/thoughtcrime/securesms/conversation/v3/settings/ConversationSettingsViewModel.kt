@@ -744,6 +744,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val maxPins =
             proStatusManager.getPinnedConversationLimit(proStatusManager.currentUserHasProAccess())
         if (totalPins >= maxPins) {
+            // RULED: an Active plan gets no CTA — see HomeViewModel.setPinned for the reasoning. The
+            // pin limit lives in two ViewModels and both must apply it.
+            if (proStatusManager.proDataState.value.type is ProStatus.Active) return
             // the user has reached the pin limit, show the CTA
             _dialogState.update {
                 it.copy(
