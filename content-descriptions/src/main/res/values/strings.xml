@@ -256,6 +256,10 @@
     <string name="qa_settings_item_donate">donate-menu-item</string>
     <string name="qa_settings_item_path">path-menu-item</string>
     <string name="qa_settings_item_pro">pro-menu-item</string>
+    <!-- The Pro row's LABEL, which is what says which state the account is in ("Session Pro Beta" /
+         "Upgrade Session" / "Renew Pro Beta"). Separate from the row above, which is the tap target and
+         carries no text of its own — so a test reading the row's STATE needs this one, not that one. -->
+    <string name="qa_settings_item_pro_title">pro-menu-item-title</string>
 
     <!-- In app review -->
     <string name="qa_inapp_review_dialog_button_great">enjoy-session-positive-button</string>

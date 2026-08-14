@@ -608,6 +608,9 @@ fun Buttons(
                             )
                         },
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
+                        // The row id above is the tap target and carries no text; this one is on the
+                        // label, so a test can read WHICH of the three states the row is showing.
+                        textQaTag = R.string.qa_settings_item_pro_title,
                         colors = accentTextButtonColors()
                     ) {
                        activity?.push<ProSettingsActivity>()
