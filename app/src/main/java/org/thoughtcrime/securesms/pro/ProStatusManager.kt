@@ -426,6 +426,14 @@ class ProStatusManager @Inject constructor(
      * its own key — a routine refresh must not consume the gate's budget, and a startup fetch from
      * twenty hours ago must not satisfy the 60s floor.
      */
+    /** The four config values [startupFetchReason] turns on, read together under one lock. */
+    private data class StartupGateInputs(
+        val renewalDue: Instant?,
+        val autoRenewing: Boolean,
+        val grace: Duration,
+        val hasProof: Boolean,
+    )
+
     private fun startupGate(): Flow<String> = flow {
         val now = snodeClock.currentTime()
 
@@ -435,15 +443,24 @@ class ProStatusManager @Inject constructor(
             return@flow
         }
 
-        val (renewalDue, autoRenewing, grace) = configFactory.get().withUserConfigs { configs ->
-            Triple(
-                configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond),
-                configs.userProfile.getProAutoRenewing(),
-                configs.userProfile.getProGracePeriod(),
+        // All four read under ONE config lock — the gate's inputs are cheap individually but the lock is
+        // not, so this deliberately does not read the proof in a second pass.
+        val inputs = configFactory.get().withUserConfigs { configs ->
+            StartupGateInputs(
+                renewalDue = configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond),
+                autoRenewing = configs.userProfile.getProAutoRenewing(),
+                grace = configs.userProfile.getProGracePeriod(),
+                hasProof = configs.userProfile.getProConfig()?.proProof != null,
             )
         }
 
-        val reason = startupFetchReason(renewalDue, autoRenewing, grace, now)
+        val reason = startupFetchReason(
+            renewalDue = inputs.renewalDue,
+            autoRenewing = inputs.autoRenewing,
+            grace = inputs.grace,
+            now = now,
+            hasProof = inputs.hasProof,
+        )
         if (reason == null) {
             Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Startup gate: no CTA could fire, skipping the startup fetch")
             return@flow
@@ -702,18 +719,38 @@ class ProStatusManager @Inject constructor(
          * | `auto_renewing && now >= renewalDue`                | fetch — the renewal is overdue    |
          * | `!auto_renewing && renewalDue` in the CTA window    | fetch — the Expiring CTA may fire |
          * | `!auto_renewing && now >= renewalDue`               | confirm before the Expired CTA    |
+         * | no `renewalDue`, but a proof                        | fetch — entitled, horizon unknown |
+         * | no `renewalDue`, no proof                           | no fetch — never subscribed       |
          *
          * No row tests `renewalDue + grace <= now`: a cold start does not need to know when coverage
          * ends, and testing it would double-count grace against the payment date the rows turn on.
+         *
+         * [hasProof] is deliberately not defaulted. It is the difference between a real subscriber who
+         * cannot be warned and an account we correctly leave alone, and the failure mode of forgetting it
+         * is a fetch that silently never happens — so every caller states it.
          */
         internal fun startupFetchReason(
             renewalDue: Instant?,
             autoRenewing: Boolean,
             grace: Duration,
             now: Instant,
+            hasProof: Boolean,
         ): String? {
-            // No access expiry at all: never subscribed, so no CTA can fire and nothing to confirm.
-            if (renewalDue == null) return null
+            if (renewalDue == null) {
+                // A proof is entitlement; the access expiry is only the payment horizon, and the two can
+                // come apart — a config that merged one without the other, or pruned history. In that
+                // state the client positively knows it is Pro while knowing nothing about when that ends,
+                // so it is not the never-subscribed case this gate exists to protect and declining would
+                // leave a real subscriber unwarnable. Matches iOS's `expirySeconds > 0 || hasProof`.
+                //
+                // Both absent stays declined, which is the minted-but-undiscovered grant (no proof, no
+                // expiry): nothing local says the account is Pro, so there is nothing to warn about yet.
+                return if (hasProof) {
+                    "a proof but no access expiry; entitled with no known horizon"
+                } else {
+                    null
+                }
+            }
 
             val overdue = !now.isBefore(renewalDue)
 
