@@ -76,7 +76,14 @@ abstract class InputbarViewModel(
                 count = charsLeft,
                 countFormatted = NumberUtil.getFormattedNumber(charsLeft.toLong()),
                 danger = charsLeft < 0,
-                showProBadge = !isSelfPro.value // only show the badge for non pro users
+                // THE RULE: the gate reads ACCESS, the thing that EXPLAINS the gate reads DISPLAY.
+                //
+                // This badge is an upsell, not an entitlement indicator, so it reads the plan's state.
+                // Do not "fix" it back to an inverted ACCESS read to match the other badges: a
+                // subscriber whose proof has not arrived is correctly held to the standard limit by
+                // ACCESS above, and inviting them to buy what they already pay for is a different
+                // question with a different answer.
+                showProBadge = proStatusManager.proDataState.value.type !is ProStatus.Active
             )
         } else {
             null
