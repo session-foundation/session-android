@@ -208,21 +208,26 @@ fun ProSettingsHome(
             }
         }
     ) {
-        // Header for non-pro users or expired users in sheet mode
+        val headerText = when(subscriptionType) {
+            is ProStatus.NeverSubscribed -> R.string.proFullestPotential
+            is ProStatus.Expired -> R.string.proAccessRenewStart
+            is ProStatus.Active -> R.string.proThanksForSupporting
+        }
+
+        if(data.proDataState.refreshState !is State.Success){
+            Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+        }
+
+        Text(
+            text = Phrase.from(context.getText(headerText))
+                .format().toString(),
+            style = LocalType.current.base,
+            textAlign = TextAlign.Center,
+        )
+
+        // The Continue CTA belongs only where upgrading is what the screen is for — the expired
+        // main screen offers renewal through ProManage below instead.
         if(subscriptionType is ProStatus.NeverSubscribed || expiredInSheet) {
-            if(data.proDataState.refreshState !is State.Success){
-                Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-            }
-
-            Text(
-                text = if(expiredInSheet) Phrase.from(context.getText(R.string.proAccessRenewStart))
-                    .format().toString()
-                    else Phrase.from(context.getText(R.string.proFullestPotential))
-                    .format().toString(),
-                style = LocalType.current.base,
-                textAlign = TextAlign.Center,
-            )
-
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
             Box {
