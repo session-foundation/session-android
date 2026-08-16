@@ -136,7 +136,7 @@ fun ChoosePlanNoBilling(
         )
 
         // optional cell 3
-        if(subscription is ProStatus.Expired) {
+        if(subscription is ProStatus.Expired.WithPlan) {
             add(
                 NonOriginatingLinkCellData(
                     title = Phrase.from(context.getText(R.string.onPlatformStoreWebsite))
@@ -157,13 +157,13 @@ fun ChoosePlanNoBilling(
         disabled = false,
         onBack = onBack,
         headerTitle = headerTitle,
-        buttonText = if(subscription is ProStatus.Expired) Phrase.from(context.getText(R.string.openPlatformWebsite))
+        buttonText = if(subscription is ProStatus.Expired.WithPlan) Phrase.from(context.getText(R.string.openPlatformWebsite))
             .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
             .format().toString()
         else null,
         dangerButton = false,
         onButtonClick = {
-            if(subscription is ProStatus.Expired) {
+            if(subscription is ProStatus.Expired.WithPlan) {
                 sendCommand(ShowOpenUrlDialog(subscription.providerData.updateSubscriptionUrl))
             }
         },

@@ -96,18 +96,24 @@ fun GetProStatusResponse.toProStatus(
             }
         }
 
-        ProUserStatus.EXPIRED -> ProStatus.Expired(
-            // Both values come off the response, and neither may be read from config: they are only
-            // meaningful as a PAIR from one response. Not every status branch writes `G` to config, and
-            // the branches that clear `E` cascade `G` away with it, so a config read would pair this
-            // response's expiry with a grace period from a different one.
-            expiredAt = expiry ?: Instant.EPOCH,
-            gracePeriod = gracePeriod,
-            providerData = providerMetadata(
-                latestPayment?.paymentProvider ?: PAYMENT_PROVIDER_GOOGLE_PLAY,
-                context,
-            ),
-        )
+        // A response that reports EXPIRED without an expiry describes the status but not the dates, so it
+        // maps to the dateless variant. The epoch is not a usable stand-in: the Expired CTA's window is
+        // measured from coverage end, and an epoch anchor puts that window decades in the past, so the CTA
+        // silently never fires and nothing indicates a date was missing.
+        ProUserStatus.EXPIRED -> expiry?.let {
+            ProStatus.Expired.WithPlan(
+                // Both values come off the response, and neither may be read from config: they are only
+                // meaningful as a PAIR from one response. Not every status branch writes `G` to config, and
+                // the branches that clear `E` cascade `G` away with it, so a config read would pair this
+                // response's expiry with a grace period from a different one.
+                expiredAt = it,
+                gracePeriod = gracePeriod,
+                providerData = providerMetadata(
+                    latestPayment?.paymentProvider ?: PAYMENT_PROVIDER_GOOGLE_PLAY,
+                    context,
+                ),
+            )
+        } ?: ProStatus.Expired.FromLocalState
 
         // "never" + any unrecognized/future slug -> treat as not subscribed.
         else -> ProStatus.NeverSubscribed
@@ -173,7 +179,7 @@ val previewAutoRenewingApple = ProStatus.Active.AutoRenewing(
     inGracePeriod = false
 )
 
-val previewExpiredApple = ProStatus.Expired(
+val previewExpiredApple = ProStatus.Expired.WithPlan(
     expiredAt = Instant.now() - Duration.ofDays(14),
     // Zero grace, so expiredAt and coverage end coincide: the fixture means what it reads as.
     gracePeriod = Duration.ZERO,

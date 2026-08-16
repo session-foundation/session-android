@@ -179,7 +179,7 @@ class ProStatusManager @Inject constructor(
                 ProDataState(
                     type = proStatusState.lastUpdated?.let { (response, confirmedAt) ->
                         response.toProStatus(nowMs, application, refundInProgress, confirmedAt)
-                    } ?: seedDisplayStatusFromProof(),
+                    } ?: seedDisplayStatusFromConfig(),
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
@@ -259,19 +259,19 @@ class ProStatusManager @Inject constructor(
                             refundInProgress = false
                         )
 
-                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired.WithPlan(
                             expiredAt = now - Duration.ofDays(14),
                             // Zero grace: these fixtures mean "coverage ended N days ago".
                             gracePeriod = Duration.ZERO,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
-                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired.WithPlan(
                             expiredAt = now - Duration.ofDays(60),
                             // Zero grace: these fixtures mean "coverage ended N days ago".
                             gracePeriod = Duration.ZERO,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
-                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired.WithPlan(
                             expiredAt = now - Duration.ofDays(14),
                             // Zero grace: these fixtures mean "coverage ended N days ago".
                             gracePeriod = Duration.ZERO,
@@ -303,7 +303,7 @@ class ProStatusManager @Inject constructor(
         expiry == null -> this
         this is ProStatus.Active.AutoRenewing -> copy(renewingAt = expiry)
         this is ProStatus.Active.Expiring -> copy(renewingAt = expiry)
-        this is ProStatus.Expired -> copy(expiredAt = expiry)
+        this is ProStatus.Expired.WithPlan -> copy(expiredAt = expiry)
         else -> this
     }
 
@@ -610,41 +610,36 @@ class ProStatusManager @Inject constructor(
     }
 
     /**
-     * DISPLAY seeded from the local proof, for when no `get_pro_status` response has ever been persisted.
+     * DISPLAY derived from synced config, for when no `get_pro_status` response has ever been persisted.
+     * A response wins wherever one exists.
      *
-     * The bug this exists for: a restored subscriber's settings row read "Upgrade Session" while their
-     * proof was quietly granting them the features, because DISPLAY came from a response and nothing else.
-     * A response still WINS wherever one exists — this is a seed, not a second source of truth.
+     * The access expiry is consulted before the proof because it answers the question DISPLAY asks. `E` is
+     * backend-derived plan state that arrived by config sync, so its presence is evidence the ACCOUNT has
+     * a plan; the proof is evidence about THIS DEVICE's credential. A device restored from a config that
+     * carried `E` before the proof has a plan to describe, and consulting the proof first would describe
+     * it as never having subscribed.
      *
-     * ⚠️ EXPIRY-ONLY, AND THAT IS DELIBERATE. This does NOT use the revocation-aware ACCESS function, and
-     * must not be "fixed" to. Revocation is an ACCESS concern; the two values are allowed to disagree and
-     * this is one of the places they may. Matches iOS's `proProofIsActive`, which is expiry-only for the
-     * same reason.
+     * The ordering is also the only one that can express a valid proof under a past `E`: display expired,
+     * access still granted until the proof lapses. A proof-first check short-circuits to active and the
+     * state becomes unrepresentable.
      *
-     * Returns [ProStatus.Active.FromProof] — no date — because `E`, `G` and the provider are response-owned
-     * and the proof's own expiry is a different quantity from the plan's payment-due date.
+     * Status only. The variants returned here carry no dates, because `E`, `G` and the provider metadata
+     * that a rendered date must agree with are settled together by a response.
      *
-     * ⚠️ TWO KNOWN GAPS, both reported and neither mine to close here:
-     *
-     *  - An account holding an access expiry with NO proof reads `NeverSubscribed`, because this consults
-     *    the proof alone. Reachable — the startup gate exists partly for that state, where a config merged
-     *    one without the other. Adding `E` as a second seed source is a contract question for all three
-     *    clients, not an Android fix.
-     *  - An EXPIRED proof also reads `NeverSubscribed`, which is wrong for a subscriber whose proof simply
-     *    has not renewed yet. `Expired` would be equally wrong and needs response-owned dates. Both
-     *    available answers are wrong in different directions, so this takes the one that matches iOS.
+     * The proof branch tests expiry alone. Revocation governs access rather than the state of the plan, so
+     * a revoked proof still describes a subscription that exists.
      */
-    private fun seedDisplayStatusFromProof(): ProStatus {
-        val proof = configFactory.get()
-            .withUserConfigs { it.userProfile.getProConfig() }
-            ?.proProof
-            ?: return ProStatus.NeverSubscribed
-
-        return if (proof.expirySeconds > snodeClock.currentTime().epochSecond) {
-            ProStatus.Active.FromProof
-        } else {
-            ProStatus.NeverSubscribed
+    private fun seedDisplayStatusFromConfig(): ProStatus {
+        val (accessExpiry, proofExpirySeconds) = configFactory.get().withUserConfigs { configs ->
+            configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond) to
+                configs.userProfile.getProConfig()?.proProof?.expirySeconds
         }
+
+        return seededDisplayStatus(
+            accessExpiry = accessExpiry,
+            proofExpiry = proofExpirySeconds?.let(Instant::ofEpochSecond),
+            now = snodeClock.currentTime(),
+        )
     }
 
     /**
@@ -849,6 +844,38 @@ class ProStatusManager @Inject constructor(
          * landing exactly on the boundary can read the pre-crossing state.
          */
         private val WAKE_SLACK: Duration = Duration.ofSeconds(30)
+
+        /**
+         * The plan state implied by synced config alone, for display before any response has been
+         * persisted. Pure over plain values so it can be tested without a clock or config.
+         *
+         * The access expiry is consulted before the proof because the two answer different questions:
+         * `E` is backend-derived plan state that arrived by config sync, so its presence is evidence the
+         * ACCOUNT has a plan, while the proof is evidence about THIS DEVICE's credential. A device whose
+         * config carried `E` before the proof has a plan to describe.
+         *
+         * The ordering is also what makes a valid proof under a past `E` expressible — display expired,
+         * access still granted until the proof lapses. Consulting the proof first collapses that state
+         * into active.
+         *
+         * The proof branch tests expiry alone. Revocation governs access rather than the state of the
+         * plan, so a revoked proof still describes a subscription that exists.
+         */
+        internal fun seededDisplayStatus(
+            accessExpiry: Instant?,
+            proofExpiry: Instant?,
+            now: Instant,
+        ): ProStatus = when {
+            accessExpiry != null ->
+                if (now.isBefore(accessExpiry)) ProStatus.Active.FromLocalState
+                else ProStatus.Expired.FromLocalState
+
+            proofExpiry != null ->
+                if (now.isBefore(proofExpiry)) ProStatus.Active.FromLocalState
+                else ProStatus.Expired.FromLocalState
+
+            else -> ProStatus.NeverSubscribed
+        }
 
         /**
          * Whether a cold start should fetch `get_pro_status`, and why — or null to stay off the

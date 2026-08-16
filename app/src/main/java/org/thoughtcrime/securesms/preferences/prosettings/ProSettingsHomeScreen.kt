@@ -867,7 +867,7 @@ fun ProManage(
                 // detail a response has not supplied — there is no plan to cancel and no payment to
                 // refund — so nothing is offered. This screen fetches on arrival, so it is a transient
                 // state, and the refresh indicator elsewhere is what explains it.
-                ProStatus.Active.FromProof -> Unit
+                ProStatus.Active.FromLocalState -> Unit
 
                 is ProStatus.NeverSubscribed -> {
                     recoverButton()

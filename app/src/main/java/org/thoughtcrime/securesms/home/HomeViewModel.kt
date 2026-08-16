@@ -256,7 +256,11 @@ class HomeViewModel @Inject constructor(
                         }
                     }
                 }
-                else if(subscription.type is ProStatus.Expired
+                // WithPlan, because the window below is measured from a date only a response carries.
+                // An expired status derived from local state has no coverage-end instant, and there is
+                // no safe stand-in: a sentinel puts the window in the past, which suppresses the CTA
+                // without any sign that a date was missing.
+                else if(subscription.type is ProStatus.Expired.WithPlan
                     // Only after a SUCCESSFUL get_pro_status request (the round-trip completed and the
                     // backend answered — even if with "expired"/"not pro"), never off stale data from a
                     // failed or in-flight fetch: on foreground the cached status can be pre-renewal, and a
