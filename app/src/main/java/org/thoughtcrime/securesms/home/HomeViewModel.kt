@@ -367,10 +367,10 @@ class HomeViewModel @Inject constructor(
         val maxPins =
             proStatusManager.getPinnedConversationLimit(proStatusManager.currentUserHasProAccess())
         if (pinned && totalPins >= maxPins) {
-            // RULED: an Active plan gets NO CTA. A subscriber whose proof has not arrived is refused
-            // the pin by ACCESS above, and offering to sell them the plan they already hold is worse
-            // than refusing silently. The silence is an accepted trade, not an oversight — the copy
-            // that would explain a refusal without offering a purchase does not exist.
+            // No upsell when the plan already reads active. The pin was refused above on access, and
+            // a subscriber whose proof has not arrived would otherwise be offered the plan they hold.
+            // The refusal is therefore silent: the copy that would explain it without offering a
+            // purchase does not exist, and a silent refusal is the lesser of the two.
             if (proStatusManager.proDataState.value.type is ProStatus.Active) return
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {

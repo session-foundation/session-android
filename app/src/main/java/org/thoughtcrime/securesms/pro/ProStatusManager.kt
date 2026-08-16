@@ -817,26 +817,19 @@ class ProStatusManager @Inject constructor(
          * `get_pro_status` on every start — exactly the traffic the gate exists to remove, invisible to it
          * because it is a different trigger.
          *
-         * ⚠️ LIFETIME, AND THIS SIDE OF IT IS THE BUGGY ONE. This guard is scoped to the ACCOUNT SESSION,
-         * not the process: a restore or an account load re-arms it. The collector lives under
-         * [doWhileLoggedIn], which `AuthAwareComponentsHandler` drives with `collectLatest`, so a new
-         * `LoggedInState` tears it down and rebuilds it — and `drop(1)` starts again.
+         * LIFETIME: this guard is scoped to the account session, not the process. The collector runs
+         * under [doWhileLoggedIn], which `AuthAwareComponentsHandler` drives with `collectLatest`, so a
+         * new `LoggedInState` tears it down and rebuilds it and the drop starts again.
          *
-         * So on a restore the post-restore projection is STRUCTURALLY the dropped one — always, not
-         * unluckily — and this guard cannot be the thing that discovers a restored subscriber. The
-         * config-change trigger is the only thing that fetches after a restore, so what a restored
-         * subscriber actually gets today is: no status until the next cold launch, or until they happen to
-         * open Pro settings, while the proof quietly grants the features.
+         * An account load therefore re-arms it, which makes the projection that follows a restore
+         * structurally the dropped one. This guard cannot be what discovers a restored subscriber, and
+         * removing the drop is not the way to make it one — that reinstates a fetch on every cold launch.
+         * Discovering a restored subscriber is a question about whether config is news, which position
+         * cannot answer.
          *
-         * Do NOT "fix" that by removing the drop — that reinstates the every-cold-launch fetch. The fix
-         * under discussion is a separate trigger asking the SEMANTIC question ("is this config news we have
-         * never acted on") instead of the positional one, which is unruled and deliberately not built here.
-         *
-         * iOS's equivalent flag is per-PROCESS and set eagerly at app setup, so it is already true by the
-         * time a restore lands and iOS therefore fetches. That is the CORRECT outcome, reached by
-         * construction order rather than by design — do not port this file's lifetime to iOS to make the
-         * two match, which would regress iOS onto the behaviour described above. Same concept, same
-         * comment, different lifetime, and only one of them is right.
+         * The lifetime is not the same on every client, so it is not safe to assume from the shared name:
+         * iOS's equivalent flag is per-process (`SessionProManager.swift:550-563`) and is already set by
+         * the time a restore lands, which is why a restore fetches there.
          */
         internal fun <T> Flow<T>.dropFirstProjection(): Flow<T> = distinctUntilChanged().drop(1)
         /**
