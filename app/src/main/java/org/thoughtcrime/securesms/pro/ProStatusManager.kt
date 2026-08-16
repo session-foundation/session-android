@@ -851,8 +851,15 @@ class ProStatusManager @Inject constructor(
          * access still granted until the proof lapses. Consulting the proof first collapses that state
          * into active.
          *
-         * The proof branch tests expiry alone. Revocation governs access rather than the state of the
-         * plan, so a revoked proof still describes a subscription that exists.
+         * The second rung compares the proof's expiry directly, rather than calling
+         * [currentUserProProofForAccess] or [currentUserHasProAccess]. Both of those are revocation-aware
+         * and one of them is mockable, and neither property belongs here: revocation withdraws what this
+         * device may do, while a revoked credential says nothing about whether the account is still
+         * paying. Routing this rung through an access function would also let an access mock change what
+         * the menu row says, which would make the two values separate in name only.
+         *
+         * Both rungs compare against the one [now] passed in. Reading a clock per branch can straddle
+         * them, pairing `E` at one instant with the proof at another — a combination no account is in.
          */
         internal fun seededDisplayStatus(
             accessExpiry: Instant?,
