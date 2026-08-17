@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -70,6 +71,7 @@ import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.castAwayType
 import java.time.Duration
@@ -93,6 +95,7 @@ class ProStatusManager @Inject constructor(
     private val snodeClock: SnodeClock,
     private val proStatusRepository: Lazy<ProStatusRepository>,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
+    private val appVisibilityManager: AppVisibilityManager,
 ) : AuthAwareComponent {
 
     val proDataState: StateFlow<ProDataState> = loginState.flowWithLoggedInState {
@@ -415,7 +418,21 @@ class ProStatusManager @Inject constructor(
             // (see manageProofRenewalScheduling) and nothing else. A status fetch on the proof's clock
             // couples the two loops, so a proof renewing early or late drags the status fetch with it.
 
-            startupGate()
+            // Evaluated when the app becomes visible, not only when this collector starts. The
+            // expiring CTA arms seven days before the access expiry, while the wakes that survive
+            // backgrounding fire AT the expiry and at coverage end — after that window has opened. A
+            // subscriber who enters it while the app is merely backgrounded would otherwise not be
+            // warned until the process next started cold.
+            //
+            // The same gate, at a second moment: no new predicate and no second trigger. Its persisted
+            // 24h interval is what keeps this cheap — an evaluation inside that interval declines
+            // before it reads config — so this cannot become a fetch on every foreground.
+            //
+            // `isAppVisible` is a StateFlow, so collection emits the current value and the launch
+            // evaluation is the same code path as every later one.
+            appVisibilityManager.isAppVisible
+                .filter { it }
+                .flatMapLatest { startupGate() }
         ).debounce(500.milliseconds)
             .collect { refreshReason ->
                 Log.d(
