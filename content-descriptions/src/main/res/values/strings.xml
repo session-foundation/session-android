@@ -373,6 +373,11 @@
          message and must not gain a contentDescription — that would be a second source of truth for
          the same string, and the first thing to rot when the copy changes. Same string on iOS. -->
     <string name="qa_pro_settings_status_banner">pro-settings-status-banner</string>
+    <!-- The hero description under the Pro settings header. ONE id for the slot: the three
+         possible messages (never subscribed / expired / active) are told apart by their TEXT, so
+         this must stay on the node carrying the message and must not gain a contentDescription.
+         Same string on iOS and Desktop - one locator serves all three. -->
+    <string name="qa_pro_settings_description">pro-settings-description</string>
     <string name="qa_action_item_title">action-item-title</string>
     <string name="qa_action_item_subtitle">action-item-subtitle</string>
     <string name="qa_action_item_icon">action-item-icon</string>

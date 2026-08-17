@@ -219,6 +219,9 @@ fun ProSettingsHome(
         }
 
         Text(
+            // One id for the slot: the three messages above are told apart by their text, so it
+            // belongs on the node that carries the message.
+            modifier = Modifier.qaTag(R.string.qa_pro_settings_description),
             text = Phrase.from(context.getText(headerText))
                 .format().toString(),
             style = LocalType.current.base,
