@@ -1209,6 +1209,8 @@
         <item quantity="many">%1$s Закреплённых Чатов</item>
         <item quantity="other">%1$s Закреплённых Чатов</item>
     </plurals>
+    <string name="proPlanBilledEvery">{price} списывается каждый {plan_length}</string>
+    <string name="proPlanLifetime">Доступ навсегда</string>
     <string name="proPlanPlatformRefund">Поскольку вы изначально оформили подписку на Session Pro через <b><font color="0">{platform_store}</font></b>, чтобы запросить возврат средств, необходимо использовать аккаунт {platform_account}.</string>
     <string name="proPlanPlatformRefundLong">Поскольку вы изначально оформили подписку на Session Pro через <b><font color="0">{platform_store}</font></b>, запрос на возврат средств будет обрабатываться службой поддержки Session.\n\nЗапросите возврат, нажав кнопку ниже и заполнив форму возврата.\n\nСлужба поддержки Session стремится обрабатывать запросы на возврат в течение 24–72 часов, но в периоды высокой нагрузки обработка может занять больше времени.</string>
     <string name="proPlanRenewSupport">Ваш доступ к Session Pro был продлён! Спасибо за поддержку Session Network.</string>
