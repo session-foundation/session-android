@@ -229,8 +229,13 @@ class RecipientRepository @Inject constructor(
                 changeSources = if (needFlow) {
                     arrayListOf(
                         configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
+                        // Every preference that step 3 of `resolveProStatus` reads has to be here, or a
+                        // resolve cached before the write keeps its answer. A grant is what exposes an
+                        // omission: withholding one produces the same absent proData as no override at
+                        // all, so a missing invalidation looks like a correctly denied fixture.
                         TextSecurePreferences.events.filter {
                             it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
+                                    || it == TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE
                                     || it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS
                         },
                     )
