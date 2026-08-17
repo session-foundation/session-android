@@ -102,8 +102,9 @@ object QaLaunchConfig {
     /**
      * Mocked Pro PROOF, i.e. ACCESS — the harness field `proProof`.
      *
-     * `valid` grants access, `none` DENIES it regardless of any real proof, `useActual` (and an absent
-     * extra) applies no override so the real proof governs. iOS spells this
+     * `valid` grants access, `none` DENIES it regardless of any real proof, and `useActual` clears the
+     * override so the real proof governs. An ABSENT extra leaves the stored value untouched, matching
+     * every other Pro extra here — see [applyProProof] for why absent cannot mean `useActual`. iOS spells this
      * `mockCurrentUserSessionProProof` and Desktop `SESSION_PRO_MOCK_PROOF`; the harness field name is
      * what is identical across clients, the app-side literal follows each platform's own convention.
      *
@@ -464,16 +465,17 @@ object QaLaunchConfig {
      */
     private fun applyProProof(intent: Intent, prefs: TextSecurePreferences): Boolean {
         if (!intent.hasExtra(EXTRA_PRO_PROOF)) {
-            // ABSENT CLEARS, because the contract says absent is identical to `useActual` and this
-            // preference PERSISTS across launches. Returning early instead would leave the previous
-            // launch's override in place, so a spec that set `valid` would silently make every later
-            // spec on the same device Pro — the leak Desktop hit needing `PRO_ENV_KEYS`. Android has no
-            // reset list; absence has to do that work.
+            // Absent leaves the stored override alone, like every other Pro extra here.
             //
-            // Note this clears only the launch-extra override. The debug menu's own
-            // `forceCurrentUserAsPro` toggle is a separate preference and is deliberately untouched, so
-            // a developer's setting survives a relaunch as they would expect.
-            prefs.setDebugProAccessOverride(null)
+            // Clearing instead looks right — absent and `useActual` should mean the same thing — but
+            // [apply] runs on every HomeActivity creation, not once per test. On a fresh install the
+            // launcher routes to onboarding and HomeActivity is created a second time afterwards, with
+            // an intent that carries no QA extras. Clearing on that pass drops ACCESS while the status
+            // and expiry mocks, which only write when present, survive: a fixture then half-applies,
+            // and the client displays the mocked plan while behaving as though it holds no proof.
+            //
+            // Isolation between tests is therefore the harness's, exactly as it already is for
+            // `EXTRA_PRO_BACKEND_STATUS` and the rest — reinstall, or pass `useActual` to clear.
             return false
         }
 
