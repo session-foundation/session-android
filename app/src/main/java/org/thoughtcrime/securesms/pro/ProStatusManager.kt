@@ -1001,7 +1001,6 @@ class ProStatusManager @Inject constructor(
         private val MAX_CHARACTER_REGULAR by lazy { SessionProtocol.STANDARD_CHARACTER_LIMIT } // max message codepoints for non-pro users
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
-        const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
 
         /**
          * Remaining access for the `EXPIRING_GOOGLE_LATER` debug fixture, in days. **An Appium spec

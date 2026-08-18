@@ -60,6 +60,7 @@ import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.pro.previewExpiredApple
+import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
@@ -725,7 +726,7 @@ fun ProFeatures(
                 iconGradientEnd = primaryYellow,
                 expired = disabled,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.ROADMAP))
                 }
             )
         }
@@ -983,7 +984,7 @@ fun ProSettingsFooter(
                 iconColor = iconColor,
                 qaTag = R.string.qa_pro_settings_action_faq,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog("https://getsession.org/faq#pro"))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.FAQ))
                 }
             )
             Divider()
@@ -998,7 +999,7 @@ fun ProSettingsFooter(
                 iconColor = iconColor,
                 qaTag = R.string.qa_pro_settings_action_support,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.SUPPORT))
                 }
             )
         }
