@@ -60,6 +60,7 @@ import org.thoughtcrime.securesms.pro.subscription.ProPlanPeriod
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
+import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.CurrencyFormatter
@@ -200,7 +201,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                             negativeText = context.getString(R.string.close),
                             positiveStyleDanger = false,
                             negativeStyleDanger = true,
-                            onPositive = { onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT)) },
+                            onPositive = { onCommand(ShowOpenUrlDialog(ProUrls.SUPPORT)) },
                         )
                     )
                 }
@@ -441,7 +442,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     showXIcon = true,
                                     onPositive = { refreshProStatus(true) },
                                     onNegative = {
-                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                                        onCommand(ShowOpenUrlDialog(ProUrls.SUPPORT))
                                     }
                                 )
                             )
@@ -685,7 +686,7 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     showXIcon = true,
                                     onPositive = { refreshProStatus(true) },
                                     onNegative = {
-                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                                        onCommand(ShowOpenUrlDialog(ProUrls.SUPPORT))
                                     }
                                 )
                             )

@@ -241,7 +241,7 @@ class DateUtils @Inject constructor(
         }
     }
 
-    fun getExpiryString(instant: Instant?, now: Instant = Instant.now()): String {
+    fun getExpiryString(instant: Instant?, now: Instant): String {
         if (instant == null) return context.getString(R.string.proExpired)
         return getExpiryString(
             remaining = Duration.between(now, instant)

@@ -26,6 +26,7 @@ import org.thoughtcrime.securesms.pro.buildProStoresList
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
 import org.thoughtcrime.securesms.pro.providerStoreName
 import org.thoughtcrime.securesms.pro.previewExpiredApple
+import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -170,7 +171,7 @@ fun ChoosePlanNoBilling(
         contentTitle = contentTitle,
         contentDescription = contentDescription,
         contentClick = {
-            sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
+            sendCommand(ShowOpenUrlDialog(ProUrls.ROADMAP))
         },
         linkCellsInfo = cellsInfo,
         linkCells = cells
