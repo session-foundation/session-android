@@ -29,7 +29,7 @@ fun ChoosePlanHomeScreen(
         onBack = onBack
     ) { planData ->
         // Option 1. ACTIVE Pro subscription
-        if(planData.proStatus is ProStatus.Active) {
+        if(planData.proStatus is ProStatus.Active.WithPlan) {
             val subscription = planData.proStatus
 
             when {

@@ -126,6 +126,7 @@ class DebugMenuViewModel @AssistedInject constructor(
                 DebugProPlanStatus.NORMAL,
                 DebugProPlanStatus.LOADING,
                 DebugProPlanStatus.ERROR,
+                DebugProPlanStatus.SUCCESS,
             ),
             selectedDebugProPlanStatus = textSecurePreferences.getDebugProPlanStatus() ?: DebugProPlanStatus.NORMAL,
             debugProPlans = subscriptionManagers.asSequence()
@@ -685,9 +686,22 @@ class DebugMenuViewModel @AssistedInject constructor(
     }
 
     enum class DebugProPlanStatus(val label: String){
+        /** No override — the real load state decides. Not the same as [SUCCESS]. */
         NORMAL("Normal State"),
         LOADING("Always Loading"),
         ERROR("Always Erroring out"),
+
+        /**
+         * Forces the refresh state to Success, which asserts that THIS PROCESS has had a fetch confirmed
+         * by the backend when it has not. That is a lie the app tells itself, so it is only reachable
+         * from the debug menu or `QaLaunchConfig` and cannot be selected in a shipping build.
+         *
+         * Distinct from [NORMAL] on purpose: NORMAL removes the override and defers to the real state,
+         * which on a cold start is `Init` and therefore Loading. Anything gating on a confirmed fetch —
+         * `HomeViewModel`'s expiring and expired CTAs — is *defeated* by this value, so do not use it in
+         * a test whose subject is one of those gates; it would pass whether the gate works or not.
+         */
+        SUCCESS("Always Succeeding"),
     }
 
     sealed class Commands {

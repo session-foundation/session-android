@@ -343,6 +343,13 @@ fun ItemButton(
     endIcon: @Composable (BoxScope.() -> Unit)? = null,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    /**
+     * QA id for the button's own label. Off by default, like [subtitleQaTag] — most buttons are addressed
+     * by the id on the button itself. Pass one where a test needs to read the LABEL rather than find the
+     * button: the row's id sits on the tap target, which carries no text, so the words that say which
+     * state the item is in are only reachable through this.
+     */
+    @StringRes textQaTag: Int? = null,
     enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.h8,
@@ -378,7 +385,9 @@ fun ItemButton(
         ) {
             Text(
                 text,
-                Modifier.fillMaxWidth(),
+                Modifier
+                    .fillMaxWidth()
+                    .qaTag(textQaTag),
                 style = textStyle
             )
 

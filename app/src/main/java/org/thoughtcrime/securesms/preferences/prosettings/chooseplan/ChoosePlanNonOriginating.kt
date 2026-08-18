@@ -29,7 +29,7 @@ import org.thoughtcrime.securesms.util.DateUtils
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ChoosePlanNonOriginating(
-    subscription: ProStatus.Active,
+    subscription: ProStatus.Active.WithPlan,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){

@@ -233,6 +233,14 @@ class HomeViewModel @Inject constructor(
                     (prefs.hasSeenProExpiring() || prefs.hasSeenProExpired())){
                     prefs.clearProExpiryView() // reset expiry view if the user is active again
                 } else if(subscription.type is ProStatus.Active.Expiring
+                    // Same confirmed-fetch gate as the Expired branch below; both read the one
+                    // `refreshState` predicate, so tightening or loosening it moves both CTAs.
+                    // Success means THIS process has had a fetch confirmed, so a cold launch cannot
+                    // warn off a stale local proof: `status` is inferred from that proof at launch, and
+                    // nothing writes to config at renewal, so a single-device account that renewed
+                    // while the app was closed reads as expiring until get_pro_status says otherwise.
+                    // Consistent with the iOS fix, which gates both variants above the switch.
+                    && subscription.refreshState is org.thoughtcrime.securesms.util.State.Success
                     && !prefs.hasSeenProExpiring()
                 ){
                     val validUntil = subscription.type.renewingAt
@@ -248,7 +256,11 @@ class HomeViewModel @Inject constructor(
                         }
                     }
                 }
-                else if(subscription.type is ProStatus.Expired
+                // WithPlan, because the window below is measured from a date only a response carries.
+                // An expired status derived from local state has no coverage-end instant, and there is
+                // no safe stand-in: a sentinel puts the window in the past, which suppresses the CTA
+                // without any sign that a date was missing.
+                else if(subscription.type is ProStatus.Expired.WithPlan
                     // Only after a SUCCESSFUL get_pro_status request (the round-trip completed and the
                     // backend answered — even if with "expired"/"not pro"), never off stale data from a
                     // failed or in-flight fetch: on foreground the cached status can be pre-renewal, and a
@@ -349,9 +361,17 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
+        // ENFORCEMENT: the ACCESS function, called at the moment of the decision. Was a full
+        // `getSelf().isPro` resolve, which reaches the same answer but by a second route — one function
+        // means a revocation or expiry cannot be honoured here and missed on the send path.
         val maxPins =
-            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+            proStatusManager.getPinnedConversationLimit(proStatusManager.currentUserHasProAccess())
         if (pinned && totalPins >= maxPins) {
+            // No upsell when the plan already reads active. The pin was refused above on access, and
+            // a subscriber whose proof has not arrived would otherwise be offered the plan they hold.
+            // The refusal is therefore silent: the copy that would explain it without offering a
+            // purchase does not exist, and a silent refusal is the lesser of the two.
+            if (proStatusManager.proDataState.value.type is ProStatus.Active) return
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(

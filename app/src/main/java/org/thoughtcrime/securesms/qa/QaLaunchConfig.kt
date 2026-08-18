@@ -87,11 +87,33 @@ object QaLaunchConfig {
      * iOS uses on every mockable Pro feature; an ABSENT extra leaves the preferences untouched.
      *
      * Maps to TWO preferences, because Android splits the concerns iOS keeps in one key:
-     * `forceCurrentUserAsPro` is the "use mocked state at all" gate, and `DEBUG_SUBSCRIPTION_STATUS`
-     * picks which state. Collapsing them here is what keeps one `bothPlatformsIt` setup meaning the
-     * same thing on both platforms.
+     * `DEBUG_SUBSCRIPTION_STATUS` mocks the DISPLAY status, and `forceCurrentUserAsPro` grants ACCESS.
+     * Setting both from this one key is what keeps a single `bothPlatformsIt` setup meaning the same
+     * thing on both platforms.
+     *
+     * They are no longer WELDED, though, and the difference matters: `forceCurrentUserAsPro` used to
+     * double as the "use mocked state at all" gate for DISPLAY too, so a mocked status necessarily also
+     * granted access and `get_pro_status`-says-Active-with-no-usable-proof could not be set up at all.
+     * DISPLAY now keys on the subscription type alone. Use [EXTRA_PRO_PROOF] to vary the access
+     * half independently.
      */
     private const val EXTRA_PRO_BACKEND_STATUS = "sessionProBackendStatus"
+
+    /**
+     * Mocked Pro PROOF, i.e. ACCESS — the harness field `proProof`.
+     *
+     * `valid` grants access, `none` DENIES it regardless of any real proof, and `useActual` clears the
+     * override so the real proof governs. An ABSENT extra leaves the stored value untouched, matching
+     * every other Pro extra here — see [applyProProof] for why absent cannot mean `useActual`. iOS spells this
+     * `mockCurrentUserSessionProProof` and Desktop `SESSION_PRO_MOCK_PROOF`; the harness field name is
+     * what is identical across clients, the app-side literal follows each platform's own convention.
+     *
+     * DISPLAY and ACCESS are separate levers: [EXTRA_PRO_BACKEND_STATUS] says what the PLAN is and grants
+     * nothing, this says what the device MAY DO. A spec wanting an ordinary Pro user sets both, and the
+     * interesting fixture is the one that sets them to disagree — `proBackendStatus=active` with
+     * `proProof=none` is the truncation state, where the plan reads active and no usable proof exists.
+     */
+    private const val EXTRA_PRO_PROOF = "sessionProProof"
 
     /**
      * When the mocked Pro access expires, overriding the fixed offset the fixture selected by
@@ -127,7 +149,14 @@ object QaLaunchConfig {
 
     /**
      * Load state of the Pro settings screen: `useActual` | `loading` | `error` | `success`.
-     * iOS's `mockCurrentUserSessionProLoadingState`. `success` maps to Android's `NORMAL`.
+     * iOS's `mockCurrentUserSessionProLoadingState`.
+     *
+     * `success` FORCES a successful refresh state, matching iOS's `.simulate(.success)`. It used to map to
+     * `NORMAL`, which only removed the override and deferred to the real state — and since a process that
+     * has not confirmed a fetch reports Loading from launch, `success` could not previously produce one.
+     * Note what it costs: a forced success asserts a confirmed fetch that never happened, so it defeats
+     * anything gating on one (`HomeViewModel`'s expiring/expired CTAs). Never use it in a test whose
+     * subject is one of those gates — see `DebugProPlanStatus.SUCCESS`.
      */
     private const val EXTRA_PRO_LOADING_STATE = "sessionProLoadingState"
 
@@ -163,6 +192,8 @@ object QaLaunchConfig {
             applyServiceNetwork(intent, prefs)
             applyProBackend(intent, prefs)
             applyProBackendStatus(intent, prefs)
+            // After the status extra: it overrides the access half that one sets.
+            applyProProof(intent, prefs)
             applyProAccessExpiry(intent, prefs)
             applyProLoadingState(intent, prefs)
         } catch (e: RuntimeException) {
@@ -188,6 +219,7 @@ object QaLaunchConfig {
         EXTRA_PRO_BACKEND_URL,
         EXTRA_PRO_BACKEND_PUBKEY,
         EXTRA_PRO_BACKEND_STATUS,
+        EXTRA_PRO_PROOF,
         EXTRA_PRO_ACCESS_EXPIRY,
         EXTRA_PRO_LOADING_STATE,
     )
@@ -406,9 +438,68 @@ object QaLaunchConfig {
         // TextSecurePreferences.events, which is what ProStatusManager.proDataState collects. A generic
         // write would persist the value and emit nothing, so the mock would appear not to apply until
         // the next launch.
-        prefs.setForceCurrentUserAsPro(mocked != null)
+        //
+        // DISPLAY ONLY. This deliberately no longer grants ACCESS: one lever per fact, so a spec that
+        // wants an ordinary Pro user sets this AND [EXTRA_PRO_PROOF]. Leaving a combined lever in place
+        // alongside the two separate ones would mean three keys describing two facts, and a later reader
+        // could not tell which was authoritative.
         prefs.setDebugSubscriptionType(mocked)
-        Log.i(TAG, "Set mocked Pro state to '$raw' (debug subscription = ${mocked?.name ?: "off"})")
+        Log.i(TAG, "Set mocked Pro DISPLAY status to '$raw' (debug subscription = ${mocked?.name ?: "off"}); grants no access")
+        return true
+    }
+
+    /**
+     * Applies the mocked Pro PROOF, i.e. ACCESS. See [EXTRA_PRO_PROOF].
+     *
+     *     valid      -> grant
+     *     none       -> DENY, even if a real proof exists
+     *     useActual  -> clear the override; the real proof governs
+     *
+     * Tri-state rather than a boolean because `none` and `useActual` are different answers whenever a
+     * real proof exists — which it can, since the suite can point the client at a QA backend that mints
+     * them. Collapsing them would make `none` mean "don't force" rather than "deny".
+     *
+     * An unrecognised value is REJECTED and logged rather than treated as off. A silently-ignored typo
+     * here produces a PASSING test of the default state, which is worse than a failure — the same
+     * reasoning as [warnOnUnrecognisedExtras].
+     */
+    private fun applyProProof(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_PROOF)) {
+            // Absent leaves the stored override alone, like every other Pro extra here.
+            //
+            // Clearing instead looks right — absent and `useActual` should mean the same thing — but
+            // [apply] runs on every HomeActivity creation, not once per test. On a fresh install the
+            // launcher routes to onboarding and HomeActivity is created a second time afterwards, with
+            // an intent that carries no QA extras. Clearing on that pass drops ACCESS while the status
+            // and expiry mocks, which only write when present, survive: a fixture then half-applies,
+            // and the client displays the mocked plan while behaving as though it holds no proof.
+            //
+            // Isolation between tests is therefore the harness's, exactly as it already is for
+            // `EXTRA_PRO_BACKEND_STATUS` and the rest — reinstall, or pass `useActual` to clear.
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_PROOF).orEmpty().trim()
+        // null = clear the override.
+        val override: Boolean? = when (raw.lowercase()) {
+            "valid" -> true
+            "none" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_PROOF' extra: '$raw'. Use valid | none | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugProAccessOverride(override)
+        Log.i(
+            TAG,
+            "Set mocked Pro ACCESS to '$raw' " +
+                "(override = ${override?.toString() ?: "cleared, real proof governs"})"
+        )
         return true
     }
 
@@ -487,7 +578,7 @@ object QaLaunchConfig {
             USE_ACTUAL -> null
             "loading" -> DebugMenuViewModel.DebugProPlanStatus.LOADING
             "error" -> DebugMenuViewModel.DebugProPlanStatus.ERROR
-            "success" -> DebugMenuViewModel.DebugProPlanStatus.NORMAL
+            "success" -> DebugMenuViewModel.DebugProPlanStatus.SUCCESS
             else -> {
                 Log.e(
                     TAG,

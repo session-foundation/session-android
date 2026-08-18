@@ -17,8 +17,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -34,6 +36,7 @@ import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import network.loki.messenger.libsession_util.pro.ProConfig
+import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.pro.ProResponseStatus
 import network.loki.messenger.libsession_util.protocol.ProFeature
 import network.loki.messenger.libsession_util.protocol.ProMessageFeature
@@ -68,6 +71,7 @@ import org.thoughtcrime.securesms.pro.api.ServerApiRequest
 import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.State
 import org.thoughtcrime.securesms.util.castAwayType
 import java.time.Duration
@@ -91,6 +95,7 @@ class ProStatusManager @Inject constructor(
     private val snodeClock: SnodeClock,
     private val proStatusRepository: Lazy<ProStatusRepository>,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
+    private val appVisibilityManager: AppVisibilityManager,
 ) : AuthAwareComponent {
 
     val proDataState: StateFlow<ProDataState> = loginState.flowWithLoggedInState {
@@ -125,6 +130,12 @@ class ProStatusManager @Inject constructor(
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
+                // QA override, debug/QA builds only. Asserts a confirmed fetch that has not happened, so
+                // it DEFEATS every consumer gating on one — see the enum's KDoc. It sits here, alongside
+                // the other overrides, rather than being folded into the real calculation below: the
+                // `when` on `proStatusState` stays exhaustive and keeps refusing to call `Init` or a
+                // persisted `Loaded` a success.
+                DebugMenuViewModel.DebugProPlanStatus.SUCCESS -> State.Success(Unit)
                 else -> {
                     // `Success` means THIS PROCESS has had a fetch confirmed by the backend, nothing
                     // weaker: consumers gate on it to avoid acting on stale data, `HomeViewModel`'s
@@ -150,7 +161,17 @@ class ProStatusManager @Inject constructor(
                 }
             }
 
-            if(!forceCurrentUserAsPro){
+            // Keyed on the DISPLAY mock being set, NOT on the access force-grant.
+            //
+            // These were one flag, so mocking a status necessarily also granted access, and the state
+            // "`get_pro_status` says Active while no usable proof exists" — the truncation case — could
+            // not be set up at all. iOS and Desktop can express it from their mocks; Android could not,
+            // which made an edge case reachable on two clients out of three.
+            //
+            // `forceCurrentUserAsPro` now means what it says: grant ACCESS. It is read by the ACCESS
+            // path (`RecipientRepository.resolveProStatus`'s debug override and
+            // [currentUserHasProAccess]) and deliberately has no say in DISPLAY.
+            if(debugSubscription == null){
                 Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting REAL Pro data state")
                 val nowMs = snodeClock.currentTimeMillis()
 
@@ -161,14 +182,17 @@ class ProStatusManager @Inject constructor(
                 ProDataState(
                     type = proStatusState.lastUpdated?.let { (response, confirmedAt) ->
                         response.toProStatus(nowMs, application, refundInProgress, confirmedAt)
-                    } ?: ProStatus.NeverSubscribed,
+                    } ?: seedDisplayStatusFromConfig(),
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
             }// debug data
             else {
                 Log.d(DebugLogGroup.PRO_DATA.label, "ProStatusManager: Getting DEBUG Pro data state")
-                val subscriptionState = debugSubscription ?: DebugMenuViewModel.DebugSubscriptionStatus.AUTO_GOOGLE
+                // Non-null by the branch condition. The old `?: AUTO_GOOGLE` default existed because the
+                // branch was keyed on the force flag, so it could be entered with no status chosen; now
+                // that it is keyed on the status itself there is nothing to default to.
+                val subscriptionState = debugSubscription
 
                 // SnodeClock, not Instant.now(), because every consumer of these instants reads
                 // SnodeClock: the expiry label renders from `clock.currentTime()`
@@ -238,19 +262,19 @@ class ProStatusManager @Inject constructor(
                             refundInProgress = false
                         )
 
-                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired(
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED -> ProStatus.Expired.WithPlan(
                             expiredAt = now - Duration.ofDays(14),
                             // Zero grace: these fixtures mean "coverage ended N days ago".
                             gracePeriod = Duration.ZERO,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
-                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired(
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_EARLIER -> ProStatus.Expired.WithPlan(
                             expiredAt = now - Duration.ofDays(60),
                             // Zero grace: these fixtures mean "coverage ended N days ago".
                             gracePeriod = Duration.ZERO,
                             providerData = providerMetadata(PAYMENT_PROVIDER_GOOGLE_PLAY, application)
                         )
-                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired(
+                        DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED_APPLE -> ProStatus.Expired.WithPlan(
                             expiredAt = now - Duration.ofDays(14),
                             // Zero grace: these fixtures mean "coverage ended N days ago".
                             gracePeriod = Duration.ZERO,
@@ -282,7 +306,7 @@ class ProStatusManager @Inject constructor(
         expiry == null -> this
         this is ProStatus.Active.AutoRenewing -> copy(renewingAt = expiry)
         this is ProStatus.Active.Expiring -> copy(renewingAt = expiry)
-        this is ProStatus.Expired -> copy(expiredAt = expiry)
+        this is ProStatus.Expired.WithPlan -> copy(expiredAt = expiry)
         else -> this
     }
 
@@ -353,7 +377,7 @@ class ProStatusManager @Inject constructor(
                             configs.userProfile.getProPrepaid()
                     }
                 }
-                .distinctUntilChanged()
+                .dropFirstProjection()
                 .map { "ProAccessExpiry/prepaid in config changes" },
 
             proStatusRepository.get().loadState
@@ -394,7 +418,21 @@ class ProStatusManager @Inject constructor(
             // (see manageProofRenewalScheduling) and nothing else. A status fetch on the proof's clock
             // couples the two loops, so a proof renewing early or late drags the status fetch with it.
 
-            startupGate()
+            // Evaluated when the app becomes visible, not only when this collector starts. The
+            // expiring CTA arms seven days before the access expiry, while the wakes that survive
+            // backgrounding fire AT the expiry and at coverage end — after that window has opened. A
+            // subscriber who enters it while the app is merely backgrounded would otherwise not be
+            // warned until the process next started cold.
+            //
+            // The same gate, at a second moment: no new predicate and no second trigger. Its persisted
+            // 24h interval is what keeps this cheap — an evaluation inside that interval declines
+            // before it reads config — so this cannot become a fetch on every foreground.
+            //
+            // `isAppVisible` is a StateFlow, so collection emits the current value and the launch
+            // evaluation is the same code path as every later one.
+            appVisibilityManager.isAppVisible
+                .filter { it }
+                .flatMapLatest { startupGate() }
         ).debounce(500.milliseconds)
             .collect { refreshReason ->
                 Log.d(
@@ -420,6 +458,14 @@ class ProStatusManager @Inject constructor(
      * its own key — a routine refresh must not consume the gate's budget, and a startup fetch from
      * twenty hours ago must not satisfy the 60s floor.
      */
+    /** The four config values [startupFetchReason] turns on, read together under one lock. */
+    private data class StartupGateInputs(
+        val renewalDue: Instant?,
+        val autoRenewing: Boolean,
+        val grace: Duration,
+        val hasProof: Boolean,
+    )
+
     private fun startupGate(): Flow<String> = flow {
         val now = snodeClock.currentTime()
 
@@ -429,15 +475,24 @@ class ProStatusManager @Inject constructor(
             return@flow
         }
 
-        val (renewalDue, autoRenewing, grace) = configFactory.get().withUserConfigs { configs ->
-            Triple(
-                configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond),
-                configs.userProfile.getProAutoRenewing(),
-                configs.userProfile.getProGracePeriod(),
+        // All four read under ONE config lock — the gate's inputs are cheap individually but the lock is
+        // not, so this deliberately does not read the proof in a second pass.
+        val inputs = configFactory.get().withUserConfigs { configs ->
+            StartupGateInputs(
+                renewalDue = configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond),
+                autoRenewing = configs.userProfile.getProAutoRenewing(),
+                grace = configs.userProfile.getProGracePeriod(),
+                hasProof = configs.userProfile.getProConfig()?.proProof != null,
             )
         }
 
-        val reason = startupFetchReason(renewalDue, autoRenewing, grace, now)
+        val reason = startupFetchReason(
+            renewalDue = inputs.renewalDue,
+            autoRenewing = inputs.autoRenewing,
+            grace = inputs.grace,
+            now = now,
+            hasProof = inputs.hasProof,
+        )
         if (reason == null) {
             Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Startup gate: no CTA could fire, skipping the startup fetch")
             return@flow
@@ -543,6 +598,89 @@ class ProStatusManager @Inject constructor(
                 }
             }
     }
+
+    /**
+     * ACCESS: the Pro proof this device may currently act on, or `null` if there is none.
+     *
+     * This is the single place that answers "what may this device do", so that a second opinion about
+     * our own Pro-ness cannot drift from this one. It validates on EVERY call rather than caching:
+     *
+     *  - expiry, against the network clock rather than the device clock, and
+     *  - the cached revocation list, honouring each entry's effective timestamp.
+     *
+     * Do NOT answer this from `proDataState` / `get_pro_status`. That is DISPLAY ("what state is the
+     * plan in"), it is not revocation-filtered, and a cached `Active` response can outlive a revocation
+     * we have already been told about. The two are meant to disagree: a still-valid proof under an
+     * expired status keeps the features, which is the deliberate overhang.
+     */
+    fun currentUserProProofForAccess(): ProProof? {
+        val proof = configFactory.get()
+            .withUserConfigs { it.userProfile.getProConfig() }
+            ?.proProof
+            ?: return null
+
+        val now = snodeClock.currentTime()
+        if (proof.expirySeconds <= now.epochSecond) return null
+        if (proDatabase.isRevoked(proof.revocationTagHex, now)) return null
+
+        return proof
+    }
+
+    /**
+     * DISPLAY derived from synced config, for when no `get_pro_status` response has ever been persisted.
+     * A response wins wherever one exists.
+     *
+     * The access expiry is consulted before the proof because it answers the question DISPLAY asks. `E` is
+     * backend-derived plan state that arrived by config sync, so its presence is evidence the ACCOUNT has
+     * a plan; the proof is evidence about THIS DEVICE's credential. A device restored from a config that
+     * carried `E` before the proof has a plan to describe, and consulting the proof first would describe
+     * it as never having subscribed.
+     *
+     * The ordering is also the only one that can express a valid proof under a past `E`: display expired,
+     * access still granted until the proof lapses. A proof-first check short-circuits to active and the
+     * state becomes unrepresentable.
+     *
+     * Status only. The variants returned here carry no dates, because `E`, `G` and the provider metadata
+     * that a rendered date must agree with are settled together by a response.
+     *
+     * The proof branch tests expiry alone. Revocation governs access rather than the state of the plan, so
+     * a revoked proof still describes a subscription that exists.
+     */
+    private fun seedDisplayStatusFromConfig(): ProStatus {
+        val (accessExpiry, proofExpirySeconds) = configFactory.get().withUserConfigs { configs ->
+            configs.userProfile.getProAccessExpiry()?.let(Instant::ofEpochSecond) to
+                configs.userProfile.getProConfig()?.proProof?.expirySeconds
+        }
+
+        return seededDisplayStatus(
+            accessExpiry = accessExpiry,
+            proofExpiry = proofExpirySeconds?.let(Instant::ofEpochSecond),
+            now = snodeClock.currentTime(),
+        )
+    }
+
+    /**
+     * ACCESS as a boolean, for ENFORCEMENT sites that grant or refuse rather than draw.
+     *
+     * Call this UNMEMOIZED at the moment of the decision — the send path, the compose limit, the pinned
+     * conversation gate. Rendering does not use this: a render site subscribes to an observed value
+     * recomputed at the existing change sites (config change, revocation update, proof expiry), because
+     * some of them redraw per keystroke and this takes the config lock.
+     *
+     * Honours the QA overrides deliberately. Without them, rendering (which resolves through
+     * `RecipientRepository`, where the override lives) and enforcement would disagree under a fixture:
+     * the composer would offer the Pro limit and sending would then refuse it.
+     *
+     * The proof mock is TRI-STATE and is checked first, because `none` and "no override" are different
+     * answers whenever a real proof exists — which it can on a QA backend that mints them. `false` must
+     * deny such a proof; absent must let it through. A boolean cannot say both.
+     *
+     * Note an override grants ACCESS but conjures no PROOF, so a mocked-Pro client still attaches nothing
+     * when it sends. That is the truncation state and it is correct rather than a gap here.
+     */
+    fun currentUserHasProAccess(): Boolean =
+        prefs.getDebugProAccessOverride()
+            ?: (prefs.forceCurrentUserAsPro() || currentUserProProofForAccess() != null)
 
     /**
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
@@ -677,11 +815,84 @@ class ProStatusManager @Inject constructor(
     }
 
     companion object {
+
+        /**
+         * Emits only GENUINE changes: distinct values, with the FIRST PROJECTION dropped.
+         *
+         * A relaunching subscriber loads its access expiry from a dump on every launch. Treating that
+         * first projection as a change would fetch on every cold launch and defeat the startup gate.
+         *
+         * (That sentence is deliberately identical on iOS — `isFirstProjection`,
+         * `SessionProManager.swift:550-563` — and on Desktop. The shared concept is FIRST PROJECTION;
+         * each client spells it to fit its language, and this one is an operator because there is a Flow
+         * to decorate.)
+         *
+         * The mechanics, since the sentence above does not give them: `distinctUntilChanged` is
+         * per-collection and has no baseline for its first emission, so it always passes. Without the
+         * drop, the access-expiry/prepaid trigger schedules a fetch one second after the startup gate has
+         * just declined and regardless of what the gate decided, so a never-subscribed account calls
+         * `get_pro_status` on every start — exactly the traffic the gate exists to remove, invisible to it
+         * because it is a different trigger.
+         *
+         * LIFETIME: this guard is scoped to the account session, not the process. The collector runs
+         * under [doWhileLoggedIn], which `AuthAwareComponentsHandler` drives with `collectLatest`, so a
+         * new `LoggedInState` tears it down and rebuilds it and the drop starts again.
+         *
+         * An account load therefore re-arms it, which makes the projection that follows a restore
+         * structurally the dropped one. This guard cannot be what discovers a restored subscriber, and
+         * removing the drop is not the way to make it one — that reinstates a fetch on every cold launch.
+         * Discovering a restored subscriber is a question about whether config is news, which position
+         * cannot answer.
+         *
+         * The lifetime is not the same on every client, so it is not safe to assume from the shared name:
+         * iOS's equivalent flag is per-process (`SessionProManager.swift:550-563`) and is already set by
+         * the time a restore lands, which is why a restore fetches there.
+         */
+        internal fun <T> Flow<T>.dropFirstProjection(): Flow<T> = distinctUntilChanged().drop(1)
         /**
          * How long after a wake instant to fetch. The backend judges against its own clock, so a wake
          * landing exactly on the boundary can read the pre-crossing state.
          */
         private val WAKE_SLACK: Duration = Duration.ofSeconds(30)
+
+        /**
+         * The plan state implied by synced config alone, for display before any response has been
+         * persisted. Pure over plain values so it can be tested without a clock or config.
+         *
+         * The access expiry is consulted before the proof because the two answer different questions:
+         * `E` is backend-derived plan state that arrived by config sync, so its presence is evidence the
+         * ACCOUNT has a plan, while the proof is evidence about THIS DEVICE's credential. A device whose
+         * config carried `E` before the proof has a plan to describe.
+         *
+         * The ordering is also what makes a valid proof under a past `E` expressible — display expired,
+         * access still granted until the proof lapses. Consulting the proof first collapses that state
+         * into active.
+         *
+         * The second rung compares the proof's expiry directly, rather than calling
+         * [currentUserProProofForAccess] or [currentUserHasProAccess]. Both of those are revocation-aware
+         * and one of them is mockable, and neither property belongs here: revocation withdraws what this
+         * device may do, while a revoked credential says nothing about whether the account is still
+         * paying. Routing this rung through an access function would also let an access mock change what
+         * the menu row says, which would make the two values separate in name only.
+         *
+         * Both rungs compare against the one [now] passed in. Reading a clock per branch can straddle
+         * them, pairing `E` at one instant with the proof at another — a combination no account is in.
+         */
+        internal fun seededDisplayStatus(
+            accessExpiry: Instant?,
+            proofExpiry: Instant?,
+            now: Instant,
+        ): ProStatus = when {
+            accessExpiry != null ->
+                if (now.isBefore(accessExpiry)) ProStatus.Active.FromLocalState
+                else ProStatus.Expired.FromLocalState
+
+            proofExpiry != null ->
+                if (now.isBefore(proofExpiry)) ProStatus.Active.FromLocalState
+                else ProStatus.Expired.FromLocalState
+
+            else -> ProStatus.NeverSubscribed
+        }
 
         /**
          * Whether a cold start should fetch `get_pro_status`, and why — or null to stay off the
@@ -696,18 +907,38 @@ class ProStatusManager @Inject constructor(
          * | `auto_renewing && now >= renewalDue`                | fetch — the renewal is overdue    |
          * | `!auto_renewing && renewalDue` in the CTA window    | fetch — the Expiring CTA may fire |
          * | `!auto_renewing && now >= renewalDue`               | confirm before the Expired CTA    |
+         * | no `renewalDue`, but a proof                        | fetch — entitled, horizon unknown |
+         * | no `renewalDue`, no proof                           | no fetch — never subscribed       |
          *
          * No row tests `renewalDue + grace <= now`: a cold start does not need to know when coverage
          * ends, and testing it would double-count grace against the payment date the rows turn on.
+         *
+         * [hasProof] is deliberately not defaulted. It is the difference between a real subscriber who
+         * cannot be warned and an account we correctly leave alone, and the failure mode of forgetting it
+         * is a fetch that silently never happens — so every caller states it.
          */
         internal fun startupFetchReason(
             renewalDue: Instant?,
             autoRenewing: Boolean,
             grace: Duration,
             now: Instant,
+            hasProof: Boolean,
         ): String? {
-            // No access expiry at all: never subscribed, so no CTA can fire and nothing to confirm.
-            if (renewalDue == null) return null
+            if (renewalDue == null) {
+                // A proof is entitlement; the access expiry is only the payment horizon, and the two can
+                // come apart — a config that merged one without the other, or pruned history. In that
+                // state the client positively knows it is Pro while knowing nothing about when that ends,
+                // so it is not the never-subscribed case this gate exists to protect and declining would
+                // leave a real subscriber unwarnable. Matches iOS's `expirySeconds > 0 || hasProof`.
+                //
+                // Both absent stays declined, which is the minted-but-undiscovered grant (no proof, no
+                // expiry): nothing local says the account is Pro, so there is nothing to warn about yet.
+                return if (hasProof) {
+                    "a proof but no access expiry; entitled with no known horizon"
+                } else {
+                    null
+                }
+            }
 
             val overdue = !now.isBefore(renewalDue)
 

@@ -43,7 +43,7 @@ fun RefundInProgressScreen(
     onBack: () -> Unit,
 ) {
     val state by viewModel.proSettingsUIState.collectAsState()
-    val activePlan = state.proDataState.type as? ProStatus.Active ?: return
+    val activePlan = state.proDataState.type as? ProStatus.Active.WithPlan ?: return
     
     RefundInProgress(
         subscription = activePlan,
@@ -55,7 +55,7 @@ fun RefundInProgressScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun RefundInProgress(
-    subscription: ProStatus.Active,
+    subscription: ProStatus.Active.WithPlan,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){

@@ -24,7 +24,7 @@ class ProExpiredCoverageEndTest {
     private val ctaWindow: Duration = Duration.ofDays(30)
     private val paymentDue: Instant = Instant.parse("2026-08-01T00:00:00Z")
 
-    private fun expired(grace: Duration) = ProStatus.Expired(
+    private fun expired(grace: Duration) = ProStatus.Expired.WithPlan(
         expiredAt = paymentDue,
         gracePeriod = grace,
         providerData = previewAppleMetaData,

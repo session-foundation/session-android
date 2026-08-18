@@ -31,49 +31,67 @@ class ProStartupGateTest {
     // --- never subscribed -----------------------------------------------------------------------
 
     @Test
-    fun `no access expiry means no fetch`() {
-        // The population the gate exists for: no CTA can fire, so no fetch has a consumer.
-        assertNull(startupFetchReason(null, autoRenewing = false, grace = noGrace, now = now))
-        assertNull(startupFetchReason(null, autoRenewing = true, grace = grace, now = now))
+    fun `no access expiry and no proof means no fetch`() {
+        // The population the gate exists for: no CTA can fire, so no fetch has a consumer. This is also
+        // the minted-but-undiscovered grant — nothing local says the account is Pro — and it must keep
+        // declining, which is why the proof row below is a separate case rather than a relaxation.
+        assertNull(startupFetchReason(null, autoRenewing = false, grace = noGrace, now = now, hasProof = false))
+        assertNull(startupFetchReason(null, autoRenewing = true, grace = grace, now = now, hasProof = false))
+    }
+
+    @Test
+    fun `a proof without an access expiry fetches`() {
+        // Entitlement without a horizon: the client knows it is Pro and nothing about when that ends, so
+        // the safe direction is to ask. Matches iOS's `expirySeconds > 0 || hasProof`.
+        assertNotNull(startupFetchReason(null, autoRenewing = false, grace = noGrace, now = now, hasProof = true))
+        assertNotNull(startupFetchReason(null, autoRenewing = true, grace = grace, now = now, hasProof = true))
+    }
+
+    @Test
+    fun `a proof does not override the rows that turn on the expiry`() {
+        // The proof term is a fallback for a MISSING expiry, not an override of a present one. A holder
+        // comfortably mid-term still declines, or every Pro user would fetch on every cold start.
+        assertNull(startupFetchReason(inDays(20), autoRenewing = true, grace = grace, now = now, hasProof = true))
+        assertNull(startupFetchReason(inDays(60), autoRenewing = false, grace = noGrace, now = now, hasProof = true))
     }
 
     // --- auto-renewing --------------------------------------------------------------------------
 
     @Test
     fun `auto-renewing and comfortably active does not fetch`() {
-        assertNull(startupFetchReason(inDays(20), autoRenewing = true, grace = grace, now = now))
+        assertNull(startupFetchReason(inDays(20), autoRenewing = true, grace = grace, now = now, hasProof = false))
     }
 
     @Test
     fun `auto-renewing and inside the grace window DOES fetch`() {
         // Renewal due 7 days ago, grace 14: still covered, charge not landed. The state this exists for.
-        assertNotNull(startupFetchReason(daysAgo(7), autoRenewing = true, grace = grace, now = now))
+        assertNotNull(startupFetchReason(daysAgo(7), autoRenewing = true, grace = grace, now = now, hasProof = false))
     }
 
     @Test
     fun `auto-renewing boundary - exactly at the renewal date fetches`() {
-        assertNotNull(startupFetchReason(now, autoRenewing = true, grace = grace, now = now))
+        assertNotNull(startupFetchReason(now, autoRenewing = true, grace = grace, now = now, hasProof = false))
     }
 
     @Test
     fun `auto-renewing boundary - one second before the renewal date does not fetch`() {
         // Negative control: without it, "inside grace fetches" also passes against a gate that always
         // fetches when auto-renewing.
-        assertNull(startupFetchReason(now.plusSeconds(1), autoRenewing = true, grace = grace, now = now))
+        assertNull(startupFetchReason(now.plusSeconds(1), autoRenewing = true, grace = grace, now = now, hasProof = false))
     }
 
     @Test
     fun `auto-renewing past coverage end still fetches`() {
         // Coverage ended 6 days ago: the renewal failed. Still fetches — this account is about to be
         // shown the Expired CTA, and config alone must never be the basis for that.
-        assertNotNull(startupFetchReason(daysAgo(20), autoRenewing = true, grace = grace, now = now))
+        assertNotNull(startupFetchReason(daysAgo(20), autoRenewing = true, grace = grace, now = now, hasProof = false))
     }
 
     @Test
     fun `auto-renewing and long dead does not fetch`() {
         // Coverage ended 46 days ago, past the CTA window. Unbounded, an account whose renewing flag
         // was never cleared fetches on every cold start forever.
-        assertNull(startupFetchReason(daysAgo(60), autoRenewing = true, grace = grace, now = now))
+        assertNull(startupFetchReason(daysAgo(60), autoRenewing = true, grace = grace, now = now, hasProof = false))
     }
 
     @Test
@@ -81,32 +99,32 @@ class ProStartupGateTest {
         // Coverage ended 26 days ago, so the CTA can still fire. Discriminates the anchor: from the
         // payment date this reads as 40 days gone, past the window, and returns null. Only a grace
         // longer than the gap between the anchors tells them apart, hence the multi-day value.
-        assertNotNull(startupFetchReason(daysAgo(40), autoRenewing = true, grace = grace, now = now))
+        assertNotNull(startupFetchReason(daysAgo(40), autoRenewing = true, grace = grace, now = now, hasProof = false))
     }
 
     // --- not auto-renewing ----------------------------------------------------------------------
 
     @Test
     fun `not auto-renewing and expiring inside the CTA window fetches`() {
-        assertNotNull(startupFetchReason(inDays(3), autoRenewing = false, grace = noGrace, now = now))
+        assertNotNull(startupFetchReason(inDays(3), autoRenewing = false, grace = noGrace, now = now, hasProof = false))
     }
 
     @Test
     fun `not auto-renewing boundary - just outside the 7 day window does not fetch`() {
-        assertNull(startupFetchReason(inDays(8), autoRenewing = false, grace = noGrace, now = now))
+        assertNull(startupFetchReason(inDays(8), autoRenewing = false, grace = noGrace, now = now, hasProof = false))
     }
 
     @Test
     fun `not auto-renewing and recently expired fetches to confirm before the Expired CTA`() {
         // Config can read expired while a renewal landed on another device and hasn't synced, so the
         // Expired CTA must never fire off config alone.
-        assertNotNull(startupFetchReason(daysAgo(5), autoRenewing = false, grace = noGrace, now = now))
+        assertNotNull(startupFetchReason(daysAgo(5), autoRenewing = false, grace = noGrace, now = now, hasProof = false))
     }
 
     @Test
     fun `not auto-renewing boundary - expired longer ago than the CTA window does not fetch`() {
         // Past 30 days the Expired CTA can no longer fire, so a confirming fetch has no consumer.
-        assertNull(startupFetchReason(daysAgo(31), autoRenewing = false, grace = noGrace, now = now))
+        assertNull(startupFetchReason(daysAgo(31), autoRenewing = false, grace = noGrace, now = now, hasProof = false))
     }
 
     @Test
@@ -114,7 +132,7 @@ class ProStartupGateTest {
         // A prepaid or long non-renewing subscription: no CTA can fire. Unambiguous because the
         // proof-success path writes the renewing flag beside the expiry, so absent means not-renewing
         // rather than never-recorded.
-        assertNull(startupFetchReason(inDays(60), autoRenewing = false, grace = noGrace, now = now))
+        assertNull(startupFetchReason(inDays(60), autoRenewing = false, grace = noGrace, now = now, hasProof = false))
     }
 
     // --- grace's blast radius -------------------------------------------------------------------
@@ -124,7 +142,7 @@ class ProStartupGateTest {
         // Grace belongs to one row, the auto-renewing one. The guard against it being reintroduced
         // into the others: the wire sends grace = 0 when not auto-renewing, so anything keyed to a
         // non-zero grace on this path only ever fires on a fixture.
-        assertNull(startupFetchReason(daysAgo(31), autoRenewing = false, grace = grace, now = now))
-        assertNotNull(startupFetchReason(inDays(3), autoRenewing = false, grace = grace, now = now))
+        assertNull(startupFetchReason(daysAgo(31), autoRenewing = false, grace = grace, now = now, hasProof = false))
+        assertNotNull(startupFetchReason(inDays(3), autoRenewing = false, grace = grace, now = now, hasProof = false))
     }
 }

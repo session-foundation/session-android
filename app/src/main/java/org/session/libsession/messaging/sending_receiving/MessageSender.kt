@@ -52,6 +52,7 @@ import org.thoughtcrime.securesms.api.swarm.execute
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.copyFromLibSession
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import javax.inject.Inject
@@ -78,6 +79,7 @@ class MessageSender @Inject constructor(
     @param:ManagerScope private val scope: CoroutineScope,
     private val loginStateRepository: LoginStateRepository,
     private val jobQueue: Provider<JobQueue>,
+    private val proStatusManager: Provider<ProStatusManager>,
 ) {
 
     // Error
@@ -137,9 +139,13 @@ class MessageSender @Inject constructor(
 
             msg.toProto(builder, messageDataProvider)
 
-            // Attach pro proof
-            val proProof = configFactory.withUserConfigs { it.userProfile.getProConfig() }?.proProof
-            if (proProof != null && proProof.expirySeconds > snodeClock.currentTimeMillis() / 1000) {
+            // Attach pro proof.
+            //
+            // Routed through the one ACCESS function rather than checking expiry here: what we attach
+            // when sending IS an access decision, and it previously honoured expiry but NOT revocation,
+            // so a revoked proof we already knew about still went out on the wire.
+            val proProof = proStatusManager.get().currentUserProProofForAccess()
+            if (proProof != null) {
                 builder.proMessageBuilder.proofBuilder.copyFromLibSession(proProof)
             } else {
                 // If we don't have any valid pro proof, clear the pro message

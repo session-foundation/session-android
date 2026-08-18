@@ -229,8 +229,13 @@ class RecipientRepository @Inject constructor(
                 changeSources = if (needFlow) {
                     arrayListOf(
                         configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
+                        // Every preference that step 3 of `resolveProStatus` reads has to be here, or a
+                        // resolve cached before the write keeps its answer. A grant is what exposes an
+                        // omission: withholding one produces the same absent proData as no override at
+                        // all, so a missing invalidation looks like a correctly denied fixture.
                         TextSecurePreferences.events.filter {
                             it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
+                                    || it == TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE
                                     || it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS
                         },
                     )
@@ -502,15 +507,18 @@ class RecipientRepository @Inject constructor(
             it.isExpired(now) || proDatabase.isRevoked(it.revocationTag, snodeClock.get().currentTime())
         }
 
-        // 2. Determine base Pro Data from valid proofs or ProStatusManager
+        // 2. Determine base Pro Data from valid proofs
+        //
+        // ACCESS ("what may this device do") comes from the PROOF, for ourselves exactly as for anyone
+        // else — so it runs through the expiry and revocation filter above on every resolve. There is
+        // deliberately no `isSelf` short-circuit on the cached `get_pro_status` response here: that
+        // response is DISPLAY ("what state is the plan in"), it is not revocation-filtered, and trusting
+        // it for access let a cached `Active` outlive a revocation we had already been told about.
+        //
+        // The two are MEANT to disagree — a proof that outlives an expired status still grants the
+        // feature, which is the deliberate overhang. Read `ProStatusManager.proDataState` when you want
+        // to describe the plan; read this when you want to know what is permitted.
         var proData = when {
-            // For ourselves, we "trust" ProStatusManager more than the ProProofs
-            recipient.isSelf && proStatusManager.get().proDataState.value.type is ProStatus.Active -> {
-                RecipientData.ProData(
-                    showProBadge = proStatusManager.get().proDataState.value.showProBadge
-                )
-            }
-
             !proDataList.isNullOrEmpty() -> {
                 RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
             }
@@ -520,7 +528,16 @@ class RecipientRepository @Inject constructor(
         }
 
         // 3. Apply Debug Overrides
-        if (recipient.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
+        //
+        // The mocked-proof override is tri-state and BOTH directions are applied here, not just the
+        // grant: rendering and enforcement must never disagree about what a mocked run is entitled to,
+        // and `ProStatusManager.currentUserHasProAccess` honours `none` as a denial even against a real
+        // proof. If this only honoured the grant, a `proProof=none` fixture would show a Pro badge while
+        // the composer offered the standard limit.
+        val proAccessOverride = if (recipient.isSelf) prefs.getDebugProAccessOverride() else null
+        if (recipient.isSelf && proAccessOverride == false) {
+            proData = null
+        } else if (recipient.isSelf && proData == null && (proAccessOverride == true || prefs.forceCurrentUserAsPro())) {
             proData = RecipientData.ProData(showProBadge = true)
         } else if (!recipient.isSelf
             && (recipient.address is Address.Standard)

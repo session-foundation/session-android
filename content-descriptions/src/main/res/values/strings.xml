@@ -256,6 +256,10 @@
     <string name="qa_settings_item_donate">donate-menu-item</string>
     <string name="qa_settings_item_path">path-menu-item</string>
     <string name="qa_settings_item_pro">pro-menu-item</string>
+    <!-- The Pro row's LABEL, which is what says which state the account is in ("Session Pro Beta" /
+         "Upgrade Session" / "Renew Pro Beta"). Separate from the row above, which is the tap target and
+         carries no text of its own — so a test reading the row's STATE needs this one, not that one. -->
+    <string name="qa_settings_item_pro_title">pro-menu-item-title</string>
 
     <!-- In app review -->
     <string name="qa_inapp_review_dialog_button_great">enjoy-session-positive-button</string>
@@ -376,6 +380,11 @@
          message and must not gain a contentDescription — that would be a second source of truth for
          the same string, and the first thing to rot when the copy changes. Same string on iOS. -->
     <string name="qa_pro_settings_status_banner">pro-settings-status-banner</string>
+    <!-- The hero description under the Pro settings header. ONE id for the slot: the three
+         possible messages (never subscribed / expired / active) are told apart by their TEXT, so
+         this must stay on the node carrying the message and must not gain a contentDescription.
+         Same string on iOS and Desktop - one locator serves all three. -->
+    <string name="qa_pro_settings_description">pro-settings-description</string>
     <string name="qa_action_item_title">action-item-title</string>
     <string name="qa_action_item_subtitle">action-item-subtitle</string>
     <string name="qa_action_item_icon">action-item-icon</string>
