@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_UP
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -93,6 +94,7 @@ import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -401,6 +403,7 @@ fun MessageProFeatures(
 
         features.forEach { feature ->
             ProCTAFeature(
+                modifier = Modifier.qaTag(feature.qaTagRes),
                 textStyle = LocalType.current.large,
                 padding = PaddingValues(),
                 data = CTAFeature.Icon(
@@ -416,6 +419,21 @@ fun MessageProFeatures(
         }
     }
 }
+
+/**
+ * QA tag for a feature row, so a test can assert WHICH features a message was sent with rather than
+ * how many of them there are.
+ *
+ * The values are a cross-platform contract: iOS defines the same strings in
+ * `SessionProUI.AccessibilityIdentifier` and Desktop derives them from its own feature vocabulary, so
+ * one feature is named the same on every client and on every screen it appears on.
+ */
+private val ProFeature.qaTagRes: Int
+    @StringRes get() = when (this) {
+        ProProfileFeature.PRO_BADGE -> R.string.qa_pro_message_feature_badges
+        ProMessageFeature.HIGHER_CHARACTER_LIMIT -> R.string.qa_pro_message_feature_longer_messages
+        ProProfileFeature.ANIMATED_AVATAR -> R.string.qa_pro_message_feature_animated_display_picture
+    }
 
 @Preview
 @Composable
