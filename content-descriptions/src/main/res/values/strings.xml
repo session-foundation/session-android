@@ -275,6 +275,13 @@
     <string name="qa_pro_settings_action_faq">pro-settings-faq</string>
     <string name="qa_pro_settings_action_support">pro-settings-support</string>
 
+    <!-- Pro features a message was sent with, listed on the message details screen. The names are the
+         subset of the Pro feature vocabulary that applies per message, so one feature is named the same
+         wherever it appears -->
+    <string name="qa_pro_message_feature_badges">pro-message-feature-badges</string>
+    <string name="qa_pro_message_feature_longer_messages">pro-message-feature-longer-messages</string>
+    <string name="qa_pro_message_feature_animated_display_picture">pro-message-feature-animated-display-picture</string>
+
     <!-- Manage members and admin -->
     <string name="qa_manage_members_invite_contacts">invite-contacts-menu-option</string>
     <string name="qa_manage_members_invite_account_id">invite-accountid-menu-option</string>
