@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
@@ -442,6 +443,24 @@ class ProStatusManager @Inject constructor(
 
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
         launch {
+            // QA only. The pending poll is a WorkManager job carrying a delay rather than a stored
+            // instant, so there is nothing to backdate; cancelling it is the equivalent, because
+            // `schedule` enqueues with no delay and its KEEP policy would otherwise preserve a job
+            // that is up to 48h from running.
+            //
+            // Cancelled here rather than where the flag is set, immediately before the scheduling it
+            // affects: the two orderings are not equivalent, and doing it the other way round would
+            // cancel the poll it was meant to force.
+            //
+            // The scheduler below is untouched and still decides when to poll.
+            if (BuildConfig.ALLOW_QA_LAUNCH_CONFIG && prefs.forceProRevocationRefresh()) {
+                Log.w(
+                    DebugLogGroup.PRO_SUBSCRIPTION.label,
+                    "Forcing a Pro revocation poll: discarding any scheduled one"
+                )
+                RevocationListPollingWorker.cancel(application)
+            }
+
             RevocationListPollingWorker.schedule(application)
         }
 

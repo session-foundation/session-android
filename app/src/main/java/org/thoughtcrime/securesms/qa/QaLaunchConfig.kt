@@ -117,6 +117,20 @@ object QaLaunchConfig {
     private const val EXTRA_PRO_PROOF = "sessionProProof"
 
     /**
+     * Forces the next Pro revocation poll to happen at launch instead of at its scheduled time.
+     *
+     * `true` or `1` enables; absent, empty or any other value leaves the stored setting alone. Not a
+     * presence check — a key present with a disabling value must disable.
+     *
+     * The QA backend serves a 24h `retry_in`, so a client's second poll is a day after its first and no
+     * revocation behaviour is observable within a test. This does not shorten that interval or add a
+     * fetch path: it clears the pending scheduled poll so the ordinary scheduler, unchanged, enqueues
+     * one immediately. See [applyForceProRevocationRefresh] for why cancelling is the equivalent of
+     * backdating a stored timestamp here.
+     */
+    private const val EXTRA_FORCE_PRO_REVOCATION_REFRESH = "sessionForceProRevocationRefresh"
+
+    /**
      * When the mocked Pro access expires, overriding the fixed offset the fixture selected by
      * [EXTRA_PRO_BACKEND_STATUS] carries. iOS's `mockCurrentUserAccessExpiryTimestamp`, which is an
      * independent key there too.
@@ -246,6 +260,7 @@ object QaLaunchConfig {
             applyProBackendStatus(intent, prefs)
             // After the status extra: it overrides the access half that one sets.
             applyProProof(intent, prefs)
+            applyForceProRevocationRefresh(intent, prefs)
             applyProAccessExpiry(intent, prefs)
             applyProLoadingState(intent, prefs)
             applyProRefundingStatus(intent, prefs)
@@ -277,6 +292,7 @@ object QaLaunchConfig {
         EXTRA_PRO_BACKEND_PUBKEY,
         EXTRA_PRO_BACKEND_STATUS,
         EXTRA_PRO_PROOF,
+        EXTRA_FORCE_PRO_REVOCATION_REFRESH,
         EXTRA_PRO_ACCESS_EXPIRY,
         EXTRA_PRO_LOADING_STATE,
         EXTRA_PRO_REFUNDING_STATUS,
@@ -525,6 +541,32 @@ object QaLaunchConfig {
      * here produces a PASSING test of the default state, which is worse than a failure — the same
      * reasoning as [warnOnUnrecognisedExtras].
      */
+    /**
+     * Records whether the next revocation poll should be forced. See [EXTRA_FORCE_PRO_REVOCATION_REFRESH].
+     *
+     * Only the flag is stored here; it is acted on where the poll is normally scheduled, so the forcing
+     * and the scheduling cannot end up in the wrong order.
+     *
+     * Absent leaves the stored value untouched, like every other extra here: [apply] runs on each
+     * HomeActivity creation rather than once per test, and a fresh install creates it a second time
+     * after onboarding with no QA extras attached.
+     */
+    private fun applyForceProRevocationRefresh(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_FORCE_PRO_REVOCATION_REFRESH)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_FORCE_PRO_REVOCATION_REFRESH).orEmpty().trim()
+        val force = when (raw.lowercase()) {
+            "true", "1" -> true
+            else -> false
+        }
+
+        prefs.setForceProRevocationRefresh(force)
+        Log.i(TAG, "Set forced Pro revocation refresh to $force (from '$raw')")
+        return true
+    }
+
     private fun applyProProof(intent: Intent, prefs: TextSecurePreferences): Boolean {
         if (!intent.hasExtra(EXTRA_PRO_PROOF)) {
             // Absent leaves the stored override alone, like every other Pro extra here.
