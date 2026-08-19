@@ -724,10 +724,16 @@ class ProStatusManager @Inject constructor(
     }
 
     /**
-     * Adds Pro features, if any, to an outgoing visible message
+     * Adds Pro features, if any, to an outgoing visible message.
+     *
+     * Gated on the proof rather than on the plan's state, and on the same accessor that decides what
+     * [MessageSender] attaches. A declared feature is only honoured by a recipient that can verify the
+     * proof carried with it, so declaring from any other source lets a message claim a feature it does
+     * not carry the credential for — and a lapsed plan whose proof is still valid is exactly when those
+     * two answers differ.
      */
     fun addProFeatures(message: Message) {
-        if (proDataState.value.type !is ProStatus.Active) {
+        if (currentUserProProofForAccess() == null) {
             return
         }
 
