@@ -399,4 +399,11 @@
 
     <string name="qa_collapsing_footer_action">qa-collapsing-footer-action</string>
 
+    <!-- The expand affordance on a collapsed message bubble. Carried by the tap TARGET in both
+         conversation implementations (the v2 TextView, whose bounds are hit-tested, and the v3
+         Compose control), so flipping the convo-v3 debug flag cannot change the locator.
+         Android only: iOS marks the whole bubble as a single accessibility element, so an id on the
+         equivalent control there is not reachable, and its specs locate the affordance differently. -->
+    <string name="qa_message_read_more">message-read-more</string>
+
 </resources>
