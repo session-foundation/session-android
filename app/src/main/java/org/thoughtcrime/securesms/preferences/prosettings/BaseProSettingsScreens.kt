@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.preferences.prosettings
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.dialog.DialogBg
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
@@ -75,6 +77,8 @@ fun BaseProSettingsScreen(
     onBack: () -> Unit,
     onHeaderClick: (() -> Unit)? = null,
     extraHeaderContent: @Composable (() -> Unit)? = null,
+    /** Identifies WHICH store-flow screen this is, so a spec can assert the destination a state opens. */
+    @StringRes screenQaTag: Int? = null,
     content: @Composable LazyItemScope.() -> Unit
 ){
     // Calculate scroll fraction
@@ -123,7 +127,8 @@ fun BaseProSettingsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .consumeWindowInsets(paddings),
+                .consumeWindowInsets(paddings)
+                .qaTag(screenQaTag),
             state = listState,
             contentPadding = safeInsetsPadding,
             horizontalAlignment = CenterHorizontally
@@ -153,17 +158,20 @@ fun BaseCellButtonProSettingsScreen(
     dangerButton: Boolean,
     onButtonClick: () -> Unit,
     title: CharSequence? = null,
+    @StringRes screenQaTag: Int? = null,
     content: @Composable LazyItemScope.() -> Unit
 ) {
     BaseProSettingsScreen(
         disabled = disabled,
         onBack = onBack,
+        screenQaTag = screenQaTag,
     ) {
         Spacer(Modifier.height(LocalDimensions.current.spacing))
 
         if(!title.isNullOrEmpty()) {
             Text(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .qaTag(R.string.qa_pro_screen_header),
                 text = annotatedStringResource(title),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base,
@@ -189,14 +197,16 @@ fun BaseCellButtonProSettingsScreen(
             if (dangerButton) {
                 DangerFillButtonRect(
                     modifier = Modifier.fillMaxWidth()
-                        .widthIn(max = LocalDimensions.current.maxContentWidth),
+                        .widthIn(max = LocalDimensions.current.maxContentWidth)
+                        .qaTag(R.string.qa_pro_screen_action),
                     text = buttonText,
                     onClick = onButtonClick
                 )
             } else {
                 AccentFillButtonRect(
                     modifier = Modifier.fillMaxWidth()
-                        .widthIn(max = LocalDimensions.current.maxContentWidth),
+                        .widthIn(max = LocalDimensions.current.maxContentWidth)
+                        .qaTag(R.string.qa_pro_screen_action),
                     text = buttonText,
                     onClick = onButtonClick
                 )
@@ -245,6 +255,7 @@ fun BaseNonOriginatingProSettingsScreen(
     contentClick: (() -> Unit)? = null,
     linkCellsInfo: String?,
     linkCells: List<NonOriginatingLinkCellData> = emptyList(),
+    @StringRes screenQaTag: Int? = null,
 ) {
     BaseCellButtonProSettingsScreen(
         disabled = disabled,
@@ -253,9 +264,11 @@ fun BaseNonOriginatingProSettingsScreen(
         dangerButton = dangerButton,
         onButtonClick = onButtonClick,
         title = headerTitle,
+        screenQaTag = screenQaTag,
     ){
         if (contentTitle != null) {
             Text(
+                modifier = Modifier.qaTag(R.string.qa_pro_screen_title),
                 text = contentTitle,
                 style = LocalType.current.h7,
                 color = LocalColors.current.text,
@@ -265,7 +278,7 @@ fun BaseNonOriginatingProSettingsScreen(
         if (contentDescription != null) {
             Spacer(Modifier.height(LocalDimensions.current.xxxsSpacing))
             Text(
-                modifier = Modifier.then(
+                modifier = Modifier.qaTag(R.string.qa_pro_screen_description).then(
                     // make the component clickable is there is an action
                     if (contentClick != null) Modifier.clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -313,6 +326,7 @@ fun NonOriginatingLinkCell(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
+                .qaTag(data.qaTag)
                 .padding(LocalDimensions.current.smallSpacing),
             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
@@ -348,6 +362,7 @@ fun NonOriginatingLinkCell(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
+                    modifier = Modifier.qaTag(data.titleQaTag),
                     text = annotatedStringResource(data.title),
                     style = LocalType.current.base.bold(),
                     color = LocalColors.current.text,
@@ -356,6 +371,7 @@ fun NonOriginatingLinkCell(
                 Spacer(Modifier.height(LocalDimensions.current.xxxsSpacing))
 
                 Text(
+                    modifier = Modifier.qaTag(data.descriptionQaTag),
                     text = annotatedStringResource(data.info),
                     style = LocalType.current.base,
                     color = LocalColors.current.text,
@@ -370,7 +386,16 @@ data class NonOriginatingLinkCellData(
     val title: CharSequence,
     val info: CharSequence,
     @DrawableRes val iconRes: Int,
-    val onClick: (() -> Unit)? = null
+    val onClick: (() -> Unit)? = null,
+    /**
+     * QA ids for this option's cell, title and description.
+     *
+     * Named per option rather than generically like the rest of the screen, because two of these are
+     * shown at once so there is no single "the description" to address.
+     */
+    @StringRes val qaTag: Int? = null,
+    @StringRes val titleQaTag: Int? = null,
+    @StringRes val descriptionQaTag: Int? = null,
 )
 
 @Preview

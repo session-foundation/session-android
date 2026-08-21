@@ -37,6 +37,7 @@ import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.pro.previewExpiredApple
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -90,6 +91,7 @@ fun PlanConfirmation(
             modifier = Modifier
                 .fillMaxSize()
                 .consumeWindowInsets(paddings)
+                .qaTag(R.string.qa_pro_screen_plan_confirmation)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
                 )
@@ -105,7 +107,8 @@ fun PlanConfirmation(
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
             Text(
-                modifier = Modifier.align(CenterHorizontally),
+                modifier = Modifier.align(CenterHorizontally)
+                    .qaTag(R.string.qa_pro_screen_title),
                 text = stringResource(R.string.proAllSet),
                 style = LocalType.current.h6,
                 color = LocalColors.current.text,
@@ -133,7 +136,8 @@ fun PlanConfirmation(
 
             Text(
                 modifier = Modifier.align(CenterHorizontally)
-                    .safeContentWidth(),
+                    .safeContentWidth()
+                    .qaTag(R.string.qa_pro_screen_description),
                 text = annotatedStringResource(description),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base,
@@ -154,7 +158,8 @@ fun PlanConfirmation(
 
             AccentFillButtonRect(
                 modifier = Modifier.fillMaxWidth()
-                    .widthIn(max = LocalDimensions.current.maxContentWidth),
+                    .widthIn(max = LocalDimensions.current.maxContentWidth)
+                    .qaTag(R.string.qa_pro_screen_action),
                 text = buttonLabel,
                 onClick = {
                     sendCommand(ProSettingsViewModel.Commands.OnPostPlanConfirmation)

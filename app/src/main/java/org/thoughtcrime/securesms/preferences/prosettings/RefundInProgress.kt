@@ -62,6 +62,7 @@ fun RefundInProgress(
     val context = LocalContext.current
 
     BaseCellButtonProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_refund_in_progress,
         disabled = true,
         onBack = onBack,
         buttonText = stringResource(R.string.theReturn),

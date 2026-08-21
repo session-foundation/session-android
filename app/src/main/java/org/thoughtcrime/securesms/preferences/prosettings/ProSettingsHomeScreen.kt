@@ -388,7 +388,8 @@ fun ProStats(
             ) {
                 // Long Messages
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_longer_messages),
                     title = pluralStringResource(
                         R.plurals.proLongerMessagesSent,
                         stats?.longMessages ?: 0,
@@ -401,7 +402,8 @@ fun ProStats(
 
                 // Pinned Convos
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_pinned_conversations),
                     title = pluralStringResource(
                         R.plurals.proPinnedConversations,
                         stats?.pinnedConversations ?: 0,
@@ -419,7 +421,8 @@ fun ProStats(
             ) {
                 // Pro Badges
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_badges_sent),
                     title = pluralStringResource(
                         R.plurals.proBadgesSent,
                         stats?.proBadges ?: 0,
@@ -433,7 +436,8 @@ fun ProStats(
 
                 // groups updated
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_groups_upgraded),
                     title = pluralStringResource(
                         R.plurals.proGroupsUpgraded,
                         stats?.groupsUpdated ?: 0,

@@ -294,7 +294,10 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             // first check if the user has a valid subscription and billing
             val hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value
-            val hasValidSub = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
+            // The override is what makes "same platform, different store account" expressible; without it
+            // this always reports the signed-in account as the buyer on a mocked fixture.
+            val hasValidSub = prefs.getDebugOriginatingAccountOverride()
+                ?: subscriptionCoordinator.getCurrentManager().hasValidSubscription()
 
             // next get the plans, including their pricing, unless there is no billing
             // or the user is pro without a valid subscription
@@ -337,7 +340,8 @@ class ProSettingsViewModel @AssistedInject constructor(
         _cancelPlanState.update { State.Loading }
         viewModelScope.launch {
             _cancelPlanState.update { State.Loading }
-            val hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
+            val hasValidSubscription = prefs.getDebugOriginatingAccountOverride()
+                ?: subscriptionCoordinator.getCurrentManager().hasValidSubscription()
 
             _cancelPlanState.update {
                 State.Success(
@@ -358,14 +362,20 @@ class ProSettingsViewModel @AssistedInject constructor(
 
         viewModelScope.launch {
             _refundPlanState.update {
-                val isQuickRefund = if(prefs.forceCurrentUserAsPro()) prefs.getDebugIsWithinQuickRefund()// debug mode
-                else sub.isWithinQuickRefundWindow(clock.currentTime())
+                // One source for the window: the plan's own `quickRefundExpiry`. A debug override moves that
+                // date (see `ProStatusManager.withMockedQuickRefundWindow`) rather than being read here, so
+                // this no longer needs a debug branch — and no longer depends on the legacy
+                // `forceCurrentUserAsPro`, which made the override inert for any fixture granting access
+                // through the current lever.
+                val isQuickRefund = sub.isWithinQuickRefundWindow(clock.currentTime())
 
                 State.Success(
                     RefundPlanState(
                         proStatus = sub,
                         isQuickRefund = isQuickRefund,
-                        quickRefundUrl = sub.providerData.refundPlatformUrl
+                        quickRefundUrl = sub.providerData.refundPlatformUrl,
+                        hasValidSubscription = prefs.getDebugOriginatingAccountOverride()
+                            ?: subscriptionCoordinator.getCurrentManager().hasValidSubscription()
                     )
                 )
             }
@@ -1033,7 +1043,11 @@ class ProSettingsViewModel @AssistedInject constructor(
     data class RefundPlanState(
         val proStatus: ProStatus.Active.WithPlan,
         val isQuickRefund: Boolean,
-        val quickRefundUrl: String?
+        val quickRefundUrl: String?,
+        // Whether the store account signed in here is the one that bought the plan. The refund screen
+        // needs it for the same reason cancel and choose-plan do: a refund can only be requested from the
+        // buying account, so a different one has to be sent to the non-originating screen.
+        val hasValidSubscription: Boolean
     )
 
     data class ProStats(
