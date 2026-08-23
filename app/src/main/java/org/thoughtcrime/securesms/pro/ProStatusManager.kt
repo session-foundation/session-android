@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.pro
 
+import android.content.Context
 import android.app.Application
 import androidx.collection.ArraySet
 import androidx.collection.arraySetOf
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.pro.BackendRequests
 import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_APP_STORE
@@ -110,15 +112,27 @@ class ProStatusManager @Inject constructor(
                 }
                 .distinctUntilChanged(),
             proStatusRepository.get().loadState,
-            // The fixture and its expiry override are collected as ONE flow, not two: `combine` is only
-            // overloaded to five typed flows, and these two answer one question ("what state do we
-            // want mocked") so splitting them would buy nothing.
+            // The fixture and its overrides are collected as ONE flow: `combine` is only overloaded to
+            // five typed flows, and these answer one question ("what state do we want mocked").
             (TextSecurePreferences.events.filter {
                 it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS ||
-                    it == TextSecurePreferences.DEBUG_PRO_ACCESS_EXPIRY
+                    it == TextSecurePreferences.DEBUG_PRO_ACCESS_EXPIRY ||
+                    it == TextSecurePreferences.DEBUG_PRO_REFUND_IN_PROGRESS ||
+                    it == TextSecurePreferences.DEBUG_PRO_ORIGINATING_PROVIDER ||
+                    it == TextSecurePreferences.DEBUG_PRO_AUTO_RENEWING ||
+                    it == TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND
             } as Flow<*>)
                 .onStart { emit(Unit) }
-                .map { prefs.getDebugSubscriptionType() to prefs.getDebugProAccessExpiry() },
+                .map {
+                    DebugProOverrides(
+                        subscription = prefs.getDebugSubscriptionType(),
+                        accessExpiry = prefs.getDebugProAccessExpiry(),
+                        refundInProgress = prefs.getDebugRefundInProgressOverride(),
+                        originatingProvider = prefs.getDebugOriginatingProvider(),
+                        autoRenewing = prefs.getDebugAutoRenewingOverride(),
+                        withinQuickRefund = prefs.getDebugQuickRefundWindowOverride()
+                    )
+                },
             (TextSecurePreferences.events.filter { it == TextSecurePreferences.DEBUG_PRO_PLAN_STATUS } as Flow<*>)
                 .onStart { emit(Unit) }
                 .map { prefs.getDebugProPlanStatus() },
@@ -126,7 +140,13 @@ class ProStatusManager @Inject constructor(
                 .onStart { emit(Unit) }
                 .map { prefs.forceCurrentUserAsPro() },
         ){ showProBadgePreference, proStatusState,
-           (debugSubscription, debugAccessExpiry), debugProPlanStatus, forceCurrentUserAsPro ->
+           debugOverrides, debugProPlanStatus, forceCurrentUserAsPro ->
+            val debugSubscription = debugOverrides.subscription
+            val debugAccessExpiry = debugOverrides.accessExpiry
+            val debugRefundInProgress = debugOverrides.refundInProgress
+            val debugOriginatingProvider = debugOverrides.originatingProvider
+            val debugAutoRenewing = debugOverrides.autoRenewing
+            val debugWithinQuickRefund = debugOverrides.withinQuickRefund
             val proDataRefreshState = when(debugProPlanStatus){
                 DebugMenuViewModel.DebugProPlanStatus.LOADING -> State.Loading
                 DebugMenuViewModel.DebugProPlanStatus.ERROR -> State.Error(Exception())
@@ -177,8 +197,10 @@ class ProStatusManager @Inject constructor(
 
                 // Refund-requested is now a synced config flag (set by whichever device — e.g. iOS —
                 // initiated the refund), not a get_pro_status field; read it for cross-device display.
-                val refundInProgress = configFactory.get()
-                    .withUserConfigs { it.userProfile.getRefundRequested() != null }
+                // QA override wins when set, else the synced flag.
+                val refundInProgress = debugRefundInProgress
+                    ?: configFactory.get()
+                        .withUserConfigs { it.userProfile.getRefundRequested() != null }
                 ProDataState(
                     type = proStatusState.lastUpdated?.let { (response, confirmedAt) ->
                         response.toProStatus(nowMs, application, refundInProgress, confirmedAt)
@@ -280,7 +302,11 @@ class ProStatusManager @Inject constructor(
                             gracePeriod = Duration.ZERO,
                             providerData = providerMetadata(PAYMENT_PROVIDER_APP_STORE, application)
                         )
-                    }.withMockedExpiry(debugAccessExpiry),
+                    }.withMockedExpiry(debugAccessExpiry)
+                        .withMockedRefundInProgress(debugRefundInProgress)
+                        .withMockedOriginatingProvider(debugOriginatingProvider, application)
+                        .withMockedAutoRenewing(debugAutoRenewing)
+                        .withMockedQuickRefundWindow(debugWithinQuickRefund, now),
 
                     refreshState = proDataRefreshState,
                     showProBadge = showProBadgePreference,
@@ -310,8 +336,131 @@ class ProStatusManager @Inject constructor(
         else -> this
     }
 
+    /**
+     * The debug Pro overrides, collected as one value because `combine` is only overloaded to five typed
+     * flows and these all answer the same question: what state do we want mocked.
+     */
+    private data class DebugProOverrides(
+        val subscription: DebugMenuViewModel.DebugSubscriptionStatus?,
+        val accessExpiry: Instant?,
+        val refundInProgress: Boolean?,
+        val originatingProvider: String?,
+        val autoRenewing: Boolean?,
+        val withinQuickRefund: Boolean?,
+    )
+
+    /**
+     * Forces the store's quick-refund window open or closed by moving the fixture's `quickRefundExpiry`,
+     * which is the **only** representation of it — `isWithinQuickRefundWindow` compares that date against
+     * network time, and every reader goes through it.
+     *
+     * Deliberately not a second boolean carried alongside the date. It used to be: `ensureRefundState`
+     * read a debug flag directly and only when the legacy `forceCurrentUserAsPro` was set, so the flag was
+     * inert for any fixture granting access the modern way, and "is the window open" had two sources that
+     * could disagree.
+     *
+     * Tri-state: null leaves the fixture's own window alone, which every fixture sets open. A plain
+     * boolean defaulting to false would have closed it for every existing test.
+     */
+    private fun ProStatus.withMockedQuickRefundWindow(open: Boolean?, now: Instant): ProStatus = when {
+        open == null -> this
+
+        this is ProStatus.Active.AutoRenewing ->
+            copy(quickRefundExpiry = if (open) now + Duration.ofDays(7) else null)
+
+        this is ProStatus.Active.Expiring ->
+            copy(quickRefundExpiry = if (open) now + Duration.ofDays(7) else null)
+
+        else -> this
+    }
+
+    /**
+     * Forces whether a debug fixture renews itself, converting between the two active shapes and keeping
+     * the dates and provider as they were. Null keeps the fixture's own shape.
+     *
+     * A conversion rather than a flag because the distinction is a type here: `Expiring` runs to its end
+     * date, `AutoRenewing` renews and is what gates the Cancel Pro Access action. Doing it this way keeps
+     * the lever orthogonal - the `AUTO_*` fixtures reach a renewing plan too, but each bundles a provider
+     * and duration with it, so they cannot answer "this plan, but renewing".
+     *
+     * `inGracePeriod` is false on conversion: an overdue renewal is a separate state, reached by pairing
+     * this with an access expiry in the past.
+     */
+    private fun ProStatus.withMockedAutoRenewing(autoRenewing: Boolean?): ProStatus = when {
+        autoRenewing == null -> this
+
+        autoRenewing && this is ProStatus.Active.Expiring -> ProStatus.Active.AutoRenewing(
+            renewingAt = renewingAt,
+            duration = duration,
+            providerData = providerData,
+            quickRefundExpiry = quickRefundExpiry,
+            refundInProgress = refundInProgress,
+            inGracePeriod = false
+        )
+
+        !autoRenewing && this is ProStatus.Active.AutoRenewing -> ProStatus.Active.Expiring(
+            renewingAt = renewingAt,
+            duration = duration,
+            providerData = providerData,
+            quickRefundExpiry = quickRefundExpiry,
+            refundInProgress = refundInProgress
+        )
+
+        else -> this
+    }
+
+    /**
+     * Replaces the payment provider a debug fixture carries, which is what decides whether the plan reads
+     * as bought on this platform or elsewhere (`PaymentProviderMetadata.isFromAnotherPlatform`). Null
+     * keeps the fixture's own provider.
+     *
+     * Only [ProStatus.Active.WithPlan] and [ProStatus.Expired.WithPlan] carry provider data; anything
+     * else has no purchase to attribute.
+     */
+    private fun ProStatus.withMockedOriginatingProvider(
+        providerSlug: String?,
+        context: Context
+    ): ProStatus = when {
+        providerSlug == null -> this
+        this is ProStatus.Active.AutoRenewing -> copy(providerData = providerMetadata(providerSlug, context))
+        this is ProStatus.Active.Expiring -> copy(providerData = providerMetadata(providerSlug, context))
+        this is ProStatus.Expired.WithPlan -> copy(providerData = providerMetadata(providerSlug, context))
+        else -> this
+    }
+
+    /**
+     * Forces the refund-pending flag on a debug fixture, leaving the rest of it alone, so refunding
+     * composes with any fixture rather than only `AUTO_APPLE_REFUNDING`. Null keeps the fixture's flag.
+     *
+     * Only [ProStatus.Active.WithPlan] carries the flag; anything else has no refund to be pending.
+     */
+    private fun ProStatus.withMockedRefundInProgress(refunding: Boolean?): ProStatus = when {
+        refunding == null -> this
+        this is ProStatus.Active.AutoRenewing -> copy(refundInProgress = refunding)
+        this is ProStatus.Active.Expiring -> copy(refundInProgress = refunding)
+        else -> this
+    }
+
     override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
         launch {
+            // QA only. The pending poll is a WorkManager job carrying a delay rather than a stored
+            // instant, so there is nothing to backdate; cancelling it is the equivalent, because
+            // `schedule` enqueues with no delay and its KEEP policy would otherwise preserve a job
+            // that is up to 48h from running.
+            //
+            // Cancelled here rather than where the flag is set, immediately before the scheduling it
+            // affects: the two orderings are not equivalent, and doing it the other way round would
+            // cancel the poll it was meant to force.
+            //
+            // The scheduler below is untouched and still decides when to poll.
+            if (BuildConfig.ALLOW_QA_LAUNCH_CONFIG && prefs.forceProRevocationRefresh()) {
+                Log.w(
+                    DebugLogGroup.PRO_SUBSCRIPTION.label,
+                    "Forcing a Pro revocation poll: discarding any scheduled one"
+                )
+                RevocationListPollingWorker.cancel(application)
+            }
+
             RevocationListPollingWorker.schedule(application)
         }
 
@@ -724,10 +873,16 @@ class ProStatusManager @Inject constructor(
     }
 
     /**
-     * Adds Pro features, if any, to an outgoing visible message
+     * Adds Pro features, if any, to an outgoing visible message.
+     *
+     * Gated on the proof rather than on the plan's state, and on the same accessor that decides what
+     * [MessageSender] attaches. A declared feature is only honoured by a recipient that can verify the
+     * proof carried with it, so declaring from any other source lets a message claim a feature it does
+     * not carry the credential for — and a lapsed plan whose proof is still valid is exactly when those
+     * two answers differ.
      */
     fun addProFeatures(message: Message) {
-        if (proDataState.value.type !is ProStatus.Active) {
+        if (currentUserProProofForAccess() == null) {
             return
         }
 
@@ -1001,7 +1156,6 @@ class ProStatusManager @Inject constructor(
         private val MAX_CHARACTER_REGULAR by lazy { SessionProtocol.STANDARD_CHARACTER_LIMIT } // max message codepoints for non-pro users
         const val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
-        const val URL_PRO_SUPPORT = "https://getsession.org/pro-form"
 
         /**
          * Remaining access for the `EXPIRING_GOOGLE_LATER` debug fixture, in days. **An Appium spec

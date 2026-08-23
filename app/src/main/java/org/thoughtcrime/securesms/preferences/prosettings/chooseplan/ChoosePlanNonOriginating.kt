@@ -52,6 +52,7 @@ fun ChoosePlanNonOriginating(
     }
 
     BaseNonOriginatingProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_choose_plan_non_originating,
         disabled = false,
         onBack = onBack,
         headerTitle = headerTitle,
@@ -79,7 +80,10 @@ fun ChoosePlanNonOriginating(
                     .put(DEVICE_TYPE_KEY, subscription.providerData.device)
                     .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .format(),
-                iconRes = R.drawable.ic_smartphone
+                iconRes = R.drawable.ic_smartphone,
+                qaTag = R.string.qa_pro_link_cell_device,
+                titleQaTag = R.string.qa_pro_link_cell_device_title,
+                descriptionQaTag = R.string.qa_pro_link_cell_device_description,
             ),
             NonOriginatingLinkCellData(
                 title = Phrase.from(context.getText(R.string.viaStoreWebsite))
@@ -89,7 +93,10 @@ fun ChoosePlanNonOriginating(
                     .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                     .put(PLATFORM_STORE_KEY, platformOverride)
                     .format(),
-                iconRes = R.drawable.ic_globe
+                iconRes = R.drawable.ic_globe,
+                qaTag = R.string.qa_pro_link_cell_website,
+                titleQaTag = R.string.qa_pro_link_cell_website_title,
+                descriptionQaTag = R.string.qa_pro_link_cell_website_description,
             )
         )
     )

@@ -92,6 +92,7 @@ fun ChoosePlan(
     BaseProSettingsScreen(
         disabled = false,
         onBack = onBack,
+        screenQaTag = R.string.qa_pro_screen_choose_plan,
     ) {
         // Keeps track of the badge height dynamically so we can adjust the padding accordingly
         // This is better than a static badge height since users can change their font settings

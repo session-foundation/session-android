@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.CommunityUrlParser
@@ -67,7 +68,6 @@ import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
-import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
@@ -86,6 +86,7 @@ class HomeViewModel @Inject constructor(
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
     private val dateUtils: DateUtils,
+    private val snodeClock: SnodeClock,
     private val donationManager: DonationManager,
     private val audioPlaybackManager: AudioPlaybackManager,
     private val openGroupManager: OpenGroupManager,
@@ -221,10 +222,24 @@ class HomeViewModel @Inject constructor(
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.proDataState.collect { subscription ->
-                // show a CTA (only once per install) when
+                // show a CTA when
                 // - subscription is expiring in less than 7 days
                 // - subscription expired less than 30 days ago
-                val now = Instant.now()
+                //
+                // Armed ONCE PER PRO CYCLE, not once per install and not once per launch: Pro can only
+                // expire once per cycle, so one warning per cycle is the whole intent. The latch is
+                // persisted (`has_seen_pro_expir{ing,ed}`), written on DISMISSAL rather than on display
+                // -- so a CTA shown to a process that dies before the user dismisses it is shown again --
+                // and cleared below whenever the account reads Active again.
+                //
+                // Do not "correct" this to fire on every launch or every status change. Both were
+                // considered and rejected: the arm-once-per-cycle model is the ruled behaviour, and it is
+                // the one the other clients are being aligned TO.
+                // Network time: both comparisons below are against instants the backend supplied,
+                // so device-clock skew moves the boundary rather than the subscription. The two CTAs
+                // also skew in opposite directions — a fast clock warns of expiry early and stops
+                // warning of expiration early — so a wrong reading here is not uniformly wrong.
+                val now = snodeClock.currentTime()
 
                 var showExpiring: Boolean = false
                 var showExpired: Boolean = false
@@ -250,7 +265,7 @@ class HomeViewModel @Inject constructor(
                         _dialogsState.update { state ->
                             state.copy(
                                 proExpiringCTA = ProExpiringCTA(
-                                    dateUtils.getExpiryString(validUntil)
+                                    dateUtils.getExpiryString(validUntil, now)
                                 )
                             )
                         }

@@ -26,6 +26,7 @@ import org.thoughtcrime.securesms.pro.buildProStoresList
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
 import org.thoughtcrime.securesms.pro.providerStoreName
 import org.thoughtcrime.securesms.pro.previewExpiredApple
+import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -131,7 +132,10 @@ fun ChoosePlanNoBilling(
             NonOriginatingLinkCellData(
                 title = stringResource(R.string.proNewInstallation),
                 info = cell2Text,
-                iconRes = R.drawable.ic_smartphone
+                iconRes = R.drawable.ic_smartphone,
+                qaTag = R.string.qa_pro_link_cell_device,
+                titleQaTag = R.string.qa_pro_link_cell_device_title,
+                descriptionQaTag = R.string.qa_pro_link_cell_device_description,
             )
         )
 
@@ -146,7 +150,10 @@ fun ChoosePlanNoBilling(
                         .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
                         .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
                         .format(),
-                    iconRes = R.drawable.ic_globe
+                    iconRes = R.drawable.ic_globe,
+                qaTag = R.string.qa_pro_link_cell_website,
+                titleQaTag = R.string.qa_pro_link_cell_website_title,
+                descriptionQaTag = R.string.qa_pro_link_cell_website_description,
                 )
             )
         }
@@ -154,6 +161,7 @@ fun ChoosePlanNoBilling(
 
 
     BaseNonOriginatingProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_choose_plan_no_billing,
         disabled = false,
         onBack = onBack,
         headerTitle = headerTitle,
@@ -170,7 +178,7 @@ fun ChoosePlanNoBilling(
         contentTitle = contentTitle,
         contentDescription = contentDescription,
         contentClick = {
-            sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
+            sendCommand(ShowOpenUrlDialog(ProUrls.ROADMAP))
         },
         linkCellsInfo = cellsInfo,
         linkCells = cells

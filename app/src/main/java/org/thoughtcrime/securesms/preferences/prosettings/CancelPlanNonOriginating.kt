@@ -31,6 +31,7 @@ fun CancelPlanNonOriginating(
     val context = LocalContext.current
 
     BaseNonOriginatingProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_cancel_plan_non_originating,
         disabled = true,
         onBack = onBack,
         headerTitle = Phrase.from(context.getText(R.string.proCancelSorry))
@@ -58,7 +59,10 @@ fun CancelPlanNonOriginating(
                     .put(DEVICE_TYPE_KEY, providerData.device)
                     .put(PLATFORM_ACCOUNT_KEY, providerData.platformAccount)
                     .format(),
-                iconRes = R.drawable.ic_smartphone
+                iconRes = R.drawable.ic_smartphone,
+                qaTag = R.string.qa_pro_link_cell_device,
+                titleQaTag = R.string.qa_pro_link_cell_device_title,
+                descriptionQaTag = R.string.qa_pro_link_cell_device_description,
             ),
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onPlatformWebsite))
@@ -68,7 +72,10 @@ fun CancelPlanNonOriginating(
                     .put(PLATFORM_STORE_KEY, providerData.store)
                     .put(PLATFORM_ACCOUNT_KEY, providerData.platformAccount)
                     .format(),
-                iconRes = R.drawable.ic_globe
+                iconRes = R.drawable.ic_globe,
+                qaTag = R.string.qa_pro_link_cell_website,
+                titleQaTag = R.string.qa_pro_link_cell_website_title,
+                descriptionQaTag = R.string.qa_pro_link_cell_website_description,
             )
         )
     )

@@ -60,6 +60,7 @@ import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.pro.previewExpiredApple
+import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
@@ -387,7 +388,8 @@ fun ProStats(
             ) {
                 // Long Messages
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_longer_messages),
                     title = pluralStringResource(
                         R.plurals.proLongerMessagesSent,
                         stats?.longMessages ?: 0,
@@ -400,7 +402,8 @@ fun ProStats(
 
                 // Pinned Convos
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_pinned_conversations),
                     title = pluralStringResource(
                         R.plurals.proPinnedConversations,
                         stats?.pinnedConversations ?: 0,
@@ -418,7 +421,8 @@ fun ProStats(
             ) {
                 // Pro Badges
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_badges_sent),
                     title = pluralStringResource(
                         R.plurals.proBadgesSent,
                         stats?.proBadges ?: 0,
@@ -432,7 +436,8 @@ fun ProStats(
 
                 // groups updated
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_groups_upgraded),
                     title = pluralStringResource(
                         R.plurals.proGroupsUpgraded,
                         stats?.groupsUpdated ?: 0,
@@ -725,7 +730,7 @@ fun ProFeatures(
                 iconGradientEnd = primaryYellow,
                 expired = disabled,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.ROADMAP))
                 }
             )
         }
@@ -983,7 +988,7 @@ fun ProSettingsFooter(
                 iconColor = iconColor,
                 qaTag = R.string.qa_pro_settings_action_faq,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog("https://getsession.org/faq#pro"))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.FAQ))
                 }
             )
             Divider()
@@ -998,7 +1003,7 @@ fun ProSettingsFooter(
                 iconColor = iconColor,
                 qaTag = R.string.qa_pro_settings_action_support,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.SUPPORT))
                 }
             )
         }
