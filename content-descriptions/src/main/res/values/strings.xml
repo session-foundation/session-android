@@ -440,4 +440,14 @@
          equivalent control there is not reachable, and its specs locate the affordance differently. -->
     <string name="qa_message_read_more">message-read-more</string>
 
+    <!-- The shared "Open URL" confirmation dialog, which every urlOpen confirmation in the app goes
+         through, so these three ids cover all of them rather than one caller. The description is the
+         node carrying the interpolated URL, so a spec reads its TEXT to assert WHICH url is about to
+         be opened - do not add a contentDescription to it. Same strings on Desktop - one locator
+         serves both. The "Copy URL" button is deliberately left untagged: a spec already finds it by
+         its label, and a testTag would change its resource-id. -->
+    <string name="qa_open_url_dialog">open-url-dialog</string>
+    <string name="qa_open_url_description">open-url-description</string>
+    <string name="qa_open_url_confirm_button">open-url-confirm-button</string>
+
 </resources>
