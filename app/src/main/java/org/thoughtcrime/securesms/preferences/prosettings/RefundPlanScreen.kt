@@ -22,6 +22,7 @@ import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.C
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -54,8 +55,15 @@ fun RefundPlanScreen(
 
         // there are different UI depending on the state
         when {
-            // there is an active subscription but from a different platform
-            activePlan.providerData.isFromAnotherPlatform() ->
+            // there is an active subscription but from a different platform or from the same platform
+            // but a different account
+            //
+            // The account half matters as much as the platform half: a refund can only be requested from
+            // the account that bought the plan, so offering the originating screen to a different account
+            // offers an action it cannot complete. `CancelPlanScreen` and `ChoosePlanHomeScreen` have
+            // always made both checks; this screen only made the first.
+            activePlan.providerData.isFromAnotherPlatform()
+                    || !refundData.hasValidSubscription ->
                 RefundPlanNonOriginating(
                     subscription = activePlan,
                     sendCommand = viewModel::onCommand,
@@ -86,6 +94,7 @@ fun RefundPlan(
     val context = LocalContext.current
 
     BaseCellButtonProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_refund_plan,
         disabled = true,
         onBack = onBack,
         buttonText = if(isQuickRefund) Phrase.from(context.getText(R.string.openPlatformWebsite))
@@ -104,6 +113,7 @@ fun RefundPlan(
     ){
         Column {
             Text(
+                modifier = Modifier.qaTag(R.string.qa_pro_screen_title),
                 text = Phrase.from(context.getText(R.string.proRefunding))
                     .format().toString(),
                 style = LocalType.current.base.bold(),
@@ -113,6 +123,9 @@ fun RefundPlan(
             Spacer(Modifier.height(LocalDimensions.current.xxxsSpacing))
 
             Text(
+                // The one line that separates the two refund routes this screen offers: inside the store's
+                // own window it points at the store, outside it at Session Support.
+                modifier = Modifier.qaTag(R.string.qa_pro_screen_description),
                 text = annotatedStringResource(
                     if(isQuickRefund)
                         Phrase.from(context.getText(R.string.proRefundRequestStorePolicies))

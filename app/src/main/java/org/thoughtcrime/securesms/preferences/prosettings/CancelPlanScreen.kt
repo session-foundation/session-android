@@ -97,6 +97,7 @@ fun CancelPlan(
     }
 
     BaseCellButtonProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_cancel_plan,
         disabled = true,
         onBack = onBack,
         buttonText = Phrase.from(context.getText(R.string.cancelAccess))

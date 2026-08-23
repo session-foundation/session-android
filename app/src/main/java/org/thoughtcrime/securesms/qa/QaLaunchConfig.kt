@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.qa
 
+import network.loki.messenger.libsession_util.pro.BackendRequests
 import android.content.Intent
 import android.os.Bundle
 import network.loki.messenger.BuildConfig
@@ -161,6 +162,57 @@ object QaLaunchConfig {
     private const val EXTRA_PRO_LOADING_STATE = "sessionProLoadingState"
 
     /**
+     * Whether the mocked subscription has a refund pending: `useActual` | `notRefunding` | `refunding`.
+     * iOS's `mockCurrentUserSessionProRefundingStatus`.
+     *
+     * Its own key rather than a [EXTRA_PRO_BACKEND_STATUS] value, so it composes with any fixture:
+     * `AUTO_APPLE_REFUNDING` bundles refunding with a provider, duration and renewal date. Keeping it out
+     * of that key also leaves those values as the backend's own plan slugs, which are open to future
+     * additions that could shadow a test-only one.
+     *
+     * Only renders on an ACTIVE plan — the flag lives on `ProStatus.Active.WithPlan`.
+     */
+    private const val EXTRA_PRO_REFUNDING_STATUS = "sessionProRefundingStatus"
+
+    /**
+     * Which platform the mocked subscription was bought on: `useActual` | `iOS` | `android`.
+     * iOS's `mockCurrentUserSessionProOriginatingPlatform`.
+     *
+     * Maps to the payment provider slug, which is what every "bought elsewhere" decision reads
+     * (`PaymentProviderMetadata.isFromAnotherPlatform`) — so `iOS` reaches the non-originating screens on
+     * an Android device, and `android` the originating ones.
+     */
+    private const val EXTRA_PRO_ORIGINATING_PLATFORM = "sessionProOriginatingPlatform"
+
+    /**
+     * Whether the store's own quick-refund window is still open: `useActual` | `true` | `false`. Decides
+     * the <48h vs >48h refund screens.
+     *
+     * Applied by moving the plan's `quickRefundExpiry`, which is the single representation of the window,
+     * so it works for any fixture regardless of how access was granted.
+     */
+    private const val EXTRA_PRO_QUICK_REFUND_WINDOW = "sessionProQuickRefundWindow"
+
+    /**
+     * Whether the mocked plan renews itself: `useActual` | `autoRenewing` | `notAutoRenewing`.
+     * iOS's `mockCurrentUserSessionProAutoRenewing`.
+     *
+     * The flag the "Pro auto-renewing in {time}" line, the renewal-unsuccessful state and the Cancel Pro
+     * Access action all read - without it a mocked plan always runs to its end date, so none of those is
+     * reachable.
+     */
+    private const val EXTRA_PRO_AUTO_RENEWING = "sessionProAutoRenewing"
+
+    /**
+     * Whether the store account signed in on this device is the one that bought the subscription:
+     * `useActual` | `originatingAccount` | `nonOriginatingAccount`. iOS's `mockCurrentUserOriginatingAccount`.
+     *
+     * Overrides `hasValidSubscription`, which the cancel and choose-plan screens read as "same platform but
+     * a different account". Note the refund screen branches only on the platform, so this does not change it.
+     */
+    private const val EXTRA_PRO_ORIGINATING_ACCOUNT = "sessionProOriginatingAccount"
+
+    /**
      * Read any supported extras off [intent] and persist them. Safe to call on every launch: absent
      * extras leave the corresponding preference untouched.
      */
@@ -196,6 +248,11 @@ object QaLaunchConfig {
             applyProProof(intent, prefs)
             applyProAccessExpiry(intent, prefs)
             applyProLoadingState(intent, prefs)
+            applyProRefundingStatus(intent, prefs)
+            applyProOriginatingPlatform(intent, prefs)
+            applyProQuickRefundWindow(intent, prefs)
+            applyProAutoRenewing(intent, prefs)
+            applyProOriginatingAccount(intent, prefs)
         } catch (e: RuntimeException) {
             Log.e(TAG, "Ignoring unreadable launch extras", e)
             return
@@ -222,6 +279,11 @@ object QaLaunchConfig {
         EXTRA_PRO_PROOF,
         EXTRA_PRO_ACCESS_EXPIRY,
         EXTRA_PRO_LOADING_STATE,
+        EXTRA_PRO_REFUNDING_STATUS,
+        EXTRA_PRO_ORIGINATING_PLATFORM,
+        EXTRA_PRO_QUICK_REFUND_WINDOW,
+        EXTRA_PRO_AUTO_RENEWING,
+        EXTRA_PRO_ORIGINATING_ACCOUNT,
     )
 
     /**
@@ -500,6 +562,169 @@ object QaLaunchConfig {
             "Set mocked Pro ACCESS to '$raw' " +
                 "(override = ${override?.toString() ?: "cleared, real proof governs"})"
         )
+        return true
+    }
+
+    /**
+     * Applies the mocked refund-pending flag. See [EXTRA_PRO_REFUNDING_STATUS].
+     *
+     *     refunding      -> force a refund in progress
+     *     notRefunding   -> force none, even if the synced config flag says otherwise
+     *     useActual      -> clear the override; the real state governs
+     *
+     * Tri-state for the same reason as [applyProProof]: the real state is a synced config flag another
+     * device can have set, so `notRefunding` and `useActual` differ.
+     */
+    private fun applyProRefundingStatus(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_REFUNDING_STATUS)) {
+            // Absent leaves the stored override alone — see [applyProProof].
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_REFUNDING_STATUS).orEmpty().trim()
+        // null = clear the override.
+        val override: Boolean? = when (raw.lowercase()) {
+            "refunding" -> true
+            "notrefunding" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_REFUNDING_STATUS' extra: '$raw'. " +
+                        "Use refunding | notRefunding | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugRefundInProgressOverride(override)
+        Log.i(
+            TAG,
+            "Set mocked Pro refund-pending to '$raw' " +
+                "(override = ${override?.toString() ?: "cleared, real state governs"})"
+        )
+        return true
+    }
+
+    /**
+     * Applies the mocked originating platform. See [EXTRA_PRO_ORIGINATING_PLATFORM].
+     *
+     * Accepts the platform names iOS uses rather than the provider slugs the app stores, so one
+     * `bothPlatformsIt` setup reads the same on both clients.
+     */
+    private fun applyProOriginatingPlatform(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_ORIGINATING_PLATFORM)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_ORIGINATING_PLATFORM).orEmpty().trim()
+        // null = clear the override.
+        val slug: String? = when (raw.lowercase()) {
+            "ios" -> BackendRequests.PAYMENT_PROVIDER_APP_STORE
+            "android" -> BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_ORIGINATING_PLATFORM' extra: '$raw'. " +
+                        "Use iOS | android | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugOriginatingProvider(slug)
+        Log.i(
+            TAG,
+            "Set mocked Pro originating platform to '$raw' (provider = ${slug ?: "cleared"})"
+        )
+        return true
+    }
+
+    /** Applies the mocked originating account. See [EXTRA_PRO_ORIGINATING_ACCOUNT]. */
+    private fun applyProOriginatingAccount(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_ORIGINATING_ACCOUNT)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_ORIGINATING_ACCOUNT).orEmpty().trim()
+        // null = clear the override.
+        val override: Boolean? = when (raw.lowercase()) {
+            "originatingaccount" -> true
+            "nonoriginatingaccount" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_ORIGINATING_ACCOUNT' extra: '$raw'. " +
+                        "Use originatingAccount | nonOriginatingAccount | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugOriginatingAccountOverride(override)
+        Log.i(
+            TAG,
+            "Set mocked Pro originating account to '$raw' " +
+                "(override = ${override?.toString() ?: "cleared, the store decides"})"
+        )
+        return true
+    }
+
+    /** Applies the mocked auto-renewing flag. See [EXTRA_PRO_AUTO_RENEWING]. */
+    private fun applyProAutoRenewing(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_AUTO_RENEWING)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_AUTO_RENEWING).orEmpty().trim()
+        // null = clear the override.
+        val override: Boolean? = when (raw.lowercase()) {
+            "autorenewing" -> true
+            "notautorenewing" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_AUTO_RENEWING' extra: '$raw'. " +
+                        "Use autoRenewing | notAutoRenewing | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugAutoRenewingOverride(override)
+        Log.i(
+            TAG,
+            "Set mocked Pro auto-renewing to '$raw' " +
+                "(override = ${override?.toString() ?: "cleared, real state governs"})"
+        )
+        return true
+    }
+
+    /** Applies the mocked quick-refund window. See [EXTRA_PRO_QUICK_REFUND_WINDOW]. */
+    private fun applyProQuickRefundWindow(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_QUICK_REFUND_WINDOW)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_QUICK_REFUND_WINDOW).orEmpty().trim()
+        when (raw.lowercase()) {
+            "true" -> prefs.setDebugQuickRefundWindowOverride(true)
+            "false" -> prefs.setDebugQuickRefundWindowOverride(false)
+            USE_ACTUAL -> prefs.setDebugQuickRefundWindowOverride(null)
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_QUICK_REFUND_WINDOW' extra: '$raw'. " +
+                        "Use true | false | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        Log.i(TAG, "Set mocked Pro quick-refund window to '$raw'")
         return true
     }
 

@@ -373,6 +373,11 @@
     <!-- Section headers on the Pro settings screen. Named for the section's role rather than its
          visible title, so they survive a copy change. -->
     <string name="qa_pro_settings_stats_header">pro-settings-stats-header</string>
+    <!-- The four cells of the Pro stats matrix. Same strings as iOS. -->
+    <string name="qa_pro_stats_longer_messages">pro-stats-longer-messages</string>
+    <string name="qa_pro_stats_pinned_conversations">pro-stats-pinned-conversations</string>
+    <string name="qa_pro_stats_badges_sent">pro-stats-badges-sent</string>
+    <string name="qa_pro_stats_groups_upgraded">pro-stats-groups-upgraded</string>
     <string name="qa_pro_settings_manage_header">pro-settings-manage-header</string>
     <string name="qa_pro_settings_features_header">pro-settings-features-header</string>
     <!-- The Pro settings header's loading/error status message. ONE id for the slot: the four
@@ -385,6 +390,35 @@
          this must stay on the node carrying the message and must not gain a contentDescription.
          Same string on iOS and Desktop - one locator serves all three. -->
     <string name="qa_pro_settings_description">pro-settings-description</string>
+    <!-- The Pro store-flow screens (update / renew / refund / cancel), one id per destination so a
+         spec can assert WHICH screen a state opens. Only one of them is ever on screen, which is what
+         lets the parts below carry generic ids. Same strings on iOS - one locator serves both. -->
+    <string name="qa_pro_screen_choose_plan">pro-screen-choose-plan</string>
+    <string name="qa_pro_screen_choose_plan_no_billing">pro-screen-choose-plan-no-billing</string>
+    <string name="qa_pro_screen_choose_plan_non_originating">pro-screen-choose-plan-non-originating</string>
+    <string name="qa_pro_screen_cancel_plan">pro-screen-cancel-plan</string>
+    <string name="qa_pro_screen_cancel_plan_non_originating">pro-screen-cancel-plan-non-originating</string>
+    <string name="qa_pro_screen_refund_plan">pro-screen-refund-plan</string>
+    <string name="qa_pro_screen_refund_plan_non_originating">pro-screen-refund-plan-non-originating</string>
+    <string name="qa_pro_screen_refund_in_progress">pro-screen-refund-in-progress</string>
+    <string name="qa_pro_screen_plan_confirmation">pro-screen-plan-confirmation</string>
+    <!-- The parts of whichever store-flow screen is showing. Generic on purpose: these screens are
+         mutually exclusive, so the screen id above supplies the context and this stays four ids
+         instead of four per screen. Several screens differ only in their interpolated store name, so
+         the description is often the only thing that tells two of them apart - assert its TEXT, and
+         do not add a contentDescription to these nodes. Not every screen has all four. -->
+    <string name="qa_pro_screen_header">pro-screen-header</string>
+    <string name="qa_pro_screen_title">pro-screen-title</string>
+    <string name="qa_pro_screen_description">pro-screen-description</string>
+    <string name="qa_pro_screen_action">pro-screen-action</string>
+    <!-- The "how to manage this elsewhere" cells on the non-originating screens. Two are shown at
+         once, so unlike the parts above these are named per option. -->
+    <string name="qa_pro_link_cell_device">pro-link-cell-device</string>
+    <string name="qa_pro_link_cell_device_title">pro-link-cell-device-title</string>
+    <string name="qa_pro_link_cell_device_description">pro-link-cell-device-description</string>
+    <string name="qa_pro_link_cell_website">pro-link-cell-website</string>
+    <string name="qa_pro_link_cell_website_title">pro-link-cell-website-title</string>
+    <string name="qa_pro_link_cell_website_description">pro-link-cell-website-description</string>
     <string name="qa_action_item_title">action-item-title</string>
     <string name="qa_action_item_subtitle">action-item-subtitle</string>
     <string name="qa_action_item_icon">action-item-icon</string>

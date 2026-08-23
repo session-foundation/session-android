@@ -234,8 +234,60 @@ interface TextSecurePreferences {
     fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
     fun getDebugForceNoBilling(): Boolean
     fun setDebugForceNoBilling(hasBilling: Boolean)
-    fun getDebugIsWithinQuickRefund(): Boolean
-    fun setDebugIsWithinQuickRefund(isWithin: Boolean)
+    /**
+     * Mocked quick-refund window: `true` forces it open, `false` forces it closed, `null` for no override
+     * so the fixture's own window stands.
+     *
+     * Tri-state because every debug fixture sets the window open; a plain boolean defaulting to false
+     * would close it for every existing test. Applied by moving `quickRefundExpiry`, which is the single
+     * representation of the window — see `ProStatusManager.withMockedQuickRefundWindow`.
+     */
+    fun getDebugQuickRefundWindowOverride(): Boolean?
+    fun setDebugQuickRefundWindowOverride(isWithin: Boolean?)
+
+    /**
+     * Mocked refund-pending override: `true` forces a refund in progress, `false` forces none, `null`
+     * means no override so the real state governs.
+     *
+     * Tri-state as [getDebugProAccessOverride] is: the real state is a synced config flag another device
+     * can have set, so `false` and `null` differ. Orthogonal to [getDebugSubscriptionType] so it composes
+     * with any fixture.
+     */
+    fun getDebugRefundInProgressOverride(): Boolean?
+    fun setDebugRefundInProgressOverride(refunding: Boolean?)
+
+    /**
+     * Mocked originating payment provider (a `BackendRequests.PAYMENT_PROVIDER_*` slug), or `null` for no
+     * override so the fixture's own provider stands.
+     *
+     * This is Android's equivalent of iOS's `mockCurrentUserSessionProOriginatingPlatform`: the provider
+     * slug is what every "was this bought elsewhere" decision reads, via
+     * `PaymentProviderMetadata.isFromAnotherPlatform`.
+     */
+    fun getDebugOriginatingProvider(): String?
+    fun setDebugOriginatingProvider(providerSlug: String?)
+
+    /**
+     * Mocked auto-renewing override: `true` forces a renewing plan, `false` forces one that runs to its
+     * end date, `null` for no override.
+     *
+     * The flag the "Pro auto-renewing in {time}" line, the renewal-unsuccessful state and the Cancel Pro
+     * Access action all read. Tri-state like the others so "force not renewing" and "do not mock" stay
+     * distinguishable.
+     */
+    fun getDebugAutoRenewingOverride(): Boolean?
+    fun setDebugAutoRenewingOverride(autoRenewing: Boolean?)
+
+    /**
+     * Mocked originating-account override: `true` forces the store account currently signed in to be the
+     * one that bought the subscription, `false` forces a different one, `null` for no override.
+     *
+     * Overrides `SubscriptionManager.hasValidSubscription()`, which is what the screens read as "same
+     * platform but a different account" — iOS spells the same fact
+     * `mockCurrentUserOriginatingAccount`.
+     */
+    fun getDebugOriginatingAccountOverride(): Boolean?
+    fun setDebugOriginatingAccountOverride(isOriginating: Boolean?)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -399,6 +451,10 @@ interface TextSecurePreferences {
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
         const val DEBUG_WITHIN_QUICK_REFUND = "debug_within_quick_refund"
+        const val DEBUG_PRO_REFUND_IN_PROGRESS = "debug_pro_refund_in_progress"
+        const val DEBUG_PRO_ORIGINATING_PROVIDER = "debug_pro_originating_provider"
+        const val DEBUG_PRO_AUTO_RENEWING = "debug_pro_auto_renewing"
+        const val DEBUG_PRO_ORIGINATING_ACCOUNT = "debug_pro_originating_account"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
@@ -1298,13 +1354,44 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
     }
 
-    override fun getDebugIsWithinQuickRefund(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, false)
+    override fun getDebugOriginatingAccountOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_ORIGINATING_ACCOUNT, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugOriginatingAccountOverride(isOriginating: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_ORIGINATING_ACCOUNT, isOriginating?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_ORIGINATING_ACCOUNT)
     }
 
-    override fun setDebugIsWithinQuickRefund(isWithin: Boolean) {
-        setBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin)
-        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    override fun getDebugAutoRenewingOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_AUTO_RENEWING, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugAutoRenewingOverride(autoRenewing: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_AUTO_RENEWING, autoRenewing?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_AUTO_RENEWING)
+    }
+
+    override fun getDebugOriginatingProvider(): String? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_ORIGINATING_PROVIDER, null)
+
+    override fun setDebugOriginatingProvider(providerSlug: String?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_ORIGINATING_PROVIDER, providerSlug)
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_ORIGINATING_PROVIDER)
+    }
+
+    override fun getDebugRefundInProgressOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_REFUND_IN_PROGRESS, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugRefundInProgressOverride(refunding: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_REFUND_IN_PROGRESS, refunding?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_REFUND_IN_PROGRESS)
+    }
+
+    override fun getDebugQuickRefundWindowOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugQuickRefundWindowOverride(isWithin: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND)
     }
 
     override fun getSubscriptionProvider(): String? {

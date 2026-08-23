@@ -683,13 +683,21 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         val pro = configs.userProfile.getProConfig()
 
-                        if (prefs.forceCurrentUserAsPro()) {
+                        // Honours the tri-state access override first, then the legacy flag. Without this
+                        // the two levers disagree: a `proProof=none` fixture would still be given Pro data
+                        // here whenever the legacy flag happened to be set, and a `proProof=valid` one
+                        // would not be given any unless it was.
+                        if (prefs.getDebugProAccessOverride() ?: prefs.forceCurrentUserAsPro()) {
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
                                         ProProfileFeature.PRO_BADGE
                                     ),
-                                    expiry = Instant.now().plusSeconds(3600),
+                                    // The mocked access expiry when one was set, so this and the Pro state
+                                    // report the same date. It used to hard-code an hour from now, which made
+                                    // it a second and silently disagreeing source for the same fact.
+                                    expiry = prefs.getDebugProAccessExpiry()
+                                        ?: Instant.now().plusSeconds(3600),
                                     revocationTag = "a1b2c3d4",
                                 )
                             )

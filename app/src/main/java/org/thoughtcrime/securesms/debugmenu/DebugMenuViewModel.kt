@@ -133,7 +133,7 @@ class DebugMenuViewModel @AssistedInject constructor(
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
             forceNoBilling = textSecurePreferences.getDebugForceNoBilling(),
-            withinQuickRefund = textSecurePreferences.getDebugIsWithinQuickRefund(),
+            withinQuickRefund = textSecurePreferences.getDebugQuickRefundWindowOverride() == true,
             availableAltFileServers = TEST_FILE_SERVERS,
             alternativeFileServer = textSecurePreferences.alternativeFileServer,
             showToastForGroups = getDebugGroupToastPref(),
@@ -342,7 +342,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.WithinQuickRefund -> {
-                textSecurePreferences.setDebugIsWithinQuickRefund(command.set)
+                textSecurePreferences.setDebugQuickRefundWindowOverride(command.set)
                 _uiState.update {
                     it.copy(withinQuickRefund = command.set)
                 }
