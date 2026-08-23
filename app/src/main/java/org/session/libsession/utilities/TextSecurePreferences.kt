@@ -146,6 +146,13 @@ interface TextSecurePreferences {
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
     fun setHasSeenLinkPreviewSuggestionDialog()
     fun forceCurrentUserAsPro(): Boolean
+
+    /**
+     * QA only: force the next Pro revocation poll to happen now rather than at its scheduled time.
+     * Set from a launch extra, which is itself unreachable outside QA builds.
+     */
+    fun forceProRevocationRefresh(): Boolean
+    fun setForceProRevocationRefresh(force: Boolean)
     fun setForceCurrentUserAsPro(isPro: Boolean)
     fun forceOtherUsersAsPro(): Boolean
     fun setForceOtherUsersAsPro(isPro: Boolean)
@@ -374,6 +381,7 @@ interface TextSecurePreferences {
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
+        const val SET_FORCE_PRO_REVOCATION_REFRESH = "pref_force_pro_revocation_refresh"
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
@@ -1076,6 +1084,14 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun forceCurrentUserAsPro(): Boolean {
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
+    }
+
+    override fun forceProRevocationRefresh(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.SET_FORCE_PRO_REVOCATION_REFRESH, false)
+    }
+
+    override fun setForceProRevocationRefresh(force: Boolean) {
+        setBooleanPreference(TextSecurePreferences.SET_FORCE_PRO_REVOCATION_REFRESH, force)
     }
 
     override fun setForceCurrentUserAsPro(isPro: Boolean) {

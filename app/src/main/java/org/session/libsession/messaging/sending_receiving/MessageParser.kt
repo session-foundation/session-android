@@ -30,6 +30,7 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.protos.SessionProtos
 import org.thoughtcrime.securesms.pro.ProBackendConfig
+import org.thoughtcrime.securesms.pro.db.ProDatabase
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Provider
@@ -42,6 +43,7 @@ class MessageParser @Inject constructor(
     private val storage: StorageProtocol,
     private val snodeClock: SnodeClock,
     private val proBackendConfig: Provider<ProBackendConfig>,
+    private val proDatabase: ProDatabase,
 ) {
 
     // A faster way to check if the user is blocked than to go through RecipientRepository
@@ -140,7 +142,20 @@ class MessageParser @Inject constructor(
         message.receivedTimestamp = snodeClock.currentTimeMillis()
         message.isSenderSelf = isSenderSelf
 
-        if (pro?.status == ProProof.STATUS_VALID) {
+        // A cryptographically valid proof is not enough to carry features: the revocation list overrides
+        // the validity of proofs already in circulation, and libsession's decode cannot see it because
+        // the list is cached locally rather than travelling with the message.
+        //
+        // Cleared here rather than at each consumer so the bitset itself is truthful. Everything
+        // downstream reads it without knowing about revocation — the character limit, the features shown
+        // in message info, and what is persisted alongside the message.
+        //
+        // Honours the entry's effective timestamp, like every other read of the list, so a revocation
+        // dated in the future does not withdraw features early.
+        val proofRevoked = pro?.proof?.revocationTagHex
+            ?.let { proDatabase.isRevoked(it, snodeClock.currentTime()) } == true
+
+        if (pro?.status == ProProof.STATUS_VALID && !proofRevoked) {
             (message as? VisibleMessage)?.proFeatures = buildSet {
                 addAll(pro.proMessageFeatures.asSequence())
                 addAll(pro.proProfileFeatures.asSequence())

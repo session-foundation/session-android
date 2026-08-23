@@ -222,9 +222,19 @@ class HomeViewModel @Inject constructor(
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.proDataState.collect { subscription ->
-                // show a CTA (only once per install) when
+                // show a CTA when
                 // - subscription is expiring in less than 7 days
                 // - subscription expired less than 30 days ago
+                //
+                // Armed ONCE PER PRO CYCLE, not once per install and not once per launch: Pro can only
+                // expire once per cycle, so one warning per cycle is the whole intent. The latch is
+                // persisted (`has_seen_pro_expir{ing,ed}`), written on DISMISSAL rather than on display
+                // -- so a CTA shown to a process that dies before the user dismisses it is shown again --
+                // and cleared below whenever the account reads Active again.
+                //
+                // Do not "correct" this to fire on every launch or every status change. Both were
+                // considered and rejected: the arm-once-per-cycle model is the ruled behaviour, and it is
+                // the one the other clients are being aligned TO.
                 // Network time: both comparisons below are against instants the backend supplied,
                 // so device-clock skew moves the boundary rather than the subscription. The two CTAs
                 // also skew in opposite directions — a fast clock warns of expiry early and stops
