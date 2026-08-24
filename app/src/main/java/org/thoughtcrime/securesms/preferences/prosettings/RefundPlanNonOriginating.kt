@@ -14,6 +14,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
+import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
@@ -48,8 +49,15 @@ fun RefundPlanNonOriginating(
         else stringResource(R.string.requestRefund),
         dangerButton = true,
         onButtonClick = {
+            // Gated on the originating store as well as the window: the quick-refund link is Google
+            // Play's and redirects into the Play store, so it is only a usable route for a plan bought
+            // there. An App Store plan reports its window open for the whole subscription, so gating on
+            // the window alone would send an Apple subscriber to the wrong store's refund flow — which
+            // this screen, showing only non-originating plans, is where that would happen.
+            val canUseStoreRoute = isQuickRefund &&
+                    subscription.providerData.slug == PAYMENT_PROVIDER_GOOGLE_PLAY
             sendCommand(
-                ShowOpenUrlDialog(if (isQuickRefund) ProUrls.QUICK_REFUND else ProUrls.SUPPORT)
+                ShowOpenUrlDialog(if (canUseStoreRoute) ProUrls.QUICK_REFUND else ProUrls.SUPPORT)
             )
         },
         contentTitle = Phrase.from(context.getText(R.string.proRefunding))
