@@ -411,6 +411,10 @@
     <string name="qa_pro_screen_title">pro-screen-title</string>
     <string name="qa_pro_screen_description">pro-screen-description</string>
     <string name="qa_pro_screen_action">pro-screen-action</string>
+    <!-- The label inside qa_pro_screen_action. Separate because the tagged Button node
+         exposes no text of its own: the copy lives on an untagged child, so a test filtering
+         on the button's text matches nothing. -->
+    <string name="qa_pro_screen_action_label">pro-screen-action-label</string>
     <!-- The "how to manage this elsewhere" cells on the non-originating screens. Two are shown at
          once, so unlike the parts above these are named per option. -->
     <string name="qa_pro_link_cell_device">pro-link-cell-device</string>
