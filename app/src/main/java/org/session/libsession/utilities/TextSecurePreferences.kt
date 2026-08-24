@@ -337,7 +337,6 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
-    var forcesDeterministicAttachmentEncryption: Boolean
     var debugAvatarReupload: Boolean
     var alternativeFileServer: FileServer?
 
@@ -1417,12 +1416,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setSubscriptionProvider(provider: String) {
         setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
     }
-
-    override var forcesDeterministicAttachmentEncryption: Boolean
-        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
-        set(value) {
-            setBooleanPreference("forces_deterministic_attachment_upload", value)
-        }
 
     override var debugAvatarReupload: Boolean
         get() = getBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, false)

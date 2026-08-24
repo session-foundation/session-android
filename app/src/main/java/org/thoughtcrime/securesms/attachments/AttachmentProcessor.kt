@@ -26,10 +26,7 @@ import okio.BufferedSource
 import okio.FileSystem
 import okio.buffer
 import okio.source
-import org.session.libsession.utilities.Util
 import org.session.libsignal.streams.AttachmentCipherInputStream
-import org.session.libsignal.streams.AttachmentCipherOutputStream
-import org.session.libsignal.streams.PaddingInputStream
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Log
@@ -46,7 +43,6 @@ import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.math.roundToInt
 
-typealias DigestResult = ByteArray
 
 /**
  * A central class to handle attachment resizing/exif stripping/compression/encryption, etc.
@@ -291,39 +287,6 @@ class AttachmentProcessor @Inject constructor(
             ciphertext = cipherOut,
             key = key,
         )
-    }
-
-    /**
-     * Encrypt the given data using the legacy attachment encryption method, returning a digest
-     * for the encrypted data too.
-     */
-    fun encryptAttachmentLegacy(plaintext: ByteArray): Pair<EncryptResult, DigestResult> {
-        val key = Util.getSecretBytes(64)
-        var remainingPaddingSize =
-            (PaddingInputStream.getPaddedSize(plaintext.size.toLong()) - plaintext.size.toLong()).toInt()
-        val paddingBuffer = ByteArray(remainingPaddingSize.coerceAtMost(512))
-        val digest: ByteArray
-
-        val cipherText = ByteArrayOutputStream().also { outputStream ->
-            AttachmentCipherOutputStream(key, outputStream).use { os ->
-                os.write(plaintext)
-
-                while (remainingPaddingSize > 0) {
-                    val toWrite = remainingPaddingSize.coerceAtMost(paddingBuffer.size)
-                    os.write(paddingBuffer, 0, toWrite)
-                    remainingPaddingSize -= toWrite
-                }
-
-                os.flush()
-
-                digest = os.transmittedDigest
-            }
-        }.toByteArray()
-
-        return EncryptResult(
-            ciphertext = cipherText,
-            key = key,
-        ) to digest
     }
 
     fun decryptDeterministically(ciphertext: ByteArraySlice, key: ByteArray): ByteArraySlice {
