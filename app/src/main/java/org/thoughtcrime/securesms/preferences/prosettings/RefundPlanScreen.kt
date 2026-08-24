@@ -119,8 +119,18 @@ fun RefundPlan(
             //
             // The window is what decides who can act: while it is open the store takes the request,
             // and once it closes only Session can, which is what this screen's copy promises.
+            // The store route's url is libsession's, read through `providerUrls` — it owns the
+            // per-provider table and says so. Note the slot: for Google Play its `refund_support_url`
+            // IS the Session short link that redirects into the Play store, so the value we want for
+            // the window-OPEN route sits under libsession's "support" name. The window-closed route
+            // uses `ProUrls.SUPPORT` instead, which mirrors `url_pro_support` — that one has no Kotlin
+            // accessor, which is the only reason it is still a copy.
+            //
+            // No provider gate here: this screen only ever shows a plan bought on this store.
             sendCommand(
-                ShowOpenUrlDialog(if (isQuickRefund) ProUrls.QUICK_REFUND else ProUrls.SUPPORT)
+                ShowOpenUrlDialog(
+                    if (isQuickRefund) data.providerData.refundSupportUrl else ProUrls.SUPPORT
+                )
             )
         },
         title = stringResource(R.string.proRefundDescription),

@@ -56,8 +56,17 @@ fun RefundPlanNonOriginating(
             // this screen, showing only non-originating plans, is where that would happen.
             val canUseStoreRoute = isQuickRefund &&
                     subscription.providerData.slug == PAYMENT_PROVIDER_GOOGLE_PLAY
+            // The store route's url is libsession's, read through `providerUrls` — it owns the
+            // per-provider table and says so. Note the slot: for Google Play its `refund_support_url`
+            // IS the Session short link that redirects into the Play store, so the value we want for
+            // the window-OPEN route sits under libsession's "support" name. The window-closed route
+            // uses `ProUrls.SUPPORT` instead, which mirrors `url_pro_support` — that one has no Kotlin
+            // accessor, which is the only reason it is still a copy.
             sendCommand(
-                ShowOpenUrlDialog(if (canUseStoreRoute) ProUrls.QUICK_REFUND else ProUrls.SUPPORT)
+                ShowOpenUrlDialog(
+                    if (canUseStoreRoute) subscription.providerData.refundSupportUrl
+                    else ProUrls.SUPPORT
+                )
             )
         },
         contentTitle = Phrase.from(context.getText(R.string.proRefunding))

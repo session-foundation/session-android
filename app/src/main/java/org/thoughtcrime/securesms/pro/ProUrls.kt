@@ -13,12 +13,6 @@ package org.thoughtcrime.securesms.pro
  */
 object ProUrls {
     const val FAQ = "https://getsession.org/pro#faq"
-    /**
-     * The refund route while the store's own quick-refund window is open. A Session-owned short link
-     * that redirects to the store, so the destination can change without a client release - which is
-     * why the CTA beside it names the store while this url does not.
-     */
-    const val QUICK_REFUND = "https://getsession.org/android-refund"
     const val PRIVACY_POLICY = "https://getsession.org/pro-privacy"
     const val ROADMAP = "https://getsession.org/pro#roadmap"
     const val SUPPORT = "https://getsession.org/pro-support"
