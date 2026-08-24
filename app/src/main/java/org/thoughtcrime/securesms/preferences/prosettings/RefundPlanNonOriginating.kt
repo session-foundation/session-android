@@ -14,7 +14,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACC
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
-import network.loki.messenger.libsession_util.pro.BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
@@ -49,22 +48,20 @@ fun RefundPlanNonOriginating(
         else stringResource(R.string.requestRefund),
         dangerButton = true,
         onButtonClick = {
-            // Gated on the originating store as well as the window: the quick-refund link is Google
-            // Play's and redirects into the Play store, so it is only a usable route for a plan bought
-            // there. An App Store plan reports its window open for the whole subscription, so gating on
-            // the window alone would send an Apple subscriber to the wrong store's refund flow — which
-            // this screen, showing only non-originating plans, is where that would happen.
-            val canUseStoreRoute = isQuickRefund &&
-                    subscription.providerData.slug == PAYMENT_PROVIDER_GOOGLE_PLAY
             // The store route's url is libsession's, read through `providerUrls` — it owns the
             // per-provider table and says so. Note the slot: for Google Play its `refund_support_url`
             // IS the Session short link that redirects into the Play store, so the value we want for
             // the window-OPEN route sits under libsession's "support" name. The window-closed route
             // uses `ProUrls.SUPPORT` instead, which mirrors `url_pro_support` — that one has no Kotlin
             // accessor, which is the only reason it is still a copy.
+            //
+            // No provider check on top of the window: `providerData` is already the ORIGINATING
+            // provider's table, so an Apple plan yields Apple's own refund page here rather than the
+            // Play-store link. Gating on the provider as well would replace that correct page with
+            // Session's form.
             sendCommand(
                 ShowOpenUrlDialog(
-                    if (canUseStoreRoute) subscription.providerData.refundSupportUrl
+                    if (isQuickRefund) subscription.providerData.refundSupportUrl
                     else ProUrls.SUPPORT
                 )
             )
