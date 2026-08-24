@@ -17,6 +17,7 @@ import org.thoughtcrime.securesms.links.LinkType.CommunityLink.DisplayType.*
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.openUrl
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
@@ -67,14 +68,16 @@ fun OpenURLAlertDialog(
 
 
     AlertDialog(
-        modifier = modifier,
+        modifier = modifier.qaTag(R.string.qa_open_url_dialog),
         title = AnnotatedString(stringResource(R.string.urlOpen)),
         text = annotatedStringResource(text = unformattedText),
+        textQaTag = R.string.qa_open_url_description,
         maxLines = 5,
         showCloseButton = true, // display the 'x' button
         buttons = listOf(
             DialogButtonData(
                 text = GetString(R.string.open),
+                qaTag = stringResource(R.string.qa_open_url_confirm_button),
                 color = LocalColors.current.danger,
                 dismissOnClick = false,
                 onClick = {

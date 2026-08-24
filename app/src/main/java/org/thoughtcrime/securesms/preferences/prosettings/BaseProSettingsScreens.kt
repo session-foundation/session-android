@@ -200,6 +200,7 @@ fun BaseCellButtonProSettingsScreen(
                         .widthIn(max = LocalDimensions.current.maxContentWidth)
                         .qaTag(R.string.qa_pro_screen_action),
                     text = buttonText,
+                    textQaTag = R.string.qa_pro_screen_action_label,
                     onClick = onButtonClick
                 )
             } else {
@@ -208,6 +209,7 @@ fun BaseCellButtonProSettingsScreen(
                         .widthIn(max = LocalDimensions.current.maxContentWidth)
                         .qaTag(R.string.qa_pro_screen_action),
                     text = buttonText,
+                    textQaTag = R.string.qa_pro_screen_action_label,
                     onClick = onButtonClick
                 )
             }
