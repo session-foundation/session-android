@@ -20,6 +20,8 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.ProUrls
+import org.thoughtcrime.securesms.pro.getPlatformDisplayName
 import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.ui.qaTag
@@ -66,6 +68,10 @@ fun RefundPlanScreen(
                     || !refundData.hasValidSubscription ->
                 RefundPlanNonOriginating(
                     subscription = activePlan,
+                    // The window governs this screen too, and it was resolved right here — this branch
+                    // simply never passed it on, so one screen served both the <48h and >48h states with
+                    // the former's button and the latter's link.
+                    isQuickRefund = refundData.isQuickRefund,
                     sendCommand = viewModel::onCommand,
                     onBack = onBack,
                 )
@@ -98,16 +104,24 @@ fun RefundPlan(
         disabled = true,
         onBack = onBack,
         buttonText = if(isQuickRefund) Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, data.providerData.platform)
+            // `getPlatformDisplayName`, not `platform`: the designs spell the rule out - Apple reads
+            // "Apple" but our own store reads "Google Play Store", never "Google". iOS and Desktop
+            // both branch the same way; these two refund screens were the only sites still passing
+            // the raw platform name.
+            .put(PLATFORM_KEY, data.providerData.getPlatformDisplayName())
             .format().toString()
         else stringResource(R.string.requestRefund),
         dangerButton = true,
         onButtonClick = {
-            if(isQuickRefund && !quickRefundUrl.isNullOrEmpty()){
-                sendCommand(ShowOpenUrlDialog(quickRefundUrl))
-            } else {
-                sendCommand(ShowOpenUrlDialog(data.providerData.refundSupportUrl))
-            }
+            // Two Session-owned links, chosen on the window alone - not the provider's own
+            // `refund_platform_url`/`refund_support_url`. Being ours, the destinations can be
+            // repointed without a client release, and all three clients agree on them.
+            //
+            // The window is what decides who can act: while it is open the store takes the request,
+            // and once it closes only Session can, which is what this screen's copy promises.
+            sendCommand(
+                ShowOpenUrlDialog(if (isQuickRefund) ProUrls.QUICK_REFUND else ProUrls.SUPPORT)
+            )
         },
         title = stringResource(R.string.proRefundDescription),
     ){
