@@ -281,13 +281,10 @@ class ScreenLockActivity : BaseActionBarActivity() {
         keyCachingService?.setMasterSecret(Any())
 
         // The 'nextIntent' will take us to the MainActivity if this is a standard unlock, or it will
-        // take us to the ShareActivity if this is an external share.
-        val nextIntent = intent.getParcelableExtra<Intent?>("next_intent")
-        if (nextIntent == null) {
-            Log.w(TAG, "Got a null nextIntent - cannot proceed.")
-        } else {
-            startActivity(nextIntent)
-        }
+        // take us to the ShareActivity if this is an external share. It is absent when this lock was
+        // presented OVER a still-live activity (see ScreenLockActionBarActivity.presentScreenLock), in
+        // which case finishing is all that is needed to return to it.
+        intent.getParcelableExtra<Intent?>("next_intent")?.let(::startActivity)
 
         finish()
     }

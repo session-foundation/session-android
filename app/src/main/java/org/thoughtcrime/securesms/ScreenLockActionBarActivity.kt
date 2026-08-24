@@ -80,6 +80,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     }
 
     private var clearKeyReceiver: BroadcastReceiver? = null
+    private var hasStarted = false
 
     @Inject
     lateinit var loginStateRepository: LoginStateRepository
@@ -95,9 +96,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
         super.onCreate(savedInstanceState)
 
-        val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) &&
-                loginStateRepository.peekLoginState() != null
-        routeApplicationState(locked)
+        routeApplicationState(isScreenLocked())
 
         if (!isFinishing) {
             initializeClearKeyReceiver()
@@ -106,6 +105,34 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     }
 
     protected open fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {}
+
+    override fun onStart() {
+        super.onStart()
+
+        // Only re-locks an activity that is coming BACK to the foreground; a first start while locked
+        // is already handled by onCreate's routing. The distinction matters because the lock can be
+        // cleared while this activity is merely stopped, which happens on any excursion to another app
+        // - a file picker, the camera, the share sheet. Covering it here rather than destroying it is
+        // what lets such an excursion return to the state it left, including a pending
+        // onActivityResult.
+        val isReturningToForeground = hasStarted
+        hasStarted = true
+
+        if (isReturningToForeground && isScreenLocked()) presentScreenLock()
+    }
+
+    private fun isScreenLocked(): Boolean =
+        KeyCachingService.isLocked(this) && isScreenLockEnabled(this) &&
+                loginStateRepository.peekLoginState() != null
+
+    // Covers this activity with the lock screen WITHOUT finishing it, so the task and any pending
+    // activity result survive. No "next_intent" is supplied because there is nothing to route back to
+    // - this activity is still underneath, and ScreenLockActivity finishes itself on success to reveal
+    // it. ScreenLockActivity is singleInstancePerTask, so concurrent calls from several live activities
+    // reuse the one instance.
+    private fun presentScreenLock() {
+        startActivity(Intent(this, ScreenLockActivity::class.java))
+    }
 
     override fun onPause() {
         Log.i(TAG, "onPause()")
@@ -120,8 +147,10 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     fun onMasterSecretCleared() {
         Log.i(TAG, "onMasterSecretCleared()")
-        if (appVisibilityManager.isAppVisible.value) routeApplicationState(true)
-        else finish()
+
+        // Nothing to cover while backgrounded, and finishing would discard whatever the user was in
+        // the middle of - onStart presents the lock when they come back instead.
+        if (appVisibilityManager.isAppVisible.value) presentScreenLock()
     }
 
     protected fun <T : Fragment?> initFragment(@IdRes target: Int, fragment: T): T? {
