@@ -1,20 +1,27 @@
 package org.thoughtcrime.securesms.pro
 
+import network.loki.messenger.libsession_util.pro.BackendRequests
+
 /**
- * The Pro destinations, mirroring libsession's URL registry
- * (`session_protocol.cpp`, the `url_pro_*` fields).
+ * The Pro destinations, from libsession's URL registry (`session_protocol.cpp`, the `url_pro_*` fields).
  *
- * Copies rather than reads: the registry is a C struct of `const char*` with no accessor exposed to
- * Kotlin, so consuming it directly would mean adding JNI surface for five constants.
- *
- * Being copies, they can drift from it, and they have — every value here was once wrong at the use site
- * that needed it. They are defined together so that comparing this file against the registry is the whole
- * check; correcting a single link where it happens to be used is what let them diverge one at a time.
+ * These were copies, because the registry is a C struct of `const char*` with no accessor exposed to
+ * Kotlin. Being copies they drifted — every value here was once wrong at the use site that needed it.
+ * The glue now exposes the registry ([BackendRequests.proUrls]), so a value here should READ it rather
+ * than restate it, and the remaining literals below are just the ones not yet converted.
  */
 object ProUrls {
     const val FAQ = "https://getsession.org/pro#faq"
     const val PRIVACY_POLICY = "https://getsession.org/pro-privacy"
     const val ROADMAP = "https://getsession.org/pro#roadmap"
-    const val SUPPORT = "https://getsession.org/pro-support"
+    /**
+     * Read from libsession rather than copied, now that the glue exposes the registry
+     * ([BackendRequests.proUrls]).
+     *
+     * A getter, not a `val`: the accessor is JNI, so evaluating it while this `object` initialises
+     * could run before `System.loadLibrary("session_util")`. Reading per call costs a struct field
+     * lookup and cannot be too early.
+     */
+    val SUPPORT: String get() = BackendRequests.proUrls().support
     const val TERMS_OF_SERVICE = "https://getsession.org/pro-terms"
 }
