@@ -52,8 +52,7 @@ fun RefundPlanNonOriginating(
             // per-provider table and says so. Note the slot: for Google Play its `refund_support_url`
             // IS the Session short link that redirects into the Play store, so the value we want for
             // the window-OPEN route sits under libsession's "support" name. The window-closed route
-            // uses `ProUrls.SUPPORT` instead, which mirrors `url_pro_support` — that one has no Kotlin
-            // accessor, which is the only reason it is still a copy.
+            // uses `ProUrls.SUPPORT`, which reads libsession's `url_pro_support`.
             //
             // No provider check on top of the window: `providerData` is already the ORIGINATING
             // provider's table, so an Apple plan yields Apple's own refund page here rather than the
