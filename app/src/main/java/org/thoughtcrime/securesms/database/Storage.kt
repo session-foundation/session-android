@@ -69,6 +69,8 @@ import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.trimThread
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.pro.ProSendStats
+import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -108,6 +110,7 @@ open class Storage @Inject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val json: Json,
     private val jobQueue: Provider<JobQueue>,
+    private val proDatabase: Provider<ProDatabase>,
 ) : Database(context, helper), StorageProtocol {
 
     override fun getUserPublicKey(): String? { return loginStateRepository.peekLoginState()?.accountId?.hexString }
@@ -968,16 +971,12 @@ open class Storage @Inject constructor(
     override suspend fun getTotalSentLongMessages(): Int =
         getTotalSentForFeature(ProMessageFeature.HIGHER_CHARACTER_LIMIT)
 
+    /**
+     * A persisted running total, not a count over message rows — so deleting a message you have sent does
+     * not reduce the number of things you have sent, and opening the stats screen does not scan a table.
+     */
     suspend fun getTotalSentForFeature(feature: ProFeature): Int = withContext(Dispatchers.IO) {
-        val mask = 1L shl feature.bitIndex
-
-        when (feature) {
-            is ProMessageFeature ->
-                mmsSmsDatabase.getOutgoingMessageProFeatureCount(mask)
-
-            is ProProfileFeature ->
-                mmsSmsDatabase.getOutgoingProfileProFeatureCount(mask)
-        }
+        ProSendStats.total(proDatabase.get(), feature)
     }
 
     override fun setPinned(address: Address, isPinned: Boolean) {
