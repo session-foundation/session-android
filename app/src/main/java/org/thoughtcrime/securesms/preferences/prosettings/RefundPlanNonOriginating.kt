@@ -15,6 +15,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatus
+import org.thoughtcrime.securesms.pro.ProUrls
+import org.thoughtcrime.securesms.pro.getPlatformDisplayName
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -24,6 +26,10 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 @Composable
 fun RefundPlanNonOriginating(
     subscription: ProStatus.Active.WithPlan,
+    /// Whether the store's own quick-refund window is still open. Decides all three of the button, the
+    /// body copy and the link, exactly as it does on the originating screen — while the store will take
+    /// the request it is sent there, and once it will not, only Session can action it.
+    isQuickRefund: Boolean,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
@@ -34,18 +40,42 @@ fun RefundPlanNonOriginating(
         disabled = true,
         onBack = onBack,
         headerTitle = stringResource(R.string.proRefundDescription),
-        buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
-            .put(PLATFORM_KEY, subscription.providerData.platform)
-            .format().toString(),
+        buttonText = if (isQuickRefund)
+            // See RefundPlanScreen: "Google Play Store", not "Google".
+            Phrase.from(context.getText(R.string.openPlatformWebsite))
+                .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
+                .format().toString()
+        else stringResource(R.string.requestRefund),
         dangerButton = true,
         onButtonClick = {
-            sendCommand(ShowOpenUrlDialog(subscription.providerData.refundSupportUrl))
+            // The store route's url is libsession's, read through `providerUrls` — it owns the
+            // per-provider table and says so. Note the slot: for Google Play its `refund_support_url`
+            // IS the Session short link that redirects into the Play store, so the value we want for
+            // the window-OPEN route sits under libsession's "support" name. The window-closed route
+            // uses `ProUrls.SUPPORT`, which reads libsession's `url_pro_support`.
+            //
+            // No provider check on top of the window: `providerData` is already the ORIGINATING
+            // provider's table, so an Apple plan yields Apple's own refund page here rather than the
+            // Play-store link. Gating on the provider as well would replace that correct page with
+            // Session's form.
+            sendCommand(
+                ShowOpenUrlDialog(
+                    if (isQuickRefund) subscription.providerData.refundSupportUrl
+                    else ProUrls.SUPPORT
+                )
+            )
         },
         contentTitle = Phrase.from(context.getText(R.string.proRefunding))
             .format().toString(),
-        contentDescription = Phrase.from(context.getText(R.string.proPlanPlatformRefund))
+        // Past the window the request is Session's to handle, and the copy has to say so — this is the
+        // same sentence the originating screen shows, with the non-originating premise kept.
+        contentDescription = if (isQuickRefund)
+            Phrase.from(context.getText(R.string.proPlanPlatformRefund))
+                .put(PLATFORM_STORE_KEY, subscription.providerData.store)
+                .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
+                .format()
+        else Phrase.from(context.getText(R.string.proPlanPlatformRefundLong))
             .put(PLATFORM_STORE_KEY, subscription.providerData.store)
-            .put(PLATFORM_ACCOUNT_KEY, subscription.providerData.platformAccount)
             .format(),
         linkCellsInfo = stringResource(R.string.refundRequestOptions),
         linkCells = listOf(
@@ -88,6 +118,7 @@ private fun PreviewUpdatePlan(
         val context = LocalContext.current
         RefundPlanNonOriginating (
             subscription = previewAutoRenewingApple,
+            isQuickRefund = true,
             sendCommand = {},
             onBack = {},
         )
