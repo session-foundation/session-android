@@ -353,6 +353,8 @@
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
     <string name="AccessibilityId_expand">Expand</string>
+    <string name="AccessibilityId_mediaInvalid">Media invalid</string>
+    <string name="AccessibilityId_mediaLoading">Media loading</string>
     <string name="AccessibilityId_mediaMessage">Media message</string>
     <string name="AccessibilityId_save">Save</string>
     <string name="AccessibilityId_remove">Remove</string>
