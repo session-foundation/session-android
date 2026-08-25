@@ -153,7 +153,7 @@ class AttachmentUploadJob @AssistedInject constructor(
         val deterministicallyEncrypted: Boolean
 
         when {
-            encrypt && preferences.forcesDeterministicAttachmentEncryption -> {
+            encrypt -> {
                 deterministicallyEncrypted = true
                 val result = attachmentProcessor.encryptDeterministically(
                     plaintext = input,
@@ -162,14 +162,6 @@ class AttachmentUploadJob @AssistedInject constructor(
                 key = result.key
                 dataToUpload = result.ciphertext
                 digest = null
-            }
-
-            encrypt -> {
-                deterministicallyEncrypted = false
-                val result = attachmentProcessor.encryptAttachmentLegacy(plaintext = input)
-                key = result.first.key
-                dataToUpload = result.first.ciphertext
-                digest = result.second
             }
 
             else -> {
