@@ -379,6 +379,11 @@
     <string name="qa_pro_stats_longer_messages">pro-stats-longer-messages</string>
     <string name="qa_pro_stats_pinned_conversations">pro-stats-pinned-conversations</string>
     <string name="qa_pro_stats_badges_sent">pro-stats-badges-sent</string>
+    <!-- The text inside a Pro stats cell. Generic on purpose: the cell's own id
+         (qa_pro_stats_*) sits on the row, which carries no text of its own, so a
+         reader scopes this child by that parent - the same shape as
+         qa_pro_screen_action_label and qa_action_item_title. -->
+    <string name="qa_pro_stats_value">pro-stats-value</string>
     <string name="qa_pro_stats_groups_upgraded">pro-stats-groups-upgraded</string>
     <string name="qa_pro_settings_manage_header">pro-settings-manage-header</string>
     <string name="qa_pro_settings_features_header">pro-settings-features-header</string>
