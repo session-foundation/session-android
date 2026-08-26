@@ -46,6 +46,10 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageChanges
 import org.thoughtcrime.securesms.database.model.MessageId
+import network.loki.messenger.libsession_util.protocol.ProFeature
+import org.thoughtcrime.securesms.pro.ProSendStats
+import org.thoughtcrime.securesms.pro.toProProfileFeatures
+import org.thoughtcrime.securesms.pro.db.ProDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.Quote
@@ -78,6 +82,7 @@ class MmsDatabase @Inject constructor(
     private val groupDatabase: GroupDatabase,
     private val snodeClock: SnodeClock,
     private val prefs: Provider<PreferenceStorage>,
+    private val proDatabase: Provider<ProDatabase>,
 ) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
@@ -119,26 +124,6 @@ class MmsDatabase @Inject constructor(
                 .map(cursor::getLong)
                 .any { MmsSmsColumns.Types.isOutgoingMessageType(it) }
         }
-
-    fun getOutgoingMessageProFeatureCount(featureMask: Long): Int {
-        return getOutgoingProFeatureCountInternal(PRO_MESSAGE_FEATURES, featureMask)
-    }
-
-    fun getOutgoingProfileProFeatureCount(featureMask: Long): Int {
-        return getOutgoingProFeatureCountInternal(PRO_PROFILE_FEATURES, featureMask)
-    }
-
-    private fun getOutgoingProFeatureCountInternal(column: String, featureMask: Long): Int {
-        val db = readableDatabase
-        val where = "($column & $featureMask) != 0 AND $IS_OUTGOING"
-
-        db.query(TABLE_NAME, arrayOf("COUNT(*)"), where, null, null, null, null).use { cursor ->
-            if (cursor.moveToFirst()) {
-                return cursor.getInt(0)
-            }
-        }
-        return 0
-    }
 
     fun isDeletedMessage(id: Long): Boolean =
         readableDatabase.query(
@@ -333,10 +318,29 @@ class MmsDatabase @Inject constructor(
     }
 
     override fun markAsSent(messageId: Long, isSent: Boolean) {
+        // Read BEFORE the update: this is the only moment that can tell a message's first success from a
+        // later repeat, and the update overwrites it.
+        val beforeSending = readProSendStatState(messageId)
+
         markAs(
             messageId,
             MmsSmsColumns.Types.BASE_SENT_TYPE or if (isSent) MmsSmsColumns.Types.PUSH_MESSAGE_BIT or MmsSmsColumns.Types.SECURE_MESSAGE_BIT else 0
         )
+
+        beforeSending?.let {
+            ProSendStats.recordSendSuccess(proDatabase.get(), it.wasAlreadySent, it.features)
+        }
+    }
+
+    /** See [ProSendStatRow]; this only supplies the columns. */
+    private fun readProSendStatState(messageId: Long): ProSendStatRow.State? {
+        return readableDatabase.query(
+            "SELECT $MESSAGE_BOX, $PRO_MESSAGE_FEATURES, $PRO_PROFILE_FEATURES FROM $TABLE_NAME WHERE $ID = ?",
+            arrayOf(messageId)
+        ).use { cursor ->
+            if (!cursor.moveToFirst()) null
+            else ProSendStatRow.from(cursor.getLong(0), cursor.getLong(1), cursor.getLong(2))
+        }
     }
 
     override fun markAsDeleted(messageId: Long, isOutgoing: Boolean, displayedMessage: String) {
