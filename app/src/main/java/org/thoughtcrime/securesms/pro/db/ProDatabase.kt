@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import network.loki.messenger.libsession_util.pro.ProRevocationItem
 import org.thoughtcrime.securesms.util.asSequence
+import org.thoughtcrime.securesms.pro.ProSendStats
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Provider
@@ -25,7 +26,7 @@ class ProDatabase @Inject constructor(
     @ApplicationContext context: Context,
     databaseHelper: Provider<SQLCipherOpenHelper>,
     private val json: Json,
-) : Database(context, databaseHelper) {
+) : Database(context, databaseHelper), ProSendStats.Store {
 
     private val cache = LruCache<String, Unit>(1000)
 
@@ -260,6 +261,35 @@ class ProDatabase @Inject constructor(
         }
     }
 
+
+    // --- ProSendStats.Store -------------------------------------------------------------------------
+    //
+    // The Pro "sent" stat counters, over the same pro_state key/value table as the rest of the scalar
+    // Pro state, so no schema change is involved. Values are stored as TEXT like every other key here.
+
+    override fun getProStatCount(name: String): Long? {
+        return readableDatabase.query(
+            "SELECT value FROM pro_state WHERE name = ?",
+            arrayOf(name)
+        ).use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0)?.toLongOrNull() else null
+        }
+    }
+
+    /**
+     * One statement, so a concurrent send cannot read the same value twice and lose an increment. A
+     * get-then-set from Kotlin would be exactly that race.
+     */
+    override fun incrementProStatCount(name: String) {
+        writableDatabase.compileStatement("""
+            INSERT INTO pro_state (name, value)
+            VALUES (?, '1')
+            ON CONFLICT DO UPDATE SET value = CAST(CAST(value AS INTEGER) + 1 AS TEXT)
+        """).use { stmt ->
+            stmt.bindString(1, name)
+            stmt.executeInsert()
+        }
+    }
 
     companion object {
         private const val TAG = "ProRevocationDatabase"

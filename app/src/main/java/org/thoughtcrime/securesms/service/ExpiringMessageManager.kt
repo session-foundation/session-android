@@ -146,6 +146,8 @@ class ExpiringMessageManager @Inject constructor(
                 quote = null,
                 previews = emptyList(),
                 messageContent = content
+                // No proFeatures here: this group-message constructor does not expose the parameter at
+                // all, so the row cannot carry Pro features even by mistake.
             ) else OutgoingMediaMessage(
                 recipient = serializedAddress,
                 body = "",
@@ -157,7 +159,11 @@ class ExpiringMessageManager @Inject constructor(
                 messageContent = content,
                 linkPreviews = emptyList(),
                 group = null,
-                isGroupUpdateMessage = false
+                isGroupUpdateMessage = false,
+                // Explicit rather than defaulted. This row reaches markAsSent and so feeds the Pro
+                // "sent" stats; a control message carries no Pro features, and saying so here makes
+                // adding any a deliberate edit rather than the filling of a blank.
+                proFeatures = emptySet()
             )
 
             return mmsDatabase.insertSecureDecryptedMessageOutbox(
