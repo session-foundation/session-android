@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import network.loki.messenger.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.session.libsession.messaging.file_server.FileServer
 import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
@@ -78,6 +79,23 @@ object QaLaunchConfig {
      */
     private const val EXTRA_PRO_BACKEND_URL = "sessionProBackendUrl"
     private const val EXTRA_PRO_BACKEND_PUBKEY = "sessionProBackendPubkey"
+
+    /**
+     * File server to upload attachments and display pictures to, instead of the production one.
+     *
+     * The debug menu selects only from a hardcoded list of remote test servers, so this is the only
+     * way to name an arbitrary one — a locally hosted file server included.
+     *
+     * Set BOTH or neither, for the same reason the Pro backend pair does: the key is what the onion
+     * request is built against, so a URL paired with the wrong key fails inside the request rather than
+     * at configuration time, as a transfer that never resolves.
+     *
+     * **Ed25519**, which is what [FileServer] stores; it derives the X25519 form itself. Both forms are
+     * 64 hex characters, so supplying the wrong one passes every check here and fails only at the far
+     * end of a transfer.
+     */
+    private const val EXTRA_FILE_SERVER_URL = "sessionFileServerUrl"
+    private const val EXTRA_FILE_SERVER_PUBKEY = "sessionFileServerPubkey"
 
     /**
      * Current user's Pro state. Named after the iOS concept rather than the Android preference,
@@ -254,6 +272,7 @@ object QaLaunchConfig {
             warnOnUnrecognisedExtras(extras)
 
             // Order matters: point the devnet at the right seed BEFORE switching the environment onto it.
+            applyFileServer(intent, prefs)
             applyDevnetSeedUrl(intent, prefs)
             applyServiceNetwork(intent, prefs)
             applyProBackend(intent, prefs)
@@ -300,6 +319,8 @@ object QaLaunchConfig {
         EXTRA_PRO_QUICK_REFUND_WINDOW,
         EXTRA_PRO_AUTO_RENEWING,
         EXTRA_PRO_ORIGINATING_ACCOUNT,
+        EXTRA_FILE_SERVER_URL,
+        EXTRA_FILE_SERVER_PUBKEY,
     )
 
     /**
@@ -422,6 +443,57 @@ object QaLaunchConfig {
         Log.i(TAG, "Setting Pro backend override to $rawUrl (takes effect on next launch)")
         prefs.setProBackendUrl(rawUrl)
         prefs.setProBackendPubkey(rawPubkey)
+        return true
+    }
+
+    /**
+     * Points uploads at [EXTRA_FILE_SERVER_URL], or clears a previous override so the production file
+     * server is used again.
+     *
+     * Writes the same `alternativeFileServer` preference the debug menu drives, so this adds a way to
+     * SET the existing setting rather than a second parallel one — the app has one notion of "not the
+     * production file server" and this is it.
+     */
+    private fun applyFileServer(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_FILE_SERVER_URL) && !intent.hasExtra(EXTRA_FILE_SERVER_PUBKEY)) {
+            return false
+        }
+
+        val rawUrl = intent.getStringExtra(EXTRA_FILE_SERVER_URL).orEmpty().trim()
+        val rawPubkey = intent.getStringExtra(EXTRA_FILE_SERVER_PUBKEY).orEmpty().trim()
+
+        // Present-but-empty is how a test asks to clear the override, as with every other pair here.
+        if (rawUrl.isEmpty() && rawPubkey.isEmpty()) {
+            if (prefs.alternativeFileServer == null) {
+                return false
+            }
+            Log.i(TAG, "Clearing file server override")
+            prefs.alternativeFileServer = null
+            return true
+        }
+
+        if (rawUrl.toHttpUrlOrNull() == null) {
+            Log.e(TAG, "Ignoring file server override: malformed '$EXTRA_FILE_SERVER_URL' ('$rawUrl')")
+            return false
+        }
+
+        if (!isEd25519PubKeyHex(rawPubkey)) {
+            Log.e(
+                TAG,
+                "Ignoring file server override: '$EXTRA_FILE_SERVER_PUBKEY' must be 64 hex characters " +
+                    "(the server's Ed25519 key), got '${rawPubkey.length}' characters"
+            )
+            return false
+        }
+
+        val existing = prefs.alternativeFileServer
+        if (existing?.url?.toString() == rawUrl && existing?.ed25519PublicKeyHex == rawPubkey) {
+            Log.i(TAG, "File server override already set to $rawUrl")
+            return false
+        }
+
+        Log.i(TAG, "Setting file server override to $rawUrl (takes effect on next launch)")
+        prefs.alternativeFileServer = FileServer(url = rawUrl, ed25519PublicKeyHex = rawPubkey)
         return true
     }
 

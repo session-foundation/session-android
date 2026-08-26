@@ -605,16 +605,6 @@ fun DebugMenu(
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
                 DebugSwitchRow(
-                    text = "Uses deterministic encryption for both avatar and attachment uploads",
-                    checked = uiState.forceDeterministicEncryption,
-                    onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.ToggleDeterministicEncryption)
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-
-                DebugSwitchRow(
                     text = "Debug avatar reupload (shorten interval, and toast messages)",
                     checked = uiState.debugAvatarReupload,
                     onCheckedChange = {
@@ -964,7 +954,6 @@ fun PreviewDebugMenu() {
                 debugProPlans = emptyList(),
                 forceNoBilling = false,
                 withinQuickRefund = true,
-                forceDeterministicEncryption = false,
                 debugAvatarReupload = true,
                 hasDonated = false,
                 hasCopiedDonationURL = false,

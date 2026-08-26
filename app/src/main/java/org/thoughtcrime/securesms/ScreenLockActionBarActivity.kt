@@ -46,6 +46,8 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         private const val STATE_WELCOME_SCREEN    = 3
         private const val STATE_DATABASE_MIGRATE  = 4 // This is different from STATE_UPGRADE_DATABASE as it is used to migrate database in a whole rather than the internal db schema upgrades
 
+        private const val KEY_HAS_STARTED = "has_started"
+
         private fun getStateName(state: Int): String {
             return when (state) {
                 STATE_NORMAL           -> "STATE_NORMAL"
@@ -80,6 +82,8 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     }
 
     private var clearKeyReceiver: BroadcastReceiver? = null
+    private var hasStarted = false
+    private var wasRecreated = false
 
     @Inject
     lateinit var loginStateRepository: LoginStateRepository
@@ -95,9 +99,12 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
         super.onCreate(savedInstanceState)
 
-        val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) &&
-                loginStateRepository.peekLoginState() != null
-        routeApplicationState(locked)
+        // Captured once, before routing: routeApplicationState is a coroutine, so reading hasStarted
+        // from inside it would race with onStart setting it and misread a cold start as a recreation.
+        wasRecreated = (savedInstanceState != null)
+        hasStarted = savedInstanceState?.getBoolean(KEY_HAS_STARTED) == true
+
+        routeApplicationState(isScreenLocked())
 
         if (!isFinishing) {
             initializeClearKeyReceiver()
@@ -106,6 +113,45 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     }
 
     protected open fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {}
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_HAS_STARTED, hasStarted)
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        // Only re-locks an activity that is coming BACK to the foreground; a first start while locked
+        // is already handled by onCreate's routing. The distinction matters because the lock can be
+        // cleared while this activity is merely stopped, which happens on any excursion to another app
+        // - a file picker, the camera, the share sheet. Covering it here rather than destroying it is
+        // what lets such an excursion return to the state it left, including a pending
+        // onActivityResult.
+        val isReturningToForeground = hasStarted
+        hasStarted = true
+
+        if (isReturningToForeground && isScreenLocked()) presentScreenLock()
+    }
+
+    private fun isScreenLocked(): Boolean =
+        KeyCachingService.isLocked(this) && isScreenLockEnabled(this) &&
+                loginStateRepository.peekLoginState() != null
+
+    // Puts the lock screen in front of this activity WITHOUT finishing it, so the task and any pending
+    // activity result survive. No "next_intent" is supplied because there is nothing to route back to
+    // - this activity is still here, and ScreenLockActivity finishes itself on success to reveal it.
+    //
+    // ScreenLockActivity is singleInstancePerTask, so it occupies its own task ABOVE this one rather
+    // than stacking in it: concurrent calls from several live activities reuse the one instance, and
+    // dismissing it without authenticating reveals this activity again - which is why it has to send
+    // the user to the launcher instead (see ScreenLockActivity.leaveAppLocked).
+    private fun presentScreenLock() {
+        startActivity(
+            Intent(this, ScreenLockActivity::class.java)
+                .putExtra(ScreenLockActivity.EXTRA_PRESENTED_OVER, true)
+        )
+    }
 
     override fun onPause() {
         Log.i(TAG, "onPause()")
@@ -120,8 +166,15 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     fun onMasterSecretCleared() {
         Log.i(TAG, "onMasterSecretCleared()")
-        if (appVisibilityManager.isAppVisible.value) routeApplicationState(true)
-        else finish()
+
+        // KeyCachingService.onDestroy broadcasts this whether or not app lock is enabled, so the same
+        // isScreenLocked() check onStart uses is needed here too - without it the broadcast can raise a
+        // lock screen that never prompts for anything, because ScreenLockActivity only starts an
+        // authentication when the setting is on.
+        //
+        // Nothing to cover while backgrounded either, and finishing would discard whatever the user was
+        // in the middle of - onStart presents the lock when they come back instead.
+        if (appVisibilityManager.isAppVisible.value && isScreenLocked()) presentScreenLock()
     }
 
     protected fun <T : Fragment?> initFragment(@IdRes target: Int, fragment: T): T? {
@@ -165,7 +218,10 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         Log.i(TAG, "routeApplicationState() - ${getStateName(state)}")
 
         return when (state) {
-            STATE_SCREEN_LOCKED    -> getScreenUnlockIntent() // Note: This is a suspend function
+            // Routing finishes this activity, which on a recreation would discard a pending activity
+            // result - a picker excursion survives a rotation only if the activity waiting on it does.
+            // A recreated instance is covered by onStart instead, via the restored hasStarted.
+            STATE_SCREEN_LOCKED    -> if (wasRecreated) null else getScreenUnlockIntent() // Note: This is a suspend function
             STATE_UPGRADE_DATABASE -> getUpgradeDatabaseIntent()
             STATE_WELCOME_SCREEN   -> getWelcomeIntent()
             STATE_DATABASE_MIGRATE -> getRoutedIntent(DatabaseMigrationStateActivity::class.java, getConversationListIntent())

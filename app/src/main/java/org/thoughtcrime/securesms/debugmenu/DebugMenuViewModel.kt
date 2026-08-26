@@ -99,7 +99,6 @@ class DebugMenuViewModel @AssistedInject constructor(
             hideMessageRequests = preferenceStorage[AppPreferences.HAS_HIDDEN_MESSAGE_REQUESTS],
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
-            forceDeterministicEncryption = textSecurePreferences.forcesDeterministicAttachmentEncryption,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
@@ -394,12 +393,6 @@ class DebugMenuViewModel @AssistedInject constructor(
                 }
             }
 
-            is Commands.ToggleDeterministicEncryption -> {
-                val newValue = !_uiState.value.forceDeterministicEncryption
-                _uiState.update { it.copy(forceDeterministicEncryption = newValue) }
-                textSecurePreferences.forcesDeterministicAttachmentEncryption = newValue
-            }
-
             is Commands.ToggleDebugAvatarReupload -> {
                 val newValue = !_uiState.value.debugAvatarReupload
                 _uiState.update { it.copy(debugAvatarReupload = newValue) }
@@ -619,7 +612,6 @@ class DebugMenuViewModel @AssistedInject constructor(
         val showDeprecatedStateWarningDialog: Boolean,
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
-        val forceDeterministicEncryption: Boolean,
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
@@ -732,7 +724,6 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
         data class SetDebugProPlanStatus(val status: DebugProPlanStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
-        data object ToggleDeterministicEncryption : Commands()
         data object ToggleDebugAvatarReupload : Commands()
         data object ResetPushToken : Commands()
         data class SelectAltFileServer(val fileServer: FileServer?) : Commands()

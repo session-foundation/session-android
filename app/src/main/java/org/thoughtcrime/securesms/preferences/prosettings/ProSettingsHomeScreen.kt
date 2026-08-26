@@ -501,7 +501,12 @@ fun ProStatItem(
         }
 
         Text(
-            modifier = Modifier.weight(1f),
+            // The cell's own qa tag is on the Row above, which is a layout container and
+            // carries no text -- Compose's testTag sets a resource-id, not a description.
+            // So the count ("12 badges sent") was unreadable to a test: present on screen,
+            // absent from every node a reader could address. This tags the node that
+            // actually holds it, scoped by the row's id the same way action-item-title is.
+            modifier = Modifier.weight(1f).qaTag(R.string.qa_pro_stats_value),
             text = title,
             style = LocalType.current.h9,
             color = if(disabledState) LocalColors.current.textSecondary else LocalColors.current.text
