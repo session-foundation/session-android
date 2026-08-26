@@ -47,6 +47,8 @@ import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
 import org.thoughtcrime.securesms.preferences.CommunicationPreferences;
 import org.thoughtcrime.securesms.preferences.PreferenceStorage;
 import org.thoughtcrime.securesms.pro.ProFeatureExtKt;
+import org.thoughtcrime.securesms.pro.ProSendStats;
+import org.thoughtcrime.securesms.pro.db.ProDatabase;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -67,6 +69,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow;
 import kotlinx.coroutines.flow.SharedFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
 import network.loki.messenger.libsession_util.protocol.ProFeature;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Database for storage of SMS messages.
@@ -164,6 +168,7 @@ public class SmsDatabase extends MessagingDatabase {
   private final SnodeClock snodeClock;
   private final Lazy<@NonNull ReactionDatabase> reactionDatabase;
   final Provider<@NonNull PreferenceStorage> prefs;
+  final Provider<@NonNull ProDatabase> proDatabase;
 
   final MutableSharedFlow<MessageChanges> changeNotification
           = SharedFlowKt.MutableSharedFlow(0, 24, BufferOverflow.DROP_OLDEST);
@@ -174,12 +179,14 @@ public class SmsDatabase extends MessagingDatabase {
                      RecipientRepository recipientRepository,
                      SnodeClock snodeClock,
                      Lazy<@NonNull ReactionDatabase> reactionDatabase,
-                     Provider<@NonNull PreferenceStorage> prefs) {
+                     Provider<@NonNull PreferenceStorage> prefs,
+                     Provider<@NonNull ProDatabase> proDatabase) {
     super(context, databaseHelper);
     this.recipientRepository = recipientRepository;
     this.snodeClock = snodeClock;
     this.reactionDatabase = reactionDatabase;
     this.prefs = prefs;
+    this.proDatabase = proDatabase;
   }
 
   public SharedFlow<MessageChanges> getChangeNotification() {
@@ -224,7 +231,26 @@ public class SmsDatabase extends MessagingDatabase {
 
   @Override
   public void markAsSent(long id, boolean isSent) {
+    // Read BEFORE the update: this is the only moment that can tell a message's first success from a
+    // later repeat, and the update overwrites it.
+    final ProSendStatRow.State beforeSending = readProSendStatState(id);
+
     updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SENT_TYPE | (isSent ? Types.PUSH_MESSAGE_BIT | Types.SECURE_MESSAGE_BIT : 0));
+
+    if (beforeSending != null) {
+      ProSendStats.INSTANCE.recordSendSuccess(proDatabase.get(), beforeSending.getWasAlreadySent(), beforeSending.getFeatures());
+    }
+  }
+
+  /** See {@link ProSendStatRow}; this only supplies the columns. */
+  private ProSendStatRow.@Nullable State readProSendStatState(long id) {
+    try (final Cursor cursor = getReadableDatabase().rawQuery(
+            "SELECT " + TYPE + ", " + PRO_MESSAGE_FEATURES + ", " + PRO_PROFILE_FEATURES +
+                    " FROM " + TABLE_NAME + " WHERE " + ID + " = ?", id)) {
+      if (!cursor.moveToFirst()) return null;
+
+      return ProSendStatRow.from(cursor.getLong(0), cursor.getLong(1), cursor.getLong(2));
+    }
   }
 
   public void markAsSending(long id) {
@@ -304,29 +330,6 @@ public class SmsDatabase extends MessagingDatabase {
 
     return isOutgoing;
   }
-
-    public int getOutgoingMessageProFeatureCount(long featureMask) {
-        return getOutgoingProFeatureCountInternal(PRO_MESSAGE_FEATURES, featureMask);
-    }
-
-    public int getOutgoingProfileProFeatureCount(long featureMask) {
-        return getOutgoingProFeatureCountInternal(PRO_PROFILE_FEATURES, featureMask);
-    }
-
-    private int getOutgoingProFeatureCountInternal(@NonNull String columnName, long featureMask) {
-        SQLiteDatabase db = getReadableDatabase();
-
-        // outgoing clause
-        String where = "(" + columnName + " & " + featureMask + ") != 0 AND " + IS_OUTGOING;
-
-        try (Cursor cursor = db.query(TABLE_NAME, new String[]{"COUNT(*)"}, where, null, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getInt(0);
-            }
-        }
-
-        return 0;
-    }
 
   public boolean isDeletedMessage(long id) {
     SQLiteDatabase database     = getReadableDatabase();
