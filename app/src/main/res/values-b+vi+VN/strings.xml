@@ -738,7 +738,6 @@
     <string name="pinUnpinConversation">Bỏ ghim cuộc trò chuyện</string>
     <string name="preview">Xem trước</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Tải lên GIF với PRO</string>
-    <string name="proRefundRequestSessionSupport">Yêu cầu hoàn tiền của bạn sẽ được bộ phận Hỗ trợ Session xử lý.\n\nHãy yêu cầu hoàn tiền bằng cách nhấn nút bên dưới và hoàn thành biểu mẫu yêu cầu hoàn tiền.\n\nMặc dù bộ phận Hỗ trợ Session luôn cố gắng xử lý yêu cầu hoàn tiền trong vòng 24 đến 72 giờ, nhưng thời gian xử lý có thể lâu hơn vào những thời điểm có nhiều yêu cầu.</string>
     <string name="profile">Hồ sơ cá nhân</string>
     <string name="profileDisplayPicture">Display Picture</string>
     <string name="profileDisplayPictureRemoveError">Không thể xóa hình đại diện.</string>
