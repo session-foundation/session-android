@@ -310,7 +310,7 @@ open class Storage @Inject constructor(
 
         val targetAddress = if ((isUserSender || isUserBlindedSender) && !message.syncTarget.isNullOrEmpty()) {
             message.syncTarget!!.toAddress()
-        } else (threadRecipient.address as? Address.Group) ?: senderAddress
+        } else MessageTargetAddress.of(threadRecipient.address, senderAddress)
 
         if (message.threadID == null) {
             message.threadID = getOrCreateThreadIdFor(targetAddress)
