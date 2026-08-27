@@ -308,8 +308,6 @@ class ProDatabase @Inject constructor(
         private const val STATE_PRO_STATUS_LAST_STARTUP_FETCH_ATTEMPT_AT =
             "pro_status_last_startup_fetch_attempt_at"
 
-        private const val ROTATING_KEY_VALIDITY_DAYS = 15
-
         fun createTable(db: SupportSQLiteDatabase) {
             // A table to hold the list of pro revocations. This is the ORIGINAL (lokiV57) shipped
             // shape; `reshapeRevocationsForSeconds` (lokiV61) drops and recreates it with the
