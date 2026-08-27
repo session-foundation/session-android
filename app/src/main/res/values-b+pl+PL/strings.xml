@@ -1158,13 +1158,11 @@
         <item quantity="other">%1$s przypiętych konwersacji</item>
     </plurals>
     <string name="proPlanPlatformRefund">Ponieważ początkowo zarejestrowano się w Session Pro przez <b><font color="0">{platform_store}</font></b>, musisz użyć tego samego konta {platform_account}, aby złożyć wniosek o zwrot.</string>
-    <string name="proPlanPlatformRefundLong">Ponieważ początkowo zarejestrowano się w Session Pro przez <b><font color="0">{platform_store}</font></b>, Twoim wnioskiem o zwrot zajmie się Zespół Wsparcia Session.\n\nAby poprosić o zwrot, kliknij poniższy przycisk i wypełnij formularz zgłoszenia.\n\nChociaż Zespół Wsparcia Session dokłada starań, aby przetwarzać wnioski o zwrot w ciągu 24–72 godzin, przetwarzanie może trwać dłużej w okresach dużej liczby zgłoszeń.</string>
     <string name="proPlanRenewSupport">Twój dostęp Session Pro został odnowiony! Dziękujemy za wspieranie Session Network.</string>
     <string name="proReactivatingActivation">ponowne aktywowanie</string>
     <string name="proRefundAccountDevice">Otwórz to konto Session na urządzeniu {device_type} zalogowanym na konto {platform_account}, którego użyto do rejestracji. Następnie poproś o zwrot pieniędzy przez ustawienia Session Pro.</string>
     <string name="proRefundDescription">Przykro nam, że odchodzisz. Tutaj znajdziesz wszystko, co powinieneś wiedzieć przed złożeniem wniosku o zwrot.</string>
     <string name="proRefundNextSteps">{platform} przetwarza obecnie Twój wniosek o zwrot. Zwykle trwa to 24–48 godzin. W zależności od decyzji, Twój status Pro w Session może się zmienić.</string>
-    <string name="proRefundRequestSessionSupport">Twoją prośbą o zwrot zajmie się Zespół Wsparcia Session.\n\nAby poprosić o zwrot, kliknij poniższy przycisk i wypełnij formularz zgłoszenia.\n\nChociaż Zespół Wsparcia Session dokłada starań, aby przetwarzać wnioski o zwrot w ciągu 24–72 godzin, przetwarzanie może trwać dłużej w okresach dużej liczby zgłoszeń.</string>
     <string name="proRefundRequestStorePolicies">Twoja prośba o zwrot zostanie rozpatrzona wyłącznie przez {platform} za pośrednictwem <b>strony internetowej {platform}</b>.\n\nZe względu na zasady zwrotów {platform}, deweloperzy Session nie mają wpływu na decyzję o przyznaniu zwrotu—ani czy wniosek zostanie zaakceptowany lub odrzucony, ani czy zostanie wydany pełny lub częściowy zwrot.</string>
     <string name="proRefundSupport">Skontaktuj się z {platform} w celu uzyskania dalszych informacji na temat twojego żądania zwrotu. Ze względu na zasady zwrotu {platform}, deweloperzy Session nie mają możliwości wpływania na wynik żądań zwrotu.\n\n<font color="0"><b>{platform} Wsparcie dotyczące zwrotu {icon}</b></font></string>
     <string name="proRefunding">Zwrot Pro</string>

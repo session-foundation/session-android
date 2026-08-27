@@ -1051,12 +1051,10 @@
         <item quantity="other">ピン留めされた会話 %1$s 件</item>
     </plurals>
     <string name="proPlanPlatformRefund">Session Pro に最初に <b><font color="0">{platform_store}</font></b> を通じて登録したため、払い戻しを申請するには同じ {platform_account} を使用する必要があります。</string>
-    <string name="proPlanPlatformRefundLong">Session Pro に最初に <b><font color="0">{platform_store}</font></b> を通じて登録したため、払い戻しリクエストは Session サポートによって処理されます。\n\n下のボタンを押して払い戻しリクエストフォームに記入することで、払い戻しを申請できます。\n\nSession サポートは通常24～72時間以内の処理を目指していますが、リクエストが集中している場合は処理に時間がかかることがあります。</string>
     <string name="proPlanRenewSupport">Session Pro アクセスが更新されました！Session Network をご支援いただきありがとうございます。</string>
     <string name="proReactivatingActivation">再アクティベート中</string>
     <string name="proRefundDescription">ご利用いただけなくなるのは残念です。返金をリクエストする前に知っておくべきことがあります。</string>
     <string name="proRefundNextSteps">{platform} で返金申請の処理中です。通常は 24～48 時間かかります。決定に応じて、Session 内の Pro ステータスが変更される場合があります。</string>
-    <string name="proRefundRequestSessionSupport">払い戻しリクエストは Session サポートによって処理されます。\n\n下のボタンを押して払い戻しリクエストフォームに記入することで、払い戻しを申請できます。\n\nSession サポートは通常24～72時間以内の処理を目指していますが、リクエストが集中している場合は処理に時間がかかることがあります。</string>
     <string name="proRefundRequestStorePolicies">払い戻しリクエストは、<b>{platform} ウェブサイト</b>を通じて{platform}によってのみ処理されます。\n\n{platform}の払い戻しポリシーにより、Session の開発者は払い戻しリクエストの結果に影響を与えることができません。これには、リクエストが承認されるか却下されるか、および全額または一部の返金が行われるかが含まれます。</string>
     <string name="proRefunding">Pro の返金処理中</string>
     <string name="proRefundingDescription">Session Pro の返金処理はすべて {platform_store} を通じて {platform} によって行われます。\n\n{platform} の返金ポリシーにより、Session の開発者は返金申請の結果に影響を与えることができません。これには申請の承認・却下の判断、および全額または一部返金かどうかも含まれます。</string>
