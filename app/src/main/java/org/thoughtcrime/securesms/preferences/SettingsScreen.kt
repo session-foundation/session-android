@@ -773,6 +773,7 @@ fun ShowClearDataDialog(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(stringResource(R.string.clearDeviceOnly)),
+                            qaTag = GetString(stringResource(R.string.AccessibilityId_clearDeviceOnlyRadio)),
                             selected = !deleteOnNetwork
                         )
                     ) {
@@ -783,6 +784,7 @@ fun ShowClearDataDialog(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(stringResource(R.string.clearDeviceAndNetwork)),
+                            qaTag = GetString(stringResource(R.string.AccessibilityId_clearDeviceAndNetworkRadio)),
                             selected = deleteOnNetwork,
                         )
                     ) {

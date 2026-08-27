@@ -237,6 +237,8 @@
     <string name="AccessibilityId_apply">Apply</string>
     <string name="AccessibilityId_cancel">Cancel</string>
     <string name="AccessibilityId_sessionClearData">Clear data</string>
+    <string name="AccessibilityId_clearDeviceOnlyRadio">clear-device-only-radio</string>
+    <string name="AccessibilityId_clearDeviceAndNetworkRadio">clear-device-and-network-radio</string>
     <string name="AccessibilityId_conversationTitle">Conversation header name</string>
     <string name="AccessibilityId_sessionConversations">Conversations</string>
     <string name="AccessibilityId_disappearingMessagesOff">Disable disappearing messages</string>
