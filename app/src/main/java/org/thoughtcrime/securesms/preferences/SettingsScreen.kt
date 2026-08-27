@@ -745,6 +745,7 @@ fun ShowClearDataDialog(
         text = when(state){
             is SettingsViewModel.ClearDataState.Clearing -> null
             is SettingsViewModel.ClearDataState.Error -> annotatedStringResource(R.string.clearDataErrorDescriptionGeneric)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevice -> annotatedStringResource(R.string.clearDeviceDescription)
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork -> annotatedStringResource(R.string.clearDeviceAndNetworkConfirm)
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro -> {
                 annotatedStringResource(
@@ -797,6 +798,7 @@ fun ShowClearDataDialog(
         },
         buttons = when(state){
             is SettingsViewModel.ClearDataState.Default,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevice,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro,

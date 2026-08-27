@@ -445,10 +445,19 @@ class SettingsViewModel @Inject constructor(
                 }
 
                 else -> {
-                    if(!clearNetwork || currentClearState == ClearDataState.Error){
-                        clearDataDeviceOnly()
-                    } else {
-                        _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmNetwork) }
+                    when {
+                        // The error state already IS the second look: the user has been told the network
+                        // delete failed and is choosing to clear the device anyway, so asking again would
+                        // be a third confirmation for one decision.
+                        currentClearState == ClearDataState.Error -> clearDataDeviceOnly()
+
+                        !clearNetwork -> _uiState.update {
+                            it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmDevice)
+                        }
+
+                        else -> _uiState.update {
+                            it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmNetwork)
+                        }
                     }
                 }
             }
@@ -673,6 +682,7 @@ class SettingsViewModel @Inject constructor(
         data object Error: ClearDataState
 
         sealed interface ConfirmedClearDataState: ClearDataState {
+            data object ConfirmDevice : ConfirmedClearDataState
             data object ConfirmNetwork : ConfirmedClearDataState
             data object ConfirmNetworkPro : ConfirmedClearDataState
             data object ConfirmDevicePro : ConfirmedClearDataState
