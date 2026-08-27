@@ -1142,13 +1142,11 @@
         <item quantity="other">%1$s گفتگوهای سنجاق‌شده</item>
     </plurals>
     <string name="proPlanPlatformRefund">ازآنجاکه شما از ابتدا برای Session Pro از طریق <b><font color="0">{platform_store}</font></b> ثبت‌نام کردید، برای درخواست استرداد وجه باید از {platform_account} خود استفاده کنید.</string>
-    <string name="proPlanPlatformRefundLong">ازآنجاکه شما از ابتدا برای Session Pro از طریق <b><font color="0">{platform_store}</font></b> ثبت‌نام کردید، درخواست استرداد وجه شما را پشتیبانی Session پردازش خواهد کرد.\n\nبرای درخواست استرداد وجه، دکمهٔ زیر را بزنید و فرم مربوطه را تکمیل کنید.\n\nاگرچه پشتیبانی Session تلاش می‌کند درخواست‌های شما را ظرف ۲۴ تا ۷۲ ساعت پردازش کند، ممکن است هنگامی که حجم درخواست‌ها بالاست، پردازش بیشتر طول بکشد.</string>
     <string name="proPlanRenewSupport">دسترسی شما به Session Pro تمدید شد! از حمایت شما از Session Network سپاسگزاریم.</string>
     <string name="proReactivatingActivation">در حال فعال‌سازی مجدد</string>
     <string name="proRefundAccountDevice">این حساب Session را روی یک دستگاه {device_type} باز کنید که به {platform_account} متصل است که از ابتدا با آن ثبت‌نام کردید. سپس از طریق تنظیمات Session Pro درخواست استرداد وجه بدهید.</string>
     <string name="proRefundDescription">متأسفیم که می‌خواهید بروید. پیش از درخواست استرداد وجه، این موارد را باید بدانید.</string>
     <string name="proRefundNextSteps">{platform} اکنون در حال پردازش درخواست استرداد وجه شما است. این فرایند معمولاً ۲۴ تا ۴۸ ساعت طول می‌کشد. بسته به تصمیم آن‌ها، ممکن است وضعیت Pro شما در Session تغییر کند.</string>
-    <string name="proRefundRequestSessionSupport">پشتیبانی Session به درخواست استرداد وجه شما رسیدگی خواهد کرد.\n\nبرای درخواست استرداد وجه، دکمهٔ زیر را بزنید و فرم مربوطه را تکمیل کنید.\n\nاگرچه پشتیبانی Session تلاش می‌کند درخواست‌ها را ظرف ۲۴ تا ۷۲ ساعت پردازش کند، ممکن است هنگامی که حجم درخواست‌ها بالاست، پردازش بیشتر طول بکشد.</string>
     <string name="proRefundRequestStorePolicies">درخواست استرداد وجه شما را انحصاراً {platform} از طریق <b>وب‌سایت {platform}</b> انجام می‌دهد.\n\nطبق سیاست‌های استرداد وجه {platform}، توسعه‌دهندگان Session هیچ امکانی برای تأثیرگذاری بر نتیجهٔ درخواست‌ها ندارند. شامل اینکه درخواست تأیید یا رد شود، و همچنین اینکه استرداد کامل یا جزئی انجام شود.</string>
     <string name="proRefundSupport">لطفاً برای دریافت به‌روزرسانی‌های بیشتر در رابطه با درخواست استرداد وجه خود با {platform} تماس بگیرید. با توجه به سیاست‌های استرداد وجه {platform}، توسعه‌دهندگان Session هیچ امکانی برای تأثیرگذاری بر نتیجهٔ درخواست‌های استرداد ندارند.\n\n<font color="0"><b>پشتیبانی استرداد وجه {platform} {icon}</b></font></string>
     <string name="proRefunding">در حال استرداد وجهPro</string>

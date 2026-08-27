@@ -1079,13 +1079,11 @@
         <item quantity="other">%1$s festede samtaler</item>
     </plurals>
     <string name="proPlanPlatformRefund">Fordi du opprinnelig registrerte deg for Session Pro via <b><font color="0">{platform_store}</font></b>, må du bruke din {platform_account} for å be om refusjon.</string>
-    <string name="proPlanPlatformRefundLong">Fordi du opprinnelig registrerte deg for Session Pro via <b><font color="0">{platform_store}</font></b>, vil refusjonsforespørselen din behandles av Session-støtte.\n\nBe om refusjon ved å trykke på knappen nedenfor og fylle ut refusjonsskjemaet.\n\nSession-støtte tilstreber å behandle refusjonsforespørsler innen 24–72 timer, men behandlingstiden kan være lengre ved stor pågang.</string>
     <string name="proPlanRenewSupport">Tilgangen til Session Pro er fornyet! Takk for at du støtter Session Network.</string>
     <string name="proReactivatingActivation">aktiverer på nytt</string>
     <string name="proRefundAccountDevice">Åpne denne Session-kontoen på en {device_type}-enhet som er logget inn med {platform_account}-kontoen du opprinnelig registrerte deg med. Be deretter om refusjon via Session Pro-innstillingene.</string>
     <string name="proRefundDescription">Vi er lei for at du forlater oss. Her er hva du bør vite før du ber om refusjon.</string>
     <string name="proRefundNextSteps">{platform} behandler nå refusjonsforespørselen din. Dette tar vanligvis 24–48 timer. Avhengig av avgjørelsen deres, kan du se at Pro-statusen din endres i Session.</string>
-    <string name="proRefundRequestSessionSupport">Refusjonsforespørselen din vil bli behandlet av Session kundestøtte.\n\nSend inn en forespørsel ved å trykke på knappen nedenfor og fylle ut refusjonsskjemaet.\n\nSelv om Session kundestøtte tilstreber å behandle refusjonsforespørsler innen 24–72 timer, kan det ta lenger tid ved høyt forespørselsvolum.</string>
     <string name="proRefundRequestStorePolicies">Refusjonsforespørselen din vil utelukkende bli behandlet av {platform} via <b>{platform}-nettstedet</b>.\n\nPå grunn av {platform}s refusjonsretningslinjer har utviklerne av Session ingen mulighet til å påvirke resultatet av refusjonsforespørsler. Dette inkluderer om forespørselen blir godkjent eller avslått, samt om du får full eller delvis refusjon.</string>
     <string name="proRefunding">Refunderer Pro</string>
     <string name="proRefundingDescription">Refusjoner for Session Pro håndteres utelukkende av {platform} via {platform_store}.\n\nPå grunn av refusjonspolicyene til {platform}, har ikke utviklerne av Session mulighet til å påvirke utfallet av refusjonsforespørsler. Dette inkluderer hvorvidt forespørselen blir godkjent eller avslått, samt om det gis full eller delvis refusjon.</string>

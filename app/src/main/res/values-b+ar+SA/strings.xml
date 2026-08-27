@@ -1279,13 +1279,11 @@
         <item quantity="other">%1$s محادثة مثبتة</item>
     </plurals>
     <string name="proPlanPlatformRefund">نظرًا لأنكم تسجلتم في الأصل في Session Pro عبر <b><font color="0">{platform_store}</font></b>، ستحتاجون إلى استخدام حساب {platform_account} لطلب استرداد المبلغ.</string>
-    <string name="proPlanPlatformRefundLong">نظرًا لأنك تسجلتم في Session Pro في الأصل عبر <b><font color="0">{platform_store}</font></b>، فسيتم معالجة طلب الاسترداد الخاص بكم من قبل دعم Session.\n\nلطلب استرداد، اضغطوا على الزر أدناه واملأوا نموذج طلب الاسترداد.\n\nيسعى دعم Session لمعالجة طلبات الاسترداد خلال ٢٤ إلى ٧٢ ساعة، ولكن قد تستغرق المعالجة وقتًا أطول في فترات كثافة الطلبات.</string>
     <string name="proPlanRenewSupport">تم تجديد صلاحية وصولكم إلى Session Pro! شكرًا لدعمكم لـ Session Network.</string>
     <string name="proReactivatingActivation">إعادة التفعيل</string>
     <string name="proRefundAccountDevice">افتحوا هذا الحساب في Session على جهاز {device_type} مُسجّل عليه الدخول بالحساب {platform_account} الذي سجلتم به في البداية. بعد ذلك، اطلبوا استرداد المبلغ من خلال إعدادات Session Pro.</string>
     <string name="proRefundDescription">نأسف لمغادرتكم. إليكم ما تحتاجون إلى معرفته قبل طلب استرداد المبلغ.</string>
     <string name="proRefundNextSteps">يُعالج {platform} الآن طلب استرداد الأموال الخاص بكم. عادةً ما يستغرق ذلك من 24 إلى 48 ساعة. اعتمادًا على قرارهم، قد تلاحظ تغيير حالة Pro في Session.</string>
-    <string name="proRefundRequestSessionSupport">سيتم التعامل مع طلب استرداد المبلغ الخاص بكم بواسطة دعم Session.\n\nلطلب استرداد المبلغ، اضغطوا على الزر أدناه وأكملوا نموذج طلب الاسترداد.\n\nبينما يسعى دعم Session لمعالجة طلبات الاسترداد خلال ٢٤–٧٢ ساعة، قد تستغرق المعالجة وقتًا أطول في أوقات كثرة الطلبات.</string>
     <string name="proRefundRequestStorePolicies">سيتم التعامل مع طلب استرداد المبلغ الخاص بكم حصريًا من خلال {platform} عبر <b>موقع {platform}</b>.\n\nبسبب سياسات استرداد {platform}، لا يستطيع مطورو Session التأثير على نتيجة طلبات الاسترداد، سواء تمت الموافقة أو الرفض، أو إذا ما تم إصدار استرداد كامل أو جزئي.</string>
     <string name="proRefundSupport">يرجى التواصل مع {platform} للحصول على تحديثات إضافية بخصوص طلب استرداد المبلغ الخاص بكم. وفقاً لسياسات استرداد المبالغ المعتمدة من قِبل {platform}، لا يستطيع مطورو Session التأثير على نتيجة طلبات الاسترداد.\n\n<font color="0"><b>{platform} دعم طلبات الاسترداد{icon}</b></font></string>
     <string name="proRefunding">جارٍ استرداد مبلغ Pro</string>
