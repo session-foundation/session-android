@@ -60,11 +60,12 @@ abstract class ProApi<Res : ProResponse>(private val deps: ProApiDependencies)
             ProApiResponse.Success(parsed)
         } else {
             ProApiResponse.Failure(
-                ProApiError(
+                error = ProApiError(
                     status = parsed.header.status,
                     errorCode = parsed.header.errorCode,
                     error = parsed.header.error,
-                )
+                ),
+                parsed = parsed,
             )
         }
     }
@@ -113,7 +114,19 @@ object ProErrorCode {
  */
 sealed interface ProApiResponse<out Res> {
     data class Success<T>(val data: T) : ProApiResponse<T>
-    data class Failure(val error: ProApiError) : ProApiResponse<Nothing>
+
+    /**
+     * A failure still carries the [parsed] body, because some error slugs are informative rather than
+     * merely negative: `subscription_expired` returns the account expiry, grace period and renewing flag
+     * precisely so a client can persist them.
+     *
+     * Reaching here means the ENVELOPE parsed — a body that could not be parsed throws before this — so
+     * [parsed] is a real struct rather than defaults built from nothing. That distinction is what makes it
+     * safe to write config from a failure at all, and it is only safe **per slug**: libsession populates
+     * those fields for `subscription_expired` and leaves them at their defaults otherwise, and the defaults
+     * are indistinguishable from genuine zeroes. Gate any write on the slug.
+     */
+    data class Failure<T>(val error: ProApiError, val parsed: T) : ProApiResponse<T>
 }
 
 fun <T> ProApiResponse<T>.successOrThrow(): T {
