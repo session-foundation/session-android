@@ -53,6 +53,7 @@ class ProProofGenerationWorker @AssistedInject constructor(
     private val loginStateRepository: LoginStateRepository,
     private val configFactory: ConfigFactoryProtocol,
     private val snodeClock: SnodeClock,
+    private val proStatusRepository: Provider<ProStatusRepository>,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val proMasterKey = requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
@@ -169,9 +170,8 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         // it: it would wipe a flag `get_pro_status` had correctly learned, on the
                         // strength of a response that said nothing about the account.
                         //
-                        // The entitlement-denied path needs no equivalent write. It clears `E`, and
-                        // libsession erases `G` and `A` with it — a grace that outlived its expiry
-                        // would pair with whatever wrote `E` next.
+                        // The entitlement-denied path writes the same three, but only for
+                        // `subscription_expired` — the one denial that returns them. See that branch.
                         configs.userProfile.setProAutoRenewing(response.accountAutoRenewing)
                         configs.userProfile.setProGracePeriod(response.accountGracePeriod)
                     }
@@ -197,21 +197,89 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         notEntitled && purchasePending -> Result.retry()
 
                         notEntitled -> {
-                            // Backend authoritatively says we're not (or no longer) entitled. Clear the
-                            // synced access-expiry (E) so the renewal loop terminates: libsession's renewal
-                            // target now fires on "future E but no proof", so a stale future E left here
-                            // would spin. (subscription_expired's past account_expiry is redundant with the
-                            // get_pro_status horizon, so we clear E rather than re-set it.) Also drop a now-
-                            // defunct credential, guarded so a proof another device just landed survives.
+                            // The backend says this device is not (or no longer) entitled. The defunct
+                            // credential goes in every case — guarded, so a proof another device just
+                            // landed survives. What happens to the synced access expiry (E) does NOT
+                            // generalise, because the three slugs are three different answers:
+                            //
+                            //  * REVOKED — this PROOF is void, and that is all it says. It returns no
+                            //    dates to say more with. A revocation that does not revoke payments is a
+                            //    rotation, leaving the account paid and re-provable, and locally we cannot
+                            //    tell that from a refund. So KEEP E: clearing it would answer a question
+                            //    the backend did not answer, and E is SYNCED, so that answer would reach
+                            //    every other device and erase the shared record that the user ever
+                            //    subscribed. With no E and no proof the seeded display reads "never
+                            //    subscribed" — a confident claim rather than an absence — and a refunded
+                            //    subscriber is offered "Upgrade" where they should see "Renew".
+                            //    `ProStatusManager` keeps E on the revocation-LIST path for this reason.
+                            //
+                            //  * SUBSCRIPTION_EXPIRED — a lapse or cancellation, and the response carries
+                            //    the expiry, grace period and renewing flag so a client can persist them.
+                            //    SET all three. Not the expiry alone: on a cancellation the expiry is
+                            //    typically the value that did NOT change while the grace and the flag did,
+                            //    so writing only the expiry leaves a stale grace claiming coverage the
+                            //    backend has stopped honouring. Coverage end is derived as E + G.
+                            //
+                            //  * NOT_SUBSCRIBED — no account row exists, so there is genuinely nothing to
+                            //    record. CLEAR E.
+                            //
+                            // The three-value write is gated on the slug, and that gate is doing real
+                            // work: libsession only populates those fields for SUBSCRIPTION_EXPIRED and
+                            // otherwise leaves them at 0/false, which are indistinguishable from genuine
+                            // zeroes. Writing `false` to a presence-only key ERASES it, so an ungated
+                            // write would wipe a flag `get_pro_status` had correctly learned.
+                            val expiredWithDates = code == ProErrorCode.SUBSCRIPTION_EXPIRED
+
                             configFactory.withMutableUserConfigs { configs ->
-                                configs.userProfile.removeProAccessExpiry()
+                                when {
+                                    expiredWithDates -> {
+                                        result.parsed.accountExpiry?.let {
+                                            configs.userProfile.setProAccessExpiry(it.epochSecond)
+                                        }
+                                        configs.userProfile.setProGracePeriod(result.parsed.accountGracePeriod)
+                                        configs.userProfile.setProAutoRenewing(result.parsed.accountAutoRenewing)
+                                    }
+
+                                    // REVOKED keeps whatever the backend last said; only NOT_SUBSCRIBED
+                                    // clears.
+                                    code == ProErrorCode.NOT_SUBSCRIBED -> {
+                                        configs.userProfile.removeProAccessExpiry()
+                                    }
+                                }
+
                                 val nowSeconds = snodeClock.currentTime().epochSecond
                                 val existing = configs.userProfile.getProConfig()?.proProof
                                 if (existing == null || existing.expirySeconds <= nowSeconds) {
                                     configs.userProfile.removeProConfig()
                                 }
                             }
-                            Log.w(WORK_NAME, "Pro proof denied (code=$code); cleared access-expiry, ending the acquire loop")
+
+                            // Change the local record, then ask the server — on every one of the three,
+                            // not just the ones that cleared something.
+                            //
+                            // IMMEDIATE, bypassing the routine freshness floor. A floored request is
+                            // dropped whenever a status fetch already ran inside the floor, which is the
+                            // ordinary case because launch fetches, so flooring drops exactly the fetch
+                            // that matters. It matters because it is the acquire loop's TERMINATOR:
+                            // libsession's renewal target fires while E is in the future with no proof, and
+                            // only a status response writing a past E stops it.
+                            //
+                            // This does make the proof loop a source of status fetches, which the success
+                            // branch above deliberately avoids. The difference is that the success branch
+                            // has another trigger — its own E write fires the config-change trigger —
+                            // whereas REVOKED writes nothing, so without this the terminator would have to
+                            // arrive via the revocation-LIST path. That would be a dependency between two
+                            // paths that neither of them states.
+                            proStatusRepository.get().requestRefresh(immediate = true)
+
+                            Log.w(
+                                WORK_NAME,
+                                "Pro proof denied (code=$code); " + when {
+                                    expiredWithDates -> "stored the returned expiry, grace and renewing flag"
+                                    code == ProErrorCode.NOT_SUBSCRIBED -> "cleared access-expiry"
+                                    else -> "kept access-expiry (the proof is void, the plan may not be)"
+                                } + "; fetching status immediately"
+                            )
                             Result.failure()
                         }
 
