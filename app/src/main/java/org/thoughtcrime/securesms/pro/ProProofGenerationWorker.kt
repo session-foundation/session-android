@@ -197,21 +197,52 @@ class ProProofGenerationWorker @AssistedInject constructor(
                         notEntitled && purchasePending -> Result.retry()
 
                         notEntitled -> {
-                            // Backend authoritatively says we're not (or no longer) entitled. Clear the
-                            // synced access-expiry (E) so the renewal loop terminates: libsession's renewal
-                            // target now fires on "future E but no proof", so a stale future E left here
-                            // would spin. (subscription_expired's past account_expiry is redundant with the
-                            // get_pro_status horizon, so we clear E rather than re-set it.) Also drop a now-
-                            // defunct credential, guarded so a proof another device just landed survives.
+                            // The backend says this device is not (or no longer) entitled, and the defunct
+                            // credential goes either way — guarded, so a proof another device just landed
+                            // survives.
+                            //
+                            // Whether the synced access-expiry (E) goes with it depends on WHICH answer
+                            // this is, and REVOKED is not the same answer as the other two:
+                            //
+                            //  * REVOKED says this PROOF is void. It says nothing about the subscription,
+                            //    and it carries no expiry to say it with — a revocation with
+                            //    revoke_payments=false is a rotation, leaving the account paid and
+                            //    re-provable, and locally we cannot tell that from a refund. Clearing E
+                            //    here would answer a question the backend did not answer. E is SYNCED, so
+                            //    that answer would propagate to every other device and erase the shared
+                            //    record that the user ever subscribed: with no E and no proof, the seeded
+                            //    display status reads "never subscribed" — a confident claim, not an
+                            //    absence — and a refunded subscriber gets offered "Upgrade" instead of
+                            //    "Renew". Matches the reasoning in `ProStatusManager`, which keeps E on the
+                            //    revocation-LIST path for the same reason.
+                            //
+                            //  * NOT_SUBSCRIBED means no account row exists, so there is genuinely nothing
+                            //    to record and clearing is right.
+                            //
+                            // Keeping E on REVOKED leaves libsession's renewal target firing on
+                            // "future E but no proof", so the acquire loop keeps running. That is bounded
+                            // rather than unbounded — the dark backoff widens to DARK_CAP_SECONDS spacing —
+                            // and it ends when a status fetch writes a past E. Deliberately no extra
+                            // limiter here: a third guard would suppress the symptom of a loop that already
+                            // terminates.
+                            val keepAccessExpiry = code == ProErrorCode.REVOKED
+
                             configFactory.withMutableUserConfigs { configs ->
-                                configs.userProfile.removeProAccessExpiry()
+                                if (!keepAccessExpiry) {
+                                    configs.userProfile.removeProAccessExpiry()
+                                }
                                 val nowSeconds = snodeClock.currentTime().epochSecond
                                 val existing = configs.userProfile.getProConfig()?.proProof
                                 if (existing == null || existing.expirySeconds <= nowSeconds) {
                                     configs.userProfile.removeProConfig()
                                 }
                             }
-                            Log.w(WORK_NAME, "Pro proof denied (code=$code); cleared access-expiry, ending the acquire loop")
+                            Log.w(
+                                WORK_NAME,
+                                "Pro proof denied (code=$code); " +
+                                    if (keepAccessExpiry) "kept access-expiry (the proof is void, the plan may not be)"
+                                    else "cleared access-expiry, ending the acquire loop"
+                            )
                             Result.failure()
                         }
 
