@@ -264,6 +264,17 @@ interface TextSecurePreferences {
     fun setDebugRefundInProgressOverride(refunding: Boolean?)
 
     /**
+     * Overrides whether the app considers itself to have been UPDATED rather than freshly installed,
+     * which gates which events may raise the in-app review prompt.
+     *
+     * Tri-state: `null` means "use the real package-manager answer". The real answer is
+     * `firstInstallTime != lastUpdateTime`, which a test harness cannot influence — it installs over an
+     * existing package, so the app always reads as updated and the fresh-install branch is unreachable.
+     */
+    fun getDebugAppUpdated(): Boolean?
+    fun setDebugAppUpdated(updated: Boolean?)
+
+    /**
      * Mocked originating payment provider (a `BackendRequests.PAYMENT_PROVIDER_*` slug), or `null` for no
      * override so the fixture's own provider stands.
      *
@@ -454,6 +465,7 @@ interface TextSecurePreferences {
         const val DEBUG_PRO_PROFILE_FEATURES = "debug_pro_profile_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
         const val DEBUG_PRO_ACCESS_OVERRIDE = "debug_pro_access_override"
+        const val DEBUG_APP_UPDATED = "debug_app_updated"
         const val DEBUG_PRO_ACCESS_EXPIRY = "debug_pro_access_expiry"
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
@@ -1325,6 +1337,13 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?) {
         setStringPreference(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS, status?.name)
         _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
+    }
+
+    override fun getDebugAppUpdated(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_APP_UPDATED, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugAppUpdated(updated: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_APP_UPDATED, updated?.toString())
     }
 
     override fun getDebugProAccessOverride(): Boolean? =
