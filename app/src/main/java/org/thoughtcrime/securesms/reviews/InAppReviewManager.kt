@@ -78,7 +78,13 @@ class InAppReviewManager @Inject constructor(
                 if (storeReviewManager.supportsReviewFlow) {
                     val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
                     InAppReviewState.WaitingForTrigger(
-                        appUpdated = pkg.firstInstallTime != pkg.lastUpdateTime
+                        // The QA override comes first, and only exists because the real answer is not
+                        // reachable from a test: a harness installs over an existing package, so
+                        // firstInstallTime and lastUpdateTime always differ and the fresh-install branch —
+                        // the one that allows the path and theme triggers — can never be exercised.
+                        // Null in any build without the launch config, so the real answer stands.
+                        appUpdated = prefs.getDebugAppUpdated()
+                            ?: (pkg.firstInstallTime != pkg.lastUpdateTime)
                     )
                 } else {
                     InAppReviewState.DismissedForever
