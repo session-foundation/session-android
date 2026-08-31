@@ -171,7 +171,6 @@
     <plurals name="clearDataErrorDescription">
         <item quantity="one">נתונים לא נמחקו על ידי %1$d Service Node. מזהה Service Node: %2$s.</item>
         <item quantity="two">נתונים לא נמחקו על ידי %1$d Service Nodes. מזהי Service Nodes: %2$s.</item>
-        <item quantity="many">נתונים לא נמחקו על ידי %1$d Service Nodes. מזהי Service Nodes: %2$s.</item>
         <item quantity="other">נתונים לא נמחקו על ידי %1$d Service Nodes. מזהי Service Nodes: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">אירעה שגיאה לא ידועה והנתונים שלך לא נמחקו. האם ברצונך למחוק את הנתונים שלך רק ממכשיר זה במקום?</string>
@@ -273,13 +272,11 @@
     <plurals name="deleteMessage">
         <item quantity="one">מחק הודעה</item>
         <item quantity="two">מחק הודעות</item>
-        <item quantity="many">מחק הודעות</item>
         <item quantity="other">מחק הודעות</item>
     </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">הודעה נמחקה</item>
         <item quantity="two">הודעות נמחקו</item>
-        <item quantity="many">הודעות נמחקו</item>
         <item quantity="other">הודעות נמחקו</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">הודעה זו נמחקה</string>
@@ -291,7 +288,6 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">נכשל במחיקת הודעה</item>
         <item quantity="two">נכשל במחיקת הודעות</item>
-        <item quantity="many">נכשל במחיקת הודעות</item>
         <item quantity="other">נכשל במחיקת הודעות</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">האם אתה בטוח שברצונך למחוק את ההודעות האלה לכולם?</string>
@@ -361,7 +357,6 @@
     <plurals name="emojiReactsCountOthers">
         <item quantity="one">ועוד %1$d אחד הגיב עם %2$s להודעה זו.</item>
         <item quantity="two">ועוד %1$d אחרים הגיבו עם %2$s להודעה זו.</item>
-        <item quantity="many">ועוד %1$d אחרים הגיבו עם %2$s להודעה זו.</item>
         <item quantity="other">ועוד %1$d אחרים הגיבו עם %2$s להודעה זו.</item>
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} הגיב עם {emoji_name}</string>
@@ -439,13 +434,11 @@
     <plurals name="groupRemoveMessages">
         <item quantity="one">הסר משתמש והודעותיו</item>
         <item quantity="two">הסר משתמשים והודעותיהם</item>
-        <item quantity="many">הסר משתמשים והודעותיהם</item>
         <item quantity="other">הסר משתמשים והודעותיהם</item>
     </plurals>
     <plurals name="groupRemoveUserOnly">
         <item quantity="one">הסר משתמש</item>
         <item quantity="two">הסר משתמשים</item>
-        <item quantity="many">הסר משתמשים</item>
         <item quantity="other">הסר משתמשים</item>
     </plurals>
     <string name="groupRemoved"><b>{name}‏</b> הוסר מהקבוצה.</string>
@@ -510,13 +503,11 @@
     <plurals name="members">
         <item quantity="one">%1$d חבר קבוצה</item>
         <item quantity="two">%1$d חברי קבוצה</item>
-        <item quantity="many">%1$d חברי קבוצה</item>
         <item quantity="other">%1$d חברי קבוצה</item>
     </plurals>
     <plurals name="membersActive">
         <item quantity="one">%1$d חבר פעיל</item>
         <item quantity="two">%1$d חברים פעילים</item>
-        <item quantity="many">%1$d חברים פעילים</item>
         <item quantity="other">%1$d חברים פעילים</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">הוסף מזהה חשבון או ONS</string>
@@ -524,7 +515,6 @@
     <plurals name="membersInviteSend">
         <item quantity="one">שלח הזמנה</item>
         <item quantity="two">שלח הזמנות</item>
-        <item quantity="many">שלח הזמנות</item>
         <item quantity="other">שלח הזמנות</item>
     </plurals>
     <string name="membersInviteShareDescription">האם ברצונך לשתף את היסטוריית ההודעות של הקבוצה עם <b>{name}</b>?</string>
@@ -545,7 +535,6 @@
     <plurals name="messageNew">
         <item quantity="one">הודעה חדשה</item>
         <item quantity="two">הודעות חדשות</item>
-        <item quantity="many">הודעות חדשות</item>
         <item quantity="other">הודעות חדשות</item>
     </plurals>
     <string name="messageNewDescriptionDesktop">התחל שיחה חדשה על ידי הזנת מזהה החשבון או ה־ONS של חברך.</string>
@@ -553,7 +542,6 @@
     <plurals name="messageNewYouveGot">
         <item quantity="one">יש לך הודעה חדשה.</item>
         <item quantity="two">יש לך %1$d הודעות חדשות.</item>
-        <item quantity="many">יש לך %1$d הודעות חדשות.</item>
         <item quantity="other">יש לך %1$d הודעות חדשות.</item>
     </plurals>
     <string name="messageReplyingTo">מענה אל</string>
@@ -756,7 +744,6 @@
     <plurals name="searchMatches">
         <item quantity="one">%1$d מתוך %2$d תוצאה</item>
         <item quantity="two">%1$d מתוך %2$d תוצאות</item>
-        <item quantity="many">%1$d מתוך %2$d תוצאות</item>
         <item quantity="other">%1$d מתוך %2$d תוצאות</item>
     </plurals>
     <string name="searchMatchesNone">לא נמצאו תוצאות.</string>
