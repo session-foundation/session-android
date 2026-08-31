@@ -639,9 +639,7 @@ class SettingsViewModel @Inject constructor(
             }
 
             is Commands.OnDonateClicked -> {
-                viewModelScope.launch {
-                    inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
-                }
+                inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
                 showUrlDialog(URL_DONATE)
             }
 
