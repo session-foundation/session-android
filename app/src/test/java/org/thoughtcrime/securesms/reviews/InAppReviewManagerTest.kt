@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.reviews
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import app.cash.turbine.test
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -213,6 +214,43 @@ class InAppReviewManagerAppUpdatedOverrideTest {
                 assertTrue(awaitItem())
             }
         }
+    }
+}
+
+/**
+ * That an event survives being fired from a caller that does not stick around.
+ *
+ * This is the regression: a theme change emitted from a screen's own scope was lost if the user left the
+ * screen immediately, because the channel was rendezvous and the send did not complete until the collector
+ * received it. The prompt then never appeared — for anyone, not only a test.
+ */
+@RunWith(JUnit4::class)
+class InAppReviewManagerEventDeliveryTest {
+    @get:Rule
+    val mockLoggingRule = MockLoggingRule()
+
+    @Test
+    fun `an event fired before the collector is ready is still delivered`() = runTest {
+        val manager = createManager(isFreshInstall = true)
+
+        // Deliberately no yield between construction and the event: the collector has not started, so this
+        // is the moment a rendezvous channel had nowhere to put it. `first { it }` waits rather than
+        // sampling, so a lost event fails by timing out instead of by reading a stale false.
+        manager.onEvent(InAppReviewManager.Event.ThemeChanged)
+
+        assertTrue(manager.shouldShowPrompt.first { it })
+    }
+
+    @Test
+    fun `onEvent needs no coroutine at the call site`() = runTest {
+        // Compilation is half the assertion: onEvent must stay non-suspending, because every caller is a
+        // screen and wrapping it in that screen's scope is what made the event losable.
+        val manager = createManager(isFreshInstall = true)
+        val fire: () -> Unit = { manager.onEvent(InAppReviewManager.Event.PathScreenVisited) }
+
+        fire()
+
+        assertTrue(manager.shouldShowPrompt.first { it })
     }
 }
 

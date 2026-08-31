@@ -111,9 +111,7 @@ class PathActivity : ScreenLockActionBarActivity() {
             binding.pathRowsContainer.layoutParams = params
         }
 
-        lifecycleScope.launch {
-            inAppReviewManager.onEvent(InAppReviewManager.Event.PathScreenVisited)
-        }
+        inAppReviewManager.onEvent(InAppReviewManager.Event.PathScreenVisited)
     }
 
     private fun registerObservers() {
