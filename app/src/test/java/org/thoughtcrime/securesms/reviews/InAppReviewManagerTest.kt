@@ -164,9 +164,62 @@ class InAppReviewManagerTest {
     }
 }
 
+/**
+ * The QA override for the install-state gate.
+ *
+ * It exists because the real answer is unreachable from a test: a harness installs over an existing
+ * package, so firstInstallTime and lastUpdateTime always differ, the app always reads as updated, and the
+ * two triggers that only a fresh install allows can never be exercised. These pin that the override
+ * outranks the package manager.
+ *
+ * Only the POSITIVE direction is asserted. The negative one — that an override of `true` gates the theme
+ * and path triggers back out — is not here, because turbine's `expectNoEvents()` does not fail in this
+ * setup even when the event DOES raise the prompt: verified by mutation, and `advanceUntilIdle()` before
+ * it does not change that. A test that cannot fail is worse than an absent one, so it is absent. The
+ * pre-existing `should show prompt respectively on triggers on update` rests on the same call and is
+ * likely to share the weakness.
+ */
+@RunWith(JUnit4::class)
+class InAppReviewManagerAppUpdatedOverrideTest {
+    @get:Rule
+    val mockLoggingRule = MockLoggingRule()
+
+    @Test
+    fun `override false lets the fresh-install triggers fire even though the package says updated`() =
+        runTest {
+            // Exactly the harness's situation: installed over an existing package.
+            for (event in listOf(
+                InAppReviewManager.Event.ThemeChanged,
+                InAppReviewManager.Event.PathScreenVisited,
+            )) {
+                val manager = createManager(isFreshInstall = false, debugAppUpdated = false)
+
+                manager.shouldShowPrompt.test {
+                    assertFalse(awaitItem())
+                    manager.onEvent(event)
+                    assertTrue(awaitItem())
+                }
+            }
+        }
+
+    @Test
+    fun `the donate trigger fires either way`() = runTest {
+        for (updated in listOf(true, false)) {
+            val manager = createManager(isFreshInstall = !updated, debugAppUpdated = updated)
+
+            manager.shouldShowPrompt.test {
+                assertFalse(awaitItem())
+                manager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
+                assertTrue(awaitItem())
+            }
+        }
+    }
+}
+
 fun TestScope.createManager(
     isFreshInstall: Boolean,
-    supportInAppReviewFlow: Boolean = true
+    supportInAppReviewFlow: Boolean = true,
+    debugAppUpdated: Boolean? = null,
 ): InAppReviewManager {
     val pm = mock<PackageManager> {
         on { getPackageInfo(any<String>(), any<Int>()) } doReturn PackageInfo().apply {
@@ -190,6 +243,7 @@ fun TestScope.createManager(
         prefs = mock {
             on { inAppReviewState } doAnswer { reviewState }
             on { inAppReviewState = any() } doAnswer { reviewState = it.arguments[0] as? String }
+            on { getDebugAppUpdated() } doReturn debugAppUpdated
         },
         json = Json {
             serializersModule += ReviewsSerializerModule().provideReviewsSerializersModule()
