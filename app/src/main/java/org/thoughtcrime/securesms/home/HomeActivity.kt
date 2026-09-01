@@ -23,6 +23,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.WindowInsetsCompat
@@ -33,7 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -53,6 +56,7 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
+import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
@@ -91,6 +95,7 @@ import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.qa.QaLaunchConfig
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import org.thoughtcrime.securesms.reviews.ui.InAppReview
@@ -156,6 +161,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var prefs: PreferenceStorage
     @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
     @Inject lateinit var jobQueue: Provider<JobQueue>
+    @Inject lateinit var snodeDirectory: SnodeDirectory
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -229,6 +235,24 @@ class HomeActivity : ScreenLockActionBarActivity(),
         get() = false
 
     // region Lifecycle
+    /**
+     * This activity is the launcher target (via the `RoutingActivity` alias), so any automated-test
+     * launch extras arrive on ITS intent — including when there is no account yet and the base class
+     * immediately routes on to onboarding.
+     *
+     * The QA config is therefore applied here rather than in `onCreate(savedInstanceState, ready)`:
+     * that overload is only invoked when the base class did NOT route away (`!isFinishing`), so on a
+     * fresh install — exactly the automation case — it never runs. Placed after `super.onCreate` so
+     * Hilt has injected `textSecurePreferences`; `finish()` having been called does not stop us from
+     * persisting the preferences.
+     */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // QA/debug builds only; compiled out of release builds entirely.
+        QaLaunchConfig.apply(intent, textSecurePreferences, snodeDirectory)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
@@ -244,14 +268,25 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
             val pathStatus by pathManager.status.collectAsState()
 
+            // Carried on the Compose node rather than as an `android:contentDescription` on the hosting
+            // ComposeView, which is where it used to live. The host's attribute was unreliable: Compose
+            // publishes its own semantics tree for the content (the `clickable` below already gives this
+            // node a button role), so whether the host's description surfaced in the accessibility tree
+            // depended on composition timing — which showed up as an intermittent "element not found" in
+            // the Appium onboarding flow. On the tapped node it is deterministic, and it describes the
+            // thing that is actually actionable.
+            val openSettingsDescription = stringResource(R.string.AccessibilityId_profilePicture)
+
             Avatar(
                 size = LocalDimensions.current.iconMediumAvatar,
                 data = avatarUtils.getUIDataFromRecipient(recipient),
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = ::openSettings
-                ),
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = ::openSettings
+                    )
+                    .semantics { contentDescription = openSettingsDescription },
                 badge = AvatarBadge.ComposeBadge(
                     content = {
                         val glowSize = LocalDimensions.current.xxxsSpacing

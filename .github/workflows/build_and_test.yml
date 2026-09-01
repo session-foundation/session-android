@@ -23,10 +23,10 @@ jobs:
           - variant: 'huawei'
             extra_build_command_options: '-Phuawei=1'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Restore gradle cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.gradle/caches
@@ -46,7 +46,7 @@ jobs:
         run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }} --stacktrace
 
       - name: Save gradle cache
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         # Only save cache on dev
         if: github.ref_name == 'dev'
         with:
@@ -73,9 +73,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Restore Gradle cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.gradle/caches
@@ -95,7 +95,7 @@ jobs:
         run: ./gradlew testPlayDebugUnitTest --stacktrace
 
       - name: Save gradle cache
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         # Only save cache on dev
         if: github.ref_name == 'dev'
         with:

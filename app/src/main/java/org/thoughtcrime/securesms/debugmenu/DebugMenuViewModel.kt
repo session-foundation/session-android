@@ -99,14 +99,12 @@ class DebugMenuViewModel @AssistedInject constructor(
             hideMessageRequests = preferenceStorage[AppPreferences.HAS_HIDDEN_MESSAGE_REQUESTS],
             hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
-            forceDeterministicEncryption = textSecurePreferences.forcesDeterministicAttachmentEncryption,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
             deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
             forceCurrentUserAsPro = textSecurePreferences.forceCurrentUserAsPro(),
             forceOtherUsersAsPro = textSecurePreferences.forceOtherUsersAsPro(),
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
-            forcePostPro = textSecurePreferences.forcePostPro(),
             forceShortTTl = textSecurePreferences.forcedShortTTL(),
             debugAvatarReupload = textSecurePreferences.debugAvatarReupload,
             messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
@@ -127,13 +125,14 @@ class DebugMenuViewModel @AssistedInject constructor(
                 DebugProPlanStatus.NORMAL,
                 DebugProPlanStatus.LOADING,
                 DebugProPlanStatus.ERROR,
+                DebugProPlanStatus.SUCCESS,
             ),
             selectedDebugProPlanStatus = textSecurePreferences.getDebugProPlanStatus() ?: DebugProPlanStatus.NORMAL,
             debugProPlans = subscriptionManagers.asSequence()
                 .flatMap { it.availablePlans.asSequence().map { plan -> DebugProPlan(it, plan) } }
                 .toList(),
             forceNoBilling = textSecurePreferences.getDebugForceNoBilling(),
-            withinQuickRefund = textSecurePreferences.getDebugIsWithinQuickRefund(),
+            withinQuickRefund = textSecurePreferences.getDebugQuickRefundWindowOverride() == true,
             availableAltFileServers = TEST_FILE_SERVERS,
             alternativeFileServer = textSecurePreferences.alternativeFileServer,
             showToastForGroups = getDebugGroupToastPref(),
@@ -342,16 +341,9 @@ class DebugMenuViewModel @AssistedInject constructor(
             }
 
             is Commands.WithinQuickRefund -> {
-                textSecurePreferences.setDebugIsWithinQuickRefund(command.set)
+                textSecurePreferences.setDebugQuickRefundWindowOverride(command.set)
                 _uiState.update {
                     it.copy(withinQuickRefund = command.set)
-                }
-            }
-
-            is Commands.ForcePostPro -> {
-                textSecurePreferences.setForcePostPro(command.set)
-                _uiState.update {
-                    it.copy(forcePostPro = command.set)
                 }
             }
 
@@ -399,12 +391,6 @@ class DebugMenuViewModel @AssistedInject constructor(
                 viewModelScope.launch {
                     command.plan.apply { manager.purchasePlan(plan) }
                 }
-            }
-
-            is Commands.ToggleDeterministicEncryption -> {
-                val newValue = !_uiState.value.forceDeterministicEncryption
-                _uiState.update { it.copy(forceDeterministicEncryption = newValue) }
-                textSecurePreferences.forcesDeterministicAttachmentEncryption = newValue
             }
 
             is Commands.ToggleDebugAvatarReupload -> {
@@ -626,12 +612,10 @@ class DebugMenuViewModel @AssistedInject constructor(
         val showDeprecatedStateWarningDialog: Boolean,
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
-        val forceDeterministicEncryption: Boolean,
         val forceCurrentUserAsPro: Boolean,
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
         val messageProFeature: Set<ProFeature>,
-        val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
         val debugAvatarReupload: Boolean,
@@ -668,22 +652,48 @@ class DebugMenuViewModel @AssistedInject constructor(
         STOPPED,
     }
 
+    /**
+     * The `label` is what the debug menu shows for selection, so the day counts in it MUST match the
+     * offsets the fixtures actually use in `ProStatusManager`'s debug branch. Two of these were out of
+     * step (they said 14 days where the code did 2), which cost a wrong expected string in an Appium
+     * spec — the label was read as if it were the source of truth. If you change a fixture offset,
+     * change its label in the same commit.
+     *
+     * That warning was then proved on the very next pair: `EXPIRED`/`EXPIRED_APPLE` claimed 2 days
+     * while the code did 14, because the fix above only covered the `EXPIRING` labels. **Correcting
+     * the labels that lie is not the same as checking the ones that didn't**, so when this drifts
+     * again, re-read every offset rather than the ones a report names — the labels are now the
+     * documented contract an Appium spec is written against.
+     */
     enum class DebugSubscriptionStatus(val label: String) {
         AUTO_GOOGLE("Auto Renewing (Google, 3 months)"),
         AUTO_APPLE_REFUNDING("Refunding (Apple, 3 months)"),
-        EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 14 days, Google, 12 months)"),
-        EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 40 days, Google, 12 months)"),
+        EXPIRING_GOOGLE("Expiring/Cancelled (Expires in 2 days, Google, 12 months)"),
+        EXPIRING_GOOGLE_LATER("Expiring/Cancelled (Expires in 30 days, Google, 12 months)"),
         AUTO_APPLE("Auto Renewing (Apple, 1 months)"),
-        EXPIRING_APPLE("Expiring/Cancelled (Expires in 14 days, Apple, 1 months)"),
-        EXPIRED("Expired (Expired 2 days ago, Google)"),
+        EXPIRING_APPLE("Expiring/Cancelled (Expires in 2 days, Apple, 1 months)"),
+        EXPIRED("Expired (Expired 14 days ago, Google)"),
         EXPIRED_EARLIER("Expired (Expired 60 days ago, Google)"),
-        EXPIRED_APPLE("Expired (Expired 2 days ago, Apple)"),
+        EXPIRED_APPLE("Expired (Expired 14 days ago, Apple)"),
     }
 
     enum class DebugProPlanStatus(val label: String){
+        /** No override — the real load state decides. Not the same as [SUCCESS]. */
         NORMAL("Normal State"),
         LOADING("Always Loading"),
         ERROR("Always Erroring out"),
+
+        /**
+         * Forces the refresh state to Success, which asserts that THIS PROCESS has had a fetch confirmed
+         * by the backend when it has not. That is a lie the app tells itself, so it is only reachable
+         * from the debug menu or `QaLaunchConfig` and cannot be selected in a shipping build.
+         *
+         * Distinct from [NORMAL] on purpose: NORMAL removes the override and defers to the real state,
+         * which on a cold start is `Init` and therefore Loading. Anything gating on a confirmed fetch —
+         * `HomeViewModel`'s expiring and expired CTAs — is *defeated* by this value, so do not use it in
+         * a test whose subject is one of those gates; it would pass whether the gate works or not.
+         */
+        SUCCESS("Always Succeeding"),
     }
 
     sealed class Commands {
@@ -701,7 +711,6 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
         data class ForceNoBilling(val set: Boolean) : Commands()
         data class WithinQuickRefund(val set: Boolean) : Commands()
-        data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
         data class SetMessageProFeature(val feature: ProFeature, val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
@@ -715,7 +724,6 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class SetDebugSubscriptionStatus(val status: DebugSubscriptionStatus) : Commands()
         data class SetDebugProPlanStatus(val status: DebugProPlanStatus) : Commands()
         data class PurchaseDebugPlan(val plan: DebugProPlan) : Commands()
-        data object ToggleDeterministicEncryption : Commands()
         data object ToggleDebugAvatarReupload : Commands()
         data object ResetPushToken : Commands()
         data class SelectAltFileServer(val fileServer: FileServer?) : Commands()

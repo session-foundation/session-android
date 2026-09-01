@@ -22,11 +22,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.OpenCancelSubscriptionPage
 import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -100,10 +97,10 @@ fun CancelPlan(
     }
 
     BaseCellButtonProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_cancel_plan,
         disabled = true,
         onBack = onBack,
         buttonText = Phrase.from(context.getText(R.string.cancelAccess))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         dangerButton = true,
         onButtonClick = {
@@ -111,7 +108,6 @@ fun CancelPlan(
             sendCommand(OpenCancelSubscriptionPage)
         },
         title = Phrase.from(context.getText(R.string.proCancelSorry))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
     ){
         Column {
@@ -126,10 +122,6 @@ fun CancelPlan(
             Text(
                 text = annotatedStringResource(
                     Phrase.from(context.getText(R.string.proCancellationShortDescription))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format()
                 ),
                 style = LocalType.current.base,

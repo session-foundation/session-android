@@ -63,15 +63,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.network.model.PathStatus
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -318,7 +314,6 @@ fun Settings(
             Buttons(
                 recoveryHidden = uiState.recoveryHidden,
                 pathStatus = uiState.pathStatus,
-                postPro = uiState.isPostPro,
                 proDataState = uiState.proDataState,
                 sendCommand = sendCommand
             )
@@ -402,7 +397,6 @@ fun Settings(
             AvatarDialog(
                 state = uiState.avatarDialogState,
                 isPro = uiState.proDataState.type is ProStatus.Active,
-                isPostPro = uiState.isPostPro,
                 sendCommand = sendCommand,
                 startAvatarSelection = startAvatarSelection
             )
@@ -541,7 +535,6 @@ fun Settings(
 fun Buttons(
     recoveryHidden: Boolean,
     pathStatus: PathStatus,
-    postPro: Boolean,
     proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ) {
@@ -584,29 +577,25 @@ fun Buttons(
 
         Cell {
             Column {
-                if(postPro){
-                   ItemButton(
-                        text = annotatedStringResource(
-                            when (proDataState.type) {
+                ItemButton(
+                    text = annotatedStringResource(
+                        when (proDataState.type) {
                                 is ProStatus.Active -> Phrase.from(
                                     LocalContext.current,
                                     R.string.sessionProBeta
                                 )
-                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                                     .format().toString()
 
                                 is ProStatus.NeverSubscribed -> Phrase.from(
                                     LocalContext.current,
                                     R.string.upgradeSession
                                 )
-                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
                                     .format().toString()
 
                                 is ProStatus.Expired -> Phrase.from(
                                     LocalContext.current,
                                     R.string.proRenewBeta
                                 )
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString()
                             }
                         ),
@@ -619,13 +608,15 @@ fun Buttons(
                             )
                         },
                         modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
+                        // The row id above is the tap target and carries no text; this one is on the
+                        // label, so a test can read WHICH of the three states the row is showing.
+                        textQaTag = R.string.qa_settings_item_pro_title,
                         colors = accentTextButtonColors()
                     ) {
                        activity?.push<ProSettingsActivity>()
                     }
 
                     Divider()
-                }
 
                 // Invite a friend
                 ItemButton(
@@ -754,20 +745,17 @@ fun ShowClearDataDialog(
         text = when(state){
             is SettingsViewModel.ClearDataState.Clearing -> null
             is SettingsViewModel.ClearDataState.Error -> annotatedStringResource(R.string.clearDataErrorDescriptionGeneric)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevice -> annotatedStringResource(R.string.clearDeviceDescription)
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork -> annotatedStringResource(R.string.clearDeviceAndNetworkConfirm)
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro -> {
                 annotatedStringResource(
                     Phrase.from(context.getText(R.string.proClearAllDataDevice))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format()
                 )
             }
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro -> {
                 annotatedStringResource(
                     Phrase.from(context.getText(R.string.proClearAllDataNetwork))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format()
                 )
             }
@@ -786,6 +774,7 @@ fun ShowClearDataDialog(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(stringResource(R.string.clearDeviceOnly)),
+                            qaTag = GetString(stringResource(R.string.AccessibilityId_clearDeviceOnlyRadio)),
                             selected = !deleteOnNetwork
                         )
                     ) {
@@ -796,6 +785,7 @@ fun ShowClearDataDialog(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(stringResource(R.string.clearDeviceAndNetwork)),
+                            qaTag = GetString(stringResource(R.string.AccessibilityId_clearDeviceAndNetworkRadio)),
                             selected = deleteOnNetwork,
                         )
                     ) {
@@ -808,6 +798,7 @@ fun ShowClearDataDialog(
         },
         buttons = when(state){
             is SettingsViewModel.ClearDataState.Default,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevice,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro,
@@ -932,7 +923,6 @@ fun AvatarOption(
 fun AvatarDialog(
     state: SettingsViewModel.AvatarDialogState,
     isPro: Boolean,
-    isPostPro: Boolean,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
     startAvatarSelection: () -> Unit,
 ){
@@ -945,22 +935,20 @@ fun AvatarDialog(
             // custom content that has the displayed images
 
             // animated Pro title
-            if(isPostPro){
-                ProBadgeText(
-                    modifier = Modifier
-                        .padding(
-                            top = LocalDimensions.current.xxxsSpacing,
-                            bottom = LocalDimensions.current.xsSpacing,
-                        )
-                        .clickable {
-                            sendCommand(ShowAnimatedProCTA)
-                        },
-                    text = stringResource(if(isPro) R.string.proAnimatedDisplayPictureModalDescription
-                    else R.string.proAnimatedDisplayPicturesNonProModalDescription),
-                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary),
-                    badgeAtStart = isPro
-                )
-            }
+            ProBadgeText(
+                modifier = Modifier
+                    .padding(
+                        top = LocalDimensions.current.xxxsSpacing,
+                        bottom = LocalDimensions.current.xsSpacing,
+                    )
+                    .clickable {
+                        sendCommand(ShowAnimatedProCTA)
+                    },
+                text = stringResource(if(isPro) R.string.proAnimatedDisplayPictureModalDescription
+                else R.string.proAnimatedDisplayPicturesNonProModalDescription),
+                textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary),
+                badgeAtStart = isPro
+            )
 
             // main container that control the overall size and adds the rounded bg
             Box(
@@ -1080,7 +1068,6 @@ private fun SettingsScreenPreview() {
                         )
                     )
                 ),
-                isPostPro = true,
                 proDataState = ProDataState(
                     type = previewAutoRenewingApple,
                     refreshState = State.Success(Unit),
@@ -1110,7 +1097,6 @@ fun PreviewAvatarDialog(
         AvatarDialog(
             state = SettingsViewModel.AvatarDialogState.NoAvatar,
             isPro = false,
-            isPostPro = false,
             sendCommand = {},
             startAvatarSelection = {}
         )

@@ -7,6 +7,8 @@ import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.pro.subscription.ProPlanPeriod
+import org.thoughtcrime.securesms.pro.subscription.ProPlanUnit
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DATE_FORMAT_PREF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.TIME_FORMAT_PREF
@@ -239,7 +241,7 @@ class DateUtils @Inject constructor(
         }
     }
 
-    fun getExpiryString(instant: Instant?, now: Instant = Instant.now()): String {
+    fun getExpiryString(instant: Instant?, now: Instant): String {
         if (instant == null) return context.getString(R.string.proExpired)
         return getExpiryString(
             remaining = Duration.between(now, instant)
@@ -303,6 +305,46 @@ class DateUtils @Inject constructor(
             return rawString.replace(Regex("""(\d+\p{Z}+)(\p{L})""")) {
                 it.groupValues[1] + it.groupValues[2].uppercase(locale)
             }
+        }
+
+        /**
+         * Render a Pro plan length from the backend's raw (count, unit) [ProPlanPeriod], GENERICALLY,
+         * via the OS locale formatter — so a new period ("6m", "1w", "2y") renders with zero code change.
+         *
+         * - Periodic units (second/day/week/month/year) map to the matching ICU [MeasureUnit] and go
+         *   through [getLocalisedTimeDuration] (locale-aware + capitalised); MONTH and YEAR are supported.
+         * - LIFETIME is NOT a duration: it renders the localized `proPlanLifetime` string when that key
+         *   exists (base English counts), else the English fallback "Lifetime". We gate on the resource
+         *   existing (same pattern as the pro_provider_* / pro_error_* strings) so it works before the
+         *   Crowdin sync adds the key. Callers should not normally pass a lifetime plan here (it has no
+         *   renewal/expiry surface), but we handle it safely rather than emitting "0 months".
+         */
+        fun getLocalisedProPlanLength(context: Context, period: ProPlanPeriod): String {
+            if (period.unit == ProPlanUnit.LIFETIME) {
+                val resId = context.resources.getIdentifier("proPlanLifetime", "string", context.packageName)
+                return if (resId != 0) context.getString(resId) else "Lifetime"
+            }
+
+            val measureUnit = when (period.unit) {
+                ProPlanUnit.SECOND -> MeasureUnit.SECOND
+                ProPlanUnit.DAY -> MeasureUnit.DAY
+                ProPlanUnit.WEEK -> MeasureUnit.WEEK
+                ProPlanUnit.MONTH -> MeasureUnit.MONTH
+                ProPlanUnit.YEAR -> MeasureUnit.YEAR
+                ProPlanUnit.LIFETIME -> return "Lifetime" // handled above; keeps the `when` exhaustive
+            }
+            return getLocalisedTimeDuration(context, period.count, measureUnit)
+        }
+
+        /**
+         * Resolve a Crowdin string template by resource [name], or fall back to [englishFallback] when the
+         * key isn't in the (generated) resources yet — the same not-yet-synced gate as the
+         * `proPlanLifetime` lookup above, so we can reference new Pro keys before the Crowdin sync adds
+         * them. Returns a CharSequence suitable for `Phrase.from(...)`.
+         */
+        fun proStringTemplateOrFallback(context: Context, name: String, englishFallback: String): CharSequence {
+            val resId = context.resources.getIdentifier(name, "string", context.packageName)
+            return if (resId != 0) context.getText(resId) else englishFallback
         }
 
         // Format a given timestamp with a specific pattern

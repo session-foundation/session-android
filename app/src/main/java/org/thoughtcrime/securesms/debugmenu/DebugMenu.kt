@@ -385,15 +385,6 @@ fun DebugMenu(
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
-                    text = "Set app as post Pro launch",
-                    checked = uiState.forcePostPro,
-                    onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.ForcePostPro(it))
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-                DebugSwitchRow(
                     text = "Set other users as Pro",
                     checked = uiState.forceOtherUsersAsPro,
                     onCheckedChange = {
@@ -609,16 +600,6 @@ fun DebugMenu(
                     onValueSelected = { sendCommand(DebugMenuViewModel.Commands.SelectAltFileServer(it)) },
                     labeler = { it?.url?.host ?: "Do not use" },
                     allowSelectingNullValue = true,
-                )
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-
-                DebugSwitchRow(
-                    text = "Uses deterministic encryption for both avatar and attachment uploads",
-                    checked = uiState.forceDeterministicEncryption,
-                    onCheckedChange = {
-                        sendCommand(DebugMenuViewModel.Commands.ToggleDeterministicEncryption)
-                    }
                 )
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
@@ -963,7 +944,6 @@ fun PreviewDebugMenu() {
                 forceCurrentUserAsPro = true,
                 forceIncomingMessagesAsPro = true,
                 forceOtherUsersAsPro = false,
-                forcePostPro = false,
                 forceShortTTl = false,
                 messageProFeature = setOf(ProMessageFeature.HIGHER_CHARACTER_LIMIT),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
@@ -974,7 +954,6 @@ fun PreviewDebugMenu() {
                 debugProPlans = emptyList(),
                 forceNoBilling = false,
                 withinQuickRefund = true,
-                forceDeterministicEncryption = false,
                 debugAvatarReupload = true,
                 hasDonated = false,
                 hasCopiedDonationURL = false,

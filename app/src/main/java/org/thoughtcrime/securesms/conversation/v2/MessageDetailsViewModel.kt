@@ -204,7 +204,11 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup,
                     proFeatures = proStatusManager.getMessageProFeatures(messageRecord),
-                    proBadgeClickable = !recipientRepository.getSelf().isPro // no badge click if the current user is pro
+                    // A badge clickable only for non-subscribers is an upsell affordance, so it reads
+                    // DISPLAY: the gate reads ACCESS, the thing that explains the gate reads DISPLAY.
+                    // Was an inverted ACCESS read, which offered a subscriber holding no usable proof a
+                    // route to buy the plan they already have.
+                    proBadgeClickable = proStatusManager.proDataState.value.type !is ProStatus.Active
                 )
             }
         }

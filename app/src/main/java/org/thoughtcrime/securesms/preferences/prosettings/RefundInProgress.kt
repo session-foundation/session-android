@@ -16,13 +16,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
@@ -46,7 +43,7 @@ fun RefundInProgressScreen(
     onBack: () -> Unit,
 ) {
     val state by viewModel.proSettingsUIState.collectAsState()
-    val activePlan = state.proDataState.type as? ProStatus.Active ?: return
+    val activePlan = state.proDataState.type as? ProStatus.Active.WithPlan ?: return
     
     RefundInProgress(
         subscription = activePlan,
@@ -58,13 +55,14 @@ fun RefundInProgressScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun RefundInProgress(
-    subscription: ProStatus.Active,
+    subscription: ProStatus.Active.WithPlan,
     sendCommand: (ProSettingsViewModel.Commands) -> Unit,
     onBack: () -> Unit,
 ){
     val context = LocalContext.current
 
     BaseCellButtonProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_refund_in_progress,
         disabled = true,
         onBack = onBack,
         buttonText = stringResource(R.string.theReturn),
@@ -85,8 +83,6 @@ fun RefundInProgress(
                 text = annotatedStringResource(
                     Phrase.from(context.getText(R.string.proRefundNextSteps))
                         .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .format()
                 ),
                 style = LocalType.current.base,
@@ -112,7 +108,6 @@ fun RefundInProgress(
                 text = annotatedStringResource(
                     Phrase.from(context.getText(R.string.proRefundSupport))
                         .put(PLATFORM_KEY, subscription.providerData.getPlatformDisplayName())
-                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                         .put(ICON_KEY, iconExternalLink)
                         .format()
                 ),

@@ -1,0 +1,992 @@
+package org.thoughtcrime.securesms.qa
+
+import network.loki.messenger.libsession_util.pro.BackendRequests
+import android.content.Intent
+import android.os.Bundle
+import network.loki.messenger.BuildConfig
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.session.libsession.messaging.file_server.FileServer
+import org.session.libsession.network.snode.SnodeDirectory
+import org.session.libsession.utilities.Environment
+import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
+import org.session.libsignal.utilities.Log
+import java.time.Duration
+import java.time.Instant
+
+/**
+ * Applies automated-test configuration supplied as launch intent extras.
+ *
+ * This is the Android counterpart of iOS's
+ * `DeveloperSettingsViewModel.processUnitTestEnvVariablesIfNeeded`, which reads the same kind of
+ * settings out of the process environment. Android apps can't read the launcher's environment, so
+ * the equivalent channel is intent extras on the launch activity — which Appium can set with the
+ * `appium:optionalIntentArguments` capability:
+ *
+ * ```
+ * 'appium:optionalIntentArguments': '--es sessionDevnetSeedUrl http://10.0.0.1:1280'
+ * ```
+ *
+ * ## Security
+ *
+ * The launcher is an `android:exported="true"` activity-alias, so ANY app on the device can start it
+ * with extras. Acting on them is therefore gated behind [BuildConfig.ALLOW_QA_LAUNCH_CONFIG], which
+ * is false for `release`/`releaseWithDebugMenu` and true only for `debug`/`qa`/`automaticQa`. Because
+ * it is a compile-time constant, R8 removes this whole code path from builds that don't opt in.
+ *
+ * Never gate on anything weaker (a runtime pref, a string comparison on build type): that would turn
+ * an exported launcher into a way for a third-party app to repoint a release build's network.
+ *
+ * ## Timing
+ *
+ * No restart is needed. Values go to preferences, and everything that resolves the network re-reads
+ * them on every access — `SnodeDirectory.seedNodePool` is a getter, not a field captured at
+ * construction — so the requested configuration is live from here on.
+ *
+ * What does not follow automatically is state already derived from the PREVIOUS configuration — a
+ * cached snode pool, and the onion paths and swarms built out of it. `SnodeDirectory` owns that
+ * problem: it records the seed configuration each pool was fetched under and drops the lot when that
+ * no longer matches, so no restart is needed to converge on the requested network.
+ *
+ * It does have to be told to look, though. That check normally rides along with pool population, and
+ * a launch that already has a usable pool and cached paths never populates anything — so it would
+ * never run on exactly the launches where it matters. Hence the explicit kick at the end of [apply].
+ */
+object QaLaunchConfig {
+    private const val TAG = "QaLaunchConfig"
+
+    /** iOS's explicit-clear sentinel, accepted on every Pro mock key so both platforms spell it alike. */
+    private const val USE_ACTUAL = "useactual"
+
+    /** Seed node to use when the environment is devnet. Must be a valid http(s) URL. */
+    private const val EXTRA_DEVNET_SEED_URL = "sessionDevnetSeedUrl"
+
+    /**
+     * Which service network to use: `mainnet`, `testnet` or `devnet` — the same vocabulary iOS
+     * accepts for its `serviceNetwork` launch variable.
+     */
+    private const val EXTRA_SERVICE_NETWORK = "sessionServiceNetwork"
+
+    /**
+     * Session Pro backend to use instead of the one compiled into libsession, so a QA backend can be
+     * targeted without rebuilding. iOS's equivalents are `customProBackendUrl`/`customProBackendPubkey`.
+     *
+     * Both are required together, and [EXTRA_PRO_BACKEND_PUBKEY] must be the backend's **Ed25519**
+     * signing key (`signing_pubkey` from its `GET /status`), not the x25519 form — the x25519 key is
+     * derived from it (see ProBackendConfig). A URL paired with the production key verifies every
+     * QA-signed proof as invalid and silently strips Pro content, which reads as an app bug rather
+     * than a config mistake, so a half-supplied pair is rejected rather than half-applied.
+     */
+    private const val EXTRA_PRO_BACKEND_URL = "sessionProBackendUrl"
+    private const val EXTRA_PRO_BACKEND_PUBKEY = "sessionProBackendPubkey"
+
+    /**
+     * File server to upload attachments and display pictures to, instead of the production one.
+     *
+     * The debug menu selects only from a hardcoded list of remote test servers, so this is the only
+     * way to name an arbitrary one — a locally hosted file server included.
+     *
+     * Set BOTH or neither, for the same reason the Pro backend pair does: the key is what the onion
+     * request is built against, so a URL paired with the wrong key fails inside the request rather than
+     * at configuration time, as a transfer that never resolves.
+     *
+     * **Ed25519**, which is what [FileServer] stores; it derives the X25519 form itself. Both forms are
+     * 64 hex characters, so supplying the wrong one passes every check here and fails only at the far
+     * end of a transfer.
+     */
+    private const val EXTRA_FILE_SERVER_URL = "sessionFileServerUrl"
+    private const val EXTRA_FILE_SERVER_PUBKEY = "sessionFileServerPubkey"
+
+    /**
+     * Current user's Pro state. Named after the iOS concept rather than the Android preference,
+     * because this is a cross-platform contract the Appium suite is written against — iOS's key is
+     * `mockCurrentUserSessionProBackendStatus`.
+     *
+     * `useActual` | `never` | `active` | `expired`. `useActual` is the same explicit-clear sentinel
+     * iOS uses on every mockable Pro feature; an ABSENT extra leaves the preferences untouched.
+     *
+     * Maps to TWO preferences, because Android splits the concerns iOS keeps in one key:
+     * `DEBUG_SUBSCRIPTION_STATUS` mocks the DISPLAY status, and `forceCurrentUserAsPro` grants ACCESS.
+     * Setting both from this one key is what keeps a single `bothPlatformsIt` setup meaning the same
+     * thing on both platforms.
+     *
+     * They are no longer WELDED, though, and the difference matters: `forceCurrentUserAsPro` used to
+     * double as the "use mocked state at all" gate for DISPLAY too, so a mocked status necessarily also
+     * granted access and `get_pro_status`-says-Active-with-no-usable-proof could not be set up at all.
+     * DISPLAY now keys on the subscription type alone. Use [EXTRA_PRO_PROOF] to vary the access
+     * half independently.
+     */
+    private const val EXTRA_PRO_BACKEND_STATUS = "sessionProBackendStatus"
+
+    /**
+     * Mocked Pro PROOF, i.e. ACCESS — the harness field `proProof`.
+     *
+     * `valid` grants access, `none` DENIES it regardless of any real proof, and `useActual` clears the
+     * override so the real proof governs. An ABSENT extra leaves the stored value untouched, matching
+     * every other Pro extra here — see [applyProProof] for why absent cannot mean `useActual`. iOS spells this
+     * `mockCurrentUserSessionProProof` and Desktop `SESSION_PRO_MOCK_PROOF`; the harness field name is
+     * what is identical across clients, the app-side literal follows each platform's own convention.
+     *
+     * DISPLAY and ACCESS are separate levers: [EXTRA_PRO_BACKEND_STATUS] says what the PLAN is and grants
+     * nothing, this says what the device MAY DO. A spec wanting an ordinary Pro user sets both, and the
+     * interesting fixture is the one that sets them to disagree — `proBackendStatus=active` with
+     * `proProof=none` is the truncation state, where the plan reads active and no usable proof exists.
+     */
+    private const val EXTRA_PRO_PROOF = "sessionProProof"
+
+    /**
+     * Forces the next Pro revocation poll to happen at launch instead of at its scheduled time.
+     *
+     * `true` or `1` enables; absent, empty or any other value leaves the stored setting alone. Not a
+     * presence check — a key present with a disabling value must disable.
+     *
+     * The QA backend serves a 24h `retry_in`, so a client's second poll is a day after its first and no
+     * revocation behaviour is observable within a test. This does not shorten that interval or add a
+     * fetch path: it clears the pending scheduled poll so the ordinary scheduler, unchanged, enqueues
+     * one immediately. See [applyForceProRevocationRefresh] for why cancelling is the equivalent of
+     * backdating a stored timestamp here.
+     */
+    private const val EXTRA_FORCE_PRO_REVOCATION_REFRESH = "sessionForceProRevocationRefresh"
+
+    /**
+     * States whether the app should consider itself UPDATED rather than freshly installed, which decides
+     * which events may raise the in-app review prompt: when updated, only the donate trigger can; when
+     * freshly installed, the path and theme triggers can too.
+     *
+     * `true` | `false`. Absent leaves the stored override alone; `useActual` restores the real
+     * package-manager answer.
+     *
+     * It needs an extra because the real answer is `firstInstallTime != lastUpdateTime`, and a harness
+     * cannot influence either: installing over an existing package always makes them differ, so the app
+     * always reads as updated and the fresh-install branch is unreachable from a test. The two triggers
+     * behind it are not testable without this.
+     *
+     * Applying this also CLEARS the stored review state, because that state is what the flag feeds: the
+     * flag is only consulted when deriving a fresh state, so without the clear a device that had already
+     * run a review spec would keep its old state and ignore the extra. That reset happens once, on the
+     * launch carrying the extra — a later relaunch without it keeps whatever the app has since decided,
+     * so a spec asserting the prompt appears only once still works across a restart.
+     *
+     * Mirrors iOS's `customFirstInstallDateTime` in purpose but not in shape — see the commit for why a
+     * date cannot express this on Android.
+     */
+    private const val EXTRA_APP_UPDATED = "sessionAppUpdated"
+
+    /**
+     * When the mocked Pro access expires, overriding the fixed offset the fixture selected by
+     * [EXTRA_PRO_BACKEND_STATUS] carries. iOS's `mockCurrentUserAccessExpiryTimestamp`, which is an
+     * independent key there too.
+     *
+     * Two accepted forms, and neither can contain a space or start with `-` because `appium-adb`
+     * reads a space-preceded `-`-prefixed token as a new flag:
+     *
+     * - **Absolute:** epoch **SECONDS**, e.g. `1786407165`. Always positive, so this is how a PAST
+     *   instant is expressed — there is deliberately no `-30d` form.
+     * - **Relative:** `+<n><unit>` with unit `s`|`m`|`h`|`d`, e.g. `+30d`. Future only, and unit-free
+     *   by construction, so prefer it wherever a test only needs an offset.
+     *
+     * `useActual` clears the override and restores the fixture's own offset.
+     *
+     * **Seconds, not milliseconds, and this is a cross-platform contract rather than a preference:**
+     * iOS's mock is a `TimeInterval` feeding `accessExpiryTimestampSeconds`, and the harness builds the
+     * value with `Math.floor(Date.now() / 1000)`. One key name and one value shape per platform is the
+     * standing rule for these keys — a per-platform dialect is how a shared spec silently means two
+     * things. Note the app's own field name records the unit; prefer it over any doc, including this one.
+     *
+     * A resolved instant more than [MAX_EXPIRY_SKEW_YEARS] years from now is REJECTED rather than
+     * applied, which is what makes a unit slip loud: milliseconds read as seconds lands around the year
+     * 58,000, which no test means. The check is deliberately **direction-agnostic** — it bounds the
+     * resolved instant rather than inspecting the input's magnitude, so it catches the slip either way
+     * and needs no second unit-specific test beside it.
+     */
+    private const val EXTRA_PRO_ACCESS_EXPIRY = "sessionProAccessExpiry"
+
+    /** Bound on [EXTRA_PRO_ACCESS_EXPIRY], in years either side of now. See its docs. */
+    private const val MAX_EXPIRY_SKEW_YEARS = 10L
+
+    /**
+     * Load state of the Pro settings screen: `useActual` | `loading` | `error` | `success`.
+     * iOS's `mockCurrentUserSessionProLoadingState`.
+     *
+     * `success` FORCES a successful refresh state, matching iOS's `.simulate(.success)`. It used to map to
+     * `NORMAL`, which only removed the override and deferred to the real state — and since a process that
+     * has not confirmed a fetch reports Loading from launch, `success` could not previously produce one.
+     * Note what it costs: a forced success asserts a confirmed fetch that never happened, so it defeats
+     * anything gating on one (`HomeViewModel`'s expiring/expired CTAs). Never use it in a test whose
+     * subject is one of those gates — see `DebugProPlanStatus.SUCCESS`.
+     */
+    private const val EXTRA_PRO_LOADING_STATE = "sessionProLoadingState"
+
+    /**
+     * Whether the mocked subscription has a refund pending: `useActual` | `notRefunding` | `refunding`.
+     * iOS's `mockCurrentUserSessionProRefundingStatus`.
+     *
+     * Its own key rather than a [EXTRA_PRO_BACKEND_STATUS] value, so it composes with any fixture:
+     * `AUTO_APPLE_REFUNDING` bundles refunding with a provider, duration and renewal date. Keeping it out
+     * of that key also leaves those values as the backend's own plan slugs, which are open to future
+     * additions that could shadow a test-only one.
+     *
+     * Only renders on an ACTIVE plan — the flag lives on `ProStatus.Active.WithPlan`.
+     */
+    private const val EXTRA_PRO_REFUNDING_STATUS = "sessionProRefundingStatus"
+
+    /**
+     * Which platform the mocked subscription was bought on: `useActual` | `iOS` | `android`.
+     * iOS's `mockCurrentUserSessionProOriginatingPlatform`.
+     *
+     * Maps to the payment provider slug, which is what every "bought elsewhere" decision reads
+     * (`PaymentProviderMetadata.isFromAnotherPlatform`) — so `iOS` reaches the non-originating screens on
+     * an Android device, and `android` the originating ones.
+     */
+    private const val EXTRA_PRO_ORIGINATING_PLATFORM = "sessionProOriginatingPlatform"
+
+    /**
+     * Whether the store's own quick-refund window is still open: `useActual` | `true` | `false`. Decides
+     * the <48h vs >48h refund screens.
+     *
+     * Applied by moving the plan's `quickRefundExpiry`, which is the single representation of the window,
+     * so it works for any fixture regardless of how access was granted.
+     */
+    private const val EXTRA_PRO_QUICK_REFUND_WINDOW = "sessionProQuickRefundWindow"
+
+    /**
+     * Whether the mocked plan renews itself: `useActual` | `autoRenewing` | `notAutoRenewing`.
+     * iOS's `mockCurrentUserSessionProAutoRenewing`.
+     *
+     * The flag the "Pro auto-renewing in {time}" line, the renewal-unsuccessful state and the Cancel Pro
+     * Access action all read - without it a mocked plan always runs to its end date, so none of those is
+     * reachable.
+     */
+    private const val EXTRA_PRO_AUTO_RENEWING = "sessionProAutoRenewing"
+
+    /**
+     * Whether the store account signed in on this device is the one that bought the subscription:
+     * `useActual` | `originatingAccount` | `nonOriginatingAccount`. iOS's `mockCurrentUserOriginatingAccount`.
+     *
+     * Overrides `hasValidSubscription`, which the cancel and choose-plan screens read as "same platform but
+     * a different account". Note the refund screen branches only on the platform, so this does not change it.
+     */
+    private const val EXTRA_PRO_ORIGINATING_ACCOUNT = "sessionProOriginatingAccount"
+
+    /**
+     * Read any supported extras off [intent] and persist them. Safe to call on every launch: absent
+     * extras leave the corresponding preference untouched.
+     */
+    fun apply(intent: Intent?, prefs: TextSecurePreferences, snodeDirectory: SnodeDirectory) {
+        if (!BuildConfig.ALLOW_QA_LAUNCH_CONFIG) {
+            return
+        }
+
+        if (intent == null) {
+            return
+        }
+
+        // Reading extras deserialises an attacker-supplied Bundle: because the launcher alias is
+        // exported, any app can hand us extras referencing a Parcelable class we don't have, and the
+        // unparcel then throws BadParcelableException. Left uncaught that is a remote crash-on-launch
+        // for every QA build. Every read below can be the one that triggers the unparcel (which read
+        // exactly depends on the API level's lazy-unparcelling behaviour), so the whole block is
+        // guarded rather than just the first access. A malformed Bundle is treated as no config.
+        try {
+            val extras = intent.extras ?: return
+            if (extras.isEmpty) {
+                return
+            }
+
+            warnOnUnrecognisedExtras(extras)
+
+            // Order matters: point the devnet at the right seed BEFORE switching the environment onto it.
+            applyFileServer(intent, prefs)
+            applyDevnetSeedUrl(intent, prefs)
+            applyServiceNetwork(intent, prefs)
+            applyProBackend(intent, prefs)
+            applyProBackendStatus(intent, prefs)
+            // After the status extra: it overrides the access half that one sets.
+            applyProProof(intent, prefs)
+            applyForceProRevocationRefresh(intent, prefs)
+            applyAppUpdated(intent, prefs)
+            applyProAccessExpiry(intent, prefs)
+            applyProLoadingState(intent, prefs)
+            applyProRefundingStatus(intent, prefs)
+            applyProOriginatingPlatform(intent, prefs)
+            applyProQuickRefundWindow(intent, prefs)
+            applyProAutoRenewing(intent, prefs)
+            applyProOriginatingAccount(intent, prefs)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "Ignoring unreadable launch extras", e)
+            return
+        }
+
+        // Invalidation is delegated rather than done here: SnodeDirectory keys the cached pool on the
+        // seed configuration it was fetched under and knows everything derived from it, whereas this
+        // class would only ever clear the caches it happened to know about.
+        //
+        // It does have to be kicked, though. The check normally rides along with pool population, and
+        // a launch that already has a usable pool and cached paths never populates anything — so
+        // without this the switch would apply to preferences and nothing else. Unconditional: the
+        // marker comparison inside is what decides whether there is anything to drop.
+        snodeDirectory.discardPoolIfSeedChangedAsync()
+    }
+
+    /** Every extra this class acts on. Used only to report the ones it doesn't. */
+    private val SUPPORTED_EXTRAS = setOf(
+        EXTRA_DEVNET_SEED_URL,
+        EXTRA_SERVICE_NETWORK,
+        EXTRA_PRO_BACKEND_URL,
+        EXTRA_PRO_BACKEND_PUBKEY,
+        EXTRA_PRO_BACKEND_STATUS,
+        EXTRA_PRO_PROOF,
+        EXTRA_FORCE_PRO_REVOCATION_REFRESH,
+        EXTRA_APP_UPDATED,
+        EXTRA_PRO_ACCESS_EXPIRY,
+        EXTRA_PRO_LOADING_STATE,
+        EXTRA_PRO_REFUNDING_STATUS,
+        EXTRA_PRO_ORIGINATING_PLATFORM,
+        EXTRA_PRO_QUICK_REFUND_WINDOW,
+        EXTRA_PRO_AUTO_RENEWING,
+        EXTRA_PRO_ORIGINATING_ACCOUNT,
+        EXTRA_FILE_SERVER_URL,
+        EXTRA_FILE_SERVER_PUBKEY,
+    )
+
+    /**
+     * Logs any `session`-prefixed extra this class does not act on.
+     *
+     * Exists because the rest of the class CANNOT report an unsupported key by construction: each
+     * `applyX` asks `hasExtra` for a name it already knows, so a typo'd or not-yet-implemented key is
+     * silently a no-op. That makes a setup mistake surface later as a wrong assertion in a spec —
+     * the failure arrives far from its cause and looks like a product bug. A key that does nothing is
+     * worse than one that errors.
+     *
+     * Deliberately scoped to the `session` prefix: the launcher also receives Android's own extras
+     * (and anything another app cares to send, since the alias is exported), and warning about those
+     * would be noise that trains readers to ignore this log.
+     */
+    private fun warnOnUnrecognisedExtras(extras: Bundle) {
+        val unrecognised = extras.keySet()
+            .filter { it.startsWith("session") && it !in SUPPORTED_EXTRAS }
+
+        if (unrecognised.isEmpty()) {
+            return
+        }
+
+        Log.e(
+            TAG,
+            "Ignoring ${unrecognised.size} unrecognised launch extra(s): " +
+                "${unrecognised.sorted()}. Supported: ${SUPPORTED_EXTRAS.sorted()}. " +
+                "These had NO effect — check for a typo, or for a key this build does not implement."
+        )
+    }
+
+    /**
+     * Switches the service network, mirroring iOS's `serviceNetwork` launch variable.
+     *
+     * Unlike the debug menu's equivalent (which deliberately wipes all local data and restarts,
+     * because switching networks invalidates an existing account) this only writes the preference.
+     * That is correct for automation, where every run starts from a fresh install and so has nothing
+     * to invalidate — but it means this must not be used to flip a populated install between
+     * networks. It is a no-op when the requested network is already active.
+     */
+    private fun applyServiceNetwork(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_SERVICE_NETWORK)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_SERVICE_NETWORK).orEmpty().trim()
+        val requested = parseEnvironment(raw)
+        if (requested == null) {
+            Log.e(
+                TAG,
+                "Ignoring unknown '$EXTRA_SERVICE_NETWORK' extra: '$raw'. Use mainnet | testnet | devnet."
+            )
+            return false
+        }
+
+        if (requested == prefs.getEnvironment()) {
+            Log.i(TAG, "Service network already ${requested.label}")
+            return false
+        }
+
+        Log.i(TAG, "Setting service network to ${requested.label}")
+        prefs.setEnvironment(requested)
+        return true
+    }
+
+    /** Accepts the iOS-style tokens (`devnet`) as well as the enum's own names (`DEV_NET`). */
+    private fun parseEnvironment(raw: String): Environment? {
+        val normalised = raw.lowercase().replace("_", "")
+        return Environment.entries.firstOrNull {
+            it.name.lowercase().replace("_", "") == normalised || it.label.lowercase() == normalised
+        }
+    }
+
+    /**
+     * Points the app at a different Session Pro backend.
+     *
+     * Only applied when BOTH extras are present and valid — see [EXTRA_PRO_BACKEND_URL] for why a
+     * mismatched pair is worse than no override at all. Passing an empty URL clears the override and
+     * falls back to the backend compiled into libsession.
+     */
+    private fun applyProBackend(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_BACKEND_URL) && !intent.hasExtra(EXTRA_PRO_BACKEND_PUBKEY)) {
+            return false
+        }
+
+        val rawUrl = intent.getStringExtra(EXTRA_PRO_BACKEND_URL).orEmpty().trim()
+        val rawPubkey = intent.getStringExtra(EXTRA_PRO_BACKEND_PUBKEY).orEmpty().trim()
+
+        // Deliberately distinguishes "absent" from "present but empty": an empty URL is how a test
+        // asks to clear a previous override.
+        if (rawUrl.isEmpty() && rawPubkey.isEmpty()) {
+            if (prefs.getProBackendUrl() == null && prefs.getProBackendPubkey() == null) {
+                return false
+            }
+            Log.i(TAG, "Clearing Pro backend override")
+            prefs.setProBackendUrl(null)
+            prefs.setProBackendPubkey(null)
+            return true
+        }
+
+        if (rawUrl.toHttpUrlOrNull() == null) {
+            Log.e(TAG, "Ignoring Pro backend override: malformed '$EXTRA_PRO_BACKEND_URL' ('$rawUrl')")
+            return false
+        }
+
+        if (!isEd25519PubKeyHex(rawPubkey)) {
+            Log.e(
+                TAG,
+                "Ignoring Pro backend override: '$EXTRA_PRO_BACKEND_PUBKEY' must be 64 hex characters " +
+                    "(the backend's Ed25519 signing_pubkey), got '${rawPubkey.length}' characters"
+            )
+            return false
+        }
+
+        if (rawUrl == prefs.getProBackendUrl() && rawPubkey == prefs.getProBackendPubkey()) {
+            Log.i(TAG, "Pro backend override already set to $rawUrl")
+            return false
+        }
+
+        Log.i(TAG, "Setting Pro backend override to $rawUrl (takes effect on next launch)")
+        prefs.setProBackendUrl(rawUrl)
+        prefs.setProBackendPubkey(rawPubkey)
+        return true
+    }
+
+    /**
+     * Points uploads at [EXTRA_FILE_SERVER_URL], or clears a previous override so the production file
+     * server is used again.
+     *
+     * Writes the same `alternativeFileServer` preference the debug menu drives, so this adds a way to
+     * SET the existing setting rather than a second parallel one — the app has one notion of "not the
+     * production file server" and this is it.
+     */
+    private fun applyFileServer(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_FILE_SERVER_URL) && !intent.hasExtra(EXTRA_FILE_SERVER_PUBKEY)) {
+            return false
+        }
+
+        val rawUrl = intent.getStringExtra(EXTRA_FILE_SERVER_URL).orEmpty().trim()
+        val rawPubkey = intent.getStringExtra(EXTRA_FILE_SERVER_PUBKEY).orEmpty().trim()
+
+        // Present-but-empty is how a test asks to clear the override, as with every other pair here.
+        if (rawUrl.isEmpty() && rawPubkey.isEmpty()) {
+            if (prefs.alternativeFileServer == null) {
+                return false
+            }
+            Log.i(TAG, "Clearing file server override")
+            prefs.alternativeFileServer = null
+            return true
+        }
+
+        if (rawUrl.toHttpUrlOrNull() == null) {
+            Log.e(TAG, "Ignoring file server override: malformed '$EXTRA_FILE_SERVER_URL' ('$rawUrl')")
+            return false
+        }
+
+        if (!isEd25519PubKeyHex(rawPubkey)) {
+            Log.e(
+                TAG,
+                "Ignoring file server override: '$EXTRA_FILE_SERVER_PUBKEY' must be 64 hex characters " +
+                    "(the server's Ed25519 key), got '${rawPubkey.length}' characters"
+            )
+            return false
+        }
+
+        val existing = prefs.alternativeFileServer
+        if (existing?.url?.toString() == rawUrl && existing?.ed25519PublicKeyHex == rawPubkey) {
+            Log.i(TAG, "File server override already set to $rawUrl")
+            return false
+        }
+
+        Log.i(TAG, "Setting file server override to $rawUrl (takes effect on next launch)")
+        prefs.alternativeFileServer = FileServer(url = rawUrl, ed25519PublicKeyHex = rawPubkey)
+        return true
+    }
+
+    private fun isEd25519PubKeyHex(value: String): Boolean =
+        value.length == 64 && value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+
+    private fun applyDevnetSeedUrl(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        // Deliberately distinguishes "absent" from "present but empty": passing an empty value is how
+        // a test asks to clear a previously-set override and fall back to the built-in seed.
+        if (!intent.hasExtra(EXTRA_DEVNET_SEED_URL)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_DEVNET_SEED_URL).orEmpty().trim()
+        val current = prefs.getDevnetSeedUrl()
+
+        if (raw.isEmpty()) {
+            if (current == null) {
+                return false
+            }
+            Log.i(TAG, "Clearing devnet seed URL override")
+            prefs.setDevnetSeedUrl(null)
+            return true
+        }
+
+        if (raw.toHttpUrlOrNull() == null) {
+            // Rejected here as well as at the point of use, so a typo shows up in the log at launch
+            // instead of surfacing much later as an unexplained network failure.
+            Log.e(TAG, "Ignoring malformed '$EXTRA_DEVNET_SEED_URL' extra: '$raw'")
+            return false
+        }
+
+        if (raw == current) {
+            Log.i(TAG, "Devnet seed URL override already set to $raw")
+            return false
+        }
+
+        Log.i(TAG, "Setting devnet seed URL override to $raw")
+        prefs.setDevnetSeedUrl(raw)
+        return true
+    }
+
+    /**
+     * Sets the mocked Pro state for the current user.
+     *
+     * Values are mapped EXPLICITLY rather than derived from the enum names, deliberately: this is an
+     * external contract the Appium suite is written against, so it stays readable and stable
+     * independently of how [DebugMenuViewModel.DebugSubscriptionStatus] is renamed or reordered. The
+     * same reasoning iOS documents for its own key.
+     *
+     * `expired` is reachable because the debug enum already models it — no new product state was
+     * needed. The offsets these fixtures carry are FIXED, so this key expresses *which state* and not
+     * *when*; pass [EXTRA_PRO_ACCESS_EXPIRY] alongside it to choose the instant.
+     *
+     * ## Why `active` selects an EXPIRING fixture rather than an auto-renewing one
+     *
+     * It looks wrong and is deliberate: iOS's `autoRenewing` is a plain field defaulting to **false**
+     * with **no mock key of its own**, so `active` on iOS means "active, not auto-renewing, expiring
+     * at the access expiry you gave me" — which is [ProStatus.Active.Expiring] here, not
+     * `AutoRenewing`. Mapping to `AUTO_GOOGLE` made the same token mean different things per platform
+     * and rendered `proAutoRenewTime` where the shared spec asserts `proExpiringTime`.
+     *
+     * The deeper mismatch worth knowing before adding another token: **iOS mocks are orthogonal
+     * fields, Android's are bundled fixtures.** `active` constrains exactly one field on iOS, while
+     * here it selects a whole tuple (status + offset + plan length + provider). That is why
+     * [EXTRA_PRO_ACCESS_EXPIRY] exists — it peels the one dimension tests actually vary back out of
+     * the bundle. Prefer widening that seam over adding fixtures.
+     */
+    private fun applyProBackendStatus(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_BACKEND_STATUS)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_BACKEND_STATUS).orEmpty().trim()
+        // null = don't mock at all (fall through to the real backend-derived state).
+        val mocked: DebugMenuViewModel.DebugSubscriptionStatus? = when (raw.lowercase()) {
+            USE_ACTUAL, "never" -> null
+            // Expiring, NOT auto-renewing — see the KDoc on EXTRA_PRO_BACKEND_STATUS for why.
+            "active" -> DebugMenuViewModel.DebugSubscriptionStatus.EXPIRING_GOOGLE_LATER
+            "expired" -> DebugMenuViewModel.DebugSubscriptionStatus.EXPIRED
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_BACKEND_STATUS' extra: '$raw'. " +
+                        "Use $USE_ACTUAL | never | active | expired."
+                )
+                return false
+            }
+        }
+
+        // Written through the specific setters, not setStringPreference: these emit on
+        // TextSecurePreferences.events, which is what ProStatusManager.proDataState collects. A generic
+        // write would persist the value and emit nothing, so the mock would appear not to apply until
+        // the next launch.
+        //
+        // DISPLAY ONLY. This deliberately no longer grants ACCESS: one lever per fact, so a spec that
+        // wants an ordinary Pro user sets this AND [EXTRA_PRO_PROOF]. Leaving a combined lever in place
+        // alongside the two separate ones would mean three keys describing two facts, and a later reader
+        // could not tell which was authoritative.
+        prefs.setDebugSubscriptionType(mocked)
+        Log.i(TAG, "Set mocked Pro DISPLAY status to '$raw' (debug subscription = ${mocked?.name ?: "off"}); grants no access")
+        return true
+    }
+
+    /**
+     * Applies the mocked Pro PROOF, i.e. ACCESS. See [EXTRA_PRO_PROOF].
+     *
+     *     valid      -> grant
+     *     none       -> DENY, even if a real proof exists
+     *     useActual  -> clear the override; the real proof governs
+     *
+     * Tri-state rather than a boolean because `none` and `useActual` are different answers whenever a
+     * real proof exists — which it can, since the suite can point the client at a QA backend that mints
+     * them. Collapsing them would make `none` mean "don't force" rather than "deny".
+     *
+     * An unrecognised value is REJECTED and logged rather than treated as off. A silently-ignored typo
+     * here produces a PASSING test of the default state, which is worse than a failure — the same
+     * reasoning as [warnOnUnrecognisedExtras].
+     */
+    /**
+     * Records whether the next revocation poll should be forced. See [EXTRA_FORCE_PRO_REVOCATION_REFRESH].
+     *
+     * Only the flag is stored here; it is acted on where the poll is normally scheduled, so the forcing
+     * and the scheduling cannot end up in the wrong order.
+     *
+     * Absent leaves the stored value untouched, like every other extra here: [apply] runs on each
+     * HomeActivity creation rather than once per test, and a fresh install creates it a second time
+     * after onboarding with no QA extras attached.
+     */
+    private fun applyForceProRevocationRefresh(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_FORCE_PRO_REVOCATION_REFRESH)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_FORCE_PRO_REVOCATION_REFRESH).orEmpty().trim()
+        val force = when (raw.lowercase()) {
+            "true", "1" -> true
+            else -> false
+        }
+
+        prefs.setForceProRevocationRefresh(force)
+        Log.i(TAG, "Set forced Pro revocation refresh to $force (from '$raw')")
+        return true
+    }
+
+    private fun applyAppUpdated(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_APP_UPDATED)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_APP_UPDATED).orEmpty().trim()
+        // null = drop the override and use the real package-manager answer.
+        val override: Boolean? = when (raw.lowercase()) {
+            "true" -> true
+            "false" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_APP_UPDATED' extra: '$raw'. Use true | false | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugAppUpdated(override)
+
+        // The flag is only read when a fresh review state is derived, so an existing stored state would
+        // silently outrank this extra. Clearing it is what makes the extra mean what it says.
+        prefs.inAppReviewState = null
+
+        Log.i(TAG, "Set app-updated override to $override (from '$raw'); cleared the stored review state")
+        return true
+    }
+
+    private fun applyProProof(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_PROOF)) {
+            // Absent leaves the stored override alone, like every other Pro extra here.
+            //
+            // Clearing instead looks right — absent and `useActual` should mean the same thing — but
+            // [apply] runs on every HomeActivity creation, not once per test. On a fresh install the
+            // launcher routes to onboarding and HomeActivity is created a second time afterwards, with
+            // an intent that carries no QA extras. Clearing on that pass drops ACCESS while the status
+            // and expiry mocks, which only write when present, survive: a fixture then half-applies,
+            // and the client displays the mocked plan while behaving as though it holds no proof.
+            //
+            // Isolation between tests is therefore the harness's, exactly as it already is for
+            // `EXTRA_PRO_BACKEND_STATUS` and the rest — reinstall, or pass `useActual` to clear.
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_PROOF).orEmpty().trim()
+        // null = clear the override.
+        val override: Boolean? = when (raw.lowercase()) {
+            "valid" -> true
+            "none" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_PROOF' extra: '$raw'. Use valid | none | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugProAccessOverride(override)
+        Log.i(
+            TAG,
+            "Set mocked Pro ACCESS to '$raw' " +
+                "(override = ${override?.toString() ?: "cleared, real proof governs"})"
+        )
+        return true
+    }
+
+    /**
+     * Applies the mocked refund-pending flag. See [EXTRA_PRO_REFUNDING_STATUS].
+     *
+     *     refunding      -> force a refund in progress
+     *     notRefunding   -> force none, even if the synced config flag says otherwise
+     *     useActual      -> clear the override; the real state governs
+     *
+     * Tri-state for the same reason as [applyProProof]: the real state is a synced config flag another
+     * device can have set, so `notRefunding` and `useActual` differ.
+     */
+    private fun applyProRefundingStatus(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_REFUNDING_STATUS)) {
+            // Absent leaves the stored override alone — see [applyProProof].
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_REFUNDING_STATUS).orEmpty().trim()
+        // null = clear the override.
+        val override: Boolean? = when (raw.lowercase()) {
+            "refunding" -> true
+            "notrefunding" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_REFUNDING_STATUS' extra: '$raw'. " +
+                        "Use refunding | notRefunding | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugRefundInProgressOverride(override)
+        Log.i(
+            TAG,
+            "Set mocked Pro refund-pending to '$raw' " +
+                "(override = ${override?.toString() ?: "cleared, real state governs"})"
+        )
+        return true
+    }
+
+    /**
+     * Applies the mocked originating platform. See [EXTRA_PRO_ORIGINATING_PLATFORM].
+     *
+     * Accepts the platform names iOS uses rather than the provider slugs the app stores, so one
+     * `bothPlatformsIt` setup reads the same on both clients.
+     */
+    private fun applyProOriginatingPlatform(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_ORIGINATING_PLATFORM)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_ORIGINATING_PLATFORM).orEmpty().trim()
+        // null = clear the override.
+        val slug: String? = when (raw.lowercase()) {
+            "ios" -> BackendRequests.PAYMENT_PROVIDER_APP_STORE
+            "android" -> BackendRequests.PAYMENT_PROVIDER_GOOGLE_PLAY
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_ORIGINATING_PLATFORM' extra: '$raw'. " +
+                        "Use iOS | android | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugOriginatingProvider(slug)
+        Log.i(
+            TAG,
+            "Set mocked Pro originating platform to '$raw' (provider = ${slug ?: "cleared"})"
+        )
+        return true
+    }
+
+    /** Applies the mocked originating account. See [EXTRA_PRO_ORIGINATING_ACCOUNT]. */
+    private fun applyProOriginatingAccount(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_ORIGINATING_ACCOUNT)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_ORIGINATING_ACCOUNT).orEmpty().trim()
+        // null = clear the override.
+        val override: Boolean? = when (raw.lowercase()) {
+            "originatingaccount" -> true
+            "nonoriginatingaccount" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_ORIGINATING_ACCOUNT' extra: '$raw'. " +
+                        "Use originatingAccount | nonOriginatingAccount | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugOriginatingAccountOverride(override)
+        Log.i(
+            TAG,
+            "Set mocked Pro originating account to '$raw' " +
+                "(override = ${override?.toString() ?: "cleared, the store decides"})"
+        )
+        return true
+    }
+
+    /** Applies the mocked auto-renewing flag. See [EXTRA_PRO_AUTO_RENEWING]. */
+    private fun applyProAutoRenewing(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_AUTO_RENEWING)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_AUTO_RENEWING).orEmpty().trim()
+        // null = clear the override.
+        val override: Boolean? = when (raw.lowercase()) {
+            "autorenewing" -> true
+            "notautorenewing" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_AUTO_RENEWING' extra: '$raw'. " +
+                        "Use autoRenewing | notAutoRenewing | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugAutoRenewingOverride(override)
+        Log.i(
+            TAG,
+            "Set mocked Pro auto-renewing to '$raw' " +
+                "(override = ${override?.toString() ?: "cleared, real state governs"})"
+        )
+        return true
+    }
+
+    /** Applies the mocked quick-refund window. See [EXTRA_PRO_QUICK_REFUND_WINDOW]. */
+    private fun applyProQuickRefundWindow(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_QUICK_REFUND_WINDOW)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_QUICK_REFUND_WINDOW).orEmpty().trim()
+        when (raw.lowercase()) {
+            "true" -> prefs.setDebugQuickRefundWindowOverride(true)
+            "false" -> prefs.setDebugQuickRefundWindowOverride(false)
+            USE_ACTUAL -> prefs.setDebugQuickRefundWindowOverride(null)
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_QUICK_REFUND_WINDOW' extra: '$raw'. " +
+                        "Use true | false | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        Log.i(TAG, "Set mocked Pro quick-refund window to '$raw'")
+        return true
+    }
+
+    /** Sets the mocked Pro access expiry. See [EXTRA_PRO_ACCESS_EXPIRY] for the accepted forms. */
+    private fun applyProAccessExpiry(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_ACCESS_EXPIRY)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_ACCESS_EXPIRY).orEmpty().trim()
+
+        // Deliberately distinguishes "absent" from the explicit-clear sentinel, as the other keys do.
+        if (raw.equals(USE_ACTUAL, ignoreCase = true)) {
+            if (prefs.getDebugProAccessExpiry() == null) {
+                return false
+            }
+            Log.i(TAG, "Clearing mocked Pro access expiry")
+            prefs.setDebugProAccessExpiry(null)
+            return true
+        }
+
+        val parsed = parseExpiry(raw)
+        if (parsed == null) {
+            Log.e(
+                TAG,
+                "Ignoring unparseable '$EXTRA_PRO_ACCESS_EXPIRY' extra: '$raw'. " +
+                    "Use epoch SECONDS, +<n>[smhd], or $USE_ACTUAL."
+            )
+            return false
+        }
+
+        // Bounded rather than trusted: see EXTRA_PRO_ACCESS_EXPIRY on why a unit slip must be loud.
+        val now = Instant.now()
+        val limit = Duration.ofDays(MAX_EXPIRY_SKEW_YEARS * 365)
+        if (parsed.isBefore(now - limit) || parsed.isAfter(now + limit)) {
+            Log.e(
+                TAG,
+                "Ignoring '$EXTRA_PRO_ACCESS_EXPIRY' extra: '$raw' resolves to $parsed, more than " +
+                    "$MAX_EXPIRY_SKEW_YEARS years from now. Epoch MILLISECONDS passed where SECONDS " +
+                    "are expected is the usual cause."
+            )
+            return false
+        }
+
+        Log.i(TAG, "Setting mocked Pro access expiry to $parsed")
+        prefs.setDebugProAccessExpiry(parsed)
+        return true
+    }
+
+    /** `+<n><unit>` relative, or bare epoch milliseconds. Null when neither parses. */
+    private fun parseExpiry(raw: String): Instant? {
+        if (raw.startsWith("+")) {
+            val body = raw.substring(1)
+            val amount = body.dropLast(1).toLongOrNull() ?: return null
+            val duration = when (body.lastOrNull()?.lowercaseChar()) {
+                's' -> Duration.ofSeconds(amount)
+                'm' -> Duration.ofMinutes(amount)
+                'h' -> Duration.ofHours(amount)
+                'd' -> Duration.ofDays(amount)
+                else -> return null
+            }
+            return Instant.now() + duration
+        }
+
+        return raw.toLongOrNull()?.let(Instant::ofEpochSecond)
+    }
+
+    /** Sets the mocked load state of the Pro settings screen. See [EXTRA_PRO_LOADING_STATE]. */
+    private fun applyProLoadingState(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_PRO_LOADING_STATE)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_PRO_LOADING_STATE).orEmpty().trim()
+        val mocked: DebugMenuViewModel.DebugProPlanStatus? = when (raw.lowercase()) {
+            USE_ACTUAL -> null
+            "loading" -> DebugMenuViewModel.DebugProPlanStatus.LOADING
+            "error" -> DebugMenuViewModel.DebugProPlanStatus.ERROR
+            "success" -> DebugMenuViewModel.DebugProPlanStatus.SUCCESS
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_PRO_LOADING_STATE' extra: '$raw'. " +
+                        "Use $USE_ACTUAL | loading | error | success."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugProPlanStatus(mocked)
+        Log.i(TAG, "Set mocked Pro load state to '$raw' (${mocked?.name ?: "off"})")
+        return true
+    }
+
+}

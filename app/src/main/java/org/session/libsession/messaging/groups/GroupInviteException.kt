@@ -1,7 +1,7 @@
 package org.session.libsession.messaging.groups
 
 import android.content.Context
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY

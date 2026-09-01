@@ -9,7 +9,7 @@
     <string name="accountIdErrorInvalid">תעודת חשבון זו אינה חוקית. אנא בדוק ונסה שוב.</string>
     <string name="accountIdOrOnsEnter">Enter Account ID or ONS</string>
     <string name="accountIdOrOnsInvite">הזמן את מספר הזיהוי או ה-ONS</string>
-    <string name="accountIdShare">היי, אני משתמש ב-{app_name} כדי לשוחח בפרטיות ובביטחון מוחלטים. הצטרף אליי! מזהה החשבון שלי הוא\n\n{account_id}\n\nהורד אותו ב-{session_download_url}</string>
+    <string name="accountIdShare">היי, אני משתמש ב-Session כדי לשוחח בפרטיות ובביטחון מוחלטים. הצטרף אליי! מזהה החשבון שלי הוא\n\n{account_id}\n\nהורד אותו ב-https://getsession.org/download</string>
     <string name="accountIdYours">מזהה החשבון שלך</string>
     <string name="accountIdYoursDescription">זוהי תעודת החשבון שלך. משתמשים אחרים יכולים לסרוק אותה כדי להתחיל איתך שיחה.</string>
     <string name="actualSize">גודל ממשי</string>
@@ -42,7 +42,7 @@
     <string name="anonymous">אנונימי</string>
     <string name="appearanceHideMenuBar">הסתר את סרגל התפריטים</string>
     <string name="appearanceLanguage">שפה</string>
-    <string name="appearanceLanguageDescription">בחר את הגדרת השפה שלך עבור {app_name}. {app_name} יופעל מחדש כאשר תשנה את הגדרת השפה שלך.</string>
+    <string name="appearanceLanguageDescription">בחר את הגדרת השפה שלך עבור Session. Session יופעל מחדש כאשר תשנה את הגדרת השפה שלך.</string>
     <string name="appearancePreview1">מה שלומך?</string>
     <string name="appearancePreview2">אני בסדר תודה, אתה?</string>
     <string name="appearancePreview3">שלומי מצוין, תודה.</string>
@@ -111,7 +111,7 @@
     <string name="authenticateFailed">ההזדהות נכשלה</string>
     <string name="authenticateFailedTooManyAttempts">יותר מדי ניסיונות אימות כושלים. אנא נסה שוב מאוחר יותר.</string>
     <string name="authenticateNotAccessed">האימות לא נגיש.</string>
-    <string name="authenticateToOpen">הזדהה כדי לפתוח את {app_name}.</string>
+    <string name="authenticateToOpen">הזדהה כדי לפתוח את Session.</string>
     <string name="back">חזרה</string>
     <string name="banDeleteAll">חסום ומחק הכול</string>
     <string name="banErrorFailed">החסימה נכשלה</string>
@@ -148,7 +148,7 @@
     <string name="callsPermissionsRequiredDescription">תוכל/י לאפשר את ההרשאה \"שיחות קוליות ווידאו\" בהגדרות הפרטיות.</string>
     <string name="callsReconnecting">מתחבר מחדש…</string>
     <string name="callsRinging">מצלצל...</string>
-    <string name="callsSessionCall">שיחת {app_name}</string>
+    <string name="callsSessionCall">שיחת Session</string>
     <string name="callsSettings">שיחות (בטא)</string>
     <string name="callsVoiceAndVideo">שיחות קוליות ווידיאו</string>
     <string name="callsVoiceAndVideoBeta">שיחות קוליות ווידיאו (Beta)</string>
@@ -158,9 +158,9 @@
     <string name="cameraErrorNotFound">לא נמצאה מצלמה</string>
     <string name="cameraErrorUnavailable">המקרה אינה זמינה.</string>
     <string name="cameraGrantAccess">הענק גישה למצלמה</string>
-    <string name="cameraGrantAccessDenied">{app_name} צריך את הרשאת המצלמה כדי לצלם תצלומים או וידיאו, אבל היא נדחתה לצמיתות. אנא המשך אל הגדרות היישום, בחר \"הרשאות\" ואפשר את \"מצלמה\".</string>
-    <string name="cameraGrantAccessDescription">{app_name} צריך הרשאות מצלמה כדי לצלם תצלומים או להקליט וידיאו או לסרוק קודי QR.</string>
-    <string name="cameraGrantAccessQr">{app_name} זקוק להרשאות מצלמה כדי לסרוק קודי QR</string>
+    <string name="cameraGrantAccessDenied">Session צריך את הרשאת המצלמה כדי לצלם תצלומים או וידיאו, אבל היא נדחתה לצמיתות. אנא המשך אל הגדרות היישום, בחר \"הרשאות\" ואפשר את \"מצלמה\".</string>
+    <string name="cameraGrantAccessDescription">Session צריך הרשאות מצלמה כדי לצלם תצלומים או להקליט וידיאו או לסרוק קודי QR.</string>
+    <string name="cameraGrantAccessQr">Session זקוק להרשאות מצלמה כדי לסרוק קודי QR</string>
     <string name="cancel">בטל</string>
     <string name="changePasswordFail">נכשל לקבוע סיסמה</string>
     <string name="clear">נקה</string>
@@ -171,7 +171,6 @@
     <plurals name="clearDataErrorDescription">
         <item quantity="one">נתונים לא נמחקו על ידי %1$d Service Node. מזהה Service Node: %2$s.</item>
         <item quantity="two">נתונים לא נמחקו על ידי %1$d Service Nodes. מזהי Service Nodes: %2$s.</item>
-        <item quantity="many">נתונים לא נמחקו על ידי %1$d Service Nodes. מזהי Service Nodes: %2$s.</item>
         <item quantity="other">נתונים לא נמחקו על ידי %1$d Service Nodes. מזהי Service Nodes: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">אירעה שגיאה לא ידועה והנתונים שלך לא נמחקו. האם ברצונך למחוק את הנתונים שלך רק ממכשיר זה במקום?</string>
@@ -249,8 +248,8 @@
     <string name="copy">העתק</string>
     <string name="create">צור</string>
     <string name="cut">גזור</string>
-    <string name="databaseErrorTimeout">שמנו לב ל-{app_name} לוקח הרבה זמן להתחיל.\n\nתוכל להמשיך להמתין, לייצא את יומני המכשיר שלך לשיתוף לצורך פתרון בעיות, או לנסות להפעיל מחדש את {app_name}.</string>
-    <string name="databaseErrorUpdate">מאגר נתונים של האפליקציה שלך אינו תואם לגרסה זו של {app_name}. התקן מחדש את האפליקציה ושחזר את החשבון שלך כדי ליצור מאגר נתונים חדש ולהמשיך להשתמש ב-{app_name}.\n\nאזהרה: פעולה זו תשאיר את כל ההודעות והצרופות הישנות משבועיים.</string>
+    <string name="databaseErrorTimeout">שמנו לב ל-Session לוקח הרבה זמן להתחיל.\n\nתוכל להמשיך להמתין, לייצא את יומני המכשיר שלך לשיתוף לצורך פתרון בעיות, או לנסות להפעיל מחדש את Session.</string>
+    <string name="databaseErrorUpdate">מאגר נתונים של האפליקציה שלך אינו תואם לגרסה זו של Session. התקן מחדש את האפליקציה ושחזר את החשבון שלך כדי ליצור מאגר נתונים חדש ולהמשיך להשתמש ב-Session.\n\nאזהרה: פעולה זו תשאיר את כל ההודעות והצרופות הישנות משבועיים.</string>
     <string name="databaseOptimizing">מעדכן מסד נתונים</string>
     <string name="debugLog">יומן תקלות</string>
     <string name="decline">דחה</string>
@@ -273,13 +272,11 @@
     <plurals name="deleteMessage">
         <item quantity="one">מחק הודעה</item>
         <item quantity="two">מחק הודעות</item>
-        <item quantity="many">מחק הודעות</item>
         <item quantity="other">מחק הודעות</item>
     </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">הודעה נמחקה</item>
         <item quantity="two">הודעות נמחקו</item>
-        <item quantity="many">הודעות נמחקו</item>
         <item quantity="other">הודעות נמחקו</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">הודעה זו נמחקה</string>
@@ -291,7 +288,6 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">נכשל במחיקת הודעה</item>
         <item quantity="two">נכשל במחיקת הודעות</item>
-        <item quantity="many">נכשל במחיקת הודעות</item>
         <item quantity="other">נכשל במחיקת הודעות</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">האם אתה בטוח שברצונך למחוק את ההודעות האלה לכולם?</string>
@@ -361,7 +357,6 @@
     <plurals name="emojiReactsCountOthers">
         <item quantity="one">ועוד %1$d אחד הגיב עם %2$s להודעה זו.</item>
         <item quantity="two">ועוד %1$d אחרים הגיבו עם %2$s להודעה זו.</item>
-        <item quantity="many">ועוד %1$d אחרים הגיבו עם %2$s להודעה זו.</item>
         <item quantity="other">ועוד %1$d אחרים הגיבו עם %2$s להודעה זו.</item>
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} הגיב עם {emoji_name}</string>
@@ -383,7 +378,7 @@
     <string name="fullScreenToggle">עורר מסך מלא</string>
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
-    <string name="giphyWarningDescription">{app_name} יתחבר אל Giphy כדי לספק תוצאות חיפוש. לא תהיה לך הגנה מלאה על נתוני מטא בעת שליחת GIFs.</string>
+    <string name="giphyWarningDescription">Session יתחבר אל Giphy כדי לספק תוצאות חיפוש. לא תהיה לך הגנה מלאה על נתוני מטא בעת שליחת GIFs.</string>
     <string name="groupAddMemberMaximum">קבוצות יכולות להכיל עד 100 חברים</string>
     <string name="groupCreate">צור קבוצה</string>
     <string name="groupCreateErrorNoMembers">אנא בחר לפחות חבר קבוצה אחד</string>
@@ -439,13 +434,11 @@
     <plurals name="groupRemoveMessages">
         <item quantity="one">הסר משתמש והודעותיו</item>
         <item quantity="two">הסר משתמשים והודעותיהם</item>
-        <item quantity="many">הסר משתמשים והודעותיהם</item>
         <item quantity="other">הסר משתמשים והודעותיהם</item>
     </plurals>
     <plurals name="groupRemoveUserOnly">
         <item quantity="one">הסר משתמש</item>
         <item quantity="two">הסר משתמשים</item>
-        <item quantity="many">הסר משתמשים</item>
         <item quantity="other">הסר משתמשים</item>
     </plurals>
     <string name="groupRemoved"><b>{name}‏</b> הוסר מהקבוצה.</string>
@@ -458,10 +451,10 @@
     <string name="groupUnknown">קבוצה לא ידועה</string>
     <string name="groupUpdated">קבוצה עודכנה</string>
     <string name="helpFAQ">שאלות נפוצות</string>
-    <string name="helpHelpUsTranslateSession">עזרו לנו לתרגם את {app_name}</string>
-    <string name="helpReportABugDescription">שתף פרטים שיעזרו לנו לפתור את הבעיה שלך. ייצא את היומנים שלך, ואז העלה את הקובץ דרך עמוד העזרה של {app_name}.</string>
+    <string name="helpHelpUsTranslateSession">עזרו לנו לתרגם את Session</string>
+    <string name="helpReportABugDescription">שתף פרטים שיעזרו לנו לפתור את הבעיה שלך. ייצא את היומנים שלך, ואז העלה את הקובץ דרך עמוד העזרה של Session.</string>
     <string name="helpReportABugExportLogs">ייצא יומנים</string>
-    <string name="helpReportABugExportLogsDescription">ייצא את היומנים שלך, ואז העלה את הקובץ דרך Help Desk של {app_name}.</string>
+    <string name="helpReportABugExportLogsDescription">ייצא את היומנים שלך, ואז העלה את הקובץ דרך Help Desk של Session.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">שמור לשולחן העבודה</string>
     <string name="helpSupport">תמיכה</string>
     <string name="helpWedLoveYourFeedback">נשמח לקבל את חוות דעתך</string>
@@ -488,35 +481,33 @@
     <string name="linkPreviewsEnable">לאפשר תצוגה מקדימה של קישורים</string>
     <string name="linkPreviewsErrorLoad">לא ניתן לטעון תצוגה מקדימה של קישור</string>
     <string name="linkPreviewsErrorUnsecure">תצוגה מקדימה לא נטענה עבור קישור לא מאובטח</string>
-    <string name="linkPreviewsFirstDescription">הצג תצוגות מקדימות לכתובות אתרים שאתה שולח ומקבל. זה יכול להיות שימושי, אבל {app_name} יצטרך לפנות לאתרים המקושרים כדי ליצור תצוגות מקדימה. אפשר תמיד לכבות את התצוגות המקדימות של הקישורים בהגדרות של {app_name}.</string>
+    <string name="linkPreviewsFirstDescription">הצג תצוגות מקדימות לכתובות אתרים שאתה שולח ומקבל. זה יכול להיות שימושי, אבל Session יצטרך לפנות לאתרים המקושרים כדי ליצור תצוגות מקדימה. אפשר תמיד לכבות את התצוגות המקדימות של הקישורים בהגדרות של Session.</string>
     <string name="linkPreviewsSend">שלח קדם־תצוגות של קישורים</string>
     <string name="linkPreviewsSendModalDescription">לא תהיה לך הגנת נתוני מטא מלאה בעת שליחת תצוגות מקדימות של קישורים.</string>
     <string name="linkPreviewsTurnedOff">תצוגות מקדימות של קישורים כבויות</string>
-    <string name="linkPreviewsTurnedOffDescription">{app_name} חייב ליצור קשר עם אתרים מקושרים כדי ליצור תצוגות מקדימות של קישורים שאתה שולח ומקבל.\n\nאתה יכול להפעיל אותם בהגדרות של {app_name}.</string>
+    <string name="linkPreviewsTurnedOffDescription">Session חייב ליצור קשר עם אתרים מקושרים כדי ליצור תצוגות מקדימות של קישורים שאתה שולח ומקבל.\n\nאתה יכול להפעיל אותם בהגדרות של Session.</string>
     <string name="loadAccount">טען חשבון</string>
     <string name="loadAccountProgressMessage">טוען את חשבונך</string>
     <string name="loading">טוען...</string>
     <string name="lockApp">נעל אפליקציה</string>
-    <string name="lockAppDescription">דרוש טביעת אצבע, PIN, דגם או סיסמה לביטול נעילת {app_name}.</string>
-    <string name="lockAppDescriptionIos">דרוש Touch ID, Face ID או את קוד הסיסמה שלך לביטול נעילת {app_name}.</string>
+    <string name="lockAppDescription">דרוש טביעת אצבע, PIN, דגם או סיסמה לביטול נעילת Session.</string>
+    <string name="lockAppDescriptionIos">דרוש Touch ID, Face ID או את קוד הסיסמה שלך לביטול נעילת Session.</string>
     <string name="lockAppEnablePasscode">עליך להפעיל קוד סודי בהגדרות iOS שלך כדי להשתמש בנעילת מסך.</string>
-    <string name="lockAppLocked">{app_name} נעול</string>
-    <string name="lockAppQuickResponse">תגובה מהירה אינה זמינה כאשר {app_name} נעול!</string>
+    <string name="lockAppLocked">Session נעול</string>
+    <string name="lockAppQuickResponse">תגובה מהירה אינה זמינה כאשר Session נעול!</string>
     <string name="lockAppStatus">מעמד נעילה</string>
     <string name="lockAppUnlock">הקש כדי לבטל את הנעילה</string>
-    <string name="lockAppUnlocked">{app_name} לא נעול</string>
+    <string name="lockAppUnlocked">Session לא נעול</string>
     <string name="max">מרבי</string>
     <string name="media">מדיה</string>
     <plurals name="members">
         <item quantity="one">%1$d חבר קבוצה</item>
         <item quantity="two">%1$d חברי קבוצה</item>
-        <item quantity="many">%1$d חברי קבוצה</item>
         <item quantity="other">%1$d חברי קבוצה</item>
     </plurals>
     <plurals name="membersActive">
         <item quantity="one">%1$d חבר פעיל</item>
         <item quantity="two">%1$d חברים פעילים</item>
-        <item quantity="many">%1$d חברים פעילים</item>
         <item quantity="other">%1$d חברים פעילים</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">הוסף מזהה חשבון או ONS</string>
@@ -524,7 +515,6 @@
     <plurals name="membersInviteSend">
         <item quantity="one">שלח הזמנה</item>
         <item quantity="two">שלח הזמנות</item>
-        <item quantity="many">שלח הזמנות</item>
         <item quantity="other">שלח הזמנות</item>
     </plurals>
     <string name="membersInviteShareDescription">האם ברצונך לשתף את היסטוריית ההודעות של הקבוצה עם <b>{name}</b>?</string>
@@ -537,7 +527,7 @@
     <string name="messageEmpty">הודעה זו ריקה.</string>
     <string name="messageErrorDelivery">מסירת ההודעה נכשלה</string>
     <string name="messageErrorLimit">הגעת למגבלת ההודעות</string>
-    <string name="messageErrorOld">התקבלה הודעה מוצפנת ע״י שימוש בגרסה ישנה של {app_name} שאינה נתמכת יותר. אנא בקש מהשולח לעדכן אל הגרסה העדכנית ביותר ולשלוח מחדש את ההודעה.</string>
+    <string name="messageErrorOld">התקבלה הודעה מוצפנת ע״י שימוש בגרסה ישנה של Session שאינה נתמכת יותר. אנא בקש מהשולח לעדכן אל הגרסה העדכנית ביותר ולשלוח מחדש את ההודעה.</string>
     <string name="messageErrorOriginal">הודעה מקורית לא נמצאה</string>
     <string name="messageInfo">פרטי הודעה</string>
     <string name="messageMarkRead">סמן כנקרא</string>
@@ -545,7 +535,6 @@
     <plurals name="messageNew">
         <item quantity="one">הודעה חדשה</item>
         <item quantity="two">הודעות חדשות</item>
-        <item quantity="many">הודעות חדשות</item>
         <item quantity="other">הודעות חדשות</item>
     </plurals>
     <string name="messageNewDescriptionDesktop">התחל שיחה חדשה על ידי הזנת מזהה החשבון או ה־ONS של חברך.</string>
@@ -553,7 +542,6 @@
     <plurals name="messageNewYouveGot">
         <item quantity="one">יש לך הודעה חדשה.</item>
         <item quantity="two">יש לך %1$d הודעות חדשות.</item>
-        <item quantity="many">יש לך %1$d הודעות חדשות.</item>
         <item quantity="other">יש לך %1$d הודעות חדשות.</item>
     </plurals>
     <string name="messageReplyingTo">מענה אל</string>
@@ -621,7 +609,7 @@
     <string name="notificationsMuteUnmute">בטל השתקה</string>
     <string name="notificationsMuted">מושתק</string>
     <string name="notificationsSlowMode">מצב איטי</string>
-    <string name="notificationsSlowModeDescription">{app_name} יבדוק מדי פעם אם ישנן הודעות חדשות ברקע.</string>
+    <string name="notificationsSlowModeDescription">Session יבדוק מדי פעם אם ישנן הודעות חדשות ברקע.</string>
     <string name="notificationsSound">קול</string>
     <string name="notificationsSoundDescription">קול כשהאפליקציה פתוחה</string>
     <string name="notificationsSoundDesktop">התראות שמע</string>
@@ -635,20 +623,22 @@
     <string name="onboardingAccountCreate">יצירת חשבון</string>
     <string name="onboardingAccountCreated">חשבונך נוצר</string>
     <string name="onboardingAccountExists">יש לי חשבון</string>
-    <string name="onboardingBackAccountCreation">אינך יכול/ה לחזור אחורה יותר. כדי לבטל את יצירת החשבון שלך, {app_name} צריכה להיסגר.</string>
-    <string name="onboardingBackLoadAccount">אינך יכול/ה לחזור אחורה יותר. כדי להפסיק את טעינת החשבון שלך, {app_name} צריכה להיסגר.</string>
+    <string name="onboardingBackAccountCreation">אינך יכול/ה לחזור אחורה יותר. כדי לבטל את יצירת החשבון שלך, Session צריכה להיסגר.</string>
+    <string name="onboardingBackLoadAccount">אינך יכול/ה לחזור אחורה יותר. כדי להפסיק את טעינת החשבון שלך, Session צריכה להיסגר.</string>
     <string name="onboardingBubbleCreatingAnAccountIsEasy">יצירת חשבון היא מיידית, חינמית ואנונימית {emoji}</string>
     <string name="onboardingBubbleNoPhoneNumber">לא צריך/ה אפילו מספר טלפון כדי להירשם.</string>
     <string name="onboardingBubblePrivacyInYourPocket">פרטיוּת בכיס שלך.</string>
-    <string name="onboardingBubbleSessionIsEngineered">{app_name} מתוכנן להגן על פרטיותך.</string>
-    <string name="onboardingBubbleWelcomeToSession">ברוכים הבאים ל-{app_name} {emoji}</string>
+    <string name="onboardingBubbleSessionIsEngineered">Session מתוכנן להגן על פרטיותך.</string>
+    <string name="onboardingBubbleWelcomeToSession">ברוכים הבאים ל-Session {emoji}</string>
     <string name="onboardingHitThePlusButton">לחץ על כפתור ההוספה כדי להתחיל שיחה, ליצור קבוצה, או להצטרף ל-Community רשמי!</string>
-    <string name="onboardingMessageNotificationExplanation">ישנן שתי דרכים בהן {app_name} יכול להתריע לך על הודעות חדשות.</string>
+    <string name="onboardingMessageNotificationExplanation">ישנן שתי דרכים בהן Session יכול להתריע לך על הודעות חדשות.</string>
     <string name="onboardingPrivacy">מדיניות פרטיות</string>
     <string name="onboardingTos">תנאי שירות</string>
     <string name="onboardingTosPrivacy">בשימוש בשירות זה, אתה מסכים ל<b>תנאי השימוש</b> ול<b>מדיניות הפרטיות</b></string>
+    <string name="ongoingAppeal">תקווה חדשה עבור Session</string>
+    <string name="ongoingAppealDescription">כשנראה היה ש-Session עלולה להיעלם, התגייסתם.\n\nהתרומות שלכם העניקו ל-Session Technology Foundation (STF) מימון מספיק כדי לאפשר לצוות קטן של תורמים לתחזק את האפליקציה.\n\nכרגע, המיקוד הוא בשמירה על Session מאובטחת, יציבה ומקוונת.\n\nהתרומות שלכם יכולות לסייע בתמיכה ב-Session בזמן קריטי זה. תרומות נוספות עשויות לאפשר גיוס של מפתחים נוספים ולסייע באספקת התכונות הנדרשות כדי לקדם את Session מהר יותר.</string>
     <string name="onionRoutingPath">דרך</string>
-    <string name="onionRoutingPathDescription">{app_name} מסתיר את כתובת ה-IP שלך על ידי ניתוב ההודעות שלך דרך מספר צומתי שירות ברשת המבוזרת של {app_name}. זהו המסלול הנוכחי שלך:</string>
+    <string name="onionRoutingPathDescription">Session מסתיר את כתובת ה-IP שלך על ידי ניתוב ההודעות שלך דרך מספר צומתי שירות ברשת המבוזרת של Session. זהו המסלול הנוכחי שלך:</string>
     <string name="onionRoutingPathDestination">יעד</string>
     <string name="onionRoutingPathEntryNode">צומת כניסה</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
@@ -670,26 +660,26 @@
     <string name="passwordRemove">הסר סיסמה</string>
     <string name="passwordSet">הגדר סיסמה</string>
     <string name="paste">הדבק</string>
-    <string name="permissionMusicAudioDenied">{app_name} זקוק לגישה למוזיקה ואודיו על מנת לשלוח קבצים, מוזיקה ואודיו, אבל היא נדחתה לצמיתות. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
-    <string name="permissionsAppleMusic">{app_name} זקוק ל-Apple Music כדי להפעיל צרופות מדיה.</string>
+    <string name="permissionMusicAudioDenied">Session זקוק לגישה למוזיקה ואודיו על מנת לשלוח קבצים, מוזיקה ואודיו, אבל היא נדחתה לצמיתות. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
+    <string name="permissionsAppleMusic">Session זקוק ל-Apple Music כדי להפעיל צרופות מדיה.</string>
     <string name="permissionsAutoUpdate">עדכון אוטומטי</string>
     <string name="permissionsAutoUpdateDescription">בדיקה אוטומטית לעדכונים בעת הפעלה</string>
-    <string name="permissionsCameraDenied">{app_name} צריך את הרשאת המצלמה כדי לצלם תצלומים או וידיאו, אבל היא נדחתה לצמיתות. Tap Settings → Permissions, and turn \"Camera\" on.</string>
-    <string name="permissionsFaceId">תכונת נעילת המסך ב-{app_name} משתמשת בזיהוי פנים.</string>
+    <string name="permissionsCameraDenied">Session צריך את הרשאת המצלמה כדי לצלם תצלומים או וידיאו, אבל היא נדחתה לצמיתות. Tap Settings → Permissions, and turn \"Camera\" on.</string>
+    <string name="permissionsFaceId">תכונת נעילת המסך ב-Session משתמשת בזיהוי פנים.</string>
     <string name="permissionsKeepInSystemTray">שמור במגש המערכת</string>
-    <string name="permissionsLibrary">{app_name} זקוק להרשאות לספריית תמונות כדי להמשיך. אתה יכול לאפשר גישה בהגדרות של iOS.</string>
+    <string name="permissionsLibrary">Session זקוק להרשאות לספריית תמונות כדי להמשיך. אתה יכול לאפשר גישה בהגדרות של iOS.</string>
     <string name="permissionsMicrophone">מיקרופון</string>
-    <string name="permissionsMicrophoneAccessRequired">{app_name} דורש גישה למיקרופון כדי לבצע שיחות ולשלוח הודעות שמע, אך הגישה נדחתה לצמיתות. הקש על הגדרות → הרשאות, והפעל את \"מיקרופון\".</string>
-    <string name="permissionsMicrophoneAccessRequiredDesktop">תוכל/י לאפשר גישה למיקרופון בהגדרות הפרטיות של {app_name}</string>
-    <string name="permissionsMicrophoneAccessRequiredIos">{app_name} צריך הרשאת מיקרופון לשיחות ולהודעות שמע.</string>
+    <string name="permissionsMicrophoneAccessRequired">Session דורש גישה למיקרופון כדי לבצע שיחות ולשלוח הודעות שמע, אך הגישה נדחתה לצמיתות. הקש על הגדרות → הרשאות, והפעל את \"מיקרופון\".</string>
+    <string name="permissionsMicrophoneAccessRequiredDesktop">תוכל/י לאפשר גישה למיקרופון בהגדרות הפרטיות של Session</string>
+    <string name="permissionsMicrophoneAccessRequiredIos">Session צריך הרשאת מיקרופון לשיחות ולהודעות שמע.</string>
     <string name="permissionsMicrophoneDescription">אפשרו גישה למיקרופון.</string>
-    <string name="permissionsMusicAudio">{app_name} זקוק לגישה למוזיקה ואודיו על מנת לשלוח קבצים, מוזיקה ואודיו.</string>
+    <string name="permissionsMusicAudio">Session זקוק לגישה למוזיקה ואודיו על מנת לשלוח קבצים, מוזיקה ואודיו.</string>
     <string name="permissionsRequired">דרושה הרשאה</string>
-    <string name="permissionsStorageDenied">{app_name} דורש גישה לספריית התמונות בכדי לשלוח תמונות וסרטונים, אך הגישה נדחתה לצמיתות. הקש על הגדרות → הרשאות, והפעל \"תמונות וסרטונים\".</string>
-    <string name="permissionsStorageDeniedLegacy">{app_name} דורש גישה לאחסון בכדי לשלוח ולשמור קבצים. הקש על הגדרות → הרשאות, והפעל \"אחסון\".</string>
-    <string name="permissionsStorageSave">{app_name} זקוק לגישה לאחסון כדי לשמור צרופות ומדיה.</string>
-    <string name="permissionsStorageSaveDenied">{app_name} זקוק לגישה לאחסון כדי לשמור תמונות ווידיאו, אבל היא נדחתה לצמיתות. המשך להגדרות האפליקציה, בחר \"הרשאות\" והפעל את \"אחסון\".</string>
-    <string name="permissionsStorageSend">{app_name} צריך הרשאות גישה לאחסון על מנת לשלוח תמונות ווידיאו.</string>
+    <string name="permissionsStorageDenied">Session דורש גישה לספריית התמונות בכדי לשלוח תמונות וסרטונים, אך הגישה נדחתה לצמיתות. הקש על הגדרות → הרשאות, והפעל \"תמונות וסרטונים\".</string>
+    <string name="permissionsStorageDeniedLegacy">Session דורש גישה לאחסון בכדי לשלוח ולשמור קבצים. הקש על הגדרות → הרשאות, והפעל \"אחסון\".</string>
+    <string name="permissionsStorageSave">Session זקוק לגישה לאחסון כדי לשמור צרופות ומדיה.</string>
+    <string name="permissionsStorageSaveDenied">Session זקוק לגישה לאחסון כדי לשמור תמונות ווידיאו, אבל היא נדחתה לצמיתות. המשך להגדרות האפליקציה, בחר \"הרשאות\" והפעל את \"אחסון\".</string>
+    <string name="permissionsStorageSend">Session צריך הרשאות גישה לאחסון על מנת לשלוח תמונות ווידיאו.</string>
     <string name="pin">נעץ</string>
     <string name="pinConversation">נעץ שיחה</string>
     <string name="pinUnpin">בטל נעיצה</string>
@@ -708,7 +698,7 @@
     <string name="qrScan">סרוק ברקוד</string>
     <string name="qrView">הצג QR</string>
     <string name="qrYoursDescription">חברים יכולים לשלוח לך הודעות על ידי סריקת קוד QR שלך.</string>
-    <string name="quit">צא מ-{app_name}</string>
+    <string name="quit">צא מ-Session</string>
     <string name="quitButton">צא</string>
     <string name="read">נקרא</string>
     <string name="readReceipts">אישורי קריאה</string>
@@ -754,7 +744,6 @@
     <plurals name="searchMatches">
         <item quantity="one">%1$d מתוך %2$d תוצאה</item>
         <item quantity="two">%1$d מתוך %2$d תוצאות</item>
-        <item quantity="many">%1$d מתוך %2$d תוצאות</item>
         <item quantity="other">%1$d מתוך %2$d תוצאות</item>
     </plurals>
     <string name="searchMatchesNone">לא נמצאו תוצאות.</string>
@@ -778,13 +767,13 @@
     <string name="sessionRecoveryPassword">סיסמת שיחזור</string>
     <string name="sessionSettings">הגדרות</string>
     <string name="set">הגדר</string>
-    <string name="settingsRestartDescription">עליך להפעיל מחדש את {app_name} כדי להחיל את ההגדרות החדשות שלך.</string>
+    <string name="settingsRestartDescription">עליך להפעיל מחדש את Session כדי להחיל את ההגדרות החדשות שלך.</string>
     <string name="settingsScreenSecurityDesktop">אבטחת מסך</string>
     <string name="share">שיתוף</string>
-    <string name="shareAccountIdDescription">הזמן את חברך לשוחח איתך על {app_name} על ידי שיתוף מספר הזיהוי שלך איתו.</string>
+    <string name="shareAccountIdDescription">הזמן את חברך לשוחח איתך על Session על ידי שיתוף מספר הזיהוי שלך איתו.</string>
     <string name="shareAccountIdDescriptionCopied">שתף עם חבריך היכן שאתה מדבר איתם בדרך כלל - ואז העבר את השיחה לכאן.</string>
     <string name="shareExtensionDatabaseError">יש בעיה בפתיחת מאגר הנתונים. אנא הפעל את האפליקציה מחדש ונסה שוב.</string>
-    <string name="shareToSession">שתף ל־{app_name}</string>
+    <string name="shareToSession">שתף ל־Session</string>
     <string name="show">הראה</string>
     <string name="showAll">הראה הכל</string>
     <string name="showLess">הראה פחות</string>
@@ -803,10 +792,10 @@
     <string name="updateDownloaded">העדכון הותקן, לחץ לאתחול מחדש</string>
     <string name="updateDownloading">מוריד עדכון: {percent_loader}%</string>
     <string name="updateError">לא ניתן לבצע עדכון</string>
-    <string name="updateErrorDescription">לא ניתן היה לעדכן את {app_name}. נא לעבור אל {session_download_url} ולהתקין את הגרסה החדשה ידנית, ואז לפנות למרכז העזרה שלנו כדי לעדכן אותנו על בעיה זו.</string>
-    <string name="updateNewVersion">גרסה חדשה של {app_name} זמינה, הקש כדי לעדכן</string>
+    <string name="updateErrorDescription">לא ניתן היה לעדכן את Session. נא לעבור אל https://getsession.org/download ולהתקין את הגרסה החדשה ידנית, ואז לפנות למרכז העזרה שלנו כדי לעדכן אותנו על בעיה זו.</string>
+    <string name="updateNewVersion">גרסה חדשה של Session זמינה, הקש כדי לעדכן</string>
     <string name="updateReleaseNotes">לך אל הערות שחרור</string>
-    <string name="updateSession">עדכון {app_name}</string>
+    <string name="updateSession">עדכון Session</string>
     <string name="updateVersion">גרסה {version}</string>
     <string name="uploading">מעלה...</string>
     <string name="urlCopy">העתק קישור</string>

@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_UP
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -59,7 +60,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.launch
@@ -70,9 +71,6 @@ import network.loki.messenger.libsession_util.protocol.ProMessageFeature
 import network.loki.messenger.libsession_util.protocol.ProProfileFeature
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -96,6 +94,7 @@ import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -398,19 +397,18 @@ fun MessageProFeatures(
 
         Text(
             text = Phrase.from(LocalContext.current,R.string.proMessageInfoFeatures)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format().toString(),
             style = LocalType.current.large
         )
 
         features.forEach { feature ->
             ProCTAFeature(
+                modifier = Modifier.qaTag(feature.qaTagRes),
                 textStyle = LocalType.current.large,
                 padding = PaddingValues(),
                 data = CTAFeature.Icon(
                     text = when (feature){
                         ProProfileFeature.PRO_BADGE -> Phrase.from(LocalContext.current, R.string.appProBadge)
-                            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                             .format()
                             .toString()
                         ProMessageFeature.HIGHER_CHARACTER_LIMIT -> stringResource(id = R.string.proIncreasedMessageLengthFeature)
@@ -421,6 +419,21 @@ fun MessageProFeatures(
         }
     }
 }
+
+/**
+ * QA tag for a feature row, so a test can assert WHICH features a message was sent with rather than
+ * how many of them there are.
+ *
+ * The values are a cross-platform contract: iOS defines the same strings in
+ * `SessionProUI.AccessibilityIdentifier` and Desktop derives them from its own feature vocabulary, so
+ * one feature is named the same on every client and on every screen it appears on.
+ */
+private val ProFeature.qaTagRes: Int
+    @StringRes get() = when (this) {
+        ProProfileFeature.PRO_BADGE -> R.string.qa_pro_message_feature_badges
+        ProMessageFeature.HIGHER_CHARACTER_LIMIT -> R.string.qa_pro_message_feature_longer_messages
+        ProProfileFeature.ANIMATED_AVATAR -> R.string.qa_pro_message_feature_animated_display_picture
+    }
 
 @Preview
 @Composable

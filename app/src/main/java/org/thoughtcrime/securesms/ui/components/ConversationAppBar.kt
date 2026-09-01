@@ -107,7 +107,13 @@ fun ConversationAppBar(
                                 ProBadgeText(
                                     modifier = titleModifier.qaTag(R.string.AccessibilityId_conversationTitle),
                                     text = data.title,
-                                    showBadge = data.showProBadge
+                                    showBadge = data.showProBadge,
+                                    // The shared `pro-badge-icon` is on every badge in the app, and the
+                                    // name text beside it renders unconditionally — so a test reaching
+                                    // this badge by traversing to the *text* would pass whether or not
+                                    // the badge was shown. This id addresses the badge itself, which is
+                                    // the thing worth asserting.
+                                    badgeQaTag = R.string.qa_conversation_header_pro_badge
                                 )
 
                                 if (data.pagerData.isNotEmpty()) {

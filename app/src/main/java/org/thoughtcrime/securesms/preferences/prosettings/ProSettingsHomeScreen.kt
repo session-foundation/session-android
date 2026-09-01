@@ -49,21 +49,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.pro.previewExpiredApple
+import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.ui.ActionRowItem
 import org.thoughtcrime.securesms.ui.CategoryCell
 import org.thoughtcrime.securesms.ui.Divider
@@ -161,12 +158,15 @@ fun ProSettingsHome(
                         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
                     ) {
                         Text(
+                            // One id for the slot, shared with the error state below: the four
+                            // possible messages are told apart by their text, not by separate ids, so
+                            // it belongs on the node that carries the message rather than the Row.
+                            modifier = Modifier.qaTag(R.string.qa_pro_settings_status_banner),
                             text = Phrase.from(context.getText(
                                 when(subscriptionType){
                                     is ProStatus.Active -> R.string.proStatusLoadingSubtitle
                                     else -> R.string.checkingProStatus
                                 }))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             style = LocalType.current.base,
                             color = LocalColors.current.text
@@ -183,12 +183,13 @@ fun ProSettingsHome(
                         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
                     ) {
                         Text(
+                            // Same id as the loading state above — deliberately. See there.
+                            modifier = Modifier.qaTag(R.string.qa_pro_settings_status_banner),
                             text = Phrase.from(context.getText(
                                 when(subscriptionType){
                                     is ProStatus.Active -> R.string.proErrorRefreshingStatus
                                     else -> R.string.errorCheckingProStatus
                                 }))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             style = LocalType.current.base,
                             color = LocalColors.current.warning
@@ -208,25 +209,29 @@ fun ProSettingsHome(
             }
         }
     ) {
-        // Header for non-pro users or expired users in sheet mode
+        val headerText = when(subscriptionType) {
+            is ProStatus.NeverSubscribed -> R.string.proFullestPotential
+            is ProStatus.Expired -> R.string.proAccessRenewStart
+            is ProStatus.Active -> R.string.proThanksForSupporting
+        }
+
+        if(data.proDataState.refreshState !is State.Success){
+            Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+        }
+
+        Text(
+            // One id for the slot: the three messages above are told apart by their text, so it
+            // belongs on the node that carries the message.
+            modifier = Modifier.qaTag(R.string.qa_pro_settings_description),
+            text = Phrase.from(context.getText(headerText))
+                .format().toString(),
+            style = LocalType.current.base,
+            textAlign = TextAlign.Center,
+        )
+
+        // The Continue CTA belongs only where upgrading is what the screen is for — the expired
+        // main screen offers renewal through ProManage below instead.
         if(subscriptionType is ProStatus.NeverSubscribed || expiredInSheet) {
-            if(data.proDataState.refreshState !is State.Success){
-                Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-            }
-
-            Text(
-                text = if(expiredInSheet) Phrase.from(context.getText(R.string.proAccessRenewStart))
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .format().toString()
-                    else Phrase.from(context.getText(R.string.proFullestPotential))
-                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .format().toString(),
-                style = LocalType.current.base,
-                textAlign = TextAlign.Center,
-            )
-
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
             Box {
@@ -260,7 +265,9 @@ fun ProSettingsHome(
         }
 
         // Pro Stats
-        if(subscriptionType is ProStatus.Active){
+        // WithPlan: everything inside renders plan detail. A proof-seeded Active shows the
+        // header/refresh state above and no plan block, which is the "render absent" answer.
+        if(subscriptionType is ProStatus.Active.WithPlan){
             Spacer(Modifier.height(LocalDimensions.current.spacing))
             ProStats(
                 data = data.proStats,
@@ -269,11 +276,15 @@ fun ProSettingsHome(
         }
 
         // Pro account settings
-        if(subscriptionType is ProStatus.Active){
+        // WithPlan, not Active: everything in this block renders plan detail a response owns. A
+        // proof-seeded Active shows the header and refresh state above and no plan block, which is the
+        // "render absent" answer rather than a formatted sentinel.
+        if(subscriptionType is ProStatus.Active.WithPlan){
             Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
             ProSettings(
                 showProBadge = data.proDataState.showProBadge,
-                proStatus = data.proDataState.type,
+                // the smart-cast value, not `data.proDataState.type` — the cast does not carry to it
+                proStatus = subscriptionType,
                 subscriptionRefreshState = data.proDataState.refreshState,
                 inSheet = inSheet,
                 inGracePeriod = data.inGracePeriod,
@@ -327,15 +338,14 @@ fun ProStats(
         modifier = modifier,
         dropShadow = LocalColors.current.isLight,
         title = Phrase.from(LocalContext.current, R.string.proStats)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
+        titleQaTag = R.string.qa_pro_settings_stats_header,
         titleIcon = {
             val tooltipState = rememberTooltipState(isPersistent = true)
             val scope = rememberCoroutineScope()
 
             SpeechBubbleTooltip(
                 text = Phrase.from(LocalContext.current, R.string.proStatsTooltip)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format().toString(),
                 tooltipState = tooltipState
             ) {
@@ -378,7 +388,8 @@ fun ProStats(
             ) {
                 // Long Messages
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_longer_messages),
                     title = pluralStringResource(
                         R.plurals.proLongerMessagesSent,
                         stats?.longMessages ?: 0,
@@ -391,7 +402,8 @@ fun ProStats(
 
                 // Pinned Convos
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_pinned_conversations),
                     title = pluralStringResource(
                         R.plurals.proPinnedConversations,
                         stats?.pinnedConversations ?: 0,
@@ -409,13 +421,13 @@ fun ProStats(
             ) {
                 // Pro Badges
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_badges_sent),
                     title = pluralStringResource(
                         R.plurals.proBadgesSent,
                         stats?.proBadges ?: 0,
                         if(stats != null) NumberUtil.getFormattedNumber(stats.proBadges.toLong())
-                        else  "",
-                        NonTranslatableStringConstants.PRO
+                        else  ""
                     ).trim(),
                     loading = data !is State.Success,
                     icon = R.drawable.ic_rectangle_ellipsis
@@ -424,7 +436,8 @@ fun ProStats(
 
                 // groups updated
                 ProStatItem(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
+                        .qaTag(R.string.qa_pro_stats_groups_upgraded),
                     title = pluralStringResource(
                         R.plurals.proGroupsUpgraded,
                         stats?.groupsUpdated ?: 0,
@@ -488,7 +501,12 @@ fun ProStatItem(
         }
 
         Text(
-            modifier = Modifier.weight(1f),
+            // The cell's own qa tag is on the Row above, which is a layout container and
+            // carries no text -- Compose's testTag sets a resource-id, not a description.
+            // So the count ("12 badges sent") was unreadable to a test: present on screen,
+            // absent from every node a reader could address. This tags the node that
+            // actually holds it, scoped by the row's id the same way action-item-title is.
+            modifier = Modifier.weight(1f).qaTag(R.string.qa_pro_stats_value),
             text = title,
             style = LocalType.current.h9,
             color = if(disabledState) LocalColors.current.textSecondary else LocalColors.current.text
@@ -521,7 +539,7 @@ fun ProStatItem(
 fun ProSettings(
     modifier: Modifier = Modifier,
     showProBadge: Boolean,
-    proStatus: ProStatus.Active,
+    proStatus: ProStatus.Active.WithPlan,
     subscriptionRefreshState: State<Unit>,
     inSheet: Boolean,
     expiry: CharSequence,
@@ -531,8 +549,8 @@ fun ProSettings(
     CategoryCell(
         modifier = modifier,
         title = Phrase.from(LocalContext.current, R.string.proSettings)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
+        titleQaTag = R.string.qa_pro_settings_manage_header,
     ) {
         val refunding = proStatus.refundInProgress
 
@@ -555,7 +573,6 @@ fun ProSettings(
             val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                 is State.Loading -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
                         Phrase.from(LocalContext.current, R.string.proAccessLoadingEllipsis)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString(),
                             LocalColors.current.text,
                     { SmallCircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) }
@@ -563,7 +580,6 @@ fun ProSettings(
                 
                 is State.Error -> Triple<CharSequence, Color, @Composable BoxScope.() -> Unit>(
                         Phrase.from(LocalContext.current, R.string.errorLoadingProAccess)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString(),
                             LocalColors.current.warning, chevronIcon
                     )
@@ -594,7 +610,6 @@ fun ProSettings(
                 title = if(refunding) annotatedStringResource(R.string.proRequestedRefund)
                 else annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.updateAccess)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(subtitle),
@@ -607,6 +622,10 @@ fun ProSettings(
                     }
                 },
                 qaTag = R.string.qa_pro_settings_action_update_plan,
+                // The remaining-access line. Uniquely identified rather than left as the shared
+                // `action-item-subtitle`, which is on every row here and so can only be addressed by
+                // traversing from this row — a traversal that breaks whenever the layout is restructured.
+                subtitleQaTag = R.string.qa_pro_settings_update_plan_subtitle,
                 onClick = { sendCommand(GoToChoosePlan(inSheet)) }
             )
             Divider()
@@ -614,12 +633,10 @@ fun ProSettings(
             SwitchActionRowItem(
                 title = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proBadge)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proBadgeVisible)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format().toString()
                 ),
                 checked = showProBadge,
@@ -641,8 +658,8 @@ fun ProFeatures(
     CategoryCell(
         modifier = modifier,
         title = Phrase.from(LocalContext.current, R.string.proBetaFeatures)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
+        titleQaTag = R.string.qa_pro_settings_features_header,
     ) {
         // Cell content
         Column(
@@ -696,7 +713,6 @@ fun ProFeatures(
                 title = stringResource(R.string.proBadges),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proBadgesDescription)
-                        .put(APP_NAME_KEY, stringResource(R.string.app_name))
                         .format().toString()
                 ),
                 icon = R.drawable.ic_rectangle_ellipsis,
@@ -711,8 +727,6 @@ fun ProFeatures(
                 title = stringResource(R.string.plusLoadsMore),
                 subtitle = annotatedStringResource(
                     text = Phrase.from(LocalContext.current.getText(R.string.plusLoadsMoreDescription))
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .put(ICON_KEY, iconExternalLink)
                         .format()
                 ),
@@ -721,7 +735,7 @@ fun ProFeatures(
                 iconGradientEnd = primaryYellow,
                 expired = disabled,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog("https://getsession.org/pro-roadmap"))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.ROADMAP))
                 }
             )
         }
@@ -805,7 +819,6 @@ fun ProManage(
     CategoryCell(
         modifier = modifier,
         title = Phrase.from(LocalContext.current, R.string.managePro)
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         dropShadow = LocalColors.current.isLight && data is ProStatus.Expired
     ) {
@@ -830,7 +843,6 @@ fun ProManage(
                 IconActionRowItem(
                     title = annotatedStringResource(
                         Phrase.from(LocalContext.current, R.string.proAccessRecover)
-                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                             .format().toString()
                     ),
                     icon = R.drawable.ic_refresh_cw,
@@ -846,7 +858,6 @@ fun ProManage(
                     IconActionRowItem(
                         title = annotatedStringResource(
                             Phrase.from(LocalContext.current, R.string.cancelAccess)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
                         titleColor = LocalColors.current.danger,
@@ -864,6 +875,12 @@ fun ProManage(
                 is ProStatus.Active.Expiring -> {
                     refundButton()
                 }
+
+                // Entitled from a local proof, with no plan detail yet. Every action here needs plan
+                // detail a response has not supplied — there is no plan to cancel and no payment to
+                // refund — so nothing is offered. This screen fetches on arrival, so it is a transient
+                // state, and the refresh indicator elsewhere is what explains it.
+                ProStatus.Active.FromLocalState -> Unit
 
                 is ProStatus.NeverSubscribed -> {
                     recoverButton()
@@ -885,7 +902,6 @@ fun ProManage(
                     val (subtitle, subColor, icon) = when(subscriptionRefreshState){
                         is State.Loading -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             Phrase.from(LocalContext.current, R.string.checkingProStatusEllipsis)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             LocalColors.current.text,
                             { SmallCircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) }
@@ -893,7 +909,6 @@ fun ProManage(
 
                         is State.Error -> Triple<CharSequence?, Color, @Composable BoxScope.() -> Unit>(
                             Phrase.from(LocalContext.current, R.string.errorCheckingProStatus)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             LocalColors.current.warning, renewIcon(LocalColors.current.text)
                         )
@@ -907,7 +922,6 @@ fun ProManage(
                     ActionRowItem(
                         title = annotatedStringResource(
                             Phrase.from(LocalContext.current, R.string.proAccessRenew)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString()
                         ),
                         titleColor = if(subscriptionRefreshState is State.Success ) LocalColors.current.accentText
@@ -942,7 +956,7 @@ fun ProSettingsFooter(
 ) {
     // Manage Pro - Expired has this in the header so exclude it here
     // We also don't want to show this while refund in process
-    val refunding = (proStatus as? ProStatus.Active)?.refundInProgress ?: false
+    val refunding = (proStatus as? ProStatus.Active.WithPlan)?.refundInProgress ?: false
     if(proStatus !is ProStatus.Expired && !refunding) {
         Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
         ProManage(
@@ -968,12 +982,10 @@ fun ProSettingsFooter(
             IconActionRowItem(
                 title = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proFaq)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proFaqDescription)
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                         .format().toString()
                 ),
                 icon = R.drawable.ic_square_arrow_up_right,
@@ -981,7 +993,7 @@ fun ProSettingsFooter(
                 iconColor = iconColor,
                 qaTag = R.string.qa_pro_settings_action_faq,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog("https://getsession.org/faq#pro"))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.FAQ))
                 }
             )
             Divider()
@@ -989,7 +1001,6 @@ fun ProSettingsFooter(
                 title = annotatedStringResource(R.string.helpSupport),
                 subtitle = annotatedStringResource(
                     Phrase.from(LocalContext.current, R.string.proSupportDescription)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format().toString()
                 ),
                 icon = R.drawable.ic_square_arrow_up_right,
@@ -997,7 +1008,7 @@ fun ProSettingsFooter(
                 iconColor = iconColor,
                 qaTag = R.string.qa_pro_settings_action_support,
                 onClick = {
-                    sendCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                    sendCommand(ShowOpenUrlDialog(ProUrls.SUPPORT))
                 }
             )
         }

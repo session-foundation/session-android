@@ -2,12 +2,15 @@ package org.thoughtcrime.securesms
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
-import com.squareup.phrase.Phrase
+import androidx.lifecycle.viewModelScope
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.Util
 import org.session.libsession.utilities.StringSubstitutionConstants.LIMIT_KEY
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatus
@@ -29,12 +32,43 @@ abstract class InputbarViewModel(
     private val _inputBarStateDialogsState = MutableStateFlow(InputBarDialogsState())
     val inputBarStateDialogsState: StateFlow<InputBarDialogsState> = _inputBarStateDialogsState
 
-    private val currentUser by lazy { recipientRepository.getSelf() }
+    /**
+     * ACCESS ("what may this device do") for the character limit — which gates SENDING, not just what
+     * the composer displays.
+     *
+     * Deliberately NOT `by lazy`. ACCESS is validated against proof expiry and the cached revocation
+     * list on every resolve, and a value captured once at first use is only ever validated once: a
+     * revocation landing while this screen is open could not demote us until the ViewModel was
+     * recreated. `observeSelf()`'s change sources include the revocation notification and a timer armed
+     * at the earliest proof expiry, so this stays current for the life of the screen.
+     *
+     * A `StateFlow` rather than a `getSelf()` call per use because [onTextChanged] runs on every
+     * keystroke and `getSelf()` is an uncached fetch that takes the config lock.
+     */
+    private val isSelfPro: StateFlow<Boolean> = recipientRepository.observeSelf()
+        .map { it.isPro }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            // Seeded synchronously so the very first keystroke is already correct rather than briefly
+            // reading as non-Pro. Guarded because `getSelf()` throws when not logged in.
+            initialValue = runCatching { recipientRepository.getSelf().isPro }.getOrDefault(false),
+        )
+
+    /**
+     * The composed length, kept so [validateMessageLength] can recompute against a FRESH access read
+     * instead of trusting the limit that was in force when the indicator was last drawn.
+     *
+     * A length is not an access decision, so caching it is safe; caching the limit is not.
+     */
+    private var composedCodePointCount: Int = 0
 
     fun onTextChanged(text: CharSequence) {
-        // check the character limit
-        val maxChars = proStatusManager.getCharacterLimit(currentUser.isPro)
-        val charsLeft = maxChars - Util.countCodepoints(text.toString())
+        // RENDERING: the observed value. This runs per keystroke, so it must not take the config lock.
+        val maxChars = proStatusManager.getCharacterLimit(isSelfPro.value)
+        val message = text.toString()
+        composedCodePointCount = message.codePointCount(0, message.length)
+        val charsLeft = maxChars - composedCodePointCount
 
         // update the char limit state based on characters left
         val charLimitState = if(charsLeft <= CHARACTER_LIMIT_THRESHOLD){
@@ -42,7 +76,14 @@ abstract class InputbarViewModel(
                 count = charsLeft,
                 countFormatted = NumberUtil.getFormattedNumber(charsLeft.toLong()),
                 danger = charsLeft < 0,
-                showProBadge = proStatusManager.isPostPro() && !currentUser.isPro // only show the badge for non pro users POST pro launch
+                // THE RULE: the gate reads ACCESS, the thing that EXPLAINS the gate reads DISPLAY.
+                //
+                // This badge is an upsell, not an entitlement indicator, so it reads the plan's state.
+                // Do not "fix" it back to an inverted ACCESS read to match the other badges: a
+                // subscriber whose proof has not arrived is correctly held to the standard limit by
+                // ACCESS above, and inviting them to buy what they already pay for is a different
+                // question with a different answer.
+                showProBadge = proStatusManager.proDataState.value.type !is ProStatus.Active
             )
         } else {
             null
@@ -51,14 +92,28 @@ abstract class InputbarViewModel(
         _inputBarState.update { it.copy(charLimitState = charLimitState) }
     }
 
+    /**
+     * ENFORCEMENT, so it calls the ACCESS function directly and unmemoized rather than reading the
+     * observed value or the indicator's cached count.
+     *
+     * This gates SENDING, which makes it a grant rather than a draw: a proof that expired or was revoked
+     * since the indicator was last drawn must refuse here, and it cannot if the decision is inherited
+     * from render state. Recomputed from [composedCodePointCount] for the same reason — the stored
+     * `charLimitState.count` was computed against whatever limit was in force at the last keystroke.
+     */
     fun validateMessageLength(): Boolean {
-        // the message is too long if we have a negative char left in the input state
-        val charsLeft = _inputBarState.value.charLimitState?.count ?: 0
+        val hasProAccess = proStatusManager.currentUserHasProAccess()
+        val charsLeft = proStatusManager.getCharacterLimit(hasProAccess) - composedCodePointCount
+
         return if(charsLeft < 0){
-            // the user is trying to send a message that is too long - we should display a dialog
-            // we currently have different logic for PRE and POST Pro launch
-            // which we can remove once Pro is out - currently we can switch this fro the debug menu
-            if(!proStatusManager.isPostPro() || currentUser.isPro){
+            // The LIMIT is an access question; which dialog explains it is a DISPLAY one, and the two
+            // deliberately read different values.
+            //
+            // A user whose plan reads Active but who holds no usable proof is over the standard limit —
+            // that is ACCESS, correctly refusing. But offering them "upgrade to Pro" is inviting them to
+            // buy something they are already paying for. They get "message too long" instead, and the
+            // upsell is reserved for users whose plan says they are not subscribed.
+            if(proStatusManager.proDataState.value.type is ProStatus.Active){
                 showMessageTooLongSendDialog()
             } else {
                 showSessionProCTA()
@@ -71,9 +126,10 @@ abstract class InputbarViewModel(
     }
 
     fun onCharLimitTapped(){
-        // we currently have different logic for PRE and POST Pro launch
-        // which we can remove once Pro is out - currently we can switch this fro the debug menu
-        if(!proStatusManager.isPostPro() || currentUser.isPro){
+        // Same split as [validateMessageLength]: this chooses which explanation to show, so it is DISPLAY.
+        // `handleCharLimitTappedForRegularUser` is the upsell, and a subscriber with no usable proof must
+        // not be upsold their own plan.
+        if(proStatusManager.proDataState.value.type is ProStatus.Active){
             handleCharLimitTappedForProUser()
         } else {
             handleCharLimitTappedForRegularUser()
@@ -107,7 +163,7 @@ abstract class InputbarViewModel(
                     message = context.resources.getQuantityString(
                         R.plurals.modalMessageCharacterDisplayDescription,
                         charsLeft, // quantity for plural
-                        proStatusManager.getCharacterLimit(currentUser.isPro), // 1st arg: total character limit
+                        proStatusManager.getCharacterLimit(isSelfPro.value), // 1st arg: total character limit
                         charsLeft, // 2nd arg: chars left
                     ),
                     positiveStyleDanger = false,
@@ -125,7 +181,7 @@ abstract class InputbarViewModel(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.modalMessageTooLongTitle),
                     message = Phrase.from(context.getString(R.string.modalMessageCharacterTooLongDescription))
-                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit(currentUser.isPro))
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit(isSelfPro.value))
                         .format(),
                     positiveStyleDanger = false,
                     positiveText = context.getString(R.string.okay),
@@ -141,7 +197,7 @@ abstract class InputbarViewModel(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.modalMessageTooLongTitle),
                     message = Phrase.from(context.getString(R.string.modalMessageTooLongDescription))
-                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit(currentUser.isPro))
+                        .put(LIMIT_KEY, proStatusManager.getCharacterLimit(isSelfPro.value))
                         .format(),
                     positiveStyleDanger = false,
                     positiveText = context.getString(R.string.okay),

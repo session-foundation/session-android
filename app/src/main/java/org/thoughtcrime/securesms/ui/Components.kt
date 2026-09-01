@@ -343,6 +343,13 @@ fun ItemButton(
     endIcon: @Composable (BoxScope.() -> Unit)? = null,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    /**
+     * QA id for the button's own label. Off by default, like [subtitleQaTag] — most buttons are addressed
+     * by the id on the button itself. Pass one where a test needs to read the LABEL rather than find the
+     * button: the row's id sits on the tap target, which carries no text, so the words that say which
+     * state the item is in are only reachable through this.
+     */
+    @StringRes textQaTag: Int? = null,
     enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.h8,
@@ -378,7 +385,9 @@ fun ItemButton(
         ) {
             Text(
                 text,
-                Modifier.fillMaxWidth(),
+                Modifier
+                    .fillMaxWidth()
+                    .qaTag(textQaTag),
                 style = textStyle
             )
 
@@ -462,6 +471,12 @@ fun getCellBottomShape() = RoundedCornerShape(
 fun CategoryCell(
     modifier: Modifier = Modifier,
     title: String? = null,
+    /**
+     * QA id for the section header. Off by default, since most cells are addressed by their content
+     * rather than their heading; pass one where a test needs the section itself. Note the header only
+     * composes when [title] or [titleIcon] is present, so the id follows the header's existence.
+     */
+    @StringRes titleQaTag: Int? = null,
     titleIcon: @Composable (() -> Unit)? = null,
     dropShadow: Boolean = false,
     content: @Composable () -> Unit,
@@ -482,6 +497,7 @@ fun CategoryCell(
                 if (!title.isNullOrEmpty()) {
                     Text(
                         text = title,
+                        modifier = Modifier.qaTag(titleQaTag),
                         style = LocalType.current.base,
                         color = LocalColors.current.textSecondary
                     )
@@ -1414,6 +1430,12 @@ fun ActionRowItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     subtitle: AnnotatedString? = null,
+    /**
+     * Overrides the subtitle's QA id. Defaults to the shared [R.string.qa_action_item_subtitle],
+     * which is on every action row and so cannot identify a particular one. Mirrors the
+     * `subtitleQaTag` parameter the other row composables in this file already take.
+     */
+    @StringRes subtitleQaTag: Int? = null,
     titleColor: Color = LocalColors.current.text,
     subtitleColor: Color = LocalColors.current.text,
     textStyle: TextStyle = LocalType.current.h8,
@@ -1454,7 +1476,7 @@ fun ActionRowItem(
                     text = it,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .qaTag(R.string.qa_action_item_subtitle),
+                        .qaTag(subtitleQaTag ?: R.string.qa_action_item_subtitle),
                     style = subtitleStyle,
                     color = subtitleColor
                 )

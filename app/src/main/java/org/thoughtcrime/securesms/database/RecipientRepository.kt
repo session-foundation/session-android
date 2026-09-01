@@ -211,11 +211,7 @@ class RecipientRepository @Inject constructor(
     ): Pair<Recipient, Flow<*>?> {
         val now = snodeClock.get().currentTime()
 
-        val proDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
-            ProDataContext()
-        } else {
-            null
-        }
+        val proDataContext = ProDataContext()
 
         // Fetch data from config first, this may contain partial information for some kind of recipient
         val configData = getDataFromConfig(
@@ -233,8 +229,13 @@ class RecipientRepository @Inject constructor(
                 changeSources = if (needFlow) {
                     arrayListOf(
                         configFactory.userConfigsChanged(onlyConfigTypes = EnumSet.of(UserConfigType.USER_PROFILE)),
+                        // Every preference that step 3 of `resolveProStatus` reads has to be here, or a
+                        // resolve cached before the write keeps its answer. A grant is what exposes an
+                        // omission: withholding one produces the same absent proData as no override at
+                        // all, so a missing invalidation looks like a correctly denied fixture.
                         TextSecurePreferences.events.filter {
                             it == TextSecurePreferences.SET_FORCE_CURRENT_USER_PRO
+                                    || it == TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE
                                     || it == TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS
                         },
                     )
@@ -463,7 +464,7 @@ class RecipientRepository @Inject constructor(
 
         // Safety: Let's filter again for the flow logic to be 100% sure we are only setting timers for valid proofs
         val validProDataList = proDataContext?.proDataList?.filter {
-            !it.isExpired(now) && !proDatabase.isRevoked(it.genIndexHash, snodeClock.get().currentTime())
+            !it.isExpired(now) && !proDatabase.isRevoked(it.revocationTag, snodeClock.get().currentTime())
         }
 
         if (changeSources != null) {
@@ -481,8 +482,6 @@ class RecipientRepository @Inject constructor(
                     .drop(1)
             }
         }
-
-        changeSources?.add(proStatusManager.get().postProLaunchStatus.drop(1))
 
         return updatedValue to changeSources?.let { merge(*it.toTypedArray()) }
     }
@@ -505,18 +504,21 @@ class RecipientRepository @Inject constructor(
 
         // 1. Filter invalid proofs
         proDataList?.removeAll {
-            it.isExpired(now) || proDatabase.isRevoked(it.genIndexHash, snodeClock.get().currentTime())
+            it.isExpired(now) || proDatabase.isRevoked(it.revocationTag, snodeClock.get().currentTime())
         }
 
-        // 2. Determine base Pro Data from valid proofs or ProStatusManager
+        // 2. Determine base Pro Data from valid proofs
+        //
+        // ACCESS ("what may this device do") comes from the PROOF, for ourselves exactly as for anyone
+        // else — so it runs through the expiry and revocation filter above on every resolve. There is
+        // deliberately no `isSelf` short-circuit on the cached `get_pro_status` response here: that
+        // response is DISPLAY ("what state is the plan in"), it is not revocation-filtered, and trusting
+        // it for access let a cached `Active` outlive a revocation we had already been told about.
+        //
+        // The two are MEANT to disagree — a proof that outlives an expired status still grants the
+        // feature, which is the deliberate overhang. Read `ProStatusManager.proDataState` when you want
+        // to describe the plan; read this when you want to know what is permitted.
         var proData = when {
-            // For ourselves, we "trust" ProStatusManager more than the ProProofs
-            recipient.isSelf && proStatusManager.get().proDataState.value.type is ProStatus.Active -> {
-                RecipientData.ProData(
-                    showProBadge = proStatusManager.get().proDataState.value.showProBadge
-                )
-            }
-
             !proDataList.isNullOrEmpty() -> {
                 RecipientData.ProData(showProBadge = proDataList.any { it.showProBadge })
             }
@@ -526,7 +528,16 @@ class RecipientRepository @Inject constructor(
         }
 
         // 3. Apply Debug Overrides
-        if (recipient.isSelf && proData == null && prefs.forceCurrentUserAsPro()) {
+        //
+        // The mocked-proof override is tri-state and BOTH directions are applied here, not just the
+        // grant: rendering and enforcement must never disagree about what a mocked run is entitled to,
+        // and `ProStatusManager.currentUserHasProAccess` honours `none` as a denial even against a real
+        // proof. If this only honoured the grant, a `proProof=none` fixture would show a Pro badge while
+        // the composer offered the standard limit.
+        val proAccessOverride = if (recipient.isSelf) prefs.getDebugProAccessOverride() else null
+        if (recipient.isSelf && proAccessOverride == false) {
+            proData = null
+        } else if (recipient.isSelf && proData == null && (proAccessOverride == true || prefs.forceCurrentUserAsPro())) {
             proData = RecipientData.ProData(showProBadge = true)
         } else if (!recipient.isSelf
             && (recipient.address is Address.Standard)
@@ -554,11 +565,7 @@ class RecipientRepository @Inject constructor(
         settingsFetcher: (address: Address) -> RecipientSettings
     ): Recipient {
         // 1. Create a local context specifically for this member
-        val memberProDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
-            ProDataContext()
-        } else {
-            null
-        }
+        val memberProDataContext = ProDataContext()
 
         // 2. Fetch the basic recipient data
         val rawRecipient = when (val configData = getDataFromConfig(member.address, memberProDataContext)) {
@@ -603,11 +610,7 @@ class RecipientRepository @Inject constructor(
         settingsFetcher: (address: Address) -> RecipientSettings,
     ): Recipient {
         // 1. Create Local Context
-        val memberProDataContext = if (proStatusManager.get().postProLaunchStatus.value) {
-            ProDataContext()
-        } else {
-            null
-        }
+        val memberProDataContext = ProDataContext()
 
         // 2. Fetch Data
         val rawRecipient = when (val configData = getDataFromConfig(address, memberProDataContext)) {
@@ -680,14 +683,22 @@ class RecipientRepository @Inject constructor(
                     configFactory.withUserConfigs { configs ->
                         val pro = configs.userProfile.getProConfig()
 
-                        if (prefs.forceCurrentUserAsPro()) {
+                        // Honours the tri-state access override first, then the legacy flag. Without this
+                        // the two levers disagree: a `proProof=none` fixture would still be given Pro data
+                        // here whenever the legacy flag happened to be set, and a `proProof=valid` one
+                        // would not be given any unless it was.
+                        if (prefs.getDebugProAccessOverride() ?: prefs.forceCurrentUserAsPro()) {
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
                                         ProProfileFeature.PRO_BADGE
                                     ),
-                                    expiry = Instant.now().plusSeconds(3600),
-                                    genIndexHash = "a1b2c3d4",
+                                    // The mocked access expiry when one was set, so this and the Pro state
+                                    // report the same date. It used to hard-code an hour from now, which made
+                                    // it a second and silently disagreeing source for the same fact.
+                                    expiry = prefs.getDebugProAccessExpiry()
+                                        ?: Instant.now().plusSeconds(3600),
+                                    revocationTag = "a1b2c3d4",
                                 )
                             )
                         } else if (pro != null) {
@@ -696,8 +707,8 @@ class RecipientRepository @Inject constructor(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
                                         ProProfileFeature.PRO_BADGE
                                     ),
-                                    expiry = Instant.ofEpochMilli(pro.proProof.expiryMs),
-                                    genIndexHash = pro.proProof.genIndexHashHex,
+                                    expiry = Instant.ofEpochSecond(pro.proProof.expirySeconds),
+                                    revocationTag = pro.proProof.revocationTagHex,
                                 )
                             )
                         }
@@ -724,7 +735,7 @@ class RecipientRepository @Inject constructor(
                                 RecipientSettings.ProData(
                                     showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                                     expiry = convo.proProofInfo!!.expiry,
-                                    genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                                    revocationTag = convo.proProofInfo!!.revocationTag.data.toHexString(),
                                 )
                             )
                         }
@@ -784,7 +795,7 @@ class RecipientRepository @Inject constructor(
                         RecipientSettings.ProData(
                             showProBadge = contact.proFeatures.contains(ProProfileFeature.PRO_BADGE),
                             expiry = convo.proProofInfo!!.expiry,
-                            genIndexHash = convo.proProofInfo!!.genIndexHash.data.toHexString(),
+                            revocationTag = convo.proProofInfo!!.revocationTag.data.toHexString(),
                         )
                     )
                 }

@@ -34,6 +34,10 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_HAS_DONATED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SEEN_DONATION_CTA_AMOUNT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.DEBUG_SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
+import org.session.libsession.utilities.TextSecurePreferences.Companion.DEVNET_SEED_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.PRO_BACKEND_PUBKEY
+import org.session.libsession.utilities.TextSecurePreferences.Companion.PRO_BACKEND_URL
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SNODE_POOL_SEED_MARKER
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FORCED_SHORT_TTL
@@ -58,7 +62,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SEND_WIT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO
-import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW
@@ -68,6 +71,7 @@ import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.pro.toProMessageFeatures
 import org.thoughtcrime.securesms.pro.toProProfileFeatures
 import java.io.IOException
+import java.time.Instant
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -142,19 +146,23 @@ interface TextSecurePreferences {
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
     fun setHasSeenLinkPreviewSuggestionDialog()
     fun forceCurrentUserAsPro(): Boolean
+
+    /**
+     * QA only: force the next Pro revocation poll to happen now rather than at its scheduled time.
+     * Set from a launch extra, which is itself unreachable outside QA builds.
+     */
+    fun forceProRevocationRefresh(): Boolean
+    fun setForceProRevocationRefresh(force: Boolean)
     fun setForceCurrentUserAsPro(isPro: Boolean)
     fun forceOtherUsersAsPro(): Boolean
     fun setForceOtherUsersAsPro(isPro: Boolean)
     fun forceIncomingMessagesAsPro(): Boolean
     fun setForceIncomingMessagesAsPro(isPro: Boolean)
-    fun forcePostPro(): Boolean
-    fun setForcePostPro(postPro: Boolean)
     fun hasSeenProExpiring(): Boolean
     fun setHasSeenProExpiring()
     fun hasSeenProExpired(): Boolean
     fun setHasSeenProExpired()
     fun clearProExpiryView()
-    fun watchPostProStatus(): StateFlow<Boolean>
     fun hasSeenSlowModeCallWarning(): Boolean
     fun setHasSeenSlowModeCallWarning(value: Boolean)
     fun setShownCallWarning(): Boolean
@@ -184,6 +192,31 @@ interface TextSecurePreferences {
     fun setLastVersionCheck()
     fun getEnvironment(): Environment
     fun setEnvironment(value: Environment)
+
+    /**
+     * Overrides the seed node used when the environment is [Environment.DEV_NET], so a devnet can be
+     * targeted without rebuilding the app. `null` (the default) means use the built-in devnet seed.
+     */
+    fun getDevnetSeedUrl(): String?
+    fun setDevnetSeedUrl(value: String?)
+
+    /**
+     * Overrides the Session Pro backend, so a QA backend can be targeted without rebuilding. Both
+     * must be set together: the pubkey is what proofs are verified against, so a QA-signed proof read
+     * with the production key is simply invalid. `null` (the default) means use the compiled-in
+     * backend from libsession.
+     */
+    fun getProBackendUrl(): String?
+    fun setProBackendUrl(value: String?)
+    fun getProBackendPubkey(): String?
+    fun setProBackendPubkey(value: String?)
+
+    /**
+     * Identifies the seed configuration the cached snode pool was fetched from, so a pool belonging
+     * to a previous network can be discarded (see SnodeDirectory). Opaque; do not parse.
+     */
+    fun getSnodePoolSeedMarker(): String?
+    fun setSnodePoolSeedMarker(value: String?)
     fun hasSeenTokenPageNotification(): Boolean
     fun setHasSeenTokenPageNotification(value: Boolean)
     fun forcedShortTTL(): Boolean
@@ -193,13 +226,86 @@ interface TextSecurePreferences {
     fun  setDebugMessageFeatures(features: Set<ProFeature>)
 
     fun getDebugSubscriptionType(): DebugMenuViewModel.DebugSubscriptionStatus?
+
+    /**
+     * Mocked Pro ACCESS override: `true` grants, `false` DENIES, `null` means no override so the real
+     * proof governs. Tri-state deliberately — `false` and `null` differ when a real proof exists, which
+     * it can on a QA backend that mints them.
+     */
+    fun getDebugProAccessOverride(): Boolean?
+    fun setDebugProAccessOverride(granted: Boolean?)
     fun setDebugSubscriptionType(status: DebugMenuViewModel.DebugSubscriptionStatus?)
+    fun getDebugProAccessExpiry(): Instant?
+    fun setDebugProAccessExpiry(expiry: Instant?)
     fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus?
     fun setDebugProPlanStatus(status: DebugMenuViewModel.DebugProPlanStatus?)
     fun getDebugForceNoBilling(): Boolean
     fun setDebugForceNoBilling(hasBilling: Boolean)
-    fun getDebugIsWithinQuickRefund(): Boolean
-    fun setDebugIsWithinQuickRefund(isWithin: Boolean)
+    /**
+     * Mocked quick-refund window: `true` forces it open, `false` forces it closed, `null` for no override
+     * so the fixture's own window stands.
+     *
+     * Tri-state because every debug fixture sets the window open; a plain boolean defaulting to false
+     * would close it for every existing test. Applied by moving `quickRefundExpiry`, which is the single
+     * representation of the window — see `ProStatusManager.withMockedQuickRefundWindow`.
+     */
+    fun getDebugQuickRefundWindowOverride(): Boolean?
+    fun setDebugQuickRefundWindowOverride(isWithin: Boolean?)
+
+    /**
+     * Mocked refund-pending override: `true` forces a refund in progress, `false` forces none, `null`
+     * means no override so the real state governs.
+     *
+     * Tri-state as [getDebugProAccessOverride] is: the real state is a synced config flag another device
+     * can have set, so `false` and `null` differ. Orthogonal to [getDebugSubscriptionType] so it composes
+     * with any fixture.
+     */
+    fun getDebugRefundInProgressOverride(): Boolean?
+    fun setDebugRefundInProgressOverride(refunding: Boolean?)
+
+    /**
+     * Overrides whether the app considers itself to have been UPDATED rather than freshly installed,
+     * which gates which events may raise the in-app review prompt.
+     *
+     * Tri-state: `null` means "use the real package-manager answer". The real answer is
+     * `firstInstallTime != lastUpdateTime`, which a test harness cannot influence — it installs over an
+     * existing package, so the app always reads as updated and the fresh-install branch is unreachable.
+     */
+    fun getDebugAppUpdated(): Boolean?
+    fun setDebugAppUpdated(updated: Boolean?)
+
+    /**
+     * Mocked originating payment provider (a `BackendRequests.PAYMENT_PROVIDER_*` slug), or `null` for no
+     * override so the fixture's own provider stands.
+     *
+     * This is Android's equivalent of iOS's `mockCurrentUserSessionProOriginatingPlatform`: the provider
+     * slug is what every "was this bought elsewhere" decision reads, via
+     * `PaymentProviderMetadata.isFromAnotherPlatform`.
+     */
+    fun getDebugOriginatingProvider(): String?
+    fun setDebugOriginatingProvider(providerSlug: String?)
+
+    /**
+     * Mocked auto-renewing override: `true` forces a renewing plan, `false` forces one that runs to its
+     * end date, `null` for no override.
+     *
+     * The flag the "Pro auto-renewing in {time}" line, the renewal-unsuccessful state and the Cancel Pro
+     * Access action all read. Tri-state like the others so "force not renewing" and "do not mock" stay
+     * distinguishable.
+     */
+    fun getDebugAutoRenewingOverride(): Boolean?
+    fun setDebugAutoRenewingOverride(autoRenewing: Boolean?)
+
+    /**
+     * Mocked originating-account override: `true` forces the store account currently signed in to be the
+     * one that bought the subscription, `false` forces a different one, `null` for no override.
+     *
+     * Overrides `SubscriptionManager.hasValidSubscription()`, which is what the screens read as "same
+     * platform but a different account" — iOS spells the same fact
+     * `mockCurrentUserOriginatingAccount`.
+     */
+    fun getDebugOriginatingAccountOverride(): Boolean?
+    fun setDebugOriginatingAccountOverride(isOriginating: Boolean?)
 
     fun setSubscriptionProvider(provider: String)
     fun getSubscriptionProvider(): String?
@@ -242,7 +348,6 @@ interface TextSecurePreferences {
     var selectedActivityAliasName: String?
 
     var inAppReviewState: String?
-    var forcesDeterministicAttachmentEncryption: Boolean
     var debugAvatarReupload: Boolean
     var alternativeFileServer: FileServer?
 
@@ -286,9 +391,9 @@ interface TextSecurePreferences {
         const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
+        const val SET_FORCE_PRO_REVOCATION_REFRESH = "pref_force_pro_revocation_refresh"
         const val SET_FORCE_OTHER_USERS_PRO = "pref_force_other_users_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
-        const val SET_FORCE_POST_PRO = "pref_force_post_pro"
         const val HAS_SEEN_PRO_EXPIRING = "has_seen_pro_expiring"
         const val HAS_SEEN_PRO_EXPIRED = "has_seen_pro_expired"
         const val SHOWN_SLOW_MODE_CALL_WARNING = "has_seen_slow_mode_call_warning"
@@ -302,6 +407,10 @@ interface TextSecurePreferences {
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
         const val LAST_VERSION_CHECK = "pref_last_version_check"
         const val ENVIRONMENT = "debug_environment"
+        const val DEVNET_SEED_URL = "debug_devnet_seed_url"
+        const val PRO_BACKEND_URL = "debug_pro_backend_url"
+        const val PRO_BACKEND_PUBKEY = "debug_pro_backend_pubkey"
+        const val SNODE_POOL_SEED_MARKER = "snode_pool_seed_marker"
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
 
@@ -355,20 +464,27 @@ interface TextSecurePreferences {
         const val DEBUG_PRO_MESSAGE_FEATURES = "debug_pro_message_features"
         const val DEBUG_PRO_PROFILE_FEATURES = "debug_pro_profile_features"
         const val DEBUG_SUBSCRIPTION_STATUS = "debug_subscription_status"
+        const val DEBUG_PRO_ACCESS_OVERRIDE = "debug_pro_access_override"
+        const val DEBUG_APP_UPDATED = "debug_app_updated"
+        const val DEBUG_PRO_ACCESS_EXPIRY = "debug_pro_access_expiry"
         const val DEBUG_PRO_PLAN_STATUS = "debug_pro_plan_status"
         const val DEBUG_FORCE_NO_BILLING = "debug_pro_has_billing"
         const val DEBUG_WITHIN_QUICK_REFUND = "debug_within_quick_refund"
+        const val DEBUG_PRO_REFUND_IN_PROGRESS = "debug_pro_refund_in_progress"
+        const val DEBUG_PRO_ORIGINATING_PROVIDER = "debug_pro_originating_provider"
+        const val DEBUG_PRO_AUTO_RENEWING = "debug_pro_auto_renewing"
+        const val DEBUG_PRO_ORIGINATING_ACCOUNT = "debug_pro_originating_account"
 
         const val SUBSCRIPTION_PROVIDER = "session_subscription_provider"
         const val DEBUG_AVATAR_REUPLOAD = "debug_avatar_reupload"
 
 
         // Donation
-        const val HAS_DONATED = "has_donated_v3"
-        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url_v3"
-        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount_v3"
-        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta_v3"
-        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review_v3"
+        const val HAS_DONATED = "has_donated_v4"
+        const val HAS_COPIED_DONATION_URL = "has_copied_donation_url_v4"
+        const val SEEN_DONATION_CTA_AMOUNT = "seen_donation_cta_amount_v4"
+        const val LAST_SEEN_DONATION_CTA = "last_seen_donation_cta_v4"
+        const val SHOW_DONATION_CTA_FROM_POSITIVE_REVIEW = "show_donation_cta_from_positive_review_v4"
 
         const val DEBUG_HAS_DONATED = "debug_has_donated"
         const val DEBUG_HAS_COPIED_DONATION_URL = "debug_has_copied_donation_url"
@@ -553,7 +669,6 @@ class AppTextSecurePreferences @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val json: Json,
 ): TextSecurePreferences {
-    private val postProLaunchState = MutableStateFlow(getBooleanPreference(SET_FORCE_POST_PRO, if (BuildConfig.BUILD_TYPE != "release") true else false))
     private val hiddenPasswordState = MutableStateFlow(getBooleanPreference(HIDE_PASSWORD, false))
 
     override var migratedToGroupV2Config: Boolean
@@ -931,6 +1046,30 @@ class AppTextSecurePreferences @Inject constructor(
         setStringPreference(ENVIRONMENT, value.name)
     }
 
+    override fun getDevnetSeedUrl(): String? = getStringPreference(DEVNET_SEED_URL, null)
+
+    override fun setDevnetSeedUrl(value: String?) {
+        setStringPreference(DEVNET_SEED_URL, value)
+    }
+
+    override fun getProBackendUrl(): String? = getStringPreference(PRO_BACKEND_URL, null)
+
+    override fun setProBackendUrl(value: String?) {
+        setStringPreference(PRO_BACKEND_URL, value)
+    }
+
+    override fun getProBackendPubkey(): String? = getStringPreference(PRO_BACKEND_PUBKEY, null)
+
+    override fun setProBackendPubkey(value: String?) {
+        setStringPreference(PRO_BACKEND_PUBKEY, value)
+    }
+
+    override fun getSnodePoolSeedMarker(): String? = getStringPreference(SNODE_POOL_SEED_MARKER, null)
+
+    override fun setSnodePoolSeedMarker(value: String?) {
+        setStringPreference(SNODE_POOL_SEED_MARKER, value)
+    }
+
     override fun setShownCallNotification(): Boolean {
         val previousValue = getBooleanPreference(SHOWN_CALL_NOTIFICATION, false)
         if (previousValue) return false
@@ -958,6 +1097,14 @@ class AppTextSecurePreferences @Inject constructor(
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
     }
 
+    override fun forceProRevocationRefresh(): Boolean {
+        return getBooleanPreference(TextSecurePreferences.SET_FORCE_PRO_REVOCATION_REFRESH, false)
+    }
+
+    override fun setForceProRevocationRefresh(force: Boolean) {
+        setBooleanPreference(TextSecurePreferences.SET_FORCE_PRO_REVOCATION_REFRESH, force)
+    }
+
     override fun setForceCurrentUserAsPro(isPro: Boolean) {
         setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, isPro)
         _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
@@ -980,16 +1127,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, isPro)
     }
 
-    override fun forcePostPro(): Boolean {
-        return postProLaunchState.value
-    }
-
-    override fun setForcePostPro(postPro: Boolean) {
-        setBooleanPreference(SET_FORCE_POST_PRO, postPro)
-        postProLaunchState.update { postPro }
-        _events.tryEmit(SET_FORCE_POST_PRO)
-    }
-
     override fun hasSeenProExpiring(): Boolean {
         return getBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
     }
@@ -1009,10 +1146,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun clearProExpiryView() {
         setBooleanPreference(HAS_SEEN_PRO_EXPIRED, false)
         setBooleanPreference(HAS_SEEN_PRO_EXPIRING, false)
-    }
-
-    override fun watchPostProStatus(): StateFlow<Boolean> {
-        return postProLaunchState
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {
@@ -1118,7 +1251,6 @@ class AppTextSecurePreferences @Inject constructor(
      * Clear all prefs and reset our observables
      */
     override fun clearAll() {
-        postProLaunchState.update { false }
         hiddenPasswordState.update { false }
 
         getDefaultSharedPreferences(context).edit(commit = true) { clear() }
@@ -1207,6 +1339,35 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.DEBUG_SUBSCRIPTION_STATUS)
     }
 
+    override fun getDebugAppUpdated(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_APP_UPDATED, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugAppUpdated(updated: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_APP_UPDATED, updated?.toString())
+    }
+
+    override fun getDebugProAccessOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugProAccessOverride(granted: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE, granted?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_ACCESS_OVERRIDE)
+    }
+
+    override fun getDebugProAccessExpiry(): Instant? {
+        return getStringPreference(TextSecurePreferences.DEBUG_PRO_ACCESS_EXPIRY, null)
+            ?.toLongOrNull()
+            ?.let(Instant::ofEpochMilli)
+    }
+
+    override fun setDebugProAccessExpiry(expiry: Instant?) {
+        setStringPreference(
+            TextSecurePreferences.DEBUG_PRO_ACCESS_EXPIRY,
+            expiry?.toEpochMilli()?.toString()
+        )
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_ACCESS_EXPIRY)
+    }
+
     override fun getDebugProPlanStatus(): DebugMenuViewModel.DebugProPlanStatus? {
         return getStringPreference(TextSecurePreferences.DEBUG_PRO_PLAN_STATUS, null)?.let {
             DebugMenuViewModel.DebugProPlanStatus.valueOf(it)
@@ -1227,13 +1388,44 @@ class AppTextSecurePreferences @Inject constructor(
         _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
     }
 
-    override fun getDebugIsWithinQuickRefund(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, false)
+    override fun getDebugOriginatingAccountOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_ORIGINATING_ACCOUNT, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugOriginatingAccountOverride(isOriginating: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_ORIGINATING_ACCOUNT, isOriginating?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_ORIGINATING_ACCOUNT)
     }
 
-    override fun setDebugIsWithinQuickRefund(isWithin: Boolean) {
-        setBooleanPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin)
-        _events.tryEmit(TextSecurePreferences.DEBUG_FORCE_NO_BILLING)
+    override fun getDebugAutoRenewingOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_AUTO_RENEWING, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugAutoRenewingOverride(autoRenewing: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_AUTO_RENEWING, autoRenewing?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_AUTO_RENEWING)
+    }
+
+    override fun getDebugOriginatingProvider(): String? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_ORIGINATING_PROVIDER, null)
+
+    override fun setDebugOriginatingProvider(providerSlug: String?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_ORIGINATING_PROVIDER, providerSlug)
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_ORIGINATING_PROVIDER)
+    }
+
+    override fun getDebugRefundInProgressOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_PRO_REFUND_IN_PROGRESS, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugRefundInProgressOverride(refunding: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_PRO_REFUND_IN_PROGRESS, refunding?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_PRO_REFUND_IN_PROGRESS)
+    }
+
+    override fun getDebugQuickRefundWindowOverride(): Boolean? =
+        getStringPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, null)?.toBooleanStrictOrNull()
+
+    override fun setDebugQuickRefundWindowOverride(isWithin: Boolean?) {
+        setStringPreference(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND, isWithin?.toString())
+        _events.tryEmit(TextSecurePreferences.DEBUG_WITHIN_QUICK_REFUND)
     }
 
     override fun getSubscriptionProvider(): String? {
@@ -1243,12 +1435,6 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setSubscriptionProvider(provider: String) {
         setStringPreference(TextSecurePreferences.SUBSCRIPTION_PROVIDER, provider)
     }
-
-    override var forcesDeterministicAttachmentEncryption: Boolean
-        get() = getBooleanPreference("forces_deterministic_attachment_upload", false)
-        set(value) {
-            setBooleanPreference("forces_deterministic_attachment_upload", value)
-        }
 
     override var debugAvatarReupload: Boolean
         get() = getBooleanPreference(TextSecurePreferences.DEBUG_AVATAR_REUPLOAD, false)

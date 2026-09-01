@@ -21,10 +21,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel.UiState
 import org.thoughtcrime.securesms.onboarding.ui.ContinueAccentOutlineButton
@@ -80,7 +79,6 @@ internal fun MessageNotificationsScreen(
                 Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
                 Text(
                     Phrase.from(stringResource(R.string.onboardingMessageNotificationExplanation))
-                        .put(APP_NAME_KEY, stringResource(R.string.app_name))
                         .format().toString(),
                     style = LocalType.current.base
                 )
@@ -103,7 +101,6 @@ internal fun MessageNotificationsScreen(
 
                 val explanationTxt =
                     Phrase.from(stringResource(R.string.notificationsSlowModeDescription))
-                        .put(APP_NAME_KEY, stringResource(R.string.app_name))
                         .format().toString()
 
                 NotificationRadioButton(
