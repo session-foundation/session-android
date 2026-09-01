@@ -149,6 +149,30 @@ object QaLaunchConfig {
     private const val EXTRA_FORCE_PRO_REVOCATION_REFRESH = "sessionForceProRevocationRefresh"
 
     /**
+     * States whether the app should consider itself UPDATED rather than freshly installed, which decides
+     * which events may raise the in-app review prompt: when updated, only the donate trigger can; when
+     * freshly installed, the path and theme triggers can too.
+     *
+     * `true` | `false`. Absent leaves the stored override alone; `useActual` restores the real
+     * package-manager answer.
+     *
+     * It needs an extra because the real answer is `firstInstallTime != lastUpdateTime`, and a harness
+     * cannot influence either: installing over an existing package always makes them differ, so the app
+     * always reads as updated and the fresh-install branch is unreachable from a test. The two triggers
+     * behind it are not testable without this.
+     *
+     * Applying this also CLEARS the stored review state, because that state is what the flag feeds: the
+     * flag is only consulted when deriving a fresh state, so without the clear a device that had already
+     * run a review spec would keep its old state and ignore the extra. That reset happens once, on the
+     * launch carrying the extra — a later relaunch without it keeps whatever the app has since decided,
+     * so a spec asserting the prompt appears only once still works across a restart.
+     *
+     * Mirrors iOS's `customFirstInstallDateTime` in purpose but not in shape — see the commit for why a
+     * date cannot express this on Android.
+     */
+    private const val EXTRA_APP_UPDATED = "sessionAppUpdated"
+
+    /**
      * When the mocked Pro access expires, overriding the fixed offset the fixture selected by
      * [EXTRA_PRO_BACKEND_STATUS] carries. iOS's `mockCurrentUserAccessExpiryTimestamp`, which is an
      * independent key there too.
@@ -280,6 +304,7 @@ object QaLaunchConfig {
             // After the status extra: it overrides the access half that one sets.
             applyProProof(intent, prefs)
             applyForceProRevocationRefresh(intent, prefs)
+            applyAppUpdated(intent, prefs)
             applyProAccessExpiry(intent, prefs)
             applyProLoadingState(intent, prefs)
             applyProRefundingStatus(intent, prefs)
@@ -312,6 +337,7 @@ object QaLaunchConfig {
         EXTRA_PRO_BACKEND_STATUS,
         EXTRA_PRO_PROOF,
         EXTRA_FORCE_PRO_REVOCATION_REFRESH,
+        EXTRA_APP_UPDATED,
         EXTRA_PRO_ACCESS_EXPIRY,
         EXTRA_PRO_LOADING_STATE,
         EXTRA_PRO_REFUNDING_STATUS,
@@ -636,6 +662,36 @@ object QaLaunchConfig {
 
         prefs.setForceProRevocationRefresh(force)
         Log.i(TAG, "Set forced Pro revocation refresh to $force (from '$raw')")
+        return true
+    }
+
+    private fun applyAppUpdated(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_APP_UPDATED)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_APP_UPDATED).orEmpty().trim()
+        // null = drop the override and use the real package-manager answer.
+        val override: Boolean? = when (raw.lowercase()) {
+            "true" -> true
+            "false" -> false
+            USE_ACTUAL -> null
+            else -> {
+                Log.e(
+                    TAG,
+                    "Ignoring unknown '$EXTRA_APP_UPDATED' extra: '$raw'. Use true | false | $USE_ACTUAL."
+                )
+                return false
+            }
+        }
+
+        prefs.setDebugAppUpdated(override)
+
+        // The flag is only read when a fresh review state is derived, so an existing stored state would
+        // silently outrank this extra. Clearing it is what makes the extra mean what it says.
+        prefs.inAppReviewState = null
+
+        Log.i(TAG, "Set app-updated override to $override (from '$raw'); cleared the stored review state")
         return true
     }
 
