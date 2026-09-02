@@ -14,6 +14,7 @@ import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.messaging.sending_receiving.pollers.BasePoller
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -27,15 +28,16 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.snode.AlterTtlApi
 import org.thoughtcrime.securesms.api.snode.RetrieveMessageApi
+import org.thoughtcrime.securesms.api.snode.groupExpiredFromExpiryCheck
 import org.thoughtcrime.securesms.api.swarm.SwarmApiExecutor
 import org.thoughtcrime.securesms.api.swarm.SwarmApiRequest
 import org.thoughtcrime.securesms.api.swarm.SwarmSnodeSelector
 import org.thoughtcrime.securesms.api.swarm.execute
+import org.thoughtcrime.securesms.configs.ExpiredConfigRecovery
 import org.thoughtcrime.securesms.database.ReceivedMessageHashDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Duration.Companion.days
 
 class GroupPoller @AssistedInject constructor(
     @Assisted private val groupId: AccountId,
@@ -51,6 +53,7 @@ class GroupPoller @AssistedInject constructor(
     private val alterTtlApiApiFactory: AlterTtlApi.Factory,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val swarmSnodeSelector: SwarmSnodeSelector,
+    private val expiredConfigRecovery: ExpiredConfigRecovery,
     networkConnectivity: NetworkConnectivity,
     appVisibilityManager: AppVisibilityManager,
 ): BasePoller<GroupPoller.GroupPollResult>(
@@ -62,6 +65,20 @@ class GroupPoller @AssistedInject constructor(
         val groupExpired: Boolean?
     )
 
+    /**
+     * The active hashes of a group's three configs, kept attributed.
+     *
+     * Only [all] is sent on the wire; the individual sets exist so the response can be read back
+     * per-config, which is what lets the keys config alone decide whether the group is expired.
+     */
+    private data class GroupConfigHashes(
+        val keys: Set<String>,
+        val info: Set<String>,
+        val members: Set<String>,
+    ) {
+        val all: Set<String> get() = keys + info + members
+    }
+
     override suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean): GroupPollResult = pollSemaphore.withPermit {
         var groupExpired: Boolean? = null
 
@@ -71,12 +88,16 @@ class GroupPoller @AssistedInject constructor(
 
                 val groupAuth =
                     configFactoryProtocol.getGroupAuth(groupId) ?: return@supervisorScope
-                val configHashesToExtends = configFactoryProtocol.withGroupConfigs(groupId) {
-                    buildSet {
-                        addAll(it.groupKeys.activeHashes())
-                        addAll(it.groupInfo.activeHashes())
-                        addAll(it.groupMembers.activeHashes())
-                    }
+                // Keep the three sets apart rather than merging them here: the expire response is read
+                // back to find out which configs the swarm has lost, and only the *keys* hashes decide
+                // whether the group is expired. A flat union can't be attributed, so merge only where
+                // the request payload is built.
+                val configHashes = configFactoryProtocol.withGroupConfigs(groupId) {
+                    GroupConfigHashes(
+                        keys = it.groupKeys.activeHashes().toSet(),
+                        info = it.groupInfo.activeHashes().toSet(),
+                        members = it.groupMembers.activeHashes().toSet(),
+                    )
                 }
 
                 val group = configFactoryProtocol.getGroup(groupId)
@@ -89,8 +110,6 @@ class GroupPoller @AssistedInject constructor(
                 }
 
                 log("Start polling group($groupId) message snode = ${snode.ip}")
-
-                val adminKey = group.adminKey
 
                 val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
@@ -113,22 +132,34 @@ class GroupPoller @AssistedInject constructor(
                     ).messages
                 }
 
-                if (configHashesToExtends.isNotEmpty() && adminKey != null) {
-                    pollingTasks += "extending group config TTL" to async {
-                        swarmApiExecutor.execute(
-                            SwarmApiRequest(
-                                swarmNodeOverride = snode,
-                                swarmPubKeyHex = groupId.hexString,
-                                api = alterTtlApiApiFactory.create(
-                                    messageHashes = configHashesToExtends,
-                                    auth = groupAuth,
-                                    alterType = AlterTtlApi.AlterType.Extend,
-                                    newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
+                // Any member can extend, not just an admin: the request authenticates with
+                // `groupAuth`, and the storage server explicitly supports a member doing this. Gating
+                // it on an admin key meant a group whose admins went quiet lost its configs at 30
+                // days while active members polled it daily.
+                //
+                // The response also doubles as our only signal that a config has been swept from the
+                // swarm, so keep hold of it. It's read after the merge below, because putting a
+                // config back before merging what we just fetched is how a long-offline device
+                // overwrites newer state with older.
+                val extendTask: Deferred<AlterTtlApi.Result>? =
+                    if (configHashes.all.isNotEmpty()) {
+                        async {
+                            swarmApiExecutor.execute(
+                                SwarmApiRequest(
+                                    swarmNodeOverride = snode,
+                                    swarmPubKeyHex = groupId.hexString,
+                                    api = alterTtlApiApiFactory.create(
+                                        messageHashes = configHashes.all,
+                                        auth = groupAuth,
+                                        alterType = AlterTtlApi.AlterType.Extend,
+                                        newExpiry = clock.currentTimeMillis() + SnodeMessage.CONFIG_TTL,
+                                    )
                                 )
                             )
-                        )
+                        }.also { pollingTasks += "extending group config TTL" to it }
+                    } else {
+                        null
                     }
-                }
 
                 val groupMessageRetrieval = async {
                     val lastHash = lokiApiDatabase.getLastMessageHashValue(
@@ -183,7 +214,8 @@ class GroupPoller @AssistedInject constructor(
                 pollingTasks += "polling and handling group config keys and messages" to async {
                     val result = runCatching {
                         val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.awaitAll()
-                        handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
+                        val tookEverythingIn =
+                            handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
                         saveLastMessageHash(snode, keysMessage, Namespace.GROUP_KEYS())
                         saveLastMessageHash(snode, infoMessage, Namespace.GROUP_INFO())
                         saveLastMessageHash(snode, membersMessage, Namespace.GROUP_MEMBERS())
@@ -201,6 +233,59 @@ class GroupPoller @AssistedInject constructor(
                                 publicKey = groupId.hexString,
                                 newValue = newest.hash,
                                 namespace = Namespace.GROUP_MESSAGES()
+                            )
+                        }
+
+                        // Left until last: the configs above have been taken in, which is what makes it
+                        // safe to put back anything the swarm has lost, and nothing else should wait
+                        // on the expire response. Its failure is already reported via pollingTasks.
+                        val expiryReport = extendTask?.let { task ->
+                            runCatching { task.await() }.getOrNull()?.expiry
+                        }
+
+                        // Reached whether or not there was anything to merge, and it must stay that
+                        // way — a group whose configs have expired returns nothing, so gating this on
+                        // having merged something would make recovery unreachable for exactly the
+                        // groups that need it.
+                        //
+                        // It is *not* reached when any of the three namespaces failed: awaitAll()
+                        // rethrows the first failure, so a partial answer never counts as level. Nor
+                        // when the merge threw, since handleGroupConfigMessages lets that propagate to
+                        // the outer runCatching.
+                        //
+                        // `tookEverythingIn` covers the case neither of those catches: a merge that
+                        // skips a message it can't parse and returns normally. No error, nothing to
+                        // catch, and the swarm still holds config we haven't incorporated.
+                        if (tookEverythingIn) {
+                            expiredConfigRecovery.markLocalStateLevelWithSwarm(
+                                swarmPubKeyHex = groupId.hexString,
+                                mergedConfigMessagesForDiagnosticsOnly = keysMessage.isNotEmpty() ||
+                                        infoMessage.isNotEmpty() ||
+                                        membersMessage.isNotEmpty(),
+                            )
+                        } else {
+                            expiredConfigRecovery.markMergeIncompleteForSwarm(groupId.hexString)
+                        }
+
+                        // The keys hashes alone decide this, and only when the check actually had an
+                        // answer — otherwise the empty-keys check above stands. "Expired" now means the
+                        // keys are gone AND this device cannot put them back, so the repairable question
+                        // is part of the rule rather than something applied to its answer.
+                        groupExpiredFromExpiryCheck(
+                            report = expiryReport,
+                            keysHashes = configHashes.keys,
+                            canRepairKeys = {
+                                expiredConfigRecovery.canRepairGroupKeys(groupId, configHashes.keys)
+                            },
+                        )?.let {
+                            groupExpired = it
+                        }
+
+                        if (expiryReport != null) {
+                            expiredConfigRecovery.onGroupConfigsChecked(
+                                groupId = groupId,
+                                auth = groupAuth,
+                                report = expiryReport,
                             )
                         }
                     }
@@ -265,13 +350,19 @@ class GroupPoller @AssistedInject constructor(
         groupRevokedMessageHandler.handleRevokeMessage(groupId, messages.map { it.data })
     }
 
+    /**
+     * @return whether every message handed to the merge was actually taken in. Merging skips a message
+     *  it can't parse or verify and returns normally, so a clean return is not evidence of that — the
+     *  count has to be compared. Callers whose correctness depends on being level with the swarm need
+     *  this; callers that just want the configs applied can ignore it.
+     */
     private fun handleGroupConfigMessages(
         keysResponse: List<RetrieveMessageResponse.Message>,
         infoResponse: List<RetrieveMessageResponse.Message>,
         membersResponse: List<RetrieveMessageResponse.Message>
-    ) {
+    ): Boolean {
         if (keysResponse.isEmpty() && infoResponse.isEmpty() && membersResponse.isEmpty()) {
-            return
+            return true
         }
 
         log("Handling group config messages(" +
@@ -280,12 +371,19 @@ class GroupPoller @AssistedInject constructor(
                     "members = ${membersResponse.size})"
         )
 
-        configFactoryProtocol.mergeGroupConfigMessages(
+        val given = keysResponse.size + infoResponse.size + membersResponse.size
+        val merged = configFactoryProtocol.mergeGroupConfigMessages(
             groupId = groupId,
             keys = keysResponse.map { it.toConfigMessage() },
             info = infoResponse.map { it.toConfigMessage() },
             members = membersResponse.map { it.toConfigMessage() },
         )
+
+        if (merged < given) {
+            logE("Only merged $merged of $given group config messages")
+        }
+
+        return merged == given
     }
 
     private fun handleMessages(messages: List<RetrieveMessageResponse.Message>) {

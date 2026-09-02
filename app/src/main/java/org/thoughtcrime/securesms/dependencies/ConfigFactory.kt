@@ -271,10 +271,12 @@ class ConfigFactory @Inject constructor(
     override fun mergeUserConfigs(
         userConfigType: UserConfigType,
         messages: List<ConfigMessage>
-    ) {
+    ): Int {
         if (messages.isEmpty()) {
-            return
+            return 0
         }
+
+        var mergedCount = 0
 
         val result = doWithMutableUserConfigs(fromMerge = true) { configs ->
             val config = when (userConfigType) {
@@ -286,7 +288,10 @@ class ConfigFactory @Inject constructor(
 
             // Merge the list of config messages, we'll be told which messages have been merged
             // and we will then find out which message has the max timestamp
-            val maxTimestamp = config.merge(messages.map { it.hash to it.data }.toTypedArray())
+            val mergedHashes = config.merge(messages.map { it.hash to it.data }.toTypedArray())
+            mergedCount = mergedHashes.size
+
+            val maxTimestamp = mergedHashes
                 .asSequence()
                 .mapNotNull { hash -> messages.firstOrNull { it.hash == hash } }
                 .maxOfOrNull { it.timestamp }
@@ -307,6 +312,8 @@ class ConfigFactory @Inject constructor(
                 timestamp = timestamp
             )
         }
+
+        return mergedCount
     }
 
     override fun createGroupConfigs(groupId: AccountId, adminKey: ByteArray): MutableGroupConfigs {
@@ -404,28 +411,42 @@ class ConfigFactory @Inject constructor(
         keys: List<ConfigMessage>,
         info: List<ConfigMessage>,
         members: List<ConfigMessage>
-    ) {
+    ): Int {
+        var mergedCount = 0
+
         val changed = doWithMutableGroupConfigs(groupId, fromMerge = true) { configs ->
-            // Keys must be loaded first as they are used to decrypt the other config messages
-            val keysLoaded = keys.fold(false) { acc, msg ->
-                configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
+            // Keys must be loaded first as they are used to decrypt the other config messages.
+            // Counted rather than folded to a flag: every key is still attempted, but callers whose
+            // correctness depends on having taken everything in need to know how many actually landed.
+            val keysLoaded = keys.count { msg ->
+                configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer)
             }
 
-            val infoMerged = info.isNotEmpty() &&
-                    configs.groupInfo.merge(info.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+            val infoMerged = if (info.isEmpty()) {
+                emptyList()
+            } else {
+                configs.groupInfo.merge(info.map { it.hash to it.data }.toTypedArray())
+            }
 
-            val membersMerged = members.isNotEmpty() &&
-                    configs.groupMembers.merge(members.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+            val membersMerged = if (members.isEmpty()) {
+                emptyList()
+            } else {
+                configs.groupMembers.merge(members.map { it.hash to it.data }.toTypedArray())
+            }
 
             configs.dumpIfNeeded(clock)
 
-            val changed = (keysLoaded || infoMerged || membersMerged)
+            mergedCount = keysLoaded + infoMerged.size + membersMerged.size
+
+            val changed = keysLoaded > 0 || infoMerged.isNotEmpty() || membersMerged.isNotEmpty()
             changed to changed
         }
 
         if (changed) {
             configToDatabaseSync.get().syncGroupConfigs(groupId)
         }
+
+        return mergedCount
     }
 
     override fun confirmUserConfigsPushed(

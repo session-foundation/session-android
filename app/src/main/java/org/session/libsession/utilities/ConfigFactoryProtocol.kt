@@ -83,7 +83,16 @@ interface ConfigFactoryProtocol {
      */
     fun dangerouslyAccessMutableGroupConfigs(groupId: AccountId): Pair<MutableGroupConfigs, () -> Unit>
 
-    fun mergeUserConfigs(userConfigType: UserConfigType, messages: List<ConfigMessage>)
+    /**
+     * Merges [messages] into the given config.
+     *
+     * @return how many of [messages] were actually taken in. This is deliberately a count rather than a
+     *  success flag: merging is tolerant of partial failure — a message that fails to parse or verify is
+     *  skipped and the rest are merged — so "no exception" says nothing about how much was incorporated.
+     *  Anything whose correctness depends on local state being level with the swarm must compare this
+     *  against `messages.size` rather than treating a normal return as proof.
+     */
+    fun mergeUserConfigs(userConfigType: UserConfigType, messages: List<ConfigMessage>): Int
 
     /**
      * Create a new group config instance. Note this does not save the group configs to the database.
@@ -111,12 +120,18 @@ interface ConfigFactoryProtocol {
                        domain: String,
                        closedGroupSessionId: AccountId): ByteArray?
 
+    /**
+     * Merges the given group config messages.
+     *
+     * @return how many messages across all three namespaces were actually taken in — see
+     *  [mergeUserConfigs] for why this is a count and not a flag.
+     */
     fun mergeGroupConfigMessages(
         groupId: AccountId,
         keys: List<ConfigMessage>,
         info: List<ConfigMessage>,
         members: List<ConfigMessage>
-    )
+    ): Int
 
     fun confirmUserConfigsPushed(
         contacts: Pair<ConfigPush, ConfigPushResult>? = null,
