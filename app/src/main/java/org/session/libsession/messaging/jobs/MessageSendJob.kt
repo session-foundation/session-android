@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.jobs
 
-import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import dagger.assisted.Assisted
@@ -157,8 +156,7 @@ class MessageSendJob @AssistedInject constructor(
     }
 
     override fun serialize(): Data {
-        val kryo = Kryo()
-        kryo.isRegistrationRequired = false
+        val kryo = jobKryo()
         // Message
         val messageOutput = Output(ByteArray(4096), MAX_BUFFER_SIZE_BYTES)
         kryo.writeClassAndObject(messageOutput, message)
@@ -192,8 +190,7 @@ class MessageSendJob @AssistedInject constructor(
         override fun create(data: Data): MessageSendJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
             val serializedDestination = data.getByteArray(DESTINATION_KEY)
-            val kryo = Kryo()
-            kryo.isRegistrationRequired = false
+            val kryo = jobKryo()
             // Message
             val messageInput = Input(serializedMessage)
             val message: Message
