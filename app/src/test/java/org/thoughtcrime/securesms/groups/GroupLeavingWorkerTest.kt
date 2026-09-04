@@ -97,15 +97,28 @@ class GroupLeavingWorkerTest {
         }
     }
 
-    /**
-     * The status channel is a rendezvous one, so a result can only be handed over while the worker
-     * is waiting for it — and the worker stops waiting after the first failure, leaving the second
-     * send parked on the channel for the background scope to cancel.
-     */
+    @Test
+    fun `leave completes when both results arrive before the worker waits for them`() = runTest {
+        answerSendImmediatelyWith(Result.success(Unit))
+
+        val result = worker(runAttemptCount = 0).doWork()
+
+        assertEquals(ListenableWorker.Result.success(), result)
+        verify { configFactory.removeGroup(groupId) }
+    }
+
+    /** Reports the result once the worker is already waiting for it. */
     private fun TestScope.answerSendWith(result: Result<Unit>) {
         every { messageSender.send(any(), any(), any()) } answers {
             val statusChannel = thirdArg<SendChannel<Result<Unit>>>()
-            backgroundScope.launch { statusChannel.send(result) }
+            launch { statusChannel.send(result) }
+        }
+    }
+
+    /** Reports the result as the send is made, before the worker gets as far as waiting for it. */
+    private fun answerSendImmediatelyWith(result: Result<Unit>) {
+        every { messageSender.send(any(), any(), any()) } answers {
+            thirdArg<SendChannel<Result<Unit>>>().trySend(result)
         }
     }
 

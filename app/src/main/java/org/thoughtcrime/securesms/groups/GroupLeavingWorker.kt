@@ -109,7 +109,11 @@ class GroupLeavingWorker @AssistedInject constructor(
 
                     if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
                         val address = Address.fromSerialized(groupId.hexString)
-                        val statusChannel = Channel<kotlin.Result<Unit>>()
+                        // The jobs report with trySend, which delivers nothing unless a receiver
+                        // is already parked, and they run on their own dispatcher: either result
+                        // can land before we reach the wait below. Unbuffered, that result is lost
+                        // and the leave waits for it forever, holding this group's scope with it.
+                        val statusChannel = Channel<kotlin.Result<Unit>>(capacity = Channel.UNLIMITED)
 
                         // Always send a "XXX left" message to the group if we can
                         messageSender.send(
