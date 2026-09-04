@@ -24,6 +24,7 @@ import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.api.error.UnhandledStatusCodeException
@@ -94,13 +95,18 @@ class MessageSendJob @AssistedInject constructor(
         val isSync = destination is Destination.Contact && destination.publicKey == storage.getUserPublicKey()
 
         try {
-            // Shouldn't send message to group when the group has no keys available
+            // A group we hold no encryption keys for can't be sent to, and the keys can only
+            // arrive by an admin granting them to us, which may never happen. Typed so a caller
+            // waiting on this send can tell it apart from a transient failure and give up
+            // deliberately rather than waiting for keys that aren't coming.
             if (destination is Destination.ClosedGroup) {
-                requireNotNull(withTimeoutOrNull(20_000L) {
+                val keysAvailable = withTimeoutOrNull(20_000L) {
                     configFactory
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
-                }) {
-                    "Timeout waiting for group keys to become available"
+                } != null
+
+                if (!keysAvailable) {
+                    throw NonRetryableException("Timeout waiting for group keys to become available")
                 }
             }
 
