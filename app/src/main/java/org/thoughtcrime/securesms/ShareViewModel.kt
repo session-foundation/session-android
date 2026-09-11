@@ -1,10 +1,11 @@
 package org.thoughtcrime.securesms
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
-import androidx.core.content.IntentCompat
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +38,6 @@ import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.MediaUtil
-import java.io.FileInputStream
 import java.io.IOException
 import javax.inject.Inject
 
@@ -46,6 +46,7 @@ class ShareViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
     private val deprecationManager: LegacyGroupDeprecationManager,
+    private val shareIntentTokenStore: ShareIntentTokenStore,
     conversationRepository: ConversationRepository,
 ): ViewModel(){
 
@@ -55,6 +56,8 @@ class ShareViewModel @Inject constructor(
     private var resolvedPlaintext: CharSequence? = null
     private var mimeType: String? = null
     private var isPassingAlongMedia = false
+    private var isInternalShare = false
+    private var shareDestination: Address? = null
 
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
@@ -144,6 +147,10 @@ class ShareViewModel @Inject constructor(
         mimeType = null
         isPassingAlongMedia = false
 
+        val minted = shareIntentTokenStore.resolve(intent.getStringExtra(ShareActivity.EXTRA_SHARE_TOKEN))
+        isInternalShare = minted != null
+        shareDestination = minted?.address
+
         val action = intent.action
         val type = intent.type
         val incomingUris = ArrayList<Uri>()
@@ -176,27 +183,30 @@ class ShareViewModel @Inject constructor(
         isPassingAlongMedia = false
         mimeType = getMimeType(uris.firstOrNull(), type)
 
-        if (uris.isNotEmpty() && uris.all { PartAuthority.isLocalUri(it) }) {
+        // A URI naming one of our own providers is passed to the attachment manager verbatim, which
+        // reads it as us - so it resolves to the viewer's own message history rather than to anything
+        // the sender holds. Only an Intent this app built may take that route.
+        if (isInternalShare && uris.isNotEmpty() && uris.all { PartAuthority.isLocalUri(it) }) {
             isPassingAlongMedia = true
             resolvedExtras = uris
-            handleResolvedMedia(intent)
+            handleResolvedMedia()
         } else if (
             uris.isEmpty() &&
             charSequenceExtra != null &&
             (mimeType?.startsWith("text/") == true)
         ) {
             resolvedPlaintext = charSequenceExtra
-            handleResolvedMedia(intent)
+            handleResolvedMedia()
         } else if (uris.isNotEmpty()) {
             _uiState.update { it.copy(showLoader = true) }
-            resolveMedia(intent, uris)
+            resolveMedia(uris)
         } else {
             _uiState.update { it.copy(showLoader = false) }
         }
     }
 
-    private fun handleResolvedMedia(intent: Intent) {
-        val address = IntentCompat.getParcelableExtra(intent, ShareActivity.EXTRA_ADDRESS, Address::class.java)
+    private fun handleResolvedMedia() {
+        val address = shareDestination
         if (address is Address.Conversable) {
             createConversation(address)
         } else {
@@ -204,22 +214,44 @@ class ShareViewModel @Inject constructor(
         }
     }
 
-    private fun resolveMedia(intent: Intent, uris: List<Uri>){
+    private fun resolveMedia(uris: List<Uri>){
         viewModelScope.launch(Dispatchers.Default){
             resolvedExtras = uris.mapNotNull { processSingleUri(it) }
-            handleResolvedMedia(intent)
+            handleResolvedMedia()
         }
+    }
+
+    /**
+     * Whether a URI offered by whoever sent the share Intent may be opened on their behalf.
+     */
+    @VisibleForTesting
+    internal fun canReadSharedUri(uri: Uri): Boolean {
+        // A URI grant is what makes the sender's content readable to us, and only content:// carries
+        // one. openInputStream also accepts file:// and android.resource://, both of which it opens
+        // as this app with nothing consulted, so anything this app can reach would be readable by
+        // whoever sent the Intent.
+        if (ContentResolver.SCHEME_CONTENT != uri.scheme) {
+            Log.w(TAG, "Refusing a shared URI that carries no content grant.")
+            return false
+        }
+
+        // Our own providers answer us whether or not they are exported, so these resolve to the
+        // viewer's own attachments; the caller of an exported activity has no business naming one.
+        if (PartAuthority.isLocalUri(uri)) {
+            Log.w(TAG, "Refusing a shared URI that names one of our own providers.")
+            return false
+        }
+
+        return true
     }
 
     private fun processSingleUri(uri: Uri): Uri? {
         try {
             Log.i(TAG, "Resolving URI: " + uri.toString() + " - " + uri.path)
 
-            val inputStream = if ("file" == uri.scheme) {
-                FileInputStream(uri.path)
-            } else {
-                context.contentResolver.openInputStream(uri)
-            }
+            if (!canReadSharedUri(uri)) return null
+
+            val inputStream = context.contentResolver.openInputStream(uri)
 
             if (inputStream == null) {
                 Log.w(TAG, "Failed to create input stream during ShareActivity - bailing.")
