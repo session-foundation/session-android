@@ -15,7 +15,9 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import network.loki.messenger.libsession_util.ED25519
+import network.loki.messenger.libsession_util.MutableUserProfile
 import network.loki.messenger.libsession_util.pro.ProConfig
+import network.loki.messenger.libsession_util.pro.ProProof
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.withMutableUserConfigs
@@ -140,15 +142,10 @@ class ProProofGenerationWorker @AssistedInject constructor(
                     val proof = requireNotNull(response.proof) { "generate-proof returned ok without a proof" }
 
                     configFactory.withMutableUserConfigs { configs ->
-                        // Upgrade guard: only replace the proof if it extends coverage (monotonic merge;
-                        // same-period races round to the same expiry -> byte-identical -> no-op). Avoids
-                        // churning a proof another device just landed.
-                        val current = configs.userProfile.getProConfig()?.proProof
-                        if (current == null || proof.expirySeconds > current.expirySeconds) {
-                            configs.userProfile.setProConfig(ProConfig(
-                                proProof = proof,
-                                rotatingPrivateKey = rotatingPrivateKey))
-                        }
+                        // Before the access-expiry write below: that is one of the three values
+                        // `storeProof` reads to decide whether this account has ever held Pro.
+                        storeProof(configs.userProfile, proof, rotatingPrivateKey)
+
                         // Refresh the cached access-expiry from the advisory account_expiry that rides the
                         // proof response, so the renewal path keeps E fresh without a separate get_pro_status.
                         response.accountExpiry?.let { configs.userProfile.setProAccessExpiry(it.epochSecond) }
@@ -306,6 +303,43 @@ class ProProofGenerationWorker @AssistedInject constructor(
 
     companion object {
         private const val WORK_NAME = "ProProofGenerationWorker"
+
+        /**
+         * Store a freshly minted [proof] in config, and on an account's first-ever proof turn its pro
+         * badge on.
+         *
+         * Must run before anything writes the access expiry from the same response — that is one of the
+         * three values read here.
+         */
+        internal fun storeProof(
+            userProfile: MutableUserProfile,
+            proof: ProProof,
+            rotatingPrivateKey: ByteArray,
+        ) {
+            // Upgrade guard: only replace the proof if it extends coverage (monotonic merge;
+            // same-period races round to the same expiry -> byte-identical -> no-op). Avoids
+            // churning a proof another device just landed.
+            val current = userProfile.getProConfig()?.proProof
+            if (current == null || proof.expirySeconds > current.expirySeconds) {
+                // First-ever proof: enable the pro badge feature. The badge is off by default because
+                // being visible as a subscriber is the user's choice, and these three absent values are
+                // the only evidence the account has never had one to express. Asking "is Pro active"
+                // instead would re-enable the badge at every renewal for a subscriber who had turned it
+                // off, leaving them no way to make it stick.
+                //
+                // Mirrors iOS `SessionProManager.applyProofSuccess` and Desktop `ducks/proBackendData.ts`.
+                if (current == null &&
+                    userProfile.getProAccessExpiry() == null &&
+                    userProfile.getProFeatures().isEmpty
+                ) {
+                    userProfile.setProBadge(true)
+                }
+
+                userProfile.setProConfig(ProConfig(
+                    proProof = proof,
+                    rotatingPrivateKey = rotatingPrivateKey))
+            }
+        }
 
         /**
          * Minimum spacing between proof requests. **Shared cross-client contract** — iOS
