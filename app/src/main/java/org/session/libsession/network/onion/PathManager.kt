@@ -203,7 +203,13 @@ open class PathManager @Inject constructor(
                 snodeApiExecutor.get()
                     .execute(
                         req = SnodeApiRequest(
-                            snode = snodePoolStorage.getSnodePool().first { it !in pathCandidate },
+                            // The destination has to vary per test: with a fixed one, a single node
+                            // that rejects onion payloads fails every path test this process makes,
+                            // so no candidate can ever be verified and rotation never commits -
+                            // however healthy the candidate paths themselves are.
+                            snode = snodePoolStorage.getSnodePool()
+                                .filter { it !in pathCandidate }
+                                .secureRandom(),
                             api = getInfoApi.get()
                         ),
                         ctx = ApiExecutorContext()
