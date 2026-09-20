@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -57,6 +58,7 @@ open class PathManager @Inject constructor(
     companion object {
         private const val STRIKE_THRESHOLD = 3
         private const val PATH_ROTATE_INTERVAL_MS = 10 * 60 * 1000L // 10min
+        private const val ROTATION_FAILURES_BEFORE_REBUILD = 3
     }
 
     private val pathSize: Int = 3
@@ -71,6 +73,7 @@ open class PathManager @Inject constructor(
 
     // path rotation
     private val isRotating = AtomicBoolean(false)
+    private val consecutiveRotationFailures = AtomicInteger(0)
 
     // -----------------------------
     // Flow Setup
@@ -288,7 +291,14 @@ open class PathManager @Inject constructor(
             if (working.size >= targetPathCount) break
         }
 
-        if (working.isEmpty()) return
+        // A rotation can only be committed whole: Phase 3 requires the new guards to match the current
+        // ones, so a single candidate failing discards the rotation exactly as a total failure does.
+        // Each candidate keeps its own guard, so the candidate that failed is the one whose guard
+        // cannot be rotated away from - and testing only tells us which candidate, never which hop.
+        if (working.size < candidates.size) {
+            escalateFailedRotation()
+            return
+        }
 
         // Phase 3: commit under lock (guards must match current guards)
         buildMutex.withLock {
@@ -309,7 +319,31 @@ open class PathManager @Inject constructor(
             val committed = sanitizePaths(working.take(targetPathCount))
             _paths.value = committed
             prefs.setLastPathRotation(System.currentTimeMillis())
+            consecutiveRotationFailures.set(0)
         }
+    }
+
+    /**
+     * Counts a rotation that could not be committed, and drops every path once enough of them pile
+     * up so the next [getPath] rebuilds - which is the only thing that replaces a guard, since
+     * rotation reuses them by design.
+     *
+     * Counted in attempts rather than elapsed time: a failed rotation does not advance the rotation
+     * timestamp, so a wedged client re-enters rotation on every [getPath] and the threshold is
+     * seconds apart rather than half an hour. [clearPaths] takes no lock, Phase 2 of [rotatePaths]
+     * holds none, and it sets the rotation timestamp itself, so the escalation cannot thrash.
+     */
+    private suspend fun escalateFailedRotation() {
+        // With no network every path test fails for a reason that says nothing about the guards, and
+        // escalating would hand an offline device a fresh guard every rotation interval for as long
+        // as it stays offline.
+        if (!networkConnectivity.networkAvailable.value) return
+
+        if (consecutiveRotationFailures.incrementAndGet() < ROTATION_FAILURES_BEFORE_REBUILD) return
+
+        consecutiveRotationFailures.set(0)
+        Log.w("Onion Request", "Rotation failed to verify $ROTATION_FAILURES_BEFORE_REBUILD times running, dropping paths to force a rebuild onto new guards")
+        clearPaths()
     }
 
     suspend fun rebuildPaths(reusablePaths: List<Path>) {

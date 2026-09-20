@@ -21,6 +21,8 @@ import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.network.snode.SnodePoolStorage
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.thoughtcrime.securesms.api.onion.OnionSessionApiExecutor
 import org.thoughtcrime.securesms.api.snode.GetInfoApi
 import org.thoughtcrime.securesms.api.snode.SnodeApiExecutor
 import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
@@ -148,8 +150,15 @@ class PathManagerTest {
         assertThat(newPaths.size).isLessThan(2) // irreparable path dropped :contentReference[oaicite:11]{index=11}
     }
 
+    private data class RotationHarness(
+        val pathManager: PathManager,
+        val targeted: List<Snode>,
+        val directory: SnodeDirectory,
+        val scope: CoroutineScope,
+    )
+
     /**
-     * Rotation is what these two tests actually drive, because it is the only caller of the path
+     * Rotation is what these tests actually drive, because it is the only caller of the path
      * test: it builds candidate paths, tests each one, and commits only if every candidate passed.
      *
      * [rejecting] is the set of destinations whose path test fails; every other destination
@@ -158,16 +167,26 @@ class PathManagerTest {
     private fun TestScope.rotatingPathManager(
         pool: List<Snode>,
         persistedPaths: List<Path>,
-        rejecting: Set<Snode>,
-    ): Triple<PathManager, List<Snode>, CoroutineScope> {
+        rejecting: Set<Snode> = emptySet(),
+        rejectingGuards: Set<Snode> = emptySet(),
+        rebuildGuards: Set<Snode> = emptySet(),
+        networkAvailable: Boolean = true,
+    ): RotationHarness {
         val targeted = mutableListOf<Snode>()
 
+        // A path test carries the candidate it is testing in the request context, so a failure can be
+        // attributed to that candidate's guard - which is what a bad first hop looks like from here.
         val executor: SnodeApiExecutor = mock {
             onBlocking { send(any(), any()) } doAnswer { invocation ->
+                val ctx = invocation.getArgument<ApiExecutorContext>(0)
                 val request = invocation.getArgument<SnodeApiRequest<*>>(1)
+                val candidate = ctx.get(OnionSessionApiExecutor.OnionPathOverridesKey)
                 targeted += request.snode
-                if (request.snode in rejecting) throw IOException("synthetic rejection")
-                GetInfoApi.InfoResponse(timestamp = Instant.EPOCH)
+                when {
+                    candidate?.first() in rejectingGuards -> throw IOException("synthetic guard rejection")
+                    request.snode in rejecting -> throw IOException("synthetic rejection")
+                    else -> GetInfoApi.InfoResponse(timestamp = Instant.EPOCH)
+                }
             }
         }
 
@@ -177,6 +196,7 @@ class PathManagerTest {
 
         val directory: SnodeDirectory = mock {
             onBlocking { ensurePoolPopulated(any()) } doReturn pool
+            onBlocking { getGuardSnodes(any(), any()) } doReturn rebuildGuards
         }
 
         // Anything other than 0 counts as "rotated once, long ago": 0 means never rotated, which
@@ -200,10 +220,12 @@ class PathManagerTest {
             prefs = prefs,
             snodeApiExecutor = { executor },
             getInfoApi = { mock() },
-            networkConnectivity = networkConnectivity,
+            networkConnectivity = mock {
+                on { this.networkAvailable } doReturn MutableStateFlow(networkAvailable)
+            },
         )
 
-        return Triple(pm, targeted, pmScope)
+        return RotationHarness(pm, targeted, directory, pmScope)
     }
 
     @Test
@@ -217,20 +239,21 @@ class PathManagerTest {
         // in a candidate. Picking the first eligible member therefore lands on b every time.
         val pool = listOf(snode("b")) + spares + listOf(snode("a"), snode("c")) + p2
 
-        // Every destination rejects, so no rotation commits and all eight sample the same position.
-        val (pm, targeted, pmScope) = rotatingPathManager(
+        // Every destination rejects, so no rotation commits and both sample the same position.
+        // Two rotations, not more: a third would trip the escalation below and drop these paths.
+        val (pm, targeted, _, pmScope) = rotatingPathManager(
             pool = pool,
             persistedPaths = listOf(p1, p2),
             rejecting = pool.toSet(),
         )
 
-        repeat(8) {
+        repeat(2) {
             pm.getPath()
             advanceUntilIdle()
         }
         pmScope.cancel()
 
-        assertThat(targeted).hasSize(16) // two candidate paths tested per rotation
+        assertThat(targeted).hasSize(4) // two candidate paths tested per rotation
         assertThat(targeted.toSet().size).isGreaterThan(1)
     }
 
@@ -243,7 +266,7 @@ class PathManagerTest {
 
         val pool = listOf(broken) + spares + listOf(snode("a"), snode("c")) + p2
 
-        val (pm, targeted, pmScope) = rotatingPathManager(
+        val (pm, targeted, _, pmScope) = rotatingPathManager(
             pool = pool,
             persistedPaths = listOf(p1, p2),
             rejecting = setOf(broken),
@@ -267,4 +290,135 @@ class PathManagerTest {
         assertThat(pm.paths.value).hasSize(2)
         assertThat(pm.paths.value.map { it.first() }).containsExactly(p1.first(), p2.first())
     }
+
+    @Test
+    fun `rotation that never verifies drops the paths and rebuilds onto fresh guards`() = runTest {
+        val p1: Path = listOf(snode("a"), snode("b"), snode("c"))
+        val p2: Path = listOf(snode("d"), snode("e"), snode("f"))
+        val spares = (1..12).map { snode("spare$it") }
+        val pool = spares + p1 + p2
+        val freshGuards = setOf(snode("fresh1"), snode("fresh2"))
+
+        val (pm, _, directory, pmScope) = rotatingPathManager(
+            pool = pool,
+            persistedPaths = listOf(p1, p2),
+            rejecting = pool.toSet(),
+            rebuildGuards = freshGuards,
+        )
+
+        repeat(3) {
+            pm.getPath()
+            advanceUntilIdle()
+        }
+
+        assertThat(pm.paths.value).isEmpty()
+        assertThat(snodeDb.getOnionRequestPaths()).isEmpty()
+
+        pm.getPath()
+        advanceUntilIdle()
+        pmScope.cancel()
+
+        // The guards are new because the rebuild was given none to reuse - that is the step that
+        // makes dropping the paths equivalent to replacing the bad first hop.
+        val reused = argumentCaptor<Set<Snode>>()
+        verify(directory).getGuardSnodes(reused.capture(), any())
+        assertThat(reused.firstValue).isEmpty()
+
+        assertThat(pm.paths.value.map { it.first() }).containsExactlyElementsIn(freshGuards)
+    }
+
+    @Test
+    fun `a rotation that verifies keeps a flaky client off the rebuild path`() = runTest {
+        val p1: Path = listOf(snode("a"), snode("b"), snode("c"))
+        val p2: Path = listOf(snode("d"), snode("e"), snode("f"))
+        val spares = (1..12).map { snode("spare$it") }
+        val pool = spares + p1 + p2
+
+        val rejecting = pool.toMutableSet()
+        val (pm, _, directory, pmScope) = rotatingPathManager(
+            pool = pool,
+            persistedPaths = listOf(p1, p2),
+            rejecting = rejecting,
+        )
+
+        // Two failures, then a rotation that commits, then two more: without the reset on commit
+        // these four failures would add up to a rebuild.
+        repeat(2) {
+            pm.getPath()
+            advanceUntilIdle()
+        }
+        rejecting.clear()
+        pm.getPath()
+        advanceUntilIdle()
+        rejecting += pool
+        repeat(2) {
+            pm.getPath()
+            advanceUntilIdle()
+        }
+        pmScope.cancel()
+
+        assertThat(pm.paths.value).hasSize(2)
+        assertThat(pm.paths.value.map { it.first() }).containsExactly(p1.first(), p2.first())
+        verify(directory, never()).getGuardSnodes(any(), any())
+    }
+
+    @Test
+    fun `a single bad guard escalates to a rebuild`() = runTest {
+        val badGuard = snode("a")
+        val p1: Path = listOf(badGuard, snode("b"), snode("c"))
+        val p2: Path = listOf(snode("d"), snode("e"), snode("f"))
+        val spares = (1..12).map { snode("spare$it") }
+        val pool = spares + p1 + p2
+        val freshGuards = setOf(snode("fresh1"), snode("fresh2"))
+
+        // Only the candidate built on the bad guard fails, so the other one verifies and rotation is
+        // discarded on the guard-set mismatch rather than on a total failure.
+        val (pm, _, directory, pmScope) = rotatingPathManager(
+            pool = pool,
+            persistedPaths = listOf(p1, p2),
+            rejectingGuards = setOf(badGuard),
+            rebuildGuards = freshGuards,
+        )
+
+        repeat(3) {
+            pm.getPath()
+            advanceUntilIdle()
+        }
+
+        assertThat(pm.paths.value).isEmpty()
+
+        pm.getPath()
+        advanceUntilIdle()
+        pmScope.cancel()
+
+        assertThat(pm.paths.value.map { it.first() }).containsExactlyElementsIn(freshGuards)
+        assertThat(pm.paths.value.map { it.first() }).doesNotContain(badGuard)
+        verify(directory).getGuardSnodes(argThat { isEmpty() }, any())
+    }
+
+    @Test
+    fun `an offline client keeps its guards however many rotations fail`() = runTest {
+        val p1: Path = listOf(snode("a"), snode("b"), snode("c"))
+        val p2: Path = listOf(snode("d"), snode("e"), snode("f"))
+        val spares = (1..12).map { snode("spare$it") }
+        val pool = spares + p1 + p2
+
+        val (pm, targeted, directory, pmScope) = rotatingPathManager(
+            pool = pool,
+            persistedPaths = listOf(p1, p2),
+            rejecting = pool.toSet(),
+            networkAvailable = false,
+        )
+
+        repeat(6) {
+            pm.getPath()
+            advanceUntilIdle()
+        }
+        pmScope.cancel()
+
+        assertThat(targeted).isNotEmpty() // the rotations really ran
+        assertThat(pm.paths.value).isEqualTo(listOf(p1, p2))
+        verify(directory, never()).getGuardSnodes(any(), any())
+    }
+
 }
