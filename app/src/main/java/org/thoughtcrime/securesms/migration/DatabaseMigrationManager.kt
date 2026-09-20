@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.migration
 
 import android.app.Application
+import android.os.Build
 import android.os.SystemClock
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,12 +45,21 @@ class DatabaseMigrationManager @Inject constructor(
 
         // First perform a cheap check to see if the migration is done, if so we can skip the wait.
         if (mutableMigrationState.value != MigrationState.Completed) {
-            // Wait until the migration is done. This is a semi-expensive call but it's necessary
-            // to block the callers from accessing the database until we have sorted out the migration
-            // process. Note that we don't pass in errors here as the callers of this function
-            // don't expect the exceptions at all so we have no choice but to block them.
-            runBlocking {
-                migrationState.first { it == MigrationState.Completed }
+            // Blocking is deliberate: callers don't expect to handle a half-migrated database, so
+            // they wait here instead. Error has to end the wait as well as Completed, because the
+            // state only leaves Error on an explicit retry and waiting for Completed alone hangs
+            // every caller until the process dies.
+            val finalState = runBlocking {
+                migrationState.first {
+                    it == MigrationState.Completed || it is MigrationState.Error
+                }
+            }
+
+            if (finalState is MigrationState.Error) {
+                throw IllegalStateException(
+                    "Database unavailable: migration failed",
+                    finalState.throwable
+                )
             }
         }
 
@@ -90,6 +101,12 @@ class DatabaseMigrationManager @Inject constructor(
         mutableMigrationState.value = MigrationState.Migrating(steps.toList())
 
         try {
+            // Resolving the secret here is what puts a failed KeyStoreHelper.unseal into
+            // MigrationState.Error, where the user is offered retry and log export. Its only other
+            // dereference is in openHelper, which sits outside every handler on this path, so left
+            // to happen there the AssertionError kills the process on every launch instead (#2213).
+            dbSecret
+
             for ((index, desc) in stepDescriptors.withIndex()) {
                 Log.d(TAG, "Starting migration step: ${desc.name}")
                 val stepStartedAt = SystemClock.elapsedRealtime()
@@ -107,10 +124,40 @@ class DatabaseMigrationManager @Inject constructor(
             }
 
             mutableMigrationState.value = MigrationState.Completed
-        } catch (ec: Exception) {
+        } catch (ec: Throwable) {
+            // Throwable, not Exception: KeyStoreHelper reports every crypto failure as an
+            // AssertionError, which is an Error and would otherwise pass straight through here.
+            logKeyStoreFailure(ec)
             mutableMigrationState.value = MigrationState.Error(ec)
             return
         }
+    }
+
+    /**
+     * Records the keystore error code behind a crypto failure, if there is one.
+     *
+     * The code distinguishes a transient keystore fault, where the data is intact and a retry may
+     * succeed, from a key that can no longer decrypt what it sealed. Nothing else in the crash
+     * reaching us carries that distinction.
+     */
+    private fun logKeyStoreFailure(error: Throwable) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            logKeyStoreExceptionDetails(error)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun logKeyStoreExceptionDetails(error: Throwable) {
+        val keyStoreError = generateSequence(error) { it.cause }
+            .filterIsInstance<android.security.KeyStoreException>()
+            .firstOrNull() ?: return
+
+        Log.w(
+            TAG,
+            "Keystore failure: code=${keyStoreError.numericErrorCode}, " +
+                "transient=${keyStoreError.isTransientFailure}, " +
+                "systemError=${keyStoreError.isSystemError}"
+        )
     }
 
     private fun migrateCipherSettings(fromRetry: Boolean) {

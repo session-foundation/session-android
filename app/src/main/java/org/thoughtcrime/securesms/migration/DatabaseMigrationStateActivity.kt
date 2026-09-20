@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import org.thoughtcrime.securesms.FullComposeActivity
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.ui.components.LogExporter
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import javax.inject.Inject
@@ -22,6 +23,9 @@ class DatabaseMigrationStateActivity : FullComposeActivity() {
     @Inject
     lateinit var exporter: LogExporter
 
+    @Inject
+    lateinit var loginStateRepository: LoginStateRepository
+
     @Composable
     override fun ComposeContent() {
         DatabaseMigrationScreen(
@@ -29,6 +33,7 @@ class DatabaseMigrationStateActivity : FullComposeActivity() {
             fm = supportFragmentManager,
             exporter = exporter,
             clearDataUtils = clearDataUtils,
+            canRestoreAccount = loginStateRepository.peekLoginState() != null,
         )
 
         val state = migrationManager.migrationState.collectAsState().value
