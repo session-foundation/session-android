@@ -46,20 +46,14 @@ class DatabaseMigrationManager @Inject constructor(
         // First perform a cheap check to see if the migration is done, if so we can skip the wait.
         if (mutableMigrationState.value != MigrationState.Completed) {
             // Blocking is deliberate: callers don't expect to handle a half-migrated database, so
-            // they wait here instead. Error has to end the wait as well as Completed, because the
-            // state only leaves Error on an explicit retry and waiting for Completed alone hangs
-            // every caller until the process dies.
-            val finalState = runBlocking {
-                migrationState.first {
-                    it == MigrationState.Completed || it is MigrationState.Error
-                }
-            }
-
-            if (finalState is MigrationState.Error) {
-                throw IllegalStateException(
-                    "Database unavailable: migration failed",
-                    finalState.throwable
-                )
+            // they wait here instead, and that includes waiting through a failure. Throwing would
+            // be worse than parking them: the database is reached from background flows that start
+            // on login state rather than through any startup sequence, none of them expect this
+            // call to fail, and the first one to be handed an exception takes the process down
+            // before the migration screen can offer a retry (#2213). A retry that succeeds reaches
+            // Completed and releases everyone waiting here.
+            runBlocking {
+                migrationState.first { it == MigrationState.Completed }
             }
         }
 

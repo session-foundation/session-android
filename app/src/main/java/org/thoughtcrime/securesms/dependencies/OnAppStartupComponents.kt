@@ -1,5 +1,9 @@
 package org.thoughtcrime.securesms.dependencies
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.network.SnodeClock
@@ -17,8 +21,33 @@ import org.thoughtcrime.securesms.tokenpage.TokenDataManager
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge
 import javax.inject.Inject
+import javax.inject.Provider
 
-class OnAppStartupComponents private constructor(
+class OnAppStartupComponents @Inject constructor(
+    private val databaseMigrationManager: DatabaseMigrationManager,
+    private val databaseBackedComponents: Provider<DatabaseBackedStartupComponents>,
+    @param:ManagerScope private val scope: CoroutineScope,
+) {
+    fun onPostAppStarted() {
+        databaseMigrationManager.onPostAppStarted()
+
+        // Everything in DatabaseBackedStartupComponents reaches the database, several of them from
+        // their own constructors, and the open helper has nothing to hand out until the migration
+        // has produced a usable secret. Resolving them before then means whichever touches it first
+        // dies on a failure the user could otherwise have retried from, taking the process with it
+        // and leaving the migration screen no chance to appear (#2213). A retry that succeeds still
+        // reaches Completed, so this also starts them after a recovery.
+        scope.launch(Dispatchers.Main) {
+            databaseMigrationManager.migrationState.first {
+                it == DatabaseMigrationManager.MigrationState.Completed
+            }
+
+            databaseBackedComponents.get().onPostAppStarted()
+        }
+    }
+}
+
+class DatabaseBackedStartupComponents private constructor(
     private val components: List<OnAppStartupComponent>
 ) {
     fun onPostAppStarted() {
@@ -29,7 +58,6 @@ class OnAppStartupComponents private constructor(
         groupPollerManager: GroupPollerManager,
         expiredGroupManager: ExpiredGroupManager,
         openGroupPollerManager: OpenGroupPollerManager,
-        databaseMigrationManager: DatabaseMigrationManager,
         tokenManager: TokenDataManager,
         currentActivityObserver: CurrentActivityObserver,
         webRtcCallBridge: WebRtcCallBridge,
@@ -47,7 +75,6 @@ class OnAppStartupComponents private constructor(
             groupPollerManager,
             expiredGroupManager,
             openGroupPollerManager,
-            databaseMigrationManager,
             tokenManager,
             currentActivityObserver,
             webRtcCallBridge,
