@@ -118,13 +118,22 @@ class DatabaseMigrationManager @Inject constructor(
             }
 
             mutableMigrationState.value = MigrationState.Completed
-        } catch (ec: Throwable) {
-            // Throwable, not Exception: KeyStoreHelper reports every crypto failure as an
-            // AssertionError, which is an Error and would otherwise pass straight through here.
-            logKeyStoreFailure(ec)
-            mutableMigrationState.value = MigrationState.Error(ec)
+        } catch (ec: Exception) {
+            recordMigrationFailure(ec)
+            return
+        } catch (ec: AssertionError) {
+            // AssertionError is caught alongside Exception because KeyStoreHelper throws it on
+            // purpose — it is how every crypto failure is reported, a deliberate signal rather than
+            // a symptom of a dying VM. Errors that do mean the process is already lost
+            // (OutOfMemoryError, StackOverflowError, LinkageError) are deliberately left to kill it.
+            recordMigrationFailure(ec)
             return
         }
+    }
+
+    private fun recordMigrationFailure(error: Throwable) {
+        logKeyStoreFailure(error)
+        mutableMigrationState.value = MigrationState.Error(error)
     }
 
     /**
