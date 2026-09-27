@@ -11,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
@@ -204,7 +206,7 @@ class ProStatusManager @Inject constructor(
                 ProDataState(
                     type = proStatusState.lastUpdated?.let { (response, confirmedAt) ->
                         response.toProStatus(nowMs, application, refundInProgress, confirmedAt)
-                    } ?: seedDisplayStatusFromConfig(),
+                    } ?: if (isPostPro()) seedDisplayStatusFromConfig() else ProStatus.NeverSubscribed,
                     showProBadge = showProBadgePreference,
                     refreshState = proDataRefreshState
                 )
@@ -441,7 +443,33 @@ class ProStatusManager @Inject constructor(
         else -> this
     }
 
-    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = supervisorScope {
+    private val _postProLaunchStatus = MutableStateFlow(isPostPro())
+    val postProLaunchStatus: StateFlow<Boolean> = _postProLaunchStatus
+
+    init {
+        scope.launch {
+            prefs.watchPostProStatus().collect {
+                _postProLaunchStatus.update { isPostPro() }
+            }
+        }
+    }
+
+    // Pre-launch only the revocation list still polls, because other people's proofs are checked against it.
+    // Everything else is about our own Pro and may not run. Those workers are cancelled rather than left to
+    // lapse because they persist across process restarts, and a proof worker scheduled before the gate closed
+    // would otherwise still mint one.
+    override suspend fun doWhileLoggedIn(loggedInState: LoggedInState): Unit = postProLaunchStatus.collectLatest { postLaunch ->
+        if (!postLaunch) {
+            RevocationListPollingWorker.schedule(application)
+            FetchProStatusWorker.cancel(application)
+            ProProofGenerationWorker.cancel(application)
+            return@collectLatest
+        }
+
+        supervisorScope { launchProTasks() }
+    }
+
+    private fun CoroutineScope.launchProTasks() {
         launch {
             // QA only. The pending poll is a WorkManager job carrying a delay rather than a stored
             // instant, so there is nothing to backdate; cancelling it is the equivalent, because
@@ -763,6 +791,9 @@ class ProStatusManager @Inject constructor(
      * expired status keeps the features, which is the deliberate overhang.
      */
     fun currentUserProProofForAccess(): ProProof? {
+        // A proof synced from another device is still no entitlement pre-launch
+        if (!isPostPro()) return null
+
         val proof = configFactory.get()
             .withUserConfigs { it.userProfile.getProConfig() }
             ?.proProof
@@ -835,7 +866,7 @@ class ProStatusManager @Inject constructor(
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(recipient: Recipient): Boolean{
-        return if(recipient.isCommunityRecipient) false else !recipient.isPro
+        return if(!isPostPro() || recipient.isCommunityRecipient) false else !recipient.isPro
     }
 
     /**
@@ -843,7 +874,8 @@ class ProStatusManager @Inject constructor(
      */
     fun getIncomingMessageMaxLength(message: VisibleMessage): Int {
         // if the debug is set, return that
-        if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
+        // Pre-launch nothing is restricted for lacking Pro, so the Pro limit applies to every sender
+        if (prefs.forceIncomingMessagesAsPro() || !isPostPro()) return MAX_CHARACTER_PRO
 
         if (message.proFeatures.contains(ProMessageFeature.HIGHER_CHARACTER_LIMIT)) {
             return MAX_CHARACTER_PRO
@@ -852,11 +884,17 @@ class ProStatusManager @Inject constructor(
         return MAX_CHARACTER_REGULAR
     }
 
+    fun isPostPro(): Boolean {
+        return prefs.forcePostPro()
+    }
+
     fun getCharacterLimit(isPro: Boolean): Int {
         return if (isPro) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
 
     fun getPinnedConversationLimit(isPro: Boolean): Int {
+        if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
+
         return if (isPro) Int.MAX_VALUE else MAX_PIN_REGULAR
     }
 
@@ -913,6 +951,8 @@ class ProStatusManager @Inject constructor(
      * and it auto-clears once the entitlement lands.
      */
     suspend fun onPurchaseInFlight() {
+        if (!isPostPro()) return
+
         val nowSeconds = snodeClock.currentTime().epochSecond
         configFactory.get().withMutableUserConfigs { configs ->
             configs.userProfile.setProPrepaid(nowSeconds)

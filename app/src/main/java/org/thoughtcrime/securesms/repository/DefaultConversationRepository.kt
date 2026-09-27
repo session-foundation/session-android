@@ -184,7 +184,8 @@ class DefaultConversationRepository @Inject constructor(
                     // If pro status pref changes, the convo is likely needing changes too
                     TextSecurePreferences.Companion.events.filter {
                         it == TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO ||
-                                it == TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
+                                it == TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO ||
+                                it == TextSecurePreferences.Companion.SET_FORCE_POST_PRO
                     }
                 ).debounce(500)
                     .onStart { emit(allAddresses) }
