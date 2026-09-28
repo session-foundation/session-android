@@ -47,17 +47,17 @@ class LoginStateRepository @Inject constructor(
     private val mutableLoggedInState: MutableStateFlow<LoggedInState?>
 
 
-    init {
-        var initialState = prefs[keyState]?.let { serializedState ->
-            runCatching {
-                json.decodeFromString<LoggedInState>(
-                    KeyStoreHelper.unseal(serializedState).toString(Charsets.UTF_8)
-                )
+    /**
+     * Set when the stored login state existed but could not be unsealed, which is not the same thing
+     * as having no account. Callers cannot tell the two apart from a null state, and treating an
+     * unreadable account as an absent one sends the user to onboarding, where creating an account
+     * overwrites the seed that was only unreadable.
+     */
+    @Volatile
+    private var sealedStateUnreadable = false
 
-            }.onFailure {
-                Log.e(TAG, "Unable to unseal login state", it)
-            }.getOrNull()
-        }
+    init {
+        var initialState = readSealedState()
 
         if (initialState == null) {
             initialState = runCatching {
@@ -177,6 +177,37 @@ class LoginStateRepository @Inject constructor(
 
     fun clear() {
         mutableLoggedInState.value = null
+    }
+
+    /**
+     * Re-attempts a sealed state read that previously failed, and reports whether an account was
+     * recovered.
+     *
+     * Keystore faults are frequently transient, but the read is only performed once when this
+     * singleton is built, so a fault at startup leaves the account unreadable for the rest of the
+     * process even after the keystore recovers. Call this wherever there is fresh reason to believe
+     * it has.
+     */
+    fun reloadUnreadableState(): Boolean {
+        if (!sealedStateUnreadable || mutableLoggedInState.value != null) return false
+
+        val recovered = readSealedState() ?: return false
+
+        Log.i(TAG, "Recovered a login state that was previously unreadable")
+        sealedStateUnreadable = false
+        mutableLoggedInState.value = recovered
+        return true
+    }
+
+    private fun readSealedState(): LoggedInState? = prefs[keyState]?.let { serializedState ->
+        runCatching {
+            json.decodeFromString<LoggedInState>(
+                KeyStoreHelper.unseal(serializedState).toString(Charsets.UTF_8)
+            )
+        }.onFailure {
+            sealedStateUnreadable = true
+            Log.e(TAG, "Unable to unseal login state", it)
+        }.getOrNull()
     }
 
     /**

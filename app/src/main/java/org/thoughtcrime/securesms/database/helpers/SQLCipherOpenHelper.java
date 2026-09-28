@@ -45,6 +45,8 @@ import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.pro.db.ProDatabase;
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
 
+import java.io.File;
+
 import javax.inject.Provider;
 
 import kotlinx.serialization.json.Json;
@@ -141,8 +143,29 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
           long currentTime = System.currentTimeMillis();
           // 7 days
           if (currentTime - TextSecurePreferences.getLastVacuumTime(context) > 604_800_000) {
-            connection.execute("VACUUM;", null, null);
+            // Recorded before the attempt rather than after it: a VACUUM that throws would
+            // otherwise leave the timestamp untouched and be retried on every open from then on,
+            // which is what turns one unlucky moment into a launch that never succeeds again.
             TextSecurePreferences.setLastVacuumNow(context);
+
+            // VACUUM rebuilds the database into a temporary copy before replacing the original, so
+            // it needs roughly twice the file's size free. Below that it is going to fail, and
+            // failing takes as long as the copy it got through first.
+            File database = context.getDatabasePath(DATABASE_NAME);
+            long requiredSpace = database.length() * 2;
+
+            if (database.getUsableSpace() > requiredSpace) {
+              // This is maintenance, and it runs on the database-open path, where an exception
+              // does not reach the caller as a failed VACUUM — it reaches them as a database that
+              // would not open. Nothing here is worth not starting the app for.
+              try {
+                connection.execute("VACUUM;", null, null);
+              } catch (Exception e) {
+                Log.w(TAG, "Vacuum failed, continuing", e);
+              }
+            } else {
+              Log.i(TAG, "Skipping vacuum: needs " + requiredSpace + " bytes free");
+            }
           }
         }
       },

@@ -2,12 +2,14 @@ package org.thoughtcrime.securesms
 
 import android.content.BroadcastReceiver
 import android.content.ClipData
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.IdRes
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.fragment.app.Fragment
@@ -21,6 +23,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
+import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity
 import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
@@ -345,14 +348,36 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     private suspend fun copyFileToCache(uri: Uri, filename: String): Uri? = withContext(Dispatchers.IO) {
         try {
+            // A URI grant is the only thing that makes the sender's content readable to us, and only
+            // content:// carries one. openInputStream also accepts file:// and android.resource://,
+            // both of which it opens as this app with nothing consulted - and this runs before the
+            // user has authenticated, so it must not be able to reach anything of ours.
+            if (ContentResolver.SCHEME_CONTENT != uri.scheme) {
+                Log.w(TAG, "Refusing to cache a shared URI that carries no content grant - aborting.")
+                return@withContext null
+            }
+
+            // Our own providers answer us regardless of being unexported, and our FileProvider's
+            // configured roots include this very cache directory - so without this the copy below
+            // would read our own data back for the sender, still before they have authenticated.
+            if (PartAuthority.isLocalUri(uri) || FileProviderUtil.AUTHORITY == uri.authority) {
+                Log.w(TAG, "Refusing to cache a shared URI that names one of our own providers - aborting.")
+                return@withContext null
+            }
+
+            val cacheFilename = cacheFilenameFrom(filename)
+            if (cacheFilename == null) {
+                Log.w(TAG, "Shared content did not provide a usable filename - aborting.")
+                return@withContext null
+            }
+
             val inputStream = contentResolver.openInputStream(uri)
             if (inputStream == null) {
                 Log.w(TAG, "Could not open input stream to cache shared content - aborting.")
                 return@withContext null
             }
 
-            // Create a File in your cache directory using the retrieved name
-            val tempFile = File(cacheDir, filename)
+            val tempFile = File(cacheDir, cacheFilename)
             inputStream.use { input ->
                 FileOutputStream(tempFile).use { output ->
                     input.copyTo(output)
@@ -414,3 +439,15 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         }
     }
 }
+
+/**
+ * Reduces a sending app's `OpenableColumns.DISPLAY_NAME` to a name that can only land directly in the
+ * directory it is joined to, or null when nothing usable is left of it.
+ *
+ * The display name reaches us verbatim from the sending app and is not a path segment until it is
+ * made one: joined as given it lets "../" out of the directory, and the two relative names survive
+ * the reduction still naming a directory rather than a file.
+ */
+@VisibleForTesting
+internal fun cacheFilenameFrom(displayName: String): String? =
+    File(displayName).name.takeUnless { it.isEmpty() || it == "." || it == ".." }

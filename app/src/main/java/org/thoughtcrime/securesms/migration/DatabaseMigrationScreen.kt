@@ -56,12 +56,14 @@ fun DatabaseMigrationScreen(
     clearDataUtils: ClearDataUtils,
     exporter: LogExporter,
     fm: FragmentManager,
+    canRestoreAccount: Boolean,
 ) {
     val scope = rememberCoroutineScope()
     var showExportLogDialog by retain { mutableStateOf(false) }
 
     DatabaseMigration(
         state = migrationManager.migrationState.collectAsState().value,
+        canRestoreAccount = canRestoreAccount,
         onRetry = {
             migrationManager.requestMigration(fromRetry = true)
         },
@@ -95,6 +97,7 @@ fun DatabaseMigrationScreen(
 private fun DatabaseMigration(
     @PreviewParameter(DatabaseMigrationStateProvider::class)
     state: DatabaseMigrationManager.MigrationState,
+    canRestoreAccount: Boolean = true,
     onRetry: () -> Unit = {},
     onExportLogs: () -> Unit = {},
     onClearData: () -> Unit = {},
@@ -164,12 +167,18 @@ private fun DatabaseMigration(
 
                         Spacer(Modifier.size(LocalDimensions.current.mediumSpacing))
 
-                        OutlineButton(
-                            text = stringResource(R.string.clearDeviceRestore),
-                            color = LocalColors.current.danger,
-                            onClick = { showingClearDeviceRestoreWarning = true }
-                        )
-                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+                        // Restoring replays the account from the network using the login state
+                        // held in memory, so with no login state there is nothing to restore with
+                        // and this would silently do what "clear and restart" does. Offering it
+                        // then would promise an account recovery that cannot happen.
+                        if (canRestoreAccount) {
+                            OutlineButton(
+                                text = stringResource(R.string.clearDeviceRestore),
+                                color = LocalColors.current.danger,
+                                onClick = { showingClearDeviceRestoreWarning = true }
+                            )
+                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+                        }
                         OutlineButton(
                             text = stringResource(R.string.clearDeviceRestart),
                             color = LocalColors.current.danger,
