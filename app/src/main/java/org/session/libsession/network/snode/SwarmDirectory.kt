@@ -35,7 +35,13 @@ class SwarmDirectory @Inject constructor(
         return fresh
     }
 
-    suspend fun fetchSwarm(publicKey: String): List<Snode> {
+    suspend fun fetchSwarm(publicKey: String): List<Snode> = fetchSwarmCounted(publicKey).nodes
+
+    /**
+     * [fetchSwarm], also saying how many of the entries the answering node listed could not be read. Those
+     * are dropped from [FetchedSwarm.nodes], so a caller that needs every node of the swarm has to know.
+     */
+    suspend fun fetchSwarmCounted(publicKey: String): FetchedSwarm {
         val pool = snodeDirectory.ensurePoolPopulated()
         require(pool.isNotEmpty()) {
             "Snode pool is empty"
@@ -48,9 +54,11 @@ class SwarmDirectory @Inject constructor(
             )
         )
 
-        return response.snodes
-            .mapNotNull { it.toSnode() }
+        val nodes = response.snodes.mapNotNull { it.toSnode() }
+        return FetchedSwarm(nodes = nodes, unreadable = response.snodes.size - nodes.size)
     }
+
+    class FetchedSwarm(val nodes: List<Snode>, val unreadable: Int)
 
     /**
      * Picks one snode from the user's swarm for a given account.

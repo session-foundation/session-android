@@ -3,11 +3,14 @@ package org.thoughtcrime.securesms.groups
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.configs.ExpiredConfigRecovery
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
@@ -24,11 +27,21 @@ import javax.inject.Singleton
 @Singleton
 class ExpiredGroupManager @Inject constructor(
     pollerManager: GroupPollerManager,
+    expiredConfigRecovery: ExpiredConfigRecovery,
     @ManagerScope scope: CoroutineScope
 ) : OnAppStartupComponent {
     @Suppress("OPT_IN_USAGE")
-    val expiredGroups: StateFlow<Set<AccountId>> = pollerManager.watchAllGroupPollingState()
-        .mapNotNull { (groupId, state) ->
+    val expiredGroups: StateFlow<Set<AccountId>> = merge(
+        // A successful keys re-store enters by the same door as a poll reporting "not expired", rather than
+        // mutating the set from outside. Two writers would race the scan and make "last known state" depend
+        // on call ordering instead of flow ordering; this way the add/remove and skip-null rules below stay
+        // the only place the set is decided.
+        //
+        // It cannot be left to the reactive path: that clears the flag when a keys message is *handled*, and
+        // the device that re-stored it already holds that hash, so it may never handle it again.
+        expiredConfigRecovery.keysRestored.map { groupId -> groupId to false },
+        pollerManager.watchAllGroupPollingState()
+            .mapNotNull { (groupId, state) ->
             val expired = state.lastPolledResult?.getOrNull()?.groupExpired
 
             if (expired == null) {
@@ -38,8 +51,9 @@ class ExpiredGroupManager @Inject constructor(
                 return@mapNotNull null
             }
 
-            groupId to expired
-        }
+                groupId to expired
+            }
+    )
 
         // This scan keep track of all expired groups. Whenever there is a new state for a group
         // poller, we compare the state with the previous state and update the set of expired groups.
