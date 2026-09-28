@@ -112,6 +112,7 @@ class SettingsViewModel @Inject constructor(
         pathStatus = PathStatus.BUILDING,
         version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
+        isPostPro = proStatusManager.isPostPro(),
         proDataState = getDefaultSubscriptionStateData(),
     ))
     val uiState: StateFlow<UIState>
@@ -140,6 +141,12 @@ class SettingsViewModel @Inject constructor(
         // set default dialog ui
         viewModelScope.launch {
             _uiState.update { it.copy(avatarDialogState = getDefaultAvatarDialogState()) }
+        }
+
+        viewModelScope.launch {
+            proStatusManager.postProLaunchStatus.collect { postPro ->
+                _uiState.update { it.copy(isPostPro = postPro) }
+            }
         }
 
         viewModelScope.launch {
@@ -281,7 +288,7 @@ class SettingsViewModel @Inject constructor(
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
         // if the selected avatar is animated but the user isn't pro, show the animated pro CTA
-        if (tempAvatar.isAnimated && !selfRecipient.value.isPro) {
+        if (tempAvatar.isAnimated && !selfRecipient.value.isPro && proStatusManager.isPostPro()) {
             showAnimatedProCTA()
             return
         }
@@ -375,9 +382,11 @@ class SettingsViewModel @Inject constructor(
 
     fun hasNetworkConnection(): Boolean = connectivity.networkAvailable.value
 
-    fun isAnimated(uri: Uri): Boolean = AnimatedImageUtils.isAnimated(context, uri)
+    fun isAnimated(uri: Uri): Boolean = proStatusManager.isPostPro() // block animated avatars prior to pro
+            && AnimatedImageUtils.isAnimated(context, uri)
 
-    fun isAnimated(rawImageData: ByteArray): Boolean = AnimatedImageUtils.isAnimated(rawImageData)
+    fun isAnimated(rawImageData: ByteArray): Boolean = proStatusManager.isPostPro() // block animated avatars prior to pro
+            && AnimatedImageUtils.isAnimated(rawImageData)
 
     private fun showAnimatedProCTA() {
         // show the right CTA based on pro state
@@ -711,6 +720,7 @@ class SettingsViewModel @Inject constructor(
         val avatarCTAState: AvatarCTAState = AvatarCTAState.Hidden,
         val usernameDialog: UsernameDialogData? = null,
         val showSimpleDialog: SimpleDialogData? = null,
+        val isPostPro: Boolean,
         val proDataState: ProDataState,
     )
 

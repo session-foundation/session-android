@@ -149,6 +149,16 @@ object QaLaunchConfig {
     private const val EXTRA_FORCE_PRO_REVOCATION_REFRESH = "sessionForceProRevocationRefresh"
 
     /**
+     * Turns the Session Pro master gate on or off: `true` | `1` | `false` | `0`. Absent leaves the stored
+     * setting alone.
+     *
+     * It is off by default in every build, so without this a harness could only reach Pro through the
+     * debug menu. The key matches iOS's `sessionPro` launch environment variable, so one cross-platform
+     * config drives both.
+     */
+    private const val EXTRA_SESSION_PRO = "sessionPro"
+
+    /**
      * States whether the app should consider itself UPDATED rather than freshly installed, which decides
      * which events may raise the in-app review prompt: when updated, only the donate trigger can; when
      * freshly installed, the path and theme triggers can too.
@@ -300,6 +310,7 @@ object QaLaunchConfig {
             applyDevnetSeedUrl(intent, prefs)
             applyServiceNetwork(intent, prefs)
             applyProBackend(intent, prefs)
+            applySessionPro(intent, prefs)
             applyProBackendStatus(intent, prefs)
             // After the status extra: it overrides the access half that one sets.
             applyProProof(intent, prefs)
@@ -334,6 +345,7 @@ object QaLaunchConfig {
         EXTRA_SERVICE_NETWORK,
         EXTRA_PRO_BACKEND_URL,
         EXTRA_PRO_BACKEND_PUBKEY,
+        EXTRA_SESSION_PRO,
         EXTRA_PRO_BACKEND_STATUS,
         EXTRA_PRO_PROOF,
         EXTRA_FORCE_PRO_REVOCATION_REFRESH,
@@ -649,6 +661,26 @@ object QaLaunchConfig {
      * HomeActivity creation rather than once per test, and a fresh install creates it a second time
      * after onboarding with no QA extras attached.
      */
+    private fun applySessionPro(intent: Intent, prefs: TextSecurePreferences): Boolean {
+        if (!intent.hasExtra(EXTRA_SESSION_PRO)) {
+            return false
+        }
+
+        val raw = intent.getStringExtra(EXTRA_SESSION_PRO).orEmpty().trim()
+        val enabled = when (raw.lowercase()) {
+            "true", "1" -> true
+            "false", "0" -> false
+            else -> {
+                Log.e(TAG, "Ignoring unknown '$EXTRA_SESSION_PRO' extra: '$raw'. Use true | false.")
+                return false
+            }
+        }
+
+        prefs.setForcePostPro(enabled)
+        Log.i(TAG, "Set Session Pro to $enabled (from '$raw')")
+        return true
+    }
+
     private fun applyForceProRevocationRefresh(intent: Intent, prefs: TextSecurePreferences): Boolean {
         if (!intent.hasExtra(EXTRA_FORCE_PRO_REVOCATION_REFRESH)) {
             return false

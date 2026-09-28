@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
@@ -31,6 +32,7 @@ class ProStatusRepository @Inject constructor(
     private val snodeClock: SnodeClock,
     @param:ManagerScope private val scope: CoroutineScope,
     loginStateRepository: LoginStateRepository,
+    private val prefs: TextSecurePreferences,
     private val networkConnectivity: NetworkConnectivity,
 ) {
     sealed interface LoadState {
@@ -140,6 +142,11 @@ class ProStatusRepository @Inject constructor(
     private var fetchedInThisProcess = false
 
     fun requestRefresh(immediate: Boolean = false) {
+        if (!prefs.forcePostPro()) {
+            Log.d(DebugLogGroup.PRO_DATA.label, "Pro hasn't been enabled, skipping refresh")
+            return
+        }
+
         if (immediate) {
             Log.d(DebugLogGroup.PRO_DATA.label, "Scheduling immediate fetch of Pro status from server")
             fetchedInThisProcess = true

@@ -314,6 +314,7 @@ fun Settings(
             Buttons(
                 recoveryHidden = uiState.recoveryHidden,
                 pathStatus = uiState.pathStatus,
+                postPro = uiState.isPostPro,
                 proDataState = uiState.proDataState,
                 sendCommand = sendCommand
             )
@@ -397,6 +398,7 @@ fun Settings(
             AvatarDialog(
                 state = uiState.avatarDialogState,
                 isPro = uiState.proDataState.type is ProStatus.Active,
+                isPostPro = uiState.isPostPro,
                 sendCommand = sendCommand,
                 startAvatarSelection = startAvatarSelection
             )
@@ -535,6 +537,7 @@ fun Settings(
 fun Buttons(
     recoveryHidden: Boolean,
     pathStatus: PathStatus,
+    postPro: Boolean,
     proDataState: ProDataState,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
 ) {
@@ -577,46 +580,48 @@ fun Buttons(
 
         Cell {
             Column {
-                ItemButton(
-                    text = annotatedStringResource(
-                        when (proDataState.type) {
-                                is ProStatus.Active -> Phrase.from(
-                                    LocalContext.current,
-                                    R.string.sessionProBeta
-                                )
-                                    .format().toString()
+                if(postPro){
+                    ItemButton(
+                        text = annotatedStringResource(
+                            when (proDataState.type) {
+                                    is ProStatus.Active -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.sessionProBeta
+                                    )
+                                        .format().toString()
 
-                                is ProStatus.NeverSubscribed -> Phrase.from(
-                                    LocalContext.current,
-                                    R.string.upgradeSession
-                                )
-                                    .format().toString()
+                                    is ProStatus.NeverSubscribed -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.upgradeSession
+                                    )
+                                        .format().toString()
 
-                                is ProStatus.Expired -> Phrase.from(
-                                    LocalContext.current,
-                                    R.string.proRenewBeta
+                                    is ProStatus.Expired -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.proRenewBeta
+                                    )
+                                        .format().toString()
+                                }
+                            ),
+                            icon = {
+                                Image(
+                                    modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
+                                        .align(Alignment.Center),
+                                    painter = painterResource(R.drawable.ic_pro_badge),
+                                    contentDescription = null,
                                 )
-                                    .format().toString()
-                            }
-                        ),
-                        icon = {
-                            Image(
-                                modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
-                                    .align(Alignment.Center),
-                                painter = painterResource(R.drawable.ic_pro_badge),
-                                contentDescription = null,
-                            )
-                        },
-                        modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
-                        // The row id above is the tap target and carries no text; this one is on the
-                        // label, so a test can read WHICH of the three states the row is showing.
-                        textQaTag = R.string.qa_settings_item_pro_title,
-                        colors = accentTextButtonColors()
-                    ) {
-                       activity?.push<ProSettingsActivity>()
-                    }
+                            },
+                            modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
+                            // The row id above is the tap target and carries no text; this one is on the
+                            // label, so a test can read WHICH of the three states the row is showing.
+                            textQaTag = R.string.qa_settings_item_pro_title,
+                            colors = accentTextButtonColors()
+                        ) {
+                           activity?.push<ProSettingsActivity>()
+                        }
 
-                    Divider()
+                        Divider()
+                }
 
                 // Invite a friend
                 ItemButton(
@@ -923,6 +928,7 @@ fun AvatarOption(
 fun AvatarDialog(
     state: SettingsViewModel.AvatarDialogState,
     isPro: Boolean,
+    isPostPro: Boolean,
     sendCommand: (SettingsViewModel.Commands) -> Unit,
     startAvatarSelection: () -> Unit,
 ){
@@ -935,20 +941,22 @@ fun AvatarDialog(
             // custom content that has the displayed images
 
             // animated Pro title
-            ProBadgeText(
-                modifier = Modifier
-                    .padding(
-                        top = LocalDimensions.current.xxxsSpacing,
-                        bottom = LocalDimensions.current.xsSpacing,
-                    )
-                    .clickable {
-                        sendCommand(ShowAnimatedProCTA)
-                    },
-                text = stringResource(if(isPro) R.string.proAnimatedDisplayPictureModalDescription
-                else R.string.proAnimatedDisplayPicturesNonProModalDescription),
-                textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary),
-                badgeAtStart = isPro
-            )
+            if(isPostPro){
+                ProBadgeText(
+                    modifier = Modifier
+                        .padding(
+                            top = LocalDimensions.current.xxxsSpacing,
+                            bottom = LocalDimensions.current.xsSpacing,
+                        )
+                        .clickable {
+                            sendCommand(ShowAnimatedProCTA)
+                        },
+                    text = stringResource(if(isPro) R.string.proAnimatedDisplayPictureModalDescription
+                    else R.string.proAnimatedDisplayPicturesNonProModalDescription),
+                    textStyle = LocalType.current.base.copy(color = LocalColors.current.textSecondary),
+                    badgeAtStart = isPro
+                )
+            }
 
             // main container that control the overall size and adds the rounded bg
             Box(
@@ -1073,6 +1081,7 @@ private fun SettingsScreenPreview() {
                     refreshState = State.Success(Unit),
                     showProBadge = true
                 ),
+                isPostPro = true,
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 pathStatus = PathStatus.READY,
@@ -1097,6 +1106,7 @@ fun PreviewAvatarDialog(
         AvatarDialog(
             state = SettingsViewModel.AvatarDialogState.NoAvatar,
             isPro = false,
+            isPostPro = false,
             sendCommand = {},
             startAvatarSelection = {}
         )
