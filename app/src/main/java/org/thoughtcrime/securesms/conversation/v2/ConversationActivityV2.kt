@@ -1109,9 +1109,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } else {
                 prepMediaForSending(mediaURI, mediaType).addListener(object : ListenableFuture.Listener<Boolean> {
 
-                    override fun onSuccess(result: Boolean?) {
-                        sendAttachments(attachmentManager.buildSlideDeck().asAttachments(), null)
-                    }
+                    // Nothing to do on success: prepMediaForSending stages the attachment in the input
+                    // bar, and the send is the user's to make once they can see what they shared.
+                    override fun onSuccess(result: Boolean?) {}
 
                     override fun onFailure(e: ExecutionException?) {
                         Toast.makeText(this@ConversationActivityV2, R.string.attachmentsErrorLoad, Toast.LENGTH_LONG).show()
@@ -2370,7 +2370,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         viewModel.beforeSendMessage()
 
-        if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
+        if (attachmentManager.isAttachmentPresent()) {
+            sendAttachments(
+                attachmentManager.buildSlideDeck().asAttachments(),
+                getMessageBody(),
+                binding.inputBar.quote,
+                binding.inputBar.linkPreview
+            )
+        } else if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
             sendAttachments(listOf(), getMessageBody(), binding.inputBar.quote, binding.inputBar.linkPreview)
         } else {
             sendTextOnlyMessage()
@@ -2612,7 +2619,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         )
     }
 
-    override fun onAttachmentChanged() { /* Do nothing */ }
+    override fun onAttachmentChanged() {
+        val slide = attachmentManager.getSlide()
+        if (slide != null) binding.inputBar.showAttachmentDraft(glide, slide)
+        else binding.inputBar.clearAttachmentDraft()
+    }
+
+    override fun cancelAttachmentDraft() {
+        attachmentManager.clear()
+        if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
+    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -2633,18 +2649,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 // If the attachment was too large or MediaConstraints.isSatisfied failed for some
                 // other reason then we reset the attachment manager & shown buttons then bail..
+                // Otherwise it is left staged in the input bar, so that the user can see what they
+                // picked, add a message to it, and choose to send.
                 if (!result) {
                     attachmentManager.clear()
                     if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
-                    return
                 }
-
-                // ..otherwise we can attempt to send the attachment(s).
-                // Note: The only multi-attachment message type is when sending images - all others
-                // attempt send the attachment immediately upon file selection.
-                sendAttachments(attachmentManager.buildSlideDeck().asAttachments(), null)
-                //todo: The current system sends the document the moment it has been selected, without text (body is set to null above) - We will want to fix this and allow the user to add text with a document AND be able to confirm before sending
-                //todo: Simply setting body to getMessageBody() above isn't good enough as it doesn't give the user a chance to confirm their message before sending it.
             }
 
             override fun onFailure(e: ExecutionException?) {

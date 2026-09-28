@@ -225,6 +225,14 @@ public class AttachmentManager {
         return result;
     }
 
+    public boolean isAttachmentPresent() {
+        return slide != null;
+    }
+
+    public @Nullable Slide getSlide() {
+        return slide;
+    }
+
     public @NonNull
     SlideDeck buildSlideDeck() {
         SlideDeck deck = new SlideDeck();

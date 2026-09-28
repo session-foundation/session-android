@@ -19,6 +19,7 @@ import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.RecipientNamesKt;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ShareActivity;
+import org.thoughtcrime.securesms.ShareIntentTokenStore;
 import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.repository.ConversationRepository;
@@ -45,6 +46,9 @@ public class DirectShareService extends ChooserTargetService {
 
   @Inject
   ConversationRepository conversationRepository;
+
+  @Inject
+  ShareIntentTokenStore shareIntentTokenStore;
 
   private static final String TAG = DirectShareService.class.getSimpleName();
 
@@ -79,8 +83,7 @@ public class DirectShareService extends ChooserTargetService {
         }
 
         Bundle bundle = new Bundle(1);
-        bundle.putParcelable(ShareActivity.EXTRA_ADDRESS, recipient.getAddress());
-        bundle.setClassLoader(getClassLoader());
+        bundle.putString(ShareActivity.EXTRA_SHARE_TOKEN, shareIntentTokenStore.mint(recipient.getAddress()));
 
         results.add(new ChooserTarget(RecipientNamesKt.displayName(recipient), Icon.createWithBitmap(avatar), 1.0f, componentName, bundle));
     }
