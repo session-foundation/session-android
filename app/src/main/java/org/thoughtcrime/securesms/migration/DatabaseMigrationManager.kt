@@ -47,13 +47,13 @@ class DatabaseMigrationManager @Inject constructor(
 
         // First perform a cheap check to see if the migration is done, if so we can skip the wait.
         if (mutableMigrationState.value != MigrationState.Completed) {
-            // Blocking is deliberate: callers don't expect to handle a half-migrated database, so
-            // they wait here instead, and that includes waiting through a failure. Throwing would
-            // be worse than parking them: the database is reached from background flows that start
-            // on login state rather than through any startup sequence, none of them expect this
-            // call to fail, and the first one to be handed an exception takes the process down
-            // before the migration screen can offer a retry (#2213). A retry that succeeds reaches
-            // Completed and releases everyone waiting here.
+            // Callers cannot do anything sensible with a half-migrated database, so they wait
+            // here rather than be handed one, and a retry that succeeds releases them.
+            //
+            // Known hazard: Error is terminal and is not a terminating condition for this wait, so
+            // a caller arriving after a failed migration blocks for the life of the process and its
+            // thread is never returned. Deferring database-backed startup work keeps the usual
+            // arrivals away from it, but callers reached from login-state flows are not covered.
             runBlocking {
                 migrationState.first { it == MigrationState.Completed }
             }
