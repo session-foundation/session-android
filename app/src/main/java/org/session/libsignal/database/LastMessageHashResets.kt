@@ -15,6 +15,10 @@ value class LastMessageHashEpoch internal constructor(internal val resets: Long)
  *
  * Every reset and every guarded write runs under this object's lock, together with its storage operation, so
  * a reset cannot land between a write's check and the write itself.
+ *
+ * So the lock is held across the SQL, and neither a reset nor a write may be made from inside a database
+ * transaction. A caller holding the database while it waits for this lock, against a write holding this lock
+ * while it waits for the database, would deadlock.
  */
 class LastMessageHashResets {
     private var resets = 0L
