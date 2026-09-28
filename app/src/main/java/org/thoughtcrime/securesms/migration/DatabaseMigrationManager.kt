@@ -19,6 +19,7 @@ import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.DatabaseSecretProvider
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -32,6 +33,7 @@ class DatabaseMigrationManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
     private val databaseSecretProvider: DatabaseSecretProvider,
+    private val loginStateRepository: Provider<LoginStateRepository>,
     jsonProvider: Provider<Json>,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : OnAppStartupComponent {
@@ -116,6 +118,12 @@ class DatabaseMigrationManager @Inject constructor(
 
                 mutableMigrationState.value = MigrationState.Migrating(steps.toList())
             }
+
+            // Reaching Completed after a failure means the keystore is working again, and the login
+            // state is only read once when its repository is built — so an account left unreadable
+            // by the same fault has to be re-read before anything routes on it, or a recovered user
+            // is sent to onboarding on top of their own data.
+            loginStateRepository.get().reloadUnreadableState()
 
             mutableMigrationState.value = MigrationState.Completed
         } catch (ec: Exception) {
