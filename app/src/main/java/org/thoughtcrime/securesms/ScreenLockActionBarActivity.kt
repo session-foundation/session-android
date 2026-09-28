@@ -23,6 +23,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
+import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity
 import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
@@ -353,6 +354,14 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             // user has authenticated, so it must not be able to reach anything of ours.
             if (ContentResolver.SCHEME_CONTENT != uri.scheme) {
                 Log.w(TAG, "Refusing to cache a shared URI that carries no content grant - aborting.")
+                return@withContext null
+            }
+
+            // Our own providers answer us regardless of being unexported, and our FileProvider's
+            // configured roots include this very cache directory - so without this the copy below
+            // would read our own data back for the sender, still before they have authenticated.
+            if (PartAuthority.isLocalUri(uri) || FileProviderUtil.AUTHORITY == uri.authority) {
+                Log.w(TAG, "Refusing to cache a shared URI that names one of our own providers - aborting.")
                 return@withContext null
             }
 

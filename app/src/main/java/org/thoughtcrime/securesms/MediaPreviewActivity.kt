@@ -491,9 +491,12 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             )
             composeIntent.setAction(Intent.ACTION_SEND)
             composeIntent.putExtra(Intent.EXTRA_STREAM, mediaItem.uri)
-            // ShareActivity only passes one of our own attachment URIs along untouched for an Intent
-            // it can tell came from inside the app; without this it would have nothing to read.
-            composeIntent.putExtra(ShareActivity.EXTRA_SHARE_TOKEN, shareIntentTokenStore.mint())
+            // ShareActivity passes one of our own attachment URIs along untouched only for the exact
+            // URIs a token vouches for; without this it would have nothing to read.
+            composeIntent.putExtra(
+                ShareActivity.EXTRA_SHARE_TOKEN,
+                shareIntentTokenStore.mint(authorisedUris = setOf(mediaItem.uri))
+            )
             composeIntent.setType(mediaItem.mimeType)
             startActivity(composeIntent)
         }

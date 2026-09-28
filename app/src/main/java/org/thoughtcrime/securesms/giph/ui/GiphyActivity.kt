@@ -21,6 +21,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.giph.ui.compose.GiphyTabsCompose
 import org.thoughtcrime.securesms.providers.BlobUtils
+import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.ui.setThemedContent
 
 class GiphyActivity :
@@ -113,6 +114,9 @@ class GiphyActivity :
                     BlobUtils.getInstance()
                         .forData(data)
                         .withMimeType(MediaTypes.IMAGE_GIF)
+                        // Giphy gives us bytes and no name, and a blob without one is named "null"
+                        // verbatim - which the attachment then carries to the recipient.
+                        .withFileName(FilenameUtils.getFilenameFromUri(this@GiphyActivity, null, MediaTypes.IMAGE_GIF))
                         .createForSingleSessionOnDisk(
                             this@GiphyActivity
                         ) { e -> Log.w(TAG, "Failed to write to disk.", e) }

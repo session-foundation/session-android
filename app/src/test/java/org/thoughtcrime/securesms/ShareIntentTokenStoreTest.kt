@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.session.libsession.utilities.Address
+import android.net.Uri
 import org.session.libsession.utilities.Address.Companion.toAddress
 
 @RunWith(RobolectricTestRunner::class)
@@ -19,6 +19,25 @@ class ShareIntentTokenStoreTest {
         val token = store.mint(address)
 
         assertThat(store.resolve(token)?.address).isEqualTo(address)
+    }
+
+    @Test
+    fun `a token authorises only the uris it was minted for`() {
+        val authorised = Uri.parse("content://network.loki.provider.securesms/part/1/2")
+        val other = Uri.parse("content://network.loki.provider.securesms/part/1/3")
+
+        val minted = store.resolve(store.mint(authorisedUris = setOf(authorised)))!!
+
+        assertThat(minted.authorises(authorised)).isTrue()
+        assertThat(minted.authorises(other)).isFalse()
+    }
+
+    @Test
+    fun `a token minted for a destination authorises no uris`() {
+        val minted = store.resolve(store.mint(address))!!
+
+        assertThat(minted.authorisedUris).isEmpty()
+        assertThat(minted.authorises(Uri.parse("content://network.loki.provider.securesms/part/1/2"))).isFalse()
     }
 
     @Test

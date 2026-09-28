@@ -26,9 +26,12 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.InputbarViewModel.InputBarContentState
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
+import org.thoughtcrime.securesms.conversation.v2.components.AttachmentDraftView
+import org.thoughtcrime.securesms.conversation.v2.components.AttachmentDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
+import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteViewDelegate
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -62,10 +65,12 @@ class InputBar @JvmOverloads constructor(
 ), InputBarEditTextDelegate,
     QuoteViewDelegate,
     LinkPreviewDraftViewDelegate,
+    AttachmentDraftViewDelegate,
     TextView.OnEditorActionListener {
 
     private var binding: ViewInputBarBinding = ViewInputBarBinding.inflate(LayoutInflater.from(context), this, true)
     private var linkPreviewDraftView: LinkPreviewDraftView? = null
+    private var attachmentDraftView: AttachmentDraftView? = null
     private var quoteView: QuoteView? = null
     var delegate: InputBarDelegate? = null
     var quote: MessageRecord? = null
@@ -225,9 +230,16 @@ class InputBar @JvmOverloads constructor(
     }
 
     override fun inputBarEditTextContentChanged(text: CharSequence) {
-        microphoneButton.isVisible = text.trim().isEmpty() && !sendOnly
-        sendButton.isVisible = microphoneButton.isGone || sendOnly
+        updateMicrophoneOrSendButton()
         delegate?.inputBarEditTextContentChanged(text)
+    }
+
+    // A staged attachment is sendable with no text at all, so the microphone has to give way to the
+    // send button for it as well - keying off the text alone strands the attachment with no way to send.
+    private fun updateMicrophoneOrSendButton() {
+        val hasSendableContent = text.trim().isNotEmpty() || attachmentDraftView != null
+        microphoneButton.isVisible = !hasSendableContent && !sendOnly
+        sendButton.isVisible = microphoneButton.isGone || sendOnly
     }
 
     override fun commitInputContent(contentUri: Uri) { delegate?.commitInputContent(contentUri) }
@@ -299,6 +311,35 @@ class InputBar @JvmOverloads constructor(
         // Update our `linkPreview` property with the new (provided as an argument to this function)
         // then update the View from that.
         linkPreview = updatedLinkPreview.also { linkPreviewDraftView?.update(glide, it) }
+    }
+
+    fun showAttachmentDraft(glide: RequestManager, slide: Slide) {
+        val existing = attachmentDraftView
+        if (existing != null) {
+            existing.update(glide, slide)
+            return
+        }
+
+        attachmentDraftView = AttachmentDraftView(context).also {
+            it.delegate = this
+            it.update(glide, slide)
+            binding.inputBarAdditionalContentContainer.addView(it)
+        }
+        updateMicrophoneOrSendButton()
+        requestLayout()
+    }
+
+    // Driven by the attachment manager rather than called directly: it owns whether an attachment
+    // exists, and clearing it reports back through onAttachmentChanged.
+    fun clearAttachmentDraft() {
+        attachmentDraftView?.let(binding.inputBarAdditionalContentContainer::removeView)
+        attachmentDraftView = null
+        updateMicrophoneOrSendButton()
+        requestLayout()
+    }
+
+    override fun cancelAttachmentDraft() {
+        delegate?.cancelAttachmentDraft()
     }
 
     override fun cancelLinkPreviewDraft() {
@@ -407,5 +448,6 @@ interface InputBarDelegate {
     fun onMicrophoneButtonUp(event: MotionEvent)
     fun sendMessage()
     fun commitInputContent(contentUri: Uri)
+    fun cancelAttachmentDraft() {} // no-op by default: only a bar backed by an attachment manager has one
     fun onCharLimitTapped()
 }

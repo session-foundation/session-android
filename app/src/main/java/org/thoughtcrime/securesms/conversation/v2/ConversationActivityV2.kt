@@ -2370,7 +2370,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         viewModel.beforeSendMessage()
 
-        if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
+        if (attachmentManager.isAttachmentPresent()) {
+            sendAttachments(
+                attachmentManager.buildSlideDeck().asAttachments(),
+                getMessageBody(),
+                binding.inputBar.quote,
+                binding.inputBar.linkPreview
+            )
+        } else if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {
             sendAttachments(listOf(), getMessageBody(), binding.inputBar.quote, binding.inputBar.linkPreview)
         } else {
             sendTextOnlyMessage()
@@ -2612,7 +2619,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         )
     }
 
-    override fun onAttachmentChanged() { /* Do nothing */ }
+    override fun onAttachmentChanged() {
+        val slide = attachmentManager.getSlide()
+        if (slide != null) binding.inputBar.showAttachmentDraft(glide, slide)
+        else binding.inputBar.clearAttachmentDraft()
+    }
+
+    override fun cancelAttachmentDraft() {
+        attachmentManager.clear()
+        if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
+    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)

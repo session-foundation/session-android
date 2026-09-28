@@ -36,6 +36,7 @@ import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import java.io.IOException
@@ -56,7 +57,7 @@ class ShareViewModel @Inject constructor(
     private var resolvedPlaintext: CharSequence? = null
     private var mimeType: String? = null
     private var isPassingAlongMedia = false
-    private var isInternalShare = false
+    private var minted: ShareIntentTokenStore.Minted? = null
     private var shareDestination: Address? = null
 
     // Input: The search query
@@ -148,7 +149,7 @@ class ShareViewModel @Inject constructor(
         isPassingAlongMedia = false
 
         val minted = shareIntentTokenStore.resolve(intent.getStringExtra(ShareActivity.EXTRA_SHARE_TOKEN))
-        isInternalShare = minted != null
+        this.minted = minted
         shareDestination = minted?.address
 
         val action = intent.action
@@ -185,8 +186,10 @@ class ShareViewModel @Inject constructor(
 
         // A URI naming one of our own providers is passed to the attachment manager verbatim, which
         // reads it as us - so it resolves to the viewer's own message history rather than to anything
-        // the sender holds. Only an Intent this app built may take that route.
-        if (isInternalShare && uris.isNotEmpty() && uris.all { PartAuthority.isLocalUri(it) }) {
+        // the sender holds. Only the exact URIs a token was minted for may take that route: holding a
+        // token is not enough, because the chooser merges our direct-share extras into the sender's
+        // own Intent, so a valid token can arrive alongside URIs we never vouched for.
+        if (minted != null && uris.isNotEmpty() && uris.all { minted.authorises(it) }) {
             isPassingAlongMedia = true
             resolvedExtras = uris
             handleResolvedMedia()
@@ -235,9 +238,11 @@ class ShareViewModel @Inject constructor(
             return false
         }
 
-        // Our own providers answer us whether or not they are exported, so these resolve to the
-        // viewer's own attachments; the caller of an exported activity has no business naming one.
-        if (PartAuthority.isLocalUri(uri)) {
+        // Our own providers answer us whether or not they are exported, so these resolve to our own
+        // data rather than to anything the sender holds. That covers the attachment and blob
+        // providers, and equally our FileProvider, whose configured roots include the cache
+        // directory and external storage.
+        if (PartAuthority.isLocalUri(uri) || FileProviderUtil.AUTHORITY == uri.authority) {
             Log.w(TAG, "Refusing a shared URI that names one of our own providers.")
             return false
         }

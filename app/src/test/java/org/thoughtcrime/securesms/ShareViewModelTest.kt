@@ -22,6 +22,7 @@ import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.FileProviderUtil
 import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
@@ -143,10 +144,28 @@ class ShareViewModelTest : BaseViewModelTest() {
         assertThat(viewModel.onPause()).isFalse()
     }
 
+    // The chooser merges a direct-share target's extras into the sender's own Intent, so a token we
+    // minted arrives attached to URIs the sender chose. The token carries a destination here, so the
+    // pass-through gate is the only thing that can stop it - without it this reaches the conversation.
     @Test
-    fun `one of our own uris is passed along for an intent we did build`() = runTest {
+    fun `a token does not authorise uris it was not minted for`() = runTest {
         val intent = sharedUriIntent(ownBlobUri)
             .putExtra(ShareActivity.EXTRA_SHARE_TOKEN, tokenStore.mint(recipient))
+
+        viewModel.uiEvents.test {
+            viewModel.initialiseMedia(intent)
+
+            expectNoEvents()
+        }
+        assertThat(viewModel.onPause()).isFalse()
+    }
+
+    @Test
+    fun `one of our own uris is passed along when the token was minted for it`() = runTest {
+        val intent = sharedUriIntent(ownBlobUri).putExtra(
+            ShareActivity.EXTRA_SHARE_TOKEN,
+            tokenStore.mint(recipient, authorisedUris = setOf(ownBlobUri))
+        )
 
         viewModel.uiEvents.test {
             viewModel.initialiseMedia(intent)
@@ -154,5 +173,12 @@ class ShareViewModelTest : BaseViewModelTest() {
             val event = awaitItem() as ShareViewModel.ShareUIEvent.GoToScreen
             assertThat(event.intent.data).isEqualTo(ownBlobUri)
         }
+    }
+
+    @Test
+    fun `refuses a content uri naming our own FileProvider`() {
+        val ours = Uri.parse("content://${FileProviderUtil.AUTHORITY}/internal_cache/example.txt")
+
+        assertThat(viewModel.canReadSharedUri(ours)).isFalse()
     }
 }
