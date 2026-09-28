@@ -1413,6 +1413,7 @@
     <string name="userSettings">Paramètres Utilisateur</string>
     <string name="viaPlatformWebsiteDescription">Modifiez votre abonnement en utilisant le compte {platform_account} avec lequel vous vous êtes inscrit, via le site web de <b><font color="0">{platform}</font></b>.</string>
     <string name="viaStoreWebsite">Via le site Web {platform}</string>
+    <string name="viaStoreWebsiteDescription">Modifiez votre accès Pro en utilisant le {platform_account} que vous avez utilisé pour vous enregistrer, via le <b><font color="0">site {platform_store}</font></b>.</string>
     <string name="video">Vidéo</string>
     <string name="videoErrorPlay">Impossible de lire la vidéo.</string>
     <string name="view">Afficher</string>

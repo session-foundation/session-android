@@ -278,6 +278,7 @@
     <string name="communityJoinedAlready">Bu topluluğun zaten üyesisiniz.</string>
     <string name="communityLeave">Topluluktan Ayrıl</string>
     <string name="communityLeaveError">{community_name} çıkış yapılamadı</string>
+    <string name="communityModModeratorCannotManage">Bir moderatör olarak, kullanıcıların rollerini değiştiremezsiniz. Bu yetki yalnızca adminlerde bulunur.</string>
     <string name="communityNameEnter">Bir grup adı girin</string>
     <string name="communityNameEnterPlease">Lütfen bir grup adı girin</string>
     <string name="communityUnknown">Bilinmeyen Community</string>
@@ -337,6 +338,7 @@
     <string name="creatingCall">Arama Oluşturuluyor</string>
     <string name="currentBilling">Mevcut Faturalandırma</string>
     <string name="currentPassword">Mevcut Parola</string>
+    <string name="currentRole">Mevcut rol</string>
     <string name="cut">Kes</string>
     <string name="darkMode">Karanlık Mod</string>
     <string name="databaseErrorClearDataWarning">Tüm mesajları, ekleri ve hesap verilerini bu cihazdan silip yeni bir hesap oluşturmak istediğinizden emin misiniz?</string>
@@ -602,6 +604,7 @@
     <string name="groupOnlyAdmin"><b>{group_name}</b> grubunda tek adminsiniz.\n\nAdmin olmadan grup üyeleri ve ayarları değiştirilemez.</string>
     <string name="groupOnlyAdminLeave"><b>{group_name}</b> grubunda yalnızca siz yöneticisiniz.\n\nGrup üyeleri ve ayarlar bir yönetici olmadan değiştirilemez. Grubu silmeden ayrılmak için önce yeni bir yönetici ekleyin.</string>
     <string name="groupPendingRemoval">Kaldırma bekleniyor</string>
+    <string name="groupPermissionReadOnly">Bu gruptakileri yalnızca okuyabilirsiniz</string>
     <string name="groupPromotedYou"><b>Sen</b> yönetici olarak terfi ettin.</string>
     <string name="groupPromotedYouMultiple"><b>Sen</b> ve <b>{count} diğer</b> yönetici olarak terfi ettiniz.</string>
     <string name="groupPromotedYouTwo"><b>Siz</b> ve <b>{other_name}</b> yönetici haklarını kazandınız.</string>
@@ -814,6 +817,7 @@
     <string name="modalMessageCharacterTooLongTitle">Mesaj çok uzun</string>
     <string name="modalMessageTooLongDescription">Lütfen mesajınızı {limit} karakter veya daha az olacak şekilde kısaltın.</string>
     <string name="modalMessageTooLongTitle">Mesaj çok uzun</string>
+    <string name="nameModeratorCommunity">{name}, Bu topluluğun bir <b>moderatörüdür</b>.</string>
     <string name="newPassword">Yeni Parola</string>
     <string name="next">İleri</string>
     <string name="nextSteps">Sonraki Adımlar</string>
@@ -1165,6 +1169,7 @@
     <string name="rateSessionApp">Uygulamayı Oyla</string>
     <string name="rateSessionModalDescription">Session\'ı beğenmenize sevindik, bir dakikanız varsa {storevariant}\'da bize oy verin. Başkalarının da özel ve güvenli mesajlaşmayı keşfetmesine yardımcı olun.</string>
     <string name="read">Okundu</string>
+    <string name="readMoreCapital">Daha fazla oku</string>
     <string name="readReceipts">Okundu Bilgileri</string>
     <string name="readReceiptsDescription">Gönderdiğiniz ve aldığınız tüm iletiler için okundu bilgilerini göster.</string>
     <string name="received">Alındı:</string>
@@ -1204,6 +1209,10 @@
     <string name="remove">Kaldır</string>
     <plurals name="removeMember">
         <item quantity="one">Üye Kaldır</item>
+        <item quantity="other">Üyeleri Kaldır</item>
+    </plurals>
+    <plurals name="removeMemberLowercase">
+        <item quantity="one">Üyeyi kaldır</item>
         <item quantity="other">Üyeleri Kaldır</item>
     </plurals>
     <plurals name="removeMemberMessages">
@@ -1325,6 +1334,7 @@
     <string name="showLess">Daha az göster</string>
     <string name="showNoteToSelf">Kendime Notu Göster</string>
     <string name="showNoteToSelfDescription"><b>Kendime Not</b>\'u sohbet listenizde göstermek istediğinizden emin misiniz?</string>
+    <string name="skip">Atla</string>
     <string name="spellChecker">Yazım Denetimi</string>
     <string name="stickers">Çıkartmalar</string>
     <string name="strength">Güç</string>
@@ -1337,6 +1347,7 @@
     <string name="theError">Hata</string>
     <string name="theReturn">Geri Dön</string>
     <string name="themePreview">Tema Önizlemesi</string>
+    <string name="thisCommunity">Bu Topluluk</string>
     <string name="tooltipAccountIdVisible"><b>{name}</b> adlı kişinin Hesap Kimliği, önceki etkileşimlerinize dayanarak görünür durumdadır</string>
     <string name="tooltipBlindedIdCommunities">Körleştirilmiş Kimlikler, istenmeyen mesajları (spam) azaltmak ve gizliliği artırmak için topluluklarda kullanılır</string>
     <string name="translate">Çeviri</string>
@@ -1385,6 +1396,7 @@
     <string name="useFastMode">Hızlı Modu Kullan</string>
     <string name="viaPlatformWebsiteDescription">Kayıt olurken kullandığınız {platform_account} hesabını kullanarak <b><font color="0">{platform} web sitesi</font></b> üzerinden planınızı değiştirin.</string>
     <string name="viaStoreWebsite">{platform} internet sitesi üzerinden</string>
+    <string name="viaStoreWebsiteDescription">Kayıt olurken kullandığınız {platform_account} hesabını kullanarak Pro erişiminizi <b><font color="0">{platform_store} web sitesi</font></b> üzerinden güncelleyin.</string>
     <string name="video">Video</string>
     <string name="videoErrorPlay">Video oynatılamıyor.</string>
     <string name="view">Görünüm</string>

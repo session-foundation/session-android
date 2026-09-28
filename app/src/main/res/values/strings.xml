@@ -367,6 +367,8 @@
     <string name="databaseErrorUpdate">Your app database is incompatible with this version of Session. Reinstall the app and restore your account to generate a new database and continue using Session.\n\nWarning: This will result in the loss of all messages and attachments older than two weeks.</string>
     <string name="databaseOptimizing">Optimizing Database</string>
     <string name="debugLog">Debug Log</string>
+    <string name="debugModeDisabled">Debug mode disabled</string>
+    <string name="debugModeEnabled">Debug mode enabled</string>
     <string name="decline">Decline</string>
     <string name="delete">Delete</string>
     <string name="deleteAfterGroupFirstReleaseConfigOutdated">Some of your devices are using outdated versions. Syncing may be unreliable until they are updated.</string>
@@ -432,6 +434,7 @@
     <string name="deleteMessagesDescriptionEveryone">Are you sure you want to delete these messages for everyone?</string>
     <string name="deleteTheirMessages">Delete all their messages</string>
     <string name="deleting">Deleting</string>
+    <string name="developerSettings">Developer Settings</string>
     <string name="developerToolsToggle">Toggle Developer Tools</string>
     <string name="deviceNotificationSettings">Device Notification Settings</string>
     <string name="deviceSettingsCallNotifications">Open Device Settings for Call Notifications.</string>
