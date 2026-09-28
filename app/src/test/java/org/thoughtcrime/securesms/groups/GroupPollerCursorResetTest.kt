@@ -18,6 +18,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.session.libsession.messaging.sending_receiving.pollers.ConfigTtlExtensionThrottle
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -130,6 +131,7 @@ class GroupPollerCursorResetTest {
             alterTtlApiApiFactory = mockk(relaxed = true),
             swarmApiExecutor = swarmApiExecutor,
             swarmSnodeSelector = snodeSelector,
+            configTtlExtensionThrottle = ConfigTtlExtensionThrottle(),
             networkConnectivity = networkConnectivity,
             appVisibilityManager = appVisibilityManager,
         ).also { it.namespaces = Namespaces }
