@@ -161,7 +161,7 @@ open class PathManager @Inject constructor(
         rotatePathsIfStale()
 
         val current = _paths.value
-        if (current.size >= targetPathCount && current.any { exclude == null || !it.contains(exclude) }) {
+        if (current.size >= targetPathCount && current.any { exclude == null || !it.routesThrough(exclude) }) {
             return selectPath(current, exclude)
         }
 
@@ -518,9 +518,21 @@ open class PathManager @Inject constructor(
     }
 
 
+    /**
+     * Whether this path routes through [snode].
+     *
+     * A node's identity is its ed25519 key; [Snode] equality is address and port, which disagree for
+     * the same node when its pool record and its swarm record were fetched either side of an IP or
+     * port change. Equality is the fallback for a snode with no key material.
+     */
+    private fun Path.routesThrough(snode: Snode): Boolean {
+        val key = snode.publicKeySet?.ed25519Key ?: return contains(snode)
+        return any { it.publicKeySet?.ed25519Key == key || it == snode }
+    }
+
     private fun selectPath(paths: List<Path>, exclude: Snode?): Path {
         val candidates = if (exclude != null) {
-            paths.filter { !it.contains(exclude) }
+            paths.filter { !it.routesThrough(exclude) }
         } else paths
 
         if (candidates.isEmpty()) {

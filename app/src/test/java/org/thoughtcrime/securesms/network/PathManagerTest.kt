@@ -421,4 +421,30 @@ class PathManagerTest {
         verify(directory, never()).getGuardSnodes(any(), any())
     }
 
+    @Test
+    fun `a snode is excluded after its address changes`() = runTest {
+        val b = snode("b")
+        val p1: Path = listOf(snode("a"), b, snode("c"))
+        val p2: Path = listOf(snode("d"), snode("e"), snode("f"))
+        val pool = p1 + p2
+
+        // Same node, re-fetched after an IP change: equal ed25519 key, different address and port.
+        val movedB = Snode(
+            address = "https://b-moved.example",
+            port = 8443,
+            publicKeySet = b.publicKeySet,
+        )
+
+        val (pm, _, _, pmScope) = rotatingPathManager(
+            pool = pool,
+            persistedPaths = listOf(p1, p2),
+        )
+
+        // Selection is random among the paths that qualify, so one call cannot tell an exclusion
+        // from a coin toss; every one of these must avoid the path the node is really in.
+        repeat(10) {
+            assertThat(pm.getPath(exclude = movedB)).isEqualTo(p2)
+        }
+        pmScope.cancel()
+    }
 }
