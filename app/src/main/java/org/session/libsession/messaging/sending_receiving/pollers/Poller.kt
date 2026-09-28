@@ -56,6 +56,7 @@ class Poller @Inject constructor(
     private val swarmSnodeSelector: SwarmSnodeSelector,
     private val swarmDirectory: SwarmDirectory,
     private val snodeApiExecutor: SnodeApiExecutor,
+    private val configTtlExtensionThrottle: ConfigTtlExtensionThrottle,
     appVisibilityManager: AppVisibilityManager,
 ) : BasePoller<Unit>(
     debugLabel = "MainPoller",
@@ -244,18 +245,20 @@ class Poller @Inject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    swarmApiExecutor.execute(
-                        SwarmApiRequest(
-                            swarmPubKeyHex = userAuth.accountId.hexString,
-                            api = alterTtlApiFactory.create(
-                                messageHashes = hashesToExtend,
-                                auth = userAuth,
-                                alterType = AlterTtlApi.AlterType.Extend,
-                                newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds
-                            ),
-                            swarmNodeOverride = snode,
+                    configTtlExtensionThrottle.extendIfDue(userAuth.accountId.hexString) {
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = userAuth.accountId.hexString,
+                                api = alterTtlApiFactory.create(
+                                    messageHashes = hashesToExtend,
+                                    auth = userAuth,
+                                    alterType = AlterTtlApi.AlterType.Extend,
+                                    newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds
+                                ),
+                                swarmNodeOverride = snode,
+                            )
                         )
-                    )
+                    }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
 

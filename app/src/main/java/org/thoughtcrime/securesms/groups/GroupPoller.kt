@@ -13,6 +13,7 @@ import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.messaging.sending_receiving.pollers.BasePoller
+import org.session.libsession.messaging.sending_receiving.pollers.ConfigTtlExtensionThrottle
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
@@ -51,6 +52,7 @@ class GroupPoller @AssistedInject constructor(
     private val alterTtlApiApiFactory: AlterTtlApi.Factory,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val swarmSnodeSelector: SwarmSnodeSelector,
+    private val configTtlExtensionThrottle: ConfigTtlExtensionThrottle,
     networkConnectivity: NetworkConnectivity,
     appVisibilityManager: AppVisibilityManager,
 ): BasePoller<GroupPoller.GroupPollResult>(
@@ -115,18 +117,20 @@ class GroupPoller @AssistedInject constructor(
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
                     pollingTasks += "extending group config TTL" to async {
-                        swarmApiExecutor.execute(
-                            SwarmApiRequest(
-                                swarmNodeOverride = snode,
-                                swarmPubKeyHex = groupId.hexString,
-                                api = alterTtlApiApiFactory.create(
-                                    messageHashes = configHashesToExtends,
-                                    auth = groupAuth,
-                                    alterType = AlterTtlApi.AlterType.Extend,
-                                    newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
+                        configTtlExtensionThrottle.extendIfDue(groupId.hexString) {
+                            swarmApiExecutor.execute(
+                                SwarmApiRequest(
+                                    swarmNodeOverride = snode,
+                                    swarmPubKeyHex = groupId.hexString,
+                                    api = alterTtlApiApiFactory.create(
+                                        messageHashes = configHashesToExtends,
+                                        auth = groupAuth,
+                                        alterType = AlterTtlApi.AlterType.Extend,
+                                        newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
+                                    )
                                 )
                             )
-                        )
+                        }
                     }
                 }
 
