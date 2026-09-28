@@ -15,10 +15,17 @@ interface LokiAPIDatabaseProtocol {
     /**
      * Writes [newValue] as the cursor, unless [publicKey]'s cursors have been reset since [since].
      *
-     * A reset asks for the swarm's history to be fetched again. A poll that was in flight when it happened
-     * would otherwise finish afterwards and write its position back, undoing the reset, and the history
-     * would never be fetched. Its messages are still handled; only the cursor write is dropped, so the next
-     * poll starts from the beginning and dedupe absorbs what it fetches twice.
+     * A reset asks for the swarm's history to be fetched again. Cursors are kept per snode, so a poll that
+     * was in flight when it happened would otherwise finish afterwards and write its position back for the
+     * snode it polled, undoing the reset there. That snode's history would then arrive only through another
+     * snode, and in a one-snode swarm not at all. The poll's messages are still handled; only the cursor write
+     * is dropped.
+     *
+     * What the next poll fetches then depends on the reset. Where the cursors were cleared, it starts from
+     * the beginning. A clear by namespace counts as a reset of every swarm, so a swarm whose cursor it did not
+     * clear starts again from its previous cursor and fetches the in-flight poll's messages a second time.
+     * Regular messages are deduplicated, config messages rely on merging being repeatable, and a kick message
+     * seen again is ignored only by the key generation check in its handler.
      *
      * @return whether the cursor was written.
      */
