@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
 import network.loki.messenger.libsession_util.ReadableGroupMembersConfig
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -56,10 +57,17 @@ class GroupLeavingWorkerTest {
         )
 
         // No admins, so we are not the only admin and the leave takes the announce-and-go path
+        groupConfigsHold(groupKeys = listOf(ByteArray(32)))
+    }
+
+    private fun groupConfigsHold(groupKeys: List<ByteArray>) {
         every { configFactory.dangerouslyAccessGroupConfigs(groupId) } returns Pair(
             mockk<GroupConfigs> {
                 every { groupMembers } returns mockk<ReadableGroupMembersConfig> {
                     every { all() } returns emptyList()
+                }
+                every { this@mockk.groupKeys } returns mockk<ReadableGroupKeysConfig> {
+                    every { keys() } returns groupKeys
                 }
             },
             {},
@@ -73,6 +81,18 @@ class GroupLeavingWorkerTest {
         val result = worker(runAttemptCount = 0).doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
+        verify { configFactory.removeGroup(groupId) }
+        verify(exactly = 0) { storage.insertGroupInfoErrorQuit(any()) }
+    }
+
+    @Test
+    fun `no departure is attempted when we hold no keys to send it with`() = runTest {
+        groupConfigsHold(groupKeys = emptyList())
+
+        val result = worker(runAttemptCount = 0).doWork()
+
+        assertEquals(ListenableWorker.Result.success(), result)
+        verify(exactly = 0) { messageSender.send(any(), any(), any()) }
         verify { configFactory.removeGroup(groupId) }
         verify(exactly = 0) { storage.insertGroupInfoErrorQuit(any()) }
     }

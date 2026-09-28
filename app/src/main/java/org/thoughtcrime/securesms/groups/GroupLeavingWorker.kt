@@ -100,14 +100,21 @@ class GroupLeavingWorker @AssistedInject constructor(
             try {
                 if (group?.destroyed != true) {
                     // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
-                    val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
+                    val (weAreTheOnlyAdmin, weHoldTheGroupKeys) = configFactory.withGroupConfigs(groupId) { config ->
                         val allMembers = config.groupMembers.all()
-                        allMembers.count { it.admin } == 1 &&
+                        val onlyAdmin = allMembers.count { it.admin } == 1 &&
                                 allMembers.first { it.admin }
                                     .accountId() == storage.getUserPublicKey()
+
+                        onlyAdmin to config.groupKeys.keys().isNotEmpty()
                     }
 
-                    if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
+                    // Holding no keys means there is nothing to encrypt the departure with, and it
+                    // is not a state that resolves itself: the flag above is only set when a
+                    // revocation message is actually received, and receiving one clears the keys,
+                    // so a revocation we were never told about looks exactly like this. Attempting
+                    // the send would cost the user 20 seconds per message to learn that.
+                    if (group != null && !group.kicked && !weAreTheOnlyAdmin && weHoldTheGroupKeys) {
                         val address = Address.fromSerialized(groupId.hexString)
                         // The jobs report with trySend, which delivers nothing unless a receiver
                         // is already parked, and they run on their own dispatcher: either result
