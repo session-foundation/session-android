@@ -8,7 +8,27 @@ import java.util.Date
 interface LokiAPIDatabaseProtocol {
 
     fun getLastMessageHashValue(snode: Snode, publicKey: String, namespace: Int): String?
-    fun setLastMessageHashValue(snode: Snode, publicKey: String, newValue: String, namespace: Int)
+
+    /** Taken when a poll starts, before it reads any cursor, and passed to [setLastMessageHashValue]. */
+    fun lastMessageHashEpoch(): LastMessageHashEpoch
+
+    /**
+     * Writes [newValue] as the cursor, unless [publicKey]'s cursors have been reset since [since].
+     *
+     * A reset asks for the swarm's history to be fetched again. A poll that was in flight when it happened
+     * would otherwise finish afterwards and write its position back, undoing the reset, and the history
+     * would never be fetched. Its messages are still handled; only the cursor write is dropped, so the next
+     * poll starts from the beginning and dedupe absorbs what it fetches twice.
+     *
+     * @return whether the cursor was written.
+     */
+    fun setLastMessageHashValue(
+        snode: Snode,
+        publicKey: String,
+        newValue: String,
+        namespace: Int,
+        since: LastMessageHashEpoch,
+    ): Boolean
     fun clearLastMessageHashes(publicKey: String)
     fun clearLastMessageHashesByNamespaces(vararg namespaces: Int)
     fun clearAllLastMessageHashes()

@@ -181,6 +181,10 @@ class Poller @Inject constructor(
     }
 
     private suspend fun poll(snode: Snode) = supervisorScope {
+        // Before any cursor is read, so a reset made while this poll is in flight keeps it from writing
+        // its position back.
+        val cursorEpoch = lokiApiDatabase.lastMessageHashEpoch()
+
         val userAuth = requireNotNull(storage.userAuth)
 
         // Get messages call wrapped in an async
@@ -279,7 +283,8 @@ class Poller @Inject constructor(
                     publicKey = userPublicKey,
                     newValue = messages
                         .maxBy { it.timestamp }.hash,
-                    namespace = configType.namespace
+                    namespace = configType.namespace,
+                    since = cursorEpoch,
                 )
             }
         }
@@ -293,7 +298,8 @@ class Poller @Inject constructor(
                 snode = snode,
                 publicKey = userPublicKey,
                 newValue = newest.hash,
-                namespace = Namespace.DEFAULT()
+                namespace = Namespace.DEFAULT(),
+                since = cursorEpoch,
             )
         }
     }
