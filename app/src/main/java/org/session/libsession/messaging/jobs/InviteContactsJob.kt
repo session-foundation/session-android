@@ -12,6 +12,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ED25519
+import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
@@ -106,6 +107,17 @@ class InviteContactsJob @AssistedInject constructor(
             configFactory.withMutableGroupConfigs(sessionId) { configs ->
                 results.forEach { (memberSessionId, result) ->
                     configs.groupMembers.get(memberSessionId)?.let { member ->
+                        // A re-invite reaches members who already accepted, and the outcome of
+                        // sending them another invitation says nothing about a membership they
+                        // already have - recording it would drag them back to "invite sent" for
+                        // everyone in the group. isAdminOrBeingPromoted covers the admin flag and a
+                        // promotion still in flight, which is the same membership seen later on.
+                        val status = configs.groupMembers.status(member)
+                        if (status == GroupMember.Status.INVITE_ACCEPTED ||
+                            member.isAdminOrBeingPromoted(status)) {
+                            return@let
+                        }
+
                         if (result.isFailure) {
                             member.setInviteFailed()
                         } else {
