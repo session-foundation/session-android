@@ -5,6 +5,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -20,13 +21,16 @@ import org.session.libsession.network.snode.SnodeDirectory
 import org.session.libsession.utilities.AESGCM
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.api.ApiExecutorContext
+import org.session.libsession.network.model.Path
 import org.thoughtcrime.securesms.api.SessionApiRequest
 import org.thoughtcrime.securesms.api.SessionApiResponse
 import org.thoughtcrime.securesms.api.direct.DirectSessionApiExecutor
 import org.thoughtcrime.securesms.api.error.ErrorWithFailureDecision
 import org.thoughtcrime.securesms.api.execute
 import org.thoughtcrime.securesms.api.http.HttpApiExecutor
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.thoughtcrime.securesms.api.http.HttpBody
+import org.thoughtcrime.securesms.api.http.HttpRequest
 import org.thoughtcrime.securesms.api.http.HttpResponse
 import org.thoughtcrime.securesms.api.snode.SnodeJsonRequest
 import org.thoughtcrime.securesms.util.MockLoggingRule
@@ -45,6 +49,7 @@ class OnionSessionApiExecutorTest {
     lateinit var directSessionApiExecutor: DirectSessionApiExecutor
     lateinit var snodeDirectory: SnodeDirectory
     lateinit var connectivity: NetworkConnectivity
+    lateinit var onionBuilder: OnionBuilder
 
 
     private lateinit var executor: OnionSessionApiExecutor
@@ -63,6 +68,19 @@ class OnionSessionApiExecutorTest {
         snodeDirectory = mockk()
         connectivity = mockk()
 
+        onionBuilder = mockk {
+            every {
+                build(any(), any(), any(), any())
+            } answers {
+                OnionBuilder.BuiltOnion(
+                    guard = snode("guard"),
+                    ciphertext = ByteArray(0),
+                    ephemeralPublicKey = ByteArray(0),
+                    destinationSymmetricKey = ByteArray(0),
+                )
+            }
+        }
+
         executor = OnionSessionApiExecutor(
             httpApiExecutor = httpExecutor,
             pathManager = pathManager,
@@ -71,18 +89,7 @@ class OnionSessionApiExecutorTest {
                 pathManager = pathManager,
                 connectivity = connectivity,
             ),
-            onionBuilder = mockk {
-                every {
-                    build(any(), any(), any(), any())
-                } answers {
-                    OnionBuilder.BuiltOnion(
-                        guard = snode("guard"),
-                        ciphertext = ByteArray(0),
-                        ephemeralPublicKey = ByteArray(0),
-                        destinationSymmetricKey = ByteArray(0),
-                    )
-                }
-            },
+            onionBuilder = onionBuilder,
             onionRequestEncryption = mockk {
                 every {
                     encryptPayloadForDestination(any(), any(), any())
@@ -438,5 +445,71 @@ class OnionSessionApiExecutorTest {
 
         // Should punish the whole path for invalid hop response
         coVerify(exactly = 1) { pathManager.handleBadPath(path1) }
+    }
+
+    @Test
+    fun `snode destination is excluded from the path it is reached through`() = runTest {
+        val target = snode("target")
+        coEvery { pathManager.getPath(any()) } returns path1
+        coEvery { httpExecutor.send(any(), any()) } throws IOException("Failed to connect")
+        every { connectivity.networkAvailable } returns MutableStateFlow(true)
+
+        runExecutor(target = target)
+
+        coVerify(exactly = 1) { pathManager.getPath(target) }
+    }
+
+    @Test
+    fun `the path chosen for a snode destination does not run through it`() = runTest {
+        val target = snode("target")
+
+        // The only path that would collide, plus one that would not. Path selection is the real
+        // thing's job; this stands in for it so the assertion is about which path the request was
+        // actually built on.
+        val collides: Path = listOf(snode("guard2"), snode("middle2"), target)
+        coEvery { pathManager.getPath(any()) } answers {
+            val exclude = firstArg<Snode?>()
+            listOf(collides, path1).first { exclude == null || !it.contains(exclude) }
+        }
+        coEvery { httpExecutor.send(any(), any()) } throws IOException("Failed to connect")
+        every { connectivity.networkAvailable } returns MutableStateFlow(true)
+
+        val built = slot<Path>()
+        every { onionBuilder.build(capture(built), any(), any(), any()) } answers {
+            OnionBuilder.BuiltOnion(
+                guard = snode("guard"),
+                ciphertext = ByteArray(0),
+                ephemeralPublicKey = ByteArray(0),
+                destinationSymmetricKey = ByteArray(0),
+            )
+        }
+
+        runExecutor(target = target)
+
+        assertThat(built.captured).doesNotContain(target)
+        assertThat(built.captured.last()).isNotEqualTo(target)
+    }
+
+    @Test
+    fun `a server destination excludes nothing - it is not a pool member`() = runTest {
+        coEvery { pathManager.getPath(any()) } returns path1
+        coEvery { httpExecutor.send(any(), any()) } throws IOException("Failed to connect")
+        every { connectivity.networkAvailable } returns MutableStateFlow(true)
+
+        runCatching {
+            executor.send(
+                ApiExecutorContext(),
+                SessionApiRequest.HttpServerRequest(
+                    request = HttpRequest.createFromJson(
+                        url = "https://example.test/room".toHttpUrl(),
+                        method = "POST",
+                        jsonText = "{}",
+                    ),
+                    serverX25519PubKeyHex = "ff".repeat(32),
+                )
+            )
+        }
+
+        coVerify(exactly = 1) { pathManager.getPath(null) }
     }
 }

@@ -94,7 +94,13 @@ class OnionSessionApiExecutor @Inject constructor(
         }
 
         val pathOverrides = ctx.get(OnionPathOverridesKey)
-        val path = pathOverrides ?: pathManager.getPath()
+        val path = pathOverrides ?: pathManager.getPath(
+            // A path that contains the destination can put the last hop and the target on the same
+            // node, and a node will not open a connection to itself: quic-to-quic refuses it
+            // outright. Only a snode destination can collide - a server destination is not a
+            // pool member.
+            exclude = (onionDestination as? OnionDestination.SnodeDestination)?.snode
+        )
 
         val builtOnion = try {
             onionBuilder.build(
