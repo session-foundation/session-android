@@ -67,21 +67,10 @@ class GroupLeavingWorkerTest {
     }
 
     @Test
-    fun `an unannounceable departure is retried before it is given up on`() = runTest {
+    fun `group is left locally when the departure cannot be announced`() = runTest {
         answerSendWith(Result.failure(NonRetryableException("no keys for this group")))
 
         val result = worker(runAttemptCount = 0).doWork()
-
-        assertEquals(ListenableWorker.Result.retry(), result)
-        verify(exactly = 0) { configFactory.removeGroup(any()) }
-        verify(exactly = 0) { storage.insertGroupInfoErrorQuit(any()) }
-    }
-
-    @Test
-    fun `group is left locally once the attempts to announce it are used up`() = runTest {
-        answerSendWith(Result.failure(NonRetryableException("no keys for this group")))
-
-        val result = worker(runAttemptCount = 2).doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
         verify { configFactory.removeGroup(groupId) }

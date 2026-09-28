@@ -146,19 +146,11 @@ class GroupLeavingWorker @AssistedInject constructor(
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: NonRetryableException) {
-                            // We have no keys to encrypt the departure with. That is what a revoked
-                            // access looks like, but it is also what a group whose keys have simply
-                            // not been fetched yet looks like — a just-accepted invite, a restore, a
-                            // cold start — so spend the attempts waiting for them to turn up before
-                            // concluding they never will.
-                            if (runAttemptCount < MAX_RETRIES) {
-                                Log.w(TAG, "No keys to announce leaving group $groupId with. Retrying...", e)
-                                return@launchAndWait Result.retry()
-                            }
-
-                            // Out of attempts: honour the leave locally anyway, because the
-                            // alternative is a group the user can never leave, however many times
-                            // they ask.
+                            // Our access to the group can be revoked before we get around to
+                            // leaving it, which leaves us without the keys to encrypt the
+                            // departure to the group. Nothing will grant them back, so honour the
+                            // leave locally instead: the alternative is a group the user can never
+                            // leave, however many times they ask.
                             Log.e(TAG, "Unable to announce leaving group $groupId. Proceeding...", e)
                         }
                     }
