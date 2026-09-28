@@ -6,6 +6,7 @@ project.properties
 bin/
 gen/
 .idea/
+.claude/
 *.iml
 out
 build
