@@ -20,6 +20,7 @@ import network.loki.messenger.libsession_util.pro.ProConfig
 import network.loki.messenger.libsession_util.pro.ProProof
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsession.utilities.withUserConfigs
 import org.session.libsignal.exceptions.NonRetryableException
@@ -56,8 +57,15 @@ class ProProofGenerationWorker @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val snodeClock: SnodeClock,
     private val proStatusRepository: Provider<ProStatusRepository>,
+    private val prefs: TextSecurePreferences,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        // A persisted schedule outlives the gate closing, so this is checked here rather than trusted to the scheduler
+        if (!prefs.forcePostPro()) {
+            Log.d(WORK_NAME, "Pro proof generation skipped because pro is not enabled")
+            return Result.success()
+        }
+
         val proMasterKey = requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
             "User must be logged to generate proof"
         }

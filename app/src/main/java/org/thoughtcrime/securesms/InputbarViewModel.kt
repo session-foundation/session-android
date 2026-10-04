@@ -83,7 +83,8 @@ abstract class InputbarViewModel(
                 // subscriber whose proof has not arrived is correctly held to the standard limit by
                 // ACCESS above, and inviting them to buy what they already pay for is a different
                 // question with a different answer.
-                showProBadge = proStatusManager.proDataState.value.type !is ProStatus.Active
+                showProBadge = proStatusManager.isPostPro() &&
+                    proStatusManager.proDataState.value.type !is ProStatus.Active
             )
         } else {
             null
@@ -113,7 +114,7 @@ abstract class InputbarViewModel(
             // that is ACCESS, correctly refusing. But offering them "upgrade to Pro" is inviting them to
             // buy something they are already paying for. They get "message too long" instead, and the
             // upsell is reserved for users whose plan says they are not subscribed.
-            if(proStatusManager.proDataState.value.type is ProStatus.Active){
+            if(!proStatusManager.isPostPro() || proStatusManager.proDataState.value.type is ProStatus.Active){
                 showMessageTooLongSendDialog()
             } else {
                 showSessionProCTA()
@@ -129,7 +130,7 @@ abstract class InputbarViewModel(
         // Same split as [validateMessageLength]: this chooses which explanation to show, so it is DISPLAY.
         // `handleCharLimitTappedForRegularUser` is the upsell, and a subscriber with no usable proof must
         // not be upsold their own plan.
-        if(proStatusManager.proDataState.value.type is ProStatus.Active){
+        if(!proStatusManager.isPostPro() || proStatusManager.proDataState.value.type is ProStatus.Active){
             handleCharLimitTappedForProUser()
         } else {
             handleCharLimitTappedForRegularUser()

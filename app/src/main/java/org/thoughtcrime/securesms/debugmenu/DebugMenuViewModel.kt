@@ -105,6 +105,7 @@ class DebugMenuViewModel @AssistedInject constructor(
             forceCurrentUserAsPro = textSecurePreferences.forceCurrentUserAsPro(),
             forceOtherUsersAsPro = textSecurePreferences.forceOtherUsersAsPro(),
             forceIncomingMessagesAsPro = textSecurePreferences.forceIncomingMessagesAsPro(),
+            forcePostPro = textSecurePreferences.forcePostPro(),
             forceShortTTl = textSecurePreferences.forcedShortTTL(),
             debugAvatarReupload = textSecurePreferences.debugAvatarReupload,
             messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
@@ -344,6 +345,13 @@ class DebugMenuViewModel @AssistedInject constructor(
                 textSecurePreferences.setDebugQuickRefundWindowOverride(command.set)
                 _uiState.update {
                     it.copy(withinQuickRefund = command.set)
+                }
+            }
+
+            is Commands.ForcePostPro -> {
+                textSecurePreferences.setForcePostPro(command.set)
+                _uiState.update {
+                    it.copy(forcePostPro = command.set)
                 }
             }
 
@@ -616,6 +624,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         val forceOtherUsersAsPro: Boolean,
         val forceIncomingMessagesAsPro: Boolean,
         val messageProFeature: Set<ProFeature>,
+        val forcePostPro: Boolean,
         val forceShortTTl: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
         val debugAvatarReupload: Boolean,
@@ -711,6 +720,7 @@ class DebugMenuViewModel @AssistedInject constructor(
         data class ForceIncomingMessagesAsPro(val set: Boolean) : Commands()
         data class ForceNoBilling(val set: Boolean) : Commands()
         data class WithinQuickRefund(val set: Boolean) : Commands()
+        data class ForcePostPro(val set: Boolean) : Commands()
         data class ForceShortTTl(val set: Boolean) : Commands()
         data class SetMessageProFeature(val feature: ProFeature, val set: Boolean) : Commands()
         data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()

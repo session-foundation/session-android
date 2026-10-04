@@ -133,6 +133,15 @@ class MessageSender @Inject constructor(
         }
     }
 
+    // Pre-launch no proof is ever attached, so a rotating-key signature would vouch for nothing
+    private fun proRotatingEd25519PrivKey(): ByteArray? {
+        if (!proStatusManager.get().isPostPro()) return null
+
+        return configFactory.withUserConfigs { configs ->
+            configs.userProfile.getProConfig()
+        }?.rotatingPrivateKey?.data
+    }
+
     private fun buildProto(msg: Message): SessionProtos.Content {
         try {
             val builder = SessionProtos.Content.newBuilder()
@@ -207,9 +216,7 @@ class MessageSender @Inject constructor(
             throw Error.InvalidMessage()
         }
 
-        val proRotatingEd25519PrivKey = configFactory.withUserConfigs { configs ->
-            configs.userProfile.getProConfig()
-        }?.rotatingPrivateKey?.data
+        val proRotatingEd25519PrivKey = proRotatingEd25519PrivKey()
 
         val messagePlaintext = buildProto(message).toByteArray()
 
@@ -391,9 +398,7 @@ class MessageSender @Inject constructor(
                     }
                     val plaintext = SessionProtocol.encodeForCommunity(
                         plaintext = content.toByteArray(),
-                        proRotatingEd25519PrivKey = configFactory.withUserConfigs { configs ->
-                            configs.userProfile.getProConfig()
-                        }?.rotatingPrivateKey?.data,
+                        proRotatingEd25519PrivKey = proRotatingEd25519PrivKey(),
                     )
 
                     val openGroupMessage = OpenGroupMessage(

@@ -385,6 +385,15 @@ fun DebugMenu(
 
                 Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
+                    text = "Set app as post Pro launch",
+                    checked = uiState.forcePostPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForcePostPro(it))
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+                DebugSwitchRow(
                     text = "Set other users as Pro",
                     checked = uiState.forceOtherUsersAsPro,
                     onCheckedChange = {
@@ -944,6 +953,7 @@ fun PreviewDebugMenu() {
                 forceCurrentUserAsPro = true,
                 forceIncomingMessagesAsPro = true,
                 forceOtherUsersAsPro = false,
+                forcePostPro = false,
                 forceShortTTl = false,
                 messageProFeature = setOf(ProMessageFeature.HIGHER_CHARACTER_LIMIT),
                 dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,

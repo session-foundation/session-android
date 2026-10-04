@@ -483,6 +483,8 @@ class RecipientRepository @Inject constructor(
             }
         }
 
+        changeSources?.add(proStatusManager.get().postProLaunchStatus.drop(1))
+
         return updatedValue to changeSources?.let { merge(*it.toTypedArray()) }
     }
 
@@ -701,7 +703,8 @@ class RecipientRepository @Inject constructor(
                                     revocationTag = "a1b2c3d4",
                                 )
                             )
-                        } else if (pro != null) {
+                        } else if (pro != null && proStatusManager.get().isPostPro()) {
+                            // Pre-launch our own proof, even one synced from another device, is no entitlement here
                             proDataContext?.addProData(
                                 RecipientSettings.ProData(
                                     showProBadge = configs.userProfile.getProFeatures().contains(
