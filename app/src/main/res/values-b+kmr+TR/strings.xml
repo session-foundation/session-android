@@ -298,8 +298,8 @@
     <string name="deleteMessageDevicesAll">Li ser temamê cîhazên min jê bibe</string>
     <string name="deleteMessageEveryone">Ji bo tevan jê bibe</string>
     <plurals name="deleteMessageFailed">
-        <item quantity="one">Bi ser neket ku peyama jê derbike.</item>
-        <item quantity="other">Bi ser neket ku peyaman jê bibe.</item>
+        <item quantity="one">Bi ser neket ku peyamê jê bibe</item>
+        <item quantity="other">Bi ser neket ku peyaman jê bibe</item>
     </plurals>
     <plurals name="deleteMessageNoteToSelfWarning">
         <item quantity="one">Ev peyam ji temamê cîhazên te nikare were jêbirin</item>
@@ -335,7 +335,7 @@
     <string name="disappearingMessagesLegacy">{name} jî versonekî paşpor birêvebir dibe. Peyaman ku tine dibin dibe ku wekî ku mîjhêr in nedixirine.</string>
     <string name="disappearingMessagesOnlyAdmins">Tenê yên destê dixwazin vekirin</string>
     <string name="disappearingMessagesSent">Hate şandin</string>
-    <string name="disappearingMessagesSet"><b>{name}</b> peyamên xwe xwe winda dibin {time} piştî ku ew {disappearing_messages_type} kirin.</string>
+    <string name="disappearingMessagesSet"><b>{name}</b> peyamên xwe xwe winda dibin {time} piştî ku ew kirin {disappearing_messages_type}.</string>
     <string name="disappearingMessagesSetYou"><b>Te</b> peyamên xwe-bi-xwe winda dibin saz kir ji bo {time} piştî ku ew hatin {disappearing_messages_type}.</string>
     <string name="disappearingMessagesTimer">Tomîrêş</string>
     <string name="disappearingMessagesTurnedOff"><b>{name}</b> peyamên windaber girt. Peyamên ku ew bişînin, wê êdî winda nebin.</string>

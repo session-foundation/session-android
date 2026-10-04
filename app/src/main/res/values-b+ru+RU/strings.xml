@@ -376,6 +376,8 @@
     <string name="databaseErrorUpdate">База данных вашего приложения несовместима с этой версией Session. Переустановите приложение и восстановите свой аккаунт, чтобы создать новую базу данных и продолжить использовать Session.\n\nВнимание: Это приведет к потере всех сообщений и вложений старше двух недель.</string>
     <string name="databaseOptimizing">Оптимизация базы данных</string>
     <string name="debugLog">Журнал отладки</string>
+    <string name="debugModeDisabled">Режим отладки выключен</string>
+    <string name="debugModeEnabled">Режим отладки включён</string>
     <string name="decline">Отклонить</string>
     <string name="delete">Удалить</string>
     <string name="deleteAfterGroupFirstReleaseConfigOutdated">Некоторые из ваших устройств используют устаревшие версии. Синхронизация может быть ненадёжной до тех пор, пока они не будут обновлены.</string>
@@ -1174,6 +1176,7 @@
     <string name="proFeatureListLoadsMore">И множество эксклюзивных функций</string>
     <string name="proFeatureListLongerMessages">Сообщения до 10 тысяч знаков</string>
     <string name="proFeatureListPinnedConversations">Неограниченное число прикреплённых чатов</string>
+    <string name="proFullestPotential">Хотите использовать Session в полной мере?\nОбновитесь до Session Pro Beta, чтобы получить доступ к эксклюзивным функциям и помочь поддержать проект.</string>
     <string name="proGroupActivated">Группа активирована</string>
     <string name="proGroupActivatedDescription">У этой группы увеличена вместимость! Теперь она поддерживает до 300 участников, потому что администратор группы активировал</string>
     <plurals name="proGroupsUpgraded">
