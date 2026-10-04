@@ -1064,7 +1064,7 @@
     <string name="proAccessNotFoundDescription">Session detected that your account does not have Pro access. If you believe this is a mistake, please reach out to Session support for assistance.</string>
     <string name="proAccessRecover">Recover Pro Access</string>
     <string name="proAccessRenew">Renew Pro Access</string>
-    <string name="proAccessRenewDesktop">Currently, Pro access can only be purchased and renewed via support platforms:{pro_stores}\nBecause you are using Session Desktop, you\'re not able to renew here.\n\nSession developers are working hard on alternative payment options to allow users to purchase Pro access outside of the above platforms. <b>Pro Roadmap</b> {icon}</string>
+    <string name="proAccessRenewDesktop">Currently, Pro access can only be purchased and renewed via one of our supported platforms:{pro_stores}\nBecause you are using Session Desktop, you\'re not able to renew here.\n\nSession developers are working hard on alternative payment options to allow users to purchase Pro access outside of the above platforms. <b>Pro Roadmap</b> {icon}</string>
     <string name="proAccessRenewPlatformStoreWebsite">Renew your Pro access on the <b><font color="0">{platform_store} website</font></b> using the {platform_account} you signed up for Pro with.</string>
     <string name="proAccessRenewPlatformWebsite">Renew on the <b><font color="0">{platform} website</font></b> using the {platform_account} you signed up for Pro with.</string>
     <string name="proAccessRenewStart">Renew your Pro access to start using powerful Session Pro Beta features and support the project again.</string>
@@ -1166,7 +1166,7 @@
     <string name="proRefundingDescription">Refunds for Session Pro are handled exclusively by {platform} through the {platform_store}.\n\nDue to {platform} refund policies, Session developers have no ability to influence the outcome of refund requests. This includes whether the request is approved or denied, as well as whether a full or partial refund is issued.</string>
     <string name="proRenewAnimatedDisplayPicture">Want to use animated display pictures again?\nRenew your Pro access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewBeta">Renew Pro Beta</string>
-    <string name="proRenewDesktopLinked">Renew your Pro access from the Session Pro settings on a linked device with Session installed via one of the support platforms:{pro_stores}</string>
+    <string name="proRenewDesktopLinked">Renew your Pro access from the Session Pro settings on a linked device with Session installed via one of the supported platforms:{pro_stores}</string>
     <string name="proRenewLongerMessages">Want to send longer messages again?\nRenew your Pro access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewMaxPotential">Want to use Session to its max potential again?\nRenew your Pro access to unlock the features you’ve been missing out on.</string>
     <string name="proRenewPinFiveConversations">Want to pin more than {limit} conversations again?\nRenew your Pro access to unlock the features you’ve been missing out on.</string>
@@ -1175,7 +1175,7 @@
     <string name="proRenewalUnsuccessful">Pro renewal unsuccessful, retrying soon</string>
     <string name="proRenewalUnsuccessfulTitle">Pro Renewal Unsuccessful</string>
     <string name="proRenewingAction">renewing</string>
-    <string name="proRenewingNoAccessBilling">Currently, Pro access can only be purchased and renewed via one the supported platforms:{pro_stores}\nBecause you installed Session using the {build_variant}, you\'re not able to renew here.\n\nSession developers are working hard on alternative payment options to allow users to purchase Pro access outside of the platforms listed above.<b> Pro Roadmap</b> {icon}</string>
+    <string name="proRenewingNoAccessBilling">Currently, Pro access can only be purchased and renewed via one of the supported platforms:{pro_stores}\nBecause you installed Session using the {build_variant}, you\'re not able to renew here.\n\nSession developers are working hard on alternative payment options to allow users to purchase Pro access outside of the platforms listed above.<b> Pro Roadmap</b> {icon}</string>
     <string name="proRequestedRefund">Refund Requested</string>
     <string name="proSendMore">Send more with</string>
     <string name="proSettings">Pro Settings</string>
@@ -1204,7 +1204,7 @@
     <string name="proUpdateAccessExpireDescription">Your Pro access will expire on <b>{date}</b>.\n\nBy updating, your Pro access will automatically renew on <b>{date}</b> for an additional <b>{selected_plan_length}</b> of Pro access.</string>
     <string name="proUpdatingAction">updating</string>
     <string name="proUpgradeAccess">Upgrade to Session Pro Beta to get access to loads of exclusive perks and features.</string>
-    <string name="proUpgradeDesktopLinked">Upgrade to Pro from the Session Pro settings on a linked device with Session installed via the our of our supported platforms:{pro_stores}</string>
+    <string name="proUpgradeDesktopLinked">Upgrade to Pro from the Session Pro settings on a linked device with Session installed via one of our supported platforms:{pro_stores}</string>
     <string name="proUpgradeNoAccessBilling">Currently, Pro access can only be purchased via one of our supported platforms:{pro_stores}\nBecause you installed Session using the {build_variant}, you\'re not able to upgrade to Pro here.\n\nSession developers are working hard on alternative payment options to allow users to purchase Pro access outside of the platforms listed above.<b> Pro Roadmap</b> {icon}</string>
     <string name="proUpgradeOption">For now, there is only one way to upgrade:</string>
     <string name="proUpgradeOptionsTwo">For now, there are two ways to upgrade:</string>
