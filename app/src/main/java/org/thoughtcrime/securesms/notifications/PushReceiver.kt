@@ -36,6 +36,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupRevokedMessageHandler
 import org.thoughtcrime.securesms.home.HomeActivity
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private const val TAG = "PushHandler"
@@ -108,7 +109,9 @@ class PushReceiver @Inject constructor(
                                         serverHash = pushData.metadata.msg_hash,
                                         groupId = groupId,
                                         currentUserId = ctx.currentUserId,
-                                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data
+                                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                                        serverTimestampMs = TimeUnit.SECONDS.toMillis(pushData.metadata.timestampSeconds),
+                                        serverExpiryMs = null,
                                     )
 
                                     receivedMessageProcessor.processSwarmMessage(
@@ -179,6 +182,12 @@ class PushReceiver @Inject constructor(
                                 serverHash = pushData.metadata?.msg_hash,
                                 currentUserId = ctx.currentUserId,
                                 currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                                // Without metadata there's no hash either, and the swarm
+                                // origin is only retained for a message with one.
+                                serverTimestampMs = pushData.metadata
+                                    ?.let { TimeUnit.SECONDS.toMillis(it.timestampSeconds) }
+                                    ?: 0L,
+                                serverExpiryMs = null,
                             )
 
                             receivedMessageProcessor.processSwarmMessage(

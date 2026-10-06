@@ -144,6 +144,38 @@
                         app:tint="@color/black" />
                 </FrameLayout>
 
+                <FrameLayout
+                    tools:visibility="visible"
+                    android:visibility="gone"
+                    android:id="@+id/unsupportedMessageBanner"
+                    android:background="?colorAccent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:id="@+id/unsupportedMessageBannerTextView"
+                        android:layout_gravity="center"
+                        android:textColor="@color/black"
+                        android:textSize="@dimen/small_font_size"
+                        android:paddingVertical="@dimen/very_small_spacing"
+                        android:paddingHorizontal="40dp"
+                        android:gravity="center"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        tools:text="Some messages can't be shown on this device. Update Session to read them."
+                        />
+                    <ImageView
+                        android:id="@+id/unsupportedMessageBannerDismiss"
+                        android:contentDescription="@string/close"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:padding="@dimen/small_spacing"
+                        android:layout_gravity="center_vertical|end"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_x"
+                        app:tint="@color/black" />
+                </FrameLayout>
+
                 <TextView
                     android:id="@+id/callInProgress"
                     android:layout_width="match_parent"

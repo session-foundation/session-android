@@ -15,6 +15,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
+import org.session.libsession.messaging.messages.UnsupportedMessage
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -82,7 +83,8 @@ class ReceivedMessageProcessor @Inject constructor(
     private val blindMappingRepository: BlindMappingRepository,
     private val messageParser: MessageParser,
     private val swarmApiExecutor: SwarmApiExecutor,
-    private val deleteMessageApiFactory: DeleteMessageApi.Factory
+    private val deleteMessageApiFactory: DeleteMessageApi.Factory,
+    private val unsupportedMessageHandler: Provider<UnsupportedMessageHandler>,
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
@@ -132,6 +134,13 @@ class ReceivedMessageProcessor @Inject constructor(
         proto: SessionProtos.Content,
         pro: DecodedPro?,
     ) = withThreadLock(threadAddress) {
+        // Retained even when there's no conversation to show it in, so it can't wait for the
+        // thread lookup below
+        if (message is UnsupportedMessage) {
+            unsupportedMessageHandler.get().handle(context, threadAddress, message)
+            return@withThreadLock
+        }
+
         // The logic to check if the message should be discarded due to being from a hidden contact.
         if (threadAddress is Address.Standard &&
             message.sentTimestamp != null &&

@@ -128,10 +128,14 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.albumThumbnailView.root.clearViews()
         onContentDoubleTap = null
 
-        if (message.isDeleted) {
+        if (message.isDeleted || message.isUnsupportedMessage) {
             binding.contentParent.isVisible = true
             binding.deletedMessageView.root.isVisible = true
-            binding.deletedMessageView.root.bind(message, getTextColor(context, message))
+            if (message.isUnsupportedMessage) {
+                binding.deletedMessageView.root.bindUnsupported(getTextColor(context, message))
+            } else {
+                binding.deletedMessageView.root.bind(message, getTextColor(context, message))
+            }
             binding.bodyTextView.isVisible = false
             binding.readMore.isVisible = false
             binding.quoteView.root.isVisible = false

@@ -36,6 +36,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
+import org.thoughtcrime.securesms.database.model.content.UnsupportedMessageContent
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import javax.inject.Inject
 
@@ -85,6 +86,7 @@ class MessageFormatter @Inject constructor(
 
                 return text
             }
+            message.isUnsupportedMessage -> return SpannableString(UnsupportedMessageContent.PLACEHOLDER_TEXT)
             message.messageContent is DisappearingMessageUpdate -> {
                 val isGroup = threadRecipient.isGroupOrCommunityRecipient
                 return buildExpirationTimerMessage(
@@ -184,6 +186,8 @@ class MessageFormatter @Inject constructor(
     ): CharSequence {
         return when {
             message.isOpenGroupInvitation -> context.getString(R.string.communityInvitation)
+            // Generic, like any notification that can't show the content
+            message.isUnsupportedMessage -> context.resources.getQuantityText(R.plurals.messageNew, 1)
             else -> replaceMmsAttachment(context, message, threadRecipient)
         }
     }

@@ -1,5 +1,7 @@
 package org.session.libsession.messaging.sending_receiving
 
+import androidx.annotation.VisibleForTesting
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.SessionEncrypt
 import network.loki.messenger.libsession_util.pro.ProProof
 import network.loki.messenger.libsession_util.protocol.DecodedEnvelope
@@ -8,6 +10,8 @@ import network.loki.messenger.libsession_util.protocol.SessionProtocol
 import network.loki.messenger.libsession_util.util.asSequence
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Message
+import org.session.libsession.messaging.messages.UnsupportedMessage
+import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -58,6 +62,19 @@ class MessageParser @Inject constructor(
         val pro: DecodedPro?
     )
 
+    /**
+     * Where a swarm message came from, exactly as retrieved, so an [UnsupportedMessage] can be
+     * retained in a form that can be replayed through this parser later.
+     */
+    class SwarmOrigin(
+        val rawData: ByteArray,
+        val swarmPublicKey: String,
+        val namespace: Int,
+        val serverHash: String,
+        val serverTimestampMs: Long,
+        val serverExpiryMs: Long?,
+    )
+
 
     private fun createMessageFromProto(proto: SessionProtos.Content, isGroupMessage: Boolean): Message {
         val message = ReadReceipt.fromProto(proto) ?:
@@ -84,7 +101,8 @@ class MessageParser @Inject constructor(
         isForGroup: Boolean,
         currentUserId: AccountId,
         currentUserBlindedIDs: List<AccountId>,
-        senderIdPrefix: IdPrefix
+        senderIdPrefix: IdPrefix,
+        swarmOrigin: SwarmOrigin?,
     ): ParseResult {
         return parseMessage(
             sender = AccountId(senderIdPrefix, decodedEnvelope.senderX25519PubKey.data),
@@ -96,6 +114,7 @@ class MessageParser @Inject constructor(
             isForGroup = isForGroup,
             currentUserId = currentUserId,
             currentUserBlindedIDs = currentUserBlindedIDs,
+            swarmOrigin = swarmOrigin,
         )
     }
 
@@ -109,6 +128,7 @@ class MessageParser @Inject constructor(
         isForGroup: Boolean,
         currentUserId: AccountId,
         currentUserBlindedIDs: List<AccountId>,
+        swarmOrigin: SwarmOrigin? = null,
     ): ParseResult {
         val proto = SessionProtos.Content.parseFrom(contentPlaintext)
 
@@ -120,6 +140,30 @@ class MessageParser @Inject constructor(
                 (relaxSignatureCheck && diff > TimeUnit.HOURS.toMillis(6))) {
                 throw NonRetryableException("Invalid signature timestamp")
             }
+        }
+
+        // Only swarm messages are considered: communities and their inboxes are open to anyone, so a
+        // placeholder there would invite spam more than it informs.
+        if (swarmOrigin != null &&
+            UnsupportedMessageDetection.isUnknownType(contentPlaintext) {
+                hasValidKnownContent(
+                    proto = proto,
+                    isForGroup = isForGroup,
+                    sender = sender,
+                    currentUserId = currentUserId,
+                    messageTimestampMs = messageTimestampMs,
+                )
+            }
+        ) {
+            return parseUnknownTypeMessage(
+                proto = proto,
+                sender = sender,
+                messageTimestampMs = messageTimestampMs,
+                checkForBlockStatus = checkForBlockStatus,
+                isForGroup = isForGroup,
+                currentUserId = currentUserId,
+                swarmOrigin = swarmOrigin,
+            )
         }
 
         val message = createMessageFromProto(proto, isGroupMessage = isForGroup)
@@ -163,10 +207,7 @@ class MessageParser @Inject constructor(
         }
 
         // Validate
-        var isValid = message.isValid()
-        // TODO: Legacy code: why this is check needed?
-        if (message is VisibleMessage && !isValid && proto.dataMessage.attachmentsCount != 0) { isValid = true }
-        if (!isValid) {
+        if (!isValidMessage(message, proto)) {
             throw NonRetryableException("Invalid message")
         }
 
@@ -190,12 +231,106 @@ class MessageParser @Inject constructor(
     }
 
 
+    private fun isValidMessage(message: Message, proto: SessionProtos.Content): Boolean {
+        // TODO: Legacy code: why this is check needed?
+        return message.isValid() ||
+                (message is VisibleMessage && proto.dataMessage.attachmentsCount != 0)
+    }
+
+    @VisibleForTesting
+    internal fun hasValidKnownContent(
+        proto: SessionProtos.Content,
+        isForGroup: Boolean,
+        sender: AccountId,
+        currentUserId: AccountId,
+        messageTimestampMs: Long,
+    ): Boolean {
+        val message = runCatching { createMessageFromProto(proto, isGroupMessage = isForGroup) }
+            .getOrNull()
+            ?: return false
+
+        message.sender = sender.hexString
+        message.recipient = currentUserId.hexString
+        message.sentTimestamp = messageTimestampMs
+        message.receivedTimestamp = snodeClock.currentTimeMillis()
+
+        return isValidMessage(message, proto)
+    }
+
+    @VisibleForTesting
+    internal fun parseUnknownTypeMessage(
+        proto: SessionProtos.Content,
+        sender: AccountId,
+        messageTimestampMs: Long,
+        checkForBlockStatus: Boolean,
+        isForGroup: Boolean,
+        currentUserId: AccountId,
+        swarmOrigin: SwarmOrigin,
+    ): ParseResult {
+        val isSenderSelf = sender == currentUserId
+
+        if (checkForBlockStatus && !isSenderSelf && isUserBlocked(sender)) {
+            throw NonRetryableException("Sender($sender) is blocked from sending message to us")
+        }
+
+        val (placement, syncTarget) = UnsupportedMessageDetection.placement(
+            isGroup = isForGroup,
+            isSenderSelf = isSenderSelf,
+            syncTarget = proto.dataMessage.takeIf { proto.hasDataMessage() && it.hasSyncTarget() }?.syncTarget,
+        )
+
+        val message = UnsupportedMessage(
+            kind = UnsupportedMessage.Kind.UNKNOWN_TYPE,
+            placement = placement,
+            rawData = swarmOrigin.rawData,
+            swarmPublicKey = swarmOrigin.swarmPublicKey,
+            namespace = swarmOrigin.namespace,
+            serverTimestampMs = swarmOrigin.serverTimestampMs,
+            serverExpiryMs = swarmOrigin.serverExpiryMs,
+            syncTarget = syncTarget,
+        ).copyExpiration(proto).apply {
+            this.sender = sender.hexString
+            recipient = currentUserId.hexString
+            sentTimestamp = messageTimestampMs
+            receivedTimestamp = snodeClock.currentTimeMillis()
+            this.isSenderSelf = isSenderSelf
+            serverHash = swarmOrigin.serverHash
+        }
+
+        if (!message.isValid()) {
+            throw NonRetryableException("Invalid message")
+        }
+
+        return ParseResult(message = message, proto = proto, pro = null)
+    }
+
     fun parse1o1Message(
         data: ByteArray,
         serverHash: String?,
         currentUserEd25519PrivKey: ByteArray,
         currentUserId: AccountId,
+        serverTimestampMs: Long,
+        serverExpiryMs: Long?,
     ): ParseResult {
+        // A message in a newer format is recognised from its first byte without decrypting it. A
+        // message that merely fails to decrypt deliberately gets nothing at all: it can't be
+        // attributed to anyone, so it could be spam, corruption or an attacker, and anything we
+        // showed for it would claim that someone really sent us something. Even a newer-format
+        // message only gets an account-level banner, never a bubble, because the format's prefix
+        // is unauthenticated and its sender is inside the encryption.
+        if (UnsupportedMessageDetection.isNewerFormat(data)) {
+            return parseNewerFormatMessage(
+                data = data,
+                serverHash = serverHash
+                    // Only push without metadata lacks a hash, and the poller fetches the same
+                    // message again with one.
+                    ?: throw NonRetryableException("Newer format message without a hash"),
+                currentUserId = currentUserId,
+                serverTimestampMs = serverTimestampMs,
+                serverExpiryMs = serverExpiryMs,
+            )
+        }
+
         val envelop = SessionProtocol.decodeFor1o1(
             myEd25519PrivKey = currentUserEd25519PrivKey,
             payload = data,
@@ -210,9 +345,53 @@ class MessageParser @Inject constructor(
             senderIdPrefix = IdPrefix.STANDARD,
             currentUserId = currentUserId,
             currentUserBlindedIDs = emptyList(),
+            swarmOrigin = serverHash?.let {
+                SwarmOrigin(
+                    rawData = data,
+                    swarmPublicKey = currentUserId.hexString,
+                    namespace = Namespace.DEFAULT(),
+                    serverHash = it,
+                    serverTimestampMs = serverTimestampMs,
+                    serverExpiryMs = serverExpiryMs,
+                )
+            },
         ).also { result ->
             result.message.serverHash = serverHash
         }
+    }
+
+    private fun parseNewerFormatMessage(
+        data: ByteArray,
+        serverHash: String,
+        currentUserId: AccountId,
+        serverTimestampMs: Long,
+        serverExpiryMs: Long?,
+    ): ParseResult {
+        val message = UnsupportedMessage(
+            kind = UnsupportedMessage.Kind.NEWER_FORMAT,
+            placement = UnsupportedMessage.Placement.NONE,
+            rawData = data,
+            swarmPublicKey = currentUserId.hexString,
+            namespace = Namespace.DEFAULT(),
+            serverTimestampMs = serverTimestampMs,
+            serverExpiryMs = serverExpiryMs,
+            syncTarget = null,
+        ).apply {
+            // The real sender is inside the encryption; the current user stands in so nothing
+            // downstream treats it as having come from someone else.
+            sender = currentUserId.hexString
+            recipient = currentUserId.hexString
+            sentTimestamp = serverTimestampMs
+            receivedTimestamp = snodeClock.currentTimeMillis()
+            isSenderSelf = true
+            this.serverHash = serverHash
+        }
+
+        if (!message.isValid()) {
+            throw NonRetryableException("Invalid message")
+        }
+
+        return ParseResult(message = message, proto = SessionProtos.Content.getDefaultInstance(), pro = null)
     }
 
     fun parseGroupMessage(
@@ -221,6 +400,8 @@ class MessageParser @Inject constructor(
         groupId: AccountId,
         currentUserEd25519PrivKey: ByteArray,
         currentUserId: AccountId,
+        serverTimestampMs: Long,
+        serverExpiryMs: Long?,
     ): ParseResult {
         val keys = configFactory.withGroupConfigs(groupId) {
             it.groupKeys.groupKeys()
@@ -242,6 +423,14 @@ class MessageParser @Inject constructor(
             senderIdPrefix = IdPrefix.STANDARD,
             currentUserId = currentUserId,
             currentUserBlindedIDs = emptyList(),
+            swarmOrigin = SwarmOrigin(
+                rawData = data,
+                swarmPublicKey = groupId.hexString,
+                namespace = Namespace.GROUP_MESSAGES(),
+                serverHash = serverHash,
+                serverTimestampMs = serverTimestampMs,
+                serverExpiryMs = serverExpiryMs,
+            ),
         ).also { result ->
             result.message.serverHash = serverHash
         }
