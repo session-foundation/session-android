@@ -34,10 +34,12 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.withGroupConfigs
 import org.session.libsession.utilities.withMutableUserConfigs
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.ConfigVariant
+import org.thoughtcrime.securesms.groups.isErasedGroupStub
 import java.util.EnumSet
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Inject
@@ -55,6 +57,8 @@ class ConfigFactory @Inject constructor(
     @param:ManagerScope private val coroutineScope: CoroutineScope
 ) : ConfigFactoryProtocol {
     companion object {
+        private const val TAG = "ConfigFactory"
+
         // This is a buffer period within which we will process messages which would result in a
         // config change, any message which would normally result in a config change which was sent
         // before `lastConfigMessage.timestamp - configChangeBufferPeriod` will not  actually have
@@ -276,6 +280,8 @@ class ConfigFactory @Inject constructor(
             return
         }
 
+        var erasedGroupStubs = emptyList<AccountId>()
+
         val result = doWithMutableUserConfigs(fromMerge = true) { configs ->
             val config = when (userConfigType) {
                 UserConfigType.CONTACTS -> configs.contacts
@@ -291,10 +297,28 @@ class ConfigFactory @Inject constructor(
                 .mapNotNull { hash -> messages.firstOrNull { it.hash == hash } }
                 .maxOfOrNull { it.timestamp }
 
+            // Finish the erase the merge undid before anything reads the entry back as a group
+            if (userConfigType == UserConfigType.USER_GROUPS) {
+                erasedGroupStubs = configs.userGroups.allClosedGroupInfo()
+                    .filter { it.isErasedGroupStub() }
+                    .map { AccountId(it.groupAccountId) }
+
+                erasedGroupStubs.forEach { groupId ->
+                    Log.w(TAG, "Erasing a group the merge recreated after another device erased it")
+                    configs.userGroups.eraseClosedGroup(groupId.hexString)
+                    configs.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
+                }
+            }
+
+            val changed = EnumSet.of(userConfigType)
+            if (erasedGroupStubs.isNotEmpty()) changed.add(UserConfigType.CONVO_INFO_VOLATILE)
+
             maxTimestamp?.let {
-                (config.dump() to it) to EnumSet.of(userConfigType)
-            } ?: (null to emptySet())
+                (config.dump() to it) to changed
+            } ?: (null to if (erasedGroupStubs.isEmpty()) emptySet() else changed)
         }
+
+        erasedGroupStubs.forEach(::deleteGroupConfigs)
 
         // Dump now regardless so we can save the timestamp to the database
         if (result != null) {
