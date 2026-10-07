@@ -64,21 +64,51 @@ class UnsupportedMessageDatabaseTest {
         version: String = "1.0.0-1",
         sender: String? = null,
         sentTimestampMs: Long? = null,
+        namespace: Int = 0,
+        data: ByteArray = ByteArray(size) { it.toByte() },
     ): Boolean = db.insert(
         kind = kind,
         swarmPublicKey = "05" + "00".repeat(32),
-        namespace = 0,
+        namespace = namespace,
         hash = hash,
         sender = sender,
         sentTimestampMs = sentTimestampMs,
         serverTimestampMs = 100L,
         serverExpiryMs = null,
-        data = ByteArray(size) { it.toByte() },
+        data = data,
         placeholderMessageId = placeholderId,
         expiresAtMs = expiresAtMs,
         receivedAtMs = receivedAtMs,
         lastAttemptVersion = version,
     )
+
+    private fun idOf(hash: String): Long =
+        sqlite.query("SELECT id FROM ${UnsupportedMessageDatabase.TABLE_NAME} WHERE hash = ?", arrayOf(hash))
+            .use { it.moveToNext(); it.getLong(0) }
+
+    private fun lastAttemptVersion(hash: String): String =
+        sqlite.query("SELECT last_attempt_version FROM ${UnsupportedMessageDatabase.TABLE_NAME} WHERE hash = ?", arrayOf(hash))
+            .use { it.moveToNext(); it.getString(0) }
+
+    /** total_bytes and newer_format_count from the stats row, then the same recomputed from the table */
+    private fun assertStatsExact() {
+        val stats = sqlite.query("SELECT total_bytes, newer_format_count FROM ${UnsupportedMessageDatabase.STATS_TABLE_NAME}").use {
+            assertTrue(it.moveToNext())
+            val result = it.getLong(0) to it.getLong(1)
+            assertFalse("exactly one stats row", it.moveToNext())
+            result
+        }
+        val actual = sqlite.query(
+            "SELECT IFNULL(SUM(length(data) + ?), 0), IFNULL(SUM(kind = 'newerFormat'), 0) FROM ${UnsupportedMessageDatabase.TABLE_NAME}",
+            arrayOf(UnsupportedMessageDatabase.ROW_OVERHEAD_BYTES)
+        ).use { it.moveToNext(); it.getLong(0) to it.getLong(1) }
+
+        assertEquals(actual, stats)
+    }
+
+    private fun stats(): Pair<Long, Long> =
+        sqlite.query("SELECT total_bytes, newer_format_count FROM ${UnsupportedMessageDatabase.STATS_TABLE_NAME}")
+            .use { it.moveToNext(); it.getLong(0) to it.getLong(1) }
 
     private fun count(): Long = sqlite.query("SELECT COUNT(*) FROM ${UnsupportedMessageDatabase.TABLE_NAME}")
         .use { it.moveToNext(); it.getLong(0) }
@@ -106,7 +136,7 @@ class UnsupportedMessageDatabaseTest {
         assertTrue(db.exists("hash1"))
         assertFalse(db.exists("hash2"))
 
-        val id = db.idsNotAttemptedBy("2.0.0-2").single()
+        val id = idOf("hash1")
         val record = db.get(id)!!
 
         assertEquals(Kind.NEWER_FORMAT, record.kind)
@@ -121,7 +151,7 @@ class UnsupportedMessageDatabaseTest {
     fun `round trips the sender and sent timestamp`() {
         insert("hash1", sender = SENDER_A, sentTimestampMs = 1_234L)
 
-        val record = db.get(db.idsNotAttemptedBy("2.0.0-2").single())!!
+        val record = db.get(idOf("hash1"))!!
 
         assertEquals(SENDER_A, record.sender)
         assertEquals(1_234L, record.sentTimestampMs)
@@ -146,7 +176,7 @@ class UnsupportedMessageDatabaseTest {
     fun `a detached record survives its placeholder being deleted`() {
         val placeholder = insertMmsRow(threadId = 1)
         insert("hash1", placeholderId = placeholder)
-        val id = db.idsNotAttemptedBy("2.0.0-2").single()
+        val id = idOf("hash1")
 
         db.detachPlaceholder(id, expiresAtMs = 5_000L)
         sqlite.execSQL("DELETE FROM ${MmsDatabase.TABLE_NAME} WHERE _id = ?", arrayOf(placeholder))
@@ -157,15 +187,50 @@ class UnsupportedMessageDatabaseTest {
     }
 
     @Test
-    fun `only records not attempted by a version are returned for it`() {
-        insert("hash1", version = "1.0.0-1")
-        insert("hash2", version = "1.0.0-1")
+    fun `stamping newer format rows marks them attempted without returning them`() {
+        insert("newer1", kind = Kind.NEWER_FORMAT, version = "1.0.0-1")
+        insert("newer2", kind = Kind.NEWER_FORMAT, version = "1.0.0-2")
+        insert("unknown", kind = Kind.UNKNOWN_TYPE, version = "1.0.0-1")
 
-        val ids = db.idsNotAttemptedBy("1.0.0-2")
-        assertEquals(2, ids.size)
+        assertEquals(1, db.stampNewerFormatAttempted("1.0.0-2"))
 
-        db.setLastAttemptVersion(ids.first(), "1.0.0-2")
-        assertEquals(listOf(ids.last()), db.idsNotAttemptedBy("1.0.0-2"))
+        assertEquals("1.0.0-2", lastAttemptVersion("newer1"))
+        assertEquals("1.0.0-2", lastAttemptVersion("newer2"))
+        assertEquals("1.0.0-1", lastAttemptVersion("unknown"))
+    }
+
+    @Test
+    fun `the replay page returns only unknown type rows not attempted by the version`() {
+        insert("newer", kind = Kind.NEWER_FORMAT, version = "1.0.0-1")
+        insert("unknown1", version = "1.0.0-1")
+        insert("attempted", version = "1.0.0-2")
+        insert("unknown2", version = "1.0.0-1")
+        insert("unknown3", version = "1.0.0-1")
+
+        assertEquals(
+            listOf(idOf("unknown1"), idOf("unknown2")),
+            db.unknownTypeIdsNotAttemptedBy("1.0.0-2", afterId = 0, limit = 2)
+        )
+        assertEquals(
+            listOf(idOf("unknown3")),
+            db.unknownTypeIdsNotAttemptedBy("1.0.0-2", afterId = idOf("unknown2"), limit = 2)
+        )
+
+        db.setLastAttemptVersion(idOf("unknown1"), "1.0.0-2")
+        assertEquals(
+            listOf(idOf("unknown2"), idOf("unknown3")),
+            db.unknownTypeIdsNotAttemptedBy("1.0.0-2", afterId = 0, limit = 50)
+        )
+    }
+
+    @Test
+    fun `a group unknown type row starting with a zero byte is replayed, not treated as newer format`() {
+        insert("group", kind = Kind.UNKNOWN_TYPE, namespace = GROUP_MESSAGES_NAMESPACE, data = byteArrayOf(0, 2, 7, 7))
+
+        db.stampNewerFormatAttempted("1.0.0-2")
+
+        assertEquals("1.0.0-1", lastAttemptVersion("group"))
+        assertEquals(listOf(idOf("group")), db.unknownTypeIdsNotAttemptedBy("1.0.0-2", afterId = 0, limit = 50))
     }
 
     @Test
@@ -223,28 +288,128 @@ class UnsupportedMessageDatabaseTest {
     }
 
     @Test
-    fun `eviction removes newer format rows first, oldest first, until within budget`() {
-        insert("unknownOld", kind = Kind.UNKNOWN_TYPE, size = 10, receivedAtMs = 1)
-        insert("newerNew", kind = Kind.NEWER_FORMAT, size = 10, receivedAtMs = 4)
-        insert("newerOld", kind = Kind.NEWER_FORMAT, size = 10, receivedAtMs = 2)
-        insert("unknownNew", kind = Kind.UNKNOWN_TYPE, size = 10, receivedAtMs = 3)
+    fun `the stats row is seeded and stays exact across inserts, updates and deletes`() {
+        assertEquals(0L to 0L, stats())
 
-        db.enforceLimits(nowMs = 0L, maxRetainedDataBytes = 40)
+        val placeholder = insertMmsRow(threadId = 1)
+        insert("unknown", size = 10, placeholderId = placeholder)
+        insert("newer1", kind = Kind.NEWER_FORMAT, size = 3)
+        insert("newer2", kind = Kind.NEWER_FORMAT, size = 0)
+        assertFalse(insert("newer1", kind = Kind.NEWER_FORMAT, size = 50))
+        assertEquals((13L + 3 * UnsupportedMessageDatabase.ROW_OVERHEAD_BYTES) to 2L, stats())
+        assertStatsExact()
+
+        sqlite.execSQL("UPDATE ${UnsupportedMessageDatabase.TABLE_NAME} SET kind = 'unknownType', data = ? WHERE hash = 'newer1'", arrayOf(ByteArray(20)))
+        assertEquals((30L + 3 * UnsupportedMessageDatabase.ROW_OVERHEAD_BYTES) to 1L, stats())
+        assertStatsExact()
+
+        db.delete(idOf("newer2"))
+        assertStatsExact()
+
+        sqlite.execSQL("DELETE FROM ${MmsDatabase.TABLE_NAME} WHERE _id = ?", arrayOf(placeholder))
+        assertFalse(db.exists("unknown"))
+        assertEquals((20L + UnsupportedMessageDatabase.ROW_OVERHEAD_BYTES) to 0L, stats())
+        assertStatsExact()
+
+        db.delete(idOf("newer1"))
+        assertEquals(0L to 0L, stats())
+    }
+
+    @Test
+    fun `the newer format count cap evicts the oldest newer format rows only`() {
+        insert("unknown", kind = Kind.UNKNOWN_TYPE)
+        repeat(5) { insert("newer$it", kind = Kind.NEWER_FORMAT) }
+
+        db.enforceRetentionCaps(maxNewerFormatCount = 3)
+
+        assertFalse(db.exists("newer0"))
+        assertFalse(db.exists("newer1"))
+        assertTrue(db.exists("newer2"))
+        assertTrue(db.exists("newer3"))
+        assertTrue(db.exists("newer4"))
+        assertTrue(db.exists("unknown"))
+        assertEquals(3L, stats().second)
+        assertStatsExact()
+    }
+
+    @Test
+    fun `the default newer format count cap is ten thousand`() {
+        sqlite.execSQL("""
+            WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 10001)
+            INSERT INTO ${UnsupportedMessageDatabase.TABLE_NAME} (
+                kind, swarm_public_key, namespace, hash, server_timestamp_ms, data, received_at_ms, last_attempt_version
+            )
+            SELECT 'newerFormat', '05', 0, 'h' || i, 0, x'00', 0, '1.0.0-1' FROM n
+        """)
+
+        db.enforceRetentionCaps()
+
+        assertEquals(10_000L, count())
+        assertFalse(db.exists("h1"))
+        assertTrue(db.exists("h2"))
+        assertStatsExact()
+    }
+
+    @Test
+    fun `the byte budget counts the per row overhead, so many tiny rows are evicted`() {
+        repeat(250) { insert("tiny$it", size = 1) }
+        val rowCost = 1 + UnsupportedMessageDatabase.ROW_OVERHEAD_BYTES
+
+        // Their data alone (250 bytes) fits easily
+        db.enforceRetentionCaps(maxRetainedBytes = 120 * rowCost)
+
+        assertEquals(120L, count())
+        assertFalse(db.exists("tiny129"))
+        assertTrue(db.exists("tiny130"))
+        assertStatsExact()
+    }
+
+    @Test
+    fun `the byte budget evicts newer format rows first, oldest first, until within budget`() {
+        insert("unknownOld", kind = Kind.UNKNOWN_TYPE, size = 10)
+        insert("newerOld", kind = Kind.NEWER_FORMAT, size = 10)
+        insert("unknownNew", kind = Kind.UNKNOWN_TYPE, size = 10)
+        insert("newerNew", kind = Kind.NEWER_FORMAT, size = 10)
+        val rowCost = 10 + UnsupportedMessageDatabase.ROW_OVERHEAD_BYTES
+
+        db.enforceRetentionCaps(maxRetainedBytes = 4 * rowCost)
         assertEquals(4L, count())
 
-        db.enforceLimits(nowMs = 0L, maxRetainedDataBytes = 25)
+        db.enforceRetentionCaps(maxRetainedBytes = 3 * rowCost)
         assertFalse(db.exists("newerOld"))
+        assertTrue(db.exists("newerNew"))
+
+        db.enforceRetentionCaps(maxRetainedBytes = 2 * rowCost + 1)
         assertFalse(db.exists("newerNew"))
         assertTrue(db.exists("unknownOld"))
         assertTrue(db.exists("unknownNew"))
 
-        db.enforceLimits(nowMs = 0L, maxRetainedDataBytes = 15)
+        db.enforceRetentionCaps(maxRetainedBytes = rowCost)
         assertFalse(db.exists("unknownOld"))
         assertTrue(db.exists("unknownNew"))
+        assertStatsExact()
+    }
+
+    @Test
+    fun `maintenance removes expired rows before applying the byte budget`() {
+        insert("unknownOld", kind = Kind.UNKNOWN_TYPE, size = 10)
+        insert("newerExpired", kind = Kind.NEWER_FORMAT, size = 10, expiresAtMs = 1_000L)
+        insert("unknownNew", kind = Kind.UNKNOWN_TYPE, size = 10)
+
+        db.enforceLimits(nowMs = 1_000L, maxRetainedBytes = 2L * (10 + UnsupportedMessageDatabase.ROW_OVERHEAD_BYTES))
+
+        assertFalse(db.exists("newerExpired"))
+        assertTrue(db.exists("unknownOld"))
+        assertTrue(db.exists("unknownNew"))
+        assertStatsExact()
     }
 
     private companion object {
         val SENDER_A = "05" + "aa".repeat(32)
         val SENDER_B = "05" + "bb".repeat(32)
+
+        // Namespace.GROUP_MESSAGES(), which can't be read here as libsession's native library
+        // doesn't load in JVM tests
+        const val GROUP_MESSAGES_NAMESPACE = 11
     }
 }

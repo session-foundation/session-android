@@ -82,22 +82,37 @@ class UnsupportedMessageReprocessor @Inject constructor(
         }
     }
 
+    /**
+     * Which records to replay is decided by the stored kind, never by the data: a group message is
+     * encrypted with a symmetric key, so its data can start with the byte that marks a one-to-one
+     * message as newer-format.
+     */
     private fun reprocessPending() {
         val version = UnsupportedMessageHandler.currentVersion()
-        val ids = unsupportedMessageDatabase.idsNotAttemptedBy(version)
+        unsupportedMessageDatabase.stampNewerFormatAttempted(version)
 
-        if (ids.isEmpty()) return
+        var afterId = 0L
+        var attempted = 0
+        var replaced = 0
+        var failed = 0
 
-        val results = receivedMessageProcessor.startProcessing("UnsupportedMessageReprocessor") { ctx ->
-            ids.map { id -> reprocess(ctx, id, version) }
+        while (true) {
+            val ids = unsupportedMessageDatabase.unknownTypeIdsNotAttemptedBy(version, afterId, REPLAY_PAGE_SIZE)
+            if (ids.isEmpty()) break
+
+            val results = receivedMessageProcessor.startProcessing("UnsupportedMessageReprocessor") { ctx ->
+                ids.map { id -> reprocess(ctx, id, version) }
+            }
+
+            afterId = ids.last()
+            attempted += ids.size
+            replaced += results.count { it == Result.REPLACED }
+            failed += results.count { it == Result.FAILED }
         }
 
-        Log.i(
-            TAG,
-            "Reprocessed ${ids.size} retained message(s): " +
-                    "${results.count { it == Result.REPLACED }} replaced, " +
-                    "${results.count { it == Result.FAILED }} failed"
-        )
+        if (attempted > 0) {
+            Log.i(TAG, "Reprocessed $attempted retained message(s): $replaced replaced, $failed failed")
+        }
     }
 
     private fun reprocess(
@@ -190,5 +205,6 @@ class UnsupportedMessageReprocessor @Inject constructor(
 
     companion object {
         private const val TAG = "UnsupportedMessageReprocessor"
+        private const val REPLAY_PAGE_SIZE = 50
     }
 }

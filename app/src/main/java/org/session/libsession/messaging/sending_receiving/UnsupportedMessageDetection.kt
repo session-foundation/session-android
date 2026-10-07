@@ -19,6 +19,13 @@ object UnsupportedMessageDetection {
      */
     const val HIGHEST_KNOWN_CONTENT_FIELD_NUMBER = 18
 
+    private const val WIRE_TYPE_VARINT = 0
+    private const val WIRE_TYPE_FIXED64 = 1
+    private const val WIRE_TYPE_LENGTH_DELIMITED = 2
+    private const val WIRE_TYPE_START_GROUP = 3
+    private const val WIRE_TYPE_END_GROUP = 4
+    private const val WIRE_TYPE_FIXED32 = 5
+
     /**
      * No v1 one-to-one message can start with a zero byte (it's protobuf, and field number 0 is
      * invalid), which is exactly why the newer wire format starts with one.
@@ -62,16 +69,20 @@ object UnsupportedMessageDetection {
 
             if (fieldNumber <= 0 || fieldNumber > Int.MAX_VALUE) return null
 
+            // A key is `(fieldNumber shl 3) or wireType`. The switch is on the wire type, which says
+            // how many bytes the value occupies, not on the field number.
             when ((key and 0x7).toInt()) {
-                0 -> readVarint() ?: return null
-                1 -> index += 8
-                2 -> {
+                WIRE_TYPE_VARINT -> readVarint() ?: return null
+                WIRE_TYPE_FIXED64 -> index += 8
+                WIRE_TYPE_LENGTH_DELIMITED -> {
                     val length = readVarint() ?: return null
                     if (length < 0 || length > (data.size - index)) return null
                     index += length.toInt()
                 }
-                5 -> index += 4
-                // Groups are deprecated and unused by Session, so anything else is malformed
+                WIRE_TYPE_FIXED32 -> index += 4
+                // Groups are deprecated and unused by Session, and 6 and 7 are undefined, so
+                // anything else is malformed
+                WIRE_TYPE_START_GROUP, WIRE_TYPE_END_GROUP -> return null
                 else -> return null
             }
 

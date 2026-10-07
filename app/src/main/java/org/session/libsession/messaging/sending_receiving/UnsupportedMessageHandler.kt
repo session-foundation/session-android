@@ -84,9 +84,9 @@ class UnsupportedMessageHandler @Inject constructor(
         )
 
         // A failure here must not fail the receive: the limits are enforced again at the next
-        // launch or foreground.
+        // launch or foreground. Expired rows are left to that run too.
         try {
-            unsupportedMessageDatabase.enforceLimits(nowMs)
+            unsupportedMessageDatabase.enforceRetentionCaps()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to enforce retained message limits", e)
         }
