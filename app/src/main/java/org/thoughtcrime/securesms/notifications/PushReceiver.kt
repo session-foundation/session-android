@@ -36,7 +36,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.groups.GroupRevokedMessageHandler
 import org.thoughtcrime.securesms.home.HomeActivity
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private const val TAG = "PushHandler"
@@ -110,8 +109,8 @@ class PushReceiver @Inject constructor(
                                         groupId = groupId,
                                         currentUserId = ctx.currentUserId,
                                         currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
-                                        serverTimestampMs = TimeUnit.SECONDS.toMillis(pushData.metadata.timestampSeconds),
-                                        serverExpiryMs = null,
+                                        serverTimestampMs = pushData.metadata.timestampMs,
+                                        serverExpiryMs = pushData.metadata.expiryMs,
                                     )
 
                                     receivedMessageProcessor.processSwarmMessage(
@@ -142,7 +141,7 @@ class PushReceiver @Inject constructor(
                                 ConfigMessage(
                                     hash = hash,
                                     data = pushData.data,
-                                    timestamp = pushData.metadata.timestampSeconds
+                                    timestamp = pushData.metadata.timestampMs
                                 )
                             )
 
@@ -184,10 +183,8 @@ class PushReceiver @Inject constructor(
                                 currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
                                 // Without metadata there's no hash either, and the swarm
                                 // origin is only retained for a message with one.
-                                serverTimestampMs = pushData.metadata
-                                    ?.let { TimeUnit.SECONDS.toMillis(it.timestampSeconds) }
-                                    ?: 0L,
-                                serverExpiryMs = null,
+                                serverTimestampMs = pushData.metadata?.timestampMs ?: 0L,
+                                serverExpiryMs = pushData.metadata?.expiryMs,
                             )
 
                             receivedMessageProcessor.processSwarmMessage(

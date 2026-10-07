@@ -33,6 +33,8 @@ class UnsupportedMessageDatabase @Inject constructor(
         val swarmPublicKey: String,
         val namespace: Int,
         val hash: String,
+        val sender: String?,
+        val sentTimestampMs: Long?,
         val serverTimestampMs: Long,
         val serverExpiryMs: Long?,
         val data: ByteArray,
@@ -56,6 +58,8 @@ class UnsupportedMessageDatabase @Inject constructor(
         swarmPublicKey: String,
         namespace: Int,
         hash: String,
+        sender: String?,
+        sentTimestampMs: Long?,
         serverTimestampMs: Long,
         serverExpiryMs: Long?,
         data: ByteArray,
@@ -67,22 +71,25 @@ class UnsupportedMessageDatabase @Inject constructor(
         //language=roomsql
         return writableDatabase.compileStatement("""
             INSERT OR IGNORE INTO $TABLE_NAME (
-                kind, swarm_public_key, namespace, hash, server_timestamp_ms, server_expiry_ms, data,
-                placeholder_message_id, expires_at_ms, received_at_ms, last_attempt_version
+                kind, swarm_public_key, namespace, hash, sender, sent_timestamp_ms, server_timestamp_ms,
+                server_expiry_ms, data, placeholder_message_id, expires_at_ms, received_at_ms,
+                last_attempt_version
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """).use { stmt ->
             stmt.bindString(1, kind.dbValue)
             stmt.bindString(2, swarmPublicKey)
             stmt.bindLong(3, namespace.toLong())
             stmt.bindString(4, hash)
-            stmt.bindLong(5, serverTimestampMs)
-            serverExpiryMs?.let { stmt.bindLong(6, it) } ?: stmt.bindNull(6)
-            stmt.bindBlob(7, data)
-            placeholderMessageId?.let { stmt.bindLong(8, it) } ?: stmt.bindNull(8)
-            expiresAtMs?.let { stmt.bindLong(9, it) } ?: stmt.bindNull(9)
-            stmt.bindLong(10, receivedAtMs)
-            stmt.bindString(11, lastAttemptVersion)
+            sender?.let { stmt.bindString(5, it) } ?: stmt.bindNull(5)
+            sentTimestampMs?.let { stmt.bindLong(6, it) } ?: stmt.bindNull(6)
+            stmt.bindLong(7, serverTimestampMs)
+            serverExpiryMs?.let { stmt.bindLong(8, it) } ?: stmt.bindNull(8)
+            stmt.bindBlob(9, data)
+            placeholderMessageId?.let { stmt.bindLong(10, it) } ?: stmt.bindNull(10)
+            expiresAtMs?.let { stmt.bindLong(11, it) } ?: stmt.bindNull(11)
+            stmt.bindLong(12, receivedAtMs)
+            stmt.bindString(13, lastAttemptVersion)
             stmt.executeInsert() != -1L
         }
     }
@@ -105,6 +112,8 @@ class UnsupportedMessageDatabase @Inject constructor(
                 swarmPublicKey = cursor.getString(cursor.getColumnIndexOrThrow("swarm_public_key")),
                 namespace = cursor.getInt(cursor.getColumnIndexOrThrow("namespace")),
                 hash = cursor.getString(cursor.getColumnIndexOrThrow("hash")),
+                sender = cursor.getColumnIndexOrThrow("sender").takeUnless(cursor::isNull)?.let(cursor::getString),
+                sentTimestampMs = nullableLong("sent_timestamp_ms"),
                 serverTimestampMs = cursor.getLong(cursor.getColumnIndexOrThrow("server_timestamp_ms")),
                 serverExpiryMs = nullableLong("server_expiry_ms"),
                 data = cursor.getBlob(cursor.getColumnIndexOrThrow("data")),
@@ -138,6 +147,32 @@ class UnsupportedMessageDatabase @Inject constructor(
     fun delete(id: Long) {
         //language=roomsql
         writableDatabase.execSQL("DELETE FROM $TABLE_NAME WHERE id = ?", arrayOf(id))
+    }
+
+    /**
+     * Removes the records an unsend request targets. A record without a placeholder can't be found
+     * through a message row, and replaying it after an update would restore a message its sender
+     * deleted.
+     */
+    fun deleteForUnsend(sender: String, sentTimestampMs: Long) {
+        //language=roomsql
+        writableDatabase.execSQL(
+            "DELETE FROM $TABLE_NAME WHERE sender = ? AND sent_timestamp_ms = ?",
+            arrayOf<Any>(sender, sentTimestampMs)
+        )
+    }
+
+    /**
+     * Unlinks the record from its placeholder so the placeholder can be deleted without the trigger
+     * taking the record with it, and gives the record its own [expiresAtMs] since nothing else owns
+     * its expiry any more.
+     */
+    fun detachPlaceholder(id: Long, expiresAtMs: Long?) {
+        //language=roomsql
+        writableDatabase.execSQL(
+            "UPDATE $TABLE_NAME SET placeholder_message_id = NULL, expires_at_ms = ? WHERE id = ?",
+            arrayOf<Any?>(expiresAtMs, id)
+        )
     }
 
     /**
@@ -201,6 +236,8 @@ class UnsupportedMessageDatabase @Inject constructor(
                     swarm_public_key TEXT NOT NULL,
                     namespace INTEGER NOT NULL,
                     hash TEXT NOT NULL UNIQUE,
+                    sender TEXT,
+                    sent_timestamp_ms INTEGER,
                     server_timestamp_ms INTEGER NOT NULL,
                     server_expiry_ms INTEGER,
                     data BLOB NOT NULL,
@@ -216,6 +253,9 @@ class UnsupportedMessageDatabase @Inject constructor(
 
             //language=roomsql
             db.execSQL("CREATE INDEX IF NOT EXISTS unsupported_message_expires_at_index ON $TABLE_NAME (expires_at_ms)")
+
+            //language=roomsql
+            db.execSQL("CREATE INDEX IF NOT EXISTS unsupported_message_sender_index ON $TABLE_NAME (sender, sent_timestamp_ms)")
 
             // Placeholders are only ever MMS rows: SMS ids overlap with MMS ids, so there must be
             // no equivalent on the sms table.

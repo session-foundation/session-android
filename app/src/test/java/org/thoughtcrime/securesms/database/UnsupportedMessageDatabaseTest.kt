@@ -62,11 +62,15 @@ class UnsupportedMessageDatabaseTest {
         expiresAtMs: Long? = null,
         receivedAtMs: Long = 0L,
         version: String = "1.0.0-1",
+        sender: String? = null,
+        sentTimestampMs: Long? = null,
     ): Boolean = db.insert(
         kind = kind,
         swarmPublicKey = "05" + "00".repeat(32),
         namespace = 0,
         hash = hash,
+        sender = sender,
+        sentTimestampMs = sentTimestampMs,
         serverTimestampMs = 100L,
         serverExpiryMs = null,
         data = ByteArray(size) { it.toByte() },
@@ -87,8 +91,9 @@ class UnsupportedMessageDatabaseTest {
 
         assertEquals(
             listOf(
-                "id", "kind", "swarm_public_key", "namespace", "hash", "server_timestamp_ms", "server_expiry_ms",
-                "data", "placeholder_message_id", "expires_at_ms", "received_at_ms", "last_attempt_version"
+                "id", "kind", "swarm_public_key", "namespace", "hash", "sender", "sent_timestamp_ms",
+                "server_timestamp_ms", "server_expiry_ms", "data", "placeholder_message_id", "expires_at_ms",
+                "received_at_ms", "last_attempt_version"
             ),
             columns
         )
@@ -108,6 +113,47 @@ class UnsupportedMessageDatabaseTest {
         assertArrayEquals(byteArrayOf(0, 1, 2, 3), record.data)
         assertNull(record.placeholderMessageId)
         assertNull(record.serverExpiryMs)
+        assertNull(record.sender)
+        assertNull(record.sentTimestampMs)
+    }
+
+    @Test
+    fun `round trips the sender and sent timestamp`() {
+        insert("hash1", sender = SENDER_A, sentTimestampMs = 1_234L)
+
+        val record = db.get(db.idsNotAttemptedBy("2.0.0-2").single())!!
+
+        assertEquals(SENDER_A, record.sender)
+        assertEquals(1_234L, record.sentTimestampMs)
+    }
+
+    @Test
+    fun `an unsend deletes only the record with the same sender and sent timestamp`() {
+        insert("target", sender = SENDER_A, sentTimestampMs = 1_000L)
+        insert("otherTime", sender = SENDER_A, sentTimestampMs = 2_000L)
+        insert("otherSender", sender = SENDER_B, sentTimestampMs = 1_000L)
+        insert("newerFormat", kind = Kind.NEWER_FORMAT)
+
+        db.deleteForUnsend(sender = SENDER_A, sentTimestampMs = 1_000L)
+
+        assertFalse(db.exists("target"))
+        assertTrue(db.exists("otherTime"))
+        assertTrue(db.exists("otherSender"))
+        assertTrue(db.exists("newerFormat"))
+    }
+
+    @Test
+    fun `a detached record survives its placeholder being deleted`() {
+        val placeholder = insertMmsRow(threadId = 1)
+        insert("hash1", placeholderId = placeholder)
+        val id = db.idsNotAttemptedBy("2.0.0-2").single()
+
+        db.detachPlaceholder(id, expiresAtMs = 5_000L)
+        sqlite.execSQL("DELETE FROM ${MmsDatabase.TABLE_NAME} WHERE _id = ?", arrayOf(placeholder))
+
+        val record = db.get(id)!!
+        assertNull(record.placeholderMessageId)
+        assertEquals(5_000L, record.expiresAtMs)
     }
 
     @Test
@@ -195,5 +241,10 @@ class UnsupportedMessageDatabaseTest {
         db.enforceLimits(nowMs = 0L, maxRetainedDataBytes = 15)
         assertFalse(db.exists("unknownOld"))
         assertTrue(db.exists("unknownNew"))
+    }
+
+    private companion object {
+        val SENDER_A = "05" + "aa".repeat(32)
+        val SENDER_B = "05" + "bb".repeat(32)
     }
 }

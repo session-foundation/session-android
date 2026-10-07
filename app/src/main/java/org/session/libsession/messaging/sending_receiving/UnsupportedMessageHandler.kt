@@ -1,7 +1,9 @@
 package org.session.libsession.messaging.sending_receiving
 
 import network.loki.messenger.BuildConfig
+import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.UnsupportedMessage
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingMediaMessage
@@ -44,10 +46,14 @@ class UnsupportedMessageHandler @Inject constructor(
 
         if (unsupportedMessageDatabase.exists(serverHash)) return
 
-        // Never create a conversation (or a message request) for something we can't show. The
-        // record is still retained either way so a newer client can recover it.
-        val threadId = if (message.placement == UnsupportedMessage.Placement.NONE) null else {
-            context.threadIDs[threadAddress]
+        // Never create a conversation (or a message request) for something we can't show, nor put
+        // one in a hidden conversation: visibility is config-synced, so anything that un-hid it
+        // would un-hide it on every device. The record is still retained either way so a newer
+        // client can recover it.
+        val threadId = when {
+            message.placement == UnsupportedMessage.Placement.NONE -> null
+            context.getThreadRecipient(threadAddress).priority == PRIORITY_HIDDEN -> null
+            else -> context.threadIDs[threadAddress]
                 ?: storage.getThreadId(threadAddress)?.also { context.threadIDs[threadAddress] = it }
         }
 
@@ -59,23 +65,31 @@ class UnsupportedMessageHandler @Inject constructor(
             swarmPublicKey = message.swarmPublicKey,
             namespace = message.namespace,
             hash = serverHash,
+            // A newer-format message's sender and sent timestamp are inside the encryption; the
+            // message carries stand-ins for them which must not match an unsend request.
+            sender = message.sender.takeIf { message.kind == UnsupportedMessage.Kind.UNKNOWN_TYPE },
+            sentTimestampMs = message.sentTimestamp.takeIf { message.kind == UnsupportedMessage.Kind.UNKNOWN_TYPE },
             serverTimestampMs = message.serverTimestampMs,
             serverExpiryMs = message.serverExpiryMs,
             data = message.rawData,
             placeholderMessageId = placeholderId?.id,
             // A placeholder owns the expiry through the normal disappearing-messages path
-            expiresAtMs = if (placeholderId != null) null else UnsupportedMessageDetection.retainedExpiryMs(
-                afterSendStartedAtMs = message.sentTimestamp.takeIf { message.expiryMode is ExpiryMode.AfterSend },
-                afterSendDurationMs = message.expiryMode.expiryMillis.takeIf { message.expiryMode is ExpiryMode.AfterSend },
+            expiresAtMs = if (placeholderId != null) null else retainedExpiryMs(
+                message = message,
                 serverTimestampMs = message.serverTimestampMs,
                 serverExpiryMs = message.serverExpiryMs,
-                defaultTtlMs = SnodeMessage.DEFAULT_TTL,
             ),
             receivedAtMs = nowMs,
             lastAttemptVersion = currentVersion(),
         )
 
-        unsupportedMessageDatabase.enforceLimits(nowMs)
+        // A failure here must not fail the receive: the limits are enforced again at the next
+        // launch or foreground.
+        try {
+            unsupportedMessageDatabase.enforceLimits(nowMs)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to enforce retained message limits", e)
+        }
 
         Log.i(TAG, "Retained ${message.kind.dbValue} message $serverHash (${message.rawData.size} bytes), placeholder: ${placeholderId != null}")
 
@@ -160,5 +174,15 @@ class UnsupportedMessageHandler @Inject constructor(
         private const val TAG = "UnsupportedMessageHandler"
 
         fun currentVersion(): String = "${BuildConfig.VERSION_NAME}-${BuildConfig.VERSION_CODE}"
+
+        /** When a retained record with no placeholder should go, given the message it holds */
+        fun retainedExpiryMs(message: Message, serverTimestampMs: Long, serverExpiryMs: Long?): Long? =
+            UnsupportedMessageDetection.retainedExpiryMs(
+                afterSendStartedAtMs = message.sentTimestamp.takeIf { message.expiryMode is ExpiryMode.AfterSend },
+                afterSendDurationMs = message.expiryMode.expiryMillis.takeIf { message.expiryMode is ExpiryMode.AfterSend },
+                serverTimestampMs = serverTimestampMs,
+                serverExpiryMs = serverExpiryMs,
+                defaultTtlMs = SnodeMessage.DEFAULT_TTL,
+            )
     }
 }

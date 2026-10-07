@@ -52,6 +52,7 @@ import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.UnsupportedMessageDatabase
 import org.thoughtcrime.securesms.database.getOrCreateThreadIdFor
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -85,6 +86,7 @@ class ReceivedMessageProcessor @Inject constructor(
     private val swarmApiExecutor: SwarmApiExecutor,
     private val deleteMessageApiFactory: DeleteMessageApi.Factory,
     private val unsupportedMessageHandler: Provider<UnsupportedMessageHandler>,
+    private val unsupportedMessageDatabase: UnsupportedMessageDatabase,
 ) {
     private val threadMutexes = ConcurrentHashMap<Address.Conversable, ReentrantLock>()
 
@@ -134,8 +136,9 @@ class ReceivedMessageProcessor @Inject constructor(
         proto: SessionProtos.Content,
         pro: DecodedPro?,
     ) = withThreadLock(threadAddress) {
-        // Retained even when there's no conversation to show it in, so it can't wait for the
-        // thread lookup below
+        // Retained even when there's no conversation to show it in, or the conversation is hidden,
+        // so it can't wait for the hidden-contact discard or the thread lookup below. The handler
+        // never un-hides a conversation; it only leaves out the placeholder.
         if (message is UnsupportedMessage) {
             unsupportedMessageHandler.get().handle(context, threadAddress, message)
             return@withThreadLock
@@ -453,6 +456,10 @@ class ReceivedMessageProcessor @Inject constructor(
 
         val timestamp = message.timestamp ?: return null
         val author = message.author ?: return null
+
+        // Before the message lookup, which finds nothing for a retained message with no placeholder
+        unsupportedMessageDatabase.deleteForUnsend(sender = author, sentTimestampMs = timestamp)
+
         val messageToDelete = storage.getMessageByTimestamp(timestamp, author, false) ?: return null
         val messageIdToDelete = messageToDelete.messageId
         val messageType = messageToDelete.individualRecipient?.getType()
