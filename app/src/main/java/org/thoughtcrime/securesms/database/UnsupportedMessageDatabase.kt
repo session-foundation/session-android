@@ -294,6 +294,12 @@ class UnsupportedMessageDatabase @Inject constructor(
 
         /** Counted as `length(data) + ROW_OVERHEAD_BYTES` per row, so tiny rows still cost something */
         const val MAX_RETAINED_BYTES: Long = 256L * 1024 * 1024
+
+        /**
+         * Written into the stats triggers when the table is created, so changing it needs a migration which
+         * recreates those triggers and recomputes `total_bytes`, otherwise existing databases keep counting
+         * the old value.
+         */
         const val ROW_OVERHEAD_BYTES: Long = 256
         const val MAX_NEWER_FORMAT_COUNT: Long = 10_000
 
