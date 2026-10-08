@@ -40,7 +40,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.database.model.content.UnsupportedMessageContent
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import javax.inject.Inject
@@ -177,7 +176,7 @@ class ConversationDataMapper @Inject constructor(
         if (record.isUnsupportedMessage) {
             addContentToGroup(
                 groups,
-                MessageContentData.Text(text = AnnotatedString(UnsupportedMessageContent.PLACEHOLDER_TEXT))
+                MessageContentData.Text(text = AnnotatedString(context.getString(R.string.messageUnsupported)))
             )
 
             return groups.toImmutableList()

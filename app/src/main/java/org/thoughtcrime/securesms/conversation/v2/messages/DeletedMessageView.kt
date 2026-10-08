@@ -8,7 +8,6 @@ import androidx.annotation.ColorInt
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewDeletedMessageBinding
 import org.thoughtcrime.securesms.database.model.MessageRecord
-import org.thoughtcrime.securesms.database.model.content.UnsupportedMessageContent
 
 class DeletedMessageView : LinearLayout {
     private val binding: ViewDeletedMessageBinding by lazy { ViewDeletedMessageBinding.bind(this) }
@@ -30,7 +29,7 @@ class DeletedMessageView : LinearLayout {
     }
 
     fun bindUnsupported(@ColorInt textColor: Int) {
-        binding.deleteTitleTextView.text = UnsupportedMessageContent.PLACEHOLDER_TEXT
+        binding.deleteTitleTextView.setText(R.string.messageUnsupported)
         binding.deleteTitleTextView.contentDescription = null
         binding.deletedMessageViewIconImageView.setImageResource(R.drawable.ic_circle_alert)
         applyColor(textColor)

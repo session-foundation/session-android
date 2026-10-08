@@ -161,7 +161,7 @@
                         android:gravity="center"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        tools:text="Some messages can't be shown on this device. Update Session to read them."
+                        tools:text="@string/messageUnsupportedBanner"
                         />
                     <ImageView
                         android:id="@+id/unsupportedMessageBannerDismiss"

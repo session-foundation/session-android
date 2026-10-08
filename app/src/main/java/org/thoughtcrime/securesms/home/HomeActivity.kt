@@ -402,8 +402,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 unsupportedMessageBannerStore.state.collect { state ->
-                    binding.unsupportedMessageBanner.isVisible = state.text != null
-                    binding.unsupportedMessageBannerTextView.text = state.text
+                    binding.unsupportedMessageBanner.isVisible = state.textRes != null
+                    state.textRes?.let { binding.unsupportedMessageBannerTextView.setText(it) }
                 }
             }
         }

@@ -1,5 +1,7 @@
 package org.session.libsession.messaging.sending_receiving
 
+import androidx.annotation.StringRes
+import network.loki.messenger.R
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -30,12 +32,10 @@ object UnsupportedMessageBanner {
         OTHER_DEVICE,
     }
 
-    enum class State(val text: String?) {
+    enum class State(@StringRes val textRes: Int?) {
         HIDDEN(null),
-
-        // FIXME: Move these to Crowdin once the design is settled
-        GENERAL("Some messages can't be shown on this device. Update Session to read them."),
-        OTHER_DEVICE("One of your other devices is using a newer version of Session. Update this device to keep your messages in sync."),
+        GENERAL(R.string.messageUnsupportedBanner),
+        OTHER_DEVICE(R.string.messageUnsupportedBannerLinkedDevice),
     }
 
     fun state(triggeredAtMs: Long?, otherDeviceTriggeredAtMs: Long?, dismissedAtMs: Long?): State {

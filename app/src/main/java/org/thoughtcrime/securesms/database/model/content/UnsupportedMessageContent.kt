@@ -11,7 +11,4 @@ import kotlinx.serialization.Serializable
 @SerialName(UnsupportedMessageContent.TYPE_NAME)
 data object UnsupportedMessageContent : MessageContent {
     const val TYPE_NAME = "unsupported_message"
-
-    // FIXME: Move to Crowdin once the design is settled
-    const val PLACEHOLDER_TEXT = "This message can't be displayed. Update Session to view it."
 }
