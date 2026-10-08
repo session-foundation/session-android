@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.jobs
 
-import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import dagger.assisted.Assisted
@@ -96,7 +95,12 @@ class AttachmentUploadJob @AssistedInject constructor(
                             )
                         )
                     )
-                    id to "${threadAddress.serverUrl}/file/$id"
+                    // Use the canonical community file URL (including the room) so other clients
+                    // (notably iOS, whose parser requires the `/room/<room>/file/<id>` form) can
+                    // download it. Android download is unaffected: it derives the file id from the
+                    // URL's last path segment and the room from the thread, so both this and the
+                    // legacy `<server>/file/<id>` form continue to work.
+                    id to "${threadAddress.serverUrl}/room/${threadAddress.room}/file/$id"
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
@@ -148,7 +152,7 @@ class AttachmentUploadJob @AssistedInject constructor(
         val deterministicallyEncrypted: Boolean
 
         when {
-            encrypt && preferences.forcesDeterministicAttachmentEncryption -> {
+            encrypt -> {
                 deterministicallyEncrypted = true
                 val result = attachmentProcessor.encryptDeterministically(
                     plaintext = input,
@@ -157,14 +161,6 @@ class AttachmentUploadJob @AssistedInject constructor(
                 key = result.key
                 dataToUpload = result.ciphertext
                 digest = null
-            }
-
-            encrypt -> {
-                deterministicallyEncrypted = false
-                val result = attachmentProcessor.encryptAttachmentLegacy(plaintext = input)
-                key = result.first.key
-                dataToUpload = result.first.ciphertext
-                digest = result.second
             }
 
             else -> {
@@ -251,8 +247,7 @@ class AttachmentUploadJob @AssistedInject constructor(
     }
 
     override fun serialize(): Data {
-        val kryo = Kryo()
-        kryo.isRegistrationRequired = false
+        val kryo = jobKryo()
         val serializedMessage = ByteArray(4096)
         val output = Output(serializedMessage, Job.MAX_BUFFER_SIZE_BYTES)
         kryo.writeClassAndObject(output, message)
@@ -280,8 +275,7 @@ class AttachmentUploadJob @AssistedInject constructor(
 
         override fun create(data: Data): AttachmentUploadJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
-            val kryo = Kryo()
-            kryo.isRegistrationRequired = false
+            val kryo = jobKryo()
             val input = Input(serializedMessage)
             val message: Message
             try {

@@ -19,9 +19,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.preferences.copyPublicKey
 import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.border
@@ -74,7 +73,7 @@ internal fun InviteFriend(
 
             Text(
                 stringResource(R.string.shareAccountIdDescription).let { txt ->
-                    Phrase.from(txt).put(APP_NAME_KEY, context.getString(R.string.app_name)).format().toString()
+                    Phrase.from(txt).format().toString()
                 },
                 textAlign = TextAlign.Center,
                 style = LocalType.current.small,

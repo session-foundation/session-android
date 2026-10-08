@@ -2,13 +2,12 @@ package org.thoughtcrime.securesms.preferences.prosettings
 
 import android.content.Context
 import android.content.Intent
-import android.icu.util.MeasureUnit
 import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavOptionsBuilder
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.Lazy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -23,25 +22,25 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.pro.GetProStatusResponse
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.ACTION_TYPE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CURRENT_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.MONTHLY_PRICE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PERCENT_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PRICE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.SELECTED_PLAN_LENGTH_SINGULAR_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
@@ -52,14 +51,16 @@ import org.thoughtcrime.securesms.debugmenu.DebugLogGroup
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.ProDataState
-import org.thoughtcrime.securesms.pro.ProDetailsRepository
+import org.thoughtcrime.securesms.pro.ProStatusRepository
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
 import org.thoughtcrime.securesms.pro.isFromAnotherPlatform
+import org.thoughtcrime.securesms.pro.subscription.ProPlanPeriod
 import org.thoughtcrime.securesms.pro.subscription.ProSubscriptionDuration
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionCoordinator
 import org.thoughtcrime.securesms.pro.subscription.SubscriptionManager
+import org.thoughtcrime.securesms.pro.ProUrls
 import org.thoughtcrime.securesms.ui.dialog.SimpleDialogData
 import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.util.CurrencyFormatter
@@ -67,6 +68,7 @@ import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.State
 import java.math.BigDecimal
 import java.time.Duration
+import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -80,7 +82,7 @@ class ProSettingsViewModel @AssistedInject constructor(
     private val subscriptionCoordinator: SubscriptionCoordinator,
     private val dateUtils: DateUtils,
     private val prefs: TextSecurePreferences,
-    private val proDetailsRepository: ProDetailsRepository,
+    private val proStatusRepository: ProStatusRepository,
     private val configFactory: Lazy<ConfigFactoryProtocol>,
     private val storage: StorageProtocol,
     private val clock: SnodeClock,
@@ -109,6 +111,18 @@ class ProSettingsViewModel @AssistedInject constructor(
     private var recovering: Boolean = false
 
     init {
+        // Trigger #3 — refresh on entering Pro settings. Floored: arriving here is not on its own a
+        // reason to bypass the floor.
+        //
+        // Not via refreshProStatus(), which early-returns while `refreshState` is Loading — and a
+        // process that has not confirmed a fetch reports Loading from launch, so that guard would
+        // suppress the one trigger able to clear it. The repository single-flights anyway
+        // (WorkManager REPLACE), so the guard buys nothing here.
+        proStatusRepository.requestRefresh(immediate = false)
+
+        // Trigger #4 — the bounded grace poll, for as long as this screen is open.
+        pollProStatusDuringGraceWhileOpen()
+
         // observe subscription status
         viewModelScope.launch {
             proStatusManager
@@ -143,53 +157,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                         ).show()
                     }
 
-                    is SubscriptionManager.PurchaseEvent.Failed.ServerError -> {
-                        // this is a special case of failure. We should display a custom dialog and allow the user to retry
-                        _dialogState.update {
-                            val action = context.getString(
-                                when(_proSettingsUIState.value.proDataState.type) {
-                                    is ProStatus.Active -> R.string.proUpdatingAction
-                                    is ProStatus.Expired -> R.string.proRenewingAction
-                                    else -> R.string.proUpgradingAction
-                                }
-                            )
-
-                            it.copy(
-                                showSimpleDialog = SimpleDialogData(
-                                    title = context.getString(R.string.paymentError),
-                                    message = Phrase.from(context, R.string.paymentProError)
-                                        .put(ACTION_TYPE_KEY, action)
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .format(),
-                                    positiveText = context.getString(R.string.retry),
-                                    negativeText = context.getString(R.string.helpSupport),
-                                    positiveStyleDanger = false,
-                                    showXIcon = true,
-                                    onPositive = {
-                                        // show the loader again
-                                        val data = choosePlanState.value
-                                        if(data is State.Success) {
-                                            _choosePlanState.update {
-                                                State.Success(
-                                                    data.value.copy(purchaseInProgress = true)
-                                                )
-                                            }
-                                        }
-
-                                        // retry the post purchase code
-                                        subscriptionCoordinator.getCurrentManager().onPurchaseSuccessful(
-                                            orderId = purchaseEvent.orderId,
-                                            paymentId = purchaseEvent.paymentId
-                                        )
-                                    },
-                                    onNegative = {
-                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
-                                    }
-                                )
-                            )
-                        }
-                    }
-
                     is SubscriptionManager.PurchaseEvent.Cancelled -> {
                         // nothing to do in this case
                     }
@@ -214,11 +181,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                     it.copy(
                         showSimpleDialog = SimpleDialogData(
                             title = Phrase.from(context, R.string.proAccessRestored)
-                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                             .format().toString(),
                             message = Phrase.from(context, R.string.proAccessRestoredDescription)
-                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format(),
                             positiveText = context.getString(R.string.okay),
                             positiveStyleDanger = false,
@@ -230,17 +194,14 @@ class ProSettingsViewModel @AssistedInject constructor(
                     it.copy(
                         showSimpleDialog = SimpleDialogData(
                             title = Phrase.from(context, R.string.proAccessNotFound)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString(),
                             message = Phrase.from(context, R.string.proAccessNotFoundDescription)
-                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format(),
                             positiveText = context.getString(R.string.helpSupport),
                             negativeText = context.getString(R.string.close),
                             positiveStyleDanger = false,
                             negativeStyleDanger = true,
-                            onPositive = { onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT)) },
+                            onPositive = { onCommand(ShowOpenUrlDialog(ProUrls.SUPPORT)) },
                         )
                     )
                 }
@@ -252,27 +213,31 @@ class ProSettingsViewModel @AssistedInject constructor(
             recovering = false
         }
 
+        // `inGracePeriod` is safe to read directly here and at the label below: the "completed fetch at
+        // or after the crossing" condition is applied in `toProStatus`, where the flag is produced.
         while (true) {
             val now = clock.currentTime()
 
             _proSettingsUIState.update {
                 it.copy(
                     proDataState = proDataState,
-                    inGracePeriod = (subType as? ProStatus.Active.AutoRenewing)?.inGracePeriod ?: false,
+                    inGracePeriod = (subType as? ProStatus.Active.AutoRenewing)?.inGracePeriod == true,
                     subscriptionExpiryLabel = when(subType){
                         is ProStatus.Active.AutoRenewing -> {
-                            // in grace period
+                            // in grace period — already debounced at construction (see toProStatus)
                             if(subType.inGracePeriod) {
                                 Phrase.from(context, R.string.proRenewalUnsuccessful)
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format()
                             } else {
                                 Phrase.from(context, R.string.proAutoRenewTime)
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .put(
+                                        // NOT floored at zero. `getExpiryString` already renders a
+                                        // negative remaining as "Expired", and the floor made that
+                                        // branch unreachable — a past renewal date rendered
+                                        // "0 seconds", which reads as a live countdown at the moment of
+                                        // lapse and gets chased as an expiry bug rather than a stale one.
                                         TIME_KEY, dateUtils.getExpiryString(
                                             remaining = Duration.between(now, subType.renewingAt)
-                                                .coerceAtLeast(Duration.ZERO)
                                         )
                                     )
                                     .format()
@@ -281,16 +246,17 @@ class ProSettingsViewModel @AssistedInject constructor(
 
                         is ProStatus.Active.Expiring ->
                             Phrase.from(context, R.string.proExpiringTime)
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
+                                // Not floored — see the AutoRenewing branch above.
                                 .put(TIME_KEY, dateUtils.getExpiryString(
-                                    remaining = Duration.between(now, subType.renewingAt)
-                                        .coerceAtLeast(Duration.ZERO)))
+                                    remaining = Duration.between(now, subType.renewingAt)))
                                 .format()
 
                         else -> ""
                     },
+                    // WithPlan, not Active: a proof-seeded Active has no date, and the empty string
+                    // is the "render absent" answer rather than a formatted sentinel.
                     subscriptionExpiryDate = when(subType){
-                        is ProStatus.Active -> subType.renewingAtFormatted()
+                        is ProStatus.Active.WithPlan -> subType.renewingAtFormatted()
                         else -> ""
                     },
                 )
@@ -328,14 +294,17 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             // first check if the user has a valid subscription and billing
             val hasBillingCapacity = subscriptionCoordinator.getCurrentManager().supportsBilling.value
-            val hasValidSub = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
+            // The override is what makes "same platform, different store account" expressible; without it
+            // this always reports the signed-in account as the buyer on a mocked fixture.
+            val hasValidSub = prefs.getDebugOriginatingAccountOverride()
+                ?: subscriptionCoordinator.getCurrentManager().hasValidSubscription()
 
             // next get the plans, including their pricing, unless there is no billing
             // or the user is pro without a valid subscription
             // or the user is pro but non originating
             val noPriceNeeded = !hasBillingCapacity
                     || (subType is ProStatus.Active && !hasValidSub)
-                    || (subType is ProStatus.Active && subType.providerData.isFromAnotherPlatform())
+                    || (subType is ProStatus.Active.WithPlan && subType.providerData.isFromAnotherPlatform())
 
             val plans = if(noPriceNeeded) emptyList()
             else {
@@ -366,12 +335,13 @@ class ProSettingsViewModel @AssistedInject constructor(
 
     fun ensureCancelState(){
         val sub = _proSettingsUIState.value.proDataState.type
-        if(sub !is ProStatus.Active) return
+        if(sub !is ProStatus.Active.WithPlan) return
 
         _cancelPlanState.update { State.Loading }
         viewModelScope.launch {
             _cancelPlanState.update { State.Loading }
-            val hasValidSubscription = subscriptionCoordinator.getCurrentManager().hasValidSubscription()
+            val hasValidSubscription = prefs.getDebugOriginatingAccountOverride()
+                ?: subscriptionCoordinator.getCurrentManager().hasValidSubscription()
 
             _cancelPlanState.update {
                 State.Success(
@@ -386,20 +356,26 @@ class ProSettingsViewModel @AssistedInject constructor(
 
     fun ensureRefundState(){
         val sub = _proSettingsUIState.value.proDataState.type
-        if(sub !is ProStatus.Active) return
+        if(sub !is ProStatus.Active.WithPlan) return
 
         _refundPlanState.update { State.Loading }
 
         viewModelScope.launch {
             _refundPlanState.update {
-                val isQuickRefund = if(prefs.forceCurrentUserAsPro()) prefs.getDebugIsWithinQuickRefund()// debug mode
-                else sub.isWithinQuickRefundWindow()
+                // One source for the window: the plan's own `quickRefundExpiry`. A debug override moves that
+                // date (see `ProStatusManager.withMockedQuickRefundWindow`) rather than being read here, so
+                // this no longer needs a debug branch — and no longer depends on the legacy
+                // `forceCurrentUserAsPro`, which made the override inert for any fixture granting access
+                // through the current lever.
+                val isQuickRefund = sub.isWithinQuickRefundWindow(clock.currentTime())
 
                 State.Success(
                     RefundPlanState(
                         proStatus = sub,
                         isQuickRefund = isQuickRefund,
-                        quickRefundUrl = sub.providerData.refundPlatformUrl
+                        quickRefundUrl = sub.providerData.refundPlatformUrl,
+                        hasValidSubscription = prefs.getDebugOriginatingAccountOverride()
+                            ?: subscriptionCoordinator.getCurrentManager().hasValidSubscription()
                     )
                 )
             }
@@ -421,23 +397,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                         val state = _proSettingsUIState.value.proDataState.type
                         val (title, message) = when{
                             state is ProStatus.Active -> Phrase.from(context.getText(R.string.proAccessLoading))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proAccessLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             state is ProStatus.NeverSubscribed
                                     || command.inSheet -> Phrase.from(context.getText(R.string.checkingProStatus))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusContinue))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             else -> Phrase.from(context.getText(R.string.checkingProStatus))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusRenew))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                         }
 
@@ -457,25 +427,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                         val state = _proSettingsUIState.value.proDataState.type
                         val (title, message) = when{
                             state is ProStatus.Active -> Phrase.from(context.getText(R.string.proAccessError))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proAccessNetworkLoadError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
                             state is ProStatus.NeverSubscribed
                                     || command.inSheet-> Phrase.from(context.getText(R.string.proStatusError))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusNetworkErrorContinue))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             else -> Phrase.from(context.getText(R.string.proStatusError))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusRenewError))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                        .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                         .format()
                         }
 
@@ -488,9 +450,9 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshProDetails(true) },
+                                    onPositive = { refreshProStatus(true) },
                                     onNegative = {
-                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                                        onCommand(ShowOpenUrlDialog(ProUrls.SUPPORT))
                                     }
                                 )
                             )
@@ -501,22 +463,20 @@ class ProSettingsViewModel @AssistedInject constructor(
                     // otherwise go to the "choose plan" screen
                     else -> {
                         // if we in the process of refunding on another platform, show that screen instead
-                        if((_proSettingsUIState.value.proDataState.type as? ProStatus.Active)?.refundInProgress == true){
+                        if((_proSettingsUIState.value.proDataState.type as? ProStatus.Active.WithPlan)?.refundInProgress == true){
                             navigateTo(ProSettingsDestination.RefundInProgress)
                             return
                         }
 
                         // otherwise handle the "Choose Plan"
-                        val provider = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)?.providerData
+                        val provider = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active.WithPlan)?.providerData
                         if(_proSettingsUIState.value.inGracePeriod){
                             _dialogState.update {
                                 it.copy(
                                     showSimpleDialog = SimpleDialogData(
                                         title = Phrase.from(context, R.string.proRenewalUnsuccessfulTitle)
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format().toString(),
                                         message = Phrase.from(context, R.string.proUnsuccessfulRenewalDescription)
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .put(PLATFORM_ACCOUNT_KEY, provider?.platformAccount ?: "")
                                             .put(PLATFORM_STORE_KEY, provider?.store ?: "")
                                             .format(),
@@ -538,14 +498,14 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             Commands.GoToRefund -> {
                 val sub = _proSettingsUIState.value.proDataState.type
-                if(sub !is ProStatus.Active) return
+                if(sub !is ProStatus.Active.WithPlan) return
 
                 navigateTo(ProSettingsDestination.RefundSubscription)
             }
 
             Commands.GoToCancel -> {
                 val sub = _proSettingsUIState.value.proDataState.type
-                if(sub !is ProStatus.Active) return
+                if(sub !is ProStatus.Active.WithPlan) return
 
                 navigateTo(ProSettingsDestination.CancelSubscription)
             }
@@ -558,7 +518,7 @@ class ProSettingsViewModel @AssistedInject constructor(
             }
 
             Commands.OpenCancelSubscriptionPage -> {
-                val subUrl = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active)
+                val subUrl = (_proSettingsUIState.value.proDataState.type as? ProStatus.Active.WithPlan)
                     ?.providerData?.cancelSubscriptionUrl
                 if(!subUrl.isNullOrEmpty()){
                     viewModelScope.launch {
@@ -577,12 +537,12 @@ class ProSettingsViewModel @AssistedInject constructor(
 
             is Commands.RecoverAccount -> {
                 recovering = true
-                refreshProDetails(true)
+                refreshProStatus(true)
             }
 
             is Commands.OnUserBackFromCancellation -> {
                 // refresh details
-                refreshProDetails(true)
+                refreshProStatus(true)
 
                 // send action to handle post cancellation to the navigator
                 viewModelScope.launch {
@@ -622,30 +582,24 @@ class ProSettingsViewModel @AssistedInject constructor(
                 val currentSubscription = _proSettingsUIState.value.proDataState.type
                 val selectedPlan = getSelectedPlan() ?: return
 
-                if(currentSubscription is ProStatus.Active){
+                if(currentSubscription is ProStatus.Active.WithPlan){
                     val newSubscriptionExpiryString = currentSubscription.renewingAtFormatted()
 
-                    val currentSubscriptionDuration = DateUtils.getLocalisedTimeDuration(
-                        context = context,
-                        amount = currentSubscription.duration.duration.months,
-                        unit = MeasureUnit.MONTH
+                    val currentSubscriptionDuration = DateUtils.getLocalisedProPlanLength(
+                        context, currentSubscription.duration
                     )
 
-                    val selectedSubscriptionDuration = DateUtils.getLocalisedTimeDuration(
-                        context = context,
-                        amount = selectedPlan.durationType.duration.months,
-                        unit = MeasureUnit.MONTH
+                    val selectedSubscriptionDuration = DateUtils.getLocalisedProPlanLength(
+                        context, selectedPlan.durationType.period
                     )
 
                     _dialogState.update {
                         it.copy(
                             showSimpleDialog = SimpleDialogData(
                                 title = Phrase.from(context, R.string.updateAccess)
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString(),
                                 message = if(currentSubscription is ProStatus.Active.AutoRenewing)
                                     Phrase.from(context.getText(R.string.proUpdateAccessDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .put(DATE_KEY, newSubscriptionExpiryString)
                                         .put(CURRENT_PLAN_LENGTH_KEY, currentSubscriptionDuration)
                                         .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration.lowercase())
@@ -653,7 +607,6 @@ class ProSettingsViewModel @AssistedInject constructor(
                                         .put(SELECTED_PLAN_LENGTH_SINGULAR_KEY, selectedSubscriptionDuration.removeSuffix("s"))
                                         .format()
                                 else Phrase.from(context.getText(R.string.proUpdateAccessExpireDescription))
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .put(DATE_KEY, newSubscriptionExpiryString)
                                     .put(SELECTED_PLAN_LENGTH_KEY, selectedSubscriptionDuration.lowercase())
                                     .format(),
@@ -689,23 +642,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                         val state = _proSettingsUIState.value.proDataState.type
                         val (title, message) = when{
                             state is ProStatus.Active -> Phrase.from(context.getText(R.string.proStatusLoading))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.proStatusLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             state is ProStatus.NeverSubscribed
                                     || command.inSheet-> Phrase.from(context.getText(R.string.checkingProStatus))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusContinue))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                             else -> Phrase.from(context.getText(R.string.checkingProStatus))
-                                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                 .format().toString() to
                                     Phrase.from(context.getText(R.string.checkingProStatusDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format()
                         }
                         _dialogState.update {
@@ -725,23 +672,17 @@ class ProSettingsViewModel @AssistedInject constructor(
                             val state = _proSettingsUIState.value.proDataState.type
                             val (title, message) = when{
                                 state is ProStatus.Active -> Phrase.from(context.getText(R.string.proStatusError))
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
                                 state is ProStatus.NeverSubscribed ||
                                      command.inSheet -> Phrase.from(context.getText(R.string.proStatusError))
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusNetworkErrorContinue))
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
                                 else -> Phrase.from(context.getText(R.string.proStatusError))
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                     .format().toString() to
                                         Phrase.from(context.getText(R.string.proStatusRefreshNetworkError))
-                                            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                             .format()
                             }
 
@@ -753,9 +694,9 @@ class ProSettingsViewModel @AssistedInject constructor(
                                     negativeText = context.getString(R.string.helpSupport),
                                     positiveStyleDanger = false,
                                     showXIcon = true,
-                                    onPositive = { refreshProDetails(true) },
+                                    onPositive = { refreshProStatus(true) },
                                     onNegative = {
-                                        onCommand(ShowOpenUrlDialog(ProStatusManager.URL_PRO_SUPPORT))
+                                        onCommand(ShowOpenUrlDialog(ProUrls.SUPPORT))
                                     }
                                 )
                             )
@@ -774,10 +715,8 @@ class ProSettingsViewModel @AssistedInject constructor(
                             it.copy(
                                 showSimpleDialog = SimpleDialogData(
                                     title = Phrase.from(context.getText(R.string.proStatsLoading))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format().toString(),
                                     message = Phrase.from(context.getText(R.string.proStatsLoadingDescription))
-                                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                                         .format(),
                                     positiveText = context.getString(R.string.okay),
                                     positiveStyleDanger = false,
@@ -792,12 +731,61 @@ class ProSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun refreshProDetails(force: Boolean){
+    /**
+     * Trigger #4 — poll `get_pro_status` while the renewal is overdue and this screen is open.
+     *
+     * Not a 60s timer on the screen: it sleeps until the renewal falls due, then polls once a minute
+     * while the renewal still hasn't landed. Three things stop it — the renewal arrives (`expiry`
+     * advances, restarting this from the new date), the account runs past coverage, or the screen
+     * closes and cancels `viewModelScope`.
+     *
+     * No `auto_renewing` check needed: the wire zeroes `grace_period_duration` when the subscription
+     * is not auto-renewing, so coverage ends exactly when the renewal falls due and the loop runs no
+     * iterations at all.
+     *
+     * Exempt from the freshness floor — see [GRACE_POLL_INTERVAL_MS] for why.
+     */
+    private fun pollProStatusDuringGraceWhileOpen() {
+        viewModelScope.launch {
+            proStatusRepository.loadState
+                .map { it.lastUpdated?.first }
+                .distinctUntilChanged { old, new -> old?.expiry == new?.expiry }
+                .collectLatest { status ->
+                    val renewalDue = status?.renewalDueAt() ?: return@collectLatest
+                    val coverageEnd = status.coverageEndsAt() ?: return@collectLatest
+
+                    // Returns immediately when already past it — i.e. the screen was opened
+                    // mid-grace — which is exactly when we want the first poll to be now.
+                    clock.delayUntil(renewalDue)
+
+                    while (clock.currentTime().isBefore(coverageEnd)) {
+                        proStatusRepository.requestRefresh(immediate = true)
+                        delay(GRACE_POLL_INTERVAL_MS)
+                    }
+                }
+        }
+    }
+
+    /**
+     * The instant the renewal falls due. `expiry` IS that date — do not subtract grace, which runs
+     * forward from it.
+     */
+    private fun GetProStatusResponse.renewalDueAt(): Instant? = expiry
+
+    /** The instant coverage really ends. See [renewalDueAt]. */
+    private fun GetProStatusResponse.coverageEndsAt(): Instant? = expiry?.plus(gracePeriod)
+
+    /**
+     * [immediate] bypasses the repository's freshness floor. Every caller here is a user-initiated
+     * refresh (a retry button, recover, returning from cancellation) — trigger #5 — so they pass
+     * true: the user is looking at the screen waiting for the answer.
+     */
+    private fun refreshProStatus(immediate: Boolean){
         // stop early if we are already refreshing
         if(_proSettingsUIState.value.proDataState.refreshState is State.Loading) return
 
-        // refreshes the pro details data
-        proDetailsRepository.requestRefresh(force = force)
+        // refreshes the pro status data
+        proStatusRepository.requestRefresh(immediate = immediate)
     }
 
     private fun getSelectedPlan(): ProPlan? {
@@ -810,10 +798,12 @@ class ProSettingsViewModel @AssistedInject constructor(
     }
 
     private suspend fun getSubscriptionPlans(subType: ProStatus): List<ProPlan> {
-        val isActive = subType is ProStatus.Active
-        val currentPlan12Months = isActive && subType.duration == ProSubscriptionDuration.TWELVE_MONTHS
-        val currentPlan3Months = isActive && subType.duration == ProSubscriptionDuration.THREE_MONTHS
-        val currentPlan1Month = isActive && subType.duration == ProSubscriptionDuration.ONE_MONTH
+        // The active plan's raw (count, unit), or null when not subscribed. We mark/disable a catalog SKU
+        // as the user's "current" plan by matching this period against the SKU's own (count, unit) — NOT
+        // by a fixed enum, so the unit is respected as transmitted. This is cosmetic and (count, unit) is
+        // not a guaranteed-unique key, so we degrade gracefully: a SKU is "current" iff its period equals
+        // the active plan's; if nothing matches (e.g. a "1y" plan vs a "12m" SKU), nothing is marked.
+        val activePeriod = (subType as? ProStatus.Active.WithPlan)?.duration
 
         // get prices from the subscription provider
         val prices = subscriptionCoordinator.getCurrentManager().getSubscriptionPrices()
@@ -822,61 +812,64 @@ class ProSettingsViewModel @AssistedInject constructor(
         val data3Month  = calculatePricesFor(prices.firstOrNull{ it.subscriptionDuration == ProSubscriptionDuration.THREE_MONTHS })
         val data12Month = calculatePricesFor(prices.firstOrNull{ it.subscriptionDuration == ProSubscriptionDuration.TWELVE_MONTHS })
 
-        val baseline = data1Month?.perMonthUnits ?: BigDecimal.ZERO
+        // Discount baseline = the highest per-month price among the available plans — i.e. the shortest
+        // plan, since shorter plans cost more per month. Don't assume the 1-month SKU exists; whichever
+        // plan equals the baseline gets 0% and no badge via discountBadge().
+        val baseline = listOfNotNull(data1Month, data3Month, data12Month)
+            .maxOfOrNull { it.perMonthUnits } ?: BigDecimal.ZERO
 
-        val plan12Months = data12Month?.let {
-            ProPlan(
-                title = Phrase.from(context.getText(R.string.proPriceTwelveMonths))
-                    .put(MONTHLY_PRICE_KEY, it.perMonthText)
-                    .format().toString(),
-                subtitle = Phrase.from(context.getText(R.string.proBilledAnnually))
-                    .put(PRICE_KEY, it.totalText)
-                    .format().toString(),
-                selected = currentPlan12Months || subType !is ProStatus.Active, // selected if our active sub is 12 month, or as a default for non pro or renew
-                currentPlan = currentPlan12Months,
-                durationType = ProSubscriptionDuration.TWELVE_MONTHS,
-                badges = buildList {
-                    if (currentPlan12Months) add(ProPlanBadge(context.getString(R.string.currentBilling)))
-                    discountBadge(baseline = baseline, it.perMonthUnits, showTooltip = currentPlan12Months)?.let(this::add)
-                }
+        // One generic card per SKU (longest first). The period label ("3 months"/"1 year") comes from the
+        // locale formatter, so a new SKU needs no new strings; the 1-month card naturally carries no
+        // discount badge (its per-month price equals the baseline, so the computed discount is 0).
+        return listOfNotNull(
+            data12Month?.let { buildProPlanCard(ProSubscriptionDuration.TWELVE_MONTHS, it, baseline, subType, activePeriod) },
+            data3Month?.let  { buildProPlanCard(ProSubscriptionDuration.THREE_MONTHS,  it, baseline, subType, activePeriod) },
+            data1Month?.let  { buildProPlanCard(ProSubscriptionDuration.ONE_MONTH,     it, baseline, subType, activePeriod) },
+        )
+    }
+
+    /**
+     * Build one choose-plan card for a catalog [sku] from its [data] prices. Both card strings are
+     * generic over the SKU's (count, unit): the title is "{plan_length} - {monthly_price} / month" and
+     * the subtitle "{price} billed every {plan_length}", with `plan_length` rendered by the locale
+     * formatter — so no per-duration strings. [baseline] is the 1-month per-month price for the discount
+     * badge; a SKU is "current" iff its period equals the active plan's [activePeriod].
+     */
+    private fun buildProPlanCard(
+        sku: ProSubscriptionDuration,
+        data: PriceDisplayData,
+        baseline: BigDecimal,
+        subType: ProStatus,
+        activePeriod: ProPlanPeriod?,
+    ): ProPlan {
+        val isCurrent = activePeriod == sku.period
+        val planLength = DateUtils.getLocalisedProPlanLength(context, sku.period)
+        return ProPlan(
+            title = Phrase.from(
+                DateUtils.proStringTemplateOrFallback(
+                    context, "proPlanPricePerMonth", "{plan_length} - {monthly_price} / month"
+                )
             )
-        }
-
-        val plan3Months = data3Month?.let {
-            ProPlan(
-                title = Phrase.from(context.getText(R.string.proPriceThreeMonths))
-                    .put(MONTHLY_PRICE_KEY, it.perMonthText)
-                    .format().toString(),
-                subtitle = Phrase.from(context.getText(R.string.proBilledQuarterly))
-                    .put(PRICE_KEY, it.totalText)
-                    .format().toString(),
-                selected = currentPlan3Months,
-                currentPlan = currentPlan3Months,
-                durationType = ProSubscriptionDuration.THREE_MONTHS,
-                badges = buildList {
-                    if (currentPlan3Months) add(ProPlanBadge(context.getString(R.string.currentBilling)))
-                    discountBadge(baseline = baseline, it.perMonthUnits, showTooltip = currentPlan3Months)?.let(this::add)
-                }
+                .put(PLAN_LENGTH_KEY, planLength)
+                .put(MONTHLY_PRICE_KEY, data.perMonthText)
+                .format().toString(),
+            subtitle = Phrase.from(
+                DateUtils.proStringTemplateOrFallback(
+                    context, "proPlanBilledEvery", "{price} billed every {plan_length}"
+                )
             )
-        }
-
-        val plan1Month = data1Month?.let {
-            ProPlan(
-                title = Phrase.from(context.getText(R.string.proPriceOneMonth))
-                    .put(MONTHLY_PRICE_KEY, it.perMonthText)
-                    .format().toString(),
-                subtitle = Phrase.from(context.getText(R.string.proBilledMonthly))
-                    .put(PRICE_KEY, it.totalText)
-                    .format().toString(),
-                selected = currentPlan1Month,
-                currentPlan = currentPlan1Month,
-                durationType = ProSubscriptionDuration.ONE_MONTH,
-                badges = if (currentPlan1Month) listOf(ProPlanBadge(context.getString(R.string.currentBilling))) else emptyList()
-                // no discount on the baseline 1 month...
-            )
-        }
-
-        return listOfNotNull(plan12Months, plan3Months, plan1Month)
+                .put(PRICE_KEY, data.totalText)
+                .put(PLAN_LENGTH_KEY, planLength)
+                .format().toString(),
+            // The longest plan is the default selection for a non-subscriber / renew flow.
+            selected = isCurrent || (subType !is ProStatus.Active && sku == ProSubscriptionDuration.TWELVE_MONTHS),
+            currentPlan = isCurrent,
+            durationType = sku,
+            badges = buildList {
+                if (isCurrent) add(ProPlanBadge(context.getString(R.string.currentBilling)))
+                discountBadge(baseline = baseline, perMonthUnits = data.perMonthUnits, showTooltip = isCurrent)?.let(::add)
+            },
+        )
     }
 
     private data class PriceDisplayData(val perMonthUnits: BigDecimal, val perMonthText: String, val totalText: String)
@@ -902,9 +895,7 @@ class ProSettingsViewModel @AssistedInject constructor(
         if (pct <= 0) return null
         val tooltip = if (showTooltip)
             Phrase.from(context.getText(R.string.proDiscountTooltip))
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .put(PERCENT_KEY, pct.toString())
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format().toString()
         else null
         return ProPlanBadge(
@@ -1045,14 +1036,18 @@ class ProSettingsViewModel @AssistedInject constructor(
     )
 
     data class CancelPlanState(
-        val proStatus: ProStatus.Active,
+        val proStatus: ProStatus.Active.WithPlan,
         val hasValidSubscription: Boolean,  // true is there is a current subscription AND the available subscription manager on this device has an account which matches the product id we got from libsession
     )
 
     data class RefundPlanState(
-        val proStatus: ProStatus.Active,
+        val proStatus: ProStatus.Active.WithPlan,
         val isQuickRefund: Boolean,
-        val quickRefundUrl: String?
+        val quickRefundUrl: String?,
+        // Whether the store account signed in here is the one that bought the plan. The refund screen
+        // needs it for the same reason cancel and choose-plan do: a refund can only be requested from the
+        // buying account, so a different one has to be sent to the non-originating screen.
+        val hasValidSubscription: Boolean
     )
 
     data class ProStats(
@@ -1081,4 +1076,16 @@ class ProSettingsViewModel @AssistedInject constructor(
         val showTCPolicyDialog: Boolean = false,
         val showSimpleDialog: SimpleDialogData? = null,
     )
+
+    companion object {
+        /**
+         * Cadence of the #4 grace poll. Shared cross-client contract (spec §9.3) — the same 60s
+         * Desktop and iOS use for their while-open poll; keep them in step.
+         *
+         * This equals `ProStatusRepository.MIN_UPDATE_INTERVAL_SECONDS`, and that equality is why #4
+         * bypasses the floor: a poll running exactly at the floor loses every other tick to timing
+         * jitter. The two constants are not coincidentally equal — change neither without the other.
+         */
+        private const val GRACE_POLL_INTERVAL_MS = 60_000L
+    }
 }

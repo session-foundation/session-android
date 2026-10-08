@@ -9,10 +9,16 @@ import org.thoughtcrime.securesms.api.execute
 import javax.inject.Inject
 
 class ServerApiRequest<RespType: ServerApiResponse>(
-    val serverBaseUrl: String,
+    serverBaseUrl: String,
     val serverX25519PubKeyHex: String,
     val api: ServerApi<RespType>,
 ) {
+    /**
+     * Normalised on the way in, so every `buildRequest` can append "/path" without having to know whether
+     * its caller's base URL ended in a slash. See [trimTrailingSlashes].
+     */
+    val serverBaseUrl: String = serverBaseUrl.trimTrailingSlashes()
+
     constructor(fileServer: FileServer, api: ServerApi<RespType>) : this(
         serverBaseUrl = fileServer.url.toString(),
         serverX25519PubKeyHex = fileServer.x25519PubKeyHex,

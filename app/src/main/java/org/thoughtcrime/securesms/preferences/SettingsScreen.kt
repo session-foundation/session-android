@@ -63,15 +63,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.network.model.PathStatus
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
@@ -585,46 +581,46 @@ fun Buttons(
         Cell {
             Column {
                 if(postPro){
-                   ItemButton(
+                    ItemButton(
                         text = annotatedStringResource(
                             when (proDataState.type) {
-                                is ProStatus.Active -> Phrase.from(
-                                    LocalContext.current,
-                                    R.string.sessionProBeta
-                                )
-                                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                                    .format().toString()
+                                    is ProStatus.Active -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.sessionProBeta
+                                    )
+                                        .format().toString()
 
-                                is ProStatus.NeverSubscribed -> Phrase.from(
-                                    LocalContext.current,
-                                    R.string.upgradeSession
-                                )
-                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                                    .format().toString()
+                                    is ProStatus.NeverSubscribed -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.upgradeSession
+                                    )
+                                        .format().toString()
 
-                                is ProStatus.Expired -> Phrase.from(
-                                    LocalContext.current,
-                                    R.string.proRenewBeta
+                                    is ProStatus.Expired -> Phrase.from(
+                                        LocalContext.current,
+                                        R.string.proRenewBeta
+                                    )
+                                        .format().toString()
+                                }
+                            ),
+                            icon = {
+                                Image(
+                                    modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
+                                        .align(Alignment.Center),
+                                    painter = painterResource(R.drawable.ic_pro_badge),
+                                    contentDescription = null,
                                 )
-                                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-                                    .format().toString()
-                            }
-                        ),
-                        icon = {
-                            Image(
-                                modifier = Modifier.size(LocalDimensions.current.iconLargeAvatar)
-                                    .align(Alignment.Center),
-                                painter = painterResource(R.drawable.ic_pro_badge),
-                                contentDescription = null,
-                            )
-                        },
-                        modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
-                        colors = accentTextButtonColors()
-                    ) {
-                       activity?.push<ProSettingsActivity>()
-                    }
+                            },
+                            modifier = Modifier.qaTag(R.string.qa_settings_item_pro),
+                            // The row id above is the tap target and carries no text; this one is on the
+                            // label, so a test can read WHICH of the three states the row is showing.
+                            textQaTag = R.string.qa_settings_item_pro_title,
+                            colors = accentTextButtonColors()
+                        ) {
+                           activity?.push<ProSettingsActivity>()
+                        }
 
-                    Divider()
+                        Divider()
                 }
 
                 // Invite a friend
@@ -754,20 +750,17 @@ fun ShowClearDataDialog(
         text = when(state){
             is SettingsViewModel.ClearDataState.Clearing -> null
             is SettingsViewModel.ClearDataState.Error -> annotatedStringResource(R.string.clearDataErrorDescriptionGeneric)
+            is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevice -> annotatedStringResource(R.string.clearDeviceDescription)
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork -> annotatedStringResource(R.string.clearDeviceAndNetworkConfirm)
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro -> {
                 annotatedStringResource(
                     Phrase.from(context.getText(R.string.proClearAllDataDevice))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format()
                 )
             }
             is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro -> {
                 annotatedStringResource(
                     Phrase.from(context.getText(R.string.proClearAllDataNetwork))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format()
                 )
             }
@@ -786,6 +779,7 @@ fun ShowClearDataDialog(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(stringResource(R.string.clearDeviceOnly)),
+                            qaTag = GetString(stringResource(R.string.AccessibilityId_clearDeviceOnlyRadio)),
                             selected = !deleteOnNetwork
                         )
                     ) {
@@ -796,6 +790,7 @@ fun ShowClearDataDialog(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(stringResource(R.string.clearDeviceAndNetwork)),
+                            qaTag = GetString(stringResource(R.string.AccessibilityId_clearDeviceAndNetworkRadio)),
                             selected = deleteOnNetwork,
                         )
                     ) {
@@ -808,6 +803,7 @@ fun ShowClearDataDialog(
         },
         buttons = when(state){
             is SettingsViewModel.ClearDataState.Default,
+                 is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevice,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmDevicePro,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetwork,
                  is SettingsViewModel.ClearDataState.ConfirmedClearDataState.ConfirmNetworkPro,
@@ -1080,12 +1076,12 @@ private fun SettingsScreenPreview() {
                         )
                     )
                 ),
-                isPostPro = true,
                 proDataState = ProDataState(
                     type = previewAutoRenewingApple,
                     refreshState = State.Success(Unit),
                     showProBadge = true
                 ),
+                isPostPro = true,
                 username = "Atreyu",
                 accountID = "053d30141d0d35d9c4b30a8f8880f8464e221ee71a8aff9f0dcefb1e60145cea5144",
                 pathStatus = PathStatus.READY,

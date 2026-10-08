@@ -4,9 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
@@ -24,7 +23,7 @@ fun OnboardingBackPressAlertDialog(
         onDismissRequest = dismissDialog,
         title = stringResource(R.string.warning),
         text = stringResource(textId).let { txt ->
-            Phrase.from(txt).put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString()
+            Phrase.from(txt).format().toString()
         },
         buttons = listOf(
             DialogButtonData(

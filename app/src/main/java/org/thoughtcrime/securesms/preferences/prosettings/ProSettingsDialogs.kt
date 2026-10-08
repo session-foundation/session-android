@@ -11,6 +11,7 @@ import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.dialog.TCPolicyDialog
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.pro.ProUrls
 
 @Composable
 fun ProSettingsDialogs(
@@ -31,8 +32,8 @@ fun ProSettingsDialogs(
     // T&C + Policy dialog
     if(dialogsState.showTCPolicyDialog){
         TCPolicyDialog(
-            tcsUrl = "https://getsession.org/pro/terms",
-            privacyUrl = "https://getsession.org/pro/privacy",
+            tcsUrl = ProUrls.TERMS_OF_SERVICE,
+            privacyUrl = ProUrls.PRIVACY_POLICY,
             onDismissRequest = { sendCommand(HideTCPolicyDialog) },
         )
     }

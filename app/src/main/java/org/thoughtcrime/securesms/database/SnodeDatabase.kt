@@ -440,14 +440,16 @@ class SnodeDatabase @Inject constructor(
                )
             """)
 
-            // Remove non-existing snodes
+            // Remove non-existing snodes. Safe to run after the path delete above: any path that
+            // referenced one of these snodes is already gone, so the ON DELETE RESTRICT on
+            // onion_path_snodes.snode_id cannot trip. Rows in swarm_snodes cascade away.
             //language=roomsql
             compileStatement(
                 """
                 DELETE FROM snodes
                 WHERE ed25519_pub_key NOT IN (SELECT ed25519_pub_key FROM temp_snode_keys)
             """
-            )
+            ).use { stmt -> stmt.executeUpdateDelete() }
 
             // Actually inserting the new snodes, or updating the ip if they already exist
             //language=roomsql

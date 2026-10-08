@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.api.snode.SnodeApiRequest
 import org.thoughtcrime.securesms.api.snode.execute
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -57,6 +58,7 @@ open class PathManager @Inject constructor(
     companion object {
         private const val STRIKE_THRESHOLD = 3
         private const val PATH_ROTATE_INTERVAL_MS = 10 * 60 * 1000L // 10min
+        private const val ROTATION_FAILURES_BEFORE_REBUILD = 3
     }
 
     private val pathSize: Int = 3
@@ -71,6 +73,7 @@ open class PathManager @Inject constructor(
 
     // path rotation
     private val isRotating = AtomicBoolean(false)
+    private val consecutiveRotationFailures = AtomicInteger(0)
 
     // -----------------------------
     // Flow Setup
@@ -117,6 +120,39 @@ open class PathManager @Inject constructor(
     // Public API
     // -----------------------------
 
+    /**
+     * Drops every path, in memory and in storage.
+     *
+     * For when the snode pool itself has been invalidated (see `SnodeDirectory`): paths are built
+     * out of pool members, so a pool belonging to a different network leaves every path routing over
+     * snodes that no longer exist. [sanitizePaths] only checks that paths are disjoint, so nothing
+     * else notices a path whose snodes are gone — it just fails, repeatedly, until strikes evict it.
+     *
+     * Deliberately takes no lock. This is reachable from `SnodeDirectory.ensurePoolPopulated`, which
+     * [rebuildPaths] calls while holding [buildMutex]; acquiring it here would deadlock on a mutex
+     * the same coroutine already owns. The cost is that a rebuild already in flight can commit its
+     * result after this returns — acceptable because that rebuild re-enters `ensurePoolPopulated`
+     * and so picks up the new network's pool anyway.
+     */
+    suspend fun clearPaths() {
+        // Awaited because warm-up is lazy: if it has not run yet it would otherwise fire later, read
+        // the rows we are about to delete, and put them straight back into _paths. A warm-up failure
+        // is no reason to skip the clear, hence runCatching.
+        runCatching { warmUpJob.await() }
+
+        Log.i("Onion Request", "Clearing all onion paths")
+
+        _paths.value = emptyList()
+
+        // The collector in init also turns an empty value into a storage clear, but that runs on
+        // another coroutine — doing it here makes storage deterministic by the time this returns.
+        storage.clearOnionRequestPaths()
+
+        // Count the coming rebuild as a fresh rotation. rebuildPaths does not touch this timestamp,
+        // so leaving the old one in place makes the next getPath() rotate paths it has just built.
+        prefs.setLastPathRotation(System.currentTimeMillis())
+    }
+
     suspend fun getPath(exclude: Snode? = null): Path {
         // Ensure persisted paths are loaded before checking. No-op after first completion.
         warmUpJob.await()
@@ -125,7 +161,7 @@ open class PathManager @Inject constructor(
         rotatePathsIfStale()
 
         val current = _paths.value
-        if (current.size >= targetPathCount && current.any { exclude == null || !it.contains(exclude) }) {
+        if (current.size >= targetPathCount && current.any { exclude == null || !it.routesThrough(exclude) }) {
             return selectPath(current, exclude)
         }
 
@@ -170,7 +206,13 @@ open class PathManager @Inject constructor(
                 snodeApiExecutor.get()
                     .execute(
                         req = SnodeApiRequest(
-                            snode = snodePoolStorage.getSnodePool().first { it !in pathCandidate },
+                            // The destination has to vary per test: with a fixed one, a single node
+                            // that rejects onion payloads fails every path test this process makes,
+                            // so no candidate can ever be verified and rotation never commits -
+                            // however healthy the candidate paths themselves are.
+                            snode = snodePoolStorage.getSnodePool()
+                                .filter { it !in pathCandidate }
+                                .secureRandom(),
                             api = getInfoApi.get()
                         ),
                         ctx = ApiExecutorContext()
@@ -249,7 +291,14 @@ open class PathManager @Inject constructor(
             if (working.size >= targetPathCount) break
         }
 
-        if (working.isEmpty()) return
+        // A rotation can only be committed whole: Phase 3 requires the new guards to match the current
+        // ones, so a single candidate failing discards the rotation exactly as a total failure does.
+        // Each candidate keeps its own guard, so the candidate that failed is the one whose guard
+        // cannot be rotated away from - and testing only tells us which candidate, never which hop.
+        if (working.size < candidates.size) {
+            escalateFailedRotation()
+            return
+        }
 
         // Phase 3: commit under lock (guards must match current guards)
         buildMutex.withLock {
@@ -270,7 +319,31 @@ open class PathManager @Inject constructor(
             val committed = sanitizePaths(working.take(targetPathCount))
             _paths.value = committed
             prefs.setLastPathRotation(System.currentTimeMillis())
+            consecutiveRotationFailures.set(0)
         }
+    }
+
+    /**
+     * Counts a rotation that could not be committed, and drops every path once enough of them pile
+     * up so the next [getPath] rebuilds - which is the only thing that replaces a guard, since
+     * rotation reuses them by design.
+     *
+     * Counted in attempts rather than elapsed time: a failed rotation does not advance the rotation
+     * timestamp, so a wedged client re-enters rotation on every [getPath] and the threshold is
+     * seconds apart rather than half an hour. [clearPaths] takes no lock, Phase 2 of [rotatePaths]
+     * holds none, and it sets the rotation timestamp itself, so the escalation cannot thrash.
+     */
+    private suspend fun escalateFailedRotation() {
+        // With no network every path test fails for a reason that says nothing about the guards, and
+        // escalating would hand an offline device a fresh guard every rotation interval for as long
+        // as it stays offline.
+        if (!networkConnectivity.networkAvailable.value) return
+
+        if (consecutiveRotationFailures.incrementAndGet() < ROTATION_FAILURES_BEFORE_REBUILD) return
+
+        consecutiveRotationFailures.set(0)
+        Log.w("Onion Request", "Rotation failed to verify $ROTATION_FAILURES_BEFORE_REBUILD times running, dropping paths to force a rebuild onto new guards")
+        clearPaths()
     }
 
     suspend fun rebuildPaths(reusablePaths: List<Path>) {
@@ -445,9 +518,21 @@ open class PathManager @Inject constructor(
     }
 
 
+    /**
+     * Whether this path routes through [snode].
+     *
+     * A node's identity is its ed25519 key; [Snode] equality is address and port, which disagree for
+     * the same node when its pool record and its swarm record were fetched either side of an IP or
+     * port change. Equality is the fallback for a snode with no key material.
+     */
+    private fun Path.routesThrough(snode: Snode): Boolean {
+        val key = snode.publicKeySet?.ed25519Key ?: return contains(snode)
+        return any { it.publicKeySet?.ed25519Key == key || it == snode }
+    }
+
     private fun selectPath(paths: List<Path>, exclude: Snode?): Path {
         val candidates = if (exclude != null) {
-            paths.filter { !it.contains(exclude) }
+            paths.filter { !it.routesThrough(exclude) }
         } else paths
 
         if (candidates.isEmpty()) {

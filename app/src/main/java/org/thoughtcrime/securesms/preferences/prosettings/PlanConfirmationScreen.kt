@@ -29,18 +29,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.pro.ProDataState
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.previewAutoRenewingApple
 import org.thoughtcrime.securesms.pro.previewExpiredApple
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.SessionProSettingsHeader
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -94,6 +91,7 @@ fun PlanConfirmation(
             modifier = Modifier
                 .fillMaxSize()
                 .consumeWindowInsets(paddings)
+                .qaTag(R.string.qa_pro_screen_plan_confirmation)
                 .padding(
                     horizontal = LocalDimensions.current.spacing,
                 )
@@ -109,7 +107,8 @@ fun PlanConfirmation(
             Spacer(Modifier.height(LocalDimensions.current.spacing))
 
             Text(
-                modifier = Modifier.align(CenterHorizontally),
+                modifier = Modifier.align(CenterHorizontally)
+                    .qaTag(R.string.qa_pro_screen_title),
                 text = stringResource(R.string.proAllSet),
                 style = LocalType.current.h6,
                 color = LocalColors.current.text,
@@ -120,30 +119,25 @@ fun PlanConfirmation(
             val description = when (previousProState) {
                 is ProStatus.Active -> {
                     Phrase.from(context.getText(R.string.proAllSetDescription))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .put(DATE_KEY, proData.subscriptionExpiryDate)
                         .format()
                 }
 
                 is ProStatus.NeverSubscribed -> {
                     Phrase.from(context.getText(R.string.proUpgraded))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(NETWORK_NAME_KEY, NETWORK_NAME)
                         .format()
                 }
 
                 is ProStatus.Expired -> {
                     Phrase.from(context.getText(R.string.proPlanRenewSupport))
-                        .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                        .put(NETWORK_NAME_KEY, NETWORK_NAME)
                         .format()
                 }
             }
 
             Text(
                 modifier = Modifier.align(CenterHorizontally)
-                    .safeContentWidth(),
+                    .safeContentWidth()
+                    .qaTag(R.string.qa_pro_screen_description),
                 text = annotatedStringResource(description),
                 textAlign = TextAlign.Center,
                 style = LocalType.current.base,
@@ -157,7 +151,6 @@ fun PlanConfirmation(
 
                 else -> {
                     Phrase.from(context.getText(R.string.proStartUsing))
-                        .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                         .format()
                         .toString()
                 }
@@ -165,7 +158,8 @@ fun PlanConfirmation(
 
             AccentFillButtonRect(
                 modifier = Modifier.fillMaxWidth()
-                    .widthIn(max = LocalDimensions.current.maxContentWidth),
+                    .widthIn(max = LocalDimensions.current.maxContentWidth)
+                    .qaTag(R.string.qa_pro_screen_action),
                 text = buttonLabel,
                 onClick = {
                     sendCommand(ProSettingsViewModel.Commands.OnPostPlanConfirmation)

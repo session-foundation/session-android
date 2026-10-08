@@ -3,9 +3,9 @@ package org.thoughtcrime.securesms.pro.api
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.serialization.DeserializationStrategy
 import network.loki.messenger.libsession_util.pro.BackendRequests
-import network.loki.messenger.libsession_util.pro.ProProof
+import network.loki.messenger.libsession_util.pro.ProProofResponse
+import network.loki.messenger.libsession_util.pro.ProRequest
 import org.session.libsession.network.SnodeClock
 
 class GenerateProProofApi @AssistedInject constructor(
@@ -13,25 +13,17 @@ class GenerateProProofApi @AssistedInject constructor(
     @Assisted private val rotatingPrivateKey: ByteArray,
     private val snodeClock: SnodeClock,
     deps: ProApiDependencies,
-) : ProApi<GetProProofStatus, ProProof>(deps) {
+) : ProApi<ProProofResponse>(deps) {
 
-    override val endpoint: String
-        get() = "generate_pro_proof"
-
-    override fun buildJsonBody(): String {
-        val now = snodeClock.currentTime()
-        return BackendRequests.buildGenerateProProofRequestJson(
-            version = 0,
+    override fun buildProRequest(): ProRequest =
+        BackendRequests.buildGenerateProProofRequest(
             masterPrivateKey = masterPrivateKey,
             rotatingPrivateKey = rotatingPrivateKey,
-            nowMs = now.toEpochMilli(),
+            nowSeconds = snodeClock.currentTime().epochSecond,
         )
-    }
 
-    override val responseDeserializer: DeserializationStrategy<ProProof>
-        get() = ProProof.serializer()
-
-    override fun convertErrorStatus(status: Int): GetProProofStatus = status
+    override fun parseResponse(json: String): ProProofResponse =
+        BackendRequests.parseProProofResponse(json)
 
     @AssistedFactory
     interface Factory {
@@ -41,5 +33,3 @@ class GenerateProProofApi @AssistedInject constructor(
         ): GenerateProProofApi
     }
 }
-
-typealias GetProProofStatus = Int

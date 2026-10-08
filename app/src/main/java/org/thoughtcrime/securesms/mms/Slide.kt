@@ -20,7 +20,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
 import androidx.annotation.DrawableRes
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState

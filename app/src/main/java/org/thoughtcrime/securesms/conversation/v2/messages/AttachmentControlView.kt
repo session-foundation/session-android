@@ -8,7 +8,7 @@ import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewAttachmentControlBinding

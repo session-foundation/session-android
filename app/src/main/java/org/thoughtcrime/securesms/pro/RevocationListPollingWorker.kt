@@ -53,23 +53,31 @@ class RevocationListPollingWorker @AssistedInject constructor(
             ).successOrThrow()
             proDatabase.updateRevocations(
                 data = response.items,
-                newTicket = response.ticket
+                newTicket = response.ticket,
+                retainForSeconds = response.retainForSeconds,
+                now = snodeClock.currentTime()
             )
 
             proDatabase.pruneRevocations(snodeClock.currentTime())
 
-            // Arrange next polling
+            // Arrange next polling. `retry_in` goes straight into a OneTimeWorkRequest delay on
+            // APPEND unique work, so a nonsensical value would either hot-loop against the backend or
+            // disable polling outright — but libsession now clamps both `retry_in` and `retain_for`
+            // to sane bounds in `parse_revocations`, so we use the parsed value as-is here rather than
+            // re-clamping client-side.
+            val retryInSeconds = response.retryInSeconds
+
             WorkManager.getInstance(context)
                 .beginUniqueWork(WORK_NAME, ExistingWorkPolicy.APPEND,
                     OneTimeWorkRequestBuilder<RevocationListPollingWorker>()
-                        .setInitialDelay(response.retryInSeconds, TimeUnit.SECONDS)
+                        .setInitialDelay(retryInSeconds, TimeUnit.SECONDS)
                         .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(10))
                         .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                         .build()
                 )
                 .enqueue()
 
-            Log.d(TAG, "Arranged next polling in ${response.retryInSeconds} seconds")
+            Log.d(TAG, "Arranged next polling in $retryInSeconds seconds")
 
             return Result.success()
         } catch (e: Exception) {

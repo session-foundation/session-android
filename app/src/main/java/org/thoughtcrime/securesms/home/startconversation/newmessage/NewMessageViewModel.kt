@@ -4,7 +4,7 @@ import android.app.Application
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -26,7 +26,6 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.CommunityUrlParser
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -232,7 +231,6 @@ class NewMessageViewModel @AssistedInject constructor(
     private fun Exception.toMessage() = when (this) {
         is UnhandledStatusCodeException -> application.getString(R.string.errorUnregisteredOns)
         else -> Phrase.from(application, R.string.errorNoLookupOns)
-            .put(APP_NAME_KEY, application.getString(R.string.app_name))
             .format().toString()
     }
 

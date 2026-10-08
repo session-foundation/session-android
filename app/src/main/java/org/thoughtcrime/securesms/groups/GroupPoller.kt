@@ -13,6 +13,7 @@ import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.sending_receiving.MessageParser
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageProcessor
 import org.session.libsession.messaging.sending_receiving.pollers.BasePoller
+import org.session.libsession.messaging.sending_receiving.pollers.ConfigTtlExtensionThrottle
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.utilities.Address
@@ -21,6 +22,7 @@ import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.truncatedForDisplay
 import org.session.libsession.utilities.withGroupConfigs
+import org.session.libsignal.database.LastMessageHashEpoch
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
@@ -51,6 +53,7 @@ class GroupPoller @AssistedInject constructor(
     private val alterTtlApiApiFactory: AlterTtlApi.Factory,
     private val swarmApiExecutor: SwarmApiExecutor,
     private val swarmSnodeSelector: SwarmSnodeSelector,
+    private val configTtlExtensionThrottle: ConfigTtlExtensionThrottle,
     networkConnectivity: NetworkConnectivity,
     appVisibilityManager: AppVisibilityManager,
 ): BasePoller<GroupPoller.GroupPollResult>(
@@ -62,8 +65,18 @@ class GroupPoller @AssistedInject constructor(
         val groupExpired: Boolean?
     )
 
+    /**
+     * libsession's namespace values. Replaceable so a test can supply them, since no JVM unit test can load
+     * the native library they come from.
+     */
+    internal var namespaces: GroupNamespaces = GroupNamespaces.Libsession
+
     override suspend fun doPollOnce(isFirstPollSinceAppStarted: Boolean): GroupPollResult = pollSemaphore.withPermit {
         var groupExpired: Boolean? = null
+
+        // Before any cursor is read, so a reset made while this poll is in flight keeps it from writing
+        // its position back.
+        val cursorEpoch = lokiApiDatabase.lastMessageHashEpoch()
 
         val result = runCatching {
             supervisorScope {
@@ -103,10 +116,10 @@ class GroupPoller @AssistedInject constructor(
                                 lastHash = lokiApiDatabase.getLastMessageHashValue(
                                     snode,
                                     groupId.hexString,
-                                    Namespace.REVOKED_GROUP_MESSAGES()
+                                    namespaces.revokedMessages
                                 ).orEmpty(),
                                 auth = groupAuth,
-                                namespace = Namespace.REVOKED_GROUP_MESSAGES(),
+                                namespace = namespaces.revokedMessages,
                                 maxSize = null,
                             )
                         )
@@ -115,18 +128,20 @@ class GroupPoller @AssistedInject constructor(
 
                 if (configHashesToExtends.isNotEmpty() && adminKey != null) {
                     pollingTasks += "extending group config TTL" to async {
-                        swarmApiExecutor.execute(
-                            SwarmApiRequest(
-                                swarmNodeOverride = snode,
-                                swarmPubKeyHex = groupId.hexString,
-                                api = alterTtlApiApiFactory.create(
-                                    messageHashes = configHashesToExtends,
-                                    auth = groupAuth,
-                                    alterType = AlterTtlApi.AlterType.Extend,
-                                    newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
+                        configTtlExtensionThrottle.extendIfDue(groupId.hexString) {
+                            swarmApiExecutor.execute(
+                                SwarmApiRequest(
+                                    swarmNodeOverride = snode,
+                                    swarmPubKeyHex = groupId.hexString,
+                                    api = alterTtlApiApiFactory.create(
+                                        messageHashes = configHashesToExtends,
+                                        auth = groupAuth,
+                                        alterType = AlterTtlApi.AlterType.Extend,
+                                        newExpiry = clock.currentTimeMillis() + 14.days.inWholeMilliseconds,
+                                    )
                                 )
                             )
-                        )
+                        }
                     }
                 }
 
@@ -134,7 +149,7 @@ class GroupPoller @AssistedInject constructor(
                     val lastHash = lokiApiDatabase.getLastMessageHashValue(
                         snode,
                         groupId.hexString,
-                        Namespace.GROUP_MESSAGES()
+                        namespaces.messages
                     ).orEmpty()
 
 
@@ -145,7 +160,7 @@ class GroupPoller @AssistedInject constructor(
                             api = retrieveMessageFactory.create(
                                 lastHash = lastHash,
                                 auth = groupAuth,
-                                namespace = Namespace.GROUP_MESSAGES(),
+                                namespace = namespaces.messages,
                                 maxSize = null,
                             )
                         )
@@ -153,9 +168,9 @@ class GroupPoller @AssistedInject constructor(
                 }
 
                 val groupConfigRetrieval = listOf(
-                    Namespace.GROUP_KEYS(),
-                    Namespace.GROUP_INFO(),
-                    Namespace.GROUP_MEMBERS()
+                    namespaces.keys,
+                    namespaces.info,
+                    namespaces.members
                 ).map { ns ->
                     async {
                         swarmApiExecutor.execute(
@@ -184,9 +199,9 @@ class GroupPoller @AssistedInject constructor(
                     val result = runCatching {
                         val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.awaitAll()
                         handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
-                        saveLastMessageHash(snode, keysMessage, Namespace.GROUP_KEYS())
-                        saveLastMessageHash(snode, infoMessage, Namespace.GROUP_INFO())
-                        saveLastMessageHash(snode, membersMessage, Namespace.GROUP_MEMBERS())
+                        saveLastMessageHash(snode, keysMessage, namespaces.keys, cursorEpoch)
+                        saveLastMessageHash(snode, infoMessage, namespaces.info, cursorEpoch)
+                        saveLastMessageHash(snode, membersMessage, namespaces.members, cursorEpoch)
 
                         groupExpired = configFactoryProtocol.withGroupConfigs(groupId) {
                             it.groupKeys.size() == 0
@@ -200,7 +215,8 @@ class GroupPoller @AssistedInject constructor(
                                 snode = snode,
                                 publicKey = groupId.hexString,
                                 newValue = newest.hash,
-                                namespace = Namespace.GROUP_MESSAGES()
+                                namespace = namespaces.messages,
+                                since = cursorEpoch,
                             )
                         }
                     }
@@ -208,7 +224,7 @@ class GroupPoller @AssistedInject constructor(
                     // Revoke message must be handled regardless, and at the end
                     val revokedMessages = receiveRevokeMessage.await()
                     handleRevoked(revokedMessages)
-                    saveLastMessageHash(snode, revokedMessages, Namespace.REVOKED_GROUP_MESSAGES())
+                    saveLastMessageHash(snode, revokedMessages, namespaces.revokedMessages, cursorEpoch)
 
                     // Propagate any prior exceptions
                     result.getOrThrow()
@@ -249,14 +265,16 @@ class GroupPoller @AssistedInject constructor(
     private fun saveLastMessageHash(
         snode: Snode,
         messages: List<RetrieveMessageResponse.Message>,
-        namespace: Int
+        namespace: Int,
+        since: LastMessageHashEpoch,
     ) {
         if (messages.isNotEmpty()) {
             lokiApiDatabase.setLastMessageHashValue(
                 snode = snode,
                 publicKey = groupId.hexString,
                 newValue = messages.last().hash,
-                namespace = namespace
+                namespace = namespace,
+                since = since,
             )
         }
     }
@@ -300,7 +318,7 @@ class GroupPoller @AssistedInject constructor(
             for (message in messages) {
                 if (receivedMessageHashDatabase.checkOrUpdateDuplicateState(
                         swarmPublicKey = groupId.hexString,
-                        namespace = Namespace.GROUP_MESSAGES(),
+                        namespace = namespaces.messages,
                         hash = message.hash
                     )) {
                     log("Skipping duplicated group message ${message.hash}")
@@ -314,6 +332,8 @@ class GroupPoller @AssistedInject constructor(
                         groupId = groupId,
                         currentUserId = ctx.currentUserId,
                         currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                        serverTimestampMs = message.timestamp.toEpochMilli(),
+                        serverExpiryMs = message.expirationMs,
                     )
 
                     receivedMessageProcessor.processSwarmMessage(
@@ -335,5 +355,22 @@ class GroupPoller @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(groupId: AccountId, pollSemaphore: Semaphore): GroupPoller
+    }
+}
+
+/** The group namespaces a poll reads, as libsession defines them. */
+internal interface GroupNamespaces {
+    val keys: Int
+    val info: Int
+    val members: Int
+    val messages: Int
+    val revokedMessages: Int
+
+    object Libsession : GroupNamespaces {
+        override val keys get() = Namespace.GROUP_KEYS()
+        override val info get() = Namespace.GROUP_INFO()
+        override val members get() = Namespace.GROUP_MEMBERS()
+        override val messages get() = Namespace.GROUP_MESSAGES()
+        override val revokedMessages get() = Namespace.REVOKED_GROUP_MESSAGES()
     }
 }

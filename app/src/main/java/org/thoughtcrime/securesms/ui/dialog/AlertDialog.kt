@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.ui.dialog
 
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -42,7 +43,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
@@ -98,6 +98,7 @@ fun AlertDialog(
     title: String? = null,
     text: String? = null,
     maxLines:  Int? = null,
+    @StringRes textQaTag: Int? = null,
     buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
@@ -108,6 +109,7 @@ fun AlertDialog(
         title = if(title != null) AnnotatedString(title) else null,
         text = if(text != null) AnnotatedString(text) else null,
         maxLines = maxLines,
+        textQaTag = textQaTag,
         buttons = buttons,
         showCloseButton = showCloseButton,
         content = content
@@ -122,6 +124,7 @@ fun AlertDialog(
     title: AnnotatedString? = null,
     text: AnnotatedString? = null,
     maxLines: Int? = null,
+    @StringRes textQaTag: Int? = null,
     buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
@@ -135,6 +138,7 @@ fun AlertDialog(
                 title = title,
                 text = text,
                 maxLines = maxLines,
+                textQaTag = textQaTag,
                 buttons = buttons,
                 showCloseButton = showCloseButton,
                 content = content
@@ -179,6 +183,7 @@ fun AlertDialogContent(
     title: AnnotatedString? = null,
     text: AnnotatedString? = null,
     maxLines: Int? = null,
+    @StringRes textQaTag: Int? = null,
     buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
@@ -236,7 +241,7 @@ fun AlertDialogContent(
                         textAlign = TextAlign.Center,
                         style = textStyle,
                         modifier = textModifier
-                            .qaTag(R.string.AccessibilityId_modalMessage)
+                            .qaTag(textQaTag ?: R.string.AccessibilityId_modalMessage)
                     )
                 }
                 content()

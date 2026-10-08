@@ -381,16 +381,6 @@ public class MmsSmsDatabase extends Database {
     return count;
   }
 
-    public int getOutgoingMessageProFeatureCount(long featureMask) {
-        return smsDatabase.get().getOutgoingMessageProFeatureCount(featureMask) +
-                mmsDatabase.get().getOutgoingMessageProFeatureCount(featureMask);
-    }
-
-    public int getOutgoingProfileProFeatureCount(long featureMask) {
-        return smsDatabase.get().getOutgoingProfileProFeatureCount(featureMask) +
-                mmsDatabase.get().getOutgoingProfileProFeatureCount(featureMask);
-    }
-
 
   public void incrementReadReceiptCount(SyncMessageId syncMessageId, long timestamp) {
     smsDatabase.get().incrementReceiptCount(syncMessageId, false, true);

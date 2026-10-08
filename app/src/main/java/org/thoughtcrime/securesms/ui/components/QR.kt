@@ -61,18 +61,16 @@ import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.GlobalHistogramBinarizer
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.findActivity
-import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import java.util.concurrent.Executors
@@ -115,7 +113,7 @@ fun QRScannerScreen(
                 Text(
                     stringResource(R.string.cameraGrantAccessQr).let { txt ->
                         val c = LocalContext.current
-                        Phrase.from(txt).put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString()
+                        Phrase.from(txt).format().toString()
                     },
                     style = LocalType.current.xl,
                     textAlign = TextAlign.Center
@@ -134,8 +132,7 @@ fun QRScannerScreen(
                         Permissions.with(context.findActivity())
                             .request(permission)
                             .withPermanentDenialDialog(
-                                context.getSubbedString(R.string.permissionsCameraDenied,
-                                    APP_NAME_KEY to context.getString(R.string.app_name))
+                                context.getString(R.string.permissionsCameraDenied)
                             ).execute()
                     }
                 )
@@ -148,8 +145,7 @@ fun QRScannerScreen(
             AlertDialog(
                 onDismissRequest = { showCameraPermissionDialog = false },
                 title = stringResource(R.string.permissionsRequired),
-                text = context.getSubbedString(R.string.permissionsCameraDenied,
-                    APP_NAME_KEY to context.getString(R.string.app_name)),
+                text = context.getString(R.string.permissionsCameraDenied),
                 buttons = listOf(
                     DialogButtonData(
                         text = GetString(stringResource(id = R.string.sessionSettings)),

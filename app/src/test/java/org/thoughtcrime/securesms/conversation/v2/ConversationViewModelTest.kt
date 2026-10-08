@@ -128,6 +128,11 @@ class ConversationViewModelTest : BaseViewModelTest() {
                 on { observeRecipient(recipient.address) } doAnswer {
                     flowOf(recipient)
                 }
+                // `InputbarViewModel` observes self for the character limit, which is an ACCESS decision
+                // and so must be read live rather than snapshotted. Stubbed here because the ViewModel
+                // subscribes during construction — an unstubbed `observeSelf()` returns a null Flow and
+                // every test in this class fails in `<init>`.
+                on { observeSelf() } doAnswer { flowOf(recipient) }
             },
             attachmentDownloadHandlerFactory = mock(),
             recipientSettingsDatabase = mock {

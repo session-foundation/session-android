@@ -23,6 +23,7 @@ import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
+import org.thoughtcrime.securesms.database.model.content.UnsupportedMessageContent;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 /**
@@ -121,6 +122,13 @@ public abstract class DisplayRecord {
             isMessageRequestResponse()     ||
             isCallLog() ||
             (messageContent instanceof DisappearingMessageUpdate);
+  }
+
+  /**
+   * A placeholder for a message this client can't display, until it's deleted.
+   */
+  public boolean isUnsupportedMessage() {
+    return !isDeleted() && messageContent instanceof UnsupportedMessageContent;
   }
 
   public boolean isGroupV2ExpirationTimerUpdate() { return false; }

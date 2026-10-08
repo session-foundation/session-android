@@ -33,10 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.conversation.v3.compose.message.Message
 import org.thoughtcrime.securesms.conversation.v3.compose.message.MessageLayout
@@ -81,7 +80,6 @@ internal fun LandingScreen(
                 contentGroups = textGroup(
                     text = AnnotatedString(
                         Phrase.from(context.getString(R.string.onboardingBubbleWelcomeToSession))
-                            .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .put(EMOJI_KEY, "\uD83D\uDC4B") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                             .format().toString()
                 )),
@@ -93,7 +91,6 @@ internal fun LandingScreen(
                 contentGroups = textGroup(
                     text = AnnotatedString(
                         Phrase.from(context.getString(R.string.onboardingBubbleSessionIsEngineered))
-                            .put(APP_NAME_KEY, context.getString(R.string.app_name))
                             .format().toString()
                     )),
                 displayName = "Test",

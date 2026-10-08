@@ -11,7 +11,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -737,9 +737,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun pinConversation(){
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
+        // ENFORCEMENT: the ACCESS function, called at the moment of the decision. The pin limit is
+        // implemented in TWO ViewModels (see HomeViewModel.setPinned) and both must go through the one
+        // ACCESS function — a second route to "am I Pro" is how one of them ends up honouring a
+        // revocation while the other does not.
         val maxPins =
-            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+            proStatusManager.getPinnedConversationLimit(proStatusManager.currentUserHasProAccess())
         if (totalPins >= maxPins) {
+            // No upsell when the plan already reads active — see HomeViewModel.setPinned. The pin limit
+            // is implemented in both ViewModels, so the condition has to exist in both.
+            if (proStatusManager.proDataState.value.type is ProStatus.Active) return
             // the user has reached the pin limit, show the CTA
             _dialogState.update {
                 it.copy(

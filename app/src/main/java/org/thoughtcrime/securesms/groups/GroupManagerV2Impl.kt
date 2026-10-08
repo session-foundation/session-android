@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.groups
 
 import android.content.Context
 import com.google.protobuf.ByteString
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -281,11 +281,13 @@ class GroupManagerV2Impl @Inject constructor(
             for ((id, shareHistory) in memberInvites) {
                 val hex = id.hexString
 
-                val toSet = configs.groupMembers.get(hex)
-                    ?.also { existing ->
-                        val status = configs.groupMembers.status(existing)
-                        if (status == GroupMember.Status.INVITE_FAILED || status == GroupMember.Status.INVITE_SENT) {
-                            existing.setSupplement(shareHistory)
+                val existing = configs.groupMembers.get(hex)
+                val existingStatus = existing?.let(configs.groupMembers::status)
+
+                val toSet = existing
+                    ?.also { member ->
+                        if (existingStatus == GroupMember.Status.INVITE_FAILED || existingStatus == GroupMember.Status.INVITE_SENT) {
+                            member.setSupplement(shareHistory)
                         }
                     }
                     ?: configs.groupMembers.getOrConstruct(hex).also { member ->
@@ -297,7 +299,16 @@ class GroupManagerV2Impl @Inject constructor(
 
                 if (shareHistory) shareHistoryHexes += hex
 
-                toSet.setInvited()
+                // Someone who has already accepted must not be dragged back to "invited": this runs
+                // for a re-invite too, and the member state we hold is the newer truth. InviteContactsJob
+                // writes the send result over this a moment later, and skips the same members for the
+                // same reason.
+                val alreadyInGroup = existing != null && existingStatus != null &&
+                        (existingStatus == GroupMember.Status.INVITE_ACCEPTED ||
+                                existing.isAdminOrBeingPromoted(existingStatus))
+                if (!alreadyInGroup) {
+                    toSet.setInvited()
+                }
                 configs.groupMembers.set(toSet)
             }
 
@@ -720,6 +731,50 @@ class GroupManagerV2Impl @Inject constructor(
             }
         }
 
+    /**
+     * Tells the inviting admin we are in the group, and drops the invitation from our swarm.
+     *
+     * Split out of [approveGroupInvite] for the case where we are already a member: the parts of
+     * approval that write our membership must not run again, but the parts the admin depends on
+     * must.
+     */
+    private suspend fun acknowledgeInvitation(
+        group: GroupInfo.ClosedGroupInfo,
+        inviteMessageHash: String?
+    ) {
+        if (group.adminKey == null) {
+            val inviteResponse = GroupUpdateInviteResponseMessage.newBuilder()
+                .setIsApproved(true)
+            val responseData = GroupUpdateMessage.newBuilder()
+                .setInviteResponse(inviteResponse)
+
+            runCatching {
+                messageSender.sendNonDurably(
+                    GroupUpdated(responseData.build()),
+                    Destination.ClosedGroup(group.groupAccountId),
+                    isSyncMessage = false
+                )
+            }
+        }
+
+        deleteInviteMessage(inviteMessageHash)
+    }
+
+    private suspend fun deleteInviteMessage(inviteMessageHash: String?) {
+        if (inviteMessageHash == null) return
+
+        val auth = requireNotNull(storage.userAuth)
+        swarmApiExecutor.execute(
+            SwarmApiRequest(
+                swarmPubKeyHex = auth.accountId.hexString,
+                api = deleteMessageApiFactory.create(
+                    messageHashes = listOf(inviteMessageHash),
+                    swarmAuth = auth
+                )
+            )
+        )
+    }
+
     private suspend fun approveGroupInvite(
         group: GroupInfo.ClosedGroupInfo,
         inviteMessageHash: String?
@@ -784,18 +839,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Delete the invite once we have approved
-        if (inviteMessageHash != null) {
-            val auth = requireNotNull(storage.userAuth)
-            swarmApiExecutor.execute(
-                SwarmApiRequest(
-                    swarmPubKeyHex = auth.accountId.hexString,
-                    api = deleteMessageApiFactory.create(
-                        messageHashes = listOf(inviteMessageHash),
-                        swarmAuth = auth
-                    )
-                )
-            )
-        }
+        deleteInviteMessage(inviteMessageHash)
     }
 
     override suspend fun handleInvitation(
@@ -901,6 +945,21 @@ class GroupManagerV2Impl @Inject constructor(
         inviteMessageTimestamp: Long,
         inviteMessageHash: String,
     ) {
+        val existing = configFactory.getGroup(groupId)
+        if (existing != null && !existing.invited && !existing.kicked && !existing.destroyed) {
+            // Rebuilding ClosedGroupInfo for a group we are already in would put us back to
+            // "invited" and throw away joinedAtSecs. Kicked or destroyed deliberately fall through:
+            // a fresh invitation is how we get back in, and that does need the rebuild.
+            //
+            // The invitation still has to be answered, though. Our invite response is sent once and
+            // its failure is swallowed, and the admin marks us accepted only on receiving it, so an
+            // admin whose copy was lost sees us as invited forever and re-inviting is the only
+            // repair they have. Answering without rebuilding keeps both halves.
+            Log.d(TAG, "Already in this group - answering the invitation without rebuilding it")
+            acknowledgeInvitation(existing, inviteMessageHash)
+            return
+        }
+
         val address = Address.fromSerialized(groupId.hexString)
         val inviterRecipient = recipientRepository.getRecipient(Address.fromSerialized(inviter.hexString))
 

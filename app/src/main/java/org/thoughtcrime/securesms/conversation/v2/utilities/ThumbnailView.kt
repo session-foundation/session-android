@@ -13,10 +13,14 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.Target
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ThumbnailViewBinding
 import org.session.libsession.utilities.Util.equals
@@ -179,7 +183,41 @@ open class ThumbnailView @JvmOverloads constructor(
         .overrideDimensions()
         .transition(DrawableTransitionOptions.withCrossFade())
         .optionalTransform(CenterCrop())
+        .listener(mediaStateListener)
         .missingThumbnailPicture(slide.isInProgress, errorDrawable)
+
+    /**
+     * Describes the thumbnail by whether it could be decoded, so the two outcomes are distinguishable
+     * from outside the app.
+     *
+     * A file that arrives but will not decode still produces a full-size bubble carrying the error
+     * drawable, so "the media message is present" is true either way and says nothing about the picture.
+     * Returning false throughout leaves Glide's own handling untouched.
+     */
+    private val mediaStateListener = object : RequestListener<Drawable> {
+        override fun onLoadFailed(
+            e: GlideException?,
+            model: Any?,
+            target: Target<Drawable>,
+            isFirstResource: Boolean
+        ): Boolean {
+            binding.thumbnailImage.contentDescription =
+                context.getString(R.string.AccessibilityId_mediaInvalid)
+            return false
+        }
+
+        override fun onResourceReady(
+            resource: Drawable,
+            model: Any,
+            target: Target<Drawable>?,
+            dataSource: DataSource,
+            isFirstResource: Boolean
+        ): Boolean {
+            binding.thumbnailImage.contentDescription =
+                context.getString(R.string.AccessibilityId_mediaMessage)
+            return false
+        }
+    }
 
     private fun buildPlaceholderGlideRequest(
         glide: RequestManager,

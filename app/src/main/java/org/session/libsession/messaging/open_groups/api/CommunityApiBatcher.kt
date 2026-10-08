@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import org.session.libsession.database.StorageProtocol
 import org.thoughtcrime.securesms.api.ApiExecutorContext
 import org.thoughtcrime.securesms.api.batch.Batcher
+import org.thoughtcrime.securesms.api.server.trimTrailingSlashes
 import javax.inject.Inject
 
 class CommunityApiBatcher @Inject constructor(
@@ -21,7 +22,8 @@ class CommunityApiBatcher @Inject constructor(
 
         return BatchApi.BatchRequestItem(
             httpRequest = req.api.buildRequest(
-                baseUrl = req.serverBaseUrl,
+                // This path does not go through ServerApiRequest, which normalises for everything else.
+                baseUrl = req.serverBaseUrl.trimTrailingSlashes(),
                 x25519PubKeyHex = pubKey
             ),
             json = json

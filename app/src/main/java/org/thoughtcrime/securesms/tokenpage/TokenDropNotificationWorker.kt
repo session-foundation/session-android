@@ -13,14 +13,12 @@ import androidx.core.content.ContextCompat.getString
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_LONG
-import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_LONG_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.notifications.NotificationId
@@ -108,9 +106,6 @@ class TokenDropNotificationWorker
         )
 
         val notificationTxt = Phrase.from(applicationContext, R.string.sessionNetworkNotificationLive)
-            .put(TOKEN_NAME_LONG_KEY, TOKEN_NAME_LONG)
-            .put(NETWORK_NAME_KEY, NETWORK_NAME)
-            .put(TOKEN_NAME_LONG_KEY, TOKEN_NAME_LONG)
             .format().toString()
         val builder = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)

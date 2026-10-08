@@ -25,7 +25,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -635,8 +635,8 @@ class ConversationReactionOverlay : FrameLayout {
         val isDeprecatedLegacyGroup = recipient.isLegacyGroup &&
                 deprecationManager.isDeprecated
 
-        // control messages and "marked as deleted" messages can only delete
-        val isDeleteOnly = message.isDeleted || containsControlMessage
+        // control messages, "marked as deleted" messages and unsupported placeholders can only delete
+        val isDeleteOnly = message.isDeleted || containsControlMessage || message.isUnsupportedMessage
 
         // Resend
         if (message.isFailed && !isDeprecatedLegacyGroup) {

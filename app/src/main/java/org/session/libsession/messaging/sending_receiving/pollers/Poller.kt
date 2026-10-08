@@ -56,6 +56,7 @@ class Poller @Inject constructor(
     private val swarmSnodeSelector: SwarmSnodeSelector,
     private val swarmDirectory: SwarmDirectory,
     private val snodeApiExecutor: SnodeApiExecutor,
+    private val configTtlExtensionThrottle: ConfigTtlExtensionThrottle,
     appVisibilityManager: AppVisibilityManager,
 ) : BasePoller<Unit>(
     debugLabel = "MainPoller",
@@ -123,7 +124,9 @@ class Poller @Inject constructor(
                         data = message.data,
                         serverHash = message.hash,
                         currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
-                        currentUserId = ctx.currentUserId
+                        currentUserId = ctx.currentUserId,
+                        serverTimestampMs = message.timestamp.toEpochMilli(),
+                        serverExpiryMs = message.expirationMs,
                     )
 
                     processor.processSwarmMessage(
@@ -181,6 +184,10 @@ class Poller @Inject constructor(
     }
 
     private suspend fun poll(snode: Snode) = supervisorScope {
+        // Before any cursor is read, so a reset made while this poll is in flight keeps it from writing
+        // its position back.
+        val cursorEpoch = lokiApiDatabase.lastMessageHashEpoch()
+
         val userAuth = requireNotNull(storage.userAuth)
 
         // Get messages call wrapped in an async
@@ -244,18 +251,20 @@ class Poller @Inject constructor(
         if (hashesToExtend.isNotEmpty()) {
             launch {
                 try {
-                    swarmApiExecutor.execute(
-                        SwarmApiRequest(
-                            swarmPubKeyHex = userAuth.accountId.hexString,
-                            api = alterTtlApiFactory.create(
-                                messageHashes = hashesToExtend,
-                                auth = userAuth,
-                                alterType = AlterTtlApi.AlterType.Extend,
-                                newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds
-                            ),
-                            swarmNodeOverride = snode,
+                    configTtlExtensionThrottle.extendIfDue(userAuth.accountId.hexString) {
+                        swarmApiExecutor.execute(
+                            SwarmApiRequest(
+                                swarmPubKeyHex = userAuth.accountId.hexString,
+                                api = alterTtlApiFactory.create(
+                                    messageHashes = hashesToExtend,
+                                    auth = userAuth,
+                                    alterType = AlterTtlApi.AlterType.Extend,
+                                    newExpiry = snodeClock.currentTimeMillis() + 14.days.inWholeMilliseconds
+                                ),
+                                swarmNodeOverride = snode,
+                            )
                         )
-                    )
+                    }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
 
@@ -279,7 +288,8 @@ class Poller @Inject constructor(
                     publicKey = userPublicKey,
                     newValue = messages
                         .maxBy { it.timestamp }.hash,
-                    namespace = configType.namespace
+                    namespace = configType.namespace,
+                    since = cursorEpoch,
                 )
             }
         }
@@ -293,7 +303,8 @@ class Poller @Inject constructor(
                 snode = snode,
                 publicKey = userPublicKey,
                 newValue = newest.hash,
-                namespace = Namespace.DEFAULT()
+                namespace = Namespace.DEFAULT(),
+                since = cursorEpoch,
             )
         }
     }

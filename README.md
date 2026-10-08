@@ -22,7 +22,7 @@ Please search for any [existing issues](https://github.com/session-foundation/se
 
 ## Build instructions
 
-Build instructions can be found in [BUILDING.md](BUILDING.md).
+Build instructions can be found in [RELEASE.md](RELEASE.md).
 
 ## Translations
 

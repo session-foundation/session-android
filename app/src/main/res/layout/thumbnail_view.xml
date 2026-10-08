@@ -23,6 +23,7 @@
         android:layout_height="@dimen/accent_line_thickness"
         android:layout_gravity="bottom"
         android:visibility="gone"
+        android:contentDescription="@string/AccessibilityId_mediaLoading"
         tools:visibility="visible" />
 
     <FrameLayout

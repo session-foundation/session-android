@@ -24,12 +24,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.STORE_VARIANT_KEY
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
@@ -108,7 +107,6 @@ fun InAppReview(
                 showCloseButton = true,
                 title = context.getString(R.string.reviewLimit),
                 text = Phrase.from(context, R.string.reviewLimitDescription)
-                    .put(APP_NAME_KEY, context.getString(R.string.app_name))
                     .format()
                     .toString(),
             )
@@ -176,11 +174,9 @@ private fun InAppReviewStartPrompt(
 
     InAppReviewDialog(
         title = Phrase.from(context, R.string.enjoyingSession)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format()
             .toString(),
         message = Phrase.from(context, R.string.enjoyingSessionDescription)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format()
             .toString(),
         negativeButtonText = Phrase.from(context, R.string.enjoyingSessionButtonPositive)
@@ -208,11 +204,9 @@ private fun InAppReviewPositivePrompt(
 
     InAppReviewDialog(
         title = Phrase.from(context, R.string.rateSession)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format()
             .toString(),
         message = Phrase.from(context, R.string.rateSessionModalDescriptionUpdated)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .put(STORE_VARIANT_KEY, storeReviewManager?.storeName ?: "Google Play Store")
             .format()
             .toString(),
@@ -232,7 +226,6 @@ private fun InAppReviewNegativePrompt(
     InAppReviewDialog(
         title = context.getString(R.string.giveFeedback),
         message = Phrase.from(context, R.string.giveFeedbackDescription)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format()
             .toString(),
         positiveButtonText = context.getString(R.string.openSurvey),

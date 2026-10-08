@@ -9,11 +9,15 @@
     <string name="accountIdErrorInvalid">Αυτό το ID λογαριασμού είναι άκυρο. Παρακαλώ ελέγξτε και δοκιμάστε ξανά.</string>
     <string name="accountIdOrOnsEnter">Εισαγάγετε Account ID ή ONS</string>
     <string name="accountIdOrOnsInvite">Πρόσκληση Account ID ή ONS</string>
-    <string name="accountIdShare">Γεια, χρησιμοποιώ το {app_name} για να συνομιλώ με πλήρη ιδιωτικότητα και ασφάλεια. Έλα μαζί μου! Το ID του Λογαριασμού μου είναι\n\n{account_id}\n\nΚατεβάστε το στο {session_download_url}</string>
+    <string name="accountIdShare">Γεια, χρησιμοποιώ το Session για να συνομιλώ με πλήρη ιδιωτικότητα και ασφάλεια. Έλα μαζί μου! Το ID του Λογαριασμού μου είναι\n\n{account_id}\n\nΚατεβάστε το στο https://getsession.org/download</string>
     <string name="accountIdYours">Το ID του Λογαριασμού σας</string>
     <string name="accountIdYoursDescription">Αυτό είναι το ID λογαριασμού σας. Άλλοι χρήστες μπορούν να το σαρώσουν για να ξεκινήσουν μια συνομιλία μαζί σας.</string>
     <string name="actualSize">Πραγματικό Μέγεθος</string>
     <string name="add">Προσθήκη</string>
+    <plurals name="addAdmin">
+        <item quantity="one">Προσθήκη διαχειριστή</item>
+        <item quantity="other">Προσθήκη διαχειριστών</item>
+    </plurals>
     <string name="adminCannotBeRemoved">Οι διαχειριστές δεν μπορούν να αφαιρεθούν.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> και <b>{count} άλλα</b> προωθήθηκαν στον Διαχειριστή.</string>
     <string name="adminPromote">Προώθηση Διαχειριστών</string>
@@ -36,6 +40,10 @@
     <string name="adminRemovedUser"><b>{name}</b> αφαιρέθηκε ως Διαχειριστής.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> και <b>{count} άλλοι</b> αφαιρέθηκαν ως Διαχειριστές.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> και <b>{other_name}</b> αφαιρέθηκαν ως Διαχειριστές.</string>
+    <plurals name="adminSelected">
+        <item quantity="one">%1$d διαχειριστής επιλέχθηκε</item>
+        <item quantity="other">%1$d διαχειριστές επιλέχθηκαν</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="one">Στέλνεται προαγωγή διαχειριστή</item>
         <item quantity="other">Στέλνονται προαγωγές διαχειριστή</item>
@@ -46,7 +54,7 @@
     <string name="anonymous">Ανώνυμος</string>
     <string name="appearanceHideMenuBar">Απόκρυψη Γραμμής Μενού</string>
     <string name="appearanceLanguage">Γλώσσα</string>
-    <string name="appearanceLanguageDescription">Επιλέξτε τις γλωσσικές ρυθμίσεις για το {app_name}. Το {app_name} θα επανεκκινήσει όταν αλλάξετε τις γλωσσικές σας ρυθμίσεις.</string>
+    <string name="appearanceLanguageDescription">Επιλέξτε τις γλωσσικές ρυθμίσεις για το Session. Το Session θα επανεκκινήσει όταν αλλάξετε τις γλωσσικές σας ρυθμίσεις.</string>
     <string name="appearancePreview1">Πώς είσαι;</string>
     <string name="appearancePreview2">Είμαι καλά ευχαριστώ, εσύ;</string>
     <string name="appearancePreview3">Τα πάω τέλεια, ευχαριστώ.</string>
@@ -115,7 +123,7 @@
     <string name="authenticateFailed">Ο Έλεγχος Ταυτότητας Απέτυχε</string>
     <string name="authenticateFailedTooManyAttempts">Πάρα πολλές αποτυχημένες προσπάθειες ταυτοποίησης. Παρακαλώ προσπαθήστε ξανά αργότερα.</string>
     <string name="authenticateNotAccessed">Δεν ήταν δυνατή η πρόσβαση στον έλεγχο ταυτότητας.</string>
-    <string name="authenticateToOpen">Πραγματοποιήστε έλεγχο ταυτότητας για να ανοίξετε το {app_name}.</string>
+    <string name="authenticateToOpen">Πραγματοποιήστε έλεγχο ταυτότητας για να ανοίξετε το Session.</string>
     <string name="back">Πίσω</string>
     <string name="banDeleteAll">Αποκλεισμός και Διαγραφή Όλων</string>
     <string name="banErrorFailed">Ο αποκλεισμός απέτυχε</string>
@@ -153,7 +161,7 @@
     <string name="callsPermissionsRequiredDescription">Μπορείτε να ενεργοποιήσετε την άδεια \"Κλήσεις Φωνής και Βίντεο\" στις Ρυθμίσεις Απορρήτου.</string>
     <string name="callsReconnecting">Επανασύνδεση...</string>
     <string name="callsRinging">Καλεί...</string>
-    <string name="callsSessionCall">{app_name} Call</string>
+    <string name="callsSessionCall">Session Call</string>
     <string name="callsSettings">Κλήσεις (Beta)</string>
     <string name="callsVoiceAndVideo">Κλήσεις Φωνής και Βίντεο</string>
     <string name="callsVoiceAndVideoBeta">Κλήσεις Φωνής και Βίντεο (Beta)</string>
@@ -163,9 +171,9 @@
     <string name="cameraErrorNotFound">Δε βρέθηκε κάμερα</string>
     <string name="cameraErrorUnavailable">Η κάμερα δεν είναι διαθέσιμη.</string>
     <string name="cameraGrantAccess">Παραχωρήστε Πρόσβαση στην Κάμερα</string>
-    <string name="cameraGrantAccessDenied">Το {app_name} χρειάζεται πρόσβαση στην κάμερα για την λήψη φωτογραφιών και βίντεο, αλλά έχει απορριφθεί μόνιμα. Παρακαλώ μεταβείτε στις ρυθμίσεις της εφαρμογής, επιλέξτε «Άδειες», και ενεργοποιήστε το «Κάμερα».</string>
-    <string name="cameraGrantAccessDescription">Το {app_name} χρειάζεται πρόσβαση στην κάμερα για λήψη φωτογραφιών και βίντεο ή για σάρωση κωδικών QR.</string>
-    <string name="cameraGrantAccessQr">Το {app_name} χρειάζεται πρόσβαση στην κάμερα για σάρωση κωδικών QR</string>
+    <string name="cameraGrantAccessDenied">Το Session χρειάζεται πρόσβαση στην κάμερα για την λήψη φωτογραφιών και βίντεο, αλλά έχει απορριφθεί μόνιμα. Παρακαλώ μεταβείτε στις ρυθμίσεις της εφαρμογής, επιλέξτε «Άδειες», και ενεργοποιήστε το «Κάμερα».</string>
+    <string name="cameraGrantAccessDescription">Το Session χρειάζεται πρόσβαση στην κάμερα για λήψη φωτογραφιών και βίντεο ή για σάρωση κωδικών QR.</string>
+    <string name="cameraGrantAccessQr">Το Session χρειάζεται πρόσβαση στην κάμερα για σάρωση κωδικών QR</string>
     <string name="cancel">Ακύρωση</string>
     <string name="changePasswordFail">Αποτυχία αλλαγής κωδικού πρόσβασης</string>
     <string name="clear">Διαγραφή</string>
@@ -219,6 +227,10 @@
     <string name="contactDeleteDescription">Είστε βέβαιοι ότι θέλετε να διαγράψετε το <b>{name}</b> από τις επαφές σας; Νέα μηνύματα από <b>{name}</b> θα φτάσουν ως αίτημα μηνύματος.</string>
     <string name="contactNone">Δεν έχετε επαφές ακόμα</string>
     <string name="contactSelect">Επιλογή Επαφών</string>
+    <plurals name="contactSelected">
+        <item quantity="one">%1$d επαφή επιλέχθηκε</item>
+        <item quantity="other">%1$d επαφές επιλέχθηκαν</item>
+    </plurals>
     <string name="contactUserDetails">Λεπτομέρειες Χρήστη</string>
     <string name="contentDescriptionCamera">Κάμερα</string>
     <string name="contentDescriptionChooseConversationType">Επιλέξτε μια ενέργεια για να ξεκινήσετε μια συνομιλία</string>
@@ -252,9 +264,9 @@
     <string name="copy">Αντιγραφή</string>
     <string name="create">Δημιουργία</string>
     <string name="cut">Αποκοπή</string>
-    <string name="databaseErrorGeneric">Παρουσιάστηκε σφάλμα βάσης δεδομένων.\n\nΕξαγάγετε τα αρχεία καταγραφής της εφαρμογής σας για κοινή χρήση στην αντιμετώπιση προβλημάτων. Αν αυτό δεν είναι επιτυχές, επανεγκαταστήστε το {app_name} και επαναφέρετε τον λογαριασμό σας.</string>
-    <string name="databaseErrorTimeout">Παρατηρήσαμε ότι το {app_name} χρειάζεται πολύ χρόνο για να ξεκινήσει.\n\nΜπορείτε να συνεχίσετε να περιμένετε, να εξάγετε τα αρχεία καταγραφής της συσκευής σας για να τα μοιραστείτε για την αντιμετώπιση προβλημάτων ή να επανεκκινήσετε το {app_name}.</string>
-    <string name="databaseErrorUpdate">Η βάση δεδομένων της εφαρμογής σας δεν είναι συμβατή με αυτήν την έκδοση του {app_name}. Επανεγκαταστήστε την εφαρμογή και αποκαταστήστε τον λογαριασμό σας για να δημιουργήσετε μια νέα βάση δεδομένων και να συνεχίσετε να χρησιμοποιείτε το {app_name}.\n\nΠροειδοποίηση: Αυτό θα έχει ως αποτέλεσμα την απώλεια όλων των μηνυμάτων και των συνημμένων που είναι παλαιότερα των δύο εβδομάδων.</string>
+    <string name="databaseErrorGeneric">Παρουσιάστηκε σφάλμα βάσης δεδομένων.\n\nΕξαγάγετε τα αρχεία καταγραφής της εφαρμογής σας για κοινή χρήση στην αντιμετώπιση προβλημάτων. Αν αυτό δεν είναι επιτυχές, επανεγκαταστήστε το Session και επαναφέρετε τον λογαριασμό σας.</string>
+    <string name="databaseErrorTimeout">Παρατηρήσαμε ότι το Session χρειάζεται πολύ χρόνο για να ξεκινήσει.\n\nΜπορείτε να συνεχίσετε να περιμένετε, να εξάγετε τα αρχεία καταγραφής της συσκευής σας για να τα μοιραστείτε για την αντιμετώπιση προβλημάτων ή να επανεκκινήσετε το Session.</string>
+    <string name="databaseErrorUpdate">Η βάση δεδομένων της εφαρμογής σας δεν είναι συμβατή με αυτήν την έκδοση του Session. Επανεγκαταστήστε την εφαρμογή και αποκαταστήστε τον λογαριασμό σας για να δημιουργήσετε μια νέα βάση δεδομένων και να συνεχίσετε να χρησιμοποιείτε το Session.\n\nΠροειδοποίηση: Αυτό θα έχει ως αποτέλεσμα την απώλεια όλων των μηνυμάτων και των συνημμένων που είναι παλαιότερα των δύο εβδομάδων.</string>
     <string name="databaseOptimizing">Βελτιστοποίηση Βάσης Δεδομένων</string>
     <string name="debugLog">Αρχείο καταγραφής Αποσφαλμάτωσης</string>
     <string name="decline">Απόρριψη</string>
@@ -274,6 +286,10 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Παρακαλώ περιμένετε όσο δημιουργείται η ομάδα...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Αποτυχία Ενημέρωσης Ομάδας</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Δεν έχετε άδεια να διαγράψετε τα μηνύματα άλλων</string>
+    <plurals name="deleteAttachments">
+        <item quantity="one">Διαγραφή επιλεγμένου συνημμένου</item>
+        <item quantity="other">Διαγραφή επιλεγμένων συνημμένων</item>
+    </plurals>
     <plurals name="deleteMessage">
         <item quantity="one">Διαγραφή Μηνύματος</item>
         <item quantity="other">Διαγραφή Μηνυμάτων</item>
@@ -356,6 +372,7 @@
     <string name="displayNameSet">Ορισμός Ονόματος Εμφάνισης</string>
     <string name="displayNameVisible">Το Όνομα Προβολής σας είναι ορατό στους χρήστες, στις ομάδες και στις κοινότητες με τις οποίες αλληλεπιδράτε.</string>
     <string name="document">Έγγραφο</string>
+    <string name="donateSessionDescription">Ισχυρές δυνάμεις προσπαθούν να αποδυναμώσουν την ιδιωτϻικότητα, αλλά δεν μπορούμε να συνεχίσουμε αυτόν τον αγώνα μόνοι μας.\n\nΗ δωρεά βοηθά να παραμείνει το Session ασφαλές, ανεξάρτητο και διαθέσιμο στο διαδίκτυο.</string>
     <string name="done">Ολοκληρώθηκε</string>
     <string name="download">Λήψη</string>
     <string name="downloading">Λήψη...</string>
@@ -396,7 +413,7 @@
     <string name="fullScreenToggle">Εναλλαγή Πλήρους Οθόνης</string>
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
-    <string name="giphyWarningDescription">Το {app_name} θα συνδεθεί με το Giphy για να παρέχει αποτελέσματα αναζήτησης. Δε θα έχετε πλήρη προστασία μεταδεδομένων όταν στέλνετε GIFs.</string>
+    <string name="giphyWarningDescription">Το Session θα συνδεθεί με το Giphy για να παρέχει αποτελέσματα αναζήτησης. Δε θα έχετε πλήρη προστασία μεταδεδομένων όταν στέλνετε GIFs.</string>
     <string name="groupAddMemberMaximum">Οι ομάδες έχουν ένα μέγιστο όριο 100 μελών</string>
     <string name="groupCreate">Δημιουργία Ομάδας</string>
     <string name="groupCreateErrorNoMembers">Παρακαλώ επιλέξτε τουλάχιστον 1 μέλος ομάδας.</string>
@@ -463,8 +480,8 @@
         <item quantity="other">Αφαίρεση χρηστών και των μηνυμάτων τους</item>
     </plurals>
     <plurals name="groupRemoveUserOnly">
-        <item quantity="one">Αφαίρεση Απλά Χρήστη</item>
-        <item quantity="other">Αφαίρεση Χρηστών</item>
+        <item quantity="one">Αφαίρεση χρήστη</item>
+        <item quantity="other">Αφαίρεση χρηστών</item>
     </plurals>
     <string name="groupRemoved"><b>{name}</b> αφαιρέθηκε από την ομάδα.</string>
     <string name="groupRemovedMultiple"><b>{name}</b> και <b>{count} άλλα</b> αφαιρέθηκαν από την ομάδα.</string>
@@ -477,10 +494,10 @@
     <string name="groupUnknown">Άγνωστη Ομάδα</string>
     <string name="groupUpdated">Η ομάδα ενημερώθηκε</string>
     <string name="helpFAQ">Συχνές Ερωτήσεις</string>
-    <string name="helpHelpUsTranslateSession">Βοηθήστε μας να μεταφράσουμε το {app_name}</string>
-    <string name="helpReportABugDescription">Κοινοποιήστε κάποια στοιχεία για να μας βοηθήσετε να επιλύσουμε το ζήτημά σας. Εξαγάγετε τους καταγραφές σας και στη συνέχεια ανεβάστε το αρχείο μέσω του Help Desk του {app_name}.</string>
+    <string name="helpHelpUsTranslateSession">Βοηθήστε μας να μεταφράσουμε το Session</string>
+    <string name="helpReportABugDescription">Κοινοποιήστε κάποια στοιχεία για να μας βοηθήσετε να επιλύσουμε το ζήτημά σας. Εξαγάγετε τους καταγραφές σας και στη συνέχεια ανεβάστε το αρχείο μέσω του Help Desk του Session.</string>
     <string name="helpReportABugExportLogs">Εξαγωγή Αρχείων Καταγραφής</string>
-    <string name="helpReportABugExportLogsDescription">Εξαγάγετε τα αρχεία καταγραφής σας και στη συνέχεια μεταφορτώστε το αρχείο μέσω του {app_name}\'s Help Desk.</string>
+    <string name="helpReportABugExportLogsDescription">Εξαγάγετε τα αρχεία καταγραφής σας και στη συνέχεια μεταφορτώστε το αρχείο μέσω του Session\'s Help Desk.</string>
     <string name="helpReportABugExportLogsSaveToDesktop">Αποθήκευση στην επιφάνεια εργασίας</string>
     <string name="helpSupport">Υποστήριξη</string>
     <string name="helpWedLoveYourFeedback">Θα θέλαμε πολύ τα σχόλιά σας</string>
@@ -491,6 +508,10 @@
     <string name="incognitoKeyboardDescription">Ζητήστε ανώνυμη λειτουργία αν είναι διαθέσιμη. Ανάλογα με το πληκτρολόγιο που χρησιμοποιείτε, το πληκτρολόγιο σας μπορεί να αγνοήσει αυτό το αίτημα.</string>
     <string name="info">Πληροφορίες</string>
     <string name="invalidShortcut">Μη έγκυρη συντόμευση</string>
+    <plurals name="inviteContactsPlural">
+        <item quantity="one">Πρόσκληση επαφής</item>
+        <item quantity="other">Πρόσκληση επαφών</item>
+    </plurals>
     <plurals name="inviteFailed">
         <item quantity="one">Η πρόσκληση απέτυχε</item>
         <item quantity="other">Οι προσκλήσεις απέτυχαν</item>
@@ -515,23 +536,23 @@
     <string name="linkPreviewsEnable">Enable Link Previews</string>
     <string name="linkPreviewsErrorLoad">Αδυναμία φόρτωσης προεπισκόπησης συνδέσμων</string>
     <string name="linkPreviewsErrorUnsecure">Η προεπισκόπηση δε φορτώθηκε για μη ασφαλή σύνδεσμο</string>
-    <string name="linkPreviewsFirstDescription">Display previews for URLs you send and receive. This can be useful, however {app_name} must contact linked websites to generate previews. You can always turn off link previews in {app_name}\'s settings.</string>
+    <string name="linkPreviewsFirstDescription">Display previews for URLs you send and receive. This can be useful, however Session must contact linked websites to generate previews. You can always turn off link previews in Session\'s settings.</string>
     <string name="linkPreviewsSend">Αποστολή Προεπισκοπήσεων Συνδέσμου</string>
     <string name="linkPreviewsSendModalDescription">Δε θα έχετε πλήρη προστασία μεταδεδομένων αν αποστέλλετε προεπισκοπήσεις συνδέσμων.</string>
     <string name="linkPreviewsTurnedOff">Προεπισκοπήσεις Συνδέσμου Απενεργοποιημένες</string>
-    <string name="linkPreviewsTurnedOffDescription">Το {app_name} πρέπει να επικοινωνήσει με συνδεδεμένες ιστοσελίδες για να δημιουργήσει προεπισκοπήσεις των συνδέσμων που στέλνετε και λαμβάνετε.\n\nΜπορείτε να τις ενεργοποιήσετε στις ρυθμίσεις του {app_name}.</string>
+    <string name="linkPreviewsTurnedOffDescription">Το Session πρέπει να επικοινωνήσει με συνδεδεμένες ιστοσελίδες για να δημιουργήσει προεπισκοπήσεις των συνδέσμων που στέλνετε και λαμβάνετε.\n\nΜπορείτε να τις ενεργοποιήσετε στις ρυθμίσεις του Session.</string>
     <string name="loadAccount">Φόρτωση Λογαριασμού</string>
     <string name="loadAccountProgressMessage">Φόρτωση του λογαριασμού σας</string>
     <string name="loading">Φόρτωση...</string>
     <string name="lockApp">Κλείδωμα εφαρμογής</string>
-    <string name="lockAppDescription">Να απαιτείται δακτυλικό αποτύπωμα, PIN, μοτίβο ή κωδικός πρόσβασης για το ξεκλείδωμα του {app_name}.</string>
-    <string name="lockAppDescriptionIos">Απαιτείται Touch ID, Face ID ή ο κωδικός πρόσβασης για να ξεκλειδώσετε το {app_name}.</string>
+    <string name="lockAppDescription">Να απαιτείται δακτυλικό αποτύπωμα, PIN, μοτίβο ή κωδικός πρόσβασης για το ξεκλείδωμα του Session.</string>
+    <string name="lockAppDescriptionIos">Απαιτείται Touch ID, Face ID ή ο κωδικός πρόσβασης για να ξεκλειδώσετε το Session.</string>
     <string name="lockAppEnablePasscode">Πρέπει να ορίσετε έναν κωδικό πρόσβασης στις Ρυθμίσεις του iOS σας για να χρησιμοποιήσετε το Κλείδωμα Οθόνης.</string>
-    <string name="lockAppLocked">Το {app_name} είναι κλειδωμένο</string>
-    <string name="lockAppQuickResponse">Η γρήγορη απάντηση δεν είναι διαθέσιμη όταν το {app_name} είναι κλειδωμένο!</string>
+    <string name="lockAppLocked">Το Session είναι κλειδωμένο</string>
+    <string name="lockAppQuickResponse">Η γρήγορη απάντηση δεν είναι διαθέσιμη όταν το Session είναι κλειδωμένο!</string>
     <string name="lockAppStatus">Κατάσταση κλειδώματος</string>
     <string name="lockAppUnlock">Πατήστε για Ξεκλείδωμα</string>
-    <string name="lockAppUnlocked">Το {app_name} είναι ξεκλείδωτο</string>
+    <string name="lockAppUnlocked">Το Session είναι ξεκλείδωτο</string>
     <string name="max">Μέγιστο</string>
     <string name="media">Πολυμέσα</string>
     <plurals name="members">
@@ -539,14 +560,14 @@
         <item quantity="other">%1$d μέλη</item>
     </plurals>
     <plurals name="membersActive">
-        <item quantity="one">%1$d ενεργά μέλη</item>
+        <item quantity="one">%1$d ενεργό μέλος</item>
         <item quantity="other">%1$d ενεργά μέλη</item>
     </plurals>
     <string name="membersAddAccountIdOrOns">Προσθήκη Account ID ή ONS</string>
     <string name="membersInvite">Πρόσκληση Επαφών</string>
     <plurals name="membersInviteSend">
-        <item quantity="one">Αποστολή Πρόσκλησης</item>
-        <item quantity="other">Αποστολή Προσκλήσεων</item>
+        <item quantity="one">Αποστολή πρόσκλησης</item>
+        <item quantity="other">Αποστολή προσκλήσεων</item>
     </plurals>
     <string name="membersInviteShareDescription">Θα θέλατε να μοιραστείτε το ιστορικό μηνυμάτων ομάδας με τον/την <b>{name}</b>;</string>
     <string name="membersInviteShareDescriptionMultiple">Θα θέλατε να μοιραστείτε το ιστορικό μηνυμάτων ομάδας με τον/την <b>{name}</b> και άλλους <b>{count}</b>;</string>
@@ -558,19 +579,19 @@
     <string name="messageEmpty">Το μήνυμα είναι κενό.</string>
     <string name="messageErrorDelivery">Η παράδοση του μηνύματος απέτυχε</string>
     <string name="messageErrorLimit">Συμπληρώθηκε το όριο μηνυμάτων</string>
-    <string name="messageErrorOld">Λήφθηκε ένα μήνυμα που είναι κρυπτογραφημένο με μια παλιά έκδοση του {app_name} που πλέον δεν υποστηρίζεται. Παρακαλώ ζητήστε από τον αποστολέα να αναβαθμίσει στην πιο πρόσφατη έκδοση και να ξαναστείλει το μήνυμα.</string>
+    <string name="messageErrorOld">Λήφθηκε ένα μήνυμα που είναι κρυπτογραφημένο με μια παλιά έκδοση του Session που πλέον δεν υποστηρίζεται. Παρακαλώ ζητήστε από τον αποστολέα να αναβαθμίσει στην πιο πρόσφατη έκδοση και να ξαναστείλει το μήνυμα.</string>
     <string name="messageErrorOriginal">Το αρχικό μήνυμα δε βρέθηκε</string>
     <string name="messageInfo">Πληροφορίες Μηνύματος</string>
     <string name="messageMarkRead">Σήμανση ως αναγνωσμένο</string>
     <string name="messageMarkUnread">Σήμανση ως μη αναγνωσμένο</string>
     <plurals name="messageNew">
-        <item quantity="one">Νέο Μήνυμα</item>
-        <item quantity="other">Νέα Μηνύματα</item>
+        <item quantity="one">Νέο μήνυμα</item>
+        <item quantity="other">Νέα μηνύματα</item>
     </plurals>
     <string name="messageNewDescriptionDesktop">Ξεκινήστε μια νέα συνομιλία εισάγοντας το ID λογαριασμού του φίλου σας ή το ONS.</string>
     <string name="messageNewDescriptionMobile">Ξεκινήστε μια νέα συνομιλία εισάγοντας το ID λογαριασμού του φίλου σας, το ONS ή σκανάροντας τον κώδικα QR τους.</string>
     <plurals name="messageNewYouveGot">
-        <item quantity="one">Έχετε νέο μήνυμα.</item>
+        <item quantity="one">Έχετε ένα νέο μήνυμα.</item>
         <item quantity="other">Έχετε %1$d νέα μηνύματα.</item>
     </plurals>
     <plurals name="messageNewYouveGotGroup">
@@ -647,7 +668,7 @@
     <string name="notificationsMuteUnmute">Αναίρεση Σίγασης</string>
     <string name="notificationsMuted">Σε Σίγαση</string>
     <string name="notificationsSlowMode">Αργή Λειτουργία</string>
-    <string name="notificationsSlowModeDescription">Το {app_name} θα ελέγχει περιστασιακά για νέα μηνύματα στο παρασκήνιο.</string>
+    <string name="notificationsSlowModeDescription">Το Session θα ελέγχει περιστασιακά για νέα μηνύματα στο παρασκήνιο.</string>
     <string name="notificationsSound">Ήχος</string>
     <string name="notificationsSoundDescription">Ήχος όταν η Εφαρμογή είναι Ανοιχτή</string>
     <string name="notificationsSoundDesktop">Ηχητικές Ειδοποιήσεις</string>
@@ -661,20 +682,22 @@
     <string name="onboardingAccountCreate">Δημιουργία λογαριασμού</string>
     <string name="onboardingAccountCreated">Ο Λογαριασμός Δημιουργήθηκε</string>
     <string name="onboardingAccountExists">Έχω λογαριασμό</string>
-    <string name="onboardingBackAccountCreation">Δεν μπορείτε να επιστρέψετε περαιτέρω. Για να ακυρώσετε τη δημιουργία του λογαριασμού σας, το {app_name} πρέπει να τερματιστεί.</string>
-    <string name="onboardingBackLoadAccount">Δεν μπορείτε να επιστρέψετε περαιτέρω. Για να σταματήσετε τη φόρτωση του λογαριασμού σας, το {app_name} πρέπει να τερματιστεί.</string>
+    <string name="onboardingBackAccountCreation">Δεν μπορείτε να επιστρέψετε περαιτέρω. Για να ακυρώσετε τη δημιουργία του λογαριασμού σας, το Session πρέπει να τερματιστεί.</string>
+    <string name="onboardingBackLoadAccount">Δεν μπορείτε να επιστρέψετε περαιτέρω. Για να σταματήσετε τη φόρτωση του λογαριασμού σας, το Session πρέπει να τερματιστεί.</string>
     <string name="onboardingBubbleCreatingAnAccountIsEasy">Creating an account is instant, free, and anonymous {emoji}</string>
     <string name="onboardingBubbleNoPhoneNumber">Δεν χρειάζεστε καν αριθμό τηλεφώνου για να εγγραφείτε.</string>
     <string name="onboardingBubblePrivacyInYourPocket">Απόρρητο στην τσέπη σας.</string>
-    <string name="onboardingBubbleSessionIsEngineered">Το {app_name} είναι σχεδιασμένο για να προστατεύει την ιδιωτικότητά σας.</string>
-    <string name="onboardingBubbleWelcomeToSession">Καλώς ήλθατε στο {app_name} {emoji}</string>
+    <string name="onboardingBubbleSessionIsEngineered">Το Session είναι σχεδιασμένο για να προστατεύει την ιδιωτικότητά σας.</string>
+    <string name="onboardingBubbleWelcomeToSession">Καλώς ήλθατε στο Session {emoji}</string>
     <string name="onboardingHitThePlusButton">Πατήστε το κουμπί συν για να ξεκινήσετε μια συνομιλία, να δημιουργήσετε μια ομάδα ή να γίνετε μέλος σε μια επίσημη κοινότητα!</string>
-    <string name="onboardingMessageNotificationExplanation">Υπάρχουν δύο τρόποι με τους οποίους το {app_name} μπορεί να σας ειδοποιήσει για νέα μηνύματα.</string>
+    <string name="onboardingMessageNotificationExplanation">Υπάρχουν δύο τρόποι με τους οποίους το Session μπορεί να σας ειδοποιήσει για νέα μηνύματα.</string>
     <string name="onboardingPrivacy">Πολιτική Απορρήτου</string>
     <string name="onboardingTos">Όροι Χρήσης</string>
     <string name="onboardingTosPrivacy">Χρησιμοποιώντας αυτή την υπηρεσία, συμφωνείτε με τους <b>Όρους Παροχής Υπηρεσιών</b> και την <b>Πολιτική Απορρήτου</b> μας</string>
+    <string name="ongoingAppeal">Νέα ελπίδα για το Session</string>
+    <string name="ongoingAppealDescription">Όταν φαινόταν ότι το Session ίσως εξαφανιστεί, σταθήκατε στο ύψος των περιστάσεων.\n\nΟι δωρεές σας έχουν δώσει στο Session Technology Foundation (STF) επαρκή χρηματοδότηση, ώστε μια μικρή ομάδα συνεισφερόντων να μπορεί να συντηρεί την εφαρμογή.\n\nΑυτή τη στιγμή, η προτεραιότητα είναι να διατηρηθεί το Session ασφαλές, σταθερό και διαθέσιμο στο διαδίκτυο.\n\nΟι δωρεές σας μπορούν να βοηθήσουν στην υποστήριξη του Session σε αυτή την κρίσιμη περίοδο. Επιπλέον δωρεές ενδέχεται να επιτρέψουν την πρόσληψη περισσότερων προγραμματιστών και να βοηθήσουν στην παροχή των λειτουργιών που χρειάζονται για να εξελιχθεί το Session ταχύτερα.</string>
     <string name="onionRoutingPath">Διαδρομή</string>
-    <string name="onionRoutingPathDescription">Το {app_name} αποκρύπτει την IP σας δρομολογώντας τα μηνύματά σας μέσω πολλών Service Nodes στο αποκεντρωμένο δίκτυο του {app_name}. Αυτή είναι η τρέχουσα διαδρομή σας:</string>
+    <string name="onionRoutingPathDescription">Το Session αποκρύπτει την IP σας δρομολογώντας τα μηνύματά σας μέσω πολλών Service Nodes στο αποκεντρωμένο δίκτυο του Session. Αυτή είναι η τρέχουσα διαδρομή σας:</string>
     <string name="onionRoutingPathDestination">Προορισμός</string>
     <string name="onionRoutingPathEntryNode">Κόμβος Εισόδου</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
@@ -696,39 +719,41 @@
     <string name="passwordRemove">Αφαίρεση Κωδικού Πρόσβασης</string>
     <string name="passwordSet">Ορισμός Κωδικού Πρόσβασης</string>
     <string name="paste">Επικόλληση</string>
-    <string name="permissionMusicAudioDenied">{app_name} χρειάζεται πρόσβαση στη μουσική και τον ήχο για να στείλει αρχεία, μουσική και ήχο, αλλά η πρόσβαση έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Δικαιώματα, και ενεργοποιήστε το \"Μουσική και ήχος\".</string>
-    <string name="permissionsAppleMusic">Το {app_name} χρειάζεται πρόσβαση στο Apple Music για αναπαραγωγή συνημμένων πολυμέσων.</string>
+    <string name="permissionMusicAudioDenied">Session χρειάζεται πρόσβαση στη μουσική και τον ήχο για να στείλει αρχεία, μουσική και ήχο, αλλά η πρόσβαση έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Δικαιώματα, και ενεργοποιήστε το \"Μουσική και ήχος\".</string>
+    <string name="permissionsAppleMusic">Το Session χρειάζεται πρόσβαση στο Apple Music για αναπαραγωγή συνημμένων πολυμέσων.</string>
     <string name="permissionsAutoUpdate">Αυτόματη Ενημέρωση</string>
     <string name="permissionsAutoUpdateDescription">Αυτόματος έλεγχος για ενημερώσεις κατά την εκκίνηση</string>
-    <string name="permissionsCameraDenied">Το {app_name} χρειάζεται πρόσβαση στην κάμερα για τη λήψη φωτογραφιών και βίντεο, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε την \"Κάμερα\".</string>
-    <string name="permissionsFaceId">Η λειτουργία κλειδώματος οθόνης στο {app_name} χρησιμοποιεί το Face ID.</string>
+    <string name="permissionsCameraChangeDescriptionIos">Η πρόσβαση στην κάμερα είναι ενεργοποιημένη. Για να την απενεργοποιήσετε, εναλλάξτε την άδεια \"Κάμερα\" στις Ρυθμίσεις.</string>
+    <string name="permissionsCameraDenied">Το Session χρειάζεται πρόσβαση στην κάμερα για τη λήψη φωτογραφιών και βίντεο, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε την \"Κάμερα\".</string>
+    <string name="permissionsFaceId">Η λειτουργία κλειδώματος οθόνης στο Session χρησιμοποιεί το Face ID.</string>
     <string name="permissionsKeepInSystemTray">Διατήρηση στην Περιοχή Ειδοποιήσεων</string>
-    <string name="permissionsKeepInSystemTrayDescription">Το {app_name} συνεχίζει να εκτελείται στο παρασκήνιο όταν κλείνετε το παράθυρο.</string>
-    <string name="permissionsLibrary">Το {app_name} χρειάζεται πρόσβαση στη φωτογραφική βιβλιοθήκη για να συνεχίσει. Μπορείτε να ενεργοποιήσετε την πρόσβαση στις ρυθμίσεις του iOS.</string>
+    <string name="permissionsKeepInSystemTrayDescription">Το Session συνεχίζει να εκτελείται στο παρασκήνιο όταν κλείνετε το παράθυρο.</string>
+    <string name="permissionsLibrary">Το Session χρειάζεται πρόσβαση στη φωτογραφική βιβλιοθήκη για να συνεχίσει. Μπορείτε να ενεργοποιήσετε την πρόσβαση στις ρυθμίσεις του iOS.</string>
     <string name="permissionsMicrophone">Μικρόφωνο</string>
-    <string name="permissionsMicrophoneAccessRequired">{app_name} χρειάζεται πρόσβαση στο μικρόφωνο για να πραγματοποιήσει κλήσεις και να στείλει ηχητικά μηνύματα, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε το \"Μικρόφωνο\".</string>
-    <string name="permissionsMicrophoneAccessRequiredDesktop">Μπορείτε να ενεργοποιήσετε την πρόσβαση στο μικρόφωνο στις ρυθμίσεις απορρήτου του {app_name}</string>
-    <string name="permissionsMicrophoneAccessRequiredIos">Το {app_name} χρειάζεται πρόσβαση στο μικρόφωνο για την αποστολή ηχητικών μηνυμάτων.</string>
+    <string name="permissionsMicrophoneAccessRequired">Session χρειάζεται πρόσβαση στο μικρόφωνο για να πραγματοποιήσει κλήσεις και να στείλει ηχητικά μηνύματα, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε το \"Μικρόφωνο\".</string>
+    <string name="permissionsMicrophoneAccessRequiredDesktop">Μπορείτε να ενεργοποιήσετε την πρόσβαση στο μικρόφωνο στις ρυθμίσεις απορρήτου του Session</string>
+    <string name="permissionsMicrophoneAccessRequiredIos">Το Session χρειάζεται πρόσβαση στο μικρόφωνο για την αποστολή ηχητικών μηνυμάτων.</string>
     <string name="permissionsMicrophoneDescription">Επιτρέψτε την πρόσβαση στο μικρόφωνο.</string>
-    <string name="permissionsMusicAudio">{app_name} χρειάζεται πρόσβαση στη μουσική και τον ήχο για να στείλει αρχεία, μουσική και ήχο.</string>
+    <string name="permissionsMusicAudio">Session χρειάζεται πρόσβαση στη μουσική και τον ήχο για να στείλει αρχεία, μουσική και ήχο.</string>
     <string name="permissionsRequired">Απαιτείται Άδεια</string>
-    <string name="permissionsStorageDenied">{app_name} χρειάζεται πρόσβαση στη βιβλιοθήκη φωτογραφιών ώστε να μπορείτε να στείλετε φωτογραφίες και βίντεο, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε το \"Φωτογραφίες και βίντεο\".</string>
-    <string name="permissionsStorageDeniedLegacy">{app_name} χρειάζεται πρόσβαση στον αποθηκευτικό χώρο ώστε να μπορείτε να στείλετε και να αποθηκεύσετε συνημμένα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε το \"Αποθηκευτικός χώρος\".</string>
-    <string name="permissionsStorageSave">Το {app_name} χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για να αποθηκεύσει συνημμένα και πολυμέσα.</string>
-    <string name="permissionsStorageSaveDenied">Το {app_name} χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για την αποθήκευση φωτογραφιών και βίντεο, αλλά έχει απορριφθεί μόνιμα. Παρακαλώ μεταβείτε στις ρυθμίσεις της εφαρμογής, επιλέξτε «Άδειες», και ενεργοποιήστε το «Αποθηκευτικός χώρος».</string>
-    <string name="permissionsStorageSend">Το {app_name} χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για την αποστολή φωτογραφιών και βίντεο.</string>
+    <string name="permissionsStorageDenied">Session χρειάζεται πρόσβαση στη βιβλιοθήκη φωτογραφιών ώστε να μπορείτε να στείλετε φωτογραφίες και βίντεο, αλλά έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε το \"Φωτογραφίες και βίντεο\".</string>
+    <string name="permissionsStorageDeniedLegacy">Session χρειάζεται πρόσβαση στον αποθηκευτικό χώρο ώστε να μπορείτε να στείλετε και να αποθηκεύσετε συνημμένα. Πατήστε Ρυθμίσεις → Άδειες, και ενεργοποιήστε το \"Αποθηκευτικός χώρος\".</string>
+    <string name="permissionsStorageSave">Το Session χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για να αποθηκεύσει συνημμένα και πολυμέσα.</string>
+    <string name="permissionsStorageSaveDenied">Το Session χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για την αποθήκευση φωτογραφιών και βίντεο, αλλά έχει απορριφθεί μόνιμα. Παρακαλώ μεταβείτε στις ρυθμίσεις της εφαρμογής, επιλέξτε «Άδειες», και ενεργοποιήστε το «Αποθηκευτικός χώρος».</string>
+    <string name="permissionsStorageSend">Το Session χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για την αποστολή φωτογραφιών και βίντεο.</string>
     <string name="pin">Καρφίτσωμα</string>
     <string name="pinConversation">Καρφίτσωμα Συνομιλίας</string>
     <string name="pinUnpin">Ξεκαρφίτσωμα</string>
     <string name="pinUnpinConversation">Ξεκαρφίτσωμα Συνομιλίας</string>
     <string name="preview">Προεπισκόπηση</string>
+    <string name="proAnimatedDisplayPicture">Προχωρήστε και ανεβάστε GIF και κινούμενες εικόνες WebP για την εικόνα της οθόνης σας!</string>
     <plurals name="proBadgesSent">
-        <item quantity="one">%1$s %2$s Σήμα στάλθηκε</item>
-        <item quantity="other">%1$s %2$s Εμβλήματα στάλθηκαν</item>
+        <item quantity="one">%1$s Pro Σήμα στάλθηκε</item>
+        <item quantity="other">%1$s Pro Εμβλήματα στάλθηκαν</item>
     </plurals>
     <plurals name="proGroupsUpgraded">
-        <item quantity="one">Αναβαθμίστηκε η %1$s ομάδα</item>
-        <item quantity="other">Αναβαθμίστηκαν %1$s ομάδες</item>
+        <item quantity="one">%1$s ομάδα αναβαθμίστηκε</item>
+        <item quantity="other">%1$s ομάδες αναβαθμίστηκαν</item>
     </plurals>
     <plurals name="proLongerMessagesSent">
         <item quantity="one">%1$s Μεγαλύτερο Μήνυμα εστάλη</item>
@@ -759,8 +784,9 @@
     <string name="qrScan">Σάρωση Κωδικού QR</string>
     <string name="qrView">Προβολή QR</string>
     <string name="qrYoursDescription">Οι φίλοι μπορούν να σας στείλουν μήνυμα σκανάροντας τον QR κωδικό σας.</string>
-    <string name="quit">Κλείσιμο {app_name}</string>
+    <string name="quit">Κλείσιμο Session</string>
     <string name="quitButton">Κλείσιμο</string>
+    <string name="rateSessionModalDescriptionUpdated">Το Session δεν προβάλλει διαφημίσεις, δεν πουλά δεδομένα και απαντά μόνο στους χρήστες του. Η βαθμολογία σας στο {storevariant} βοηθά περισσότερους να ανακαλύψουν επικοινωνία που σέβεται πραγματικά την ιδιωτικότητά τους.</string>
     <string name="read">Ανάγνωση</string>
     <string name="readReceipts">Αναφορές Ανάγνωσης</string>
     <string name="readReceiptsDescription">Δείξε αναφορές ανάγνωσης για όλα τα μηνύματα που στέλνετε και λαμβάνετε.</string>
@@ -768,6 +794,7 @@
     <string name="recommended">Προτείνεται</string>
     <string name="recoveryPasswordBannerDescription">Αποθηκεύστε τον κωδικό σας ανάκτησης για να βεβαιωθείτε ότι δεν θα χάσετε την πρόσβαση στον λογαριασμό σας.</string>
     <string name="recoveryPasswordBannerTitle">Αποθηκεύστε τον κωδικό σας ανάκτησης</string>
+    <string name="recoveryPasswordDescription">Χρησιμοποιήστε τον κωδικό ανάκτησης για να φορτώσετε τον λογαριασμό σας σε νέες συσκευές.\n\nΟ λογαριασμός σας δεν μπορεί να ανακτηθεί χωρίς τον κωδικό ανάκτησης. Βεβαιωθείτε ότι τον αποθηκεύσατε σε ασφαλές μέρος — και <b>μην τον μοιραστείτε με κανέναν</b>.</string>
     <string name="recoveryPasswordEnter">Εισαγάγετε τον κωδικό σας ανάκτησης</string>
     <string name="recoveryPasswordErrorMessageGeneric">Παρακαλώ ελέγξτε τον κωδικό πρόσβασης για ανάκτηση και προσπαθήστε ξανά.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Κάποιες από τις λέξεις στον Κωδικό Ανάκτησης σας είναι λανθασμένες. Παρακαλώ ελέγξτε και προσπαθήστε ξανά.</string>
@@ -776,6 +803,7 @@
     <string name="recoveryPasswordExplanation">Για να φορτώσετε τον λογαριασμό σας, εισαγάγετε τον κωδικό ανάκτησης.</string>
     <string name="recoveryPasswordHidePermanently">Απόκρυψη του Κωδικού Ανάκτησης Μόνιμα</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">Χωρίς τον κωδικό ανάκτησης, δεν μπορείτε να φορτώσετε τον λογαριασμό σας σε νέες συσκευές.\n\nΣυνιστούμε ανεπιφύλακτα να αποθηκεύσετε τον κωδικό ανάκτησης σε ένα ασφαλές και σίγουρο μέρος πριν συνεχίσετε.</string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">Είστε βέβαιοι ότι θέλετε να αποκρύψετε μόνιμα τον κωδικό σας ανάκτησης σε αυτήν τη συσκευή;\n\n Αυτό δεν μπορεί να αναιρεθεί.</string>
     <string name="recoveryPasswordHideRecoveryPassword">Απόκρυψη Κωδικού Ανάκτησης</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">Μόνιμη απόκρυψη του κωδικού ανάκτησης σε αυτή τη συσκευή.</string>
     <string name="recoveryPasswordRestoreDescription">Εισαγάγετε τον κωδικό σας ανάκτησης για να φορτώσετε τον λογαριασμό σας. Αν δεν τον έχετε αποθηκεύσει, μπορείτε να τον βρείτε στις ρυθμίσεις της εφαρμογής.</string>
@@ -786,9 +814,17 @@
         <item quantity="other">%1$d χαρακτήρες απομένουν</item>
     </plurals>
     <string name="remove">Αφαίρεση</string>
+    <plurals name="removeMemberLowercase">
+        <item quantity="one">Αφαίρεση μέλους</item>
+        <item quantity="other">Αφαίρεση μελών</item>
+    </plurals>
     <string name="removePasswordFail">Αποτυχία κατάργησης κωδικού πρόσβασης</string>
     <string name="reply">Απάντηση</string>
     <string name="resend">Επαναποστολή</string>
+    <plurals name="resendInvite">
+        <item quantity="one">Εκ νέου Αποστολή Πρόσκλησης</item>
+        <item quantity="other">Εκ νέου Αποστολή Προσκλήσεων</item>
+    </plurals>
     <string name="resolving">Γίνεται φόρτωση χωρών...</string>
     <string name="restart">Επανεκκίνηση</string>
     <string name="resync">Επανασυγχρονισμός</string>
@@ -831,13 +867,14 @@
     <string name="sessionRecoveryPassword">Κωδικός Ανάκτησης</string>
     <string name="sessionSettings">Ρυθμίσεις</string>
     <string name="set">Ορισμός</string>
-    <string name="settingsRestartDescription">Πρέπει να επανεκκινήσετε το {app_name} για να εφαρμόσετε τις νέες ρυθμίσεις σας.</string>
+    <string name="settingsRestartDescription">Πρέπει να επανεκκινήσετε το Session για να εφαρμόσετε τις νέες ρυθμίσεις σας.</string>
     <string name="settingsScreenSecurityDesktop">Ασφάλεια Οθόνης</string>
     <string name="share">Κοινοποίηση</string>
-    <string name="shareAccountIdDescription">Προσκαλέστε τον φίλο σας να συνομιλήσει μαζί σας στο {app_name} μοιράζοντας το Account ID σας με αυτόν.</string>
+    <string name="shareAccountIdDescription">Προσκαλέστε τον φίλο σας να συνομιλήσει μαζί σας στο Session μοιράζοντας το Account ID σας με αυτόν.</string>
     <string name="shareAccountIdDescriptionCopied">Μοιραστείτε με τους φίλους σας όπου και αν μιλάτε συνήθως μαζί τους — στη συνέχεια μετακινήστε τη συζήτηση εδώ.</string>
     <string name="shareExtensionDatabaseError">Υπάρχει ένα πρόβλημα κατά το άνοιγμα της βάσης δεδομένων. Παρακαλώ επανεκκινήστε την εφαρμογή και δοκιμάστε ξανά.</string>
-    <string name="shareToSession">Κοινοποιήστε στο {app_name}</string>
+    <string name="shareToSession">Κοινοποιήστε στο Session</string>
+    <string name="sharingSupportMultipleMedia">Συγνώμη, το Session υποστηρίζει μόνο την κοινοποίηση πολλαπλών εικόνων και βίντεο ταυτόχρονα</string>
     <string name="show">Εμφάνιση</string>
     <string name="showAll">Εμφάνιση Όλων</string>
     <string name="showLess">Εμφάνιση Λιγότερων</string>
@@ -856,11 +893,11 @@
     <string name="updateDownloaded">Εγκαταστάθηκε η ενημέρωση, κάντε κλικ για επανεκκίνηση</string>
     <string name="updateDownloading">Downloading update: {percent_loader}%</string>
     <string name="updateError">Αδυναμία Ενημέρωσης</string>
-    <string name="updateErrorDescription">Το {app_name} απέτυχε να ενημερωθεί. Παρακαλώ πηγαίνετε στο {session_download_url} και εγκαταστήστε τη νέα έκδοση χειροκίνητα, στη συνέχεια επικοινωνήστε με το Κέντρο Βοήθειας για να μας ενημερώσετε για αυτό το πρόβλημα.</string>
-    <string name="updateNewVersion">Μια νέα έκδοση της εφαρμογής {app_name} είναι διαθέσιμη, πατήστε για ενημέρωση</string>
-    <string name="updateNewVersionDescription">Μια νέα έκδοση ({version}) της εφαρμογής {app_name} είναι διαθέσιμη.</string>
+    <string name="updateErrorDescription">Το Session απέτυχε να ενημερωθεί. Παρακαλώ πηγαίνετε στο https://getsession.org/download και εγκαταστήστε τη νέα έκδοση χειροκίνητα, στη συνέχεια επικοινωνήστε με το Κέντρο Βοήθειας για να μας ενημερώσετε για αυτό το πρόβλημα.</string>
+    <string name="updateNewVersion">Μια νέα έκδοση της εφαρμογής Session είναι διαθέσιμη, πατήστε για ενημέρωση</string>
+    <string name="updateNewVersionDescription">Μια νέα έκδοση ({version}) της εφαρμογής Session είναι διαθέσιμη.</string>
     <string name="updateReleaseNotes">Μετάβαση στις Σημειώσεις Έκδοσης</string>
-    <string name="updateSession">Ενημέρωση {app_name}</string>
+    <string name="updateSession">Ενημέρωση Session</string>
     <string name="updateVersion">Έκδοση {version}</string>
     <string name="uploading">Μεταφόρτωση</string>
     <string name="urlCopy">Αντιγραφή URL</string>

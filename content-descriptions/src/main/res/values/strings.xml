@@ -237,6 +237,8 @@
     <string name="AccessibilityId_apply">Apply</string>
     <string name="AccessibilityId_cancel">Cancel</string>
     <string name="AccessibilityId_sessionClearData">Clear data</string>
+    <string name="AccessibilityId_clearDeviceOnlyRadio">clear-device-only-radio</string>
+    <string name="AccessibilityId_clearDeviceAndNetworkRadio">clear-device-and-network-radio</string>
     <string name="AccessibilityId_conversationTitle">Conversation header name</string>
     <string name="AccessibilityId_sessionConversations">Conversations</string>
     <string name="AccessibilityId_disappearingMessagesOff">Disable disappearing messages</string>
@@ -256,6 +258,10 @@
     <string name="qa_settings_item_donate">donate-menu-item</string>
     <string name="qa_settings_item_path">path-menu-item</string>
     <string name="qa_settings_item_pro">pro-menu-item</string>
+    <!-- The Pro row's LABEL, which is what says which state the account is in ("Session Pro Beta" /
+         "Upgrade Session" / "Renew Pro Beta"). Separate from the row above, which is the tap target and
+         carries no text of its own — so a test reading the row's STATE needs this one, not that one. -->
+    <string name="qa_settings_item_pro_title">pro-menu-item-title</string>
 
     <!-- In app review -->
     <string name="qa_inapp_review_dialog_button_great">enjoy-session-positive-button</string>
@@ -274,6 +280,13 @@
     <string name="qa_pro_settings_action_recover_plan">pro-settings-recover-plan</string>
     <string name="qa_pro_settings_action_faq">pro-settings-faq</string>
     <string name="qa_pro_settings_action_support">pro-settings-support</string>
+
+    <!-- Pro features a message was sent with, listed on the message details screen. The names are the
+         subset of the Pro feature vocabulary that applies per message, so one feature is named the same
+         wherever it appears -->
+    <string name="qa_pro_message_feature_badges">pro-message-feature-badges</string>
+    <string name="qa_pro_message_feature_longer_messages">pro-message-feature-longer-messages</string>
+    <string name="qa_pro_message_feature_animated_display_picture">pro-message-feature-animated-display-picture</string>
 
     <!-- Manage members and admin -->
     <string name="qa_manage_members_invite_contacts">invite-contacts-menu-option</string>
@@ -342,6 +355,8 @@
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
     <string name="AccessibilityId_expand">Expand</string>
+    <string name="AccessibilityId_mediaInvalid">Media invalid</string>
+    <string name="AccessibilityId_mediaLoading">Media loading</string>
     <string name="AccessibilityId_mediaMessage">Media message</string>
     <string name="AccessibilityId_save">Save</string>
     <string name="AccessibilityId_remove">Remove</string>
@@ -354,6 +369,69 @@
     <string name="qa_pro_badge_component">pro-badge-component</string>
     <string name="qa_pro_badge_text">pro-badge-text</string>
     <string name="qa_pro_badge_icon">pro-badge-icon</string>
+    <!-- Unique ids for elements a spec would otherwise have to reach by parent/child traversal.
+         A traversal encodes a layout detail rather than a contract, so it breaks on restructuring;
+         these are addressed directly instead. Same strings on iOS - one locator serves both. -->
+    <string name="qa_conversation_header_pro_badge">conversation-header-pro-badge</string>
+    <string name="qa_pro_settings_update_plan_subtitle">pro-settings-update-plan-subtitle</string>
+    <!-- Section headers on the Pro settings screen. Named for the section's role rather than its
+         visible title, so they survive a copy change. -->
+    <string name="qa_pro_settings_stats_header">pro-settings-stats-header</string>
+    <!-- The four cells of the Pro stats matrix. Same strings as iOS. -->
+    <string name="qa_pro_stats_longer_messages">pro-stats-longer-messages</string>
+    <string name="qa_pro_stats_pinned_conversations">pro-stats-pinned-conversations</string>
+    <string name="qa_pro_stats_badges_sent">pro-stats-badges-sent</string>
+    <!-- The text inside a Pro stats cell. Generic on purpose: the cell's own id
+         (qa_pro_stats_*) sits on the row, which carries no text of its own, so a
+         reader scopes this child by that parent - the same shape as
+         qa_pro_screen_action_label and qa_action_item_title. -->
+    <string name="qa_pro_stats_value">pro-stats-value</string>
+    <string name="qa_pro_stats_groups_upgraded">pro-stats-groups-upgraded</string>
+    <string name="qa_pro_settings_manage_header">pro-settings-manage-header</string>
+    <string name="qa_pro_settings_features_header">pro-settings-features-header</string>
+    <!-- The Pro settings header's loading/error status message. ONE id for the slot: the four
+         possible messages are told apart by their TEXT, so this must stay on the node carrying the
+         message and must not gain a contentDescription — that would be a second source of truth for
+         the same string, and the first thing to rot when the copy changes. Same string on iOS. -->
+    <string name="qa_pro_settings_status_banner">pro-settings-status-banner</string>
+    <!-- The hero description under the Pro settings header. ONE id for the slot: the three
+         possible messages (never subscribed / expired / active) are told apart by their TEXT, so
+         this must stay on the node carrying the message and must not gain a contentDescription.
+         Same string on iOS and Desktop - one locator serves all three. -->
+    <string name="qa_pro_settings_description">pro-settings-description</string>
+    <!-- The Pro store-flow screens (update / renew / refund / cancel), one id per destination so a
+         spec can assert WHICH screen a state opens. Only one of them is ever on screen, which is what
+         lets the parts below carry generic ids. Same strings on iOS - one locator serves both. -->
+    <string name="qa_pro_screen_choose_plan">pro-screen-choose-plan</string>
+    <string name="qa_pro_screen_choose_plan_no_billing">pro-screen-choose-plan-no-billing</string>
+    <string name="qa_pro_screen_choose_plan_non_originating">pro-screen-choose-plan-non-originating</string>
+    <string name="qa_pro_screen_cancel_plan">pro-screen-cancel-plan</string>
+    <string name="qa_pro_screen_cancel_plan_non_originating">pro-screen-cancel-plan-non-originating</string>
+    <string name="qa_pro_screen_refund_plan">pro-screen-refund-plan</string>
+    <string name="qa_pro_screen_refund_plan_non_originating">pro-screen-refund-plan-non-originating</string>
+    <string name="qa_pro_screen_refund_in_progress">pro-screen-refund-in-progress</string>
+    <string name="qa_pro_screen_plan_confirmation">pro-screen-plan-confirmation</string>
+    <!-- The parts of whichever store-flow screen is showing. Generic on purpose: these screens are
+         mutually exclusive, so the screen id above supplies the context and this stays four ids
+         instead of four per screen. Several screens differ only in their interpolated store name, so
+         the description is often the only thing that tells two of them apart - assert its TEXT, and
+         do not add a contentDescription to these nodes. Not every screen has all four. -->
+    <string name="qa_pro_screen_header">pro-screen-header</string>
+    <string name="qa_pro_screen_title">pro-screen-title</string>
+    <string name="qa_pro_screen_description">pro-screen-description</string>
+    <string name="qa_pro_screen_action">pro-screen-action</string>
+    <!-- The label inside qa_pro_screen_action. Separate because the tagged Button node
+         exposes no text of its own: the copy lives on an untagged child, so a test filtering
+         on the button's text matches nothing. -->
+    <string name="qa_pro_screen_action_label">pro-screen-action-label</string>
+    <!-- The "how to manage this elsewhere" cells on the non-originating screens. Two are shown at
+         once, so unlike the parts above these are named per option. -->
+    <string name="qa_pro_link_cell_device">pro-link-cell-device</string>
+    <string name="qa_pro_link_cell_device_title">pro-link-cell-device-title</string>
+    <string name="qa_pro_link_cell_device_description">pro-link-cell-device-description</string>
+    <string name="qa_pro_link_cell_website">pro-link-cell-website</string>
+    <string name="qa_pro_link_cell_website_title">pro-link-cell-website-title</string>
+    <string name="qa_pro_link_cell_website_description">pro-link-cell-website-description</string>
     <string name="qa_action_item_title">action-item-title</string>
     <string name="qa_action_item_subtitle">action-item-subtitle</string>
     <string name="qa_action_item_icon">action-item-icon</string>
@@ -367,5 +445,22 @@
     <string name="qa_cta_button_negative">cta-button-negative</string>
 
     <string name="qa_collapsing_footer_action">qa-collapsing-footer-action</string>
+
+    <!-- The expand affordance on a collapsed message bubble. Carried by the tap TARGET in both
+         conversation implementations (the v2 TextView, whose bounds are hit-tested, and the v3
+         Compose control), so flipping the convo-v3 debug flag cannot change the locator.
+         Android only: iOS marks the whole bubble as a single accessibility element, so an id on the
+         equivalent control there is not reachable, and its specs locate the affordance differently. -->
+    <string name="qa_message_read_more">message-read-more</string>
+
+    <!-- The shared "Open URL" confirmation dialog, which every urlOpen confirmation in the app goes
+         through, so these three ids cover all of them rather than one caller. The description is the
+         node carrying the interpolated URL, so a spec reads its TEXT to assert WHICH url is about to
+         be opened - do not add a contentDescription to it. Same strings on Desktop - one locator
+         serves both. The "Copy URL" button is deliberately left untagged: a spec already finds it by
+         its label, and a testTag would change its resource-id. -->
+    <string name="qa_open_url_dialog">open-url-dialog</string>
+    <string name="qa_open_url_description">open-url-description</string>
+    <string name="qa_open_url_confirm_button">open-url-confirm-button</string>
 
 </resources>

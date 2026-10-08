@@ -16,7 +16,6 @@
  */
 package org.thoughtcrime.securesms.service;
 
-import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
@@ -38,7 +37,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ServiceCompat;
 
-import com.squareup.phrase.Phrase;
+import org.session.libsession.utilities.Phrase;
 
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -221,10 +220,29 @@ public class KeyCachingService extends Service {
       if (!TextSecurePreferences.isPasswordDisabled(context)) timeoutMillis = TimeUnit.MINUTES.toMillis(passphraseTimeoutMinutes);
       else                                                    timeoutMillis = TimeUnit.SECONDS.toMillis(screenLockTimeoutSeconds);
 
+      PendingIntent expirationIntent = buildExpirationPendingIntent(context);
+
+      // With no timeout there is nothing to schedule, and scheduling anyway is what left the lock
+      // unreliable: AlarmManager batches non-wakeup alarms, so an alarm for "now" was still arriving
+      // seconds later, and onAppForegrounded cancels it on the way back in. A quick trip to another app
+      // and straight back therefore never locked at all. Deliver it directly instead - the service is
+      // necessarily foregrounded here, because we only get this far with a secret set.
+      if (timeoutMillis <= 0) {
+        Log.i(TAG, "No timeout, expiring immediately");
+
+        try {
+          expirationIntent.send();
+        } catch (PendingIntent.CanceledException e) {
+          Log.w(TAG, "Immediate expiry was cancelled, falling back to an alarm", e);
+          ServiceUtil.getAlarmManager(context).set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), expirationIntent);
+        }
+
+        return;
+      }
+
       Log.i(TAG, "Starting timeout: " + timeoutMillis);
 
-      AlarmManager  alarmManager     = ServiceUtil.getAlarmManager(context);
-      PendingIntent expirationIntent = buildExpirationPendingIntent(context);
+      AlarmManager alarmManager = ServiceUtil.getAlarmManager(context);
 
       alarmManager.cancel(expirationIntent);
       alarmManager.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + timeoutMillis, expirationIntent);
@@ -244,7 +262,6 @@ public class KeyCachingService extends Service {
     // Replace app name in title string
     Context c = getApplicationContext();
     String unlockedTxt = Phrase.from(c, R.string.lockAppUnlocked)
-            .put(APP_NAME_KEY, c.getString(R.string.app_name))
             .format().toString();
     builder.setContentTitle(unlockedTxt);
     builder.setSmallIcon(R.drawable.ic_lock_keyhole_open);

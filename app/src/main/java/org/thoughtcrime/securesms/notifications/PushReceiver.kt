@@ -108,7 +108,9 @@ class PushReceiver @Inject constructor(
                                         serverHash = pushData.metadata.msg_hash,
                                         groupId = groupId,
                                         currentUserId = ctx.currentUserId,
-                                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data
+                                        currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                                        serverTimestampMs = pushData.metadata.timestampMs,
+                                        serverExpiryMs = pushData.metadata.expiryMs,
                                     )
 
                                     receivedMessageProcessor.processSwarmMessage(
@@ -139,7 +141,7 @@ class PushReceiver @Inject constructor(
                                 ConfigMessage(
                                     hash = hash,
                                     data = pushData.data,
-                                    timestamp = pushData.metadata.timestampSeconds
+                                    timestamp = pushData.metadata.timestampMs
                                 )
                             )
 
@@ -179,6 +181,10 @@ class PushReceiver @Inject constructor(
                                 serverHash = pushData.metadata?.msg_hash,
                                 currentUserId = ctx.currentUserId,
                                 currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                                // Without metadata there's no hash either, and the swarm
+                                // origin is only retained for a message with one.
+                                serverTimestampMs = pushData.metadata?.timestampMs ?: 0L,
+                                serverExpiryMs = pushData.metadata?.expiryMs,
                             )
 
                             receivedMessageProcessor.processSwarmMessage(

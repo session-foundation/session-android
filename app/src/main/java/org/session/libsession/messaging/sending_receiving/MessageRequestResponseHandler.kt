@@ -6,7 +6,6 @@ import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
-import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -37,7 +36,6 @@ class MessageRequestResponseHandler @Inject constructor(
     private val smsDatabase: SmsDatabase,
     private val threadDatabase: ThreadDatabase,
     private val blindMappingRepository: BlindMappingRepository,
-    private val clock: SnodeClock,
 ) {
 
     fun handleVisibleMessage(
@@ -90,7 +88,7 @@ class MessageRequestResponseHandler @Inject constructor(
 
         // Always process the profile update if any. We don't need
         // to process profile for other kind of messages as they should be handled elsewhere
-        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMillis(), pro)?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto, pro)?.let { updates ->
             profileUpdateHandler.get().handleProfileUpdate(
                 senderId = (sender.address as Address.Standard).accountId,
                 updates = updates,

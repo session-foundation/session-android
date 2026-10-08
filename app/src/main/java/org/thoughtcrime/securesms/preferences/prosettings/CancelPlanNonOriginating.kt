@@ -7,17 +7,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.protocol.PaymentProviderMetadata
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.thoughtcrime.securesms.pro.PaymentProviderMetadata
 import org.session.libsession.utilities.StringSubstitutionConstants.DEVICE_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_ACCOUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.PLATFORM_STORE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.PRO_KEY
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.pro.getPlatformDisplayName
 import org.thoughtcrime.securesms.pro.previewAppleMetaData
@@ -35,10 +31,10 @@ fun CancelPlanNonOriginating(
     val context = LocalContext.current
 
     BaseNonOriginatingProSettingsScreen(
+        screenQaTag = R.string.qa_pro_screen_cancel_plan_non_originating,
         disabled = true,
         onBack = onBack,
         headerTitle = Phrase.from(context.getText(R.string.proCancelSorry))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
             .format().toString(),
         buttonText = Phrase.from(context.getText(R.string.openPlatformWebsite))
             .put(PLATFORM_KEY, providerData.getPlatformDisplayName())
@@ -49,13 +45,10 @@ fun CancelPlanNonOriginating(
         },
         contentTitle = stringResource(R.string.proCancellation),
         contentDescription = Phrase.from(context.getText(R.string.proCancellationDescription))
-            .put(PRO_KEY, NonTranslatableStringConstants.PRO)
-            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
             .put(PLATFORM_ACCOUNT_KEY, providerData.platformAccount)
             .format(),
         linkCellsInfo =
             Phrase.from(context.getText(R.string.proCancellationOptions))
-                .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                 .format().toString(),
         linkCells = listOf(
             NonOriginatingLinkCellData(
@@ -63,13 +56,13 @@ fun CancelPlanNonOriginating(
                     .put(DEVICE_TYPE_KEY, providerData.device)
                     .format(),
                 info = Phrase.from(context.getText(R.string.onDeviceCancelDescription))
-                    .put(APP_NAME_KEY, NonTranslatableStringConstants.APP_NAME)
                     .put(DEVICE_TYPE_KEY, providerData.device)
                     .put(PLATFORM_ACCOUNT_KEY, providerData.platformAccount)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
-                iconRes = R.drawable.ic_smartphone
+                iconRes = R.drawable.ic_smartphone,
+                qaTag = R.string.qa_pro_link_cell_device,
+                titleQaTag = R.string.qa_pro_link_cell_device_title,
+                descriptionQaTag = R.string.qa_pro_link_cell_device_description,
             ),
             NonOriginatingLinkCellData(
                 title =  Phrase.from(context.getText(R.string.onPlatformWebsite))
@@ -78,9 +71,11 @@ fun CancelPlanNonOriginating(
                 info = Phrase.from(context.getText(R.string.cancelProPlatformStore))
                     .put(PLATFORM_STORE_KEY, providerData.store)
                     .put(PLATFORM_ACCOUNT_KEY, providerData.platformAccount)
-                    .put(PRO_KEY, NonTranslatableStringConstants.PRO)
                     .format(),
-                iconRes = R.drawable.ic_globe
+                iconRes = R.drawable.ic_globe,
+                qaTag = R.string.qa_pro_link_cell_website,
+                titleQaTag = R.string.qa_pro_link_cell_website_title,
+                descriptionQaTag = R.string.qa_pro_link_cell_website_description,
             )
         )
     )
