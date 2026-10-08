@@ -846,6 +846,9 @@
     <string name="messageStatusFailedToSync">Failed to sync</string>
     <string name="messageStatusSyncing">Syncing</string>
     <string name="messageUnread">Unread messages</string>
+    <string name="messageUnsupported">This message can\'t be displayed. Update Session to view it.</string>
+    <string name="messageUnsupportedBanner">Some messages can\'t be shown on this device. Update Session to read them.</string>
+    <string name="messageUnsupportedBannerLinkedDevice">One of your other devices is using a newer version of Session. Update this device to keep your messages in sync.</string>
     <string name="messageVoice">Voice Message</string>
     <string name="messageVoiceErrorShort">Hold to record a voice message</string>
     <string name="messageVoiceSlideToCancel">Slide to Cancel</string>
