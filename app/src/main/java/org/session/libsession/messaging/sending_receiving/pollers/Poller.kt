@@ -124,7 +124,9 @@ class Poller @Inject constructor(
                         data = message.data,
                         serverHash = message.hash,
                         currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
-                        currentUserId = ctx.currentUserId
+                        currentUserId = ctx.currentUserId,
+                        serverTimestampMs = message.timestamp.toEpochMilli(),
+                        serverExpiryMs = message.expirationMs,
                     )
 
                     processor.processSwarmMessage(

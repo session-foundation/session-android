@@ -351,6 +351,8 @@ class MmsDatabase @Inject constructor(
         contentValues.put(HAS_MENTION, 0)
 
         database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
+        // The row survives as a "deleted" message, so the placeholder trigger doesn't fire
+        database.execSQL(UnsupportedMessageDatabase.DELETE_FOR_PLACEHOLDER_SQL, arrayOf(messageId))
         queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
         val deletedType = if (isOutgoing) {  MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE} else {
             MmsSmsColumns.Types.BASE_DELETED_INCOMING_TYPE

@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.auth
 
 import dagger.Lazy
+import org.session.libsession.messaging.sending_receiving.UnsupportedMessageReprocessor
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.thoughtcrime.securesms.attachments.AvatarUploadManager
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
@@ -47,6 +48,7 @@ class AuthAwareComponents(
         markReadProcessor: Lazy<MarkReadProcessor>,
         notificationProcessor: Lazy<NotificationProcessor>,
         versionDataFetcher: Lazy<VersionDataFetcher>,
+        unsupportedMessageReprocessor: Lazy<UnsupportedMessageReprocessor>,
     ): this(
         components = listOf<Lazy<out AuthAwareComponent>>(
             expiringMessageManager,
@@ -65,6 +67,7 @@ class AuthAwareComponents(
             versionDataFetcher,
             markReadProcessor,
             notificationProcessor,
+            unsupportedMessageReprocessor,
         )
     )
 }

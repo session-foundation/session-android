@@ -53,6 +53,7 @@ import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.sending_receiving.UnsupportedMessageBannerStore
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.network.model.PathStatus
 import org.session.libsession.network.onion.PathManager
@@ -162,6 +163,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var contentViewFactory: GlobalSearchAdapter.ContentView.Factory
     @Inject lateinit var jobQueue: Provider<JobQueue>
     @Inject lateinit var snodeDirectory: SnodeDirectory
+    @Inject lateinit var unsupportedMessageBannerStore: UnsupportedMessageBannerStore
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -391,6 +393,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.configOutdatedView.setOnClickListener {
             textSecurePreferences.setHasLegacyConfig(false)
             updateLegacyConfigView()
+        }
+
+        binding.unsupportedMessageBannerDismiss.setOnClickListener {
+            unsupportedMessageBannerStore.dismiss(clock.currentTimeMillis())
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                unsupportedMessageBannerStore.state.collect { state ->
+                    binding.unsupportedMessageBanner.isVisible = state.textRes != null
+                    state.textRes?.let { binding.unsupportedMessageBannerTextView.setText(it) }
+                }
+            }
         }
 
         // in case a phone call is in progress, this banner is visible and should bring the user back to the call

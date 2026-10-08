@@ -85,6 +85,7 @@ class MessageFormatter @Inject constructor(
 
                 return text
             }
+            message.isUnsupportedMessage -> return SpannableString(context.getString(R.string.messageUnsupported))
             message.messageContent is DisappearingMessageUpdate -> {
                 val isGroup = threadRecipient.isGroupOrCommunityRecipient
                 return buildExpirationTimerMessage(
@@ -184,6 +185,8 @@ class MessageFormatter @Inject constructor(
     ): CharSequence {
         return when {
             message.isOpenGroupInvitation -> context.getString(R.string.communityInvitation)
+            // Generic, like any notification that can't show the content
+            message.isUnsupportedMessage -> context.resources.getQuantityText(R.plurals.messageNew, 1)
             else -> replaceMmsAttachment(context, message, threadRecipient)
         }
     }

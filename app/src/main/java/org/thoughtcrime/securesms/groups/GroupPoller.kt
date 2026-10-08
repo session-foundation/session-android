@@ -332,6 +332,8 @@ class GroupPoller @AssistedInject constructor(
                         groupId = groupId,
                         currentUserId = ctx.currentUserId,
                         currentUserEd25519PrivKey = ctx.currentUserEd25519KeyPair.secretKey.data,
+                        serverTimestampMs = message.timestamp.toEpochMilli(),
+                        serverExpiryMs = message.expirationMs,
                     )
 
                     receivedMessageProcessor.processSwarmMessage(

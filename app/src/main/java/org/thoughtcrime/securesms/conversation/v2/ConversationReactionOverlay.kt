@@ -635,8 +635,8 @@ class ConversationReactionOverlay : FrameLayout {
         val isDeprecatedLegacyGroup = recipient.isLegacyGroup &&
                 deprecationManager.isDeprecated
 
-        // control messages and "marked as deleted" messages can only delete
-        val isDeleteOnly = message.isDeleted || containsControlMessage
+        // control messages, "marked as deleted" messages and unsupported placeholders can only delete
+        val isDeleteOnly = message.isDeleted || containsControlMessage || message.isUnsupportedMessage
 
         // Resend
         if (message.isFailed && !isDeprecatedLegacyGroup) {
