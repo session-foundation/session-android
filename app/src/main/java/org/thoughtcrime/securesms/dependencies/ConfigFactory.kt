@@ -318,7 +318,8 @@ class ConfigFactory @Inject constructor(
             } ?: (null to if (erasedGroupStubs.isEmpty()) emptySet() else changed)
         }
 
-        erasedGroupStubs.forEach(::deleteGroupConfigs)
+        // A merge write is neither pushed nor fully dumped; removeGroup's write is both
+        erasedGroupStubs.forEach(::removeGroup)
 
         // Dump now regardless so we can save the timestamp to the database
         if (result != null) {
