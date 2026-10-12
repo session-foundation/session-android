@@ -67,6 +67,20 @@ sha256sum session-$SESSION_VERSION-universal.apk
 grep universal.apk signature.asc
 ```
 
+## SHA-256 certificate fingerprints:
+
+**Package ID:** network.loki.messenger
+
+**GitHub APK:**
+```
+F2:A0:EC:F7:06:86:44:7D:1D:6C:6C:BB:F5:8C:42:89:05:00:CC:F4:1A:F3:72:AE:20:99:30:39:80:82:4E:DD
+```
+
+**Google Play:**
+```
+A0:22:5A:4A:C3:3A:76:E6:7D:B2:73:ED:17:D7:D6:CF:BB:AE:2B:4F:95:07:42:86:4F:83:F4:13:DE:0C:5B:E5
+```
+
 ## Testing
 ### BrowserStack
 
