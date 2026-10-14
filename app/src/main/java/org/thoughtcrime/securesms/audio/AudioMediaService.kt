@@ -160,32 +160,28 @@ class AudioMediaService : MediaSessionService() {
             session: MediaSession,
             controller: MediaSession.ControllerInfo
         ): MediaSession.ConnectionResult {
-            val base = super.onConnect(session, controller)
+            // Must not be derived from super.onConnect(). Since media3 1.11.0 the default
+            // onConnect() returns a placeholder with EMPTY commands, which media3 only replaces
+            // with real defaults if that placeholder is returned unmodified. A result built from
+            // it grants controllers no player commands, so play/prepare/setMediaItem are dropped
+            // and voice messages never play.
+            val sessionCommands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
+                .buildUpon()
+                .add(AudioCommands.ScrubStart)
+                .add(AudioCommands.ScrubStop)
+                .build()
 
             // Tighten commands for the system notification controller (no next/previous).
-            if (session.isMediaNotificationController(controller)) {
-                val playerCommands = base.availablePlayerCommands
+            val playerCommands = if (session.isMediaNotificationController(controller)) {
+                MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS
                     .buildUpon()
                     .remove(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
                     .build()
-
-                val sessionCommands = base.availableSessionCommands
-                    .buildUpon()
-                    .add(AudioCommands.ScrubStart)
-                    .add(AudioCommands.ScrubStop)
-                    .build()
-
-                return MediaSession.ConnectionResult.accept(sessionCommands, playerCommands)
+            } else {
+                MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS
             }
 
-            // In-app UI controller: allow scrubbing commands too.
-            return MediaSession.ConnectionResult.accept(
-                base.availableSessionCommands.buildUpon()
-                    .add(AudioCommands.ScrubStart)
-                    .add(AudioCommands.ScrubStop)
-                    .build(),
-                base.availablePlayerCommands
-            )
+            return MediaSession.ConnectionResult.accept(sessionCommands, playerCommands)
         }
 
         @OptIn(UnstableApi::class)

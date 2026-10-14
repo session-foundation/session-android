@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.os.Bundle
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -97,6 +98,8 @@ class AudioPlaybackManager @Inject constructor(
 
     fun play(playable: PlayableAudio, startPositionMs: Long = -1L) {
         ensureController { c ->
+            logMissingPlaybackCommands(c)
+
             val currentId = c.currentMediaItem?.mediaId
             val newId = playable.messageId.serialize()
 
@@ -140,6 +143,21 @@ class AudioPlaybackManager @Inject constructor(
             }
 
             if (!c.isPlaying) c.play()
+        }
+    }
+
+    // MediaController drops unavailable commands with only a logcat warning, which never reaches
+    // exported logs.
+    private fun logMissingPlaybackCommands(c: MediaController) {
+        val setMediaItem = c.isCommandAvailable(Player.COMMAND_SET_MEDIA_ITEM)
+        val prepare = c.isCommandAvailable(Player.COMMAND_PREPARE)
+        val playPause = c.isCommandAvailable(Player.COMMAND_PLAY_PAUSE)
+        if (!setMediaItem || !prepare || !playPause) {
+            Log.w(
+                TAG,
+                "Controller is missing playback commands: setMediaItem=$setMediaItem, " +
+                    "prepare=$prepare, playPause=$playPause, connected=${c.isConnected}"
+            )
         }
     }
 
@@ -464,6 +482,12 @@ class AudioPlaybackManager @Inject constructor(
             }
 
             if (!isScrubbing) updateFromController()
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            Log.w(TAG, "Playback error: ${error.errorCodeName} (${error.errorCode}), " +
+                "messageId=${currentPlayable?.messageId?.serialize()}", error)
+            stop()
         }
     }
 
