@@ -58,6 +58,7 @@ abstract class Message {
         val Message.senderOrSync get() = when(this)  {
             is VisibleMessage -> syncTarget ?: sender!!
             is ExpirationTimerUpdate -> syncTarget ?: sender!!
+            is UnsupportedMessage -> syncTarget ?: sender!!
             else -> sender!!
         }
     }

@@ -95,8 +95,13 @@ data class PushNotificationMetadata(
         @SerialName("n")
         val namespace: Int?,
 
+        /** When the message was stored in the swarm, in milliseconds since the epoch. */
         @SerialName("t")
-        val timestampSeconds: Long,
+        val timestampMs: Long,
+
+        /** When the message expires from the swarm, in milliseconds since the epoch. */
+        @SerialName("z")
+        val expiryMs: Long? = null,
 
         /** The length of the message data.  This is always included, even if the message content
          * itself was too large to fit into the push notification. */

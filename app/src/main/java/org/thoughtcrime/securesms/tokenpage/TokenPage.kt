@@ -57,19 +57,14 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.NonTranslatableStringConstants.STAKING_REWARD_POOL
 import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_LONG
 import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_SHORT
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.ICON_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NETWORK_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.STAKING_REWARD_POOL_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_LONG_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_SHORT_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.dialog.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
@@ -242,9 +237,6 @@ fun SessionNetworkInfoSection(modifier: Modifier = Modifier) {
         // 2.) Session network description
         val sessionNetworkDetailsAnnotatedString = annotatedStringResource(
             text = Phrase.from(context.getText(R.string.sessionNetworkDescription))
-                .put(NETWORK_NAME_KEY, NETWORK_NAME)
-                .put(TOKEN_NAME_LONG_KEY, TOKEN_NAME_LONG)
-                .put(APP_NAME_KEY, context.getString(R.string.app_name))
                 .put(ICON_KEY, iconExternalLink)
                 .format()
         )
@@ -345,13 +337,11 @@ fun NodeDetailsBox(
 
     val nodesInSwarmAS = annotatedStringResource(
         text = Phrase.from(context, R.string.sessionNetworkNodesSwarm)
-            .put(APP_NAME_KEY, appName)
             .format()
     )
 
     val nodesSecuringMessagesAS = annotatedStringResource(
         text = Phrase.from(context, R.string.sessionNetworkNodesSecuring)
-            .put(APP_NAME_KEY, appName)
             .format()
     )
 
@@ -537,7 +527,6 @@ fun StatsSection(
         // On the left we have the node image showing how many nodes are in the user's swarm..
         val currentPriceString =
             Phrase.from(LocalContext.current, R.string.sessionNetworkCurrentPrice)
-                .put(TOKEN_NAME_SHORT_KEY, TOKEN_NAME_SHORT)
                 .format().toString()
         val setOneLineOne = currentPriceString
         val setOneLineTwo = currentSentPriceUSDString
@@ -703,9 +692,6 @@ fun SessionTokenSection(
 
         val sessionTokenDescription =
             Phrase.from(LocalContext.current, R.string.sessionNetworkTokenDescription)
-                .put(TOKEN_NAME_LONG_KEY, TOKEN_NAME_LONG)
-                .put(TOKEN_NAME_SHORT_KEY, TOKEN_NAME_SHORT)
-                .put(STAKING_REWARD_POOL_KEY, STAKING_REWARD_POOL)
                 .format().toString()
 
         // Session token description text

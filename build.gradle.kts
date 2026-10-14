@@ -1,3 +1,7 @@
+import org.gradle.platform.Architecture
+import org.gradle.platform.BuildPlatformFactory
+import org.gradle.platform.OperatingSystem
+
 buildscript {
     repositories {
         google()
@@ -56,4 +60,36 @@ allprojects {
             }
         }
     }
+}
+
+// Generates gradle/gradle-daemon-jvm.properties. Any vendor's JDK 21 can run the daemon, so CI's
+// setup-java JDK and Android Studio's JBR are used as they are; a machine without one downloads
+// Adoptium's Temurin release directly rather than through the api.foojay.io index. Adoptium has no
+// FreeBSD or other Unix builds, so those get the Linux ones, as Gradle's own foojay lookup does.
+tasks.updateDaemonJvm {
+    val temurin = "21.0.12.1+1"
+    val release = "https://github.com/adoptium/temurin21-binaries/releases/download/" +
+        "jdk-${temurin.replace("+", "%2B")}/OpenJDK21U-jdk"
+    val file = temurin.replace("+", "_")
+    val linuxAarch64 = uri("${release}_aarch64_linux_hotspot_$file.tar.gz")
+    val linuxX64 = uri("${release}_x64_linux_hotspot_$file.tar.gz")
+
+    languageVersion = JavaLanguageVersion.of(21)
+    toolchainDownloadUrls = mapOf(
+        BuildPlatformFactory.of(Architecture.AARCH64, OperatingSystem.LINUX) to linuxAarch64,
+        BuildPlatformFactory.of(Architecture.X86_64, OperatingSystem.LINUX) to linuxX64,
+        BuildPlatformFactory.of(Architecture.AARCH64, OperatingSystem.FREE_BSD) to linuxAarch64,
+        BuildPlatformFactory.of(Architecture.X86_64, OperatingSystem.FREE_BSD) to linuxX64,
+        BuildPlatformFactory.of(Architecture.AARCH64, OperatingSystem.UNIX) to linuxAarch64,
+        BuildPlatformFactory.of(Architecture.X86_64, OperatingSystem.UNIX) to linuxX64,
+        BuildPlatformFactory.of(Architecture.AARCH64, OperatingSystem.MAC_OS) to
+            uri("${release}_aarch64_mac_hotspot_$file.tar.gz"),
+        BuildPlatformFactory.of(Architecture.X86_64, OperatingSystem.MAC_OS) to
+            uri("${release}_x64_mac_hotspot_$file.tar.gz"),
+        BuildPlatformFactory.of(Architecture.AARCH64, OperatingSystem.WINDOWS) to
+            uri("${release}_aarch64_windows_hotspot_$file.zip"),
+        BuildPlatformFactory.of(Architecture.X86_64, OperatingSystem.WINDOWS) to
+            uri("${release}_x64_windows_hotspot_$file.zip"),
+    )
+    toolchainPlatforms = toolchainDownloadUrls.get().keys
 }

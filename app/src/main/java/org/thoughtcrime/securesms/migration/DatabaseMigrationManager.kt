@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.migration
 
 import android.app.Application
+import android.os.Build
 import android.os.SystemClock
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +19,7 @@ import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoginStateRepository
 import org.thoughtcrime.securesms.crypto.DatabaseSecretProvider
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.dependencies.ManagerScope
@@ -30,6 +33,7 @@ class DatabaseMigrationManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
     private val databaseSecretProvider: DatabaseSecretProvider,
+    private val loginStateRepository: Provider<LoginStateRepository>,
     jsonProvider: Provider<Json>,
     @param:ManagerScope private val scope: CoroutineScope,
 ) : OnAppStartupComponent {
@@ -43,10 +47,13 @@ class DatabaseMigrationManager @Inject constructor(
 
         // First perform a cheap check to see if the migration is done, if so we can skip the wait.
         if (mutableMigrationState.value != MigrationState.Completed) {
-            // Wait until the migration is done. This is a semi-expensive call but it's necessary
-            // to block the callers from accessing the database until we have sorted out the migration
-            // process. Note that we don't pass in errors here as the callers of this function
-            // don't expect the exceptions at all so we have no choice but to block them.
+            // Callers cannot do anything sensible with a half-migrated database, so they wait
+            // here rather than be handed one, and a retry that succeeds releases them.
+            //
+            // Known hazard: Error is terminal and is not a terminating condition for this wait, so
+            // a caller arriving after a failed migration blocks for the life of the process and its
+            // thread is never returned. Deferring database-backed startup work keeps the usual
+            // arrivals away from it, but callers reached from login-state flows are not covered.
             runBlocking {
                 migrationState.first { it == MigrationState.Completed }
             }
@@ -90,6 +97,12 @@ class DatabaseMigrationManager @Inject constructor(
         mutableMigrationState.value = MigrationState.Migrating(steps.toList())
 
         try {
+            // Resolving the secret here is what puts a failed KeyStoreHelper.unseal into
+            // MigrationState.Error, where the user is offered retry and log export. Its only other
+            // dereference is in openHelper, which sits outside every handler on this path, so left
+            // to happen there the AssertionError kills the process on every launch instead (#2213).
+            dbSecret
+
             for ((index, desc) in stepDescriptors.withIndex()) {
                 Log.d(TAG, "Starting migration step: ${desc.name}")
                 val stepStartedAt = SystemClock.elapsedRealtime()
@@ -106,11 +119,56 @@ class DatabaseMigrationManager @Inject constructor(
                 mutableMigrationState.value = MigrationState.Migrating(steps.toList())
             }
 
+            // Reaching Completed after a failure means the keystore is working again, and the login
+            // state is only read once when its repository is built — so an account left unreadable
+            // by the same fault has to be re-read before anything routes on it, or a recovered user
+            // is sent to onboarding on top of their own data.
+            loginStateRepository.get().reloadUnreadableState()
+
             mutableMigrationState.value = MigrationState.Completed
         } catch (ec: Exception) {
-            mutableMigrationState.value = MigrationState.Error(ec)
+            recordMigrationFailure(ec)
+            return
+        } catch (ec: AssertionError) {
+            // AssertionError is caught alongside Exception because KeyStoreHelper throws it on
+            // purpose — it is how every crypto failure is reported, a deliberate signal rather than
+            // a symptom of a dying VM. Errors that do mean the process is already lost
+            // (OutOfMemoryError, StackOverflowError, LinkageError) are deliberately left to kill it.
+            recordMigrationFailure(ec)
             return
         }
+    }
+
+    private fun recordMigrationFailure(error: Throwable) {
+        logKeyStoreFailure(error)
+        mutableMigrationState.value = MigrationState.Error(error)
+    }
+
+    /**
+     * Records the keystore error code behind a crypto failure, if there is one.
+     *
+     * The code distinguishes a transient keystore fault, where the data is intact and a retry may
+     * succeed, from a key that can no longer decrypt what it sealed. Nothing else in the crash
+     * reaching us carries that distinction.
+     */
+    private fun logKeyStoreFailure(error: Throwable) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            logKeyStoreExceptionDetails(error)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun logKeyStoreExceptionDetails(error: Throwable) {
+        val keyStoreError = generateSequence(error) { it.cause }
+            .filterIsInstance<android.security.KeyStoreException>()
+            .firstOrNull() ?: return
+
+        Log.w(
+            TAG,
+            "Keystore failure: code=${keyStoreError.numericErrorCode}, " +
+                "transient=${keyStoreError.isTransientFailure}, " +
+                "systemError=${keyStoreError.isSystemError}"
+        )
     }
 
     private fun migrateCipherSettings(fromRetry: Boolean) {

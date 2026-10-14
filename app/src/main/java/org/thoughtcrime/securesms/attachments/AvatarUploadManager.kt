@@ -10,10 +10,8 @@ import network.loki.messenger.libsession_util.encrypt.Attachments
 import network.loki.messenger.libsession_util.util.Bytes
 import org.session.libsession.messaging.file_server.FileServerApis
 import org.session.libsession.messaging.file_server.FileUploadApi
-import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.RemoteFile.Companion.toRemoteFile
 import org.session.libsession.utilities.withMutableUserConfigs
@@ -73,17 +71,10 @@ class AvatarUploadManager @Inject constructor(
             "Should not upload an empty avatar"
         }
 
-        val usesDeterministicEncryption = prefs.forcesDeterministicAttachmentEncryption
-        val result = if (usesDeterministicEncryption) {
-            attachmentProcessor.encryptDeterministically(
-                plaintext = pictureData,
-                domain = Attachments.Domain.ProfilePic
-            )
-        } else {
-            val key = Util.getSecretBytes(PROFILE_KEY_LENGTH)
-            val ciphertext = AESGCM.encrypt(pictureData, key)
-            AttachmentProcessor.EncryptResult(ciphertext = ciphertext, key = key)
-        }
+        val result = attachmentProcessor.encryptDeterministically(
+            plaintext = pictureData,
+            domain = Attachments.Domain.ProfilePic
+        )
 
         val fileServer = prefs.alternativeFileServer ?: FileServerApis.DEFAULT_FILE_SERVER
         val uploadResult = serverApiExecutor.execute(
@@ -92,7 +83,7 @@ class AvatarUploadManager @Inject constructor(
                 api = fileUploadApiFactory.create(
                     fileServer = fileServer,
                     data = result.ciphertext,
-                    usedDeterministicEncryption = usesDeterministicEncryption,
+                    usedDeterministicEncryption = true,
                     customExpiresSeconds = DEBUG_AVATAR_TTL.takeIf { prefs.forcedShortTTL() }?.inWholeSeconds
                 )
             )
@@ -141,7 +132,6 @@ class AvatarUploadManager @Inject constructor(
     companion object {
         private const val TAG = "AvatarUploadManager"
 
-        private const val PROFILE_KEY_LENGTH = 32
 
         private val DEBUG_AVATAR_TTL: Duration = 30.seconds
     }

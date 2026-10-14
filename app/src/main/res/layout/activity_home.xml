@@ -35,8 +35,12 @@
                         android:layout_height="@dimen/very_small_profile_picture_size"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:contentDescription="@string/AccessibilityId_profilePicture" />
+                        app:layout_constraintBottom_toBottomOf="parent" />
+                    <!-- No contentDescription here on purpose: it is set on the Compose node inside
+                         (see HomeActivity's setThemedContent). Setting it on this host as well would put
+                         the same identifier on two nodes in one tree, which is the ambiguity this moved
+                         away from. -->
+
 
                     <ImageView
                         android:id="@+id/sessionHeaderImage"
@@ -135,6 +139,38 @@
                         android:layout_gravity="center_vertical|right"
                         android:layout_width="12dp"
                         android:layout_height="12dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_x"
+                        app:tint="@color/black" />
+                </FrameLayout>
+
+                <FrameLayout
+                    tools:visibility="visible"
+                    android:visibility="gone"
+                    android:id="@+id/unsupportedMessageBanner"
+                    android:background="?colorAccent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:id="@+id/unsupportedMessageBannerTextView"
+                        android:layout_gravity="center"
+                        android:textColor="@color/black"
+                        android:textSize="@dimen/small_font_size"
+                        android:paddingVertical="@dimen/very_small_spacing"
+                        android:paddingHorizontal="40dp"
+                        android:gravity="center"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        tools:text="@string/messageUnsupportedBanner"
+                        />
+                    <ImageView
+                        android:id="@+id/unsupportedMessageBannerDismiss"
+                        android:contentDescription="@string/close"
+                        android:background="?selectableItemBackgroundBorderless"
+                        android:padding="@dimen/small_spacing"
+                        android:layout_gravity="center_vertical|end"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_x"
                         app:tint="@color/black" />

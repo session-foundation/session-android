@@ -12,7 +12,6 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
-import org.session.libsession.network.SnodeClock
 import org.session.protos.SessionProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -28,7 +27,6 @@ class GroupMessageHandler @Inject constructor(
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
     @param:ManagerScope private val scope: CoroutineScope,
-    private val clock: SnodeClock,
 ) {
     fun handleGroupUpdated(
         message: GroupUpdated,
@@ -43,7 +41,7 @@ class GroupMessageHandler @Inject constructor(
         }
 
         // Update profile if needed
-        ProfileUpdateHandler.Updates.create(proto, clock.currentTimeMillis(), pro)?.let { updates ->
+        ProfileUpdateHandler.Updates.create(proto, pro)?.let { updates ->
             profileUpdateHandler.handleProfileUpdate(
                 senderId = AccountId(message.sender!!),
                 updates = updates,

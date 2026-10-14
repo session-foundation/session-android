@@ -116,7 +116,7 @@ class ConversationAdapter(
                     }
                 )
 
-                if (!message.isDeleted) {
+                if (!message.isDeleted && !message.isUnsupportedMessage) {
                     visibleMessageView.onPress = { event ->
                         onItemPress(
                             message,

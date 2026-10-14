@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
+import androidx.annotation.StringRes
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -106,9 +107,13 @@ fun Button(
     shape: Shape = buttonShape,
     minWidth: Dp = LocalDimensions.current.minButtonWidth,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    /// Tags the label rather than the button. A `qaTag` on the button covers a node whose own `text` is
+    /// empty - the copy sits on this child - so a UI test that filters a button by its text matches
+    /// nothing. Null leaves the label untagged, which is every existing caller.
+    @StringRes textQaTag: Int? = null,
 ) {
     Button(onClick, type, modifier, enabled, style, shape, minWidth = minWidth, interactionSource = interactionSource) {
-        Text(text)
+        Text(text, modifier = Modifier.qaTag(textQaTag))
     }
 }
 
@@ -128,11 +133,12 @@ fun Button(
     )
 }
 
-@Composable fun AccentFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+@Composable fun AccentFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, @StringRes textQaTag: Int? = null, onClick: () -> Unit) {
     Button(
         text, onClick, ButtonType.AccentFill, modifier, enabled,
         style = ButtonStyle.XLarge,
-        shape = sessionShapes().extraSmall
+        shape = sessionShapes().extraSmall,
+        textQaTag = textQaTag
     )
 }
 
@@ -144,11 +150,12 @@ fun Button(
     )
 }
 
-@Composable fun DangerFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+@Composable fun DangerFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, @StringRes textQaTag: Int? = null, onClick: () -> Unit) {
     Button(
         text, onClick, ButtonType.DangerFill, modifier, enabled,
         style = ButtonStyle.XLarge,
-        shape = sessionShapes().extraSmall
+        shape = sessionShapes().extraSmall,
+        textQaTag = textQaTag
     )
 }
 

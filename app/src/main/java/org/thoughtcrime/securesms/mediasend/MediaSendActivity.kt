@@ -22,7 +22,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -30,7 +30,6 @@ import network.loki.messenger.databinding.MediasendActivityBinding
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.Util.isEmpty
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.recipients.Recipient
@@ -336,7 +335,6 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderCompos
             MediaSendViewModel.Error.INVALID_TYPE_ONLY -> Toast.makeText(
                 this,
                 Phrase.from(this, R.string.sharingSupportMultipleMedia)
-                    .put(APP_NAME_KEY, getString(R.string.app_name))
                     .format()
                     .toString(),
                 Toast.LENGTH_LONG
@@ -386,10 +384,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderCompos
     private fun navigateToCamera() {
         val c = applicationContext
         val permanentDenialTxt = Phrase.from(c, R.string.permissionsCameraDenied)
-            .put(APP_NAME_KEY, c.getString(R.string.app_name))
             .format().toString()
         val requireCameraPermissionsTxt = Phrase.from(c, R.string.cameraGrantAccessDescription)
-            .put(APP_NAME_KEY, c.getString(R.string.app_name))
             .format().toString()
 
         Permissions.with(this)

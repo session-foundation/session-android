@@ -18,6 +18,7 @@ class MessageContentModule {
         return SerializersModule {
             polymorphic(MessageContent::class) {
                 subclass(DisappearingMessageUpdate::class)
+                subclass(UnsupportedMessageContent::class)
                 defaultDeserializer {
                     UnknownMessageContent.serializer()
                 }

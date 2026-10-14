@@ -42,9 +42,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.ui.dialog.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.dialog.DialogButtonData
@@ -170,7 +169,6 @@ private fun AppDisguiseSettings(
         AlertDialog(
             onDismissRequest = { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectDismissed) },
             text = Phrase.from(LocalContext.current, R.string.appIconAndNameChangeConfirmation)
-                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                 .format()
                 .toString(),
             title = stringResource(R.string.appIconAndNameChange),

@@ -70,7 +70,11 @@ class InAppReviewManager @Inject constructor(
         .stateIn(scope, SharingStarted.Eagerly, false)
 
     init {
-        val channel = Channel<Event>()
+        // UNLIMITED, not the default rendezvous. On a rendezvous channel `send` does not complete when
+        // it is called — it suspends until this collector receives — so an event emitted from a screen's
+        // scope is lost if that screen goes away in between. Buffering makes the handoff finish at the
+        // call, which is what lets [onEvent] be non-suspending.
+        val channel = Channel<Event>(capacity = Channel.UNLIMITED)
         eventsChannel = channel
 
         scope.launch {
@@ -78,7 +82,13 @@ class InAppReviewManager @Inject constructor(
                 if (storeReviewManager.supportsReviewFlow) {
                     val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
                     InAppReviewState.WaitingForTrigger(
-                        appUpdated = pkg.firstInstallTime != pkg.lastUpdateTime
+                        // The QA override comes first, and only exists because the real answer is not
+                        // reachable from a test: a harness installs over an existing package, so
+                        // firstInstallTime and lastUpdateTime always differ and the fresh-install branch —
+                        // the one that allows the path and theme triggers — can never be exercised.
+                        // Null in any build without the launch config, so the real answer stands.
+                        appUpdated = prefs.getDebugAppUpdated()
+                            ?: (pkg.firstInstallTime != pkg.lastUpdateTime)
                     )
                 } else {
                     InAppReviewState.DismissedForever
@@ -137,8 +147,24 @@ class InAppReviewManager @Inject constructor(
         }
     }
 
-    suspend fun onEvent(event: Event) {
-        eventsChannel.send(event)
+    /**
+     * Record something the user did that might earn a review prompt.
+     *
+     * Deliberately NOT suspending, and deliberately not requiring a coroutine at the call site. Every
+     * caller is a screen, and a screen's scope dies when the user leaves it — which is exactly when these
+     * events happen. Changing the theme and pressing back immediately used to lose the event entirely,
+     * because the emission had to outlive the screen that triggered it.
+     *
+     * The channel is UNLIMITED, so this hands off and returns rather than waiting for the collector.
+     */
+    fun onEvent(event: Event) {
+        val result = eventsChannel.trySend(event)
+
+        // Unreachable on an unlimited channel short of the manager being closed, but silence here would
+        // look exactly like the bug this replaced: a trigger that simply never arrives.
+        if (result.isFailure) {
+            Log.w(TAG, "Dropped review event $event: ${result.exceptionOrNull()}")
+        }
     }
 
     enum class Event {

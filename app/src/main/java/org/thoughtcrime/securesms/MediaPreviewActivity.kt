@@ -55,7 +55,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -75,7 +75,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.isGroupOrCommunity
 import org.session.libsession.utilities.isLegacyGroup
@@ -150,6 +149,9 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
 
     @Inject
     lateinit var mediaDatabase: MediaDatabase
+
+    @Inject
+    lateinit var shareIntentTokenStore: ShareIntentTokenStore
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -489,6 +491,12 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             )
             composeIntent.setAction(Intent.ACTION_SEND)
             composeIntent.putExtra(Intent.EXTRA_STREAM, mediaItem.uri)
+            // ShareActivity passes one of our own attachment URIs along untouched only for the exact
+            // URIs a token vouches for; without this it would have nothing to read.
+            composeIntent.putExtra(
+                ShareActivity.EXTRA_SHARE_TOKEN,
+                shareIntentTokenStore.mint(authorisedUris = setOf(mediaItem.uri))
+            )
             composeIntent.setType(mediaItem.mimeType)
             startActivity(composeIntent)
         }
@@ -557,7 +565,6 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(),
             applicationContext,
             R.string.permissionsStorageDeniedLegacy
         )
-            .put(APP_NAME_KEY, getString(R.string.app_name))
             .format().toString()
 
     private fun sendMediaSavedNotificationIfNeeded() {

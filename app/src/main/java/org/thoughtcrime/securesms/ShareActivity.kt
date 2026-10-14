@@ -32,7 +32,7 @@ class ShareActivity : FullComposeScreenLockActivity() {
     private val viewModel: ShareViewModel by viewModels()
 
     companion object {
-        const val EXTRA_ADDRESS = "address"
+        const val EXTRA_SHARE_TOKEN = "share_token"
     }
 
 

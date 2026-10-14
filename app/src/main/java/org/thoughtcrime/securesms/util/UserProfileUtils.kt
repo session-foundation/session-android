@@ -5,7 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Context.CLIPBOARD_SERVICE
 import android.widget.Toast
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject

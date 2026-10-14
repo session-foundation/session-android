@@ -6,6 +6,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
+import org.session.libsignal.database.LastMessageHashEpoch
+import org.session.libsignal.database.LastMessageHashResets
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.Hex
@@ -240,7 +242,17 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
         }
     }
 
-    override fun setLastMessageHashValue(snode: Snode, publicKey: String, newValue: String, namespace: Int) {
+    private val lastMessageHashResets = LastMessageHashResets()
+
+    override fun lastMessageHashEpoch(): LastMessageHashEpoch = lastMessageHashResets.epoch()
+
+    override fun setLastMessageHashValue(
+        snode: Snode,
+        publicKey: String,
+        newValue: String,
+        namespace: Int,
+        since: LastMessageHashEpoch,
+    ): Boolean = lastMessageHashResets.writeUnlessResetSince(publicKey, since) {
         val database = writableDatabase
         val row = wrap(mapOf(
             Companion.snode to snode.toString(),
@@ -249,21 +261,23 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
             lastMessageHashNamespace to namespace.toString()
         ))
         val query = "${Companion.snode} = ? AND ${Companion.publicKey} = ? AND $lastMessageHashNamespace = ?"
-        val lastHash = database.insertOrUpdate(lastMessageHashValueTable2, row, query, arrayOf( snode.toString(), publicKey, namespace.toString() ))
+        database.insertOrUpdate(lastMessageHashValueTable2, row, query, arrayOf( snode.toString(), publicKey, namespace.toString() ))
     }
 
-    override fun clearLastMessageHashes(publicKey: String) {
+    override fun clearLastMessageHashes(publicKey: String) = lastMessageHashResets.reset(publicKey) {
         writableDatabase
             .delete(lastMessageHashValueTable2, "${Companion.publicKey} = ?", arrayOf(publicKey))
     }
 
-    override fun clearLastMessageHashesByNamespaces(vararg namespaces: Int) {
+    // Counted as a reset of every swarm: the namespaces are not scoped to one, so any in-flight poll may
+    // be writing one of them.
+    override fun clearLastMessageHashesByNamespaces(vararg namespaces: Int) = lastMessageHashResets.reset(null) {
         // Note that we don't use SQL parameter as the given namespaces are integer anyway so there's little chance of SQL injection
         writableDatabase
             .delete(lastMessageHashValueTable2, "$lastMessageHashNamespace IN (${namespaces.joinToString(",")})", null)
     }
 
-    override fun clearAllLastMessageHashes() {
+    override fun clearAllLastMessageHashes() = lastMessageHashResets.reset(null) {
         val database = writableDatabase
         database.delete(lastMessageHashValueTable2, null, null)
     }

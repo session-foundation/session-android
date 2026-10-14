@@ -22,6 +22,7 @@ import org.session.libsession.messaging.open_groups.api.CommunityApiExecutor
 import org.session.libsession.messaging.open_groups.api.CommunityApiRequest
 import org.session.libsession.messaging.open_groups.api.GetCapsApi
 import org.session.libsession.messaging.open_groups.api.GetDirectMessagesApi
+import org.session.libsession.messaging.open_groups.api.GetRoomDetailsApi
 import org.session.libsession.messaging.open_groups.api.GetRoomMessagesApi
 import org.session.libsession.messaging.open_groups.api.PollRoomApi
 import org.session.libsession.messaging.open_groups.api.execute
@@ -52,6 +53,7 @@ class OpenGroupPoller @AssistedInject constructor(
     private val getRoomMessagesFactory: GetRoomMessagesApi.Factory,
     private val getDirectMessageFactory: GetDirectMessagesApi.Factory,
     private val pollRoomInfoFactory: PollRoomApi.Factory,
+    private val getRoomDetailsFactory: GetRoomDetailsApi.Factory,
     private val messageDataProvider: MessageDataProvider,
     private val getCapsApi: Provider<GetCapsApi>,
     networkConnectivity: NetworkConnectivity,
@@ -120,22 +122,64 @@ class OpenGroupPoller @AssistedInject constructor(
                 val infoUpdates = latestRoomPollInfo?.details?.infoUpdates ?: 0
                 val lastMessageServerId = storage.getLastMessageServerID(room, server)
 
-                // Poll room info
+                // Poll room info.
+                //
+                // While we have no details for this room, ask for the room outright instead of polling it.
+                // `pollInfo/{infoUpdates}` returns the details ONLY if the room's counter differs from the
+                // number we send, and with nothing cached we send 0 — so a room whose metadata has not been
+                // edited since it was created (its counter is still 0, even if it was created WITH a name)
+                // answers "no change" and never tells us its name. The poll then writes a row without
+                // details, we keep sending 0, and the conversation shows the raw room token for ever.
+                //
+                // That is reachable whenever a client holds a community it did not join itself: joining
+                // fetches the room explicitly (see OpenGroupManager.add), but a community arriving by
+                // config sync from another device never goes through that path.
+                //
+                // Keyed on there being no usable NAME, rather than on the row or the details object being
+                // absent — neither of those can express this. `patchRoomInfo` is an unconditional
+                // INSERT OR REPLACE, so a row exists after the first poll whether details came back or not;
+                // and `RoomInfo.details` is non-nullable with an empty default, so a response carrying no
+                // details deserialises to a present-but-blank object rather than to null. A row check would
+                // fire once and then go quiet, and a `details == null` check would never fire at all.
+                //
+                // Asking "do we have a name" is also what the caller actually needs: the conversation title
+                // is `roomInfo?.details?.name ?: room`, so a blank name is exactly the state that shows the
+                // raw token. This repairs devices already holding a nameless row, and stops for good once a
+                // name arrives.
+                val haveRoomDetails = latestRoomPollInfo != null &&
+                    latestRoomPollInfo.details.name.isNotBlank()
+
                 allTasks += "polling room info" to async {
-                    val roomInfo = communityApiExecutor.execute(
-                        CommunityApiRequest(
-                            serverBaseUrl = server,
-                            serverPubKey = serverKey,
-                            api = pollRoomInfoFactory.create(
-                                room = room,
-                                infoUpdates = infoUpdates
+                    val roomInfoJson = if (haveRoomDetails) {
+                        json.encodeToString(
+                            communityApiExecutor.execute(
+                                CommunityApiRequest(
+                                    serverBaseUrl = server,
+                                    serverPubKey = serverKey,
+                                    api = pollRoomInfoFactory.create(
+                                        room = room,
+                                        infoUpdates = infoUpdates
+                                    )
+                                )
                             )
                         )
-                    )
+                    } else {
+                        json.encodeToString(
+                            OpenGroupApi.RoomInfo(
+                                communityApiExecutor.execute(
+                                    CommunityApiRequest(
+                                        serverBaseUrl = server,
+                                        serverPubKey = serverKey,
+                                        api = getRoomDetailsFactory.create(room)
+                                    )
+                                )
+                            )
+                        )
+                    }
 
                     handleRoomPollInfo(
                         address = address,
-                        pollInfoJsonText = json.encodeToString(roomInfo)
+                        pollInfoJsonText = roomInfoJson
                     )
                 }
 

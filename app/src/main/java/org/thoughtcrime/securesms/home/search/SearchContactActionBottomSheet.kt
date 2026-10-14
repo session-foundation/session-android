@@ -20,7 +20,7 @@ import androidx.core.os.BundleCompat
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address

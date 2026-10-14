@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  Resources looked up by NAME at runtime via `Resources.getIdentifier`.
+
+  `automaticQa` and `qa` inherit `release`'s `isShrinkResources`, and the shrinker only follows static
+  `R.` references — so a name assembled at runtime looks unused and gets stripped. The call sites treat a
+  missing resource as "not translated yet" and fall back, so the failure is silent: the UI rendered
+  "google_play is processing your refund request" instead of "Google is …".
+
+  Verify with `aapt2 dump resources <apk>` on a shrunk build after editing this.
+
+    pro_provider_*                                   PaymentProviderMetadata.providerDisplay
+    pro_error_*                                      ProApiError.userFacingMessage
+    proPlanLifetime                                  DateUtils.getLocalisedProPlanLength
+    proPlanPricePerMonth / proPlanBilledEvery        DateUtils.proStringTemplateOrFallback
+-->
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="
+        @string/pro_provider_*,
+        @string/pro_error_*,
+        @string/proPlanLifetime,
+        @string/proPlanPricePerMonth,
+        @string/proPlanBilledEvery" />

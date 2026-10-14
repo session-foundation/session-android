@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Constraints
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -91,6 +92,7 @@ fun ExpandableMessageText(
                 text = readMoreLabel,
                 style = readMoreTextStyle,
                 modifier = Modifier
+                    .qaTag(R.string.qa_message_read_more)
                     .clickable {
                         val extraHeightPx = collapsedLayout?.let { layout ->
                             calculateExpandedTextDeltaPx(

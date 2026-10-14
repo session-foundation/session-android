@@ -7,7 +7,6 @@ import network.loki.messenger.libsession_util.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.protocol.DecodedPro
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.Util
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
@@ -18,7 +17,6 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.network.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.MessageExpirationManagerProtocol
@@ -51,7 +49,6 @@ class VisibleMessageHandler @Inject constructor(
     private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val typingIndicators: TypingIndicatorsProtocol,
-    private val clock: SnodeClock,
     private val jobQueue: Provider<JobQueue>,
 ){
     fun handleVisibleMessage(
@@ -158,7 +155,11 @@ class VisibleMessageHandler @Inject constructor(
 
             // Verify the incoming message length and truncate it if needed, before saving it to the db
             val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
-            val messageText = message.text?.let { Util.truncateCodepoints(it, maxChars) } // truncate to max char limit for this message
+            // truncate to max char limit for this message (codepoint-aware, native)
+            val messageText = message.text?.let { text ->
+                if (text.codePointCount(0, text.length) <= maxChars) text
+                else text.substring(0, text.offsetByCodePoints(0, maxChars))
+            }
             message.text = messageText
             message.hasMention = (sequenceOf(ctx.currentUserPublicKey) + ctx.getCurrentUserBlindedIDsByThread(threadAddress).asSequence())
                 .any { key ->
@@ -215,7 +216,6 @@ class VisibleMessageHandler @Inject constructor(
             if (runProfileUpdate && senderAddress is Address.WithAccountId) {
                 val updates = ProfileUpdateHandler.Updates.create(
                     content = proto,
-                    nowMills = clock.currentTimeMillis(),
                     pro = pro
                 )
 

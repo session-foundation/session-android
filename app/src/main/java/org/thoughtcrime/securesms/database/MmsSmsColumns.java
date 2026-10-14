@@ -192,6 +192,25 @@ public interface MmsSmsColumns {
       return (type & BASE_TYPE_MASK) == BASE_SENT_TYPE;
     }
 
+    /**
+     * Whether this message has already been sent to its recipient successfully at least once.
+     *
+     * Wider than {@link #isSentType(long)} on purpose. After a successful send, a 1:1 message is
+     * immediately moved to SYNCING so a copy can go to our own devices, and that sync leg reports its own
+     * success through the same "mark as sent" path. So SENT is not the only state that means "already
+     * sent" -- SYNCING, RESYNCING and SYNC_FAILED all imply the send to the recipient already succeeded,
+     * because nothing starts syncing a message that never went out.
+     *
+     * Used to count a sent message once: testing SENT alone would count every 1:1 message twice, once for
+     * the send and again for its sync.
+     */
+    public static boolean hasBeenSentSuccessfully(long type) {
+      return isSentType(type) ||
+             isSyncingType(type) ||
+             isResyncingType(type) ||
+             isSyncFailedMessageType(type);
+    }
+
     public static boolean isPendingSmsFallbackType(long type) {
       return (type & BASE_TYPE_MASK) == BASE_PENDING_INSECURE_SMS_FALLBACK ||
              (type & BASE_TYPE_MASK) == BASE_PENDING_SECURE_SMS_FALLBACK;

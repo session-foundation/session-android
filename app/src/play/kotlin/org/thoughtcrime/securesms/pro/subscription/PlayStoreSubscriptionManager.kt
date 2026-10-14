@@ -76,11 +76,27 @@ class PlayStoreSubscriptionManager @Inject constructor(
 
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.firstOrNull()?.let{
+                        // No key means we're logged out (e.g. a pending purchase resolving after a
+                        // logout) — there's nobody to attribute the purchase to, so drop it rather
+                        // than throwing from this Play SDK callback thread.
                         val expected = obfuscatedProId()
+                        if (expected == null) {
+                            Log.w(TAG, "Ignoring purchase: no logged-in Pro master key to attribute it to")
+                            return@setListener
+                        }
+
                         val purchaseAccountId = it.accountIdentifiers?.obfuscatedAccountId
 
                         if (purchaseAccountId != expected) {
                             Log.w(TAG, "Ignoring purchase: Belongs to different accountID (with this same playstore account)")
+                            return@setListener
+                        }
+
+                        // Only a PURCHASED (not PENDING) purchase means Google accepted payment; a pending
+                        // purchase (e.g. cash / parental approval) isn't redeemable yet, so don't mark it
+                        // in-flight — we'll get another callback when it resolves to PURCHASED.
+                        if (it.purchaseState != Purchase.PurchaseState.PURCHASED) {
+                            Log.d(DebugLogGroup.PRO_SUBSCRIPTION.label, "Ignoring purchase not in PURCHASED state: ${it.purchaseState}")
                             return@setListener
                         }
 
@@ -138,8 +154,12 @@ class PlayStoreSubscriptionManager @Inject constructor(
             // Check for existing subscription
             val existingPurchase = getExistingSubscription()
 
+            val obfuscatedAccountId = checkNotNull(obfuscatedProId()) {
+                "User must be logged in to purchase Pro"
+            }
+
             val billingFlowParamsBuilder = BillingFlowParams.newBuilder()
-                .setObfuscatedAccountId(obfuscatedProId())
+                .setObfuscatedAccountId(obfuscatedAccountId)
                 .setProductDetailsParamsList(
                     listOf(
                         BillingFlowParams.ProductDetailsParams.newBuilder()
@@ -187,10 +207,16 @@ class PlayStoreSubscriptionManager @Inject constructor(
         }
     }
 
-    private fun obfuscatedProId(): String {
-        val proMasterPrivateKey = requireNotNull(loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey) {
-            "User must be logged in to access Pro"
-        }
+    /**
+     * The account tag we bind purchases to, or null if there's no logged-in Pro master key.
+     *
+     * Nullable rather than throwing: this is called from the BillingClient purchases-updated
+     * listener, so a pending purchase resolving after a logout would otherwise throw from a Play
+     * SDK callback thread.
+     */
+    private fun obfuscatedProId(): String? {
+        val proMasterPrivateKey =
+            loginStateRepository.peekLoginState()?.seeded?.proMasterPrivateKey ?: return null
 
         return PlayStoreAccountId.fromProMasterPrivateKey(proMasterPrivateKey)
     }

@@ -42,8 +42,11 @@ import org.thoughtcrime.securesms.database.SessionJobDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.SnodeDatabase;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
+import org.thoughtcrime.securesms.database.UnsupportedMessageDatabase;
 import org.thoughtcrime.securesms.pro.db.ProDatabase;
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities;
+
+import java.io.File;
 
 import javax.inject.Provider;
 
@@ -110,9 +113,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV58                          = 79;
   private static final int lokiV59                          = 80;
   private static final int lokiV60                          = 81;
+  private static final int lokiV61                          = 82;
+  private static final int lokiV62                          = 83;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV60;
+  private static final int    DATABASE_VERSION         = lokiV62;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -140,8 +145,29 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
           long currentTime = System.currentTimeMillis();
           // 7 days
           if (currentTime - TextSecurePreferences.getLastVacuumTime(context) > 604_800_000) {
-            connection.execute("VACUUM;", null, null);
+            // Recorded before the attempt rather than after it: a VACUUM that throws would
+            // otherwise leave the timestamp untouched and be retried on every open from then on,
+            // which is what turns one unlucky moment into a launch that never succeeds again.
             TextSecurePreferences.setLastVacuumNow(context);
+
+            // VACUUM rebuilds the database into a temporary copy before replacing the original, so
+            // it needs roughly twice the file's size free. Below that it is going to fail, and
+            // failing takes as long as the copy it got through first.
+            File database = context.getDatabasePath(DATABASE_NAME);
+            long requiredSpace = database.length() * 2;
+
+            if (database.getUsableSpace() > requiredSpace) {
+              // This is maintenance, and it runs on the database-open path, where an exception
+              // does not reach the caller as a failed VACUUM — it reaches them as a database that
+              // would not open. Nothing here is worth not starting the app for.
+              try {
+                connection.execute("VACUUM;", null, null);
+              } catch (Exception e) {
+                Log.w(TAG, "Vacuum failed, continuing", e);
+              }
+            } else {
+              Log.i(TAG, "Skipping vacuum: needs " + requiredSpace + " bytes free");
+            }
           }
         }
       },
@@ -286,6 +312,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
     SmsDatabase.addOutgoingColumn(db);
     MmsDatabase.Companion.addOutgoingColumn(db);
+
+    ProDatabase.Companion.reshapeRevocationsForSeconds(db);
+
+    UnsupportedMessageDatabase.createTable(db);
   }
 
   @Override
@@ -647,6 +677,14 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       if (oldVersion < lokiV60) {
         SmsDatabase.addOutgoingColumn(db);
         MmsDatabase.Companion.addOutgoingColumn(db);
+      }
+
+      if (oldVersion < lokiV61) {
+        ProDatabase.Companion.reshapeRevocationsForSeconds(db);
+      }
+
+      if (oldVersion < lokiV62) {
+        UnsupportedMessageDatabase.createTable(db);
       }
 
       db.setTransactionSuccessful();

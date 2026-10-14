@@ -173,6 +173,15 @@ class ConversationDataMapper @Inject constructor(
             return groups.toImmutableList()
         }
 
+        if (record.isUnsupportedMessage) {
+            addContentToGroup(
+                groups,
+                MessageContentData.Text(text = AnnotatedString(context.getString(R.string.messageUnsupported)))
+            )
+
+            return groups.toImmutableList()
+        }
+
         // community invites
         if (record.isOpenGroupInvitation) {
             val jsonData = UpdateMessageData.fromJSON(json, record.body)

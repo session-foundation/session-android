@@ -133,6 +133,13 @@
 # Preserve class names for Kryo
 -keepnames class org.session.libsession.messaging.messages.Destination$**
 
+# Protobuf messages are persisted as their own wire format and rebuilt through parseFrom,
+# which is reached reflectively -- invisible to the shrinker, which otherwise removes it and
+# leaves every queued message carrying a protobuf unreadable after a restart.
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessage {
+    public static *** parseFrom(byte[]);
+}
+
 ########## OPEN GROUP API (MESSAGES) ##########
 -keep class org.session.libsession.messaging.open_groups.OpenGroupApi$Message { *; }
 -keepclassmembers class org.session.libsession.messaging.open_groups.OpenGroupApi$Message { <init>(); }

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:paddingHorizontal="@dimen/medium_spacing">
+
+    <RelativeLayout
+        android:id="@+id/attachmentDraftContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true">
+
+        <RelativeLayout
+            android:id="@+id/attachmentDraftIconContainer"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true">
+
+            <ImageView
+                android:id="@+id/attachmentDraftIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_centerInParent="true"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_file"
+                app:tint="?android:textColorPrimary" />
+
+            <include
+                android:id="@+id/attachmentDraftThumbnail"
+                layout="@layout/thumbnail_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop" />
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/attachmentDraftFilenameTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="8dp"
+            android:paddingStart="64dp"
+            android:paddingEnd="40dp"
+            android:ellipsize="middle"
+            android:maxLines="1"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="@dimen/small_font_size"
+            android:textStyle="bold"
+            tools:text="quarterly-report.pdf" />
+
+        <TextView
+            android:id="@+id/attachmentDraftFileSizeTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/attachmentDraftFilenameTextView"
+            android:paddingStart="64dp"
+            android:paddingEnd="40dp"
+            android:maxLines="1"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="@dimen/very_small_font_size"
+            tools:text="1.2 MB" />
+
+        <ImageView
+            android:id="@+id/attachmentDraftCancelButton"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:src="@drawable/ic_x"
+            app:tint="?android:textColorPrimary" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

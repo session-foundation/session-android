@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject

@@ -30,13 +30,13 @@ import android.view.animation.TranslateAnimation
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import java.lang.Exception
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
@@ -48,6 +48,17 @@ import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.service.KeyCachingService.KeySetBinder
 
 class ScreenLockActivity : BaseActionBarActivity() {
+    companion object {
+        /**
+         * Marks a lock that was presented over a still-live activity, and which therefore carries no
+         * [EXTRA_NEXT_INTENT]. Without it there is no way to tell that case apart from a routed unlock
+         * whose destination has gone missing, and the second one has to stay reportable.
+         */
+        const val EXTRA_PRESENTED_OVER: String = "presented_over"
+
+        private const val EXTRA_NEXT_INTENT: String = "next_intent"
+    }
+
     private val TAG: String = ScreenLockActivity::class.java.simpleName
 
     private lateinit var fingerprintPrompt: ImageView
@@ -74,6 +85,14 @@ class ScreenLockActivity : BaseActionBarActivity() {
 
         setContentView(R.layout.screen_lock_activity)
         initializeResources()
+
+        // Back must leave the app, not just dismiss the lock: the activity underneath is still alive and
+        // would re-present it immediately.
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                leaveAppLocked()
+            }
+        })
 
         // Start and bind to the KeyCachingService instance.
         val bindIntent = Intent(this, KeyCachingService::class.java)
@@ -102,14 +121,14 @@ class ScreenLockActivity : BaseActionBarActivity() {
                     BiometricPrompt.ERROR_NEGATIVE_BUTTON,
                     BiometricPrompt.ERROR_USER_CANCELED -> {
                         onAuthenticationFailed()
-                        finish()
+                        leaveAppLocked()
                     }
 
                     // User made 5 incorrect biometric login attempts so they get a timeout
                     // Note: The SYSTEM provides the localised error "Too many attempts. Try again later.".
                     BiometricPrompt.ERROR_LOCKOUT -> {
                         Toast.makeText(context, errString, Toast.LENGTH_SHORT).show()
-                        finish()
+                        leaveAppLocked()
                     }
 
                     // User made a large number of incorrect biometric login attempts and Android disabled
@@ -117,12 +136,12 @@ class ScreenLockActivity : BaseActionBarActivity() {
                     // Note: The SYSTEM provides the localised error "Too many attempts. Fingerprint sensor disabled."
                     BiometricPrompt.ERROR_LOCKOUT_PERMANENT -> {
                         Toast.makeText(context, errString, Toast.LENGTH_SHORT).show()
-                        finish()
+                        leaveAppLocked()
                     }
 
                     else -> {
                         Log.w(TAG, "Unhandled authentication error: $errorCode $errString")
-                        finish()
+                        leaveAppLocked()
                     }
                 }
             }
@@ -220,7 +239,11 @@ class ScreenLockActivity : BaseActionBarActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        setIntent(intent)
+
+        // A lock presented over a live activity carries no "next_intent". Adopting such an intent would
+        // discard the destination a routed unlock still has to reach - the activity that routed here has
+        // already finished itself, so nothing else remembers where to go.
+        if (intent.hasExtra(EXTRA_NEXT_INTENT)) setIntent(intent)
     }
 
     public override fun onActivityResult(requestCode: Int, resultcode: Int, data: Intent?) {
@@ -277,17 +300,40 @@ class ScreenLockActivity : BaseActionBarActivity() {
             ?.start()
     }
 
+    // Declining the unlock has to leave the app, not merely finish this activity. The activity being
+    // locked is still alive (ScreenLockActionBarActivity.presentScreenLock) and finishing alone reveals
+    // it, whereupon its onStart presents the lock straight back - a loop with no way out, which during a
+    // biometric lockout spins with no user input at all and flashes the covered content each time.
+    //
+    // Backgrounding this task is not enough either: launchMode is singleInstancePerTask, so this lives
+    // in its OWN task and the app's task sits beneath it. Going to the launcher is what backgrounds
+    // both. Returning to the app afterwards presents the lock again, which is correct.
+    private fun leaveAppLocked() {
+        startActivity(
+            Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+        finish()
+    }
+
     private fun handleAuthenticated() {
         authenticated = true
         keyCachingService?.setMasterSecret(Any())
 
         // The 'nextIntent' will take us to the MainActivity if this is a standard unlock, or it will
         // take us to the ShareActivity if this is an external share.
-        val nextIntent = intent.getParcelableExtra<Intent?>("next_intent")
-        if (nextIntent == null) {
-            Log.w(TAG, "Got a null nextIntent - cannot proceed.")
-        } else {
-            startActivity(nextIntent)
+        val nextIntent = intent.getParcelableExtra<Intent?>(EXTRA_NEXT_INTENT)
+
+        when {
+            nextIntent != null -> startActivity(nextIntent)
+
+            // Presented over a still-live activity, so there is nothing to route to and finishing
+            // reveals it again (see ScreenLockActionBarActivity.presentScreenLock).
+            intent.getBooleanExtra(EXTRA_PRESENTED_OVER, false) -> {}
+
+            // Routed here, but the destination is gone: unlocking will land on nothing.
+            else -> Log.w(TAG, "Got a null nextIntent - cannot proceed.")
         }
 
         finish()
@@ -303,7 +349,6 @@ class ScreenLockActivity : BaseActionBarActivity() {
     private fun initializeResources() {
         val statusTitle = findViewById<TextView>(R.id.app_lock_status_title)
         statusTitle?.text = Phrase.from(applicationContext, R.string.lockAppLocked)
-            .put(APP_NAME_KEY, getString(R.string.app_name))
             .format().toString()
 
         fingerprintPrompt = findViewById(R.id.fingerprint_auth_container)

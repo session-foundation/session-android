@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.canhub.cropper.CropImage
 import com.canhub.cropper.CropImageView
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -59,7 +59,6 @@ import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.pro.ProDataState
-import org.thoughtcrime.securesms.pro.ProDetailsRepository
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.pro.getDefaultSubscriptionStateData
@@ -93,7 +92,6 @@ class SettingsViewModel @Inject constructor(
     private val inAppReviewManager: InAppReviewManager,
     private val avatarUploadManager: AvatarUploadManager,
     private val attachmentProcessor: AttachmentProcessor,
-    private val proDetailsRepository: ProDetailsRepository,
     private val donationManager: DonationManager,
     private val pathManager: PathManager,
     private val swarmApiExecutor: SwarmApiExecutor,
@@ -172,10 +170,13 @@ class SettingsViewModel @Inject constructor(
                 }
         }
 
-        // refreshes the pro details data
-        viewModelScope.launch {
-            proDetailsRepository.requestRefresh()
-        }
+        // No status refresh here on purpose. Opening the settings LIST is not a reason to ask the
+        // backend: this screen renders the Pro row from cached state, and the refresh that matters
+        // happens on entering the PRO settings screen, where the user is actually looking at Pro data.
+        //
+        // Refreshing here fetched for every user who opened settings — including one with no expiry and
+        // no proof, who has nothing to refresh — and did so unconditionally, so on a fresh process it
+        // also consumed the one unfloored attempt before anything that needed it could.
     }
 
     private fun getVersionNumber(): CharSequence {
@@ -453,10 +454,19 @@ class SettingsViewModel @Inject constructor(
                 }
 
                 else -> {
-                    if(!clearNetwork || currentClearState == ClearDataState.Error){
-                        clearDataDeviceOnly()
-                    } else {
-                        _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmNetwork) }
+                    when {
+                        // The error state already IS the second look: the user has been told the network
+                        // delete failed and is choosing to clear the device anyway, so asking again would
+                        // be a third confirmation for one decision.
+                        currentClearState == ClearDataState.Error -> clearDataDeviceOnly()
+
+                        !clearNetwork -> _uiState.update {
+                            it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmDevice)
+                        }
+
+                        else -> _uiState.update {
+                            it.copy(clearDataDialog = ClearDataState.ConfirmedClearDataState.ConfirmNetwork)
+                        }
                     }
                 }
             }
@@ -638,9 +648,7 @@ class SettingsViewModel @Inject constructor(
             }
 
             is Commands.OnDonateClicked -> {
-                viewModelScope.launch {
-                    inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
-                }
+                inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
                 showUrlDialog(URL_DONATE)
             }
 
@@ -681,6 +689,7 @@ class SettingsViewModel @Inject constructor(
         data object Error: ClearDataState
 
         sealed interface ConfirmedClearDataState: ClearDataState {
+            data object ConfirmDevice : ConfirmedClearDataState
             data object ConfirmNetwork : ConfirmedClearDataState
             data object ConfirmNetworkPro : ConfirmedClearDataState
             data object ConfirmDevicePro : ConfirmedClearDataState

@@ -61,8 +61,10 @@ class GroupLeavingWorker @AssistedInject constructor(
         return groupScope.launchAndWait(groupId, "GroupLeavingWorker") {
             val group = configFactory.getGroup(groupId)
 
-            // Make sure we only have one group leaving control message
+            // Make sure we only have one group leaving control message, and that the error
+            // message from an earlier attempt doesn't sit alongside it
             storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupLeaving::class.java)
+            storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupErrorQuit::class.java)
             storage.insertGroupInfoLeaving(groupId)
 
             // Best effort to unsubscribe ourselves from the registration server.
@@ -98,16 +100,27 @@ class GroupLeavingWorker @AssistedInject constructor(
             try {
                 if (group?.destroyed != true) {
                     // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
-                    val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
+                    val (weAreTheOnlyAdmin, weHoldTheGroupKeys) = configFactory.withGroupConfigs(groupId) { config ->
                         val allMembers = config.groupMembers.all()
-                        allMembers.count { it.admin } == 1 &&
+                        val onlyAdmin = allMembers.count { it.admin } == 1 &&
                                 allMembers.first { it.admin }
                                     .accountId() == storage.getUserPublicKey()
+
+                        onlyAdmin to config.groupKeys.keys().isNotEmpty()
                     }
 
-                    if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
+                    // Holding no keys means there is nothing to encrypt the departure with, and it
+                    // is not a state that resolves itself: the flag above is only set when a
+                    // revocation message is actually received, and receiving one clears the keys,
+                    // so a revocation we were never told about looks exactly like this. Attempting
+                    // the send would cost the user 20 seconds per message to learn that.
+                    if (group != null && !group.kicked && !weAreTheOnlyAdmin && weHoldTheGroupKeys) {
                         val address = Address.fromSerialized(groupId.hexString)
-                        val statusChannel = Channel<kotlin.Result<Unit>>()
+                        // The jobs report with trySend, which delivers nothing unless a receiver
+                        // is already parked, and they run on their own dispatcher: either result
+                        // can land before we reach the wait below. Unbuffered, that result is lost
+                        // and the leave waits for it forever, holding this group's scope with it.
+                        val statusChannel = Channel<kotlin.Result<Unit>>(capacity = Channel.UNLIMITED)
 
                         // Always send a "XXX left" message to the group if we can
                         messageSender.send(
@@ -133,8 +146,19 @@ class GroupLeavingWorker @AssistedInject constructor(
                         )
 
                         // Wait for both messages to be sent
-                        repeat(2) {
-                            statusChannel.receive().getOrThrow()
+                        try {
+                            repeat(2) {
+                                statusChannel.receive().getOrThrow()
+                            }
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: NonRetryableException) {
+                            // Our access to the group can be revoked before we get around to
+                            // leaving it, which leaves us without the keys to encrypt the
+                            // departure to the group. Nothing will grant them back, so honour the
+                            // leave locally instead: the alternative is a group the user can never
+                            // leave, however many times they ask.
+                            Log.e(TAG, "Unable to announce leaving group $groupId. Proceeding...", e)
                         }
                     }
 
@@ -170,7 +194,10 @@ class GroupLeavingWorker @AssistedInject constructor(
             } catch (e: Exception) {
                 storage.insertGroupInfoErrorQuit(groupId)
                 Log.e(TAG, "Failed to leave group $groupId", e)
-                if (e is NonRetryableException) {
+                // WorkManager's retry has backoff but no attempt cap, so an error that never
+                // resolves itself would have us re-attempting the leave — and reporting the
+                // failure to the conversation — for as long as the group exists
+                if (e is NonRetryableException || runAttemptCount >= MAX_RETRIES) {
                     Result.failure()
                 } else {
                     Result.retry()
@@ -183,6 +210,8 @@ class GroupLeavingWorker @AssistedInject constructor(
 
     companion object {
         private const val TAG = "GroupLeavingWorker"
+
+        private const val MAX_RETRIES = 2
 
         private const val KEY_GROUP_ID = "group_id"
         private const val KEY_DELETE_GROUP = "delete_group"

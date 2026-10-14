@@ -5,7 +5,7 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
+import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -30,10 +30,10 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.network.SnodeClock
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.CommunityUrlParser
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.displayName
 import org.session.libsignal.utilities.AccountId
@@ -53,6 +53,7 @@ import org.thoughtcrime.securesms.onboarding.OnBoardingPreferences.HAS_VIEWED_SE
 import org.thoughtcrime.securesms.preferences.AppPreferences
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
 import org.thoughtcrime.securesms.preferences.prosettings.ProSettingsDestination
+import org.thoughtcrime.securesms.pro.ProRefreshWindows
 import org.thoughtcrime.securesms.pro.ProStatus
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -67,8 +68,6 @@ import org.thoughtcrime.securesms.util.UserProfileModalData
 import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -87,6 +86,7 @@ class HomeViewModel @Inject constructor(
     private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
     private val recipientRepository: RecipientRepository,
     private val dateUtils: DateUtils,
+    private val snodeClock: SnodeClock,
     private val donationManager: DonationManager,
     private val audioPlaybackManager: AudioPlaybackManager,
     private val openGroupManager: OpenGroupManager,
@@ -198,10 +198,8 @@ class HomeViewModel @Inject constructor(
                     it.copy(
                         showSimpleDialog = SimpleDialogData(
                             title = Phrase.from(context, R.string.runSessionBackground)
-                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                 .format().toString(),
                             message = Phrase.from(context, R.string.runSessionBackgroundDescription)
-                                .put(APP_NAME_KEY, context.getString(R.string.app_name))
                                 .format().toString(),
                             positiveText = context.getString(R.string.allow),
                             negativeText = context.getString(R.string.cancel),
@@ -224,10 +222,24 @@ class HomeViewModel @Inject constructor(
         // observe subscription status
         viewModelScope.launch {
             proStatusManager.proDataState.collect { subscription ->
-                // show a CTA (only once per install) when
+                // show a CTA when
                 // - subscription is expiring in less than 7 days
                 // - subscription expired less than 30 days ago
-                val now = Instant.now()
+                //
+                // Armed ONCE PER PRO CYCLE, not once per install and not once per launch: Pro can only
+                // expire once per cycle, so one warning per cycle is the whole intent. The latch is
+                // persisted (`has_seen_pro_expir{ing,ed}`), written on DISMISSAL rather than on display
+                // -- so a CTA shown to a process that dies before the user dismisses it is shown again --
+                // and cleared below whenever the account reads Active again.
+                //
+                // Do not "correct" this to fire on every launch or every status change. Both were
+                // considered and rejected: the arm-once-per-cycle model is the ruled behaviour, and it is
+                // the one the other clients are being aligned TO.
+                // Network time: both comparisons below are against instants the backend supplied,
+                // so device-clock skew moves the boundary rather than the subscription. The two CTAs
+                // also skew in opposite directions — a fast clock warns of expiry early and stops
+                // warning of expiration early — so a wrong reading here is not uniformly wrong.
+                val now = snodeClock.currentTime()
 
                 var showExpiring: Boolean = false
                 var showExpired: Boolean = false
@@ -236,29 +248,49 @@ class HomeViewModel @Inject constructor(
                     (prefs.hasSeenProExpiring() || prefs.hasSeenProExpired())){
                     prefs.clearProExpiryView() // reset expiry view if the user is active again
                 } else if(subscription.type is ProStatus.Active.Expiring
+                    // Same confirmed-fetch gate as the Expired branch below; both read the one
+                    // `refreshState` predicate, so tightening or loosening it moves both CTAs.
+                    // Success means THIS process has had a fetch confirmed, so a cold launch cannot
+                    // warn off a stale local proof: `status` is inferred from that proof at launch, and
+                    // nothing writes to config at renewal, so a single-device account that renewed
+                    // while the app was closed reads as expiring until get_pro_status says otherwise.
+                    // Consistent with the iOS fix, which gates both variants above the switch.
+                    && subscription.refreshState is org.thoughtcrime.securesms.util.State.Success
                     && !prefs.hasSeenProExpiring()
                 ){
                     val validUntil = subscription.type.renewingAt
-                    showExpiring = validUntil.isBefore(now.plus(7, ChronoUnit.DAYS))
+                    showExpiring = validUntil.isBefore(now.plus(ProRefreshWindows.EXPIRING_CTA))
                     Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro active but not auto renewing (expiring). Valid until: $validUntil - Should show Expiring CTA? $showExpiring")
                     if (showExpiring) {
                         _dialogsState.update { state ->
                             state.copy(
                                 proExpiringCTA = ProExpiringCTA(
-                                    dateUtils.getExpiryString(validUntil)
+                                    dateUtils.getExpiryString(validUntil, now)
                                 )
                             )
                         }
                     }
                 }
-                else if(subscription.type is ProStatus.Expired
+                // WithPlan, because the window below is measured from a date only a response carries.
+                // An expired status derived from local state has no coverage-end instant, and there is
+                // no safe stand-in: a sentinel puts the window in the past, which suppresses the CTA
+                // without any sign that a date was missing.
+                else if(subscription.type is ProStatus.Expired.WithPlan
+                    // Only after a SUCCESSFUL get_pro_status request (the round-trip completed and the
+                    // backend answered — even if with "expired"/"not pro"), never off stale data from a
+                    // failed or in-flight fetch: on foreground the cached status can be pre-renewal, and a
+                    // network failure must not surface a false "expired". Consistent with the iOS fix.
+                    && subscription.refreshState is org.thoughtcrime.securesms.util.State.Success
                     && !prefs.hasSeenProExpired()) {
-                    val validUntil = subscription.type.expiredAt
-                    showExpired = now.isBefore(validUntil.plus(30, ChronoUnit.DAYS))
+                    // Anchored at coverage end, not at the payment date: the backend only reports
+                    // EXPIRED once coverage has ended, so measuring from the payment date shortens
+                    // this window by exactly the grace period and empties it entirely when grace is
+                    // 30 days or more.
+                    val coverageEnded = subscription.type.coverageEndedAt
+                    showExpired = now.isBefore(coverageEnded.plus(ProRefreshWindows.EXPIRED_CTA))
 
-                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Expired at: $validUntil - Should show Expired CTA? $showExpired")
+                    Log.d(DebugLogGroup.PRO_DATA.label, "Home: Pro expired. Coverage ended: $coverageEnded - Should show Expired CTA? $showExpired")
 
-                    // Check if now is within 30 days after expiry
                     if (showExpired) {
                         _dialogsState.update { state ->
                             state.copy(proExpiredCTA = true)
@@ -344,9 +376,17 @@ class HomeViewModel @Inject constructor(
     fun setPinned(address: Address, pinned: Boolean) {
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
+        // ENFORCEMENT: the ACCESS function, called at the moment of the decision. Was a full
+        // `getSelf().isPro` resolve, which reaches the same answer but by a second route — one function
+        // means a revocation or expiry cannot be honoured here and missed on the send path.
         val maxPins =
-            proStatusManager.getPinnedConversationLimit(recipientRepository.getSelf().isPro)
+            proStatusManager.getPinnedConversationLimit(proStatusManager.currentUserHasProAccess())
         if (pinned && totalPins >= maxPins) {
+            // No upsell when the plan already reads active. The pin was refused above on access, and
+            // a subscriber whose proof has not arrived would otherwise be offered the plan they hold.
+            // The refusal is therefore silent: the copy that would explain it without offering a
+            // purchase does not exist, and a silent refusal is the lesser of the two.
+            if (proStatusManager.proDataState.value.type is ProStatus.Active) return
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(

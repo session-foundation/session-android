@@ -60,7 +60,11 @@ In practice:
 - `PLAY_STORE_DISABLED`: gates store-specific behavior
 - `DEVICE`: identifies Android vs Huawei device environment
 - `PUSH_KEY_SUFFIX`: provider-specific push-key suffix
-- `PRO_BACKEND_DEV`: currently the injected Pro backend configuration object
+
+The Pro backend configuration is **not** among them: its URL and signing pubkey come from
+libsession (`BackendRequests.proBackendUrl()` / `proBackendPubKeyHex()`, assembled into
+`ProBackendConfig` by `ProModule`), so changing the backend means releasing libsession, not editing
+the build script. There is no client-side override.
 
 Manifest placeholders are also used to vary:
 
@@ -614,7 +618,35 @@ The design system provides:
 
 `SessionMaterialTheme` installs both the custom tokens and Material 3. Most Compose entry points use `setThemedContent { ... }` so screens can remain thin.
 
-## 13. Dependency Injection
+## 13. Localization and Translations
+
+UI strings are managed on **Crowdin** (project ID `618696`), not in this repo. This matters because the string resources here are **generated artifacts**, not editable sources.
+
+### Source of truth
+
+Every `app/src/main/res/values*/strings.xml` — including the base English `values/strings.xml` — plus `NonTranslatableStringConstants.kt` (the `{app_name}`, `{entity_stf_short}`, … substitution values) is generated from Crowdin. **Do not hand-edit these files**; changes are overwritten on the next sync. String source text (English) and translations are both authored/managed on Crowdin.
+
+### The sync automation lives in a different repo
+
+There is no Crowdin workflow in this repo. The automation is in **`session-foundation/session-shared-scripts`**, workflow `.github/workflows/check_for_crowdin_updates.yml`:
+
+- Triggers: scheduled (Mondays 00:00 UTC) or manual `workflow_dispatch` (input `UPDATE_PULL_REQUESTS=true`).
+- Downloads from Crowdin, regenerates all `values*/strings.xml` + `NonTranslatableStringConstants.kt` (`crowdin/generate_android_strings.py`), validates via a gradle resource build, then opens/updates a PR using `peter-evans/create-pull-request`.
+- The PR targets the fixed head branch `feature/update-crowdin-translations` → `dev`, opened by the `stfsession` service account. Because the branch is fixed, there is only ever one open translations PR at a time; a re-run updates it in place (unless the previous one was already merged).
+- The same run produces the equivalent PRs for iOS and the desktop localization module.
+
+### Approved-only export
+
+The download requests translations with `exportApprovedOnly=true` and `skipUntranslatedStrings=true`. Consequently, machine/AI pre-translations are **excluded until a proofreader approves them** in Crowdin — unapproved strings are treated as untranslated and dropped. Approval requires a Proofreader/Manager role on the Crowdin project. (A helper for bulk-approving specific string identifiers lives at `session-shared-scripts/crowdin/approve_strings.py`.)
+
+### Shipping a text change
+
+1. Edit/add the source strings on Crowdin (new copy usually warrants **new string keys** — reusing a key keeps its now-stale translations, which will resurface as mismatched text).
+2. Approve the translations you want (see above), or they won't export.
+3. Run `check_for_crowdin_updates.yml` and merge the resulting Crowdin PR — this brings the keys into `strings.xml`.
+4. Only then merge any code referencing the new keys (`R.string.<key>` won't compile until the sync has landed them).
+
+## 14. Dependency Injection
 
 Hilt is the application-wide DI framework.
 
@@ -629,7 +661,7 @@ Important modules include:
 
 The most important architectural convention here is not just "use Hilt", but "inject long-lived managers plus a manager-scoped coroutine scope and let them expose reactive state."
 
-## 14. Other Important Runtime Components
+## 15. Other Important Runtime Components
 
 - `ExpiringMessageManager`: disappearing-message lifecycle
 - `AvatarUploadManager`: avatar upload/sync behavior
@@ -640,7 +672,7 @@ The most important architectural convention here is not just "use Hilt", but "in
 
 If a bug seems to "happen in the background" but does not fit config, polling, notifications, or Pro, it often lives in one of these auth-aware managers.
 
-## 15. End-to-End Flow Summaries
+## 16. End-to-End Flow Summaries
 
 ### App startup and login
 
@@ -695,7 +727,7 @@ User action
   -> reactive flows refresh UI
 ```
 
-## 16. Practical Notes for new Developers
+## 17. Practical Notes for new Developers
 
 For a new developer, the highest-value mental model is:
 
