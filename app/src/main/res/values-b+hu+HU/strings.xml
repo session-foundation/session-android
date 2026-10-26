@@ -1012,6 +1012,7 @@
     <string name="proAccessRenew">Pro hozzáférés megújítása</string>
     <string name="proAccessRenewPlatformStoreWebsite">Újítsd meg a Pro hozzáférésed a <b><font color="0">{platform_store} weboldalán</font></b>, azzal a {platform_account} fiókkal, amellyel eredetileg regisztráltál a Pro-ra.</string>
     <string name="proAccessRenewPlatformWebsite">Újítsa meg a <b><font color="0">{platform} weboldalon</font></b>, azzal a {platform_account} fiókkal, amellyel a Pro-ra regisztrált.</string>
+    <string name="proAccessRenewStart">Újítsa meg Pro csomagját, hogy hozzáférjen a legújabb Session Pro Béta funkciókhoz, és támogassa újra a projektet.</string>
     <string name="proAccessRestored">Pro hozzáférés visszaállítva</string>
     <string name="proAccessRestoredDescription">A(z) Session felismerte és visszaállította a(z) Pro hozzáférést a fiókodhoz. A(z) Pro státuszod vissza lett állítva!</string>
     <string name="proAccessSignUp">Mivel eredetileg a <b>{platform_store}</b> áruházon keresztül iratkoztál fel a Session Pro-ra, a {platform_account} fiókodat kell használnod a Pro hozzáférésed frissítéséhez.</string>
@@ -1141,6 +1142,7 @@
     <string name="proUpgradingTo">Frissítés folyamatban: Pro</string>
     <string name="proUpgradingTosPrivacy">A frissítéssel elfogadod a(z) Session Pro <b>Felhasználási feltételeit</b> {icon} és az <b>Adatvédelmi szabályzatát</b> {icon}</string>
     <string name="proUserProfileModalCallToAction">Többet szeretnél kihozni a Session alkalmazásból?\nFrissíts a Session Pro Beta verzióra a hatékonyabb üzenetküldési élmény érdekében.</string>
+    <string name="pro_error_not_subscribed">Nem rendelkezik Pro előfizetéssel.</string>
     <string name="processingRefundRequest">A(z) {platform} éppen feldolgozza az Ön visszatérítési kérelmét</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Profilkép</string>
