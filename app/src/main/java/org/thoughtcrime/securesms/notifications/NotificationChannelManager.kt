@@ -6,6 +6,7 @@ import android.content.Context
 import androidx.annotation.StringRes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.preferences.PreferenceKey
 import org.thoughtcrime.securesms.preferences.PreferenceStorage
@@ -23,13 +24,27 @@ class NotificationChannelManager @Inject constructor(
 
     init {
         if (!prefs[MIGRATED_FROM_OLD_CHANNELS]) {
-            // Delete all old notification channels first
-            notificationManager.notificationChannels.forEach {
-                notificationManager.deleteNotificationChannel(it.id)
-            }
+            val currentChannelIds = ChannelDescription.entries.mapTo(hashSetOf()) { it.systemId }
+            var deletedAllOldChannels = true
+
+            notificationManager.notificationChannels
+                .filter { it.id !in currentChannelIds }
+                .forEach {
+                    try {
+                        notificationManager.deleteNotificationChannel(it.id)
+                    } catch (e: SecurityException) {
+                        // The system refuses to delete a channel that a running foreground
+                        // service is posting to. Leave the migration unfinished so the
+                        // channel is deleted on a later launch instead.
+                        Log.w(TAG, "Unable to delete notification channel ${it.id}", e)
+                        deletedAllOldChannels = false
+                    }
+                }
 
             recreateChannel(true)
-            prefs[MIGRATED_FROM_OLD_CHANNELS] = true
+            if (deletedAllOldChannels) {
+                prefs[MIGRATED_FROM_OLD_CHANNELS] = true
+            }
         } else {
             recreateChannel(false)
         }
@@ -105,6 +120,7 @@ class NotificationChannelManager @Inject constructor(
         }
 
     companion object {
+        private const val TAG = "NotificationChannelManager"
         private val MIGRATED_FROM_OLD_CHANNELS = PreferenceKey.boolean("notifications.channels.migrated")
     }
 }
