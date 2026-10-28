@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import androidx.activity.viewModels
@@ -389,6 +390,10 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         }
     }
 
+    // The renderers belong to CallManager and outlive this activity, so one can still be
+    // attached to the layout of a previous instance of this screen.
+    private fun View.detachedFromParent(): View = apply { (parent as? ViewGroup)?.removeView(this) }
+
     private fun renderVideoState(state : VideoState){
         binding.floatingRenderer.removeAllViews()
         binding.fullscreenRenderer.removeAllViews()
@@ -396,7 +401,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         // handle fullscreen video window
         if(state.showFullscreenVideo()){
             viewModel.fullscreenRenderer?.let { surfaceView ->
-                binding.fullscreenRenderer.addView(surfaceView)
+                binding.fullscreenRenderer.addView(surfaceView.detachedFromParent())
                 binding.fullscreenRenderer.isVisible = true
                 hideAvatar()
             }
@@ -408,7 +413,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
         // handle floating video window
         if(state.showFloatingVideo()){
             viewModel.floatingRenderer?.let { surfaceView ->
-                binding.floatingRenderer.addView(surfaceView)
+                binding.floatingRenderer.addView(surfaceView.detachedFromParent())
                 binding.floatingRenderer.isVisible = true
                 binding.swapViewIcon.bringToFront()
             }
