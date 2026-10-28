@@ -18,6 +18,12 @@ interface ConversationRepository {
 
     fun getConversationList(): List<ThreadRecord>
 
+    /**
+     * Returns the thread for [address], or null if there is none. This queries the database, so
+     * don't call it on the main thread.
+     */
+    fun getConversation(address: Address.Conversable): ThreadRecord?
+
 
     val conversationListAddressesFlow: Flow<Set<Address.Conversable>>
 
