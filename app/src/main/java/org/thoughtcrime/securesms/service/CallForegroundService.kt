@@ -72,24 +72,45 @@ class CallForegroundService : Service() {
         )
 
     private fun startForeground(type: Int): Boolean {
+        val canRecordAudio = ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
         try {
-            ServiceCompat.startForeground(
-                this,
-                NotificationId.WEBRTC_CALL,
-                buildNotification(type, recipient = null),
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-                } else {
-                    0
-                }
-            )
+            startForegroundWithTypes(type, includeMicrophone = canRecordAudio)
             return true
         } catch (e: IllegalStateException) {
             Log.e("", "Failed to start CallForegroundService for type: ${type}", e)
+        } catch (e: SecurityException) {
+            // The microphone type also needs the app to be allowed to use the microphone right
+            // now, which Android 14+ refuses when the service starts from the background (an
+            // incoming call, say). Start as a phone call alone rather than crash.
+            Log.w("", "Unable to start CallForegroundService with the microphone type", e)
+            try {
+                startForegroundWithTypes(type, includeMicrophone = false)
+                return true
+            } catch (e: RuntimeException) {
+                Log.e("", "Failed to start CallForegroundService for type: ${type}", e)
+            }
         }
 
         stopSelf()
         return false
+    }
+
+    private fun startForegroundWithTypes(type: Int, includeMicrophone: Boolean) {
+        ServiceCompat.startForeground(
+            this,
+            NotificationId.WEBRTC_CALL,
+            buildNotification(type, recipient = null),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or
+                        (if (includeMicrophone) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0)
+            } else {
+                0
+            }
+        )
     }
 
     private fun updateNotificationWithRecipient(intent: Intent, type: Int) {
