@@ -13,7 +13,7 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabaseExt.getUnreadCount
 import org.thoughtcrime.securesms.util.AbstractCursorLoader
 
 class ConversationLoader @AssistedInject constructor(
-    @Assisted private val threadID: Long?,
+    @Assisted val threadID: Long?,
     @Assisted private val threadAddress: Address.Conversable,
     @Assisted private val reverse: Boolean,
     application: Application,

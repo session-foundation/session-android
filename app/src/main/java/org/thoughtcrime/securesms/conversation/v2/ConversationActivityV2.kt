@@ -763,7 +763,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun restartConversationLoader() {
-        LoaderManager.getInstance(this).restartLoader(0, null, this)
+        val loaderManager = LoaderManager.getInstance(this)
+        val loader = loaderManager.getLoader<ConversationLoader.Data>(0) as? ConversationLoader
+
+        // restartLoader abandons the running load rather than stopping it, and its query keeps a
+        // database connection until the cursor is filled. Reloads arrive faster than a large
+        // conversation loads, so restarting on each one piles loads up and starves the pool.
+        // A content change on the same loader runs one load at a time and coalesces the rest.
+        if (loader != null && loader.threadID == viewModel.threadId) {
+            loader.onContentChanged()
+        } else {
+            loaderManager.restartLoader(0, null, this)
+        }
     }
 
     private fun startConversationLoaderWithDelay() {
