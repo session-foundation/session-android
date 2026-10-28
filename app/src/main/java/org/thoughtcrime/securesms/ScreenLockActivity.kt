@@ -94,9 +94,8 @@ class ScreenLockActivity : BaseActionBarActivity() {
             }
         })
 
-        // Start and bind to the KeyCachingService instance.
+        // Bind now; the service is started from onResume.
         val bindIntent = Intent(this, KeyCachingService::class.java)
-        startService(bindIntent)
         bindService(bindIntent, object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder) {
                 keyCachingService = (service as KeySetBinder).service
@@ -196,6 +195,13 @@ class ScreenLockActivity : BaseActionBarActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        // KeyCachingService must be started, not only bound, or it is destroyed (clearing the key)
+        // once nothing is bound. Android 12+ refuses startService while the app is in the
+        // background, and this activity can be created there, so start it once we're visible.
+        // Unlocking needs the user, so it is always started before handleAuthenticated runs.
+        startService(Intent(this, KeyCachingService::class.java))
+
         setLockTypeVisibility()
         if (isScreenLockEnabled(this) && !authenticated && !failure) { resumeScreenLock() }
         failure = false
