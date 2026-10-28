@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
@@ -106,6 +107,9 @@ class DefaultConversationRepository @Inject constructor(
     private val json: Json,
 ) : ConversationRepository {
 
+    // HomeViewModel starts collecting this on the main thread as the home screen opens. The first
+    // emission can initialise the user configs, which waits for the database to finish opening,
+    // so none of this may run on the collector's thread.
     override val conversationListAddressesFlow get() = loginStateRepository.flowWithLoggedInState {
         configFactory
             .userConfigsChanged(
@@ -119,7 +123,7 @@ class DefaultConversationRepository @Inject constructor(
                 emit(Unit)
             }
             .map { getConversationListAddresses() }
-    }
+    }.flowOn(Dispatchers.Default)
 
     private fun getConversationListAddresses() = buildSet {
         val myAddress = loginStateRepository.getLocalNumber()?.toAddress() as? Address.Standard
