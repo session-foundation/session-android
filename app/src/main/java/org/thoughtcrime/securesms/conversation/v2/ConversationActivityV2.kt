@@ -1956,7 +1956,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (author == null) {
             Log.w(TAG, "Unable to locate local number when sending emoji reaction - aborting.")
             return
-        } else {
+        } else applyReactionInBackground {
             // Put the message in the database
             val messageId = originalMessage.messageId
             val count = if (recipient.isCommunityRecipient) {
@@ -1991,8 +1991,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 // has to apply on all the ReactionRecords with the same messageId/emoji per design.
                 reactionDb.updateAllCountFor(messageId, emoji, 1)
 
-                val messageServerId = lokiMessageDb.getServerID(messageId) ?:
-                    return Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
+                val messageServerId = lokiMessageDb.getServerID(messageId) ?: run {
+                    Log.w(TAG, "Failed to find message server ID when adding emoji reaction")
+                    return@applyReactionInBackground
+                }
 
                 scope.launch {
                     runCatching {
@@ -2013,8 +2015,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } else {
                 messageSender.send(reactionMessage, recipient.address)
             }
-
-            restartConversationLoader()
         }
     }
 
@@ -2030,7 +2030,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (author == null) {
             Log.w(TAG, "Unable to locate local number when removing emoji reaction - aborting.")
             return
-        } else {
+        } else applyReactionInBackground {
             reactionDb.deleteReaction(
                 emoji,
                 originalMessage.messageId,
@@ -2054,8 +2054,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 reactionDb.updateAllCountFor(originalMessage.messageId, emoji, -1)
 
 
-                val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?:
-                return Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
+                val messageServerId = lokiMessageDb.getServerID(originalMessage.messageId) ?: run {
+                    Log.w(TAG, "Failed to find message server ID when removing emoji reaction")
+                    return@applyReactionInBackground
+                }
 
                 scope.launch {
                     runCatching {
@@ -2074,7 +2076,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } else {
                 messageSender.send(message, recipient.address)
             }
+        }
+    }
 
+    // A reaction's database writes and send can wait on a busy connection pool, so they run off
+    // the main thread, in [scope] so that closing the screen doesn't drop a reaction half-written.
+    private fun applyReactionInBackground(block: () -> Unit) {
+        lifecycleScope.launch {
+            scope.launch(Dispatchers.IO) { block() }.join()
             restartConversationLoader()
         }
     }
