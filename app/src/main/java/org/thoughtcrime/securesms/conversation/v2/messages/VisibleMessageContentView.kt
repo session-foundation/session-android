@@ -274,12 +274,25 @@ class VisibleMessageContentView : ConstraintLayout {
                     message.slideDeck.documentSlide?.let { slide ->
                         if(!mediaInProgress) { // do not attempt to open a doc in progress of downloading
                             onContentClick.add {
+                                // An outgoing document is shown without waiting for DONE, so its
+                                // part may have no data to open.
+                                val uri = slide.uri
+                                if (uri == null) {
+                                    Log.w("VisibleMessageContentView", "Document has no data URI")
+                                    Toast.makeText(
+                                        context,
+                                        R.string.attachmentsErrorOpen,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    return@add
+                                }
+
                                 // open the document when tapping it
                                 try {
                                     val intent = Intent(Intent.ACTION_VIEW)
                                     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     intent.setDataAndType(
-                                        PartAuthority.getAttachmentPublicUri(slide.uri),
+                                        PartAuthority.getAttachmentPublicUri(uri),
                                         slide.contentType
                                     )
 
