@@ -107,9 +107,9 @@ class DefaultConversationRepository @Inject constructor(
     private val json: Json,
 ) : ConversationRepository {
 
-    // HomeViewModel starts collecting this on the main thread as the home screen opens. The first
-    // emission can initialise the user configs, which waits for the database to finish opening,
-    // so none of this may run on the collector's thread.
+    // HomeViewModel starts collecting this (through observeConversationList) on the main thread as
+    // the home screen opens. The first emission can initialise the user configs, which waits for
+    // the database to finish opening, so none of this may run on the collector's thread.
     override val conversationListAddressesFlow get() = loginStateRepository.flowWithLoggedInState {
         configFactory
             .userConfigsChanged(
