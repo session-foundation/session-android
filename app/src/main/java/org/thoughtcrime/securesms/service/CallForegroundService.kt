@@ -44,6 +44,8 @@ class CallForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+    private var isForeground = false
+
     companion object {
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
         const val EXTRA_TYPE = "CALL_STEP_TYPE"
@@ -72,24 +74,50 @@ class CallForegroundService : Service() {
         )
 
     private fun startForeground(type: Int): Boolean {
+        val canRecordAudio = ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
         try {
-            ServiceCompat.startForeground(
-                this,
-                NotificationId.WEBRTC_CALL,
-                buildNotification(type, recipient = null),
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-                } else {
-                    0
-                }
-            )
+            startForegroundWithTypes(type, includeMicrophone = canRecordAudio)
+            isForeground = true
             return true
         } catch (e: IllegalStateException) {
             Log.e("", "Failed to start CallForegroundService for type: ${type}", e)
+        } catch (e: SecurityException) {
+            // The microphone type needs the app to be allowed to use the microphone at that
+            // moment, which Android 14+ can refuse when the service is started or restarted from
+            // the background. A running service keeps the types it already has, so only its
+            // notification changes; a new one starts as a phone call alone rather than crash.
+            Log.w("", "Unable to start CallForegroundService with the microphone type", e)
+            if (isForeground) return true
+
+            try {
+                startForegroundWithTypes(type, includeMicrophone = false)
+                isForeground = true
+                return true
+            } catch (e: RuntimeException) {
+                Log.e("", "Failed to start CallForegroundService for type: ${type}", e)
+            }
         }
 
         stopSelf()
         return false
+    }
+
+    private fun startForegroundWithTypes(type: Int, includeMicrophone: Boolean) {
+        ServiceCompat.startForeground(
+            this,
+            NotificationId.WEBRTC_CALL,
+            buildNotification(type, recipient = null),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or
+                        (if (includeMicrophone) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0)
+            } else {
+                0
+            }
+        )
     }
 
     private fun updateNotificationWithRecipient(intent: Intent, type: Int) {
