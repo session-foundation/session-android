@@ -142,7 +142,8 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
 
             if (loaded == null) {
                 Log.w("", "Home conversation bottom sheet: Thread not found for address: $addressString")
-                dismiss()
+                // The lookup can finish after the app is backgrounded and its state saved
+                dismissAllowingStateLoss()
                 return@launch
             }
 
@@ -212,8 +213,6 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
             // the text, content description and icon will change depending on the type
             when {
                 recipient.isLegacyGroupRecipient -> {
-                    val group = groupDatabase.getGroup(recipient.address.toString())
-
                     val isGroupAdmin = group?.admins?.map { it.toString() }
                         ?.contains(loginStateRepository.requireLocalNumber()) ?: false
 
