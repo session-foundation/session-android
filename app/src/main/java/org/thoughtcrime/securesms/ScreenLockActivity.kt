@@ -197,9 +197,9 @@ class ScreenLockActivity : BaseActionBarActivity() {
         super.onResume()
 
         // KeyCachingService must be started, not only bound, or it is destroyed (clearing the key)
-        // once nothing is bound. Android 12+ refuses startService while the app is in the
-        // background, and this activity can be created there, so start it once we're visible.
-        // Unlocking needs the user, so it is always started before handleAuthenticated runs.
+        // once nothing is bound. Android refuses startService while the app is in the background,
+        // and this activity can be created there, so start it once we're visible.
+        // handleAuthenticated only needs the bound service, so it may run before this.
         startService(Intent(this, KeyCachingService::class.java))
 
         setLockTypeVisibility()
