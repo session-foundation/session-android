@@ -449,6 +449,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private val firstLoad = AtomicBoolean(true)
 
+    // The loader outlives a configuration change, but only restartLoader/initLoader bind it to
+    // this instance's callbacks, so each instance must restart it once before coalescing.
+    private var conversationLoaderBound = false
+
     private var isKeyboardVisible = false
 
     private var pendingRecyclerViewScrollState: Parcelable? = null
@@ -770,10 +774,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // database connection until the cursor is filled. Reloads arrive faster than a large
         // conversation loads, so restarting on each one piles loads up and starves the pool.
         // A content change on the same loader runs one load at a time and coalesces the rest.
-        if (loader != null && loader.threadID == viewModel.threadId) {
+        if (conversationLoaderBound && loader != null && loader.threadID == viewModel.threadId) {
             loader.onContentChanged()
         } else {
             loaderManager.restartLoader(0, null, this)
+            conversationLoaderBound = true
         }
     }
 
