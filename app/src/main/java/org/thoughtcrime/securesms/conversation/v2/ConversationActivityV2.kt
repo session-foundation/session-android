@@ -534,6 +534,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
 
+        // Shared by every conversation screen, since a reaction can outlive the one it came from
+        private val reactionDispatcher = Dispatchers.IO.limitedParallelism(1)
+
         @JvmOverloads
         fun createIntent(
             context: Context,
@@ -2081,9 +2084,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // A reaction's database writes and send can wait on a busy connection pool, so they run off
     // the main thread, in [scope] so that closing the screen doesn't drop a reaction half-written.
+    // One lane keeps them in the order they were made, so a removal can't overtake its add.
     private fun applyReactionInBackground(block: () -> Unit) {
         lifecycleScope.launch {
-            scope.launch(Dispatchers.IO) { block() }.join()
+            scope.launch(reactionDispatcher) { block() }.join()
             restartConversationLoader()
         }
     }
@@ -2107,12 +2111,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onReactWithAnyEmojiSelected(emoji: String, messageId: MessageId) {
         reactionDelegate.hide()
-        val message = mmsSmsDb.getMessageById(messageId) ?: return
-        val oldRecord = reactionDb.getReactions(messageId).find { it.author == loginStateRepository.getLocalNumber() }
-        if (oldRecord?.emoji == emoji) {
-            sendEmojiRemoval(emoji, message)
-        } else {
-            sendEmojiReaction(emoji, message)
+        lifecycleScope.launch {
+            // In the reaction lane, so the lookup sees a reaction that is still being written
+            val (message, oldRecord) = withContext(reactionDispatcher) {
+                val message = mmsSmsDb.getMessageById(messageId) ?: return@withContext null
+                message to reactionDb.getReactions(messageId).find { it.author == loginStateRepository.getLocalNumber() }
+            } ?: return@launch
+
+            if (oldRecord?.emoji == emoji) {
+                sendEmojiRemoval(emoji, message)
+            } else {
+                sendEmojiReaction(emoji, message)
+            }
         }
     }
 
