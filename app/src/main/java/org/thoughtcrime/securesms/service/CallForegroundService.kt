@@ -44,6 +44,8 @@ class CallForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+    private var isForeground = false
+
     companion object {
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
         const val EXTRA_TYPE = "CALL_STEP_TYPE"
@@ -79,16 +81,21 @@ class CallForegroundService : Service() {
 
         try {
             startForegroundWithTypes(type, includeMicrophone = canRecordAudio)
+            isForeground = true
             return true
         } catch (e: IllegalStateException) {
             Log.e("", "Failed to start CallForegroundService for type: ${type}", e)
         } catch (e: SecurityException) {
-            // The microphone type also needs the app to be allowed to use the microphone right
-            // now, which Android 14+ refuses when the service starts from the background (an
-            // incoming call, say). Start as a phone call alone rather than crash.
+            // The microphone type needs the app to be allowed to use the microphone at that
+            // moment, which Android 14+ can refuse when the service is started or restarted from
+            // the background. A running service keeps the types it already has, so only its
+            // notification changes; a new one starts as a phone call alone rather than crash.
             Log.w("", "Unable to start CallForegroundService with the microphone type", e)
+            if (isForeground) return true
+
             try {
                 startForegroundWithTypes(type, includeMicrophone = false)
+                isForeground = true
                 return true
             } catch (e: RuntimeException) {
                 Log.e("", "Failed to start CallForegroundService for type: ${type}", e)
