@@ -20,6 +20,7 @@
     </plurals>
     <string name="addAdminSingular">管理者を追加</string>
     <string name="addAdminsDescription">管理者に昇格させるユーザーのAccount IDを入力してください。\n\n複数のユーザーを追加するには、各Account IDをカンマで区切って入力してください。一度に最大20件まで指定できます。</string>
+    <string name="admin">管理者</string>
     <string name="adminCannotBeDemoted">管理者は降格またはグループから削除できません。</string>
     <string name="adminCannotBeRemoved">アドミンを削除することはできません</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> と <b>{count}人</b> がアドミンに昇格しました</string>

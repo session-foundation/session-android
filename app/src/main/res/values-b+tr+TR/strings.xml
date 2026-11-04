@@ -21,6 +21,7 @@
     </plurals>
     <string name="addAdminSingular">Yönetici Ekle</string>
     <string name="addAdminsDescription">Yönetici olarak atadığınız kullanıcının Hesap Kimliğini girin.\n\nBirden fazla kullanıcı eklemek için her Hesap Kimliğini virgülle ayırarak girin. Tek seferde en fazla 20 Hesap Kimliği belirtilebilir.</string>
+    <string name="admin">Yönetici</string>
     <string name="adminCannotBeDemoted">Yöneticiler gruptan çıkarılamaz veya görevden alınamaz.</string>
     <string name="adminCannotBeRemoved">Yöneticiler kaldırılamaz.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> ve <b>{count} diğer</b> yönetici olarak terfi etti.</string>
@@ -808,6 +809,7 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Sesli İleti</string>
     <string name="messages">İletiler</string>
     <string name="minimize">Küçült</string>
+    <string name="missingServerWideAdminPermissions">Bu kullanıcının rolünü değiştiremezsiniz çünkü sunucu geneli yönetici rolünüz bulunmuyor.</string>
     <plurals name="modalMessageCharacterDisplayDescription">
         <item quantity="one">Mesajlar %1$s karakter ile sınırlıdır. %2$d karakteriniz kaldı.</item>
         <item quantity="other">Mesajlar %1$s karakter ile sınırlıdır. %2$d karakteriniz kaldı.</item>
