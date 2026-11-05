@@ -6,6 +6,7 @@ import org.session.libsession.messaging.messages.control.TypingIndicator;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Util;
+import org.session.libsession.utilities.concurrent.SignalExecutors;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
@@ -14,6 +15,7 @@ import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -30,6 +32,11 @@ public class TypingStatusSender {
   private final ThreadDatabase       threadDatabase;
   private final RecipientRepository  recipientRepository;
   private final MessageSender messageSender;
+
+  // Typing events and their timers run on the main thread, but a send reads the database and
+  // persists a job, either of which can wait on a busy connection pool. A single thread keeps a
+  // "started" from being overtaken by the "stopped" that follows it.
+  private final ExecutorService sendExecutor = SignalExecutors.newCachedSingleThreadExecutor("typing-status-sender");
 
   @Inject
   public TypingStatusSender(ThreadDatabase threadDatabase, RecipientRepository recipientRepository, MessageSender messageSender) {
@@ -85,6 +92,10 @@ public class TypingStatusSender {
   }
 
   private void sendTyping(long threadId, boolean typingStarted) {
+    sendExecutor.execute(() -> sendTypingNow(threadId, typingStarted));
+  }
+
+  private void sendTypingNow(long threadId, boolean typingStarted) {
     Address.Conversable address = ThreadDatabaseExtKt.getRecipientAddress(threadDatabase, threadId);
     if (address == null) { return; }
     Recipient recipient = recipientRepository.getRecipientSync(address);

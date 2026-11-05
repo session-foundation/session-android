@@ -6,14 +6,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
+import androidx.core.view.isInvisible
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.core.widget.TextViewCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -90,20 +95,6 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
         val args = requireArguments()
         publicKey = requireNotNull(args.getString(ARG_PUBLIC_KEY))
         requireNotNull(args.getLong(ARG_THREAD_ID))
-        val addressString = requireNotNull(args.getString(ARG_ADDRESS))
-        val address = Address.fromSerialized(addressString)
-
-        val threadFromDb = conversationRepository.getConversationList().firstOrNull { it.recipient.address == address }
-
-        if(threadFromDb == null){
-            Log.w("", "Home conversation bottom sheet: Thread not found for address: $addressString" )
-            dismiss()
-            return
-        }
-
-        this.thread = threadFromDb
-
-        group = groupDatabase.getGroup(thread.recipient.address.toString())
     }
 
     override fun onCreateView(
@@ -137,7 +128,33 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (!this::thread.isInitialized) { return dismiss() }
+        val addressString = requireNotNull(requireArguments().getString(ARG_ADDRESS))
+        val address = Address.fromSerialized(addressString) as? Address.Conversable
+
+        // Hidden until bound, so the sheet doesn't flash every option before they're filtered
+        binding.root.isInvisible = true
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val loaded = withContext(Dispatchers.IO) {
+                address?.let(conversationRepository::getConversation)
+                    ?.let { it to groupDatabase.getGroup(it.recipient.address.toString()) }
+            }
+
+            if (loaded == null) {
+                Log.w("", "Home conversation bottom sheet: Thread not found for address: $addressString")
+                // The lookup can finish after the app is backgrounded and its state saved
+                dismissAllowingStateLoss()
+                return@launch
+            }
+
+            thread = loaded.first
+            group = loaded.second
+            binding.root.isInvisible = false
+            bindThread()
+        }
+    }
+
+    private fun bindThread() {
         val recipient = thread.recipient
 
         binding.deleteContactTextView.isVisible = false
@@ -196,8 +213,6 @@ class ConversationOptionsBottomSheet() : BottomSheetDialogFragment(), View.OnCli
             // the text, content description and icon will change depending on the type
             when {
                 recipient.isLegacyGroupRecipient -> {
-                    val group = groupDatabase.getGroup(recipient.address.toString())
-
                     val isGroupAdmin = group?.admins?.map { it.toString() }
                         ?.contains(loginStateRepository.requireLocalNumber()) ?: false
 
