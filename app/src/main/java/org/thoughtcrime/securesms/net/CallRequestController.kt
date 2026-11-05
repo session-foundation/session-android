@@ -6,6 +6,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import org.session.libsession.utilities.Util
+import org.session.libsession.utilities.concurrent.SignalExecutors
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -25,8 +26,9 @@ class CallRequestController(private val call: Call) : RequestController {
         // Unblock waiters first
         result.complete(null)
 
-        // Close any stream we might already have
-        stream?.let(Util::close)
+        // cancel() is called on the main thread (e.g. when Glide clears a request), and closing
+        // a response body there can write to the TLS socket and throw NetworkOnMainThreadException.
+        stream?.let { SignalExecutors.UNBOUNDED.execute { Util.close(it) } }
         stream = null
     }
 

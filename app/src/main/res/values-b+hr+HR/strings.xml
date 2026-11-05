@@ -170,8 +170,8 @@
     <string name="clearDataError">Podaci nisu izbrisani</string>
     <plurals name="clearDataErrorDescription">
         <item quantity="one">Podatke nije izbrisao %1$d Service Node. ID uslužnog čvora: %2$s.</item>
-        <item quantity="few">Podatke nije izbrisao %1$d Service Node. ID-ovi uslužnih čvorova: %2$s.</item>
-        <item quantity="other">Podatke nije izbrisao %1$d Service Node. ID-ovi uslužnih čvorova: %2$s.</item>
+        <item quantity="few">Podatke nije izbrisao %1$d Service Node. ID-evi uslužnih čvorova: %2$s.</item>
+        <item quantity="other">Podatke nije izbrisao %1$d Service Node. ID-evi uslužnih čvorova: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">Dogodila se nepoznata greška i vaši podaci nisu izbrisani. Želite li izbrisati podatke samo s ovog uređaja?</string>
     <string name="clearDevice">Obriši uređaj</string>
@@ -355,9 +355,9 @@
     <string name="emojiReactsClearAll">Jeste li sigurni da želite izbrisati sve {emoji}?</string>
     <string name="emojiReactsCoolDown">Uspravite se! Poslali ste previše emotikona. Pokušajte ponovno uskoro</string>
     <plurals name="emojiReactsCountOthers">
-        <item quantity="one">I %1$d osoba je reagirala %2$s na ovu poruku.</item>
-        <item quantity="few">I %1$d osobe su reagirale %2$s na ovu poruku.</item>
-        <item quantity="other">I %1$d osoba je reagiralo %2$s na ovu poruku.</item>
+        <item quantity="one">%1$d osoba je reagirala sa %2$s na ovu poruku.</item>
+        <item quantity="few">%1$d osobe su reagirale sa %2$s na ovu poruku.</item>
+        <item quantity="other">%1$d osoba je reagiralo sa %2$s na ovu poruku.</item>
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} je reagirao s {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} i {other_name} su reagirali s {emoji_name}</string>
@@ -638,7 +638,7 @@
     <string name="ongoingAppeal">Nova nada za Session</string>
     <string name="ongoingAppealDescription">Kad se činilo da bi Session mogao nestati, vi ste uskočili.\n\nVaše su donacije osigurale Session Technology Foundation (STF) dovoljno sredstava da omogući malom timu suradnika održavanje aplikacije.\n\nTrenutačno je fokus na tome da Session ostane siguran, stabilan i dostupan na mreži.\n\nVaše donacije mogu pomoći podržati Session u ovom kritičnom razdoblju. Dodatne donacije mogle bi omogućiti zapošljavanje više razvojnih programera i pomoći u isporuci značajki potrebnih za brži napredak Session.</string>
     <string name="onionRoutingPath">Putanja</string>
-    <string name="onionRoutingPathDescription">Session skriva vaš IP usmjeravanjem vaših poruka kroz više uslužnih čvorova u Session decentraliziranoj mreži. Ovo je vaša trenutna putanja:</string>
+    <string name="onionRoutingPathDescription">Session skriva vašu IP adresu usmjeravanjem vaših poruka kroz više uslužnih čvorova u Session decentraliziranoj mreži. Ovo je vaša trenutna putanja:</string>
     <string name="onionRoutingPathDestination">Odredište</string>
     <string name="onionRoutingPathEntryNode">Ulazni čvor</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
@@ -792,7 +792,7 @@
     <string name="updateDownloaded">Ažuriranje instalirano, kliknite za ponovno pokretanje</string>
     <string name="updateDownloading">Preuzimanje ažuriranja: {percent_loader}%</string>
     <string name="updateError">Nije moguće ažurirati</string>
-    <string name="updateErrorDescription">Session nije uspio ažurirati. Molimo idite na https://getsession.org/download i instalirajte novu verziju ručno, zatim kontaktirajte naš Centar za pomoć kako biste nas obavijestili o ovom problemu.</string>
+    <string name="updateErrorDescription">Session se nije uspijela ažurirati. Molimo idite na https://getsession.org/download i instalirajte novu verziju ručno, zatim kontaktirajte naš Centar za pomoć kako biste nas obavijestili o ovom problemu.</string>
     <string name="updateNewVersion">Dostupna je nova verzija Session, dodirnite za ažuriranje.</string>
     <string name="updateReleaseNotes">Idi na bilješke o izdanju</string>
     <string name="updateSession">Ažuriranje Session</string>
