@@ -274,8 +274,8 @@
     <string name="contentDescriptionQuoteThumbnail">Sitat gətirilmiş təsvirdən kiçik şəkil</string>
     <string name="contentDescriptionStartConversation">Yeni kontakt ilə danışıq yarat</string>
     <string name="contentNotificationDescription">Yeni bir mesaj alındıqda daxili bildirişlərdə nümayiş olunacaq məzmunu seçin.</string>
-    <string name="conversationsAddToHome">Əsas ekrana əlavə et</string>
-    <string name="conversationsAddedToHome">Əsas ekrana əlavə edildi</string>
+    <string name="conversationsAddToHome">Ana ekrana əlavə et</string>
+    <string name="conversationsAddedToHome">Ana ekrana əlavə edildi</string>
     <string name="conversationsAudioMessages">Səsli mesajlar</string>
     <string name="conversationsAutoplayAudioMessage">Səsli mesajları avto-oxut</string>
     <string name="conversationsAutoplayAudioMessageDescription">Ardıcıl göndərilən səsli mesajları avto-oxut</string>
@@ -557,7 +557,7 @@
     <string name="groupNameUpdated">Qrupun adı güncəlləndi.</string>
     <string name="groupNameVisible">Qrup adı bütün qrup üzvlərinə görünür.</string>
     <string name="groupNoMessages"><b>{group_name}</b> daxilində heç bir mesajınız yoxdur. Danışığa başlamaq üçün bir mesaj göndərin!</string>
-    <string name="groupNotUpdatedWarning">Bu qrup 30 gün ərzində güncəllənməyib. Mesaj göndərərkən və ya qrup məlumatlarına baxarkən problemlərlə üzləşə bilərsiniz.</string>
+    <string name="groupNotUpdatedWarning">Bu qrup 30 gündən çoxdur ki, güncəllənməyib. Mesaj göndərərkən və ya qrup bilgilərinə baxarkən problemlərlə üzləşə bilərsiniz.</string>
     <string name="groupOnlyAdmin">Siz <b>{group_name}</b> qrupunda yeganə adminsiniz.\n\nQrup üzvləri və ayarları admin olmadan dəyişdirilə bilməz.</string>
     <string name="groupOnlyAdminLeave">Siz, <b>{group_name}</b> qrupunun yeganə adminisiniz.\n\nQrup üzvləri və ayarları admin olmadan dəyişdirilə bilməz. Qrupu silmədən tərk etmək üçün, əvvəlcə yeni bir admin əlavə edin</string>
     <string name="groupPendingRemoval">Silmə gözlənilir</string>
@@ -606,7 +606,7 @@
     <string name="important">Vacib</string>
     <string name="incognitoKeyboard">Gizli klaviatura</string>
     <string name="incognitoKeyboardDescription">Mövcuddursa gizli rejimi tələb et. İstifadə etdiyiniz klaviaturadan asılı olaraq, klaviaturanız bu tələbi yox saya bilər.</string>
-    <string name="info">Məlumat</string>
+    <string name="info">Bilgi</string>
     <string name="invalidShortcut">Yararsız qısayol</string>
     <plurals name="inviteContactsPlural">
         <item quantity="one">Kontaktı dəvət et</item>
@@ -1123,7 +1123,7 @@ Pro erişiminizi güncəlləmək üçün həmin <b><font color="0">{platform_acc
         <item quantity="one">Yüksəltmə təkrar göndərilir</item>
         <item quantity="other">Yüksəltmələr təkrar göndərilir</item>
     </plurals>
-    <string name="resolving">Ölkə məlumatları yüklənir...</string>
+    <string name="resolving">Ölkə bilgiləri yüklənir...</string>
     <string name="restart">Yenidən başlat</string>
     <string name="resync">Təkrar sinxronlaşdır</string>
     <string name="retry">Yenidən sına</string>
@@ -1231,7 +1231,7 @@ Pro erişiminizi güncəlləmək üçün həmin <b><font color="0">{platform_acc
     <string name="updateDownloading">Qoşma endirilir: {percent_loader}%</string>
     <string name="updateError">Güncəllənə bilmir</string>
     <string name="updateErrorDescription">Session güncəllənmədi. Lütfən https://getsession.org/download ünvanına gedərək yeni versiyanı quraşdırın, daha sonra bu problemi bildirmək üçün Kömək Mərkəzimizə müraciət edin.</string>
-    <string name="updateGroupInformation">Qrup Məlumatını Yenilə</string>
+    <string name="updateGroupInformation">Qrup bilgilərini güncəllə</string>
     <string name="updateGroupInformationDescription">Qrupun adı və təsviri bütün qrup üzvlərinə görünür.</string>
     <string name="updateGroupInformationEnterShorterDescription">Zəhmət olmasa, qrupun daha qısa təsvirini daxil edin</string>
     <string name="updateNewVersion">Session üçün yeni versiyası mövcuddur, güncəlləmək üçün toxunun</string>
