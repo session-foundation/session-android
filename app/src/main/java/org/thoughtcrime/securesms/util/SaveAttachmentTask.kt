@@ -72,7 +72,10 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
             Log.i(TAG, "Saving attachment as: $filename")
 
             val outputUri: Uri = getMediaStoreContentUriForType(contentType)
-            val mediaUri = createOutputUri(context, outputUri, contentType, filename)
+            val mediaUri = createOutputUri(context, outputUri, contentType, filename) ?: run {
+                Log.w(TAG, "MediaStore did not create an entry for the attachment")
+                return null
+            }
 
             val updateValues = ContentValues()
             PartAuthority.getAttachmentStream(context, attachment.uri).use { inputStream ->
@@ -80,12 +83,12 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                     return null
                 }
                 if (outputUri.scheme == ContentResolver.SCHEME_FILE) {
-                    FileOutputStream(mediaUri!!.path).use { outputStream ->
+                    FileOutputStream(mediaUri.path).use { outputStream ->
                         StreamUtil.copy(inputStream, outputStream)
                         MediaScannerConnection.scanFile(context, arrayOf(mediaUri.path), arrayOf(contentType), null)
                     }
                 } else {
-                    context.contentResolver.openOutputStream(mediaUri!!, "w").use { outputStream ->
+                    context.contentResolver.openOutputStream(mediaUri, "w").use { outputStream ->
                         val total: Long = StreamUtil.copy(inputStream, outputStream)
                         if (total > 0) {
                             updateValues.put(MediaStore.MediaColumns.SIZE, total)
@@ -100,7 +103,7 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
 
             if (updateValues.size() > 0) {
                 try {
-                    context.contentResolver.update(mediaUri!!, updateValues, null, null)
+                    context.contentResolver.update(mediaUri, updateValues, null, null)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to update MediaStore entry", e)
                 }
@@ -241,6 +244,10 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
             else
                 Pair(RESULT_SUCCESS, directory)
         } catch (e: IOException) {
+            Log.w(TAG, e)
+            return Pair(RESULT_FAILURE, null)
+        } catch (e: IllegalArgumentException) {
+            // MediaStore rejects some names and MIME types it cannot place in a collection
             Log.w(TAG, e)
             return Pair(RESULT_FAILURE, null)
         }
