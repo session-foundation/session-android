@@ -202,6 +202,10 @@ class DefaultConversationRepository @Inject constructor(
         return threadDb.getThreads(getConversationListAddresses()).populateUnreadStatus()
     }
 
+    override fun getConversation(address: Address.Conversable): ThreadRecord? {
+        return threadDb.getThreads(listOf(address)).populateUnreadStatus().firstOrNull()
+    }
+
     /**
      *
      */
