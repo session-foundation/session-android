@@ -11,6 +11,7 @@ import android.util.TypedValue;
 import network.loki.messenger.R;
 import org.thoughtcrime.securesms.components.emoji.EmojiProvider.EmojiDrawable;
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiParser;
+import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 
 public class EmojiTextView extends AppCompatTextView {
@@ -72,7 +73,9 @@ public class EmojiTextView extends AppCompatTextView {
     previousOverflowText = overflowText;
     previousBufferType   = type;
 
-      if (candidates == null || candidates.size() == 0) {
+      boolean useSystemEmoji = TextSecurePreferences.isUseSystemEmojiEnabled(getContext());
+
+      if (candidates == null || candidates.size() == 0 || useSystemEmoji) {
           super.setText(
                   new SpannableStringBuilder(text != null ? text : "")
                           .append(overflowText != null ? overflowText : ""),

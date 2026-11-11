@@ -59,6 +59,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SEEN_DON
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SEND_WITH_ENTER
+import org.session.libsession.utilities.TextSecurePreferences.Companion.USE_SYSTEM_EMOJI
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_OTHER_USERS_PRO
@@ -341,6 +342,8 @@ interface TextSecurePreferences {
 
     fun setSendWithEnterEnabled(enabled: Boolean)
     fun isSendWithEnterEnabled() : Boolean
+    fun setUseSystemEmojiEnabled(enabled: Boolean)
+    fun isUseSystemEmojiEnabled(): Boolean
     fun updateBooleanFromKey(key : String, value : Boolean)
 
     var deprecationStateOverride: String?
@@ -408,6 +411,7 @@ interface TextSecurePreferences {
         const val LAST_VACUUM_TIME = "pref_last_vacuum_time"
         const val AUTOPLAY_AUDIO_MESSAGES = "pref_autoplay_audio"
         const val SEND_WITH_ENTER = "pref_enter_sends"
+        const val USE_SYSTEM_EMOJI = "pref_use_system_emoji"
         const val FINGERPRINT_KEY_GENERATED = "fingerprint_key_generated"
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
         const val LAST_VERSION_CHECK = "pref_last_version_check"
@@ -569,6 +573,17 @@ interface TextSecurePreferences {
         @JvmStatic
         fun isThreadLengthTrimmingEnabled(context: Context): Boolean {
             return getBooleanPreference(context, THREAD_TRIM_ENABLED, true)
+        }
+
+        @JvmStatic
+        fun isUseSystemEmojiEnabled(context: Context): Boolean {
+            return getBooleanPreference(context, USE_SYSTEM_EMOJI, true)
+        }
+
+        @JvmStatic
+        fun setUseSystemEmojiEnabled(context: Context, enabled: Boolean) {
+            setBooleanPreference(context, USE_SYSTEM_EMOJI, enabled)
+            _events.tryEmit(USE_SYSTEM_EMOJI)
         }
 
         @JvmStatic
@@ -1547,6 +1562,15 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isSendWithEnterEnabled(): Boolean {
         return getBooleanPreference(SEND_WITH_ENTER, false)
+    }
+
+    override fun setUseSystemEmojiEnabled(enabled: Boolean) {
+        setBooleanPreference(USE_SYSTEM_EMOJI, enabled)
+        _events.tryEmit(USE_SYSTEM_EMOJI)
+    }
+
+    override fun isUseSystemEmojiEnabled(): Boolean {
+        return getBooleanPreference(USE_SYSTEM_EMOJI, true)
     }
 
     override fun updateBooleanFromKey(key: String, value: Boolean) {
