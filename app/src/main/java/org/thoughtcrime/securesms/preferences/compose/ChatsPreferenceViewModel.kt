@@ -21,11 +21,13 @@ class ChatsPreferenceViewModel @Inject constructor(
             prefs.observeBooleanKey(TextSecurePreferences.THREAD_TRIM_ENABLED, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.SEND_WITH_ENTER, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.AUTOPLAY_AUDIO_MESSAGES, default = false),
-        ) { trim, enter, autoplay ->
+            prefs.observeBooleanKey(TextSecurePreferences.USE_SYSTEM_EMOJI, default = true),
+        ) { trim, enter, autoplay, systemEmoji ->
             UIState(
                 trimThreads = trim,
                 sendWithEnter = enter,
-                autoplayAudioMessage = autoplay
+                autoplayAudioMessage = autoplay,
+                useSystemEmoji = systemEmoji
             )
         }.stateIn(
             scope = viewModelScope,
@@ -34,6 +36,7 @@ class ChatsPreferenceViewModel @Inject constructor(
                 trimThreads = prefs.isThreadLengthTrimmingEnabled(),
                 sendWithEnter = prefs.isSendWithEnterEnabled(),
                 autoplayAudioMessage = prefs.isAutoplayAudioMessagesEnabled(),
+                useSystemEmoji = prefs.isUseSystemEmojiEnabled(),
             )
         )
 
@@ -42,6 +45,7 @@ class ChatsPreferenceViewModel @Inject constructor(
             is Commands.ToggleTrimThreads -> prefs.setThreadLengthTrimmingEnabled(command.isEnabled)
             is Commands.ToggleSendWithEnter -> prefs.setSendWithEnterEnabled(command.isEnabled)
             is Commands.ToggleAutoplayAudioMessages -> prefs.setAutoplayAudioMessages(command.isEnabled)
+            is Commands.ToggleUseSystemEmoji -> prefs.setUseSystemEmojiEnabled(command.isEnabled)
         }
     }
 
@@ -49,11 +53,13 @@ class ChatsPreferenceViewModel @Inject constructor(
         data class ToggleTrimThreads(val isEnabled: Boolean) : Commands
         data class ToggleSendWithEnter(val isEnabled: Boolean) : Commands
         data class ToggleAutoplayAudioMessages(val isEnabled: Boolean) : Commands
+        data class ToggleUseSystemEmoji(val isEnabled: Boolean) : Commands
     }
 
     data class UIState(
         val trimThreads: Boolean = false,
         val sendWithEnter: Boolean = false,
-        val autoplayAudioMessage: Boolean = false
+        val autoplayAudioMessage: Boolean = false,
+        val useSystemEmoji: Boolean = true
     )
 }

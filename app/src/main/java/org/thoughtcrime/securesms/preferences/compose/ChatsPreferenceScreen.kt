@@ -127,6 +127,32 @@ private fun ConversationsPreference(
         item {
             CategoryCell(
                 modifier = Modifier,
+                title = "Emojis"
+            ) {
+                SwitchActionRowItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = annotatedStringResource("Use System Emojis"),
+                    subtitle = annotatedStringResource("Render crisp, high-resolution emojis using your device's native font instead of compressed spritesheets"),
+                    subtitleStyle = LocalType.current.large,
+                    checked = uiState.useSystemEmoji,
+                    qaTag = R.string.qa_preferences_send_with_enter,
+                    switchQaTag = R.string.qa_preferences_send_with_enter_toggle,
+                    onCheckedChange = { isEnabled ->
+                        sendCommand(
+                            ChatsPreferenceViewModel.Commands.ToggleUseSystemEmoji(
+                                isEnabled
+                            )
+                        )
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+        }
+
+        item {
+            CategoryCell(
+                modifier = Modifier,
                 title = GetString(R.string.conversationsBlockedContacts).string()
             ) {
                 IconActionRowItem(
