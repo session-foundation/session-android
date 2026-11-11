@@ -182,8 +182,8 @@ class ConversationReactionOverlay : FrameLayout {
         conversationTimestamp.text = dateUtils.getDisplayFormattedTimeSpanString(messageRecord.timestamp)
         updateConversationTimestamp(messageRecord)
         val isMessageOnLeft = selectedConversationModel.isOutgoing xor ViewUtil.isLtr(this)
-        conversationItem.scaleX = LONG_PRESS_SCALE_FACTOR
-        conversationItem.scaleY = LONG_PRESS_SCALE_FACTOR
+        conversationItem.scaleX = 1f
+        conversationItem.scaleY = 1f
         visibility = INVISIBLE
         this.activity = activity
         doOnLayout { showAfterLayout(messageRecord, lastSeenDownPoint, isMessageOnLeft) }
@@ -201,7 +201,14 @@ class ConversationReactionOverlay : FrameLayout {
     }
 
     private fun updateConversationTimestamp(message: MessageRecord) {
-        if (message.isOutgoing) conversationBubble.bringToFront() else conversationTimestamp.bringToFront()
+        conversationItem.removeAllViews()
+        if (message.isOutgoing) {
+            conversationItem.addView(conversationTimestamp)
+            conversationItem.addView(conversationBubble)
+        } else {
+            conversationItem.addView(conversationBubble)
+            conversationItem.addView(conversationTimestamp)
+        }
     }
 
     private fun showAfterLayout(messageRecord: MessageRecord,
@@ -211,134 +218,69 @@ class ConversationReactionOverlay : FrameLayout {
         val contextMenu = ConversationContextMenu(dropdownAnchor, recipient?.let { getMenuActionItems(messageRecord, it) }.orEmpty())
         this.contextMenu = contextMenu
 
+        val overlayLoc = intArrayOf(0, 0).also { getLocationInWindow(it) }
+        val bubbleX = selectedConversationModel.bubbleX - overlayLoc[0]
+        val bubbleY = selectedConversationModel.bubbleY - overlayLoc[1]
+        val bubbleWidth = selectedConversationModel.bitmap.width
+        val bubbleHeight = selectedConversationModel.bitmap.height
+
         // Visual left/right edges that account for system insets and configured margin.
         val leftEdge = (systemInsets.left + scrubberHorizontalMargin).toFloat()
         val rightEdge = (width - systemInsets.right - scrubberHorizontalMargin).toFloat()
 
-        // Start the bubble aligned to the same visual edge as the scrubber.
-        var endX = if (isMessageOnLeft) {
-            leftEdge
-        } else {
-            rightEdge - conversationItem.width
-        }
+        conversationTimestamp.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val timestampWidth = conversationTimestamp.measuredWidth
+        val timestampMargin = DimensionUnit.DP.toPixels(8f)
 
-        var endY = selectedConversationModel.bubbleY - statusBarHeight
-        conversationItem.x = endX
-        conversationItem.y = endY
-
-        val conversationItemSnapshot = selectedConversationModel.bitmap
-        val isWideLayout = contextMenu.getMaxWidth() + scrubberWidth < width
-
-        // Use our own available height calculation
-        val availableHeight = getAvailableScreenHeight()
-
-        val bubbleWidth = selectedConversationModel.bubbleWidth
-        var endApparentTop = endY
-        var endScale = 1f
-        val menuPadding = DimensionUnit.DP.toPixels(12f)
-        val reactionBarTopPadding = DimensionUnit.DP.toPixels(32f)
-        val reactionBarHeight = backgroundView.height
-        var reactionBarBackgroundY: Float
-
-        // Use actual content height from context menu
-        val actualMenuHeight = contextMenu.getMaxHeight()
-
-        if (isWideLayout) {
-            val everythingFitsVertically = reactionBarHeight + menuPadding + reactionBarTopPadding + conversationItemSnapshot.height < availableHeight
-            if (everythingFitsVertically) {
-                val reactionBarFitsAboveItem = conversationItem.y > reactionBarHeight + menuPadding + reactionBarTopPadding
-                if (reactionBarFitsAboveItem) {
-                    reactionBarBackgroundY = conversationItem.y - menuPadding - reactionBarHeight
-                } else {
-                    endY = reactionBarHeight + menuPadding + reactionBarTopPadding
-                    reactionBarBackgroundY = reactionBarTopPadding
-                }
+        // Keep the message bubble at its exact position without displacement
+        val endX = if (selectedConversationModel.isOutgoing) {
+            if (bubbleX - timestampWidth - timestampMargin >= leftEdge) {
+                conversationTimestamp.visibility = View.VISIBLE
+                bubbleX - timestampWidth - timestampMargin
             } else {
-                val spaceAvailableForItem = availableHeight - reactionBarHeight - menuPadding - reactionBarTopPadding
-                endScale = spaceAvailableForItem / conversationItem.height
-                endX += Util.halfOffsetFromScale(conversationItemSnapshot.width, endScale) * if (isMessageOnLeft) -1 else 1
-                endY = reactionBarHeight + menuPadding + reactionBarTopPadding - Util.halfOffsetFromScale(conversationItemSnapshot.height, endScale)
-                reactionBarBackgroundY = reactionBarTopPadding
+                conversationTimestamp.visibility = View.GONE
+                bubbleX
             }
         } else {
-            val reactionBarOffset = DimensionUnit.DP.toPixels(48f)
-            val spaceForReactionBar = Math.max(reactionBarHeight + reactionBarOffset, 0f)
-            val everythingFitsVertically = actualMenuHeight + conversationItemSnapshot.height + menuPadding + spaceForReactionBar < availableHeight
-
-            if (everythingFitsVertically) {
-                val bubbleBottom = selectedConversationModel.bubbleY + conversationItemSnapshot.height
-                val menuFitsBelowItem = bubbleBottom + menuPadding + actualMenuHeight <= availableHeight + statusBarHeight
-
-                if (menuFitsBelowItem) {
-                    if (conversationItem.y < systemInsets.top) {
-                        endY = systemInsets.top.toFloat()
-                    }
-                    val contextMenuTop = endY + conversationItemSnapshot.height
-                    reactionBarBackgroundY = getReactionBarOffsetForTouch(
-                        selectedConversationModel.bubbleY,
-                        contextMenuTop,
-                        menuPadding,
-                        reactionBarOffset,
-                        reactionBarHeight,
-                        reactionBarTopPadding,
-                        endY
-                    )
-                    if (reactionBarBackgroundY <= reactionBarTopPadding) {
-                        endY = backgroundView.height + menuPadding + reactionBarTopPadding
-                    }
-                } else {
-                    endY = availableHeight - actualMenuHeight - 2*menuPadding - conversationItemSnapshot.height
-                    reactionBarBackgroundY = endY - reactionBarHeight - menuPadding
-                }
-                endApparentTop = endY
-            } else if (reactionBarOffset + reactionBarHeight + actualMenuHeight + menuPadding < availableHeight) {
-                val spaceAvailableForItem = availableHeight.toFloat() - actualMenuHeight - menuPadding - spaceForReactionBar
-                endScale = spaceAvailableForItem / conversationItemSnapshot.height
-                endX += Util.halfOffsetFromScale(conversationItemSnapshot.width, endScale) * if (isMessageOnLeft) -1 else 1
-                endY = spaceForReactionBar - Util.halfOffsetFromScale(conversationItemSnapshot.height, endScale)
-                reactionBarBackgroundY = reactionBarTopPadding
-                endApparentTop = endY + Util.halfOffsetFromScale(conversationItemSnapshot.height, endScale)
+            if (bubbleX + bubbleWidth + timestampWidth + timestampMargin <= rightEdge) {
+                conversationTimestamp.visibility = View.VISIBLE
             } else {
-                // Calculate how much we need to scale the bubble to fit everything
-                val spaceAvailableForItem = availableHeight.toFloat() - actualMenuHeight - menuPadding * 2 - reactionBarHeight - reactionBarTopPadding
-
-                if (spaceAvailableForItem > 0) {
-                    endScale = spaceAvailableForItem / conversationItemSnapshot.height
-                    endX += Util.halfOffsetFromScale(conversationItemSnapshot.width, endScale) * if (isMessageOnLeft) -1 else 1
-                    endY = reactionBarHeight - Util.halfOffsetFromScale(conversationItemSnapshot.height, endScale) + menuPadding + reactionBarTopPadding
-                    reactionBarBackgroundY = reactionBarTopPadding
-                    endApparentTop = reactionBarHeight + menuPadding + reactionBarTopPadding
-                } else {
-                    // If we can't fit everything even with scaling, use a minimum scale
-                    val minScale = 0.2f // Minimum readable scale
-                    endScale = minScale
-                    endX += Util.halfOffsetFromScale(conversationItemSnapshot.width, endScale) * if (isMessageOnLeft) -1 else 1
-                    endY = reactionBarHeight - Util.halfOffsetFromScale(conversationItemSnapshot.height, endScale) + menuPadding + reactionBarTopPadding
-                    reactionBarBackgroundY = reactionBarTopPadding
-                    endApparentTop = reactionBarHeight + menuPadding + reactionBarTopPadding
-                }
+                conversationTimestamp.visibility = View.GONE
             }
+            bubbleX
         }
 
-        // Adjust for system insets
-        reactionBarBackgroundY = maxOf(reactionBarBackgroundY, systemInsets.top.toFloat() - statusBarHeight)
-
-        // Now that endScale is final, clamp the bubble X so it stays fully within the visual edges.
-        val minBubbleX = leftEdge
-        val maxBubbleX = rightEdge
-        endX = endX.coerceIn(minBubbleX, maxBubbleX)
-        // Ensure initial position is corrected before making the overlay visible.
+        val endY = bubbleY
         conversationItem.x = endX
         conversationItem.y = endY
+        conversationItem.scaleX = 1f
+        conversationItem.scaleY = 1f
+        conversationBubble.scaleX = 1f
+        conversationBubble.scaleY = 1f
 
-        hideAnimatorSet.end()
-        visibility = VISIBLE
+        val margin = DimensionUnit.DP.toPixels(8f)
+        val reactionBarHeight = if (backgroundView.height > 0) backgroundView.height else resources.getDimensionPixelSize(R.dimen.conversation_reaction_scrubber_height)
 
-        // Place the scrubber on the same visual edges (accounting for its own width on the right).
-        val scrubberX = if (isMessageOnLeft) {
-            leftEdge
+        // Place scrubber aligned to the bubble, clamped within visual edges
+        var scrubberX = if (isMessageOnLeft) {
+            bubbleX
         } else {
-            (rightEdge - scrubberWidth)
+            bubbleX + bubbleWidth - scrubberWidth
+        }
+        scrubberX = scrubberX.coerceIn(leftEdge, maxOf(leftEdge, rightEdge - scrubberWidth))
+
+        // Prefer placing reaction bar above the bubble if space permits; otherwise below
+        val spaceAbove = bubbleY - systemInsets.top
+        val scrubberNeededAbove = reactionBarHeight + margin
+        val reactionBarAbove = spaceAbove >= scrubberNeededAbove
+
+        val reactionBarBackgroundY = if (reactionBarAbove) {
+            bubbleY - margin - reactionBarHeight
+        } else {
+            bubbleY + bubbleHeight + margin
         }
 
         foregroundView.x = scrubberX
@@ -346,81 +288,87 @@ class ConversationReactionOverlay : FrameLayout {
         backgroundView.x = scrubberX
         backgroundView.y = reactionBarBackgroundY
 
-        verticalScrubBoundary.update(reactionBarBackgroundY,
-            lastSeenDownPoint.y + distanceFromTouchDownPointToBottomOfScrubberDeadZone)
-        updateBoundsOnLayoutChanged()
-        revealAnimatorSet.start()
-
-        val maxMenuY = maxOf(
-            systemInsets.top.toFloat(),
-            (height - systemInsets.bottom - actualMenuHeight).toFloat()
+        verticalScrubBoundary.update(
+            reactionBarBackgroundY,
+            lastSeenDownPoint.y + distanceFromTouchDownPointToBottomOfScrubberDeadZone
         )
+        updateBoundsOnLayoutChanged()
 
-        if (isWideLayout) {
-            val menuXInOverlay = if (isMessageOnLeft) {
-                // Menu to the RIGHT of the scrubber
-                scrubberX + scrubberWidth + menuPadding
-            } else {
-                // Menu to the LEFT of the scrubber - use MENU width here, not scrubber width
-                scrubberX - contextMenu.getMaxWidth() - menuPadding
-            }
+        // Place context menu
+        val actualMenuHeight = contextMenu.getMaxHeight()
+        val menuWidth = contextMenu.getMaxWidth()
+        val isWideLayout = menuWidth + scrubberWidth + 3 * margin < width
 
-            val menuYInOverlay = minOf(backgroundView.y, maxMenuY)
+        val maxMenuY = (height - systemInsets.bottom - actualMenuHeight - margin).toFloat()
+        val minMenuY = (systemInsets.top + margin).toFloat()
 
-            // Convert overlay-local to anchor relative as expected by ConversationContextMenu.show()
-            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
-            contextMenu.show(xOffset, yOffset)
-
+        var menuX = if (isMessageOnLeft) {
+            bubbleX
         } else {
-            val menuXInOverlay = if (isMessageOnLeft) {
-                leftEdge
+            bubbleX + bubbleWidth - menuWidth
+        }
+        val minMenuX = (systemInsets.left + scrubberHorizontalMargin).toFloat()
+        val maxMenuX = maxOf(minMenuX, (width - systemInsets.right - scrubberHorizontalMargin - menuWidth).toFloat())
+        menuX = menuX.coerceIn(minMenuX, maxMenuX)
+
+        val menuY = if (isWideLayout && reactionBarAbove) {
+            val sideMenuX = if (isMessageOnLeft) {
+                scrubberX + scrubberWidth + margin
             } else {
-                rightEdge - contextMenu.getMaxWidth()
+                scrubberX - menuWidth - margin
             }
-
-            val menuTop = endApparentTop + conversationItemSnapshot.height * endScale
-            val menuYInOverlay = (menuTop + menuPadding)
-                .coerceIn(
-                    systemInsets.top.toFloat(),
-                    maxMenuY
-                )
-
-            val (xOffset, yOffset) = toAnchorOffsets(menuXInOverlay, menuYInOverlay)
-            contextMenu.show(xOffset, yOffset)
+            if (sideMenuX >= minMenuX && sideMenuX <= maxMenuX) {
+                menuX = sideMenuX
+                reactionBarBackgroundY
+            } else {
+                calculateMenuY(reactionBarAbove, bubbleY, bubbleHeight, actualMenuHeight, margin, reactionBarBackgroundY, reactionBarHeight, spaceAbove, minMenuY, maxMenuY)
+            }
+        } else {
+            calculateMenuY(reactionBarAbove, bubbleY, bubbleHeight, actualMenuHeight, margin, reactionBarBackgroundY, reactionBarHeight, spaceAbove, minMenuY, maxMenuY)
         }
 
-        val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
-        conversationBubble.animate()
-            .scaleX(endScale)
-            .scaleY(endScale)
-            .setDuration(revealDuration.toLong())
-        conversationItem.animate()
-            .x(endX)
-            .y(endY)
-            .setDuration(revealDuration.toLong())
+        val (xOffset, yOffset) = toAnchorOffsets(menuX, menuY)
+        contextMenu.show(xOffset, yOffset)
+
+        hideAnimatorSet.end()
+        visibility = VISIBLE
+        revealAnimatorSet.start()
+    }
+
+    private fun calculateMenuY(
+        reactionBarAbove: Boolean,
+        bubbleY: Float,
+        bubbleHeight: Int,
+        actualMenuHeight: Int,
+        margin: Float,
+        reactionBarBackgroundY: Float,
+        reactionBarHeight: Int,
+        spaceAbove: Float,
+        minMenuY: Float,
+        maxMenuY: Float
+    ): Float {
+        return if (reactionBarAbove) {
+            val spaceBelow = (height - systemInsets.bottom) - (bubbleY + bubbleHeight)
+            if (spaceBelow >= actualMenuHeight + margin) {
+                bubbleY + bubbleHeight + margin
+            } else {
+                val spaceAboveScrubber = reactionBarBackgroundY - systemInsets.top
+                if (spaceAboveScrubber >= actualMenuHeight + margin) {
+                    reactionBarBackgroundY - margin - actualMenuHeight
+                } else {
+                    if (spaceBelow >= spaceAbove) maxMenuY else minMenuY
+                }
+            }
+        } else {
+            val yBelowScrubber = reactionBarBackgroundY + reactionBarHeight + margin
+            minOf(yBelowScrubber, maxMenuY)
+        }.coerceIn(minMenuY, maxOf(minMenuY, maxMenuY))
     }
 
     private fun toAnchorOffsets(xInOverlay: Float, yInOverlay: Float): Pair<Int, Int> {
         val xOffset = (xInOverlay - dropdownAnchor.x).toInt()
         val yOffset = (yInOverlay - dropdownAnchor.y).toInt()
         return xOffset to yOffset
-    }
-
-    private fun getReactionBarOffsetForTouch(itemY: Float,
-                                             contextMenuTop: Float,
-                                             contextMenuPadding: Float,
-                                             reactionBarOffset: Float,
-                                             reactionBarHeight: Int,
-                                             spaceNeededBetweenTopOfScreenAndTopOfReactionBar: Float,
-                                             messageTop: Float): Float {
-        val adjustedTouchY = itemY - statusBarHeight
-        var reactionStartingPoint = Math.min(adjustedTouchY, contextMenuTop)
-        val spaceBetweenTopOfMessageAndTopOfContextMenu = Math.abs(messageTop - contextMenuTop)
-        if (spaceBetweenTopOfMessageAndTopOfContextMenu < DimensionUnit.DP.toPixels(150f)) {
-            val offsetToMakeReactionBarOffsetMatchMenuPadding = reactionBarOffset - contextMenuPadding
-            reactionStartingPoint = messageTop + offsetToMakeReactionBarOffsetMatchMenuPadding
-        }
-        return Math.max(reactionStartingPoint - reactionBarOffset - reactionBarHeight, spaceNeededBetweenTopOfScreenAndTopOfReactionBar)
     }
 
 
