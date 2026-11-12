@@ -38,6 +38,7 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
     sealed class DecodingError(val description: String) : Exception(description) {
         object Generic : DecodingError("Something went wrong. Please check your mnemonic and try again.")
         object InputTooShort : DecodingError("Looks like you didn't enter enough words. Please check your mnemonic and try again.")
+        object InputTooLong : DecodingError("Looks like you entered too many words. Please check your mnemonic and try again.")
         object InvalidWord : DecodingError("There appears to be an invalid word in your mnemonic. Please check what you entered and try again.")
         object VerificationFailed : DecodingError("Your mnemonic couldn't be verified. Please check what you entered and try again.")
     }
@@ -85,6 +86,9 @@ class MnemonicCodec(private val loadFileContents: (String) -> String) {
 
         // Check preconditions
         if (words.size < 13) throw DecodingError.InputTooShort
+        // A 16-byte seed is 12 words plus a checksum word. Longer phrases decode to longer seeds,
+        // which this client can't load, so refuse them before they get that far.
+        if (words.size > 13) throw DecodingError.InputTooLong
 
         fun String.prefix() = substring(0 until prefixLength)
 

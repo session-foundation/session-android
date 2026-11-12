@@ -20,6 +20,8 @@ import network.loki.messenger.R
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InputTooShort
 import org.session.libsignal.crypto.MnemonicCodec.DecodingError.InvalidWord
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.auth.LoggedInState
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
 
 class LoadAccountEvent(val mnemonic: ByteArray)
@@ -49,8 +51,11 @@ internal class LoadAccountViewModel @Inject constructor(
     fun onContinue() {
         viewModelScope.launch {
             try {
-                codec.sanitizeAndDecodeAsByteArray(state.value.recoveryPhrase).let(::onSuccess)
+                codec.sanitizeAndDecodeAsByteArray(state.value.recoveryPhrase)
+                    .also(::requireLoadableSeed)
+                    .let(::onSuccess)
             } catch (e: Exception) {
+                Log.w(TAG, "Recovery phrase rejected", e)
                 onFailure(e)
             }
         }
@@ -60,8 +65,11 @@ internal class LoadAccountViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                codec.decodeMnemonicOrHexAsByteArray(string).let(::onSuccess)
+                codec.decodeMnemonicOrHexAsByteArray(string)
+                    .also(::requireLoadableSeed)
+                    .let(::onSuccess)
             } catch (e: Exception) {
+                Log.w(TAG, "Recovery QR code rejected", e)
                 onQrCodeScanFailure(e)
             }
         }
@@ -69,6 +77,14 @@ internal class LoadAccountViewModel @Inject constructor(
 
     fun onChange(recoveryPhrase: String) {
         state.update { it.copy(recoveryPhrase = recoveryPhrase, isTextErrorColor = false) }
+    }
+
+    // The QR path also accepts raw hex of any length, so the size is checked here, before it can
+    // reach the account state, which only accepts a seed of exactly this size.
+    private fun requireLoadableSeed(seed: ByteArray) {
+        require(seed.size == LoggedInState.SEED_LENGTH) {
+            "Seed must be ${LoggedInState.SEED_LENGTH} bytes, got ${seed.size}"
+        }
     }
 
     private fun onSuccess(seed: ByteArray) {
@@ -90,5 +106,9 @@ internal class LoadAccountViewModel @Inject constructor(
 
     private fun onQrCodeScanFailure(error: Throwable) {
         viewModelScope.launch { _qrErrors.emit(error) }
+    }
+
+    companion object {
+        private const val TAG = "LoadAccountViewModel"
     }
 }
