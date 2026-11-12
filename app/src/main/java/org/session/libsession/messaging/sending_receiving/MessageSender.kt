@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
+import androidx.annotation.VisibleForTesting
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -512,7 +513,29 @@ class MessageSender @Inject constructor(
             if (message is VisibleMessage) message.syncTarget = destination.publicKey
             if (message is ExpirationTimerUpdate) message.syncTarget = destination.publicKey
 
-            message.id?.let(storage::markAsSyncing)
+            scheduleSyncToSelf(message, userPublicKey)
+        }
+    }
+
+    /**
+     * A stored message's sync must be a persisted job rather than a coroutine. The message has
+     * already reached its recipient, so a failed sync leaves it showing "Failed to sync", and only a
+     * job is retried and resumed after a restart. A message with no stored record has no status to get
+     * stuck, and includes call signalling that must not be replayed late, so its sync stays best-effort.
+     */
+    @VisibleForTesting
+    internal fun scheduleSyncToSelf(message: Message, userPublicKey: String) {
+        val messageId = message.id
+        if (messageId != null) {
+            storage.markAsSyncing(messageId)
+            jobQueue.get().add(
+                messageSendJobFactory.create(
+                    message = message,
+                    destination = Destination.Contact(userPublicKey),
+                    isSyncOfSentMessage = true,
+                )
+            )
+        } else {
             scope.launch {
                 try {
                     sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
