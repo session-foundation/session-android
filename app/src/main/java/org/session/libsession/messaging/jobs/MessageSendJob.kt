@@ -33,6 +33,12 @@ class MessageSendJob @AssistedInject constructor(
     @Assisted val message: Message,
     @Assisted val destination: Destination,
     @Assisted val statusCallback: SendChannel<Result<Unit>>?,
+    /**
+     * This job copies a message that has already reached its recipient to our own swarm, so its
+     * progress is reported as syncing rather than sending. Note to Self also sends to our own swarm
+     * but is a first send, which is why this can't be inferred from [destination].
+     */
+    @Assisted val isSyncOfSentMessage: Boolean,
     private val attachmentUploadJobFactory: AttachmentUploadJob.Factory,
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,
@@ -56,6 +62,7 @@ class MessageSendJob @AssistedInject constructor(
         // Keys used for database storage
         private const val MESSAGE_KEY = "message"
         private const val DESTINATION_KEY = "destination"
+        private const val SYNC_OF_SENT_MESSAGE_KEY = "sync_of_sent_message"
     }
 
     override suspend fun execute(dispatcherName: String) {
@@ -67,7 +74,9 @@ class MessageSendJob @AssistedInject constructor(
             return
         }
 
-        messageId?.let(storage::markAsSending)
+        if (messageId != null) {
+            if (isSyncOfSentMessage) storage.markAsSyncing(messageId) else storage.markAsSending(messageId)
+        }
 
         if (message != null) {
             val isOutgoing = messageId != null && messageDataProvider.isOutgoingMessage(messageId)
@@ -177,6 +186,7 @@ class MessageSendJob @AssistedInject constructor(
         return Data.Builder()
             .putByteArray(MESSAGE_KEY, serializedMessage)
             .putByteArray(DESTINATION_KEY, serializedDestination)
+            .putBoolean(SYNC_OF_SENT_MESSAGE_KEY, isSyncOfSentMessage)
             .build()
     }
 
@@ -190,7 +200,8 @@ class MessageSendJob @AssistedInject constructor(
         abstract fun create(
             message: Message,
             destination: Destination,
-            statusCallback: SendChannel<Result<Unit>>? = null
+            statusCallback: SendChannel<Result<Unit>>? = null,
+            isSyncOfSentMessage: Boolean = false,
         ): MessageSendJob
 
         override fun create(data: Data): MessageSendJob? {
@@ -221,7 +232,8 @@ class MessageSendJob @AssistedInject constructor(
             return create(
                 message = message,
                 destination = destination,
-                statusCallback = null
+                statusCallback = null,
+                isSyncOfSentMessage = data.getBooleanOrDefault(SYNC_OF_SENT_MESSAGE_KEY, false),
             )
         }
     }
