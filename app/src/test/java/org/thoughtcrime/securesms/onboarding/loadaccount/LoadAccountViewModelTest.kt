@@ -92,4 +92,16 @@ class LoadAccountViewModelTest {
         assertEquals(1, events.size)
         assertArrayEquals(Hex.fromStringCondensed(seed16Hex), events.single().mnemonic)
     }
+
+    @Test
+    fun `a failed load shows the generic error`() {
+        val viewModel = LoadAccountViewModel(application)
+
+        viewModel.onLoadFailed(IllegalStateException("Account seed must be 16 bytes"))
+
+        assertEquals(
+            application.getString(R.string.recoveryPasswordErrorMessageGeneric),
+            viewModel.stateFlow.value.error
+        )
+    }
 }

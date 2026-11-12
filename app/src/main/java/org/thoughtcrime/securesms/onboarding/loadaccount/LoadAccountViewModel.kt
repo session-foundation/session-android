@@ -87,6 +87,13 @@ internal class LoadAccountViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Shows an error for a seed that decoded but couldn't be loaded into an account.
+     */
+    fun onLoadFailed(error: Throwable) {
+        onFailure(error)
+    }
+
     private fun onSuccess(seed: ByteArray) {
         viewModelScope.launch { _events.emit(LoadAccountEvent(seed)) }
     }
