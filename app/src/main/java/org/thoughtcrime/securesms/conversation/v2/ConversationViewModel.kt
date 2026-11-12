@@ -899,7 +899,7 @@ class ConversationViewModel @AssistedInject constructor(
                     ).show()
                 }
             } catch (e: Exception) {
-                Log.w("Loki", "FAILED TO delete messages ${data.messages} ")
+                Log.w("Loki", "FAILED TO delete messages ${data.messages}", e)
                 // failed to delete - show a toast and get back on the modal
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
@@ -948,7 +948,7 @@ class ConversationViewModel @AssistedInject constructor(
                     ).show()
                 }
             } catch (e: Exception) {
-                Log.w("Loki", "FAILED TO delete messages ${data.messages} ")
+                Log.w("Loki", "FAILED TO delete messages ${data.messages}", e)
                 // failed to delete - show a toast and get back on the modal
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
@@ -994,7 +994,7 @@ class ConversationViewModel @AssistedInject constructor(
                     ).show()
                 }
             } catch (e: Exception) {
-                Log.w("Loki", "FAILED TO delete messages ${messages} ")
+                Log.w("Loki", "FAILED TO delete messages ${messages}", e)
                 // failed to delete - show a toast and get back on the modal
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
@@ -1084,7 +1084,7 @@ class ConversationViewModel @AssistedInject constructor(
                     ).show()
                 }
             } catch (e: Exception) {
-                Log.w("Loki", "FAILED TO delete messages ${data.messages} ")
+                Log.w("Loki", "FAILED TO delete messages ${data.messages}", e)
                 // failed to delete - show a toast and get back on the modal
                 withContext(Dispatchers.Main) {
                     Toast.makeText(

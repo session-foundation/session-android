@@ -2,16 +2,24 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.ContentResolver
+import android.os.Handler
+import android.os.Looper
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.setMain
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -23,14 +31,19 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.stub
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
+import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientData
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.Storage
@@ -40,6 +53,7 @@ import org.thoughtcrime.securesms.links.LinkType
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.RecordingLogger
 import java.time.ZonedDateTime
 
 private val STANDARD_ADDRESS =
@@ -280,5 +294,66 @@ class ConversationViewModelTest : BaseViewModelTest() {
         viewModel.onCommand(ConversationViewModel.Commands.HandleLink(url))
 
         assertThat(viewModel.dialogsState.value.urlDialog, equalTo(communityLink))
+    }
+
+    private fun assertDeleteForEveryoneFailureIsLogged(
+        recipient: Recipient,
+        messageType: MessageType,
+        error: Exception,
+    ) {
+        val logger = RecordingLogger().also { Log.initialize(it) }
+        val data = ConversationViewModel.DeleteForEveryoneDialogData(
+            messages = setOf(messageRecord),
+            messageType = messageType,
+            defaultToEveryone = true,
+            everyoneEnabled = true,
+            deleteForEveryoneLabel = "",
+        )
+
+        // The failure path shows a toast from Dispatchers.Main after working on Dispatchers.IO. With
+        // the shared unconfined test Main it would run on the IO thread, where a toast throws and
+        // the exception fails whichever runTest comes next, so point Main at the main looper here.
+        Dispatchers.setMain(Handler(Looper.getMainLooper()).asCoroutineDispatcher())
+        try {
+            val viewModel = createViewModel(recipient = recipient)
+
+            viewModel.onCommand(ConversationViewModel.Commands.MarkAsDeletedForEveryone(data))
+
+            // The dialog is re-shown last, after the log and the toast.
+            val deadline = System.currentTimeMillis() + 5_000
+            while (viewModel.dialogsState.value.deleteEveryone == null && System.currentTimeMillis() < deadline) {
+                shadowOf(Looper.getMainLooper()).idle()
+                Thread.sleep(10)
+            }
+
+            assertThat(viewModel.dialogsState.value.deleteEveryone, equalTo(data))
+            assertTrue("expected $error to be logged", logger.entries.any { it.throwable === error })
+        } finally {
+            Dispatchers.setMain(UnconfinedTestDispatcher(TestCoroutineScheduler()))
+        }
+    }
+
+    @Test
+    fun `failed 1on1 delete for everyone logs the exception`() {
+        val error = IllegalStateException("1on1 delete failed")
+        repository.stub { onBlocking { delete1on1MessagesRemotely(any(), any()) } doThrow error }
+
+        assertDeleteForEveryoneFailureIsLogged(standardRecipient, MessageType.ONE_ON_ONE, error)
+    }
+
+    @Test
+    fun `failed note to self delete for everyone logs the exception`() {
+        val error = IllegalStateException("note to self delete failed")
+        repository.stub { onBlocking { deleteNoteToSelfMessagesRemotely(any(), any()) } doThrow error }
+
+        assertDeleteForEveryoneFailureIsLogged(standardRecipient, MessageType.NOTE_TO_SELF, error)
+    }
+
+    @Test
+    fun `failed community delete for everyone logs the exception`() {
+        val error = IllegalStateException("community delete failed")
+        repository.stub { onBlocking { deleteCommunityMessagesRemotely(any(), any()) } doThrow error }
+
+        assertDeleteForEveryoneFailureIsLogged(communityRecipient, MessageType.COMMUNITY, error)
     }
 }

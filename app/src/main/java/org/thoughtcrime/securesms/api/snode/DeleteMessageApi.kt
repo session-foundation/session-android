@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.api.snode
 
+import androidx.annotation.VisibleForTesting
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -25,25 +26,14 @@ class DeleteMessageApi @AssistedInject constructor(
 ) : AbstractSnodeApi<DeleteMessageApi.SuccessResponse>(errorManager) {
 
     override fun deserializeSuccessResponse(ctx: ApiExecutorContext, body: JsonElement): SuccessResponse {
-        val response: Response = json.decodeFromJsonElement(body)
-
-        val totalSuccessSnodes = response.swarm
-            .asSequence()
-            .count { (snodePubKeyHex, deleteState) ->
-                !deleteState.failed && deleteState.verifyDeletedMessages(
-                    requestedMessageHashes = messageHashes,
-                    snodePubKey = snodePubKeyHex,
-                    swarmPubKey = swarmAuth.accountId.hexString
-                )
+        return parseSuccessResponse(
+            json = json,
+            body = body,
+            requestedMessageHashes = messageHashes,
+            swarmPubKeyHex = swarmAuth.accountId.hexString,
+            verifySignature = { publicKey, signature, message ->
+                ED25519.verify(ed25519PublicKey = publicKey, signature = signature, message = message)
             }
-
-        check(totalSuccessSnodes > 0) {
-            "No snodes reported successful deletion of messages"
-        }
-
-        return SuccessResponse(
-            numSnodeSuccessDeleted = totalSuccessSnodes,
-            numSnodeTotal = response.swarm.size
         )
     }
 
@@ -90,12 +80,16 @@ class DeleteMessageApi @AssistedInject constructor(
         val deleted: List<String> = emptyList(),
         val signature: String? = null
     ) {
+        // An empty `deleted` is still a success: the node signs it like any other result, and it
+        // is what a hash that has already expired or been deleted returns. 1:1 message hashes
+        // expire after 14 days, so rejecting it makes every older message fail to delete.
         fun verifyDeletedMessages(
             requestedMessageHashes: Collection<String>,
             snodePubKey: String,
             swarmPubKey: String,
+            verifySignature: (ed25519PublicKey: ByteArray, signature: ByteArray, message: ByteArray) -> Boolean,
         ): Boolean {
-            if (deleted.isEmpty() || signature.isNullOrBlank()) return false
+            if (signature.isNullOrBlank()) return false
 
             val message = buildString {
                 append(swarmPubKey)
@@ -103,10 +97,43 @@ class DeleteMessageApi @AssistedInject constructor(
                 deleted.forEach(this::append)
             }.toByteArray()
 
-            return ED25519.verify(
-                ed25519PublicKey = Hex.fromStringCondensed(snodePubKey),
-                signature = Base64.decode(signature),
-                message = message
+            return verifySignature(
+                Hex.fromStringCondensed(snodePubKey),
+                Base64.decode(signature),
+                message
+            )
+        }
+    }
+
+    companion object {
+        @VisibleForTesting
+        internal fun parseSuccessResponse(
+            json: Json,
+            body: JsonElement,
+            requestedMessageHashes: Collection<String>,
+            swarmPubKeyHex: String,
+            verifySignature: (ed25519PublicKey: ByteArray, signature: ByteArray, message: ByteArray) -> Boolean,
+        ): SuccessResponse {
+            val response: Response = json.decodeFromJsonElement(body)
+
+            val totalSuccessSnodes = response.swarm
+                .asSequence()
+                .count { (snodePubKeyHex, deleteState) ->
+                    !deleteState.failed && deleteState.verifyDeletedMessages(
+                        requestedMessageHashes = requestedMessageHashes,
+                        snodePubKey = snodePubKeyHex,
+                        swarmPubKey = swarmPubKeyHex,
+                        verifySignature = verifySignature,
+                    )
+                }
+
+            check(totalSuccessSnodes > 0) {
+                "No snodes reported successful deletion of messages"
+            }
+
+            return SuccessResponse(
+                numSnodeSuccessDeleted = totalSuccessSnodes,
+                numSnodeTotal = response.swarm.size
             )
         }
     }
