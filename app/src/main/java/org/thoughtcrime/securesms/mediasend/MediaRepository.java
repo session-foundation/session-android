@@ -61,8 +61,8 @@ class MediaRepository {
 
     @WorkerThread
     private @NonNull List<MediaFolder> getFolders(@NonNull Context context) {
-        FolderResult imageFolders = getFolders(context, Images.Media.EXTERNAL_CONTENT_URI);
-        FolderResult videoFolders = getFolders(context, Video.Media.EXTERNAL_CONTENT_URI);
+        FolderResult imageFolders = getFolders(context, Images.Media.EXTERNAL_CONTENT_URI, false);
+        FolderResult videoFolders = getFolders(context, Video.Media.EXTERNAL_CONTENT_URI, true);
 
         // Merge image and video folder data
         Map<String, FolderData> mergedFolders = new HashMap<>(imageFolders.getFolderData());
@@ -84,13 +84,14 @@ class MediaRepository {
         List<MediaFolder> mediaFolders = new ArrayList<>();
         for (FolderData fd : folderDataList) {
             if (fd.getTitle() != null) {
-                mediaFolders.add(new MediaFolder(fd.getThumbnail(), fd.getTitle(), fd.getCount(), fd.getBucketId()));
+                mediaFolders.add(new MediaFolder(fd.getThumbnail(), fd.getTitle(), fd.getCount(), fd.getBucketId(), fd.isThumbnailVideo()));
             }
         }
 
         // Determine the global thumbnail from the most recent media across image and video queries
-        Uri allMediaThumbnail = imageFolders.getThumbnailTimestamp() > videoFolders.getThumbnailTimestamp()
-                ? imageFolders.getThumbnail() : videoFolders.getThumbnail();
+        FolderResult allMediaSource = imageFolders.getThumbnailTimestamp() > videoFolders.getThumbnailTimestamp()
+                ? imageFolders : videoFolders;
+        Uri allMediaThumbnail = allMediaSource.getThumbnail();
 
         if (allMediaThumbnail != null) {
             int allMediaCount = 0;
@@ -98,13 +99,13 @@ class MediaRepository {
                 allMediaCount += folder.getItemCount();
             }
             // Prepend an "All Media" folder
-            mediaFolders.add(0, new MediaFolder(allMediaThumbnail, context.getString(R.string.conversationsSettingsAllMedia), allMediaCount, Media.ALL_MEDIA_BUCKET_ID));
+            mediaFolders.add(0, new MediaFolder(allMediaThumbnail, context.getString(R.string.conversationsSettingsAllMedia), allMediaCount, Media.ALL_MEDIA_BUCKET_ID, allMediaSource.isThumbnailVideo()));
         }
 
         return mediaFolders;
     }
     @WorkerThread
-    private @NonNull FolderResult getFolders(@NonNull Context context, @NonNull Uri contentUri) {
+    private @NonNull FolderResult getFolders(@NonNull Context context, @NonNull Uri contentUri, boolean isVideo) {
         Uri globalThumbnail = null;
         long thumbnailTimestamp = 0;
         Map<String, FolderData> folders = new HashMap<>();
@@ -136,7 +137,7 @@ class MediaRepository {
 
                     FolderData folder = folders.get(bucketId);
                     if (folder == null) {
-                        folder = new FolderData(thumbnail, title, bucketId);
+                        folder = new FolderData(thumbnail, isVideo, title, bucketId);
                         folders.put(bucketId, folder);
                     }
                     folder.incrementCount();
@@ -150,7 +151,7 @@ class MediaRepository {
             }
         }
 
-        return new FolderResult(globalThumbnail, thumbnailTimestamp, folders);
+        return new FolderResult(globalThumbnail, isVideo, thumbnailTimestamp, folders);
     }
     @WorkerThread
     private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId) {
@@ -292,20 +293,27 @@ class MediaRepository {
 
     private static class FolderResult {
         private final Uri                     thumbnail;
+        private final boolean                 thumbnailIsVideo;
         private final long                    thumbnailTimestamp;
         private final Map<String, FolderData> folderData;
 
         private FolderResult(@Nullable Uri thumbnail,
+                             boolean thumbnailIsVideo,
                              long thumbnailTimestamp,
                              @NonNull Map<String, FolderData> folderData)
         {
             this.thumbnail          = thumbnail;
+            this.thumbnailIsVideo   = thumbnailIsVideo;
             this.thumbnailTimestamp = thumbnailTimestamp;
             this.folderData         = folderData;
         }
 
         @Nullable Uri getThumbnail() {
             return thumbnail;
+        }
+
+        boolean isThumbnailVideo() {
+            return thumbnailIsVideo;
         }
 
         long getThumbnailTimestamp() {
@@ -319,13 +327,15 @@ class MediaRepository {
 
     private static class FolderData {
         private final Uri thumbnail;
+        private final boolean thumbnailIsVideo;
         private final String title;
         private final String bucketId;
         private int count;
         private long latestTimestamp; // New field
 
-        private FolderData(@NonNull Uri thumbnail, @NonNull String title, @NonNull String bucketId) {
+        private FolderData(@NonNull Uri thumbnail, boolean thumbnailIsVideo, @NonNull String title, @NonNull String bucketId) {
             this.thumbnail = thumbnail;
+            this.thumbnailIsVideo = thumbnailIsVideo;
             this.title = title;
             this.bucketId = bucketId;
             this.count = 0;
@@ -334,6 +344,10 @@ class MediaRepository {
 
         Uri getThumbnail() {
             return thumbnail;
+        }
+
+        boolean isThumbnailVideo() {
+            return thumbnailIsVideo;
         }
 
         String getTitle() {
