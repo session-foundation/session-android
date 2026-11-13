@@ -72,6 +72,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
     private var hasSignatureObject = true
 
     private var keyCachingService: KeyCachingService? = null
+    private var keyCachingServiceStarted = false
 
     private var accentColor: Int = -1
     private var errorColor:  Int = -1
@@ -200,7 +201,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
         // once nothing is bound. Android refuses startService while the app is in the background,
         // and this activity can be created there, so start it once we're visible.
         // handleAuthenticated only needs the bound service, so it may run before this.
-        startService(Intent(this, KeyCachingService::class.java))
+        startKeyCachingService()
 
         setLockTypeVisibility()
         if (isScreenLockEnabled(this) && !authenticated && !failure) { resumeScreenLock() }
@@ -323,9 +324,23 @@ class ScreenLockActivity : BaseActionBarActivity() {
         finish()
     }
 
+    private fun startKeyCachingService() {
+        try {
+            startService(Intent(this, KeyCachingService::class.java))
+            keyCachingServiceStarted = true
+        } catch (e: IllegalStateException) {
+            // BackgroundServiceStartNotAllowedException (API 31+) is an IllegalStateException.
+            Log.w(TAG, "Couldn't start KeyCachingService", e)
+        }
+    }
+
     private fun handleAuthenticated() {
         authenticated = true
         keyCachingService?.setMasterSecret(Any())
+
+        // onResume can run while Android still counts the app as background (e.g. behind the
+        // keyguard), so its start may have been refused. The user has just unlocked, so retry now.
+        if (!keyCachingServiceStarted) startKeyCachingService()
 
         // The 'nextIntent' will take us to the MainActivity if this is a standard unlock, or it will
         // take us to the ShareActivity if this is an external share.
