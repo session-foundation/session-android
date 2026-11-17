@@ -69,8 +69,8 @@ class MessageSendJob @AssistedInject constructor(
         val messageId = message.id
         val message = message as? VisibleMessage
 
-        // do not attempt to send if the message is marked as deleted
         if (messageId != null && messageDataProvider.isDeletedMessage(messageId)) {
+            finishForDeletedMessage(dispatcherName)
             return
         }
 
@@ -80,7 +80,10 @@ class MessageSendJob @AssistedInject constructor(
 
         if (message != null) {
             val isOutgoing = messageId != null && messageDataProvider.isOutgoingMessage(messageId)
-            if (!isOutgoing && message.reaction == null) return // The message has been deleted
+            if (!isOutgoing && message.reaction == null) {
+                finishForDeletedMessage(dispatcherName)
+                return
+            }
             val attachmentIDs = mutableListOf<Long>()
             attachmentIDs.addAll(message.attachmentIDs)
             message.quote?.let { it.attachmentID?.let { attachmentID -> attachmentIDs.add(attachmentID) } }
@@ -158,13 +161,22 @@ class MessageSendJob @AssistedInject constructor(
         delegate?.handleJobFailedPermanently(this, dispatcherName, error)
     }
 
+    /**
+     * A job whose message has been deleted has nothing left to send, but it must still be removed:
+     * left in storage, it is resumed at every launch only to stop here again.
+     */
+    private fun finishForDeletedMessage(dispatcherName: String) {
+        delegate?.handleJobSucceeded(this, dispatcherName)
+    }
+
     private fun handleFailure(dispatcherName: String, error: Exception) {
         Log.w(TAG, "Failed to send ${message::class.simpleName}.", error)
         val messageId = message.id
         if (message is VisibleMessage && messageId != null) {
             if (messageDataProvider.isDeletedMessage(messageId) ||
                 !messageDataProvider.isOutgoingMessage(messageId)) {
-                return // The message has been deleted
+                finishForDeletedMessage(dispatcherName)
+                return
             }
         }
         delegate?.handleJobFailed(this, dispatcherName, error)

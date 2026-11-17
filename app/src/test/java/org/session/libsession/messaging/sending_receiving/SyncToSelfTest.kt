@@ -190,6 +190,44 @@ class SyncToSelfTest {
         verify(exactly = 0) { expirationManager.onMessageSynced(any()) }
     }
 
+    @Test
+    fun `a sync whose message was deleted before it ran sends nothing and is removed`() = runTest {
+        network = network(failuresBeforeSuccess = 0)
+        every { messageDataProvider.isDeletedMessage(any()) } returns true
+
+        messageSender(JobQueue(queueScope(), storage)).scheduleSyncToSelf(storedMessage(), self)
+        advanceUntilIdle()
+
+        assertEquals(emptyList<Send>(), sends)
+        verify(exactly = 1) { storage.markJobAsSucceeded(any()) }
+    }
+
+    @Test
+    fun `a sync whose message no longer exists sends nothing and is removed`() = runTest {
+        network = network(failuresBeforeSuccess = 0)
+        every { messageDataProvider.isOutgoingMessage(any()) } returns false
+
+        messageSender(JobQueue(queueScope(), storage)).scheduleSyncToSelf(storedMessage(), self)
+        advanceUntilIdle()
+
+        assertEquals(emptyList<Send>(), sends)
+        verify(exactly = 1) { storage.markJobAsSucceeded(any()) }
+    }
+
+    @Test
+    fun `a sync whose message is deleted during a failed attempt is removed, not retried`() = runTest {
+        network = network(failuresBeforeSuccess = 1) {
+            every { messageDataProvider.isDeletedMessage(any()) } returns true
+        }
+
+        messageSender(JobQueue(queueScope(), storage)).scheduleSyncToSelf(storedMessage(), self)
+        advanceUntilIdle()
+
+        assertEquals(listOf(syncOfSentMessage), sends)
+        verify(exactly = 1) { storage.markJobAsSucceeded(any()) }
+        verify(exactly = 0) { storage.persistJob(match { it.failureCount > 0 }) }
+    }
+
     private fun storedMessage() = VisibleMessage(syncTarget = contact, text = "hi").apply {
         id = messageId
         sentTimestamp = 1_700_000_000_000L
@@ -211,12 +249,13 @@ class SyncToSelfTest {
         queueScopes.forEach { it.cancel() }
     }
 
-    /** Fails the first [failuresBeforeSuccess] sends, then succeeds. */
-    private fun network(failuresBeforeSuccess: Int): MessageSender = mockk {
+    /** Fails the first [failuresBeforeSuccess] sends, running [duringFailure] in each, then succeeds. */
+    private fun network(failuresBeforeSuccess: Int, duringFailure: () -> Unit = {}): MessageSender = mockk {
         coEvery { sendNonDurably(any<Message>(), any<Destination>(), any(), any()) } coAnswers {
             val message = firstArg<Message>()
             sends += Send(secondArg(), thirdArg(), arg(3))
             if (sends.size <= failuresBeforeSuccess) {
+                duringFailure()
                 val error = IOException("snode unreachable")
                 storage.markAsSyncFailed(message.id!!, error)
                 throw error
