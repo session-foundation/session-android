@@ -21,6 +21,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.PorterDuff
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
@@ -347,7 +348,16 @@ class ScreenLockActivity : BaseActionBarActivity() {
         val nextIntent = intent.getParcelableExtra<Intent?>(EXTRA_NEXT_INTENT)
 
         when {
-            nextIntent != null -> startActivity(nextIntent)
+            nextIntent != null -> {
+                // Android 16 refuses to launch a nested intent whose creator token is missing or
+                // invalid. next_intent only ever targets the activity of ours that routed here, so the
+                // check protects nothing; the package test keeps the opt-out to our own components.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
+                    nextIntent.component?.packageName == packageName) {
+                    nextIntent.removeLaunchSecurityProtection()
+                }
+                startActivity(nextIntent)
+            }
 
             // Presented over a still-live activity, so there is nothing to route to and finishing
             // reveals it again (see ScreenLockActionBarActivity.presentScreenLock).
