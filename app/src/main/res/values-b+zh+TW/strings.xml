@@ -40,6 +40,9 @@
     <string name="adminRemovedUser"><b>{name}</b> 被撤下管理員的身份。</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> 和 <b>{count} 位其他成員</b> 被移除管理員身份。</string>
     <string name="adminRemovedUserOther"><b>{name}</b> 和 <b>{other_name}</b> 被移除管理員身份。</string>
+    <plurals name="adminSelected">
+        <item quantity="other">%1$d 管理員已選中</item>
+    </plurals>
     <plurals name="adminSendingPromotion">
         <item quantity="other">晉升中</item>
     </plurals>
@@ -138,6 +141,7 @@
     <string name="authenticateNotAccessed">無法訪問身份驗證。</string>
     <string name="authenticateToOpen">驗證以打開 Session。</string>
     <string name="back">返回</string>
+    <string name="banAndUnbanUsers">封鎖 &amp;amp; 解除封鎖用戶</string>
     <string name="banDeleteAll">封鎖並刪除所有</string>
     <string name="banErrorFailed">封鎖失敗</string>
     <string name="banUnbanErrorFailed">解除封鎖失敗</string>
@@ -280,6 +284,7 @@
     <string name="conversationsMessageTrimmingTrimCommunities">刪裁社群舊訊息</string>
     <string name="conversationsNew">新對話</string>
     <string name="conversationsNone">您還沒有任何對話</string>
+    <string name="conversationsSendWithEnterKey">按 Enter 發送</string>
     <string name="conversationsSendWithEnterKeyDescription">回車鍵發送訊息，而不是另起一行。</string>
     <string name="conversationsSettingsAllMedia">所有媒體</string>
     <string name="conversationsSpellCheck">拼寫檢查</string>
@@ -346,6 +351,10 @@
     <string name="deleteMessagesDescriptionEveryone">您確定要為所有人刪除這些訊息嗎？</string>
     <string name="deleting">刪除中</string>
     <string name="developerToolsToggle">切換開發者工具</string>
+    <string name="deviceSettingsCallNotifications">開啟裝置設定管理通話通知。</string>
+    <string name="deviceSettingsCommunityNotifications">開啟裝置設定管理社群通知。</string>
+    <string name="deviceSettingsConversationNotifications">開啟裝置設定管理對話通知。</string>
+    <string name="deviceSettingsGroupNotifications">開啟裝置設定管理群組通知。</string>
     <string name="dictationStart">開始聽寫...</string>
     <string name="disappearingMessages">自動銷毀訊息</string>
     <string name="disappearingMessagesCountdownBig">訊息將在 {time_large} 後刪除</string>
@@ -434,6 +443,7 @@
     <string name="errorUnknown">發生不明錯誤。</string>
     <string name="failedToDownload">下載失敗</string>
     <string name="failures">失敗</string>
+    <string name="feedbackDescription">透過完成一份簡短的問卷，分享你對Session使用體驗。</string>
     <string name="file">檔案</string>
     <string name="files">檔案</string>
     <string name="finalAppeal"><font color="0">我們最後的呼籲：</font>\nSession 將在 90 天後停止服務</string>
@@ -532,12 +542,14 @@
     <string name="groupUpdated">群組已更新</string>
     <string name="handlingConnectionCandidates">正在處理連線候選項目</string>
     <string name="helpFAQ">常見問題</string>
+    <string name="helpFAQDescription">常見問題請查看Session 常見問題尋找答案。</string>
     <string name="helpHelpUsTranslateSession">幫助我們翻譯 Session</string>
     <string name="helpReportABugDescription">將一些細節分享給我們, 以幫助我們解決您的問題。導出您的日誌, 然後通過 Session 的幫助台上傳檔案。</string>
     <string name="helpReportABugExportLogs">匯出日誌記錄</string>
     <string name="helpReportABugExportLogsDescription">匯出你的日誌記錄，然後透過幫助服務台 Session 上傳日誌記錄。</string>
     <string name="helpReportABugExportLogsSaveToDesktop">儲存到桌面</string>
     <string name="helpSupport">支援</string>
+    <string name="helpTranslateSessionDescription">幫助將 Session 翻譯成超過80種語言！</string>
     <string name="helpWedLoveYourFeedback">請提供我們建議</string>
     <string name="hide">隱藏</string>
     <string name="hideNoteToSelfDescription">您確定要將 <b>小筆記</b> 從您的對話清單中隱藏嗎？</string>
@@ -660,6 +672,7 @@
     <string name="messageStatusFailedToSync">同步失敗</string>
     <string name="messageStatusSyncing">同步中</string>
     <string name="messageUnread">未讀訊息</string>
+    <string name="messageUnsupported">不能顯示此訊息。更新 Session 以檢視。</string>
     <string name="messageVoice">語音訊息</string>
     <string name="messageVoiceErrorShort">按住錄製語音消息</string>
     <string name="messageVoiceSlideToCancel">滑動以取消</string>
@@ -675,6 +688,7 @@
     <string name="modalMessageCharacterTooLongTitle">訊息過長</string>
     <string name="modalMessageTooLongDescription">請將您的訊息縮短至 {limit} 個字元或更少。</string>
     <string name="modalMessageTooLongTitle">訊息過長</string>
+    <string name="nameAdminCommunity">{name} 是此社群的 <b> 管理員 </b>。</string>
     <string name="next">下一步</string>
     <string name="nicknameDescription">為 <b>{name}</b> 選擇一個暱稱。這將在您的一對一和群組對話中顯示。</string>
     <string name="nicknameEnter">輸入暱稱</string>
@@ -689,6 +703,7 @@
     <string name="noteToSelfEmpty">您在「小筆記」中沒有任何訊息。</string>
     <string name="noteToSelfHide">隱藏小筆記</string>
     <string name="noteToSelfHideDescription">您確定要隱藏小筆記嗎？</string>
+    <string name="notificationSenderNameOnly">僅顯示傳送者名稱，不顯示任何訊息內容。</string>
     <string name="notificationsAllMessages">所有訊息</string>
     <string name="notificationsContent">通知內容</string>
     <string name="notificationsContentDescription">在通知面板中展示的資訊。</string>
@@ -768,6 +783,7 @@
     <string name="passwordFailed">設定密碼失敗</string>
     <string name="passwordIncorrect">密碼錯誤</string>
     <string name="passwordRemove">移除密碼</string>
+    <string name="passwordRemoveShortDescription">移除解鎖Session密碼</string>
     <string name="passwordSet">設定密碼</string>
     <string name="paste">貼上</string>
     <string name="permissionChange">權限變更</string>
@@ -807,13 +823,16 @@
     <string name="pinConversation">置頂對話</string>
     <string name="pinUnpin">取消置頂</string>
     <string name="pinUnpinConversation">取消置頂</string>
+    <string name="plusLoadsMoreDescription">Pro 即將推出新功能。在 <b>Pro 未來規劃</b>{icon} 了解未來即將推出的新功能</string>
     <string name="preview">預覽</string>
+    <string name="proAccessRestoredDescription">Session 偵測並已為你的帳戶恢復 Pro 權限。你已恢復 Pro 狀態！</string>
     <string name="proActivated">已啟用</string>
     <string name="proAlreadyPurchased">您已擁有</string>
     <string name="proAnimatedDisplayPicture">您可以為您的顯示圖片上傳 GIF 或動畫 WebP 圖片了！</string>
     <string name="proAnimatedDisplayPictureFeature">動畫顯示圖片</string>
     <string name="proAnimatedDisplayPictureModalDescription">用戶可以上傳 GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">上傳 GIF</string>
+    <string name="proCallToActionLongerMessages">想傳送更長的訊息嗎？\n使用 Session Pro Beta 傳送更多文本並解鎖進階功能</string>
     <string name="proFeatureListAnimatedDisplayPicture">上傳 GIF 和 WebP 顯示圖片</string>
     <string name="proFeatureListLargerGroups">最大支援 300 位成員的大型群組聊天室</string>
     <string name="proFeatureListLoadsMore">以及更多獨家功能</string>
@@ -824,7 +843,10 @@
     <string name="proIncreasedAttachmentSizeFeature">附件大小提升</string>
     <string name="proIncreasedMessageLengthFeature">訊息長度提升</string>
     <string name="proMessageInfoFeatures">本訊息使用了以下 Session Pro 功能：</string>
+    <string name="proPercentOff">折扣 {percent}%</string>
     <string name="proSendMore">升級後可傳送更多內容</string>
+    <string name="proStatsTooltip">Pro 統計資料反映此裝置的使用情況，在其他關連裝置上可能會有所不同</string>
+    <string name="proUserProfileModalCallToAction">想要充分利用 Session？\n升級為 Session Pro Beta 享受更強大的訊息體驗。</string>
     <string name="profile">個人檔案</string>
     <string name="profileDisplayPicture">顯示圖片</string>
     <string name="profileDisplayPictureRemoveError">無法刪除顯示圖片。</string>
@@ -989,6 +1011,7 @@
     <string name="updateSession">Session 更新</string>
     <string name="updateVersion">版本： {version}</string>
     <string name="updated">上次更新於 {relative_time} 前</string>
+    <string name="updating">更新中……</string>
     <string name="upgradeTo">升級為</string>
     <string name="uploading">上傳中</string>
     <string name="urlCopy">複製連結</string>
@@ -1007,4 +1030,5 @@
     <string name="window">視窗</string>
     <string name="yes">是</string>
     <string name="you">你</string>
+    <string name="zoomFactorDescription">調整文本跟視覺元素的大小。</string>
 </resources>
