@@ -48,7 +48,7 @@ class JobKryoTest {
         val restored = slot<Message>()
         val factory = mockk<MessageSendJob.Factory> {
             every { create(any<Data>()) } answers { callOriginal() }
-            every { create(capture(restored), any(), any()) } returns mockk(relaxed = true)
+            every { create(capture(restored), any(), any(), any()) } returns mockk(relaxed = true)
         }
 
         assertNotNull(factory.create(sendJob(message).serialize()))
@@ -59,6 +59,7 @@ class JobKryoTest {
         message = message,
         destination = Destination.ClosedGroup("03${"11".repeat(32)}"),
         statusCallback = null,
+        isSyncOfSentMessage = false,
         attachmentUploadJobFactory = mockk(relaxed = true),
         messageDataProvider = mockk(relaxed = true),
         storage = mockk(relaxed = true),
