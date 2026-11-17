@@ -28,7 +28,7 @@ fun createRegularNodeOkHttpClient(): OkHttpClient.Builder {
         override fun checkServerTrusted(chain: Array<out X509Certificate>?, authorizationType: String?) { }
         override fun getAcceptedIssuers(): Array<X509Certificate> { return arrayOf() }
     }
-    val sslContext = SSLContext.getInstance("SSL")
+    val sslContext = SSLContext.getInstance("TLS")
     sslContext.init(null, arrayOf( trustManager ), SECURE_RANDOM)
     return OkHttpClient().newBuilder()
         .sslSocketFactory(sslContext.socketFactory, trustManager)
