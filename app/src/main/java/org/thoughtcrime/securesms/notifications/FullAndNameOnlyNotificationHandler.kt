@@ -10,7 +10,6 @@ import org.session.libsession.utilities.Phrase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants
@@ -69,6 +68,7 @@ class FullAndNameOnlyNotificationHandler @Inject constructor(
     notificationManager: NotificationManagerCompat,
     prefs: PreferenceStorage,
     appVisibilityManager: AppVisibilityManager,
+    private val missedMessageEvents: MissedMessageEvents,
 ) : ThreadBasedNotificationHandler(
     context = context,
     currentActivityObserver = currentActivityObserver,
@@ -90,15 +90,23 @@ class FullAndNameOnlyNotificationHandler @Inject constructor(
 
 
     suspend fun process() {
-        merge(
-            threadDb.changeNotification.map(::ThreadUpdated),
-            mmsDatabase.changeNotification.map(::MessageUpdated),
-            smsDatabase.changeNotification.map(::MessageUpdated),
-            reactionDatabase.changeNotification.map(::ReactionUpdated),
+        missedMessageEvents.withMissedMessages(
+            live = listOf(
+                threadDb.changeNotification.map(::ThreadUpdated),
+                mmsDatabase.changeNotification.map(::MessageUpdated),
+                smsDatabase.changeNotification.map(::MessageUpdated),
+                reactionDatabase.changeNotification.map(::ReactionUpdated),
+            ),
+            toEvent = ::MessageUpdated,
         ).collect(object : FlowCollector<Event> {
             private val lastPostedMessageTimestampByThreadId = MutableLongLongMap()
 
             override suspend fun emit(value: Event) {
+                handle(value)
+                if (value is MessageUpdated) missedMessageEvents.markSeen(value.change)
+            }
+
+            private suspend fun handle(value: Event) {
                 // Whether this event can only update an existing notification (i.e. no action
                 // if there's no existing notification, and no loud notify on the updated contents)
                 var updateOnly: Boolean

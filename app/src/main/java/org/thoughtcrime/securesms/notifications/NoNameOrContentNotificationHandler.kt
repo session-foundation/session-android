@@ -14,7 +14,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.merge
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.Log
@@ -67,21 +66,30 @@ class NoNameOrContentNotificationHandler @Inject constructor(
     private val prefs: PreferenceStorage,
     private val appVisibilityManager: AppVisibilityManager,
     private val loginStateRepository: LoginStateRepository,
+    private val missedMessageEvents: MissedMessageEvents,
 ): BaseNotificationHandler(
     currentActivityObserver = currentActivityObserver,
     threadDb = threadDb,
     recipientRepository = recipientRepository,
 ) {
     suspend fun process() {
-        merge(
-            threadDb.changeNotification,
-            mmsDatabase.changeNotification,
-            smsDatabase.changeNotification,
-            reactionDatabase.changeNotification,
+        missedMessageEvents.withMissedMessages<Any>(
+            live = listOf(
+                threadDb.changeNotification,
+                mmsDatabase.changeNotification,
+                smsDatabase.changeNotification,
+                reactionDatabase.changeNotification,
+            ),
+            toEvent = { it },
         ).collect(object : FlowCollector<Any> {
             private val lastNotifiedByThreadId = MutableLongLongMap()
 
             override suspend fun emit(value: Any) {
+                handle(value)
+                if (value is MessageChanges) missedMessageEvents.markSeen(value)
+            }
+
+            private suspend fun handle(value: Any) {
                 when (value) {
                     is ThreadChanges -> {
                         val newLastSeen =
