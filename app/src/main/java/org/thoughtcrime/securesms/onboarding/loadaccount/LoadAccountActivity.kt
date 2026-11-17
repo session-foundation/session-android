@@ -9,10 +9,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.onboarding.manager.LoadAccountManager
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
@@ -50,9 +52,22 @@ class LoadAccountActivity : BaseActionBarActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                val mnemonic = viewModel.events.first().mnemonic
-                loadAccountManager.load(mnemonic)
-                start<MessageNotificationsActivity>()
+                // Waits for one event at a time so a double tap can't load twice. A failed load
+                // goes back to waiting, so the user can correct the phrase and try again.
+                while (true) {
+                    val mnemonic = viewModel.events.first().mnemonic
+                    try {
+                        loadAccountManager.load(mnemonic)
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        Log.e(TAG, "Failed to load account", e)
+                        viewModel.onLoadFailed(e)
+                        continue
+                    }
+
+                    start<MessageNotificationsActivity>()
+                    break
+                }
             }
         }
 
@@ -65,5 +80,9 @@ class LoadAccountActivity : BaseActionBarActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
+    }
+
+    companion object {
+        private const val TAG = "LoadAccountActivity"
     }
 }

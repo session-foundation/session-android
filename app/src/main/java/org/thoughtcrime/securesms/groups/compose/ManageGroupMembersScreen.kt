@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -207,16 +209,31 @@ fun ManageMembers(
                     }
                 }
             } else {
-                Text(
+                // LANDSCAPE: with no member list to scroll the options in, they scroll here instead,
+                // so an admin can still invite when every member is already an admin.
+                Column(
                     modifier = Modifier
-                        .padding(horizontal = LocalDimensions.current.mediumSpacing)
-                        .fillMaxWidth()
-                        .wrapContentWidth(Alignment.CenterHorizontally),
-                    text = LocalResources.current.getString(R.string.noNonAdminsInGroup),
-                    textAlign = TextAlign.Center,
-                    style = LocalType.current.base,
-                    color = LocalColors.current.textSecondary
-                )
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (isLandscape) {
+                        OptionsBlock(
+                            show = showAddMembers && !searchFocused,
+                            options = uiState.options
+                        )
+                    }
+
+                    Text(
+                        modifier = Modifier
+                            .padding(horizontal = LocalDimensions.current.mediumSpacing)
+                            .fillMaxWidth()
+                            .wrapContentWidth(Alignment.CenterHorizontally),
+                        text = LocalResources.current.getString(R.string.noNonAdminsInGroup),
+                        textAlign = TextAlign.Center,
+                        style = LocalType.current.base,
+                        color = LocalColors.current.textSecondary
+                    )
+                }
             }
         }
     }
@@ -588,6 +605,42 @@ private fun EditGroupEmptyPreview(
                     )
                 )),
             hasMembers = true,
+        )
+    }
+}
+@Preview(device = "spec:width=891dp,height=411dp,orientation=landscape")
+@Composable
+private fun ManageMembersAllAdminsLandscapePreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        ManageMembers(
+            onBack = {},
+            members = emptyList(),
+            showAddMembers = true,
+            searchQuery = "",
+            sendCommand = {},
+            uiState = ManageGroupMembersViewModel.UiState(
+                options = listOf(
+                    OptionsItem(
+                        name = stringResource(R.string.membersInvite),
+                        icon = R.drawable.ic_user_round_plus,
+                        onClick = {}
+                    ),
+                    OptionsItem(
+                        name = stringResource(R.string.accountIdOrOnsInvite),
+                        icon = R.drawable.ic_user_round_search,
+                        onClick = {}
+                    )
+                ),
+                footer = CollapsibleFooterState(
+                    visible = false,
+                    collapsed = true,
+                    footerActionTitle = GetString(""),
+                    footerActionItems = emptyList()
+                )
+            ),
+            hasMembers = false,
         )
     }
 }

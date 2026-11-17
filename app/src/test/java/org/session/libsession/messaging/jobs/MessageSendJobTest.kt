@@ -103,6 +103,7 @@ class MessageSendJobTest {
             ),
             destination = Destination.ClosedGroup(groupId),
             statusCallback = statusChannel,
+            isSyncOfSentMessage = false,
             attachmentUploadJobFactory = mockk(relaxed = true),
             messageDataProvider = mockk(relaxed = true),
             storage = mockk(relaxed = true),

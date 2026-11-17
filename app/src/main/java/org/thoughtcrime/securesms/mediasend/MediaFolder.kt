@@ -11,6 +11,7 @@ data class MediaFolder(
     val title: String,
     val itemCount: Int,
     val bucketId: String,
+    val thumbnailIsVideo: Boolean = false,
 ) {
     enum class FolderType {
         NORMAL, CAMERA
