@@ -33,6 +33,8 @@ class PeerConnectionWrapper(private val context: Context,
                             private val eglBase: EglBase,
                             private val relay: Boolean = false): CameraEventListener {
 
+    // Null once disposed, so late callers fail in Kotlin rather than on freed native memory.
+    @Volatile
     private var peerConnection: PeerConnection? = null
     private val audioTrack: AudioTrack
     private val audioSource: AudioSource
@@ -133,7 +135,9 @@ class PeerConnectionWrapper(private val context: Context,
 
     fun addIceCandidate(candidate: IceCandidate) {
         // TODO: filter logic based on known servers
-        peerConnection!!.addIceCandidate(candidate)
+        // The call can end while onIncomingCall is suspended sending its answer; the candidates it
+        // queued are then drained into this disposed connection and must be dropped.
+        peerConnection?.addIceCandidate(candidate)
     }
 
     fun dispose() {
@@ -149,9 +153,11 @@ class PeerConnectionWrapper(private val context: Context,
             audioSource.dispose()
         } catch (e: Exception){ Log.w("", "Audio source already disposed")}
 
+        val connection = peerConnection
+        peerConnection = null
         try {
-            peerConnection?.close()
-            peerConnection?.dispose()
+            connection?.close()
+            connection?.dispose()
         } catch (e: Exception){ Log.w("", "Peer connection source already disposed")}
     }
 
