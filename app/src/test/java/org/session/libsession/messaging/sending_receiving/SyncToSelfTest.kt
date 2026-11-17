@@ -28,6 +28,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.NoOpLogger
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import java.io.IOException
 import javax.inject.Provider
 
@@ -62,8 +63,14 @@ class SyncToSelfTest {
         every { isOutgoingMessage(any()) } returns true
     }
 
-    /** Each send that reached the fake network: its destination and whether it was a sync. */
-    private val sends = mutableListOf<Pair<Destination, Boolean>>()
+    private data class Send(val destination: Destination, val isSyncMessage: Boolean, val isSyncOfSentMessage: Boolean)
+
+    /** Each send that reached the fake network. */
+    private val sends = mutableListOf<Send>()
+
+    private val syncOfSentMessage get() = Send(Destination.Contact(self), isSyncMessage = true, isSyncOfSentMessage = true)
+
+    private val expirationManager = mockk<ExpiringMessageManager>(relaxed = true)
 
     @Before
     fun setUp() {
@@ -81,7 +88,7 @@ class SyncToSelfTest {
         messageSender(queue).scheduleSyncToSelf(storedMessage(), self)
         advanceUntilIdle()
 
-        assertEquals(List(4) { Destination.Contact(self) to true }, sends)
+        assertEquals(List(4) { syncOfSentMessage }, sends)
         assertEquals(
             listOf(
                 SYNCING,
@@ -128,7 +135,7 @@ class SyncToSelfTest {
         JobQueue(queueScope(), storage).resumePendingJobs()
         advanceUntilIdle()
 
-        assertEquals(listOf(Destination.Contact(self) to true), sends)
+        assertEquals(listOf(syncOfSentMessage), sends)
         assertEquals(listOf(SYNCING, SENT), statuses)
     }
 
@@ -153,6 +160,34 @@ class SyncToSelfTest {
         jobFactory.create(storedMessage(), Destination.Contact(self), isSyncOfSentMessage = true).execute("test")
 
         assertEquals(listOf(SENDING, SENT, SYNCING, SENT), statuses)
+        assertEquals(
+            listOf(Send(Destination.Contact(self), isSyncMessage = true, isSyncOfSentMessage = false), syncOfSentMessage),
+            sends
+        )
+    }
+
+    // A sync can land minutes after the send, on a retry or after a restart: restarting the timer then
+    // would keep the message on this device that much longer than on every other
+    @Test
+    fun `a landed sync of a sent message does not restart its disappearing timer`() {
+        val message = storedMessage()
+
+        messageSender(mockk(relaxed = true))
+            .handleSuccessfulMessageSend(message, Destination.Contact(self), isSyncMessage = true, isSyncOfSentMessage = true)
+
+        verify(exactly = 1) { expirationManager.onMessageSynced(message) }
+        verify(exactly = 0) { expirationManager.onMessageSent(any()) }
+    }
+
+    @Test
+    fun `a landed Note to Self send starts its disappearing timer`() {
+        val message = storedMessage()
+
+        messageSender(mockk(relaxed = true))
+            .handleSuccessfulMessageSend(message, Destination.Contact(self), isSyncMessage = true)
+
+        verify(exactly = 1) { expirationManager.onMessageSent(message) }
+        verify(exactly = 0) { expirationManager.onMessageSynced(any()) }
     }
 
     private fun storedMessage() = VisibleMessage(syncTarget = contact, text = "hi").apply {
@@ -178,9 +213,9 @@ class SyncToSelfTest {
 
     /** Fails the first [failuresBeforeSuccess] sends, then succeeds. */
     private fun network(failuresBeforeSuccess: Int): MessageSender = mockk {
-        coEvery { sendNonDurably(any<Message>(), any<Destination>(), any<Boolean>()) } coAnswers {
+        coEvery { sendNonDurably(any<Message>(), any<Destination>(), any(), any()) } coAnswers {
             val message = firstArg<Message>()
-            sends += secondArg<Destination>() to thirdArg<Boolean>()
+            sends += Send(secondArg(), thirdArg(), arg(3))
             if (sends.size <= failuresBeforeSuccess) {
                 val error = IOException("snode unreachable")
                 storage.markAsSyncFailed(message.id!!, error)
@@ -218,7 +253,7 @@ class SyncToSelfTest {
         recipientRepository = mockk(relaxed = true),
         messageDataProvider = messageDataProvider,
         messageSendJobFactory = jobFactory,
-        messageExpirationManager = mockk(relaxed = true),
+        messageExpirationManager = expirationManager,
         snodeClock = mockk(relaxed = true),
         communityApiExecutor = mockk(relaxed = true),
         sendCommunityMessageApiFactory = mockk(relaxed = true),

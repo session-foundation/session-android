@@ -118,7 +118,7 @@ class MessageSendJob @AssistedInject constructor(
                 }
             }
 
-            messageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
+            messageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync, isSyncOfSentMessage)
 
             this.handleSuccess(dispatcherName)
             statusCallback?.trySend(Result.success(Unit))

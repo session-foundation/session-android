@@ -125,12 +125,20 @@ class MessageSender @Inject constructor(
         }
     }
 
-    // Convenience
-    suspend fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean) {
+    /**
+     * @param isSyncOfSentMessage [message] has already reached its recipient and this sends a copy to
+     * our own swarm, as opposed to a first send there such as Note to Self.
+     */
+    suspend fun sendNonDurably(
+        message: Message,
+        destination: Destination,
+        isSyncMessage: Boolean,
+        isSyncOfSentMessage: Boolean = false,
+    ) {
         return if (destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
-            sendToSnodeDestination(destination, message, isSyncMessage)
+            sendToSnodeDestination(destination, message, isSyncMessage, isSyncOfSentMessage)
         }
     }
 
@@ -260,7 +268,12 @@ class MessageSender @Inject constructor(
     }
 
     // One-on-One Chats & Closed Groups
-    private suspend fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false) {
+    private suspend fun sendToSnodeDestination(
+        destination: Destination,
+        message: Message,
+        isSyncMessage: Boolean = false,
+        isSyncOfSentMessage: Boolean = false,
+    ) {
         // Set the failure handler (need it here already for precondition failure handling)
         fun handleFailure(error: Exception) {
             handleFailedMessageSend(message, error, isSyncMessage)
@@ -306,7 +319,7 @@ class MessageSender @Inject constructor(
 
             if (sendResult.isSuccess) {
                 message.serverHash = sendResult.getOrThrow().hash
-                handleSuccessfulMessageSend(message, destination, isSyncMessage)
+                handleSuccessfulMessageSend(message, destination, isSyncMessage, isSyncOfSentMessage = isSyncOfSentMessage)
             } else {
                 throw sendResult.exceptionOrNull()!!
             }
@@ -460,7 +473,14 @@ class MessageSender @Inject constructor(
     }
 
     // Result Handling
-    private fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
+    @VisibleForTesting
+    internal fun handleSuccessfulMessageSend(
+        message: Message,
+        destination: Destination,
+        isSyncMessage: Boolean = false,
+        openGroupSentTimestamp: Long = -1,
+        isSyncOfSentMessage: Boolean = false,
+    ) {
         val userPublicKey = storage.getUserPublicKey()!!
         // Ignore future self-sends
         storage.addReceivedMessageTimestamp(message.sentTimestamp!!)
@@ -501,7 +521,11 @@ class MessageSender @Inject constructor(
             storage.updateSentTimestamp(messageId, message.sentTimestamp!!)
 
             // Start the disappearing messages timer if needed
-            messageExpirationManager.onMessageSent(message)
+            if (isSyncOfSentMessage) {
+                messageExpirationManager.onMessageSynced(message)
+            } else {
+                messageExpirationManager.onMessageSent(message)
+            }
         } ?: run {
             storage.updateReactionIfNeeded(message, message.sender?:userPublicKey, openGroupSentTimestamp)
         }
@@ -538,7 +562,12 @@ class MessageSender @Inject constructor(
         } else {
             scope.launch {
                 try {
-                    sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
+                    sendToSnodeDestination(
+                        Destination.Contact(userPublicKey),
+                        message,
+                        isSyncMessage = true,
+                        isSyncOfSentMessage = true,
+                    )
                 } catch (ec: Exception) {
                     Log.e("MessageSender", "Unable to send sync message", ec)
                 }
