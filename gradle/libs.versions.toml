@@ -69,7 +69,7 @@ huaweiPushVersion = "6.13.0.301"
 huaweiAnalyticsVersion = "6.12.0.301"
 googlePlayReviewVersion = "2.0.2"
 coilVersion = "3.5.0"
-billingVersion = "8.3.0"
+billingVersion = "9.1.0"
 autolinkVersion = "0.12.0"
 pagingCommonVersion = "3.5.1"
 
