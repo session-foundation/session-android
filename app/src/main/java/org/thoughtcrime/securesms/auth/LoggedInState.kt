@@ -96,7 +96,7 @@ data class LoggedInState(
     }
 
     companion object {
-        private const val SEED_LENGTH = 16
+        const val SEED_LENGTH = 16
         private const val NOTIFICATION_KEY_LENGTH = 32
 
 

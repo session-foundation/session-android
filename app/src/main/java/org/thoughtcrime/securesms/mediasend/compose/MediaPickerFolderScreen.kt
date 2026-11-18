@@ -116,6 +116,7 @@ private fun MediaPickerFolder(
                         title = folder.title,
                         count = folder.itemCount,
                         thumbnailUri = folder.thumbnailUri,
+                        thumbnailIsVideo = folder.thumbnailIsVideo,
                         onClick = { onFolderClick(folder) },
                         qaTag = stringResource( R.string.qa_mediapicker_folder_item) +"-$index"
                     )

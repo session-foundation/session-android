@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.repository
 
 import androidx.collection.MutableIntList
 import androidx.collection.mutableIntListOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -34,6 +35,7 @@ import org.session.libsession.messaging.open_groups.api.UnbanUserApi
 import org.session.libsession.messaging.open_groups.api.execute
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.network.SnodeClock
+import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.toAddress
 import org.session.libsession.utilities.TextSecurePreferences
@@ -424,19 +426,7 @@ class DefaultConversationRepository @Inject constructor(
         val userAddress = userAuth.accountId.toAddress()
 
         messages.forEach { message ->
-            // delete from swarm
-            messageDataProvider.getServerHashForMessage(message.messageId)
-                ?.let { serverHash ->
-                    swarmApiExecutor.execute(
-                        SwarmApiRequest(
-                            swarmPubKeyHex = userAuth.accountId.hexString,
-                            api = deleteSwarmMessageApiFactory.create(
-                                messageHashes = listOf(serverHash),
-                                swarmAuth = userAuth
-                            )
-                        )
-                    )
-                }
+            deleteFromOwnSwarm(userAuth, message)
 
             // send an UnsendRequest to user's swarm
             buildUnsendRequest(message).let { unsendRequest ->
@@ -489,24 +479,35 @@ class DefaultConversationRepository @Inject constructor(
         val userAddress = userAuth.accountId.toAddress()
 
         messages.forEach { message ->
-            // delete from swarm
-            messageDataProvider.getServerHashForMessage(message.messageId)
-                ?.let { serverHash ->
-                    swarmApiExecutor.execute(
-                        SwarmApiRequest(
-                            swarmPubKeyHex = userAuth.accountId.hexString,
-                            api = deleteSwarmMessageApiFactory.create(
-                                messageHashes = listOf(serverHash),
-                                swarmAuth = userAuth
-                            )
-                        )
-                    )
-                }
+            deleteFromOwnSwarm(userAuth, message)
 
             // send an UnsendRequest to user's swarm
             buildUnsendRequest(message).let { unsendRequest ->
                 messageSender.send(unsendRequest, userAddress)
             }
+        }
+    }
+
+    private suspend fun deleteFromOwnSwarm(userAuth: OwnedSwarmAuth, message: MessageRecord) {
+        val serverHash = messageDataProvider.getServerHashForMessage(message.messageId) ?: return
+
+        try {
+            swarmApiExecutor.execute(
+                SwarmApiRequest(
+                    swarmPubKeyHex = userAuth.accountId.hexString,
+                    api = deleteSwarmMessageApiFactory.create(
+                        messageHashes = listOf(serverHash),
+                        swarmAuth = userAuth
+                    )
+                )
+            )
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+
+            // The UnsendRequests are what remove the message for the recipient and our other
+            // devices. This only clears our own swarm's copy early, which expires anyway, so its
+            // failure must not stop them being sent.
+            Log.w(TAG, "Failed to delete message from own swarm", e)
         }
     }
 
@@ -686,5 +687,9 @@ class DefaultConversationRepository @Inject constructor(
     // Only call this with a closed group thread ID
     override fun getInvitingAdmin(threadId: Long): Address? {
         return lokiMessageDb.groupInviteReferrer(threadId)?.let(Address.Companion::fromSerialized)
+    }
+
+    companion object {
+        private const val TAG = "ConversationRepository"
     }
 }

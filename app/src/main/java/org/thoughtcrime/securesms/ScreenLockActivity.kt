@@ -21,6 +21,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.PorterDuff
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
@@ -72,6 +73,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
     private var hasSignatureObject = true
 
     private var keyCachingService: KeyCachingService? = null
+    private var keyCachingServiceStarted = false
 
     private var accentColor: Int = -1
     private var errorColor:  Int = -1
@@ -200,7 +202,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
         // once nothing is bound. Android refuses startService while the app is in the background,
         // and this activity can be created there, so start it once we're visible.
         // handleAuthenticated only needs the bound service, so it may run before this.
-        startService(Intent(this, KeyCachingService::class.java))
+        startKeyCachingService()
 
         setLockTypeVisibility()
         if (isScreenLockEnabled(this) && !authenticated && !failure) { resumeScreenLock() }
@@ -323,16 +325,39 @@ class ScreenLockActivity : BaseActionBarActivity() {
         finish()
     }
 
+    private fun startKeyCachingService() {
+        try {
+            startService(Intent(this, KeyCachingService::class.java))
+            keyCachingServiceStarted = true
+        } catch (e: IllegalStateException) {
+            // BackgroundServiceStartNotAllowedException (API 31+) is an IllegalStateException.
+            Log.w(TAG, "Couldn't start KeyCachingService", e)
+        }
+    }
+
     private fun handleAuthenticated() {
         authenticated = true
         keyCachingService?.setMasterSecret(Any())
+
+        // onResume can run while Android still counts the app as background (e.g. behind the
+        // keyguard), so its start may have been refused. The user has just unlocked, so retry now.
+        if (!keyCachingServiceStarted) startKeyCachingService()
 
         // The 'nextIntent' will take us to the MainActivity if this is a standard unlock, or it will
         // take us to the ShareActivity if this is an external share.
         val nextIntent = intent.getParcelableExtra<Intent?>(EXTRA_NEXT_INTENT)
 
         when {
-            nextIntent != null -> startActivity(nextIntent)
+            nextIntent != null -> {
+                // Android 16 refuses to launch a nested intent whose creator token is missing or
+                // invalid. next_intent only ever targets the activity of ours that routed here, so the
+                // check protects nothing; the package test keeps the opt-out to our own components.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
+                    nextIntent.component?.packageName == packageName) {
+                    nextIntent.removeLaunchSecurityProtection()
+                }
+                startActivity(nextIntent)
+            }
 
             // Presented over a still-live activity, so there is nothing to route to and finishing
             // reveals it again (see ScreenLockActionBarActivity.presentScreenLock).
