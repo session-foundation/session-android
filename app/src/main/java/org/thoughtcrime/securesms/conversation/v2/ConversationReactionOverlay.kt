@@ -185,6 +185,7 @@ class ConversationReactionOverlay : FrameLayout {
         val isMessageOnLeft = selectedConversationModel.isOutgoing xor ViewUtil.isLtr(this)
         conversationItem.scaleX = 1f
         conversationItem.scaleY = 1f
+        conversationItem.clipBounds = null
         visibility = INVISIBLE
         this.activity = activity
         doOnLayout { showAfterLayout(messageRecord, lastSeenDownPoint, isMessageOnLeft) }
@@ -268,6 +269,14 @@ class ConversationReactionOverlay : FrameLayout {
         conversationItem.scaleY = 1f
         conversationBubble.scaleX = 1f
         conversationBubble.scaleY = 1f
+        conversationItem.clipBounds = selectedConversationModel.contentClipBounds?.let { clip ->
+            Rect(
+                (clip.left - overlayLoc[0] - endX).toInt(),
+                (clip.top - overlayLoc[1] - endY).toInt(),
+                (clip.right - overlayLoc[0] - endX).toInt(),
+                (clip.bottom - overlayLoc[1] - endY).toInt()
+            )
+        }
 
         val margin = DimensionUnit.DP.toPixels(8f)
         val reactionBarHeight = if (backgroundView.height > 0) backgroundView.height else resources.getDimensionPixelSize(R.dimen.conversation_reaction_scrubber_height)
