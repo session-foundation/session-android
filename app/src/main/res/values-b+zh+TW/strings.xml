@@ -162,6 +162,7 @@
     <string name="blockUnblockNameMultiple">您確定要解除封鎖 <b>{name}</b> 和 <b>{count} 位其他人嗎</b>？</string>
     <string name="blockUnblockNameTwo">您確定要解除封鎖 <b>{name}</b> 和另一個人嗎？</string>
     <string name="blockUnblockedUser">解除封鎖 {name}</string>
+    <string name="browserNotFound">沒有找到能開啟此網址的瀏覽器，請改為手動複製此網址</string>
     <string name="call">撥打</string>
     <string name="callsCalledYou">{name} 來電</string>
     <string name="callsCannotStart">您無法開始新的通話。請先結束當前通話。</string>
@@ -248,6 +249,9 @@
     <string name="communityJoinedAlready">您已經是此社群的成員。</string>
     <string name="communityLeave">離開社群</string>
     <string name="communityLeaveError">無法退出 {community_name}</string>
+    <string name="communityModLegacyHostedServer">此社群由架設在傳統 Session 軟體的伺服器運作，且除非已升級 {icon} 否則將只能讀取</string>
+    <string name="communityModOtherBlindedId">其他社群成員將能看到你的已遮蔽ID。</string>
+    <string name="communityModSelfManagement">你的職位自主管理即將在未來更新。</string>
     <string name="communityNameEnter">輸入社群名稱</string>
     <string name="communityNameEnterPlease">請輸入社群名稱</string>
     <string name="communityUnknown">未知的社群</string>
@@ -441,6 +445,9 @@
     <string name="errorDatabase">資料庫錯誤</string>
     <string name="errorGeneric">發生錯誤。請稍後再試。</string>
     <string name="errorUnknown">發生不明錯誤。</string>
+    <string name="failedResendInviteMultiple">無法將邀請重新發送給在 <b>{group_name}</b> 中的 <b>{name}</b> 跟 <b>{count}</b> 位其他成員</string>
+    <string name="failedResendInviteTwo">無法將邀請重新發送給在 <b>{group_name}</b> 中的 <b>{name}</b> 跟 <b>{other_name}</b></string>
+    <string name="failedResendPromotionTwo">無法將管理員邀請重新發送給在 <b>{group_name}</b> 中的 <b>{name}</b> 跟 <b>{other_name}</b></string>
     <string name="failedToDownload">下載失敗</string>
     <string name="failures">失敗</string>
     <string name="feedbackDescription">透過完成一份簡短的問卷，分享你對Session使用體驗。</string>
@@ -456,6 +463,7 @@
     <string name="giphyWarningDescription">Session 將連接到 Giphy 以提供搜尋結果。發送 GIF 時，您的元數據將無法獲得完整的保護。</string>
     <string name="giveFeedback">提供回饋？</string>
     <string name="giveFeedbackDescription">很遺憾聽到您在使用 Session 時的體驗不盡理想。如果您能花點時間在簡短問卷中分享您的想法，我們將不勝感激</string>
+    <string name="globalSearchAccountId">你輸入的搜尋條件中包含一個帳號 ID。\n\n你想用此帳號 ID 開始對話嗎？</string>
     <string name="groupAddMemberMaximum">群組最多可容納100個成員</string>
     <string name="groupCreate">建立群組</string>
     <string name="groupCreateErrorNoMembers">請選擇至少一名群組成員。</string>
@@ -566,6 +574,8 @@
     <plurals name="inviteFailedDescription">
         <item quantity="other">無法傳送邀請，您要再試一次嗎？</item>
     </plurals>
+    <string name="inviteNewMemberGroupLink">透過輸入你朋友的帳號 ID 、ONS 或掃描他們的 QR code {icon}，邀請新成員進群組</string>
+    <string name="inviteNewMemberGroupNoLink">透過輸入你朋友的帳號 ID 、ONS 或掃描他們的 QR code ，邀請新成員進群組</string>
     <string name="join">加入</string>
     <string name="later">稍後</string>
     <string name="learnMore">瞭解更多</string>
@@ -673,6 +683,7 @@
     <string name="messageStatusSyncing">同步中</string>
     <string name="messageUnread">未讀訊息</string>
     <string name="messageUnsupported">不能顯示此訊息。更新 Session 以檢視。</string>
+    <string name="messageUnsupportedBannerLinkedDevice">你的其他裝置之中有一個正在使用更新版本的 Session。請更新此裝置以保持訊息同步。</string>
     <string name="messageVoice">語音訊息</string>
     <string name="messageVoiceErrorShort">按住錄製語音消息</string>
     <string name="messageVoiceSlideToCancel">滑動以取消</string>
@@ -696,6 +707,7 @@
     <string name="nicknameRemove">移除暱稱</string>
     <string name="nicknameSet">設定暱稱</string>
     <string name="no">否</string>
+    <string name="noNonAdminsInGroup">此群組沒有非管理員成員。</string>
     <string name="noSuggestions">沒有建議</string>
     <string name="none">無</string>
     <string name="notNow">暫不</string>
@@ -742,6 +754,7 @@
     <string name="off">關閉</string>
     <string name="okay">好的</string>
     <string name="on">開啟</string>
+    <string name="onDeviceDescription">在登入了你最初註冊的 {platform_account} 的 {device_type} 裝置開啟此 Session 帳號。接著透過 Session Pro 設定更新你的 Pro 權限。</string>
     <string name="onboardingAccountCreate">建立帳號</string>
     <string name="onboardingAccountCreated">帳號已建立</string>
     <string name="onboardingAccountExists">我已有帳戶</string>
@@ -844,8 +857,12 @@
     <string name="proIncreasedMessageLengthFeature">訊息長度提升</string>
     <string name="proMessageInfoFeatures">本訊息使用了以下 Session Pro 功能：</string>
     <string name="proPercentOff">折扣 {percent}%</string>
+    <string name="proRefundAccountDevice">在登入了你最初註冊的 {platform_account} 的 {device_type} 裝置開啟此 Session 帳號。接著透過 Session Pro 設定申請退款。</string>
     <string name="proSendMore">升級後可傳送更多內容</string>
     <string name="proStatsTooltip">Pro 統計資料反映此裝置的使用情況，在其他關連裝置上可能會有所不同</string>
+    <string name="proStatusNetworkErrorContinue">無法連接到網路以檢查你的 Pro 狀態。你無法繼續直到連線恢復。
+\n\n請檢查你的網路連線並再試一次。</string>
+    <string name="proStatusNetworkErrorDescription">無法連接到網路以檢查你的 Pro 狀態。你無法升級到 Pro 直到連線恢復。\n\n請檢查你的網路連線並再試一次。</string>
     <string name="proUserProfileModalCallToAction">想要充分利用 Session？\n升級為 Session Pro Beta 享受更強大的訊息體驗。</string>
     <string name="profile">個人檔案</string>
     <string name="profileDisplayPicture">顯示圖片</string>
@@ -914,6 +931,7 @@
     <string name="retry">重試</string>
     <string name="reviewLimit">評分次數上限</string>
     <string name="reviewLimitDescription">看起來您最近已經對 Session 給予評價，感謝您的回饋！</string>
+    <string name="runSessionBackground">在背景執行 Session？</string>
     <string name="save">儲存</string>
     <string name="saved">已儲存</string>
     <string name="savedMessages">已儲存的訊息</string>
