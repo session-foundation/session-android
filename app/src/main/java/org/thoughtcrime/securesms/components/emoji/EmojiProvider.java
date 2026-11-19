@@ -12,6 +12,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextPaint;
 import android.text.TextUtils;
 import android.widget.TextView;
 
@@ -19,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.utilities.FutureTaskListener;
+import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiDrawInfo;
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiParser;
@@ -52,7 +54,7 @@ public class EmojiProvider {
                                      @NonNull TextView tv,
                                      boolean jumboEmoji)
   {
-    if (matches == null || text == null || tv.isInEditMode()) return null;
+    if (matches == null || text == null || tv.isInEditMode() || TextSecurePreferences.isUseSystemEmojiEnabled(tv.getContext())) return null;
     SpannableStringBuilder builder = new SpannableStringBuilder(text);
 
     for (EmojiParser.Candidate candidate : matches) {
@@ -74,6 +76,10 @@ public class EmojiProvider {
   static @Nullable Drawable getEmojiDrawable(@NonNull Context context, @Nullable CharSequence emoji, boolean jumboEmoji) {
     if (TextUtils.isEmpty(emoji)) {
       return null;
+    }
+
+    if (TextSecurePreferences.isUseSystemEmojiEnabled(context)) {
+      return new SystemEmojiDrawable(context, emoji.toString());
     }
 
     EmojiDrawInfo drawInfo = EmojiSource.getLatest().getEmojiTree().getEmoji(emoji, 0, emoji.length());
@@ -200,6 +206,80 @@ public class EmojiProvider {
 
     @Override
     public void setColorFilter(ColorFilter cf) { }
+  }
+
+  /**
+   * Renders a single emoji using the device's native system font at full vector resolution.
+   */
+  static final class SystemEmojiDrawable extends Drawable {
+    private final String    emoji;
+    private final int       intrinsicSize;
+    private final TextPaint textPaint  = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+    private final Rect      textBounds = new Rect();
+
+    SystemEmojiDrawable(@NonNull Context context, @NonNull String emoji) {
+      this.emoji         = emoji;
+      this.intrinsicSize = Math.round(32f * context.getResources().getDisplayMetrics().density);
+      this.textPaint.setTextAlign(Paint.Align.LEFT);
+    }
+
+    @Override
+    public int getIntrinsicWidth() {
+      return intrinsicSize;
+    }
+
+    @Override
+    public int getIntrinsicHeight() {
+      return intrinsicSize;
+    }
+
+    @Override
+    public void draw(@NonNull Canvas canvas) {
+      final Rect bounds = getBounds();
+      final int  width  = bounds.width();
+      final int  height = bounds.height();
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+
+      final int targetSize = Math.min(width, height);
+      float     textSize   = targetSize * 0.85f;
+      textPaint.setTextSize(textSize);
+      textPaint.getTextBounds(emoji, 0, emoji.length(), textBounds);
+
+      final float maxAllowed = targetSize * 0.90f;
+      if (textBounds.width() > maxAllowed || textBounds.height() > maxAllowed) {
+        final float maxDim = Math.max(textBounds.width(), textBounds.height());
+        if (maxDim > 0) {
+          textSize *= maxAllowed / maxDim;
+          textPaint.setTextSize(textSize);
+          textPaint.getTextBounds(emoji, 0, emoji.length(), textBounds);
+        }
+      }
+
+      final float x = bounds.exactCenterX() - textBounds.exactCenterX();
+      final float y = !textBounds.isEmpty()
+              ? bounds.exactCenterY() - textBounds.exactCenterY()
+              : bounds.exactCenterY() - ((textPaint.ascent() + textPaint.descent()) / 2f);
+      canvas.drawText(emoji, 0, emoji.length(), x, y, textPaint);
+    }
+
+    @Override
+    public int getOpacity() {
+      return PixelFormat.TRANSLUCENT;
+    }
+
+    @Override
+    public void setAlpha(int alpha) {
+      textPaint.setAlpha(alpha);
+      invalidateSelf();
+    }
+
+    @Override
+    public void setColorFilter(@Nullable ColorFilter cf) {
+      textPaint.setColorFilter(cf);
+      invalidateSelf();
+    }
   }
 
 }
