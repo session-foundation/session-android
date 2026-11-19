@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.view.View
 
 /**
@@ -14,4 +15,5 @@ data class SelectedConversationModel(
   val bubbleWidth: Int,
   val isOutgoing: Boolean,
   val focusedView: View?,
+  val contentClipBounds: Rect? = null,
 )

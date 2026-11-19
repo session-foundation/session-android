@@ -1887,7 +1887,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         }
         emojiPickerVisible = true
-        ViewUtil.hideKeyboard(this, messageView)
         binding.scrollToBottomButton.isVisible = false
         binding.conversationRecyclerView.suppressLayout(true)
         reactionDelegate.setOnActionSelectedListener(ReactionsToolbarListener(message))
@@ -1903,13 +1902,21 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         })
         val topLeft = intArrayOf(0, 0).also { messageContentView.getLocationInWindow(it) }
+        val recyclerTopLeft = intArrayOf(0, 0).also { binding.conversationRecyclerView.getLocationInWindow(it) }
+        val contentClipBounds = android.graphics.Rect(
+            recyclerTopLeft[0],
+            recyclerTopLeft[1],
+            recyclerTopLeft[0] + binding.conversationRecyclerView.width,
+            recyclerTopLeft[1] + binding.conversationRecyclerView.height
+        )
         val selectedConversationModel = SelectedConversationModel(
             messageContentBitmap,
             topLeft[0].toFloat(),
             topLeft[1].toFloat(),
             messageContentView.width,
             message.isOutgoing,
-            messageContentView
+            messageContentView,
+            contentClipBounds
         )
         reactionDelegate.show(this, viewModel.recipient,message, selectedConversationModel)
     }
