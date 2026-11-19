@@ -21,7 +21,7 @@ class ChatsPreferenceViewModel @Inject constructor(
             prefs.observeBooleanKey(TextSecurePreferences.THREAD_TRIM_ENABLED, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.SEND_WITH_ENTER, default = false),
             prefs.observeBooleanKey(TextSecurePreferences.AUTOPLAY_AUDIO_MESSAGES, default = false),
-            prefs.observeBooleanKey(TextSecurePreferences.USE_SYSTEM_EMOJI, default = true),
+            prefs.observeBooleanKey(TextSecurePreferences.USE_SYSTEM_EMOJI, default = false),
         ) { trim, enter, autoplay, systemEmoji ->
             UIState(
                 trimThreads = trim,
@@ -60,6 +60,6 @@ class ChatsPreferenceViewModel @Inject constructor(
         val trimThreads: Boolean = false,
         val sendWithEnter: Boolean = false,
         val autoplayAudioMessage: Boolean = false,
-        val useSystemEmoji: Boolean = true
+        val useSystemEmoji: Boolean = false
     )
 }

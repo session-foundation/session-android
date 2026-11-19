@@ -577,7 +577,7 @@ interface TextSecurePreferences {
 
         @JvmStatic
         fun isUseSystemEmojiEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, USE_SYSTEM_EMOJI, true)
+            return getBooleanPreference(context, USE_SYSTEM_EMOJI, false)
         }
 
         @JvmStatic
@@ -1570,7 +1570,7 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun isUseSystemEmojiEnabled(): Boolean {
-        return getBooleanPreference(USE_SYSTEM_EMOJI, true)
+        return getBooleanPreference(USE_SYSTEM_EMOJI, false)
     }
 
     override fun updateBooleanFromKey(key: String, value: Boolean) {

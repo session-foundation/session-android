@@ -135,8 +135,8 @@ private fun ConversationsPreference(
                     subtitle = annotatedStringResource("Render crisp, high-resolution emojis using your device's native font instead of compressed spritesheets"),
                     subtitleStyle = LocalType.current.large,
                     checked = uiState.useSystemEmoji,
-                    qaTag = R.string.qa_preferences_send_with_enter,
-                    switchQaTag = R.string.qa_preferences_send_with_enter_toggle,
+                    qaTag = R.string.qa_preferences_use_system_emojis,
+                    switchQaTag = R.string.qa_preferences_use_system_emojis_toggle,
                     onCheckedChange = { isEnabled ->
                         sendCommand(
                             ChatsPreferenceViewModel.Commands.ToggleUseSystemEmoji(

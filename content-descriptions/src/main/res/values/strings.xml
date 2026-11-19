@@ -320,6 +320,8 @@
     <string name="qa_preferences_send_with_enter_toggle">preferences-option-send-with-enter_toggle</string>
     <string name="qa_preferences_autoplay_audio">preferences-option-autoplay-audio</string>
     <string name="qa_preferences_autoplay_audio_toggle">preferences-option-autoplay-audio-toggle</string>
+    <string name="qa_preferences_use_system_emojis">preferences-option-use-system-emojis</string>
+    <string name="qa_preferences_use_system_emojis_toggle">preferences-option-use-system-emojis-toggle</string>
     <string name="qa_preferences_option_blocked_contacts">preferences-option-blocked-contacts</string>
     <string name="qa_preferences_option_notification_privacy">preferences-option-notification-privacy</string>
     <string name="qa_preferences_ringtone">preferences-option-ringtone</string>
