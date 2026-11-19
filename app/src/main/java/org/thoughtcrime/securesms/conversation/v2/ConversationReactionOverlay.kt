@@ -141,7 +141,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Use your existing utility to handle insets
         applySafeInsetsPaddings(
-            typeMask = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout(),
+            typeMask = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.ime(),
             consumeInsets = false, // Don't consume so children can also access them
             applyTop = false,      // Don't apply as padding, just capture the values
             applyBottom = false
@@ -411,7 +411,6 @@ class ConversationReactionOverlay : FrameLayout {
         revealAnimatorSet.end()
         animatorSet.start()
         onHideListener?.startHide()
-        selectedConversationModel.focusedView?.let(ViewUtil::focusAndShowKeyboard)
         animatorSet.addListener(object : AnimationCompleteListener() {
             override fun onAnimationEnd(animation: Animator) {
                 animatorSet.removeListener(this)
