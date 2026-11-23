@@ -1281,6 +1281,7 @@
     <string name="recoveryPasswordErrorLoad">An error occurred when trying to load your recovery password.\n\nPlease export your logs, then upload the file through the Session Help Desk to help resolve this issue.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Please check your recovery password and try again.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Some of the words in your Recovery Password are incorrect. Please check and try again.</string>
+    <string name="recoveryPasswordErrorMessageOtherAccount">This device has messages from a different account. Restoring this account would make them unreachable. Enter that account’s recovery password to keep them.</string>
     <string name="recoveryPasswordErrorMessageShort">The Recovery Password you entered is not long enough. Please check and try again.</string>
     <string name="recoveryPasswordErrorTitle">Incorrect Recovery Password</string>
     <string name="recoveryPasswordExplanation">To load your account, enter your recovery password.</string>

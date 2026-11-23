@@ -58,21 +58,20 @@ fun MediaFolderCell(
     title: String,
     count: Int,
     thumbnailUri: Uri?,
+    thumbnailIsVideo: Boolean,
     qaTag : String,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val thumbnailMimeType = thumbnailUri?.let { MediaUtil.getMimeType(context, it) }
 
     val videoDecoderFactory = remember { VideoFrameDecoder.Factory() }
 
-    // our URI does not have a file extension so we need to check for the mimetype
-    // then explicitly set the decoder for the request
-    val folderThumbnailRequest = remember(context, thumbnailUri) {
+    // our URI does not have a file extension, so the decoder for a video has to be set explicitly
+    val folderThumbnailRequest = remember(context, thumbnailUri, thumbnailIsVideo) {
         ImageRequest.Builder(context)
             .data(thumbnailUri)
             .apply {
-                if (MediaUtil.isVideoType(thumbnailMimeType)) {
+                if (thumbnailIsVideo) {
                     decoderFactory(videoDecoderFactory)
                 }
             }
@@ -305,6 +304,7 @@ private fun PreviewMediaFolderCell() {
         title = "Test Title",
         count = 100,
         thumbnailUri = null,
+        thumbnailIsVideo = false,
         qaTag = ""
     ) { }
 }

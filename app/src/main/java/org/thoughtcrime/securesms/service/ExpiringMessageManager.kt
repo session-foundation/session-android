@@ -210,6 +210,20 @@ class ExpiringMessageManager @Inject constructor(
         }
     }
 
+    /**
+     * A copy of a message we already sent has reached our own swarm. Its timer here started when it
+     * was first sent, and must not restart: the copy can land long afterwards, after retries or a
+     * restart. Linked devices count a message from ourselves from its sent timestamp, so the copy is
+     * shortened to expire with theirs.
+     */
+    fun onMessageSynced(message: Message) {
+        val hash = message.serverHash ?: return
+        val sentTimestamp = message.sentTimestamp ?: return
+        if (message.expiryMode == ExpiryMode.NONE) return
+
+        scope.launch { shortenTtl(hash, sentTimestamp, message.expiryMode.expiryMillis) }
+    }
+
     override fun onMessageReceived(message: Message) {
         val messageId = message.id ?: return
 

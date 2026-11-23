@@ -173,21 +173,23 @@ public class MmsSmsDatabase extends Database {
 
   @Nullable
   public MessageId getLastSentMessageID(long threadId) {
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND NOT " + MmsSmsColumns.IS_DELETED;
+    // Kept to ids: this runs on every change to the thread, and building MessageRecords (a quote
+    // query per row) holds a connection long enough to starve the main thread's reads.
+    String query =
+        "SELECT " + MmsSmsColumns.ID + ", '" + MMS_TRANSPORT + "' AS " + TRANSPORT + ", " +
+            MmsDatabase.DATE_SENT + " AS " + MmsSmsColumns.NORMALIZED_DATE_SENT +
+        " FROM " + MmsDatabase.TABLE_NAME +
+        " WHERE " + MmsSmsColumns.THREAD_ID + " = ? AND NOT " + MmsSmsColumns.IS_DELETED + " AND " + MmsSmsColumns.IS_OUTGOING +
+        " UNION ALL" +
+        " SELECT " + MmsSmsColumns.ID + ", '" + SMS_TRANSPORT + "', " + SmsDatabase.DATE_SENT +
+        " FROM " + SmsDatabase.TABLE_NAME +
+        " WHERE " + MmsSmsColumns.THREAD_ID + " = ? AND NOT " + MmsSmsColumns.IS_DELETED + " AND " + MmsSmsColumns.IS_OUTGOING +
+        " ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC LIMIT 1";
 
-    try (final Cursor cursor = MmsSmsDatabaseExt.INSTANCE.queryTables(this, PROJECTION_ALL, selection, true, null, order, null)) {
-      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
-        MessageRecord messageRecord;
-        while ((messageRecord = reader.getNext()) != null) {
-          if (messageRecord.isOutgoing()) {
-            return new MessageId(messageRecord.getId(), messageRecord.isMms());
-          }
-        }
-      }
+    try (Cursor cursor = getReadableDatabase().rawQuery(query, threadId, threadId)) {
+      if (!cursor.moveToFirst()) return null;
+      return new MessageId(cursor.getLong(0), MMS_TRANSPORT.equals(cursor.getString(1)));
     }
-
-    return null;
   }
 
   public @Nullable MessageRecord getMessageFor(long threadId, long timestamp, Address author) {

@@ -33,6 +33,12 @@ class MessageSendJob @AssistedInject constructor(
     @Assisted val message: Message,
     @Assisted val destination: Destination,
     @Assisted val statusCallback: SendChannel<Result<Unit>>?,
+    /**
+     * This job copies a message that has already reached its recipient to our own swarm, so its
+     * progress is reported as syncing rather than sending. Note to Self also sends to our own swarm
+     * but is a first send, which is why this can't be inferred from [destination].
+     */
+    @Assisted val isSyncOfSentMessage: Boolean,
     private val attachmentUploadJobFactory: AttachmentUploadJob.Factory,
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,
@@ -56,22 +62,28 @@ class MessageSendJob @AssistedInject constructor(
         // Keys used for database storage
         private const val MESSAGE_KEY = "message"
         private const val DESTINATION_KEY = "destination"
+        private const val SYNC_OF_SENT_MESSAGE_KEY = "sync_of_sent_message"
     }
 
     override suspend fun execute(dispatcherName: String) {
         val messageId = message.id
         val message = message as? VisibleMessage
 
-        // do not attempt to send if the message is marked as deleted
         if (messageId != null && messageDataProvider.isDeletedMessage(messageId)) {
+            finishForDeletedMessage(dispatcherName)
             return
         }
 
-        messageId?.let(storage::markAsSending)
+        if (messageId != null) {
+            if (isSyncOfSentMessage) storage.markAsSyncing(messageId) else storage.markAsSending(messageId)
+        }
 
         if (message != null) {
             val isOutgoing = messageId != null && messageDataProvider.isOutgoingMessage(messageId)
-            if (!isOutgoing && message.reaction == null) return // The message has been deleted
+            if (!isOutgoing && message.reaction == null) {
+                finishForDeletedMessage(dispatcherName)
+                return
+            }
             val attachmentIDs = mutableListOf<Long>()
             attachmentIDs.addAll(message.attachmentIDs)
             message.quote?.let { it.attachmentID?.let { attachmentID -> attachmentIDs.add(attachmentID) } }
@@ -109,7 +121,7 @@ class MessageSendJob @AssistedInject constructor(
                 }
             }
 
-            messageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync)
+            messageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync, isSyncOfSentMessage)
 
             this.handleSuccess(dispatcherName)
             statusCallback?.trySend(Result.success(Unit))
@@ -149,13 +161,22 @@ class MessageSendJob @AssistedInject constructor(
         delegate?.handleJobFailedPermanently(this, dispatcherName, error)
     }
 
+    /**
+     * A job whose message has been deleted has nothing left to send, but it must still be removed:
+     * left in storage, it is resumed at every launch only to stop here again.
+     */
+    private fun finishForDeletedMessage(dispatcherName: String) {
+        delegate?.handleJobSucceeded(this, dispatcherName)
+    }
+
     private fun handleFailure(dispatcherName: String, error: Exception) {
         Log.w(TAG, "Failed to send ${message::class.simpleName}.", error)
         val messageId = message.id
         if (message is VisibleMessage && messageId != null) {
             if (messageDataProvider.isDeletedMessage(messageId) ||
                 !messageDataProvider.isOutgoingMessage(messageId)) {
-                return // The message has been deleted
+                finishForDeletedMessage(dispatcherName)
+                return
             }
         }
         delegate?.handleJobFailed(this, dispatcherName, error)
@@ -177,6 +198,7 @@ class MessageSendJob @AssistedInject constructor(
         return Data.Builder()
             .putByteArray(MESSAGE_KEY, serializedMessage)
             .putByteArray(DESTINATION_KEY, serializedDestination)
+            .putBoolean(SYNC_OF_SENT_MESSAGE_KEY, isSyncOfSentMessage)
             .build()
     }
 
@@ -190,7 +212,8 @@ class MessageSendJob @AssistedInject constructor(
         abstract fun create(
             message: Message,
             destination: Destination,
-            statusCallback: SendChannel<Result<Unit>>? = null
+            statusCallback: SendChannel<Result<Unit>>? = null,
+            isSyncOfSentMessage: Boolean = false,
         ): MessageSendJob
 
         override fun create(data: Data): MessageSendJob? {
@@ -221,7 +244,8 @@ class MessageSendJob @AssistedInject constructor(
             return create(
                 message = message,
                 destination = destination,
-                statusCallback = null
+                statusCallback = null,
+                isSyncOfSentMessage = data.getBooleanOrDefault(SYNC_OF_SENT_MESSAGE_KEY, false),
             )
         }
     }

@@ -177,7 +177,7 @@ class GroupManagerV2ImplTest {
         verify(configFactory, never()).dangerouslyAccessMutableUserConfigs()
         // ...and the invite response goes out anyway: it is sent once on approval with its failure
         // swallowed, so a re-invite is the admin's only way to recover a lost one.
-        verify(messageSender).sendNonDurably(any(), any<Destination.ClosedGroup>(), eq(false))
+        verify(messageSender).sendNonDurably(any(), any<Destination.ClosedGroup>(), eq(false), eq(false))
         // The invitation is dropped from our swarm, as approving one does.
         verify(swarmApiExecutor).send(any(), any())
     }
@@ -192,7 +192,7 @@ class GroupManagerV2ImplTest {
         manager.deliverInvitation()
 
         // An admin's membership is not established by an invite response - they write it themselves.
-        verify(messageSender, never()).sendNonDurably(any(), any<Destination>(), any())
+        verify(messageSender, never()).sendNonDurably(any(), any<Destination>(), any(), any())
         verify(swarmApiExecutor).send(any(), any())
     }
 }
