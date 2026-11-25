@@ -842,7 +842,6 @@
     <string name="messageRequestPendingDescription">Budete moci posílat hlasové zprávy a přílohy, jakmile příjemce schválí tuto žádost o komunikaci.</string>
     <string name="messageRequestYouHaveAccepted">Přijali jste žádost o komunikaci od <b>{name}</b>.</string>
     <string name="messageRequestsAcceptDescription">Odesláním zprávy tomuto uživateli automaticky přijmete jejich žádost o komunikaci a odhalíte jim své ID účtu.</string>
-    <string name="messageRequestsAccepted">Vaše žádost o komunikaci byla odsouhlasena.</string>
     <string name="messageRequestsClearAllExplanation">Jste si jisti, že chcete smazat všechny žádosti o komunikaci a pozvánky do skupin?</string>
     <string name="messageRequestsCommunities">Žádosti o komunikaci z komunit</string>
     <string name="messageRequestsCommunitiesDescription">Povolit žádosti o komunikaci zahájené prostřednictvím komunit.</string>

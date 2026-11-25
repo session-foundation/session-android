@@ -187,6 +187,7 @@
     <string name="callsEnded">Call Ended</string>
     <string name="callsErrorAnswer">Failed to answer call</string>
     <string name="callsErrorStart">Failed to start call</string>
+    <string name="callsFullScreenExit">Exit Full Screen</string>
     <string name="callsInProgress">Call in progress</string>
     <string name="callsIncoming">Incoming call from {name}</string>
     <string name="callsIncomingUnknown">Incoming call</string>
@@ -199,8 +200,12 @@
     <string name="callsPermissionsRequiredDescription1">You can enable the \"Voice and Video Calls\" permission in Permissions Settings.</string>
     <string name="callsReconnecting">Reconnecting…</string>
     <string name="callsRinging">Ringing...</string>
+    <string name="callsScreenRecordingPermissionDescription">Session needs Screen Recording access to share your screen. Allow it in System Settings, then restart Session.</string>
     <string name="callsSessionCall">Session Call</string>
     <string name="callsSettings">Calls (Beta)</string>
+    <string name="callsShareScreen">Share Screen</string>
+    <string name="callsShareScreenNoSources">No windows or screens are available to share.</string>
+    <string name="callsStopSharing">Stop Sharing</string>
     <string name="callsVoiceAndVideo">Voice and Video Calls</string>
     <string name="callsVoiceAndVideoBeta">Voice and Video Calls (Beta)</string>
     <string name="callsVoiceAndVideoModalDescription">Your IP is visible to your call partner and a Session Foundation server while using beta calls.</string>
