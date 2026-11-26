@@ -48,6 +48,21 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
     private val durationForever: Long = Long.MAX_VALUE
 
+    // Declared before init: its collector runs on another thread and can call updateState before
+    // the constructor reaches any property declared below it.
+    private val debugMuteDurations = listOf(
+        TimeUnit.MINUTES.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1m,
+        TimeUnit.MINUTES.toMillis(5) to R.string.qa_conversation_settings_notifications_radio_5m,
+    )
+
+    private val muteDurations = listOf(
+        durationForever to R.string.qa_conversation_settings_notifications_radio_forever,
+        TimeUnit.HOURS.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1h,
+        TimeUnit.HOURS.toMillis(2) to R.string.qa_conversation_settings_notifications_radio_2h,
+        TimeUnit.DAYS.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1d,
+        TimeUnit.DAYS.toMillis(7) to R.string.qa_conversation_settings_notifications_radio_1w,
+    )
+
     // the options the user is currently using
     private var currentOption: NotificationType = NotificationType.All
     private var currentMutedUntil: Long? = null
@@ -283,19 +298,6 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         data object MentionsOnly: NotificationType(NotifyType.MENTIONS)
         data object Mute: NotificationType(NotifyType.NONE)
     }
-
-    private val debugMuteDurations = listOf(
-        TimeUnit.MINUTES.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1m,
-        TimeUnit.MINUTES.toMillis(5) to R.string.qa_conversation_settings_notifications_radio_5m,
-    )
-
-    private val muteDurations = listOf(
-        durationForever to R.string.qa_conversation_settings_notifications_radio_forever,
-        TimeUnit.HOURS.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1h,
-        TimeUnit.HOURS.toMillis(2) to R.string.qa_conversation_settings_notifications_radio_2h,
-        TimeUnit.DAYS.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1d,
-        TimeUnit.DAYS.toMillis(7) to R.string.qa_conversation_settings_notifications_radio_1w,
-    )
 
     @AssistedFactory
     interface Factory {
