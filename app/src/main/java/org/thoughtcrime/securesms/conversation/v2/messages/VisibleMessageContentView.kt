@@ -125,7 +125,9 @@ class VisibleMessageContentView : ConstraintLayout {
 
         // reset visibilities / containers
         onContentClick.clear()
-        binding.albumThumbnailView.root.clearViews()
+        // The album is hidden below and only shown again by an image message, so its cells are
+        // kept: AlbumThumbnailView reuses them for the same number of images, and a cell already
+        // showing a slide doesn't load it again.
         onContentDoubleTap = null
 
         if (message.isDeleted || message.isUnsupportedMessage) {
