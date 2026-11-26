@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.work.await
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.collectLatest
@@ -80,7 +81,8 @@ class PushRegistrationHandler @Inject constructor(
     /**
      * Build desired subscriptions: self (local number) + any group that shouldPoll.
      * */
-    private fun desiredSubscriptions(localNumber: String, token: String): List<PushRegistrationDatabase.Registration> =
+    @VisibleForTesting
+    internal fun desiredSubscriptions(localNumber: String, token: String): List<PushRegistrationDatabase.Registration> =
         buildList {
             val input = PushRegistrationDatabase.Input(pushToken = token)
 
@@ -92,7 +94,11 @@ class PushRegistrationHandler @Inject constructor(
                     add(
                         PushRegistrationDatabase.Registration(
                             accountId = group.groupAccountId,
-                            input = input
+                            input = input,
+                            groupAuth = PushRegistrationDatabase.GroupAuth.of(
+                                adminKey = group.adminKey?.data,
+                                authData = group.authData?.data,
+                            ),
                         )
                     )
                 }

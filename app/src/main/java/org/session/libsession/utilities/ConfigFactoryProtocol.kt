@@ -104,6 +104,12 @@ interface ConfigFactoryProtocol {
     fun getConfigTimestamp(userConfigType: UserConfigType, publicKey: String): Long
 
     fun getGroupAuth(groupId: AccountId): SwarmAuth?
+
+    /**
+     * Builds a group's auth from its credentials, for when they no longer come from its
+     * user-groups entry. Null if neither credential is present.
+     */
+    fun createGroupAuth(groupId: AccountId, adminKey: ByteArray?, authData: ByteArray?): SwarmAuth?
     fun removeGroup(groupId: AccountId)
     fun removeContactOrBlindedContact(address: Address.WithAccountId)
 

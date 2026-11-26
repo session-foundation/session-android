@@ -79,8 +79,12 @@ class PushRegistrationWorker @AssistedInject constructor(
         )
 
         supervisorScope {
-            val unregisterJobs = work.unregister
-                .map { r ->
+            val (signable, unsignable) = work.unregister
+                .map { r -> r to unregisterAuth(r) }
+                .partition { (_, swarmAuth) -> swarmAuth != null }
+
+            val unregisterJobs = signable
+                .map { (r, swarmAuth) ->
                     async {
                         r to runCatching {
                             serverApiExecutor.execute(
@@ -89,7 +93,7 @@ class PushRegistrationWorker @AssistedInject constructor(
                                     serverX25519PubKeyHex = NotificationServer.LATEST.publicKey,
                                     api = pushUnregisterApiFactory.create(
                                         token = r.input.pushToken,
-                                        swarmAuth = swarmAuthForAccount(AccountId(r.accountId)),
+                                        swarmAuth = swarmAuth!!,
                                     )
                                 )
                             )
@@ -169,7 +173,7 @@ class PushRegistrationWorker @AssistedInject constructor(
                 }
             )
 
-            pushRegistrationDatabase.removeRegistrations(unregisterJobs.awaitAll().map {
+            val unregistered = unregisterJobs.awaitAll().map {
                 if (it.second.isFailure) {
                     Log.e(
                         TAG,
@@ -177,9 +181,13 @@ class PushRegistrationWorker @AssistedInject constructor(
                     )
                 }
 
+                it.first
+            }
+
+            pushRegistrationDatabase.removeRegistrations((unsignable.map { it.first } + unregistered).map {
                 PushRegistrationDatabase.Registration(
-                    accountId = it.first.accountId,
-                    input = it.first.input
+                    accountId = it.accountId,
+                    input = it.input
                 )
             })
         }
@@ -198,6 +206,32 @@ class PushRegistrationWorker @AssistedInject constructor(
         return Result.success()
     }
 
+
+    /**
+     * A group another device removed is already gone from the user-groups config, so its own
+     * auth can't be built from there; the credentials kept on its row sign the request instead.
+     * Null, after logging why, if neither source can sign it: nothing will ever be able to, so
+     * the caller drops the row and the push server lets the subscription lapse.
+     */
+    private fun unregisterAuth(r: PushRegistrationDatabase.RegistrationWithState): SwarmAuth? {
+        val fromConfig = runCatching { swarmAuthForAccount(AccountId(r.accountId)) }
+        fromConfig.getOrNull()?.let { return it }
+
+        val fromRow = runCatching {
+            r.groupAuth?.let {
+                configFactory.createGroupAuth(AccountId(r.accountId), it.adminKey, it.authData)
+            }
+        }
+        fromRow.getOrNull()?.let { return it }
+
+        Log.w(
+            TAG,
+            "Push unregistration skipped, nothing can sign it " +
+                    "(config: ${fromConfig.exceptionOrNull()?.message}, " +
+                    "stored: ${fromRow.exceptionOrNull()?.message ?: r.groupAuth ?: "none"})"
+        )
+        return null
+    }
 
     private fun swarmAuthForAccount(accountId: AccountId): SwarmAuth {
         return when {
@@ -226,14 +260,18 @@ class PushRegistrationWorker @AssistedInject constructor(
         private const val MAX_REGISTRATIONS_PER_RUN = 100
         private const val RE_REGISTER_INTERVAL_DAYS = 7L
 
-        private val GROUP_PUSH_NAMESPACES = listOf(
-            Namespace.GROUP_MESSAGES(),
-            Namespace.GROUP_INFO(),
-            Namespace.GROUP_MEMBERS(),
-            Namespace.GROUP_KEYS(),
-            Namespace.REVOKED_GROUP_MESSAGES(),
-        )
-        private val REGULAR_PUSH_NAMESPACES = listOf(Namespace.DEFAULT())
+        // Lazy because Namespace is native: read eagerly, loading this class would need
+        // libsession's native library, which JVM unit tests don't have.
+        private val GROUP_PUSH_NAMESPACES by lazy {
+            listOf(
+                Namespace.GROUP_MESSAGES(),
+                Namespace.GROUP_INFO(),
+                Namespace.GROUP_MEMBERS(),
+                Namespace.GROUP_KEYS(),
+                Namespace.REVOKED_GROUP_MESSAGES(),
+            )
+        }
+        private val REGULAR_PUSH_NAMESPACES by lazy { listOf(Namespace.DEFAULT()) }
 
         fun enqueue(context: Context, delay: Duration?): Operation {
             val builder = OneTimeWorkRequestBuilder<PushRegistrationWorker>()

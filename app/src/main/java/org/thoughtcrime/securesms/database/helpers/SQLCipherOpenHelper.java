@@ -115,9 +115,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int lokiV60                          = 81;
   private static final int lokiV61                          = 82;
   private static final int lokiV62                          = 83;
+  private static final int lokiV63                          = 84;
 
   // Loki - onUpgrade(...) must be updated to use Loki version numbers if Signal makes any database changes
-  private static final int    DATABASE_VERSION         = lokiV62;
+  private static final int    DATABASE_VERSION         = lokiV63;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   public static final String  DATABASE_NAME            = "session.db";
 
@@ -316,6 +317,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     ProDatabase.Companion.reshapeRevocationsForSeconds(db);
 
     UnsupportedMessageDatabase.createTable(db);
+
+    db.execSQL(PushRegistrationDatabase.ADD_GROUP_AUTH_COLUMN);
   }
 
   @Override
@@ -685,6 +688,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < lokiV62) {
         UnsupportedMessageDatabase.createTable(db);
+      }
+
+      if (oldVersion < lokiV63) {
+        db.execSQL(PushRegistrationDatabase.ADD_GROUP_AUTH_COLUMN);
       }
 
       db.setTransactionSuccessful();

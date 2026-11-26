@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.database
 
 import android.content.Context
+import androidx.core.database.getStringOrNull
 import androidx.sqlite.db.transaction
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -9,6 +10,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonClassDiscriminator
 import org.session.libsession.utilities.serializable.InstantAsMillisSerializer
+import org.session.libsignal.utilities.Hex
+import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.util.asSequence
 import java.time.Instant
@@ -24,8 +27,16 @@ class PushRegistrationDatabase @Inject constructor(
 ) : Database(context, helper) {
 
 
+    /**
+     * @param groupAuth The group's credentials, for a group registration. Not part of the
+     * registration's identity: rows are matched on [accountId] and [input] only.
+     */
     @Serializable
-    data class Registration(val accountId: String, val input: Input)
+    data class Registration(
+        val accountId: String,
+        val input: Input,
+        val groupAuth: GroupAuth? = null,
+    )
 
     /**
      * Ensure that the provided registrations exist in the database. If input changes for an existing
@@ -80,6 +91,24 @@ class PushRegistrationDatabase @Inject constructor(
                 numChanges += stmt.executeUpdateDelete()
             }
 
+            // Every row for the group gets the credentials, including one still waiting to
+            // unregister an old push token. Not counted in numChanges: new credentials alone
+            // need no request.
+            compileStatement("""
+                UPDATE push_registration_state
+                SET group_auth = ?
+                WHERE account_id = ? AND group_auth IS NOT ?
+            """).use { stmt ->
+                for (r in registrations) {
+                    val groupAuthAsText = json.encodeToString(r.groupAuth ?: continue)
+                    stmt.clearBindings()
+                    stmt.bindString(1, groupAuthAsText)
+                    stmt.bindString(2, r.accountId)
+                    stmt.bindString(3, groupAuthAsText)
+                    stmt.executeUpdateDelete()
+                }
+            }
+
             // Delete no longer desired registrations that didn't start, or ended up in a permanent error
             // Note: the changes here do not count towards numChanges since they won't affect
             // the scheduling
@@ -126,14 +155,14 @@ class PushRegistrationDatabase @Inject constructor(
         // The query does not directly map to these two groups, so we partition the results in code.
         return readableDatabase.rawQuery(
             """
-            SELECT account_id, input, state, CAST(state->>'$.due' AS INTEGER) AS due_time 
+            SELECT account_id, input, state, group_auth, CAST(state->>'$.due' AS INTEGER) AS due_time
             FROM push_registration_state
             WHERE state_type IN ('$TYPE_ERROR', '$TYPE_REGISTERED')
                 AND CAST(state->>'$.due' AS INTEGER) <= ?
             
             UNION ALL
             
-            SELECT account_id, input, state, 0 AS due_time
+            SELECT account_id, input, state, group_auth, 0 AS due_time
             FROM push_registration_state
             WHERE state_type IN ('$TYPE_PENDING_REGISTER', '$TYPE_PENDING_UNREGISTER')
             
@@ -147,6 +176,7 @@ class PushRegistrationDatabase @Inject constructor(
                         accountId = cursor.getString(0),
                         input = json.decodeFromString(cursor.getString(1)),
                         state = json.decodeFromString(cursor.getString(2)),
+                        groupAuth = cursor.getStringOrNull(3)?.let(json::decodeFromString),
                     )
                 }
                 .partition { it.state is RegistrationState.PendingUnregister }
@@ -208,8 +238,31 @@ class PushRegistrationDatabase @Inject constructor(
     data class RegistrationWithState(
         val accountId: String,
         val input: Input,
-        val state: RegistrationState
+        val state: RegistrationState,
+        val groupAuth: GroupAuth? = null,
     )
+
+    /**
+     * A group's credentials, kept with its registration because the user-groups config is the only
+     * other place they live. When another device removes the group, its config entry is already
+     * gone by the time the unregister runs, and this is what signs the request.
+     */
+    @Serializable
+    data class GroupAuth(
+        val adminKeyHex: String? = null,
+        val authDataHex: String? = null,
+    ) {
+        val adminKey: ByteArray? get() = adminKeyHex?.let(Hex::fromStringCondensed)
+        val authData: ByteArray? get() = authDataHex?.let(Hex::fromStringCondensed)
+
+        override fun toString(): String = "GroupAuth(admin=${adminKeyHex != null})"
+
+        companion object {
+            fun of(adminKey: ByteArray?, authData: ByteArray?): GroupAuth? =
+                if (adminKey == null && authData == null) null
+                else GroupAuth(adminKey?.toHexString(), authData?.toHexString())
+        }
+    }
 
     /**
      * The registration state that is saved in the db.
@@ -278,5 +331,8 @@ class PushRegistrationDatabase @Inject constructor(
             "CREATE INDEX idx_push_state_type ON push_registration_state(state_type)",
             "CREATE INDEX idx_push_due ON push_registration_state(CAST(state->>'$.due' AS INTEGER))"
         )
+
+        const val ADD_GROUP_AUTH_COLUMN =
+            "ALTER TABLE push_registration_state ADD COLUMN group_auth TEXT"
     }
 }
