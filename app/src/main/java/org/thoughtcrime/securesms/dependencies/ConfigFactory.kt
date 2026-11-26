@@ -543,14 +543,17 @@ class ConfigFactory @Inject constructor(
 
     override fun getGroupAuth(groupId: AccountId): SwarmAuth? {
         val group = getGroup(groupId) ?: return null
+        return createGroupAuth(groupId, group.adminKey?.data, group.authData?.data)
+    }
 
-        return if (group.adminKey != null) {
-            OwnedSwarmAuth.ofClosedGroup(groupId, group.adminKey!!.data)
-        } else if (group.authData != null) {
-            GroupSubAccountSwarmAuth(groupId, this, group.authData!!.data)
-        } else {
-            null
-        }
+    override fun createGroupAuth(
+        groupId: AccountId,
+        adminKey: ByteArray?,
+        authData: ByteArray?
+    ): SwarmAuth? = when {
+        adminKey != null -> OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
+        authData != null -> GroupSubAccountSwarmAuth(groupId, this, authData)
+        else -> null
     }
 
     fun clearAll() {
