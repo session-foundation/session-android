@@ -418,10 +418,14 @@ class HomeViewModel @Inject constructor(
             }
 
             is Commands.ShowStartConversationSheet -> {
+                // Home can be on screen with no logged-in state (cause unknown); ignore the tap
+                // rather than crash.
+                val accountId = loginStateRepository.getLocalNumber() ?: run {
+                    Log.w("HomeViewModel", "Start conversation tapped with no logged-in user")
+                    return
+                }
                 _dialogsState.update { it.copy(showStartConversationSheet =
-                    StartConversationSheetData(
-                        accountId = loginStateRepository.requireLocalNumber()
-                    )
+                    StartConversationSheetData(accountId = accountId)
                 ) }
             }
 
