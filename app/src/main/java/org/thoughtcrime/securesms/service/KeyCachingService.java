@@ -278,12 +278,21 @@ public class KeyCachingService extends Service {
       type = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
     }
 
-    ServiceCompat.startForeground(
-        this,
-        SERVICE_RUNNING_ID,
-        builder.build(),
-        type
-    );
+    // An unlock can complete while Android still counts the app as background (e.g. the credential
+    // prompt returning behind the keyguard), and API 31+ then refuses to foreground. The secret is
+    // already set, so carry on: if the service dies unforegrounded it clears the key, and the app
+    // asks for the lock again rather than staying unlocked.
+    try {
+      ServiceCompat.startForeground(
+          this,
+          SERVICE_RUNNING_ID,
+          builder.build(),
+          type
+      );
+    } catch (IllegalStateException e) {
+      // ForegroundServiceStartNotAllowedException (API 31+) is an IllegalStateException.
+      Log.w(TAG, "Couldn't foreground KeyCachingService", e);
+    }
   }
 
   private PendingIntent buildLockIntent() {
