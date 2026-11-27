@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.components
 
 import android.content.Context
+import androidx.annotation.LayoutRes
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.util.AttributeSet
@@ -39,7 +40,7 @@ class AlbumThumbnailView : RelativeLayout {
 
     private val cornerMask by lazy { CornerMask(this) }
     private var slides: List<Slide> = listOf()
-    private var slideSize: Int = 0
+    @LayoutRes private var cellsLayout: Int = 0
 
     override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
@@ -78,7 +79,7 @@ class AlbumThumbnailView : RelativeLayout {
 
     fun clearViews() {
         binding.albumCellContainer.removeAllViews()
-        slideSize = -1
+        cellsLayout = 0
     }
 
     fun bind(glideRequests: RequestManager, message: MmsMessageRecord,
@@ -92,20 +93,22 @@ class AlbumThumbnailView : RelativeLayout {
         }
         calculateRadius(isStart, isEnd, message.isOutgoing)
 
-        // recreate cell views if different size to what we have already (for recycling)
-        if (slides.size != this.slideSize) {
+        // recreate cell views only if this album needs a different layout (for recycling)
+        val layout = layoutRes(slides.size)
+        if (layout != cellsLayout) {
             binding.albumCellContainer.removeAllViews()
-            LayoutInflater.from(context).inflate(layoutRes(slides.size), binding.albumCellContainer)
+            LayoutInflater.from(context).inflate(layout, binding.albumCellContainer)
+            cellsLayout = layout
+        }
+        // overflowText is only in the three-cell layout, which albums of any size above three share
+        binding.albumCellContainer.findViewById<TextView>(R.id.album_cell_overflow_text)?.let { overflowText ->
             val overflowed = slides.size > MAX_ALBUM_DISPLAY_SIZE
-            binding.albumCellContainer.findViewById<TextView>(R.id.album_cell_overflow_text)?.let { overflowText ->
-                // overflowText will be null if !overflowed
-                overflowText.isVisible = overflowed // more than max album size
-                val txt = Phrase.from(context, R.string.andMore)
+            overflowText.isVisible = overflowed // more than max album size
+            if (overflowed) {
+                overflowText.text = Phrase.from(context, R.string.andMore)
                     .put(COUNT_KEY, slides.size - MAX_ALBUM_DISPLAY_SIZE)
                     .format()
-                overflowText.text = txt
             }
-            this.slideSize = slides.size
         }
         // iterate binding
         slides.take(MAX_ALBUM_DISPLAY_SIZE).forEachIndexed { position, slide ->
