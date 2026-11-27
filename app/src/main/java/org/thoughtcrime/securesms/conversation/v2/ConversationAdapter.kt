@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Context
 import android.database.Cursor
+import android.util.LruCache
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -54,6 +55,13 @@ class ConversationAdapter(
 
     private val expandedMessageIds = mutableSetOf<MessageId>()
 
+    // Building a MessageRecord parses its JSON columns and looks up its sender, and every bind
+    // needs the records for its row and both neighbours, on top of getItemViewType's. They are
+    // cached per cursor: rebinds that keep the cursor (selection, search, the last-sent marker)
+    // reuse them, and a new cursor starts afresh because its positions are different rows.
+    private val recordCache = LruCache<Int, MessageRecord>(RECORD_CACHE_SIZE)
+    private var recordCacheCursor: Cursor? = null
+
     init {
         setHasStableIds(true)
     }
@@ -62,7 +70,7 @@ class ConversationAdapter(
     class ControlMessageViewHolder(val view: ControlMessageView) : ViewHolder(view)
 
     override fun getItemViewType(cursor: Cursor): Int {
-        val message = getMessage(cursor)!!
+        val message = recordAt(cursor, cursor.position)!!
         if (message.isControlMessage) { return VIEW_TYPE_CONTROL }
         return VIEW_TYPE_VISIBLE
     }
@@ -87,7 +95,7 @@ class ConversationAdapter(
     }
 
     override fun onBindItemViewHolder(viewHolder: ViewHolder, cursor: Cursor, position: Int) {
-        val message = getMessage(cursor)!!
+        val message = recordAt(cursor, position)!!
         val messageBefore = getMessageBefore(position, cursor)
         when (viewHolder) {
             is VisibleMessageViewHolder -> {
@@ -173,25 +181,33 @@ class ConversationAdapter(
 
     private fun getMessage(cursor: Cursor): MessageRecord? = messageDB.readerFor(cursor).current
 
+    private fun recordAt(cursor: Cursor, position: Int): MessageRecord? {
+        if (recordCacheCursor !== cursor) {
+            recordCache.evictAll()
+            recordCacheCursor = cursor
+        }
+
+        recordCache.get(position)?.let { return it }
+        if (!cursor.moveToPosition(position)) return null
+
+        return messageDB.readerFor(cursor).current?.also { recordCache.put(position, it) }
+    }
+
     private fun getMessageBefore(position: Int, cursor: Cursor): MessageRecord? {
         // The message that's visually before the current one is actually after the current
         // one for the cursor because the layout is reversed
-        if (isReversed &&  !cursor.moveToPosition(position + 1)) { return null }
-        if (!isReversed && !cursor.moveToPosition(position - 1)) { return null }
-
-        return messageDB.readerFor(cursor).current
+        return recordAt(cursor, if (isReversed) position + 1 else position - 1)
     }
 
     private fun getMessageAfter(position: Int, cursor: Cursor): MessageRecord? {
         // The message that's visually after the current one is actually before the current
         // one for the cursor because the layout is reversed
-        if (isReversed && !cursor.moveToPosition(position - 1)) { return null }
-        if (!isReversed && !cursor.moveToPosition(position + 1)) { return null }
-
-        return messageDB.readerFor(cursor).current
+        return recordAt(cursor, if (isReversed) position - 1 else position + 1)
     }
 
     override fun changeCursor(cursor: Cursor?) {
+        recordCache.evictAll()
+        recordCacheCursor = null
         super.changeCursor(cursor)
 
         val toRemove = mutableSetOf<MessageRecord>()
@@ -282,5 +298,8 @@ class ConversationAdapter(
     companion object {
         private const val VIEW_TYPE_VISIBLE = 1
         private const val VIEW_TYPE_CONTROL = 2
+
+        // A screenful of rows and their neighbours, with room to scroll back and forth.
+        private const val RECORD_CACHE_SIZE = 100
     }
 }
